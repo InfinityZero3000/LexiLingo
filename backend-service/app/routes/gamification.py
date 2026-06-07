@@ -43,6 +43,29 @@ router = APIRouter(prefix="/gamification", tags=["Gamification"])
 
 
 SOCIAL_LOCATION_TTL_SECONDS = 6 * 60 * 60
+LEAGUE_ZONE_SIZE = 3
+
+
+def is_in_promotion_zone(
+    rank: Optional[int],
+    total_participants: int,
+) -> bool:
+    if rank is None or total_participants <= 0:
+        return False
+    return rank <= min(LEAGUE_ZONE_SIZE, total_participants)
+
+
+def is_in_demotion_zone(
+    rank: Optional[int],
+    total_participants: int,
+) -> bool:
+    if rank is None or total_participants <= LEAGUE_ZONE_SIZE:
+        return False
+    demotion_start = max(
+        LEAGUE_ZONE_SIZE + 1,
+        total_participants - LEAGUE_ZONE_SIZE + 1,
+    )
+    return rank >= demotion_start
 
 
 def _social_location_key(user_id: UUID) -> str:
@@ -338,7 +361,8 @@ async def get_leaderboard(
             normalized_league,
         )
         total_participants = fallback_total
-        for rank, user in enumerate(fallback_users, 1):
+        fallback_ranks = LeaderboardCRUD.rank_scores([0] * len(fallback_users))
+        for rank, user in zip(fallback_ranks, fallback_users):
             is_current = user.id == current_user.id
             if is_current:
                 current_user_rank = rank
@@ -350,12 +374,17 @@ async def get_leaderboard(
                 display_name=user.display_name,
                 avatar_url=user.avatar_url,
                 user_rank=user.rank,
-                xp_earned=user.total_xp,
+                xp_earned=0,
                 lessons_completed=0,
                 is_current_user=is_current,
             ))
-    
-    for rank, (entry, user) in enumerate(entries, 1):
+
+    weekly_scores = [
+        entry.xp_earned if entry is not None else 0
+        for entry, _ in entries
+    ]
+    weekly_ranks = LeaderboardCRUD.rank_scores(weekly_scores)
+    for rank, (entry, user) in zip(weekly_ranks, entries):
         is_current = user.id == current_user.id
         if is_current:
             current_user_rank = rank
@@ -438,6 +467,10 @@ async def get_my_league_status(
 
     entry = await LeaderboardCRUD.get_or_create_entry(db, current_user.id)
     rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
+    total_participants = await LeaderboardCRUD.count_rank_participants(
+        db,
+        current_user.rank,
+    )
     _, week_end = LeaderboardCRUD.get_current_week_range()
     
     hours_remaining = int((week_end - datetime.now(timezone.utc)).total_seconds() / 3600)
@@ -457,8 +490,8 @@ async def get_my_league_status(
             current_rank=rank,
             xp_earned=entry.xp_earned,
             lessons_completed=entry.lessons_completed,
-            is_in_promotion_zone=rank <= 3 if rank else False,
-            is_in_demotion_zone=False,  # TODO: Implement based on league size
+            is_in_promotion_zone=is_in_promotion_zone(rank, total_participants),
+            is_in_demotion_zone=is_in_demotion_zone(rank, total_participants),
             week_ends_in_hours=max(0, hours_remaining),
             rank_icon_url=rank_info.icon_url
         )

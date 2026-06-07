@@ -44,12 +44,16 @@ class SettingsLocalDataSourceImpl implements SettingsLocalDataSource {
   @override
   Future<int> updateSettings(SettingsModel settings) async {
     final db = await databaseHelper.database;
-    return await db.update(
+    final updatedRows = await db.update(
       'settings',
       settings.toJson(),
       where: 'userId = ?',
       whereArgs: [settings.userId],
     );
+    if (updatedRows > 0) {
+      return updatedRows;
+    }
+    return createSettings(settings);
   }
 
   @override

@@ -846,6 +846,8 @@
     "matchesLabel": "Cặp từ"
   },
   "gameResult": {
+    "xpNotAwarded": "XP chưa được cộng. Kết quả chơi của bạn vẫn được giữ lại.",
+    "retryXp": "Thử cộng XP lại",
     "accuracyLabel": "Độ chính xác",
     "correctLabel": "Đúng",
     "scoreLabel": "Điểm",
@@ -1015,6 +1017,9 @@
     "generateTranscript": "Tạo bản chép lời"
   },
   "games": {
+    "loadFailed": "Không thể tải trò chơi. Vui lòng thử lại.",
+    "emptyGame": "Trò chơi hiện chưa có nội dung để chơi.",
+    "retryLoad": "Thử lại",
     "levelUpTitle": "Lên cấp!",
     "youReachedLevel": "Bạn đã đạt cấp {level}!",
     "keepItUp": "Cố lên!",

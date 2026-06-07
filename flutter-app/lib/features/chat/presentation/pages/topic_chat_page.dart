@@ -270,7 +270,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
               if (provider.isSendingMessage)
                 LexiTypingIndicator(
                   isThinking: true,
-                  name: provider.currentSession?.rolePersona.name.split(' ').first ?? 'AI',
+                  name:
+                      provider.currentSession?.rolePersona.name
+                          .split(' ')
+                          .first ??
+                      'AI',
                 ),
 
               // 5. Task banner (collapses to zero height when hidden)
@@ -948,14 +952,16 @@ class VocabularyPreviewSheet extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: isDark
+                                  ? AppColors.surfaceDarkMuted
+                                  : AppColors.grey100,
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               item.partOfSpeech,
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.grey[600],
+                                color: AppColorRoles.textSecondary(isDark),
                               ),
                             ),
                           ),
@@ -977,7 +983,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
                             '"${item.exampleInStory}"',
                             style: TextStyle(
                               fontStyle: FontStyle.italic,
-                              color: Colors.grey[600],
+                              color: AppColorRoles.textSecondary(isDark),
                               fontSize: 12,
                             ),
                           ),

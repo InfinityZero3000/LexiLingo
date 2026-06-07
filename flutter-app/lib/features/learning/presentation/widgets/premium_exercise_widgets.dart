@@ -1,20 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 
 // ═══════════════════════════════════════════════════════════════
-// Design tokens — matches flutter-app/template/cognitive_fluidity/DESIGN.md
+// Semantic exercise colors
 // ═══════════════════════════════════════════════════════════════
-const _kPrimary    = Color(0xFF1A73E8);
-const _kPrimaryDk  = Color(0xFF005BBF); // ignore: unused_element
-const _kCard       = Colors.white;
-const _kSurface    = Color(0xFFE8EFFF);
-const _kCorrect    = Color(0xFF2DBD73);
-const _kError      = Color(0xFFE53935);
-const _kBorder     = Color(0xFFCDD8F6);
-const _kTextDark   = Color(0xFF141B2B);
-const _kTextMid    = Color(0xFF414754);
-const _kTextLight  = Color(0xFF9AA5BB);
+const _kCorrect = Color(0xFF2DBD73);
+const _kError = Color(0xFFE53935);
+
+class _ExercisePalette {
+  final Color primary;
+  final Color primaryDeep;
+  final Color card;
+  final Color surface;
+  final Color border;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final Color shadow;
+
+  const _ExercisePalette({
+    required this.primary,
+    required this.primaryDeep,
+    required this.card,
+    required this.surface,
+    required this.border,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.shadow,
+  });
+
+  factory _ExercisePalette.of(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return _ExercisePalette(
+      primary: AppColorRoles.primary(isDark),
+      primaryDeep: AppColorRoles.primaryDeep(isDark),
+      card: theme.colorScheme.surface,
+      surface: isDark
+          ? theme.colorScheme.surfaceContainerHighest
+          : const Color(0xFFE8EFFF),
+      border: isDark ? AppColors.borderDarkSoft : const Color(0xFFCDD8F6),
+      textPrimary: AppColorRoles.textPrimary(isDark),
+      textSecondary: AppColorRoles.textSecondary(isDark),
+      textMuted: AppColorRoles.textMuted(isDark),
+      shadow: theme.colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
+    );
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════
 // Shared helpers
@@ -27,42 +62,45 @@ class _Badge extends StatelessWidget {
   const _Badge(this.label, {this.icon});
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: _kSurface,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: _kBorder),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 13, color: _kPrimary),
-              const SizedBox(width: 5),
-            ],
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: _kPrimary,
-                letterSpacing: 1.1,
-              ),
-            ),
+  Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: colors.primary),
+            const SizedBox(width: 5),
           ],
-        ),
-      );
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: colors.primary,
+              letterSpacing: 1.1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Rounded option card (pill or rect)
 class _OptionCard extends StatelessWidget {
   final String text;
-  final String? label;      // letter or number shown on left/right
+  final String? label; // letter or number shown on left/right
   final bool labelOnRight;
-  final bool showRadio;     // radio circle on right
+  final bool showRadio; // radio circle on right
   final bool isSelected;
-  final bool isCorrect;     // only meaningful when isAnswered
+  final bool isCorrect; // only meaningful when isAnswered
   final bool isAnswered;
   final VoidCallback? onTap;
   final double radius;
@@ -81,18 +119,25 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg     = _kCard;
-    Color border = _kBorder;
-    Color fg     = _kTextDark;
+    final colors = _ExercisePalette.of(context);
+    Color bg = colors.card;
+    Color border = colors.border;
+    Color fg = colors.textPrimary;
 
     if (isAnswered && isSelected) {
       if (isCorrect) {
-        bg = _kCorrect; border = _kCorrect; fg = Colors.white;
+        bg = _kCorrect;
+        border = _kCorrect;
+        fg = Colors.white;
       } else {
-        bg = _kError; border = _kError; fg = Colors.white;
+        bg = _kError;
+        border = _kError;
+        fg = Colors.white;
       }
     } else if (!isAnswered && isSelected) {
-      bg = _kPrimary; border = _kPrimary; fg = Colors.white;
+      bg = colors.primary;
+      border = colors.primary;
+      fg = Colors.white;
     }
 
     final labelWidget = label == null
@@ -102,7 +147,7 @@ class _OptionCard extends StatelessWidget {
             height: 30,
             decoration: BoxDecoration(
               border: Border.all(
-                color: isSelected ? fg.withValues(alpha: 0.5) : _kBorder,
+                color: isSelected ? fg.withValues(alpha: 0.5) : colors.border,
                 width: 1.5,
               ),
               borderRadius: BorderRadius.circular(8),
@@ -113,7 +158,7 @@ class _OptionCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: isSelected ? fg : _kTextMid,
+                color: isSelected ? fg : colors.textSecondary,
               ),
             ),
           );
@@ -131,10 +176,10 @@ class _OptionCard extends StatelessWidget {
               ? []
               : [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: colors.shadow,
                     blurRadius: 6,
                     offset: const Offset(0, 3),
-                  )
+                  ),
                 ],
         ),
         child: Row(
@@ -164,14 +209,16 @@ class _OptionCard extends StatelessWidget {
                     ? Icons.radio_button_checked
                     : Icons.radio_button_off,
                 size: 22,
-                color: isSelected ? fg : _kBorder,
+                color: isSelected ? fg : colors.border,
               ),
             ],
             if (isAnswered && isSelected)
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: Icon(
-                  isCorrect ? Icons.check_circle_outline : Icons.cancel_outlined,
+                  isCorrect
+                      ? Icons.check_circle_outline
+                      : Icons.cancel_outlined,
                   size: 20,
                   color: fg,
                 ),
@@ -188,49 +235,46 @@ class _ExplanationCard extends StatelessWidget {
   final String explanation;
   final bool isCorrect;
 
-  const _ExplanationCard({
-    required this.explanation,
-    required this.isCorrect,
-  });
+  const _ExplanationCard({required this.explanation, required this.isCorrect});
 
   @override
   Widget build(BuildContext context) => AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isCorrect
-              ? _kCorrect.withValues(alpha: 0.08)
-              : _kError.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isCorrect
-                ? _kCorrect.withValues(alpha: 0.4)
-                : _kError.withValues(alpha: 0.4),
+    duration: const Duration(milliseconds: 300),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: isCorrect
+          ? _kCorrect.withValues(alpha: 0.08)
+          : _kError.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: isCorrect
+            ? _kCorrect.withValues(alpha: 0.4)
+            : _kError.withValues(alpha: 0.4),
+      ),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          isCorrect ? Icons.check_circle : Icons.info_outline,
+          color: isCorrect ? _kCorrect : _kError,
+          size: 20,
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            explanation,
+            style: TextStyle(
+              fontSize: 14,
+              color: isCorrect ? _kCorrect : _kError,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
+            ),
           ),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              isCorrect ? Icons.check_circle : Icons.info_outline,
-              color: isCorrect ? _kCorrect : _kError,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                explanation,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isCorrect ? _kCorrect : _kError,
-                  fontWeight: FontWeight.w500,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
+      ],
+    ),
+  );
 }
 
 /// Circular blue button that plays TTS audio
@@ -240,13 +284,20 @@ class _CircleAudioBtn extends StatelessWidget {
   const _CircleAudioBtn({required this.text, this.size = 56});
 
   @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: const BoxDecoration(color: _kPrimary, shape: BoxShape.circle),
-        alignment: Alignment.center,
-        child: SpeakIconButton(text: text, size: size * 0.45, color: Colors.white),
-      );
+  Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: colors.primary, shape: BoxShape.circle),
+      alignment: Alignment.center,
+      child: SpeakIconButton(
+        text: text,
+        size: size * 0.45,
+        color: Colors.white,
+      ),
+    );
+  }
 }
 
 /// Extract first quoted word from text — tries single then double quotes
@@ -286,6 +337,7 @@ class TrueOrFalseWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = ['True', 'False'];
     final letters = ['A', 'B'];
 
@@ -300,16 +352,16 @@ class TrueOrFalseWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _kBorder),
+              border: Border.all(color: colors.border),
             ),
             child: Text(
               exercise.question,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: _kTextDark,
+                color: colors.textPrimary,
                 height: 1.4,
               ),
               textAlign: TextAlign.center,
@@ -319,7 +371,8 @@ class TrueOrFalseWidget extends StatelessWidget {
           ...List.generate(options.length, (i) {
             final opt = options[i];
             final sel = userAnswer == opt;
-            final correct = exercise.correctAnswer.toLowerCase() == opt.toLowerCase();
+            final correct =
+                exercise.correctAnswer.toLowerCase() == opt.toLowerCase();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: _OptionCard(
@@ -367,6 +420,7 @@ class MultipleChoiceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
 
     return SingleChildScrollView(
@@ -383,21 +437,25 @@ class MultipleChoiceWidget extends StatelessWidget {
               Expanded(
                 child: Text(
                   exercise.question,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
-                    color: _kTextDark,
+                    color: colors.textPrimary,
                     height: 1.4,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              SpeakIconButton(text: exercise.question, size: 22, color: _kPrimary),
+              SpeakIconButton(
+                text: exercise.question,
+                size: 22,
+                color: colors.primary,
+              ),
             ],
           ),
           const SizedBox(height: 24),
           ...options.map((opt) {
-            final sel  = userAnswer == opt;
+            final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -458,51 +516,78 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
 
   // Build sentence with a highlighted slot for the blank
   Widget _buildSentence(String? selected) {
+    final colors = _ExercisePalette.of(context);
     final q = widget.exercise.question;
     if (!q.contains('{blank}')) {
-      return Text(q,
-          style: const TextStyle(
-              fontSize: 20, fontWeight: FontWeight.w700, color: _kTextDark, height: 1.4));
+      return Text(
+        q,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: colors.textPrimary,
+          height: 1.4,
+        ),
+      );
     }
     final parts = q.split('{blank}');
     final before = parts[0];
-    final after  = parts.length > 1 ? parts[1] : '';
+    final after = parts.length > 1 ? parts[1] : '';
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(before,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: _kTextDark, height: 1.4)),
+        Text(
+          before,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: colors.textPrimary,
+            height: 1.4,
+          ),
+        ),
         if (selected != null)
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 4),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
-              color: _kPrimary,
+              color: colors.primary,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(selected,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+            child: Text(
+              selected,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           )
         else
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 6),
             width: 72,
             height: 28,
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: _kPrimary, width: 2.5)),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: colors.primary, width: 2.5),
+              ),
             ),
           ),
-        Text(after,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: _kTextDark, height: 1.4)),
+        Text(
+          after,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: colors.textPrimary,
+            height: 1.4,
+          ),
+        ),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options;
     final hasOptions = options != null && options.isNotEmpty;
 
@@ -511,32 +596,36 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'FILL IN THE BLANK',
             style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w700, color: _kPrimary, letterSpacing: 1.2),
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: colors.primary,
+              letterSpacing: 1.2,
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Chọn từ phù hợp nhất để hoàn thành câu.',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           // Sentence card
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _kBorder),
+              border: Border.all(color: colors.border),
             ),
             child: _buildSentence(widget.userAnswer),
           ),
           const SizedBox(height: 24),
           if (hasOptions) ...[
             ...List.generate(options.length, (i) {
-              final opt  = options[i];
-              final sel  = widget.userAnswer == opt;
+              final opt = options[i];
+              final sel = widget.userAnswer == opt;
               final corr = widget.exercise.correctAnswer == opt;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -557,18 +646,18 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
               decoration: InputDecoration(
                 hintText: 'Nhập câu trả lời...',
                 filled: true,
-                fillColor: _kCard,
+                fillColor: colors.card,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: _kBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: _kBorder, width: 1.5),
+                  borderSide: BorderSide(color: colors.border, width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: _kPrimary, width: 2),
+                  borderSide: BorderSide(color: colors.primary, width: 2),
                 ),
               ),
               onSubmitted: (v) {
@@ -579,17 +668,22 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
             if (!widget.isAnswered)
               ElevatedButton(
                 onPressed: () {
-                  if (_ctrl.text.trim().isNotEmpty) widget.onAnswer(_ctrl.text.trim());
+                  if (_ctrl.text.trim().isNotEmpty) {
+                    widget.onAnswer(_ctrl.text.trim());
+                  }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: _kPrimary,
+                  backgroundColor: colors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999)),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
-                child: const Text('Xác nhận',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                child: Text(
+                  'Xác nhận',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
           ],
           if (widget.isAnswered && widget.exercise.explanation != null) ...[
@@ -629,7 +723,7 @@ class ArrangeSentenceWidget extends StatefulWidget {
 }
 
 class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
-  final List<String> _placed  = [];
+  final List<String> _placed = [];
   late List<String> _bank;
 
   @override
@@ -657,20 +751,28 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Sắp xếp câu',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             exerciseQuote(widget.exercise.question),
-            style: const TextStyle(fontSize: 14, color: _kTextMid, height: 1.4),
+            style: TextStyle(
+              fontSize: 14,
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
           ),
           const SizedBox(height: 24),
           // Drop zone (placed words)
@@ -678,19 +780,19 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
             constraints: const BoxConstraints(minHeight: 80),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: _kBorder,
+                color: colors.border,
                 style: BorderStyle.solid,
                 width: 1.5,
               ),
             ),
             child: _placed.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
                       'Nhấn vào từ bên dưới để sắp xếp...',
-                      style: TextStyle(fontSize: 13, color: _kTextLight),
+                      style: TextStyle(fontSize: 13, color: colors.textMuted),
                     ),
                   )
                 : Wrap(
@@ -702,15 +804,17 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                             onTap: () => _removeWord(w),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 8),
+                                horizontal: 14,
+                                vertical: 8,
+                              ),
                               decoration: BoxDecoration(
-                                color: _kPrimary,
+                                color: colors.primary,
                                 borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: _kPrimaryDk),
+                                border: Border.all(color: colors.primaryDeep),
                               ),
                               child: Text(
                                 w,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
@@ -734,25 +838,27 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                       onTap: widget.isAnswered ? null : () => _placeWord(w),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
-                          color: _kCard,
+                          color: colors.card,
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: _kBorder, width: 1.5),
+                          border: Border.all(color: colors.border, width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.06),
+                              color: colors.shadow,
                               blurRadius: 5,
                               offset: const Offset(0, 2),
-                            )
+                            ),
                           ],
                         ),
                         child: Text(
                           w,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: _kTextDark,
+                            color: colors.textPrimary,
                           ),
                         ),
                       ),
@@ -802,6 +908,7 @@ class TranslationChoiceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
 
     // Extract source sentence (strip instruction prefix)
@@ -813,7 +920,9 @@ class TranslationChoiceWidget extends StatelessWidget {
       'Translation of:',
     ]) {
       if (source.contains(prefix)) {
-        source = source.substring(source.indexOf(prefix) + prefix.length).trim();
+        source = source
+            .substring(source.indexOf(prefix) + prefix.length)
+            .trim();
         break;
       }
     }
@@ -829,17 +938,20 @@ class TranslationChoiceWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Chọn bản dịch đúng',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 20),
           // Source sentence card
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _kSurface,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -848,36 +960,35 @@ class TranslationChoiceWidget extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: _kPrimary,
+                    color: colors.primary,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.volume_up_rounded,
-                      color: Colors.white, size: 22),
+                  child: Icon(
+                    Icons.volume_up_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     '"$source"',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: _kTextDark,
+                      color: colors.textPrimary,
                       height: 1.4,
                     ),
                   ),
                 ),
-                SpeakIconButton(
-                  text: source,
-                  size: 18,
-                  color: _kPrimary,
-                ),
+                SpeakIconButton(text: source, size: 18, color: colors.primary),
               ],
             ),
           ),
           const SizedBox(height: 24),
           ...List.generate(options.length, (i) {
-            final opt  = options[i];
-            final sel  = userAnswer == opt;
+            final opt = options[i];
+            final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -972,6 +1083,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final (lineA, lineB) = _parseDialogue();
     final options = widget.exercise.options ?? [];
 
@@ -980,40 +1092,51 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Hoàn thành đoạn hội thoại',
             style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 24),
           // Person A bubble (left)
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 18,
-                backgroundColor: _kSurface,
-                child:
-                    Icon(Icons.person_outline, size: 20, color: _kTextMid),
+                backgroundColor: colors.surface,
+                child: Icon(
+                  Icons.person_outline,
+                  size: 20,
+                  color: colors.textSecondary,
+                ),
               ),
               const SizedBox(width: 10),
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: _kCard,
+                    color: colors.card,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
                       bottomRight: Radius.circular(20),
                     ),
-                    border: Border.all(color: _kBorder),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Text(
                     '"$lineA"',
-                    style: const TextStyle(
-                        fontSize: 15, color: _kTextDark, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: colors.textPrimary,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ),
@@ -1028,9 +1151,11 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
-                    color: _kSurface,
+                    color: colors.surface,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -1041,25 +1166,25 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                       ? _buildBlankedLine(lineB)
                       : Text(
                           lineB.isEmpty ? '[_____]' : lineB,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
-                            color: _kPrimary,
+                            color: colors.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                 ),
               ),
               const SizedBox(width: 10),
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 18,
-                backgroundColor: _kPrimary,
+                backgroundColor: colors.primary,
                 child: Icon(Icons.person, size: 20, color: Colors.white),
               ),
             ],
           ),
           const SizedBox(height: 28),
           ...options.map((opt) {
-            final sel  = widget.userAnswer == opt;
+            final sel = widget.userAnswer == opt;
             final corr = widget.exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -1086,26 +1211,27 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
   }
 
   Widget _buildBlankedLine(String line) {
+    final colors = _ExercisePalette.of(context);
     final parts = line.split('{blank}');
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        Text(parts[0],
-            style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: _kTextDark)),
+        Text(
+          parts[0],
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+          ),
+        ),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
           width: 84,
           height: 36,
           decoration: BoxDecoration(
-            color: widget.isAnswered ? _kPrimary : Colors.white,
+            color: widget.isAnswered ? colors.primary : Colors.white,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: _kPrimary,
-              width: 1.5,
-            ),
+            border: Border.all(color: colors.primary, width: 1.5),
           ),
           child: TextField(
             key: const Key('dialogue-blank-input'),
@@ -1123,29 +1249,29 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: widget.isAnswered ? Colors.white : _kTextDark,
+              color: widget.isAnswered ? Colors.white : colors.textPrimary,
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: '____',
               hintStyle: TextStyle(
-                color: _kPrimary,
+                color: colors.primary,
                 fontWeight: FontWeight.w700,
               ),
               border: InputBorder.none,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 6,
-                vertical: 8,
-              ),
+              contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
             ),
           ),
         ),
         if (parts.length > 1)
-          Text(parts[1],
-              style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: _kTextDark)),
+          Text(
+            parts[1],
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
+            ),
+          ),
       ],
     );
   }
@@ -1174,6 +1300,7 @@ class CollocationChoiceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
     final mainWord = _extractMainWord();
 
@@ -1186,13 +1313,17 @@ class CollocationChoiceWidget extends StatelessWidget {
             mainWord.isNotEmpty
                 ? 'Chọn cụm từ đi với "$mainWord"'
                 : exercise.question,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w800, color: _kTextDark, height: 1.3),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Tìm từ kết hợp chính xác để hoàn thành ý nghĩa.',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           if (mainWord.isNotEmpty) ...[
@@ -1200,28 +1331,30 @@ class CollocationChoiceWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
-                color: _kSurface,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: _kPrimary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'ĐỘNG TỪ CHÍNH',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: _kPrimary,
+                      color: colors.primary,
                       letterSpacing: 1.2,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     mainWord,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
-                      color: _kPrimary,
+                      color: colors.primary,
                     ),
                   ),
                 ],
@@ -1230,7 +1363,7 @@ class CollocationChoiceWidget extends StatelessWidget {
             const SizedBox(height: 24),
           ],
           ...options.map((opt) {
-            final sel  = userAnswer == opt;
+            final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -1249,19 +1382,25 @@ class CollocationChoiceWidget extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _kSurface,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lightbulb_outline,
-                      size: 18, color: _kPrimary),
+                  Icon(
+                    Icons.lightbulb_outline,
+                    size: 18,
+                    color: colors.primary,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Mẹo: ${exercise.hint!}',
-                      style: const TextStyle(
-                          fontSize: 13, color: _kTextMid, height: 1.4),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],
@@ -1317,23 +1456,25 @@ class _DictationWidgetState extends State<DictationWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Dictation',
             style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: _kPrimary),
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: colors.primary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Lắng nghe và điền vào chỗ trống',
-            style: TextStyle(fontSize: 14, color: _kTextMid),
+            style: TextStyle(fontSize: 14, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
@@ -1352,20 +1493,20 @@ class _DictationWidgetState extends State<DictationWidget> {
             maxLines: 3,
             decoration: InputDecoration(
               hintText: 'Nhập nội dung bạn nghe được...',
-              hintStyle: const TextStyle(color: _kTextLight),
+              hintStyle: TextStyle(color: colors.textMuted),
               filled: true,
-              fillColor: _kCard,
+              fillColor: colors.card,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: _kBorder),
+                borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: _kBorder, width: 1.5),
+                borderSide: BorderSide(color: colors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: _kPrimary, width: 2),
+                borderSide: BorderSide(color: colors.primary, width: 2),
               ),
             ),
           ),
@@ -1373,18 +1514,21 @@ class _DictationWidgetState extends State<DictationWidget> {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
-                  color: _kSurface,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   '$_wordCount từ cần điền',
-                  style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: _kTextMid),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -1393,19 +1537,22 @@ class _DictationWidgetState extends State<DictationWidget> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                if (_ctrl.text.trim().isNotEmpty)
+                if (_ctrl.text.trim().isNotEmpty) {
                   widget.onAnswer(_ctrl.text.trim());
+                }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kPrimary,
+                backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
+                  borderRadius: BorderRadius.circular(999),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
-              child: const Text('Xác nhận',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(
+                'Xác nhận',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           ],
           if (widget.isAnswered && widget.exercise.explanation != null) ...[
@@ -1452,6 +1599,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
     final errorSentence = _extractError();
 
@@ -1460,15 +1608,18 @@ class GrammarCorrectionWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Chọn câu đúng',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Chọn phiên bản chính xác của câu dưới đây:',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           // Error sentence card
@@ -1477,8 +1628,10 @@ class GrammarCorrectionWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: _kError.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(16),
-              border:
-                  Border.all(color: _kError.withValues(alpha: 0.3), width: 1.5),
+              border: Border.all(
+                color: _kError.withValues(alpha: 0.3),
+                width: 1.5,
+              ),
             ),
             child: Row(
               children: [
@@ -1486,33 +1639,36 @@ class GrammarCorrectionWidget extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: _kPrimary,
+                    color: colors.primary,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.info_outline,
-                      color: Colors.white, size: 18),
+                  child: Icon(
+                    Icons.info_outline,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'CÂU SAI',
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: _kPrimary,
+                          color: colors.primary,
                           letterSpacing: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '"$errorSentence"',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: _kTextDark,
+                          color: colors.textPrimary,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -1525,8 +1681,8 @@ class GrammarCorrectionWidget extends StatelessWidget {
           const SizedBox(height: 20),
           if (options.isNotEmpty) ...[
             ...List.generate(options.length, (i) {
-              final opt  = options[i];
-              final sel  = userAnswer == opt;
+              final opt = options[i];
+              final sel = userAnswer == opt;
               final corr = exercise.correctAnswer == opt;
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
@@ -1564,8 +1720,11 @@ class _GrammarTextInput extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
   final bool isAnswered;
-  const _GrammarTextInput(
-      {required this.exercise, required this.onAnswer, required this.isAnswered});
+  const _GrammarTextInput({
+    required this.exercise,
+    required this.onAnswer,
+    required this.isAnswered,
+  });
 
   @override
   State<_GrammarTextInput> createState() => _GrammarTextInputState();
@@ -1581,45 +1740,52 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
   }
 
   @override
-  Widget build(BuildContext context) => Column(
-        children: [
-          TextField(
-            controller: _ctrl,
-            enabled: !widget.isAnswered,
-            decoration: InputDecoration(
-              hintText: 'Viết câu đúng...',
-              filled: true,
-              fillColor: _kCard,
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: _kBorder)),
-              focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(color: _kPrimary, width: 2)),
+  Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
+    return Column(
+      children: [
+        TextField(
+          controller: _ctrl,
+          enabled: !widget.isAnswered,
+          decoration: InputDecoration(
+            hintText: 'Viết câu đúng...',
+            filled: true,
+            fillColor: colors.card,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: colors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: colors.primary, width: 2),
             ),
           ),
-          if (!widget.isAnswered) ...[
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () {
-                if (_ctrl.text.trim().isNotEmpty)
-                  widget.onAnswer(_ctrl.text.trim());
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _kPrimary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+        ),
+        if (!widget.isAnswered) ...[
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () {
+              if (_ctrl.text.trim().isNotEmpty) {
+                widget.onAnswer(_ctrl.text.trim());
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(999),
               ),
-              child: const Text('Xác nhận',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
             ),
-          ],
+            child: Text(
+              'Xác nhận',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
         ],
-      );
+      ],
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1643,6 +1809,7 @@ class ImageBasedChoiceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
     final imageUrl = exercise.metadata?['image_url'] as String?;
 
@@ -1655,24 +1822,29 @@ class ImageBasedChoiceWidget extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             exercise.question,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: _kTextDark),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 16),
           // Image area
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
             child: imageUrl != null
-                ? Image.network(imageUrl,
-                    height: 200, fit: BoxFit.cover)
+                ? Image.network(imageUrl, height: 200, fit: BoxFit.cover)
                 : Container(
                     height: 180,
                     decoration: BoxDecoration(
-                      color: _kSurface,
+                      color: colors.surface,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Icon(Icons.image_outlined,
-                        size: 64, color: _kBorder),
+                    child: Icon(
+                      Icons.image_outlined,
+                      size: 64,
+                      color: colors.border,
+                    ),
                   ),
           ),
           const SizedBox(height: 20),
@@ -1685,7 +1857,7 @@ class ImageBasedChoiceWidget extends StatelessWidget {
             mainAxisSpacing: 12,
             childAspectRatio: 2.5,
             children: options.map((opt) {
-              final sel  = userAnswer == opt;
+              final sel = userAnswer == opt;
               final corr = exercise.correctAnswer == opt;
               return _OptionCard(
                 text: opt,
@@ -1731,6 +1903,7 @@ class ListeningChoiceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
 
     return SingleChildScrollView(
@@ -1742,28 +1915,32 @@ class ListeningChoiceWidget extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             exercise.question,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: _kTextDark, height: 1.3),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 20),
           // Tap-to-listen card
           Container(
             padding: const EdgeInsets.symmetric(vertical: 28),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _kBorder, width: 1.5),
+              border: Border.all(color: colors.border, width: 1.5),
             ),
             child: Column(
               children: [
                 _CircleAudioBtn(text: exercise.correctAnswer, size: 56),
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   'TAP TO LISTEN',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: _kTextMid,
+                    color: colors.textSecondary,
                     letterSpacing: 1.5,
                   ),
                 ),
@@ -1772,8 +1949,8 @@ class ListeningChoiceWidget extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           ...List.generate(options.length, (i) {
-            final opt  = options[i];
-            final sel  = userAnswer == opt;
+            final opt = options[i];
+            final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -1829,20 +2006,24 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options ?? [];
-    final half    = options.length ~/ 2;
-    final left    = options.take(half).toList();
-    final right   = options.skip(half).toList();
+    final half = options.length ~/ 2;
+    final left = options.take(half).toList();
+    final right = options.skip(half).toList();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Nối cặp từ tương ứng',
             style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 20),
           // 2-column matching grid
@@ -1855,7 +2036,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                   child: Column(
                     children: left.map((item) {
                       final isMatchedLeft = _matched.containsKey(item);
-                      final isSelected    = _selectedLeft == item;
+                      final isSelected = _selectedLeft == item;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: GestureDetector(
@@ -1863,36 +2044,36 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                               ? null
                               : () {
                                   setState(() {
-                                    _selectedLeft =
-                                        isSelected ? null : item;
+                                    _selectedLeft = isSelected ? null : item;
                                   });
                                 },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
                               color: isMatchedLeft
                                   ? _kCorrect
                                   : isSelected
-                                      ? _kPrimary
-                                      : _kCard,
+                                  ? colors.primary
+                                  : colors.card,
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
                                 color: isMatchedLeft
                                     ? _kCorrect
                                     : isSelected
-                                        ? _kPrimary
-                                        : _kBorder,
+                                    ? colors.primary
+                                    : colors.border,
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      Colors.black.withValues(alpha: 0.05),
+                                  color: colors.shadow,
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
-                                )
+                                ),
                               ],
                             ),
                             child: Text(
@@ -1903,7 +2084,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                                 fontWeight: FontWeight.w600,
                                 color: (isMatchedLeft || isSelected)
                                     ? Colors.white
-                                    : _kTextDark,
+                                    : colors.textPrimary,
                               ),
                             ),
                           ),
@@ -1938,22 +2119,24 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
                             decoration: BoxDecoration(
-                              color:
-                                  isMatchedRight ? _kCorrect : _kCard,
+                              color: isMatchedRight ? _kCorrect : colors.card,
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: isMatchedRight ? _kCorrect : _kBorder,
+                                color: isMatchedRight
+                                    ? _kCorrect
+                                    : colors.border,
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color:
-                                      Colors.black.withValues(alpha: 0.05),
+                                  color: colors.shadow,
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
-                                )
+                                ),
                               ],
                             ),
                             child: Text(
@@ -1964,7 +2147,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                                 fontWeight: FontWeight.w600,
                                 color: isMatchedRight
                                     ? Colors.white
-                                    : _kTextDark,
+                                    : colors.textPrimary,
                               ),
                             ),
                           ),
@@ -1980,17 +2163,21 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _kSurface,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.lightbulb_outline, size: 16, color: _kPrimary),
+                Icon(Icons.lightbulb_outline, size: 16, color: colors.primary),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Chọn một từ tiếng Anh và nghĩa tiếng Việt tương ứng để nối chúng.',
-                    style: TextStyle(fontSize: 12, color: _kTextMid, height: 1.4),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -2033,22 +2220,24 @@ class VocabularyFlashcardWidget extends StatefulWidget {
       _VocabularyFlashcardWidgetState();
 }
 
-class _VocabularyFlashcardWidgetState
-    extends State<VocabularyFlashcardWidget> {
+class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
   // Extract the word from question (e.g. "Learn: 'Adventure'" → "Adventure")
   String get _word {
     final quoted = _extractQuotedWord(widget.exercise.question);
     if (quoted.isNotEmpty) return quoted;
     final colonIdx = widget.exercise.question.indexOf(':');
-    if (colonIdx != -1) return widget.exercise.question.substring(colonIdx + 1).trim();
+    if (colonIdx != -1) {
+      return widget.exercise.question.substring(colonIdx + 1).trim();
+    }
     return widget.exercise.question;
   }
 
   @override
   Widget build(BuildContext context) {
-    final options  = widget.exercise.options ?? [];
+    final colors = _ExercisePalette.of(context);
+    final options = widget.exercise.options ?? [];
     final imageUrl = widget.exercise.metadata?['image_url'] as String?;
-    final word     = _word;
+    final word = _word;
 
     // If options is just ["Got it!"], show simple flashcard
     if (options.length == 1 && options[0] == 'Got it!') {
@@ -2061,14 +2250,15 @@ class _VocabularyFlashcardWidgetState
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: _kCard,
+                color: colors.card,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _kBorder),
+                border: Border.all(color: colors.border),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.07),
-                      blurRadius: 20,
-                      offset: const Offset(0, 6))
+                    color: colors.shadow,
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
                 ],
               ),
               child: Column(
@@ -2077,18 +2267,22 @@ class _VocabularyFlashcardWidgetState
                   const SizedBox(height: 12),
                   Text(
                     word,
-                    style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: _kPrimary),
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                      color: colors.primary,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   if (widget.exercise.explanation != null) ...[
                     const SizedBox(height: 6),
                     Text(
                       widget.exercise.explanation!,
-                      style: const TextStyle(
-                          fontSize: 13, color: _kTextMid, height: 1.4),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                        height: 1.4,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -2096,8 +2290,11 @@ class _VocabularyFlashcardWidgetState
                     const SizedBox(height: 16),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(imageUrl,
-                          height: 140, fit: BoxFit.cover),
+                      child: Image.network(
+                        imageUrl,
+                        height: 140,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ],
                 ],
@@ -2111,23 +2308,27 @@ class _VocabularyFlashcardWidgetState
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 40, vertical: 16),
+                  horizontal: 40,
+                  vertical: 16,
+                ),
                 decoration: BoxDecoration(
-                  color: widget.isAnswered ? _kCorrect : _kPrimary,
+                  color: widget.isAnswered ? _kCorrect : colors.primary,
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: [
                     BoxShadow(
-                        color: _kPrimary.withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4))
+                      color: colors.primary.withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
                   ],
                 ),
-                child: const Text(
+                child: Text(
                   'Đã hiểu rồi!',
                   style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
@@ -2146,9 +2347,9 @@ class _VocabularyFlashcardWidgetState
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: _kBorder),
+              border: Border.all(color: colors.border),
             ),
             child: Column(
               children: [
@@ -2159,34 +2360,41 @@ class _VocabularyFlashcardWidgetState
                 const SizedBox(height: 10),
                 Text(
                   word,
-                  style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: _kPrimary),
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: colors.primary,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 if (imageUrl != null) ...[
                   const SizedBox(height: 12),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(imageUrl,
-                        height: 120, fit: BoxFit.cover,
-                        width: double.infinity),
+                    child: Image.network(
+                      imageUrl,
+                      height: 120,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
                   ),
                 ],
               ],
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'What is the meaning?',
             style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.w700, color: _kTextDark),
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 12),
           ...List.generate(options.length, (i) {
-            final opt  = options[i];
-            final sel  = widget.userAnswer == opt;
+            final opt = options[i];
+            final sel = widget.userAnswer == opt;
             final corr = widget.exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -2244,21 +2452,25 @@ class _PronunciationPracticeWidgetState
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Luyện phát âm',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Nghe và lặp lại câu dưới đây',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -2266,9 +2478,9 @@ class _PronunciationPracticeWidgetState
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _kBorder),
+              border: Border.all(color: colors.border),
             ),
             child: Row(
               children: [
@@ -2280,10 +2492,10 @@ class _PronunciationPracticeWidgetState
                     children: [
                       Text(
                         '"${widget.exercise.question}"',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: _kTextDark,
+                          color: colors.textPrimary,
                           height: 1.4,
                         ),
                       ),
@@ -2291,8 +2503,11 @@ class _PronunciationPracticeWidgetState
                         const SizedBox(height: 4),
                         Text(
                           widget.exercise.explanation!,
-                          style: const TextStyle(
-                              fontSize: 12, color: _kTextMid, fontStyle: FontStyle.italic),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.textSecondary,
+                            fontStyle: FontStyle.italic,
+                          ),
                         ),
                       ],
                     ],
@@ -2318,16 +2533,16 @@ class _PronunciationPracticeWidgetState
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _hasTapped || widget.isAnswered
-                      ? _kPrimary
+                      ? colors.primary
                       : Colors.transparent,
-                  border: Border.all(color: _kPrimary, width: 2.5),
+                  border: Border.all(color: colors.primary, width: 2.5),
                   boxShadow: (_hasTapped || widget.isAnswered)
                       ? [
                           BoxShadow(
-                            color: _kPrimary.withValues(alpha: 0.3),
+                            color: colors.primary.withValues(alpha: 0.3),
                             blurRadius: 20,
                             spreadRadius: 4,
-                          )
+                          ),
                         ]
                       : [],
                 ),
@@ -2336,7 +2551,7 @@ class _PronunciationPracticeWidgetState
                   size: 36,
                   color: (_hasTapped || widget.isAnswered)
                       ? Colors.white
-                      : _kPrimary,
+                      : colors.primary,
                 ),
               ),
             ),
@@ -2344,7 +2559,7 @@ class _PronunciationPracticeWidgetState
           const SizedBox(height: 12),
           Text(
             'Nhấn để nói',
-            style: const TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const Spacer(),
@@ -2392,6 +2607,7 @@ class ReadingComprehensionWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final (passage, question) = _splitPassageAndQuestion();
     final options = exercise.options ?? [];
     final letters = ['A', 'B', 'C', 'D', 'E'];
@@ -2401,15 +2617,18 @@ class ReadingComprehensionWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Đọc hiểu',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Đọc đoạn văn sau và trả lời câu hỏi bên dưới.',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           if (passage.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -2417,15 +2636,18 @@ class ReadingComprehensionWidget extends StatelessWidget {
               constraints: const BoxConstraints(maxHeight: 160),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: _kCard,
+                color: colors.card,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _kBorder),
+                border: Border.all(color: colors.border),
               ),
               child: SingleChildScrollView(
                 child: Text(
                   passage,
-                  style: const TextStyle(
-                      fontSize: 14, color: _kTextDark, height: 1.6),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colors.textPrimary,
+                    height: 1.6,
+                  ),
                 ),
               ),
             ),
@@ -2433,13 +2655,17 @@ class ReadingComprehensionWidget extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             question,
-            style: const TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: _kTextDark, height: 1.3),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+              height: 1.3,
+            ),
           ),
           const SizedBox(height: 16),
           ...List.generate(options.length, (i) {
-            final opt  = options[i];
-            final sel  = userAnswer == opt;
+            final opt = options[i];
+            final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -2499,10 +2725,12 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
     super.dispose();
   }
 
-  String _extractHighlightWord() => _extractQuotedWord(widget.exercise.question);
+  String _extractHighlightWord() =>
+      _extractQuotedWord(widget.exercise.question);
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final highlight = _extractHighlightWord();
 
     return SingleChildScrollView(
@@ -2516,20 +2744,24 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: _kSurface,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.edit_note_rounded,
-                    size: 20, color: _kPrimary),
+                child: Icon(
+                  Icons.edit_note_rounded,
+                  size: 20,
+                  color: colors.primary,
+                ),
               ),
               const SizedBox(width: 10),
-              const Text(
+              Text(
                 'VIẾT CÂU NGẮN',
                 style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: _kPrimary,
-                    letterSpacing: 1.2),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: colors.primary,
+                  letterSpacing: 1.2,
+                ),
               ),
             ],
           ),
@@ -2537,21 +2769,25 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
           // Question with highlighted word
           RichText(
             text: TextSpan(
-              style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.w800, color: _kTextDark, height: 1.3),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+                height: 1.3,
+              ),
               children: [
                 TextSpan(
-                    text: widget.exercise.question
-                        .replaceAll('"$highlight"', '')
-                        .replaceAll("'$highlight'", '')
-                        .trimRight()
-                        .replaceAll(RegExp(r'\s+$'), '')
+                  text: widget.exercise.question
+                      .replaceAll('"$highlight"', '')
+                      .replaceAll("'$highlight'", '')
+                      .trimRight()
+                      .replaceAll(RegExp(r'\s+$'), ''),
                 ),
                 if (highlight.isNotEmpty) ...[
                   const TextSpan(text: ' '),
                   TextSpan(
                     text: '"$highlight"',
-                    style: const TextStyle(color: _kPrimary),
+                    style: TextStyle(color: colors.primary),
                   ),
                   const TextSpan(text: '.'),
                 ],
@@ -2566,20 +2802,20 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
             maxLines: 4,
             decoration: InputDecoration(
               hintText: 'Nhập câu trả lời của bạn tại đây...',
-              hintStyle: const TextStyle(color: _kTextLight, fontSize: 14),
+              hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
               filled: true,
-              fillColor: _kCard,
+              fillColor: colors.card,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: _kBorder),
+                borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: _kBorder, width: 1.5),
+                borderSide: BorderSide(color: colors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: _kPrimary, width: 2),
+                borderSide: BorderSide(color: colors.primary, width: 2),
               ),
             ),
           ),
@@ -2587,18 +2823,22 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
           if (!widget.isAnswered)
             ElevatedButton(
               onPressed: () {
-                if (_ctrl.text.trim().isNotEmpty)
+                if (_ctrl.text.trim().isNotEmpty) {
                   widget.onAnswer(_ctrl.text.trim());
+                }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _kPrimary,
+                backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
+                  borderRadius: BorderRadius.circular(999),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
-              child: const Text('Kiểm tra',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              child: Text(
+                'Kiểm tra',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
             ),
           if (widget.isAnswered && widget.exercise.explanation != null) ...[
             const SizedBox(height: 16),
@@ -2641,25 +2881,30 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'LUYỆN NÓI',
             style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: _kPrimary,
-                letterSpacing: 1.5),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: colors.primary,
+              letterSpacing: 1.5,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Lặp lại câu sau',
             style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
@@ -2667,9 +2912,9 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: _kCard,
+              color: colors.card,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: _kBorder),
+              border: Border.all(color: colors.border),
             ),
             child: Column(
               children: [
@@ -2677,10 +2922,10 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                 const SizedBox(height: 14),
                 Text(
                   '"${widget.exercise.question}"',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: _kPrimary,
+                    color: colors.primary,
                     height: 1.4,
                   ),
                   textAlign: TextAlign.center,
@@ -2689,11 +2934,12 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                   const SizedBox(height: 8),
                   Text(
                     widget.exercise.explanation!,
-                    style: const TextStyle(
-                        fontSize: 13,
-                        color: _kTextMid,
-                        fontStyle: FontStyle.italic,
-                        height: 1.4),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.textSecondary,
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -2717,16 +2963,16 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: _hasTapped || widget.isAnswered
-                      ? _kPrimary
+                      ? colors.primary
                       : Colors.transparent,
-                  border: Border.all(color: _kPrimary, width: 2.5),
+                  border: Border.all(color: colors.primary, width: 2.5),
                   boxShadow: (_hasTapped || widget.isAnswered)
                       ? [
                           BoxShadow(
-                            color: _kPrimary.withValues(alpha: 0.3),
+                            color: colors.primary.withValues(alpha: 0.3),
                             blurRadius: 20,
                             spreadRadius: 4,
-                          )
+                          ),
                         ]
                       : [],
                 ),
@@ -2735,15 +2981,15 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                   size: 36,
                   color: (_hasTapped || widget.isAnswered)
                       ? Colors.white
-                      : _kPrimary,
+                      : colors.primary,
                 ),
               ),
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Nhấn để bắt đầu nói',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const Spacer(),
@@ -2782,34 +3028,40 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options ?? [];
-    final half    = options.length ~/ 2;
-    final words   = options.take(half).toList();
-    final cats    = options.skip(half).toList();
+    final half = options.length ~/ 2;
+    final words = options.take(half).toList();
+    final cats = options.skip(half).toList();
 
-    final unassigned = words.where((w) => !_assignments.containsKey(w)).toList();
+    final unassigned = words
+        .where((w) => !_assignments.containsKey(w))
+        .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Phân loại từ vựng',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w800, color: _kTextDark),
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+            ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Nhấn một từ rồi nhấn vào danh mục phù hợp.',
-            style: TextStyle(fontSize: 13, color: _kTextMid),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
           // Category buckets
           ...List.generate(cats.length, (ci) {
-            final cat      = cats[ci];
+            final cat = cats[ci];
             final assigned = _assignments.entries
                 .where((e) => e.value == cat)
                 .map((e) => e.key)
@@ -2835,13 +3087,13 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                   constraints: const BoxConstraints(minHeight: 72),
                   decoration: BoxDecoration(
                     color: _selectedWord != null && !widget.isAnswered
-                        ? _kPrimary.withValues(alpha: 0.06)
-                        : _kCard,
+                        ? colors.primary.withValues(alpha: 0.06)
+                        : colors.card,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _selectedWord != null && !widget.isAnswered
-                          ? _kPrimary
-                          : _kBorder,
+                          ? colors.primary
+                          : colors.border,
                       width: 1.5,
                     ),
                   ),
@@ -2851,9 +3103,13 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                       Row(
                         children: [
                           Icon(
-                            ci == 0 ? Icons.category_outlined : Icons.bolt_outlined,
+                            ci == 0
+                                ? Icons.category_outlined
+                                : Icons.bolt_outlined,
                             size: 18,
-                            color: ci == 0 ? _kPrimary : const Color(0xFF00A86B),
+                            color: ci == 0
+                                ? colors.primary
+                                : const Color(0xFF00A86B),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -2861,7 +3117,9 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: ci == 0 ? _kPrimary : const Color(0xFF00A86B),
+                              color: ci == 0
+                                  ? colors.primary
+                                  : const Color(0xFF00A86B),
                               letterSpacing: 1.1,
                             ),
                           ),
@@ -2878,23 +3136,26 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                   onTap: widget.isAnswered
                                       ? null
                                       : () {
-                                          setState(() =>
-                                              _assignments.remove(w));
+                                          setState(
+                                            () => _assignments.remove(w),
+                                          );
                                         },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 7),
+                                      horizontal: 12,
+                                      vertical: 7,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: _kSurface,
-                                      borderRadius:
-                                          BorderRadius.circular(999),
+                                      color: colors.surface,
+                                      borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(
                                       w,
-                                      style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: _kPrimary),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.primary,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -2914,7 +3175,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: _kSurface,
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Wrap(
@@ -2925,38 +3186,43 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                   return GestureDetector(
                     onTap: widget.isAnswered
                         ? null
-                        : () => setState(
-                            () => _selectedWord = sel ? null : w),
+                        : () => setState(() => _selectedWord = sel ? null : w),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 180),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 9),
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
                       decoration: BoxDecoration(
-                        color: sel ? _kPrimary : _kCard,
+                        color: sel ? colors.primary : colors.card,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                            color: sel ? _kPrimary : _kBorder, width: 1.5),
+                          color: sel ? colors.primary : colors.border,
+                          width: 1.5,
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
+                            color: colors.shadow,
                             blurRadius: 4,
                             offset: const Offset(0, 2),
-                          )
+                          ),
                         ],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.drag_indicator,
-                              size: 14,
-                              color: sel ? Colors.white : _kTextLight),
+                          Icon(
+                            Icons.drag_indicator,
+                            size: 14,
+                            color: sel ? Colors.white : colors.textMuted,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             w,
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: sel ? Colors.white : _kTextDark,
+                              color: sel ? Colors.white : colors.textPrimary,
                             ),
                           ),
                         ],
@@ -3001,10 +3267,10 @@ class CognitiveFluidityWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MatchWordMeaningWidget(
-        exercise: exercise,
-        onAnswer: onAnswer,
-        isAnswered: isAnswered,
-        userAnswer: userAnswer,
-        isCorrect: isCorrect,
-      );
+    exercise: exercise,
+    onAnswer: onAnswer,
+    isAnswered: isAnswered,
+    userAnswer: userAnswer,
+    isCorrect: isCorrect,
+  );
 }

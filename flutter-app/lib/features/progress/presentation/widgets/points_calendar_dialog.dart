@@ -9,6 +9,7 @@ import '../../domain/entities/streak_entity.dart';
 const _kReminderEnabledKey = 'checkin_reminder_enabled';
 const _kReminderHourKey = 'checkin_reminder_hour';
 const _kReminderMinuteKey = 'checkin_reminder_minute';
+const _kCalendarCellCount = 42;
 
 void showPointsCalendarDialog(BuildContext context, StreakEntity streak) {
   showDialog(
@@ -291,6 +292,10 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
         isFuture: future,
         isDark: isDark,
       ));
+    }
+
+    while (cells.length < _kCalendarCellCount) {
+      cells.add(const SizedBox.shrink());
     }
 
     return GridView.count(

@@ -84,10 +84,10 @@ class GamesRepository {
   /// Full session — includes timer config and XP settings.
   Future<MatchingGame> getMatchingGame({
     String level = 'B1',
-    String variation = 'definition',
+    String variant = 'definition',
   }) async {
     final data = await _apiClient.get(
-      '/games/matching?level=$level&variation=$variation',
+      '/games/matching?level=$level&variant=$variant',
     );
     return MatchingGame.fromJson(data);
   }
@@ -192,6 +192,27 @@ class GamesRepository {
     // Backend may wrap the word under a 'word' key or return it at root.
     final wordData = data['word'] as Map<String, dynamic>? ?? data;
     return HangmanWord.fromJson(wordData);
+  }
+
+  Future<XPAwardResult> completeGameSession({
+    required String sessionId,
+    required List<Map<String, String>> answers,
+    int? clientDurationSeconds,
+    int hintsUsed = 0,
+  }) async {
+    final data = await _apiClient.post(
+      '/games/sessions/$sessionId/complete',
+      body: {
+        'answers': answers,
+        if (clientDurationSeconds != null)
+          'client_duration_seconds': clientDurationSeconds,
+        'hints_used': hintsUsed,
+      },
+    );
+    final xpData = data['xp_result'] as Map<String, dynamic>? ?? data;
+    await _cache.invalidate('xp:profile:v1');
+    await _cache.invalidate('xp:leaderboard:limit:20');
+    return XPAwardResult.fromJson(xpData);
   }
 
   // ── XP System ─────────────────────────────────────────────────────────────

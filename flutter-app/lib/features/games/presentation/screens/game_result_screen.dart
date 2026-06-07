@@ -3,7 +3,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
+import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
+import 'package:provider/provider.dart';
 
 /// Shows the result after completing any game session.
 ///
@@ -31,12 +33,15 @@ class _GameResultScreenState extends State<GameResultScreen>
   late Animation<int> _xpAnimation;
   late AnimationController _starsController;
   late Animation<double> _starsAnimation;
+  XPAwardResult? _xpResult;
+  bool _isRetrying = false;
 
-  int get _xpEarned => widget.xpResult?.xpAwarded ?? widget.result.xpEarned;
+  int get _xpEarned => _xpResult?.xpAwarded ?? 0;
 
   @override
   void initState() {
     super.initState();
+    _xpResult = widget.xpResult;
 
     _xpController = AnimationController(
       vsync: this,
@@ -64,7 +69,7 @@ class _GameResultScreenState extends State<GameResultScreen>
     });
 
     // Show level-up dialog after brief delay
-    final xpResult = widget.xpResult;
+    final xpResult = _xpResult;
     if (xpResult != null && xpResult.leveledUp) {
       Future.delayed(const Duration(milliseconds: 1800), () {
         if (mounted) {
@@ -88,7 +93,7 @@ class _GameResultScreenState extends State<GameResultScreen>
   @override
   Widget build(BuildContext context) {
     final result = widget.result;
-    final xpResult = widget.xpResult;
+    final xpResult = _xpResult;
 
     return Scaffold(
       appBar: AppBar(
@@ -215,6 +220,46 @@ class _GameResultScreenState extends State<GameResultScreen>
   }
 
   Widget _buildXpCard(XPAwardResult? xpResult) {
+    if (xpResult == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.errorContainer,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              color: Theme.of(context).colorScheme.onErrorContainer,
+              size: 32,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'gameResult.xpNotAwarded'.tr(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onErrorContainer,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              onPressed: _isRetrying ? null : _retryAward,
+              icon: _isRetrying
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh_rounded),
+              label: Text('gameResult.retryXp'.tr()),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -244,24 +289,48 @@ class _GameResultScreenState extends State<GameResultScreen>
               ),
             ),
           ),
-          if (xpResult != null) ...[
-            const SizedBox(height: 8),
-            _xpStatRow(
-              'gameResult.totalXpLabel'.tr(),
-              '${xpResult.newTotalXp}',
-            ),
-            _xpStatRow(
-              'gameResult.dailyXpLabel'.tr(),
-              '${xpResult.dailyXpToday}',
-            ),
-            _xpStatRow(
-              'gameResult.streakLabel'.tr(),
-              '${xpResult.streakDays} days',
-            ),
-          ],
+          const SizedBox(height: 8),
+          _xpStatRow(
+            'gameResult.totalXpLabel'.tr(),
+            '${xpResult.newTotalXp}',
+          ),
+          _xpStatRow(
+            'gameResult.dailyXpLabel'.tr(),
+            '${xpResult.dailyXpToday}',
+          ),
+          _xpStatRow(
+            'gameResult.streakLabel'.tr(),
+            '${xpResult.streakDays} days',
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _retryAward() async {
+    setState(() => _isRetrying = true);
+    final result = await context.read<GamesProvider>().retryLastCompletion();
+    if (!mounted) return;
+    setState(() {
+      _isRetrying = false;
+      _xpResult = result;
+      _xpAnimation = IntTween(
+        begin: 0,
+        end: result?.xpAwarded ?? 0,
+      ).animate(CurvedAnimation(parent: _xpController, curve: Curves.easeOut));
+    });
+    if (result != null) {
+      _xpController
+        ..reset()
+        ..forward();
+      if (result.leveledUp) {
+        LevelUpDialog.show(
+          context,
+          newLevel: result.newLevel,
+          xpAwarded: result.xpAwarded,
+        );
+      }
+    }
   }
 
   Widget _xpStatRow(String label, String value) {

@@ -168,15 +168,22 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               children: [
                 // Progress bar (thick, rounded — matches template)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(999),
                     child: LinearProgressIndicator(
                       value: provider.progress,
                       minHeight: 10,
-                      backgroundColor: const Color(0xFFE0E8FF),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF1A73E8),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColorRoles.primary(
+                          Theme.of(context).brightness == Brightness.dark,
+                        ),
                       ),
                     ),
                   ),
@@ -397,22 +404,27 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   }
 
   Widget _buildActionButtons(BuildContext context, LearningProvider provider) {
-    final answered  = provider.isCurrentAnswered;
-    final correct   = provider.isCurrentCorrect ?? false;
+    final answered = provider.isCurrentAnswered;
+    final correct = provider.isCurrentCorrect ?? false;
     final canCheckDraft = provider.hasCurrentDraftAnswer;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    final disabledColor = theme.colorScheme.surfaceContainerHighest;
+    final actionForeground = answered || canCheckDraft
+        ? Colors.white
+        : AppColorRoles.textMuted(isDark);
 
     // Button colour: correct=green, wrong=orange, not answered=primary blue
     final checkColor = answered
         ? (correct ? const Color(0xFF2DBD73) : const Color(0xFFFF6B35))
-        : const Color(0xFF1A73E8);
+        : primaryColor;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(
-          top: BorderSide(color: Colors.grey.withValues(alpha: 0.15), width: 1),
-        ),
+        border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
       ),
       child: Row(
         children: [
@@ -423,10 +435,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               icon: const Icon(Icons.skip_next_rounded, size: 18),
               label: Text('common.skip'.tr()),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1A73E8),
-                side: const BorderSide(color: Color(0xFF1A73E8), width: 1.5),
+                foregroundColor: primaryColor,
+                side: BorderSide(color: primaryColor, width: 1.5),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
+                  borderRadius: BorderRadius.circular(999),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
             ),
@@ -439,27 +452,36 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               onPressed: answered
                   ? () => provider.nextExercise()
                   : canCheckDraft
-                      ? () => provider.submitCurrentDraftAnswer()
-                      : null,
+                  ? () => provider.submitCurrentDraftAnswer()
+                  : null,
               icon: Icon(
                 answered
-                    ? (correct ? Icons.check_circle_outline : Icons.arrow_forward_rounded)
+                    ? (correct
+                          ? Icons.check_circle_outline
+                          : Icons.arrow_forward_rounded)
                     : Icons.check_circle_outline,
                 size: 20,
-                color: Colors.white,
+                color: actionForeground,
               ),
               label: Text(
-                answered ? 'lesson.continueButton'.tr() : 'lesson.checkAnswer'.tr(),
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                answered
+                    ? 'lesson.continueButton'.tr()
+                    : 'lesson.checkAnswer'.tr(),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: actionForeground,
+                ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: answered ? checkColor : const Color(0xFFBBCEF0),
-                disabledBackgroundColor: const Color(0xFFBBCEF0),
+                backgroundColor: checkColor,
+                disabledBackgroundColor: disabledColor,
+                disabledForegroundColor: AppColorRoles.textMuted(isDark),
                 foregroundColor: Colors.white,
                 elevation: answered ? 2 : 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
+                  borderRadius: BorderRadius.circular(999),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
             ),
@@ -612,9 +634,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                           'percentage': '$percentage',
                         },
                       ),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColorRoles.textSecondary(
+                          Theme.of(context).brightness == Brightness.dark,
+                        ),
+                      ),
                     ),
                   ],
                 ),

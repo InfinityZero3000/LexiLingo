@@ -38,9 +38,6 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
   void initState() {
     super.initState();
     _selectedEntry = _findCurrentUserEntry(widget.entries);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.onEntrySelected?.call(_selectedEntry);
-    });
   }
 
   @override
@@ -63,7 +60,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
   LeaderboardEntryEntity? _findCurrentUserEntry(List<LeaderboardEntryEntity> entries) {
     final currentUserEntries = entries.where((e) => e.isCurrentUser);
     if (currentUserEntries.isNotEmpty) return currentUserEntries.first;
-    return entries.isNotEmpty ? entries.first : null;
+    return null;
   }
 
   void _onEntryTap(LeaderboardEntryEntity entry) {

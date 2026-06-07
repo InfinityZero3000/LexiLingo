@@ -3,6 +3,22 @@ import 'package:flutter/foundation.dart';
 import '../../data/repositories/games_repository.dart';
 import '../../domain/entities/game_entities.dart';
 
+enum GameAwardStatus { idle, submitting, awarded, failed, alreadyAwarded }
+
+class _PendingGameCompletion {
+  final String sessionId;
+  final List<Map<String, String>> answers;
+  final int? durationSeconds;
+  final int hintsUsed;
+
+  const _PendingGameCompletion({
+    required this.sessionId,
+    required this.answers,
+    required this.durationSeconds,
+    required this.hintsUsed,
+  });
+}
+
 /// State management for English Games + XP System.
 ///
 /// Phase 3: English Games.
@@ -30,6 +46,9 @@ class GamesProvider extends ChangeNotifier {
   // ── XP/Profile State ──────────────────────────────────────────────────────
   XPProfile? _xpProfile;
   XPAwardResult? _lastXPResult;
+  GameAwardStatus _awardStatus = GameAwardStatus.idle;
+  String? _awardError;
+  _PendingGameCompletion? _pendingCompletion;
   List<LeaderboardUser> _leaderboard = [];
   Map<String, dynamic>? _currentUserLeaderboard;
 
@@ -51,6 +70,9 @@ class GamesProvider extends ChangeNotifier {
 
   XPProfile? get xpProfile => _xpProfile;
   XPAwardResult? get lastXPResult => _lastXPResult;
+  GameAwardStatus get awardStatus => _awardStatus;
+  String? get awardError => _awardError;
+  bool get isAwardSubmitting => _awardStatus == GameAwardStatus.submitting;
   List<LeaderboardUser> get leaderboard => _leaderboard;
   Map<String, dynamic>? get currentUserLeaderboard => _currentUserLeaderboard;
   GameResult? get lastGameResult => _lastGameResult;
@@ -102,6 +124,8 @@ class GamesProvider extends ChangeNotifier {
   // ── Game Loading ──────────────────────────────────────────────────────────
 
   Future<void> loadWordScramble({int count = 10}) async {
+    _resetAwardState();
+    _wordScramble = null;
     _setLoading(true);
     _currentGame = GameType.wordScramble;
     try {
@@ -119,6 +143,8 @@ class GamesProvider extends ChangeNotifier {
   }
 
   Future<void> loadFillBlank({int count = 8}) async {
+    _resetAwardState();
+    _fillBlank = null;
     _setLoading(true);
     _currentGame = GameType.fillBlank;
     try {
@@ -135,13 +161,15 @@ class GamesProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> loadMatchingGame({String variation = 'definition'}) async {
+  Future<void> loadMatchingGame({String variant = 'definition'}) async {
+    _resetAwardState();
+    _matching = null;
     _setLoading(true);
     _currentGame = GameType.matching;
     try {
       _matching = await _repository.getMatchingGame(
         level: _selectedLevel,
-        variation: variation,
+        variant: variant,
       );
       _gameStartTime = DateTime.now();
       _error = null;
@@ -153,6 +181,8 @@ class GamesProvider extends ChangeNotifier {
   }
 
   Future<void> loadSpellingBee({int count = 8}) async {
+    _resetAwardState();
+    _spellingBee = null;
     _setLoading(true);
     _currentGame = GameType.spellingBee;
     try {
@@ -170,6 +200,8 @@ class GamesProvider extends ChangeNotifier {
   }
 
   Future<void> loadGrammarQuiz({String? topic, int count = 10}) async {
+    _resetAwardState();
+    _grammarQuiz = null;
     _setLoading(true);
     _currentGame = GameType.grammarQuiz;
     try {
@@ -188,6 +220,8 @@ class GamesProvider extends ChangeNotifier {
   }
 
   Future<void> loadHangman({String? category}) async {
+    _resetAwardState();
+    _hangman = null;
     _setLoading(true);
     _currentGame = GameType.hangman;
     try {
@@ -212,9 +246,17 @@ class GamesProvider extends ChangeNotifier {
     required int score,
     required int totalQuestions,
     required int correctAnswers,
-    required int baseXp,
+    required List<Map<String, String>> answers,
     String? sessionId,
+    int hintsUsed = 0,
   }) async {
+    if (_awardStatus == GameAwardStatus.submitting) return null;
+    if (_awardStatus == GameAwardStatus.awarded && _lastXPResult != null) {
+      _awardStatus = GameAwardStatus.alreadyAwarded;
+      notifyListeners();
+      return _lastXPResult;
+    }
+
     final durationSeconds = _gameStartTime != null
         ? DateTime.now().difference(_gameStartTime!).inSeconds
         : null;
@@ -226,61 +268,99 @@ class GamesProvider extends ChangeNotifier {
       score: score,
       totalQuestions: totalQuestions,
       correctAnswers: correctAnswers,
-      xpEarned: baseXp,
+      xpEarned: 0,
       durationSeconds: durationSeconds ?? 0,
     );
 
-    // Award XP via backend
+    final resolvedSessionId = sessionId ?? _sessionIdFor(gameType);
+    if (resolvedSessionId.isEmpty) {
+      _awardStatus = GameAwardStatus.failed;
+      _awardError = 'Missing game session ID for ${gameType.apiKey}';
+      notifyListeners();
+      return null;
+    }
+
+    _pendingCompletion = _PendingGameCompletion(
+      sessionId: resolvedSessionId,
+      answers: answers.map((answer) => Map<String, String>.from(answer)).toList(),
+      durationSeconds: durationSeconds,
+      hintsUsed: hintsUsed,
+    );
+    return _submitPendingCompletion();
+  }
+
+  Future<XPAwardResult?> retryLastCompletion() async {
+    if (_pendingCompletion == null ||
+        _awardStatus == GameAwardStatus.submitting ||
+        _awardStatus == GameAwardStatus.awarded) {
+      return _lastXPResult;
+    }
+    return _submitPendingCompletion();
+  }
+
+  Future<XPAwardResult?> _submitPendingCompletion() async {
+    final pending = _pendingCompletion;
+    if (pending == null) return null;
+
+    _awardStatus = GameAwardStatus.submitting;
+    _awardError = null;
+    notifyListeners();
     try {
-      final result = await _repository.awardXP(
-        source: 'game',
-        baseXp: baseXp,
-        sourceId: sessionId,
-        sourceDetail: gameType.apiKey,
-        durationSeconds: durationSeconds,
-        score: correctAnswers,
-        totalQuestions: totalQuestions,
+      final result = await _repository.completeGameSession(
+        sessionId: pending.sessionId,
+        answers: pending.answers,
+        clientDurationSeconds: pending.durationSeconds,
+        hintsUsed: pending.hintsUsed,
       );
       _lastXPResult = result;
-
-      // Sync actual awarded XP back into lastGameResult so callers reading
-      // lastGameResult.xpEarned get the server-confirmed value (after multipliers
-      // and daily cap) rather than the local estimate.
+      _awardStatus = GameAwardStatus.awarded;
       if (_lastGameResult != null) {
         _lastGameResult = _lastGameResult!.copyWith(xpEarned: result.xpAwarded);
       }
-
-      // Update local XP snapshot
       if (_xpProfile != null) {
-        _xpProfile = XPProfile(
-          userId: _xpProfile!.userId,
+        _xpProfile = _xpProfile!.copyWith(
           totalXp: result.newTotalXp,
           numericLevel: result.newLevel,
           levelProgressPercent: result.levelProgressPercent,
           xpForNextLevel: result.xpForNextLevel,
-          currentXpInLevel: _xpProfile!.currentXpInLevel,
+          currentXpInLevel: result.currentXpInLevel,
           dailyXpToday: result.dailyXpToday,
           dailyCapRemaining: result.dailyCapRemaining,
           streakDays: result.streakDays,
-          bestStreak: _xpProfile!.bestStreak,
-          recentTransactions: _xpProfile!.recentTransactions,
         );
       }
-
-      notifyListeners();
       return result;
     } catch (e) {
+      _awardStatus = GameAwardStatus.failed;
+      _awardError = e.toString();
       debugPrint('XP award error: $e');
-      notifyListeners();
       return null;
+    } finally {
+      notifyListeners();
     }
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 
+  String _sessionIdFor(GameType gameType) => switch (gameType) {
+    GameType.wordScramble => _wordScramble?.sessionId ?? '',
+    GameType.fillBlank => _fillBlank?.sessionId ?? '',
+    GameType.matching => _matching?.sessionId ?? '',
+    GameType.spellingBee => _spellingBee?.sessionId ?? '',
+    GameType.grammarQuiz => _grammarQuiz?.sessionId ?? '',
+    GameType.hangman => _hangman?.sessionId ?? '',
+  };
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
+  }
+
+  void _resetAwardState() {
+    _lastXPResult = null;
+    _awardStatus = GameAwardStatus.idle;
+    _awardError = null;
+    _pendingCompletion = null;
   }
 
   void clearError() {
@@ -291,6 +371,9 @@ class GamesProvider extends ChangeNotifier {
   void clearLastResult() {
     _lastGameResult = null;
     _lastXPResult = null;
+    _awardStatus = GameAwardStatus.idle;
+    _awardError = null;
+    _pendingCompletion = null;
     notifyListeners();
   }
 }

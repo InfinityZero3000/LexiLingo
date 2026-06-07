@@ -86,6 +86,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
@@ -158,7 +159,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         child: Text(
                           '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
                           style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: Colors.grey[600]),
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                         ),
                       ),
                       // Sort dropdown
@@ -169,13 +172,13 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             Icon(
                               _sortOption.icon,
                               size: 18,
-                              color: Colors.grey[600],
+                              color: AppColorRoles.textSecondary(isDark),
                             ),
                             const SizedBox(width: 4),
                             Icon(
                               Icons.arrow_drop_down,
                               size: 18,
-                              color: Colors.grey[600],
+                              color: AppColorRoles.textSecondary(isDark),
                             ),
                           ],
                         ),
@@ -209,7 +212,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       IconButton(
                         icon: Icon(
                           _isGridView ? Icons.view_list : Icons.grid_view,
-                          color: Colors.grey[600],
+                          color: AppColorRoles.textSecondary(isDark),
                         ),
                         onPressed: () {
                           setState(() => _isGridView = !_isGridView);
@@ -246,13 +249,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         Icon(
                           Icons.folder_open,
                           size: 64,
-                          color: Colors.grey[400],
+                          color: AppColorRoles.textMuted(isDark),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'course.noCourses'.tr(),
                           style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: Colors.grey[600]),
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                         ),
                       ],
                     ),
@@ -381,7 +386,7 @@ String _courseImageUrl(CourseEntity course) {
   ];
   const business = [
     'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
-    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',    // financial charts
+    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80', // financial charts
     'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&q=80', // laptop workspace
   ];
   const conversation = [
@@ -425,7 +430,7 @@ String _courseImageUrl(CourseEntity course) {
     'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
   ];
   const intermediate = [
-    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80',    // open book pages
+    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80', // open book pages
     'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop on desk
     'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
   ];
@@ -435,7 +440,9 @@ String _courseImageUrl(CourseEntity course) {
     'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // office buildings
   ];
 
-  if (tags.contains('ielts') || tags.contains('test-prep') || tags.contains('exam')) {
+  if (tags.contains('ielts') ||
+      tags.contains('test-prep') ||
+      tags.contains('exam')) {
     return ielts[pick % ielts.length];
   }
   if (tags.contains('business') || tags.contains('business-english')) {
@@ -507,7 +514,8 @@ class _CourseCard extends StatelessWidget {
                   child: Image.network(
                     _courseImageUrl(course),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                    errorBuilder: (_, __, ___) =>
+                        _buildPlaceholderImage(context),
                   ),
                 ),
               ),
@@ -534,7 +542,7 @@ class _CourseCard extends StatelessWidget {
                       Text(
                         course.description!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: AppColorRoles.textSecondary(isDark),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -568,7 +576,11 @@ class _CourseCard extends StatelessWidget {
               ),
 
               // Arrow icon
-              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppColorRoles.textMuted(isDark),
+              ),
             ],
           ),
         ),
@@ -576,10 +588,11 @@ class _CourseCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholderImage() {
+  Widget _buildPlaceholderImage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Colors.grey[200],
-      child: Icon(Icons.book, size: 40, color: Colors.grey[400]),
+      color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey200,
+      child: Icon(Icons.book, size: 40, color: AppColorRoles.textMuted(isDark)),
     );
   }
 
@@ -634,7 +647,8 @@ class _CourseGridCard extends StatelessWidget {
                   child: Image.network(
                     _courseImageUrl(course),
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildPlaceholderImage(),
+                    errorBuilder: (_, __, ___) =>
+                        _buildPlaceholderImage(context),
                   ),
                 ),
               ),
@@ -688,10 +702,17 @@ class _CourseGridCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholderImage() {
+  Widget _buildPlaceholderImage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Colors.grey[200],
-      child: Center(child: Icon(Icons.book, size: 40, color: Colors.grey[400])),
+      color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey200,
+      child: Center(
+        child: Icon(
+          Icons.book,
+          size: 40,
+          color: AppColorRoles.textMuted(isDark),
+        ),
+      ),
     );
   }
 

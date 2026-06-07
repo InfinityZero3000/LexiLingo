@@ -18,6 +18,7 @@ from app.models.gamification import Achievement, UserAchievement, ChallengeRewar
 from app.models.progress import UserCourseProgress, LessonCompletion, Streak, DailyActivity
 from app.models.vocabulary import UserVocabulary, VocabularyStatus
 from app.models.user import User
+from app.models.games import GameSession
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,12 @@ TRIGGER_CONDITIONS = {
     "social_action": ["social_interaction", "help_others"],
     "chat_complete": ["chat_complete"],
     "daily_challenge": ["daily_challenge_complete"],
+    "game_complete": [
+        "game_complete",
+        "xp_earned",
+        "numeric_level",
+        "reach_streak",
+    ],
 }
 
 
@@ -162,6 +169,7 @@ class AchievementCheckerService:
         need_skills = fetch_all or any(ct in (condition_types or []) for ct in ["grammar_mastered", "culture_lesson", "writing_complete", "listening_complete"])
         need_social = fetch_all or any(ct in (condition_types or []) for ct in ["social_interaction", "chat_complete", "help_others"])
         need_challenges = fetch_all or "daily_challenge_complete" in condition_types
+        need_games = fetch_all or "game_complete" in condition_types
         
         # Fetch lesson completion count
         if need_lessons:
@@ -226,11 +234,21 @@ class AchievementCheckerService:
         # Fetch XP (sum from all user course progress)
         if need_xp:
             result = await self.db.execute(
-                select(func.coalesce(func.sum(UserCourseProgress.total_xp_earned), 0)).where(
-                    UserCourseProgress.user_id == user_id
-                )
+                select(User.total_xp).where(User.id == user_id)
             )
             stats["total_xp"] = result.scalar() or 0
+
+        if need_games:
+            result = await self.db.execute(
+                select(func.count(GameSession.id)).where(
+                    and_(
+                        GameSession.user_id == user_id,
+                        GameSession.completed_at.is_not(None),
+                        GameSession.xp_awarded.is_(True),
+                    )
+                )
+            )
+            stats["games_completed"] = result.scalar() or 0
         
         # Fetch perfect scores and quiz completions
         if need_quiz:
@@ -352,6 +370,7 @@ class AchievementCheckerService:
             "chat_complete": lambda: user_stats.get("chats_completed", 0) >= condition_value,
             "help_others": lambda: user_stats.get("help_others_count", 0) >= condition_value,
             "daily_challenge_complete": lambda: user_stats.get("daily_challenges_completed", 0) >= condition_value,
+            "game_complete": lambda: user_stats.get("games_completed", 0) >= condition_value,
             "comeback": lambda: False,  # Special: checked contextually at login
         }
         

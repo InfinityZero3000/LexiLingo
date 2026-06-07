@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 
 /// Matching Game screen.
 ///
@@ -31,7 +32,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   Set<String> _matchedIds = {};
   Map<String, _PairState> _matchState = {};
   int _correctCount = 0;
-  int _wrongPenalty = 0;
+  bool _isFinishing = false;
 
   @override
   void initState() {
@@ -116,7 +117,6 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         _selectedMatch = matchText;
         _matchState[_selectedWord!] = _PairState.wrong;
       });
-      _wrongPenalty++;
       Future.delayed(const Duration(milliseconds: 700), () {
         if (mounted) {
           setState(() {
@@ -130,26 +130,26 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   }
 
   void _finishGame() async {
+    if (_isFinishing) return;
+    _isFinishing = true;
     _timer?.cancel();
     final provider = context.read<GamesProvider>();
     final game = provider.matching!;
     final total = game.pairs.length;
 
     final elapsed = game.timerSeconds - _timeLeft;
-    // Time bonus: +5 XP if finished in less than 50% of total time
-    // (skill: progress-xp-system → time-bonus)
-    final timeBonusXp = (elapsed < game.timerSeconds * game.timeBonusThreshold)
-        ? 5
-        : 0;
-    final rawXp = game.baseXp - (_wrongPenalty * 2) + timeBonusXp;
-    final finalXp = rawXp.clamp(0, game.baseXp + 5);
-
     final xpResult = await provider.completeGame(
       gameType: GameType.matching,
       score: _correctCount,
       totalQuestions: total,
       correctAnswers: _correctCount,
-      baseXp: finalXp,
+      answers: [
+        for (final pair in game.pairs)
+          {
+            'id': pair.wordId,
+            'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : '',
+          },
+      ],
     );
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -162,7 +162,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
             score: _correctCount,
             totalQuestions: total,
             correctAnswers: _correctCount,
-            xpEarned: xpResult?.xpAwarded ?? finalXp,
+            xpEarned: xpResult?.xpAwarded ?? 0,
             durationSeconds: elapsed,
             xpResult: xpResult,
           ),
@@ -176,12 +176,35 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   Widget build(BuildContext context) {
     return Consumer<GamesProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading || !_gameLoaded) {
+        if (provider.isLoading) {
           return const Scaffold(
             body: Center(child: LottieLoadingWidget.medium()),
           );
         }
-        final game = provider.matching!;
+        final game = provider.matching;
+        if (provider.error != null) {
+          return GameLoadState(
+            message: 'games.loadFailed'.tr(),
+            onRetry: () async {
+              await provider.loadMatchingGame();
+              if (mounted) _initGame();
+            },
+          );
+        }
+        if (game == null || game.pairs.isEmpty) {
+          return GameLoadState(
+            message: 'games.emptyGame'.tr(),
+            onRetry: () async {
+              await provider.loadMatchingGame();
+              if (mounted) _initGame();
+            },
+          );
+        }
+        if (!_gameLoaded) {
+          return const Scaffold(
+            body: Center(child: LottieLoadingWidget.medium()),
+          );
+        }
         final remaining = game.pairs
             .where((p) => !_matchedIds.contains(p.wordId))
             .toList();
@@ -264,7 +287,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                           // Matches column
                           Expanded(
                             child: _ColumnList(
-                              items: game.matchesColumn
+                              items: game.definitionsColumn
                                   .where(
                                     (m) => !_matchedIds.any((id) {
                                       try {
@@ -283,7 +306,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                               selectedItem: _selectedMatch,
                               pairStates: const {},
                               onTap: _selectMatchItem,
-                              label: game.variation == 'definition'
+                              label: game.variant == 'definition'
                                   ? 'matchingGame.definitionsLabel'.tr()
                                   : 'matchingGame.matchesLabel'.tr(),
                             ),

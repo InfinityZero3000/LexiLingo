@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 
 /// Fill in the Blank game screen.
 ///
@@ -29,7 +30,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   int? _selectedIndex;
   bool _answered = false;
   bool _gameLoaded = false;
+  bool _isFinishing = false;
   String? _feedbackTip;
+  final Map<String, String> _submittedAnswers = {};
 
   @override
   void initState() {
@@ -81,6 +84,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     if (_answered) return;
     final game = context.read<GamesProvider>().fillBlank!;
     final q = game.questions[_questionIndex];
+    _submittedAnswers[q.id] = '';
     setState(() {
       _answered = true;
       _feedbackTip = q.explanation.isNotEmpty
@@ -96,6 +100,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     final game = context.read<GamesProvider>().fillBlank!;
     final q = game.questions[_questionIndex];
     final correct = q.options[index] == q.correctAnswer;
+    _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
     setState(() {
       _selectedIndex = index;
@@ -112,6 +117,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   }
 
   void _nextQuestion() {
+    if (!mounted || _isFinishing) return;
     final game = context.read<GamesProvider>().fillBlank;
     if (game == null) return;
     if (_questionIndex + 1 >= game.questions.length) {
@@ -123,6 +129,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   }
 
   void _finishGame() async {
+    if (_isFinishing) return;
+    _isFinishing = true;
     _timer?.cancel();
     final provider = context.read<GamesProvider>();
     final game = provider.fillBlank!;
@@ -138,7 +146,13 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       score: _correctCount,
       totalQuestions: game.questions.length,
       correctAnswers: _correctCount,
-      baseXp: game.totalXp,
+      answers: [
+        for (final question in game.questions)
+          {
+            'id': question.id,
+            'answer': _submittedAnswers[question.id] ?? '',
+          },
+      ],
     );
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -151,7 +165,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
             score: _correctCount,
             totalQuestions: game.questions.length,
             correctAnswers: _correctCount,
-            xpEarned: xpResult?.xpAwarded ?? game.totalXp,
+            xpEarned: xpResult?.xpAwarded ?? 0,
             durationSeconds: 0,
             xpResult: xpResult,
           ),
@@ -165,12 +179,35 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   Widget build(BuildContext context) {
     return Consumer<GamesProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoading || !_gameLoaded) {
+        if (provider.isLoading) {
           return const Scaffold(
             body: Center(child: LottieLoadingWidget.medium()),
           );
         }
-        final game = provider.fillBlank!;
+        final game = provider.fillBlank;
+        if (provider.error != null) {
+          return GameLoadState(
+            message: 'games.loadFailed'.tr(),
+            onRetry: () async {
+              await provider.loadFillBlank();
+              if (mounted) _startQuestion();
+            },
+          );
+        }
+        if (game == null || game.questions.isEmpty) {
+          return GameLoadState(
+            message: 'games.emptyGame'.tr(),
+            onRetry: () async {
+              await provider.loadFillBlank();
+              if (mounted) _startQuestion();
+            },
+          );
+        }
+        if (!_gameLoaded) {
+          return const Scaffold(
+            body: Center(child: LottieLoadingWidget.medium()),
+          );
+        }
         final q = game.questions[_questionIndex];
 
         return Scaffold(

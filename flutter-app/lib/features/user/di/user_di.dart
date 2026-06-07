@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/progress_firestore_data_source.dart';
 import 'package:lexilingo_app/core/services/progress_sync_service.dart';
+import 'package:lexilingo_app/core/services/theme_preference_store.dart';
 import 'package:lexilingo_app/features/user/data/datasources/daily_goal_local_data_source.dart';
 import 'package:lexilingo_app/features/user/data/datasources/daily_goal_local_data_source_web.dart';
 import 'package:lexilingo_app/features/user/data/datasources/settings_local_data_source.dart';
@@ -149,6 +150,7 @@ void registerUserModule({required bool skipDatabase}) {
     () => SettingsProvider(
       repository: sl<SettingsRepository>(),
       notificationService: sl(),
+      themePreferenceStore: sl<ThemePreferenceStore>(),
     ),
   );
 

@@ -1,0 +1,102 @@
+import uuid
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
+from app.services.xp_service import award_xp_transaction
+
+
+def _result(*, scalar_one_or_none=None):
+    result = MagicMock()
+    result.scalar_one_or_none.return_value = scalar_one_or_none
+    return result
+
+
+@pytest.mark.asyncio
+async def test_award_locks_user_and_updates_weekly_leaderboard():
+    user_id = uuid.uuid4()
+    user = SimpleNamespace(
+        id=user_id,
+        total_xp=90,
+        numeric_level=1,
+        level="A1",
+        rank="bronze",
+        rank_score=0,
+        rank_level_score=0,
+        rank_proficiency_score=0,
+    )
+    daily = SimpleNamespace(xp_earned=5)
+    leaderboard = SimpleNamespace(xp_earned=20, league="bronze")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _result(scalar_one_or_none=user),
+            MagicMock(),
+            _result(scalar_one_or_none=daily),
+            _result(scalar_one_or_none=leaderboard),
+        ]
+    )
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+
+    result = await award_xp_transaction(
+        db=db,
+        user=user,
+        source="lesson",
+        base_xp=10,
+        daily_xp_loader=AsyncMock(return_value=5),
+        streak_loader=AsyncMock(return_value=0),
+    )
+
+    assert result.xp_awarded == 10
+    assert user.total_xp == 100
+    assert daily.xp_earned == 15
+    assert leaderboard.xp_earned == 30
+    assert leaderboard.league == user.rank
+    assert db.execute.await_count == 4
+    db.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_award_creates_current_week_leaderboard_entry():
+    user_id = uuid.uuid4()
+    user = SimpleNamespace(
+        id=user_id,
+        total_xp=0,
+        numeric_level=1,
+        level="A1",
+        rank="bronze",
+        rank_score=0,
+        rank_level_score=0,
+        rank_proficiency_score=0,
+    )
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _result(scalar_one_or_none=user),
+            MagicMock(),
+            _result(scalar_one_or_none=None),
+            _result(scalar_one_or_none=None),
+        ]
+    )
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+
+    await award_xp_transaction(
+        db=db,
+        user=user,
+        source="lesson",
+        base_xp=10,
+        daily_xp_loader=AsyncMock(return_value=0),
+        streak_loader=AsyncMock(return_value=0),
+    )
+
+    leaderboard_entries = [
+        call.args[0]
+        for call in db.add.call_args_list
+        if call.args[0].__class__.__name__ == "LeaderboardEntry"
+    ]
+    assert len(leaderboard_entries) == 1
+    assert leaderboard_entries[0].xp_earned == 10
+    assert leaderboard_entries[0].league == user.rank

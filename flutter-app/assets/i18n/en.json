@@ -846,6 +846,8 @@
     "matchesLabel": "Matches"
   },
   "gameResult": {
+    "xpNotAwarded": "XP was not awarded. Your game result is preserved.",
+    "retryXp": "Retry XP award",
     "accuracyLabel": "Accuracy",
     "correctLabel": "Correct",
     "scoreLabel": "Score",
@@ -1015,6 +1017,9 @@
     "generateTranscript": "Generate Transcript"
   },
   "games": {
+    "loadFailed": "Unable to load this game. Please try again.",
+    "emptyGame": "This game has no playable content right now.",
+    "retryLoad": "Try again",
     "levelUpTitle": "Level Up!",
     "youReachedLevel": "You reached Level {level}!",
     "keepItUp": "Keep it up!",

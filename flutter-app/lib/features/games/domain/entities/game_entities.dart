@@ -248,6 +248,7 @@ class ScrambleWord {
 
 /// Full word-scramble session returned by the backend.
 class WordScrambleGame {
+  final String sessionId;
   final String cefrLevel;
   final int timerSeconds;
   final int baseXpPerWord;
@@ -255,6 +256,7 @@ class WordScrambleGame {
   final List<ScrambleWord> words;
 
   const WordScrambleGame({
+    this.sessionId = '',
     required this.cefrLevel,
     required this.timerSeconds,
     required this.baseXpPerWord,
@@ -264,6 +266,7 @@ class WordScrambleGame {
 
   factory WordScrambleGame.fromJson(Map<String, dynamic> json) {
     return WordScrambleGame(
+      sessionId: json['session_id'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'A2',
       timerSeconds: json['timer_seconds'] as int? ?? 60,
       baseXpPerWord: json['base_xp_per_word'] as int? ?? 10,
@@ -277,6 +280,7 @@ class WordScrambleGame {
   }
 
   Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
     'cefr_level': cefrLevel,
     'timer_seconds': timerSeconds,
     'base_xp_per_word': baseXpPerWord,
@@ -285,6 +289,7 @@ class WordScrambleGame {
   };
 
   WordScrambleGame copyWith({
+    String? sessionId,
     String? cefrLevel,
     int? timerSeconds,
     int? baseXpPerWord,
@@ -292,6 +297,7 @@ class WordScrambleGame {
     List<ScrambleWord>? words,
   }) {
     return WordScrambleGame(
+      sessionId: sessionId ?? this.sessionId,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       timerSeconds: timerSeconds ?? this.timerSeconds,
       baseXpPerWord: baseXpPerWord ?? this.baseXpPerWord,
@@ -365,8 +371,8 @@ class MatchingPair {
 /// [wordsColumn] contains the word cards; [definitionsColumn] contains
 /// the shuffled match cards the player pairs with words.
 class MatchingGameData {
-  final List<MatchingPair> wordsColumn;
-  final List<MatchingPair> definitionsColumn;
+  final List<String> wordsColumn;
+  final List<String> definitionsColumn;
 
   const MatchingGameData({
     required this.wordsColumn,
@@ -376,22 +382,22 @@ class MatchingGameData {
   factory MatchingGameData.fromJson(Map<String, dynamic> json) {
     return MatchingGameData(
       wordsColumn: (json['words_column'] as List<dynamic>? ?? [])
-          .map((p) => MatchingPair.fromJson(p as Map<String, dynamic>))
+          .map((word) => word as String)
           .toList(),
       definitionsColumn: (json['definitions_column'] as List<dynamic>? ?? [])
-          .map((p) => MatchingPair.fromJson(p as Map<String, dynamic>))
+          .map((definition) => definition as String)
           .toList(),
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'words_column': wordsColumn.map((p) => p.toJson()).toList(),
-    'definitions_column': definitionsColumn.map((p) => p.toJson()).toList(),
+    'words_column': wordsColumn,
+    'definitions_column': definitionsColumn,
   };
 
   MatchingGameData copyWith({
-    List<MatchingPair>? wordsColumn,
-    List<MatchingPair>? definitionsColumn,
+    List<String>? wordsColumn,
+    List<String>? definitionsColumn,
   }) {
     return MatchingGameData(
       wordsColumn: wordsColumn ?? this.wordsColumn,
@@ -402,30 +408,36 @@ class MatchingGameData {
 
 /// Full matching-game session returned by the backend (includes config).
 class MatchingGame {
+  final String sessionId;
   final String cefrLevel;
-  final String variation;
+  final String variant;
   final int timerSeconds;
   final double timeBonusThreshold;
   final int baseXp;
   final List<MatchingPair> pairs;
   final List<String> wordsColumn;
-  final List<String> matchesColumn; // Shuffled
+  final List<String> definitionsColumn;
 
   const MatchingGame({
+    this.sessionId = '',
     required this.cefrLevel,
-    required this.variation,
+    required this.variant,
     required this.timerSeconds,
     required this.timeBonusThreshold,
     required this.baseXp,
     required this.pairs,
     required this.wordsColumn,
-    required this.matchesColumn,
+    required this.definitionsColumn,
   });
 
   factory MatchingGame.fromJson(Map<String, dynamic> json) {
     return MatchingGame(
+      sessionId: json['session_id'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
-      variation: json['variation'] as String? ?? 'definition',
+      variant:
+          json['variant'] as String? ??
+          json['variation'] as String? ??
+          'definition',
       timerSeconds: json['timer_seconds'] as int? ?? 45,
       timeBonusThreshold:
           (json['time_bonus_threshold'] as num?)?.toDouble() ?? 0.5,
@@ -440,8 +452,9 @@ class MatchingGame {
               ?.map((e) => e as String)
               .toList() ??
           [],
-      matchesColumn:
-          (json['matches_column'] as List<dynamic>?)
+      definitionsColumn:
+          (json['definitions_column'] as List<dynamic>? ??
+                  json['matches_column'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
           [],
@@ -449,35 +462,38 @@ class MatchingGame {
   }
 
   Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
     'cefr_level': cefrLevel,
-    'variation': variation,
+    'variant': variant,
     'timer_seconds': timerSeconds,
     'time_bonus_threshold': timeBonusThreshold,
     'base_xp': baseXp,
     'pairs': pairs.map((p) => p.toJson()).toList(),
     'words_column': wordsColumn,
-    'matches_column': matchesColumn,
+    'definitions_column': definitionsColumn,
   };
 
   MatchingGame copyWith({
+    String? sessionId,
     String? cefrLevel,
-    String? variation,
+    String? variant,
     int? timerSeconds,
     double? timeBonusThreshold,
     int? baseXp,
     List<MatchingPair>? pairs,
     List<String>? wordsColumn,
-    List<String>? matchesColumn,
+    List<String>? definitionsColumn,
   }) {
     return MatchingGame(
+      sessionId: sessionId ?? this.sessionId,
       cefrLevel: cefrLevel ?? this.cefrLevel,
-      variation: variation ?? this.variation,
+      variant: variant ?? this.variant,
       timerSeconds: timerSeconds ?? this.timerSeconds,
       timeBonusThreshold: timeBonusThreshold ?? this.timeBonusThreshold,
       baseXp: baseXp ?? this.baseXp,
       pairs: pairs ?? this.pairs,
       wordsColumn: wordsColumn ?? this.wordsColumn,
-      matchesColumn: matchesColumn ?? this.matchesColumn,
+      definitionsColumn: definitionsColumn ?? this.definitionsColumn,
     );
   }
 }
@@ -574,11 +590,13 @@ class SpellingBeeWord {
 
 /// Full spelling-bee session returned by the backend.
 class SpellingBeeGame {
+  final String sessionId;
   final String cefrLevel;
   final int timerSeconds;
   final List<SpellingBeeWord> words;
 
   const SpellingBeeGame({
+    this.sessionId = '',
     required this.cefrLevel,
     required this.timerSeconds,
     required this.words,
@@ -586,6 +604,7 @@ class SpellingBeeGame {
 
   factory SpellingBeeGame.fromJson(Map<String, dynamic> json) {
     return SpellingBeeGame(
+      sessionId: json['session_id'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
       timerSeconds: json['timer_seconds'] as int? ?? 90,
       words:
@@ -597,17 +616,20 @@ class SpellingBeeGame {
   }
 
   Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
     'cefr_level': cefrLevel,
     'timer_seconds': timerSeconds,
     'words': words.map((w) => w.toJson()).toList(),
   };
 
   SpellingBeeGame copyWith({
+    String? sessionId,
     String? cefrLevel,
     int? timerSeconds,
     List<SpellingBeeWord>? words,
   }) {
     return SpellingBeeGame(
+      sessionId: sessionId ?? this.sessionId,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       timerSeconds: timerSeconds ?? this.timerSeconds,
       words: words ?? this.words,
@@ -735,6 +757,7 @@ class HangmanHints {
 
 /// Full hangman game session with tiered hints and config.
 class HangmanGame {
+  final String sessionId;
   final String wordId;
   final String word;
   final int letterCount;
@@ -746,6 +769,7 @@ class HangmanGame {
   final List<String> availableCategories;
 
   const HangmanGame({
+    this.sessionId = '',
     required this.wordId,
     required this.word,
     required this.letterCount,
@@ -759,6 +783,7 @@ class HangmanGame {
 
   factory HangmanGame.fromJson(Map<String, dynamic> json) {
     return HangmanGame(
+      sessionId: json['session_id'] as String? ?? '',
       wordId: json['word_id'] as String? ?? '',
       word: json['word'] as String? ?? '',
       letterCount: json['letter_count'] as int? ?? 0,
@@ -778,6 +803,7 @@ class HangmanGame {
   }
 
   Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
     'word_id': wordId,
     'word': word,
     'letter_count': letterCount,
@@ -790,6 +816,7 @@ class HangmanGame {
   };
 
   HangmanGame copyWith({
+    String? sessionId,
     String? wordId,
     String? word,
     int? letterCount,
@@ -801,6 +828,7 @@ class HangmanGame {
     List<String>? availableCategories,
   }) {
     return HangmanGame(
+      sessionId: sessionId ?? this.sessionId,
       wordId: wordId ?? this.wordId,
       word: word ?? this.word,
       letterCount: letterCount ?? this.letterCount,
@@ -902,12 +930,14 @@ class FillBlankQuestion {
 
 /// Full fill-in-the-blank game session returned by the backend.
 class FillBlankGame {
+  final String sessionId;
   final String cefrLevel;
   final int timerSecondsPerQuestion;
   final int totalXp;
   final List<FillBlankQuestion> questions;
 
   const FillBlankGame({
+    this.sessionId = '',
     required this.cefrLevel,
     required this.timerSecondsPerQuestion,
     required this.totalXp,
@@ -916,6 +946,7 @@ class FillBlankGame {
 
   factory FillBlankGame.fromJson(Map<String, dynamic> json) {
     return FillBlankGame(
+      sessionId: json['session_id'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
       timerSecondsPerQuestion: json['timer_seconds_per_question'] as int? ?? 15,
       totalXp: json['total_xp'] as int? ?? 25,
@@ -930,6 +961,7 @@ class FillBlankGame {
   }
 
   Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
     'cefr_level': cefrLevel,
     'timer_seconds_per_question': timerSecondsPerQuestion,
     'total_xp': totalXp,
@@ -937,12 +969,14 @@ class FillBlankGame {
   };
 
   FillBlankGame copyWith({
+    String? sessionId,
     String? cefrLevel,
     int? timerSecondsPerQuestion,
     int? totalXp,
     List<FillBlankQuestion>? questions,
   }) {
     return FillBlankGame(
+      sessionId: sessionId ?? this.sessionId,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       timerSecondsPerQuestion:
           timerSecondsPerQuestion ?? this.timerSecondsPerQuestion,
@@ -1097,13 +1131,15 @@ class GrammarQuestion {
 
 /// Full grammar-quiz session returned by the backend.
 class GrammarQuizGame {
+  final String sessionId;
   final String cefrLevel;
   final String topic;
   final int timerSecondsPerQuestion;
   final int totalXp;
-  final List<GrammarQuestion> questions;
+  final List<GrammarQuizQuestion> questions;
 
   const GrammarQuizGame({
+    this.sessionId = '',
     required this.cefrLevel,
     required this.topic,
     required this.timerSecondsPerQuestion,
@@ -1113,19 +1149,23 @@ class GrammarQuizGame {
 
   factory GrammarQuizGame.fromJson(Map<String, dynamic> json) {
     return GrammarQuizGame(
+      sessionId: json['session_id'] as String? ?? '',
       cefrLevel: json['cefr_level'] as String? ?? 'B1',
       topic: json['topic'] as String? ?? 'mixed',
       timerSecondsPerQuestion: json['timer_seconds_per_question'] as int? ?? 12,
       totalXp: json['total_xp'] as int? ?? 25,
       questions:
           (json['questions'] as List<dynamic>?)
-              ?.map((q) => GrammarQuestion.fromJson(q as Map<String, dynamic>))
+              ?.map(
+                (q) => GrammarQuizQuestion.fromJson(q as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );
   }
 
   Map<String, dynamic> toJson() => {
+    'session_id': sessionId,
     'cefr_level': cefrLevel,
     'topic': topic,
     'timer_seconds_per_question': timerSecondsPerQuestion,
@@ -1134,13 +1174,15 @@ class GrammarQuizGame {
   };
 
   GrammarQuizGame copyWith({
+    String? sessionId,
     String? cefrLevel,
     String? topic,
     int? timerSecondsPerQuestion,
     int? totalXp,
-    List<GrammarQuestion>? questions,
+    List<GrammarQuizQuestion>? questions,
   }) {
     return GrammarQuizGame(
+      sessionId: sessionId ?? this.sessionId,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       topic: topic ?? this.topic,
       timerSecondsPerQuestion:
@@ -1422,6 +1464,7 @@ class XPAwardResult {
   final int newLevel;
   final double levelProgressPercent;
   final int xpForNextLevel;
+  final int currentXpInLevel;
   final int streakDays;
   final String message;
 
@@ -1437,6 +1480,7 @@ class XPAwardResult {
     required this.newLevel,
     this.levelProgressPercent = 0.0,
     this.xpForNextLevel = 100,
+    this.currentXpInLevel = 0,
     this.streakDays = 0,
     this.message = '',
   });
@@ -1455,6 +1499,7 @@ class XPAwardResult {
       levelProgressPercent:
           (json['level_progress_percent'] as num?)?.toDouble() ?? 0.0,
       xpForNextLevel: json['xp_for_next_level'] as int? ?? 100,
+      currentXpInLevel: json['current_xp_in_level'] as int? ?? 0,
       streakDays: json['streak_days'] as int? ?? 0,
       message: json['message'] as String? ?? '',
     );
@@ -1472,6 +1517,7 @@ class XPAwardResult {
     'new_level': newLevel,
     'level_progress_percent': levelProgressPercent,
     'xp_for_next_level': xpForNextLevel,
+    'current_xp_in_level': currentXpInLevel,
     'streak_days': streakDays,
     'message': message,
   };
@@ -1488,6 +1534,7 @@ class XPAwardResult {
     int? newLevel,
     double? levelProgressPercent,
     int? xpForNextLevel,
+    int? currentXpInLevel,
     int? streakDays,
     String? message,
   }) {
@@ -1503,6 +1550,7 @@ class XPAwardResult {
       newLevel: newLevel ?? this.newLevel,
       levelProgressPercent: levelProgressPercent ?? this.levelProgressPercent,
       xpForNextLevel: xpForNextLevel ?? this.xpForNextLevel,
+      currentXpInLevel: currentXpInLevel ?? this.currentXpInLevel,
       streakDays: streakDays ?? this.streakDays,
       message: message ?? this.message,
     );

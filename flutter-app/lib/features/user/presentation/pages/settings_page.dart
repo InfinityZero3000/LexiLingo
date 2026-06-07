@@ -243,7 +243,9 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          children: SettingsProvider.availableLanguages.asMap().entries.map((entry) {
+          children: SettingsProvider.availableLanguages.asMap().entries.map((
+            entry,
+          ) {
             final lang = entry.value;
             final isSelected = currentLocaleCode == lang['code'];
             return AnimatedListItem(
@@ -586,12 +588,13 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: themes.map((theme) {
             final isSelected = settings.theme == theme['code'];
+            final themeCode = theme['code'] as String;
 
             return InkWell(
-              onTap: () {
+              key: Key('settings-theme-$themeCode'),
+              onTap: () async {
                 if (isSelected) return;
-                final themeCode = theme['code'] as String;
-                settings.updateTheme(themeCode);
+                await settings.updateTheme(themeCode);
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(

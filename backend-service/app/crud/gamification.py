@@ -15,6 +15,7 @@ from app.models.gamification import (
     LeaderboardEntry, UserFollowing, ActivityFeed, ShopItem, UserInventory
 )
 from app.models.user import User
+from app.crud.leaderboard import competition_rank
 
 
 # ============================================================================
@@ -395,7 +396,7 @@ class LeaderboardCRUD:
         league: str,
         limit: int = 30,
     ) -> Tuple[List[User], int]:
-        """Fallback leaderboard from users table when weekly entries are empty."""
+        """Return league users for a zero-XP weekly leaderboard."""
         league_filter = league.lower().strip()
 
         base_query = select(User).where(User.is_active == True)
@@ -407,7 +408,7 @@ class LeaderboardCRUD:
 
         result = await db.execute(
             base_query
-            .order_by(desc(User.total_xp), desc(User.updated_at))
+            .order_by(desc(User.updated_at), User.id)
             .limit(limit)
         )
         return list(result.scalars().all()), total
@@ -451,6 +452,18 @@ class LeaderboardCRUD:
         )
         rank = result.scalar() + 1
         return rank
+
+    @staticmethod
+    def rank_scores(scores: List[int]) -> List[int]:
+        """Expose the canonical competition ranking policy."""
+        from app.crud.leaderboard import competition_ranks
+
+        return competition_ranks(scores)
+
+    @staticmethod
+    def rank_for_score(score: int, scores: List[int]) -> int:
+        """Return the canonical rank for a score among league scores."""
+        return competition_rank(score, scores)
 
 
 # ============================================================================

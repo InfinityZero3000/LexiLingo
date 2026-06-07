@@ -94,8 +94,10 @@ Provider, DiceBear SVG, pytest, flutter_test
 
 ### Task 6: Run focused and static checks
 
-- [x] Run backend catalog, effect, and gamification route tests.
+- [ ] Run gamification route tests when the local `lexilingo_test` PostgreSQL
+  database is available. Catalog and effect tests pass.
 - [x] Run Flutter shop/avatar tests.
 - [x] Run Python compilation or lint checks on modified backend files.
 - [x] Run `flutter analyze` on modified Flutter files.
+- [x] Merge concurrent Alembic branches and verify a single migration head.
 - [x] Review the final diff for unrelated worktree changes.

@@ -6,9 +6,13 @@ import io
 import logging
 import os
 import wave
+from pathlib import Path
 from typing import Optional
 
 from api.core.config import settings
+
+# Absolute path to the ai-service root (2 levels up from api/services/)
+_SERVICE_ROOT = Path(__file__).resolve().parent.parent.parent
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +36,14 @@ class TTSService:
         config_path = settings.TTS_CONFIG_PATH
 
         # Support both absolute model paths and voice IDs like "en_US-lessac-medium".
+        # Use _SERVICE_ROOT (absolute) so paths resolve correctly regardless of CWD.
         model_candidates = [
             model_path,
             f"{model_path}.onnx",
+            str(_SERVICE_ROOT / "models" / "piper" / model_path),
+            str(_SERVICE_ROOT / "models" / "piper" / f"{model_path}.onnx"),
             os.path.join("models", "piper", model_path),
             os.path.join("models", "piper", f"{model_path}.onnx"),
-            os.path.join(os.path.dirname(__file__), "..", "..", "models", "piper", model_path),
-            os.path.join(os.path.dirname(__file__), "..", "..", "models", "piper", f"{model_path}.onnx"),
         ]
 
         resolved_model_path = next(
@@ -52,7 +57,8 @@ class TTSService:
         else:
             json_candidates = [
                 f"{resolved_model_path}.json",
-                resolved_model_path.replace('.onnx', '.onnx.json'),
+                resolved_model_path.replace(".onnx", ".onnx.json"),
+                str(_SERVICE_ROOT / "models" / "piper" / f"{Path(model_path).stem}.onnx.json"),
             ]
             resolved_config_path = next(
                 (candidate for candidate in json_candidates if os.path.exists(candidate)),

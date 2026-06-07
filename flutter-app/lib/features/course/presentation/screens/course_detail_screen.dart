@@ -184,7 +184,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                   ),
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey[700],
+                                    color: AppColorRoles.textSecondary(
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark,
+                                    ),
                                   ),
                                 ),
                               ],

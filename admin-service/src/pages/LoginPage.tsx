@@ -97,6 +97,14 @@ export const LoginPage = () => {
       {/* 3D Globe background */}
       <GlobeBackground />
 
+      {/* Animated gradient orbs */}
+      <div className="login-orb login-orb-1" />
+      <div className="login-orb login-orb-2" />
+      <div className="login-orb login-orb-3" />
+
+      {/* Dot mesh grid overlay */}
+      <div className="login-mesh" />
+
       {/* Top-right info bar */}
       <div className="login-topbar">
         <a

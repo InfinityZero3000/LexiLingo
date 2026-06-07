@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart'
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/hangman_figure.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 
 /// Classic Hangman game screen.
 ///
@@ -34,9 +35,7 @@ class _HangmanScreenState extends State<HangmanScreen>
   bool _hint2Used = false;
   bool _hint3Used = false;
   String? _revealedHint;
-  int _xpEarned = 0;
-
-  static const int maxWrong = 6;
+  bool _isFinishing = false;
 
   @override
   void initState() {
@@ -51,7 +50,6 @@ class _HangmanScreenState extends State<HangmanScreen>
           if (game != null) {
             setState(() {
               _gameLoaded = true;
-              _xpEarned = game.baseXp;
             });
           }
         }
@@ -83,7 +81,7 @@ class _HangmanScreenState extends State<HangmanScreen>
         _wrongGuesses++;
       }
     });
-    if (_wrongGuesses >= maxWrong) {
+    if (_wrongGuesses >= game.maxLives) {
       setState(() {
         _gameOver = true;
         _gameWon = false;
@@ -111,7 +109,6 @@ class _HangmanScreenState extends State<HangmanScreen>
     if (_hint2Used) return;
     setState(() {
       _hint2Used = true;
-      _xpEarned -= game.hints.hint2XpCost;
       _revealedHint = game.hints.hint2Definition;
     });
   }
@@ -127,7 +124,6 @@ class _HangmanScreenState extends State<HangmanScreen>
     unguessed.shuffle();
     setState(() {
       _hint3Used = true;
-      _xpEarned -= game.hints.hint3XpCost;
       _guessedLetters.add(unguessed.first);
     });
     if (_isWordGuessed(game)) {
@@ -141,6 +137,8 @@ class _HangmanScreenState extends State<HangmanScreen>
   }
 
   Future<void> _finishGame(HangmanGame game) async {
+    if (_isFinishing) return;
+    _isFinishing = true;
     await Future.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
     final provider = context.read<GamesProvider>();
@@ -150,7 +148,13 @@ class _HangmanScreenState extends State<HangmanScreen>
       score: correctAnswers,
       totalQuestions: 1,
       correctAnswers: correctAnswers,
-      baseXp: _xpEarned.clamp(0, game.baseXp),
+      answers: [
+        {
+          'id': game.wordId,
+          'answer': _gameWon ? game.word : '',
+        },
+      ],
+      hintsUsed: (_hint2Used ? 1 : 0) + (_hint3Used ? 1 : 0),
     );
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -163,7 +167,7 @@ class _HangmanScreenState extends State<HangmanScreen>
             score: correctAnswers,
             totalQuestions: 1,
             correctAnswers: correctAnswers,
-            xpEarned: xpResult?.xpAwarded ?? _xpEarned.clamp(0, game.baseXp),
+            xpEarned: xpResult?.xpAwarded ?? 0,
             durationSeconds: 0,
             xpResult: xpResult,
           ),
@@ -180,12 +184,47 @@ class _HangmanScreenState extends State<HangmanScreen>
       children: [
         Consumer<GamesProvider>(
           builder: (context, provider, _) {
-            if (provider.isLoading || !_gameLoaded) {
+            if (provider.isLoading) {
               return const Scaffold(
                 body: Center(child: LottieLoadingWidget.medium()),
               );
             }
-            final game = provider.hangman!;
+            final game = provider.hangman;
+            if (provider.error != null) {
+              return GameLoadState(
+                message: 'games.loadFailed'.tr(),
+                onRetry: () async {
+                  await provider.loadHangman();
+                  if (!mounted) return;
+                  final loaded = provider.hangman;
+                  if (loaded != null) {
+                    setState(() {
+                      _gameLoaded = true;
+                    });
+                  }
+                },
+              );
+            }
+            if (game == null || game.word.isEmpty) {
+              return GameLoadState(
+                message: 'games.emptyGame'.tr(),
+                onRetry: () async {
+                  await provider.loadHangman();
+                  if (!mounted) return;
+                  final loaded = provider.hangman;
+                  if (loaded != null) {
+                    setState(() {
+                      _gameLoaded = true;
+                    });
+                  }
+                },
+              );
+            }
+            if (!_gameLoaded) {
+              return const Scaffold(
+                body: Center(child: LottieLoadingWidget.medium()),
+              );
+            }
             final word = _wordLetters(game);
 
             return Scaffold(
@@ -203,10 +242,10 @@ class _HangmanScreenState extends State<HangmanScreen>
                     padding: const EdgeInsets.only(right: 12),
                     child: Row(
                       children: List.generate(
-                        maxWrong,
+                        game.maxLives,
                         (i) => Icon(
                           Icons.favorite,
-                          color: i < maxWrong - _wrongGuesses
+                          color: i < game.maxLives - _wrongGuesses
                               ? AppColors.errorBright
                               : AppColors.grey300,
                           size: 18,
@@ -244,7 +283,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                         const Spacer(),
                         Text(
                           'hangman.livesLeftLabel'.tr(
-                            namedArgs: {'lives': '${maxWrong - _wrongGuesses}'},
+                            namedArgs: {
+                              'lives': '${game.maxLives - _wrongGuesses}',
+                            },
                           ),
                           style: TextStyle(
                             color: Theme.of(

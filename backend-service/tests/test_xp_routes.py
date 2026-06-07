@@ -163,8 +163,8 @@ class TestAwardXP:
         """Basic XP award with mocked DB operations."""
         with patch("app.routes.xp._get_daily_xp", new_callable=AsyncMock) as mock_daily, \
              patch("app.routes.xp._get_streak_days", new_callable=AsyncMock) as mock_streak, \
-             patch("app.routes.xp.get_numeric_level_progress") as mock_level_info, \
-             patch("app.routes.xp.check_numeric_level_up") as mock_level_up:
+             patch("app.services.xp_service.get_numeric_level_progress") as mock_level_info, \
+             patch("app.services.xp_service.check_numeric_level_up") as mock_level_up:
 
             mock_daily.return_value = 0
             mock_streak.return_value = 0
@@ -179,7 +179,7 @@ class TestAwardXP:
             response = await auth_client.post(
                 f"{BASE}/award",
                 json={
-                    "source": "game",
+                    "source": "lesson",
                     "base_xp": 20,
                     "source_detail": "word_scramble",
                     "duration_seconds": 30,
@@ -198,8 +198,8 @@ class TestAwardXP:
         assert "message" in data
 
     @pytest.mark.asyncio
-    async def test_rejects_game_duration_too_short(self, auth_client: AsyncClient):
-        """Anti-cheat: game source with < MIN_GAME_DURATION seconds → 400."""
+    async def test_rejects_direct_game_award(self, auth_client: AsyncClient):
+        """Game rewards must be issued by the persisted session endpoint."""
         response = await auth_client.post(
             f"{BASE}/award",
             json={
@@ -209,8 +209,7 @@ class TestAwardXP:
             },
         )
         assert response.status_code == 400
-        assert "short" in response.json()["error"]["message"].lower() or \
-               "cheat" in response.json()["error"]["message"].lower()
+        assert "session" in response.json()["error"]["message"].lower()
 
     @pytest.mark.asyncio
     async def test_requires_base_xp_minimum_1(self, auth_client: AsyncClient):
@@ -235,8 +234,8 @@ class TestAwardXP:
         """Non-game sources skip duration anti-cheat check."""
         with patch("app.routes.xp._get_daily_xp", new_callable=AsyncMock) as mock_daily, \
              patch("app.routes.xp._get_streak_days", new_callable=AsyncMock) as mock_streak, \
-             patch("app.routes.xp.get_numeric_level_progress") as mock_level_info, \
-             patch("app.routes.xp.check_numeric_level_up") as mock_level_up:
+             patch("app.services.xp_service.get_numeric_level_progress") as mock_level_info, \
+             patch("app.services.xp_service.check_numeric_level_up") as mock_level_up:
 
             mock_daily.return_value = 0
             mock_streak.return_value = 0
@@ -264,8 +263,8 @@ class TestAwardXP:
         """7-day streak should produce 1.5x multiplier."""
         with patch("app.routes.xp._get_daily_xp", new_callable=AsyncMock) as mock_daily, \
              patch("app.routes.xp._get_streak_days", new_callable=AsyncMock) as mock_streak, \
-             patch("app.routes.xp.get_numeric_level_progress") as mock_level_info, \
-             patch("app.routes.xp.check_numeric_level_up") as mock_level_up:
+             patch("app.services.xp_service.get_numeric_level_progress") as mock_level_info, \
+             patch("app.services.xp_service.check_numeric_level_up") as mock_level_up:
 
             mock_daily.return_value = 0
             mock_streak.return_value = 7  # 7-day streak → 1.5x
@@ -279,7 +278,7 @@ class TestAwardXP:
 
             response = await auth_client.post(
                 f"{BASE}/award",
-                json={"source": "game", "base_xp": 20, "duration_seconds": 30},
+                json={"source": "lesson", "base_xp": 20, "duration_seconds": 30},
             )
 
         assert response.status_code == 200
@@ -298,7 +297,7 @@ class TestAwardXP:
 
             response = await auth_client.post(
                 f"{BASE}/award",
-                json={"source": "game", "base_xp": 20, "duration_seconds": 30},
+                json={"source": "lesson", "base_xp": 20, "duration_seconds": 30},
             )
 
         assert response.status_code == 200
@@ -312,8 +311,8 @@ class TestAwardXP:
         """When XP causes level up, leveled_up=True in response."""
         with patch("app.routes.xp._get_daily_xp", new_callable=AsyncMock) as mock_daily, \
              patch("app.routes.xp._get_streak_days", new_callable=AsyncMock) as mock_streak, \
-             patch("app.routes.xp.get_numeric_level_progress") as mock_level_info, \
-             patch("app.routes.xp.check_numeric_level_up") as mock_level_up:
+             patch("app.services.xp_service.get_numeric_level_progress") as mock_level_info, \
+             patch("app.services.xp_service.check_numeric_level_up") as mock_level_up:
 
             mock_daily.return_value = 0
             mock_streak.return_value = 0

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +14,7 @@ import 'package:lexilingo_app/features/user/presentation/providers/user_provider
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_thumbnail_resolver.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
@@ -1200,6 +1202,8 @@ class _HomePageNewState extends State<HomePageNew> {
             builder: (_) => CourseDetailScreen(
               courseId: course.id,
               heroTag: 'featured-course-image-${course.id}',
+              initialThumbnailUrl: course.thumbnailUrl,
+              fallbackThumbnailUrl: courseFallbackThumbnailUrl(course),
             ),
           ),
         );
@@ -1223,28 +1227,23 @@ class _HomePageNewState extends State<HomePageNew> {
             // Hero animation for course thumbnail
             Hero(
               tag: 'featured-course-image-${course.id}',
-              child: Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                  color: levelColor.withValues(alpha: 0.1),
-                  image: course.thumbnailUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(course.thumbnailUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
                 ),
                 child: Stack(
                   children: [
+                    Positioned.fill(
+                      child: _buildFeaturedCourseThumbnail(
+                        context,
+                        course,
+                        levelColor,
+                      ),
+                    ),
                     // Gradient overlay
                     Container(
+                      height: 110,
                       decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(24),
-                        ),
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -1255,29 +1254,6 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                       ),
                     ),
-                    if (course.thumbnailUrl == null)
-                      Center(
-                        child: Container(
-                          padding: EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surface.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surface.withValues(alpha: 0.3),
-                              width: 2,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.school_rounded,
-                            size: 40,
-                            color: AppColors.surfaceLight,
-                          ),
-                        ),
-                      ),
                     // Level badge - top left
                     Positioned(
                       top: 12,
@@ -1456,6 +1432,53 @@ class _HomePageNewState extends State<HomePageNew> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedCourseThumbnail(
+    BuildContext context,
+    CourseEntity course,
+    Color levelColor, [
+    int index = 0,
+  ]) {
+    final candidates = buildCourseCardThumbnailCandidates(course);
+    if (index >= candidates.length) {
+      return _buildFeaturedCourseThumbnailPlaceholder(context, levelColor);
+    }
+
+    return CachedNetworkImage(
+      imageUrl: candidates[index],
+      fit: BoxFit.cover,
+      placeholder: (_, __) =>
+          Container(color: levelColor.withValues(alpha: 0.1)),
+      errorWidget: (_, __, ___) =>
+          _buildFeaturedCourseThumbnail(context, course, levelColor, index + 1),
+    );
+  }
+
+  Widget _buildFeaturedCourseThumbnailPlaceholder(
+    BuildContext context,
+    Color levelColor,
+  ) {
+    return Container(
+      color: levelColor.withValues(alpha: 0.1),
+      alignment: Alignment.center,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.3),
+            width: 2,
+          ),
+        ),
+        child: const Icon(
+          Icons.school_rounded,
+          size: 40,
+          color: AppColors.surfaceLight,
         ),
       ),
     );
