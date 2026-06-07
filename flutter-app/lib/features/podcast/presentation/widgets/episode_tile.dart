@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -140,13 +141,14 @@ class EpisodeTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-
-                // Download button
-                _DownloadButton(
-                  state: episode.downloadState,
-                  onDownload: onDownload,
-                ),
+                if (!kIsWeb) ...[
+                  const SizedBox(width: 8),
+                  // Download button
+                  _DownloadButton(
+                    state: episode.downloadState,
+                    onDownload: onDownload,
+                  ),
+                ],
               ],
             ),
 

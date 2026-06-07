@@ -25,6 +25,11 @@ Future<void> registerPodcastModule() async {
   // Keep initialization non-blocking so app can render first frame immediately.
   if (!kIsWeb) {
     unawaited(_registerPodcastAudioHandler());
+  } else {
+    // Web fallback: register handler directly bypassing native audio_service initialization.
+    if (!sl.isRegistered<PodcastAudioHandler>()) {
+      sl.registerSingleton<PodcastAudioHandler>(PodcastAudioHandler());
+    }
   }
 }
 

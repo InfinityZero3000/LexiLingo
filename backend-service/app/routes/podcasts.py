@@ -8,6 +8,9 @@ from hardcoded data (no API cost). All cacheable responses use APICacheService.
 Phase 4: Podcast Feature.
 """
 
+import calendar
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import hashlib
 import logging
 import re
@@ -229,8 +232,9 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                 # Browser-like UA avoids 403 from CDNs that block non-browser clients.
                 headers={
                     "User-Agent": (
-                        "Mozilla/5.0 (compatible; LexiLingo/1.0; "
-                        "+https://lexilingo.me) AppleWebKit/537.36"
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
                     ),
                     "Accept": "image/webp,image/avif,image/*,*/*;q=0.8",
                 },
@@ -616,10 +620,28 @@ async def _parse_with_feedparser(feed_url: str, limit: int) -> dict:
 
         # Published date
         published_at = ""
-        if entry.get("published"):
-            published_at = entry.published
-        elif entry.get("updated"):
-            published_at = entry.updated
+        if entry.get("published_parsed"):
+            try:
+                epoch = calendar.timegm(entry.published_parsed)
+                published_at = datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat()
+            except Exception:
+                pass
+        
+        if not published_at and entry.get("updated_parsed"):
+            try:
+                epoch = calendar.timegm(entry.updated_parsed)
+                published_at = datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat()
+            except Exception:
+                pass
+
+        if not published_at:
+            raw_date = entry.get("published") or entry.get("updated") or ""
+            if raw_date:
+                try:
+                    dt = parsedate_to_datetime(raw_date)
+                    published_at = dt.isoformat()
+                except Exception:
+                    published_at = raw_date
 
         # Episode number
         ep_number_raw = entry.get("itunes_episode", None)
@@ -710,12 +732,21 @@ async def _parse_with_elementtree(feed_url: str, limit: int) -> dict:
             or ""
         )
 
+        raw_date = _elem_text(item, "pubDate") or ""
+        published_at = ""
+        if raw_date:
+            try:
+                dt = parsedate_to_datetime(raw_date)
+                published_at = dt.isoformat()
+            except Exception:
+                published_at = raw_date
+
         episodes.append({
             "guid": _elem_text(item, "guid") or _elem_text(item, "link") or "",
             "title": _elem_text(item, "title") or "",
             "audio_url": audio_url,
             "duration_seconds": duration_seconds,
-            "published_at": _elem_text(item, "pubDate") or "",
+            "published_at": published_at,
             "description": _strip_html(raw_desc),
             "episode_number": episode_number,
             "image_url": image_url or None,
