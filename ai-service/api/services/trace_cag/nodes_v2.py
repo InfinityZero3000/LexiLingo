@@ -146,7 +146,7 @@ def _pack_kg_nodes_for_context(nodes: List[Dict[str, Any]], token_budget: int) -
 
 def _provider_rpm(provider: str) -> int:
     defaults = {
-        "groq": 28,
+        "groq": 32,  # 4 keys × 8 safe RPM/key (TPM-bound)
         "gemini": 10,
         "ollama": 120,
     }
@@ -4270,6 +4270,7 @@ def _postprocess_benchmark_qa_answer(
     *,
     support_floor: float = 0.4,
     grounding_margin: float = 0.18,
+    model_used: str = "",
 ) -> str:
     """Normalize LLM output into a concise benchmark answer span."""
     text = str(raw_answer or "").strip()
@@ -4281,29 +4282,41 @@ def _postprocess_benchmark_qa_answer(
     text = text.replace("```", "").strip()
     text = re.sub(r"^\s*(final\s+answer|answer)\s*:\s*", "", text, flags=re.IGNORECASE)
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    candidate = (lines[0] if lines else text).strip(" \t\n\r\"'`“”")
+    candidate = (lines[0] if lines else text).strip(" \t\n\r\"'`""")
 
     low = candidate.lower().strip().rstrip(".!")
     if low in {"yes", "no", "unknown"}:
         return low
 
+    # Strong LLM models (70b+) produce high-quality answers that should be trusted
+    # more than extractive span matching. Only override for clear hallucinations.
+    model_name = str(model_used or "").strip().lower()
+    is_strong_llm = any(tag in model_name for tag in ("70b", "7b", "gemini", "gpt", "claude")) and model_name not in ("extractive_fallback", "extractive_policy")
+
     extractive_answer = _generate_extractive_qa_response(question, context)
     llm_support = _answer_support_score(candidate, context)
     extractive_support = _answer_support_score(extractive_answer, context)
 
-    # Prefer extractive fallback only when LLM grounding is clearly weak.
-    # This avoids over-correcting short, high-quality LLM answers that often score better on EM/F1.
-    weak_llm_cutoff = max(0.38, support_floor - 0.02)
-    strong_extractive_cutoff = max(0.72, llm_support + grounding_margin)
+    # For strong LLMs, require a larger grounding gap before preferring extractive.
+    # For weaker/extractive fallbacks, use tighter grounding enforcement.
+    if is_strong_llm:
+        weak_llm_cutoff = max(0.20, support_floor - 0.18)
+        effective_grounding_margin = max(grounding_margin, 0.30)
+    else:
+        weak_llm_cutoff = max(0.38, support_floor - 0.02)
+        effective_grounding_margin = grounding_margin
+
+    strong_extractive_cutoff = max(0.72, llm_support + effective_grounding_margin)
     if extractive_answer and llm_support < weak_llm_cutoff and extractive_support >= strong_extractive_cutoff:
         return extractive_answer
 
-    candidate_tokens = _content_tokens(candidate)
-    context_tokens = set(_content_tokens(context))
-    if candidate_tokens:
-        support = sum(1 for tok in candidate_tokens if tok in context_tokens) / max(len(candidate_tokens), 1)
-        if support < support_floor and extractive_support >= (llm_support + 0.05):
-            return extractive_answer
+    if not is_strong_llm:
+        candidate_tokens = _content_tokens(candidate)
+        context_tokens = set(_content_tokens(context))
+        if candidate_tokens:
+            support = sum(1 for tok in candidate_tokens if tok in context_tokens) / max(len(candidate_tokens), 1)
+            if support < support_floor and extractive_support >= (llm_support + 0.05):
+                return extractive_answer
 
     # For long explanatory outputs, fallback to deterministic span extraction.
     if len(candidate.split()) > 20 or any(token in low for token in ["because", "according to", "based on", "the answer"]):
@@ -4311,6 +4324,46 @@ def _postprocess_benchmark_qa_answer(
             return extractive_answer
 
     return candidate
+
+
+_BENCHMARK_CONTEXT_MAX_CHARS = int(os.getenv("TRACECAG_BENCHMARK_CONTEXT_MAX_CHARS", "3000"))
+
+
+def _truncate_benchmark_context(context: str, question: str, max_chars: int = _BENCHMARK_CONTEXT_MAX_CHARS) -> str:
+    """Truncate context to keep token usage within TPM budget.
+
+    Keeps the most relevant passages by scoring each paragraph's lexical overlap
+    with the question, then greedily fills up to max_chars.
+    """
+    if not context or len(context) <= max_chars:
+        return context
+
+    paragraphs = [p.strip() for p in re.split(r"\n{2,}|\n(?=[A-Z])|(?<=\.)\s{2,}", context) if p.strip()]
+    if not paragraphs:
+        return context[:max_chars]
+
+    q_tokens = set(_content_tokens(question))
+
+    def _relevance(para: str) -> float:
+        p_tokens = set(_content_tokens(para))
+        if not p_tokens or not q_tokens:
+            return 0.0
+        return len(p_tokens & q_tokens) / max(len(q_tokens), 1)
+
+    scored = sorted(enumerate(paragraphs), key=lambda iv: _relevance(iv[1]), reverse=True)
+    selected: list[tuple[int, str]] = []
+    total = 0
+    for idx, para in scored:
+        if total + len(para) + 2 > max_chars:
+            break
+        selected.append((idx, para))
+        total += len(para) + 2
+
+    if not selected:
+        return context[:max_chars]
+
+    selected.sort(key=lambda iv: iv[0])
+    return "\n\n".join(p for _, p in selected)
 
 
 async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
@@ -4330,6 +4383,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     else:
         response = ""
         model_used = "llm_unavailable"
+        truncated_context = _truncate_benchmark_context(clean_context, question)
         system_prompt = (
             "You are a precise QA system for multi-hop reasoning benchmarks. "
             "The context spans multiple passages — read ALL of them, identify key entities and facts, "
@@ -4338,7 +4392,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
             "Never explain, never add punctuation or preamble. "
             "If genuinely unanswerable from the context, output exactly: unknown"
         )
-        user_prompt = f"Context:\n{context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
+        user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
 
         try:
             import httpx
@@ -4454,6 +4508,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         clean_context,
         support_floor=max(0.2, min(0.8, support_floor)),
         grounding_margin=max(0.02, min(0.35, grounding_margin)),
+        model_used=model_used,
     )
 
     overall_score = 1.0 if response and response.lower() != "unknown" else 0.0

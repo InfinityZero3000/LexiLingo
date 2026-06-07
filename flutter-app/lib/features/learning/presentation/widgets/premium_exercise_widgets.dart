@@ -418,6 +418,49 @@ class MultipleChoiceWidget extends StatelessWidget {
     this.isCorrect,
   });
 
+  // Renders question; replaces {blank} or ___ with a continuous underline
+  Widget _buildQuestion(_ExercisePalette colors) {
+    final q = exercise.question;
+    const style = TextStyle(fontSize: 20, fontWeight: FontWeight.w700, height: 1.4);
+
+    String? before, after;
+    if (q.contains('{blank}')) {
+      final parts = q.split('{blank}');
+      before = parts[0];
+      after = parts.length > 1 ? parts[1] : '';
+    } else {
+      final match = RegExp(r'_{2,}').firstMatch(q);
+      if (match != null) {
+        before = q.substring(0, match.start);
+        after = q.substring(match.end);
+      }
+    }
+
+    if (before == null) {
+      return Text(q, style: style.copyWith(color: colors.textPrimary));
+    }
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (before.isNotEmpty)
+          Text(before, style: style.copyWith(color: colors.textPrimary)),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 6),
+          width: 80,
+          height: 28,
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: colors.primary, width: 2.5),
+            ),
+          ),
+        ),
+        if (after != null && after.isNotEmpty)
+          Text(after, style: style.copyWith(color: colors.textPrimary)),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
@@ -434,17 +477,7 @@ class MultipleChoiceWidget extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  exercise.question,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
-                    height: 1.4,
-                  ),
-                ),
-              ),
+              Expanded(child: _buildQuestion(colors)),
               const SizedBox(width: 8),
               SpeakIconButton(
                 text: exercise.question,
@@ -514,8 +547,29 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
     super.dispose();
   }
 
+  // Dash-style blank for text-input questions (one underscore per letter, spaced)
+  Widget _buildDashPlaceholder(_ExercisePalette colors) {
+    final answer = widget.exercise.correctAnswer.trim();
+    // Build "_ _ _" per word, words separated by two spaces
+    final dashes = answer.split(' ').map((w) {
+      return List.generate(w.length.clamp(1, 12), (_) => '_').join(' ');
+    }).join('   ');
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      child: Text(
+        dashes,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: colors.primary,
+          letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+
   // Build sentence with a highlighted slot for the blank
-  Widget _buildSentence(String? selected) {
+  Widget _buildSentence(String? selected, {bool hasOptions = true}) {
     final colors = _ExercisePalette.of(context);
     final q = widget.exercise.question;
     if (!q.contains('{blank}')) {
@@ -561,7 +615,8 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
               ),
             ),
           )
-        else
+        else if (hasOptions)
+          // Choose-answer: continuous underline
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 6),
             width: 72,
@@ -571,7 +626,10 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
                 bottom: BorderSide(color: colors.primary, width: 2.5),
               ),
             ),
-          ),
+          )
+        else
+          // Text-input: dash-per-letter style
+          _buildDashPlaceholder(colors),
         Text(
           after,
           style: TextStyle(
@@ -619,7 +677,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: colors.border),
             ),
-            child: _buildSentence(widget.userAnswer),
+            child: _buildSentence(widget.userAnswer, hasOptions: hasOptions),
           ),
           const SizedBox(height: 24),
           if (hasOptions) ...[
