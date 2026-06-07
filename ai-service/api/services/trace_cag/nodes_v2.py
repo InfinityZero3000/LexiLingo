@@ -146,7 +146,7 @@ def _pack_kg_nodes_for_context(nodes: List[Dict[str, Any]], token_budget: int) -
 
 def _provider_rpm(provider: str) -> int:
     defaults = {
-        "groq": 32,  # 4 keys × 8 safe RPM/key (TPM-bound)
+        "groq": 8,  # 1 active key × 8 safe RPM (TPM-bound)
         "gemini": 10,
         "ollama": 120,
     }
@@ -4407,32 +4407,46 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                     break
 
                 if provider == "groq":
-                    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-                    groq_key = await get_available_groq_key(estimated_tokens=96)
+                    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, get_groq_key_pool
                     groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-                    if not groq_key:
-                        continue
-                    try:
-                        resp = await _throttled_post_json(
-                            provider="groq",
-                            url="https://api.groq.com/openai/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                            payload={"model": groq_model, "messages": messages, "max_tokens": 96, "temperature": 0.0},
-                            httpx_module=httpx,
-                            timeout=30.0,
-                        )
-                        if resp is not None and resp.status_code == 200:
-                            data = resp.json()
-                            tokens = data.get("usage", {}).get("total_tokens", 96)
-                            await record_groq_key_usage(groq_key, tokens)
-                            response = data["choices"][0]["message"]["content"].strip()
-                            model_used = f"groq/{groq_model}"
-                        else:
-                            logger.warning(
-                                f"[_generate_benchmark_qa_response] Groq returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
+                    # Retry across all available keys — skip keys returning 401 (expired/invalid)
+                    _pool = get_groq_key_pool()
+                    _max_key_tries = _pool.count if _pool else 4
+                    _tried_groq_keys: set = set()
+                    for _key_attempt in range(_max_key_tries):
+                        groq_key = await get_available_groq_key(estimated_tokens=96)
+                        if not groq_key or groq_key in _tried_groq_keys:
+                            break
+                        _tried_groq_keys.add(groq_key)
+                        try:
+                            resp = await _throttled_post_json(
+                                provider="groq",
+                                url="https://api.groq.com/openai/v1/chat/completions",
+                                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                                payload={"model": groq_model, "messages": messages, "max_tokens": 96, "temperature": 0.0},
+                                httpx_module=httpx,
+                                timeout=30.0,
                             )
-                    except Exception as e:
-                        logger.warning(f"[_generate_benchmark_qa_response] Groq failed: {e}")
+                            if resp is not None and resp.status_code == 200:
+                                data = resp.json()
+                                tokens = data.get("usage", {}).get("total_tokens", 96)
+                                await record_groq_key_usage(groq_key, tokens)
+                                response = data["choices"][0]["message"]["content"].strip()
+                                model_used = f"groq/{groq_model}"
+                                break
+                            elif resp is not None and resp.status_code == 401:
+                                logger.warning(
+                                    f"[_generate_benchmark_qa_response] Groq key invalid (401), trying next key"
+                                )
+                                continue
+                            else:
+                                logger.warning(
+                                    f"[_generate_benchmark_qa_response] Groq returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
+                                )
+                                break
+                        except Exception as e:
+                            logger.warning(f"[_generate_benchmark_qa_response] Groq failed: {e}")
+                            break
 
                 elif provider == "gemini":
                     gemini_key = os.getenv("GEMINI_API_KEY", "")
