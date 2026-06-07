@@ -21,7 +21,9 @@ from app.models.progress import (
     UserProgress,
     LessonAttempt,
     QuestionAttempt,
-    Streak
+    Streak,
+    DailyActivity,
+    LessonCompletion
 )
 from app.schemas.progress import (
     LessonStartRequest,
@@ -37,6 +39,16 @@ from app.schemas.progress import (
 from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
 from app.services import check_achievements_for_user
+from app.crud.progress import ProgressCRUD
+from app.services.level_service import (
+    LevelService,
+    calculate_numeric_level,
+    check_numeric_level_up
+)
+from app.services.rank_service import (
+    apply_rank_info_to_user,
+    calculate_rank as calc_rank
+)
 
 logger = logging.getLogger(__name__)
 
@@ -671,7 +683,8 @@ async def complete_lesson(
     
     # Complete
     attempt.finished_at = datetime.now(timezone.utc)
-    attempt.passed = attempt.score >= 70.0
+    pass_threshold = lesson.pass_threshold or 80.0
+    attempt.passed = attempt.score >= pass_threshold
     
     # Stars
     if attempt.score >= 90:
@@ -714,6 +727,105 @@ async def complete_lesson(
         progress.time_spent_seconds += attempt.time_spent_ms // 1000
         progress.attempts += 1
     
+    # Update LessonCompletion (Phase 3 completion table)
+    lesson_completion, xp_earned_first_time = await ProgressCRUD.mark_lesson_complete(
+        db,
+        str(current_user.id),
+        str(attempt.lesson_id),
+        float(attempt.score),
+        pass_threshold
+    )
+    
+    # Decide performance-based XP to award for first-time pass
+    xp_to_award = 0
+    if attempt.passed and xp_earned_first_time > 0:
+        xp_to_award = attempt.xp_earned or lesson.xp_reward or 0
+        
+    # Recalculate and update course progress percentage
+    new_progress = await ProgressCRUD.calculate_course_progress(
+        db, str(current_user.id), str(lesson.course_id)
+    )
+    course_progress = await ProgressCRUD.update_course_progress(
+        db,
+        str(current_user.id),
+        str(lesson.course_id),
+        new_progress,
+        xp_to_award
+    )
+    
+    # --- Update User.total_xp and level/rank services ---
+    if xp_to_award > 0:
+        old_xp = current_user.total_xp or 0
+        new_xp = old_xp + xp_to_award
+        current_user.total_xp = new_xp
+        
+        # Update numeric level
+        new_numeric_level = calculate_numeric_level(new_xp)
+        current_user.numeric_level = new_numeric_level
+        
+        # Check CEFR tier change
+        tier_up, _ = LevelService.check_level_up(old_xp, new_xp)
+        if tier_up:
+            cefr_status = LevelService.calculate_level_status(new_xp)
+            current_user.level = cefr_status.current_tier.code
+        
+        # Check numeric level up
+        leveled, _, _ = check_numeric_level_up(old_xp, new_xp)
+        
+        # Check rank change
+        new_rank_info = calc_rank(new_numeric_level, current_user.level)
+        apply_rank_info_to_user(current_user, new_rank_info)
+        
+        # --- Update DailyActivity ---
+        from datetime import date as date_type
+        today = date_type.today()
+        daily_result = await db.execute(
+            select(DailyActivity).where(
+                and_(
+                    DailyActivity.user_id == current_user.id,
+                    DailyActivity.activity_date == today,
+                )
+            )
+        )
+        daily_activity = daily_result.scalar_one_or_none()
+        
+        if daily_activity:
+            daily_activity.xp_earned = (daily_activity.xp_earned or 0) + xp_to_award
+            daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
+        else:
+            daily_activity = DailyActivity(
+                user_id=current_user.id,
+                activity_date=today,
+                xp_earned=xp_to_award,
+                lessons_completed=1,
+            )
+            db.add(daily_activity)
+    elif attempt.passed:
+        # If passed but no new XP was awarded (already passed before),
+        # still increment completed lessons in DailyActivity for active engagement.
+        from datetime import date as date_type
+        today = date_type.today()
+        daily_result = await db.execute(
+            select(DailyActivity).where(
+                and_(
+                    DailyActivity.user_id == current_user.id,
+                    DailyActivity.activity_date == today,
+                )
+            )
+        )
+        daily_activity = daily_result.scalar_one_or_none()
+        
+        if daily_activity:
+            daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
+        else:
+            daily_activity = DailyActivity(
+                user_id=current_user.id,
+                activity_date=today,
+                xp_earned=0,
+                lessons_completed=1,
+            )
+            db.add(daily_activity)
+            
     # Update streak
     await _update_streak(db, current_user.id)
     
@@ -743,6 +855,9 @@ async def complete_lesson(
 
     await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
+    await delete_cached(build_cache_key("progress_me", user_id=str(current_user.id)))
+    await delete_cached(build_cache_key("progress_xp", user_id=str(current_user.id)))
+    await delete_cached(build_cache_key("progress_streak", user_id=str(current_user.id)))
 
     time_sec = attempt.time_spent_ms // 1000
     accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0

@@ -42,7 +42,7 @@ class TestLearningSession:
         assert attempt_data["lesson_id"] == str(test_lesson.id)
         assert attempt_data["lives_remaining"] == 3
         assert attempt_data["hints_available"] == 3
-        assert attempt_data["total_questions"] == 10
+        assert attempt_data["total_questions"] == len(test_lesson.content["exercises"])
     
     async def test_start_lesson_resume_existing(
         self,
