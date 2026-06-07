@@ -5,6 +5,7 @@ import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.da
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/inventory_item.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/starter_reward.dart';
 
 /// Gamification Provider
 /// Manages Shop, Wallet, Leaderboard, and Inventory state
@@ -35,6 +36,11 @@ class GamificationProvider extends ChangeNotifier {
   bool get isLoadingWallet => _isLoadingWallet;
   String? get walletError => _walletError;
   int get gems => _wallet?.gems ?? 0;
+  StarterRewardEntity? _pendingStarterReward;
+  bool _isLoadingStarterReward = false;
+
+  StarterRewardEntity? get pendingStarterReward => _pendingStarterReward;
+  bool get isLoadingStarterReward => _isLoadingStarterReward;
 
   // ============== Shop State ==============
   List<ShopItemEntity> _shopItems = [];
@@ -126,6 +132,45 @@ class GamificationProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error loading transactions: $e');
+    }
+  }
+
+  Future<StarterRewardEntity?> loadPendingStarterReward() async {
+    if (_isLoadingStarterReward) return _pendingStarterReward;
+    _isLoadingStarterReward = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiClient.get(
+        '/gamification/rewards/starter/pending',
+      );
+      final data = _extractData(response);
+      _pendingStarterReward =
+          _isSuccessResponse(response) && data is Map<String, dynamic>
+          ? StarterRewardEntity.fromJson(data)
+          : null;
+      return _pendingStarterReward;
+    } catch (e) {
+      debugPrint('Error loading starter reward: $e');
+      return null;
+    } finally {
+      _isLoadingStarterReward = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> acknowledgeStarterReward() async {
+    try {
+      final response = await _apiClient.post(
+        '/gamification/rewards/starter/seen',
+      );
+      if (!_isSuccessResponse(response)) return false;
+      _pendingStarterReward = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error acknowledging starter reward: $e');
+      return false;
     }
   }
 

@@ -607,7 +607,14 @@
     "earnTipFinishCourse": "Finish a course",
     "earnTipStreakBonus": "Daily streak bonus",
     "earnTipAchievements": "Unlock achievements",
-    "earnTipChallenges": "Weekly challenges"
+    "earnTipChallenges": "Weekly challenges",
+    "starterReward": {
+      "title": "Welcome gift!",
+      "description": "Use Gems to unlock special items in the shop.",
+      "action": "Awesome!",
+      "gemLabel": "Gem reward",
+      "confirmation": "{gems} Gems were added to your wallet."
+    }
   },
   "social": {
     "friends": "Friends",

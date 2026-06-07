@@ -243,6 +243,9 @@ class FirebaseMessagingService {
     final targetId = data['target_id'] as String?;
 
     switch (type) {
+      case 'starter_reward':
+        AppNavigationService.returnToRoot();
+        break;
       case 'vocabulary_review_reminder':
         final route = data['route'] as String? ?? '/vocabulary/review';
         AppNavigationService.openRoute(route);

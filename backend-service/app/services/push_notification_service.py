@@ -61,3 +61,46 @@ class PushNotificationService:
         except Exception as exc:  # pragma: no cover - external IO
             logger.exception("Failed to send review reminder push: %s", exc)
             return False
+
+    async def send_starter_reward(
+        self,
+        *,
+        tokens: list[str],
+        gems: int,
+        reward_key: str,
+        title: str,
+        body: str,
+    ) -> bool:
+        """Send the durable starter reward notification to known devices."""
+        clean_tokens = [token for token in tokens if token]
+        if not clean_tokens:
+            return False
+
+        try:
+            _init_firebase_app()
+        except Exception as exc:
+            logger.warning(
+                "Firebase is not configured; skipping starter reward push: %s",
+                exc,
+            )
+            return False
+
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            data={
+                "type": "starter_reward",
+                "route": "/",
+                "reward_key": reward_key,
+                "gems": str(gems),
+            },
+            tokens=clean_tokens,
+        )
+        try:
+            response = await run_in_threadpool(
+                messaging.send_each_for_multicast,
+                message,
+            )
+            return int(getattr(response, "success_count", 0) or 0) > 0
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception("Failed to send starter reward push: %s", exc)
+            return False

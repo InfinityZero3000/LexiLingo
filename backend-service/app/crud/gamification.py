@@ -7,8 +7,8 @@ from typing import List, Optional, Tuple
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from sqlalchemy import select, func, and_, or_, desc
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.models.gamification import (
     Achievement, UserAchievement, UserWallet, WalletTransaction,
@@ -123,7 +123,11 @@ class WalletCRUD:
     """CRUD operations for User Wallet"""
     
     @staticmethod
-    async def get_or_create_wallet(db: AsyncSession, user_id: UUID) -> UserWallet:
+    async def get_or_create_wallet(
+        db: AsyncSession,
+        user_id: UUID,
+        commit: bool = True,
+    ) -> UserWallet:
         """Get user's wallet, create if not exists (handles race condition)."""
         result = await db.execute(
             select(UserWallet).where(UserWallet.user_id == user_id)
@@ -131,20 +135,41 @@ class WalletCRUD:
         wallet = result.scalar_one_or_none()
         
         if not wallet:
-            try:
-                wallet = UserWallet(user_id=user_id, gems=0)
-                db.add(wallet)
-                await db.commit()
-                await db.refresh(wallet)
-            except Exception:
-                await db.rollback()
-                # Another request created it concurrently — re-fetch
-                result = await db.execute(
-                    select(UserWallet).where(UserWallet.user_id == user_id)
-                )
-                wallet = result.scalar_one_or_none()
-                if not wallet:
-                    raise
+            wallet = UserWallet(
+                user_id=user_id,
+                gems=0,
+                total_gems_earned=0,
+                total_gems_spent=0,
+            )
+            if commit:
+                try:
+                    db.add(wallet)
+                    await db.commit()
+                    await db.refresh(wallet)
+                except IntegrityError:
+                    await db.rollback()
+                    result = await db.execute(
+                        select(UserWallet).where(
+                            UserWallet.user_id == user_id
+                        )
+                    )
+                    wallet = result.scalar_one_or_none()
+                    if not wallet:
+                        raise
+            else:
+                try:
+                    async with db.begin_nested():
+                        db.add(wallet)
+                        await db.flush()
+                except IntegrityError:
+                    result = await db.execute(
+                        select(UserWallet).where(
+                            UserWallet.user_id == user_id
+                        )
+                    )
+                    wallet = result.scalar_one_or_none()
+                    if not wallet:
+                        raise
         
         return wallet
     
@@ -158,7 +183,11 @@ class WalletCRUD:
         commit: bool = True,
     ) -> Tuple[UserWallet, WalletTransaction]:
         """Add gems to user's wallet"""
-        wallet = await WalletCRUD.get_or_create_wallet(db, user_id)
+        wallet = await WalletCRUD.get_or_create_wallet(
+            db,
+            user_id,
+            commit=commit,
+        )
         
         wallet.gems += amount
         wallet.total_gems_earned += amount

@@ -17,6 +17,7 @@ from app.core.security import verify_password_async, get_password_hash_async, ge
 from app.models.user import User, RefreshToken
 from app.models.rbac import Role
 from app.services.email_service import EmailService
+from app.services.starter_reward_service import StarterRewardService
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
     ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, ForgotPasswordRequest,
@@ -158,6 +159,8 @@ async def register(
     )
     
     db.add(user)
+    await db.flush()
+    await StarterRewardService.grant_new_user_reward(db, user.id)
     await db.commit()
     await db.refresh(user)
 
@@ -501,6 +504,9 @@ async def google_login(
             is_onboarding_completed=False,
         )
         db.add(user)
+        await db.flush()
+        if role_slug == "user":
+            await StarterRewardService.grant_new_user_reward(db, user.id)
         await db.commit()
         await db.refresh(user)
     elif not user.has_google_auth:

@@ -12,6 +12,8 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import '../../../gamification/presentation/providers/gamification_provider.dart';
+import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -25,6 +27,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
+  bool _starterRewardChecked = false;
 
   // Pages are built lazily — only when the tab is first visited.
   static const int _pageCount = 5;
@@ -61,6 +64,51 @@ class _MainScreenState extends State<MainScreen> {
       _warmupAiModels();
     }
     _triggerPreWarming();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showPendingStarterReward();
+    });
+  }
+
+  Future<void> _showPendingStarterReward() async {
+    if (_starterRewardChecked || !mounted) return;
+    _starterRewardChecked = true;
+
+    final gamification = context.read<GamificationProvider>();
+    final reward = await gamification.loadPendingStarterReward();
+    if (!mounted || reward == null) return;
+
+    await gamification.loadWallet();
+    if (!mounted) return;
+    await StarterRewardDialog.show(context, gems: reward.gemsAwarded);
+    if (!mounted) return;
+
+    final acknowledged = await gamification.acknowledgeStarterReward();
+    if (!mounted || !acknowledged) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+        content: Row(
+          children: [
+            const Icon(Icons.diamond_rounded, color: AppColors.accentMint),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'gamification.starterReward.confirmation'.tr(
+                  namedArgs: {'gems': '${reward.gemsAwarded}'},
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   void _triggerPreWarming() {

@@ -142,6 +142,14 @@ class WalletTransactionResponse(BaseModel):
         from_attributes = True
 
 
+class StarterRewardResponse(BaseModel):
+    reward_key: str
+    gems_awarded: int
+    current_balance: int
+    title: str
+    body: str
+
+
 class WalletHistoryResponse(BaseModel):
     """Wallet with transaction history"""
     wallet: WalletResponse

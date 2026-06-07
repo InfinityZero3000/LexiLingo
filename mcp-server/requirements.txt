@@ -1,17 +1,19 @@
 # MCP Server Dependencies
-# NOTE: This is a LIGHTWEIGHT stdio server for IDE integration.
-# Heavy ML models (Qwen, Whisper, Piper) are proxied to ai-service.
+# Lightweight stdio server for IDE integration — heavy ML models are in ai-service.
 
 # Core MCP
-mcp>=0.9.0
+mcp>=1.0.0
 
-# HTTP Client (proxy to ai-service & backend-service)
+# HTTP Client
 httpx>=0.26.0
 
-# Google AI (Gemini - direct API calls, primary AI backend)
+# Web search (Tavily)
+tavily-python>=0.3.0
+
+# Google AI (Gemini)
 google-generativeai>=0.3.0
 
-# Audio data handling (for STT/TTS data conversion)
+# Audio data handling
 numpy>=1.26.0
 soundfile>=0.12.1
 

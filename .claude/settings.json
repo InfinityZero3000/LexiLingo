@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "lexilingo": {
+      "command": "bash",
+      "args": [
+        "/Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/mcp-server/start.sh"
+      ]
+    }
+  }
+}

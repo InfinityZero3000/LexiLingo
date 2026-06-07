@@ -34,10 +34,12 @@ from app.schemas.gamification import (
     UserInventoryItemResponse, UseItemRequest, UseItemResponse,
     FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
     ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
-    LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse
+    LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse,
+    StarterRewardResponse,
 )
 from app.schemas.response import ApiResponse
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.starter_reward_service import StarterRewardService
 
 router = APIRouter(prefix="/gamification", tags=["Gamification"])
 
@@ -250,6 +252,51 @@ async def check_all_achievements(
 # ============================================================================
 # Wallet Endpoints
 # ============================================================================
+
+@router.get(
+    "/rewards/starter/pending",
+    response_model=ApiResponse[Optional[StarterRewardResponse]],
+)
+async def get_pending_starter_reward(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    grant = await StarterRewardService.get_pending(db, current_user.id)
+    if not grant:
+        return ApiResponse(
+            success=True,
+            message="No pending starter reward",
+            data=None,
+        )
+
+    wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
+    return ApiResponse(
+        success=True,
+        message="Pending starter reward retrieved",
+        data=StarterRewardResponse(
+            reward_key=grant.reward_key,
+            gems_awarded=grant.gems_awarded,
+            current_balance=wallet.gems,
+            title="Welcome gift",
+            body=f"{grant.gems_awarded} Gems have been added to your wallet.",
+        ),
+    )
+
+
+@router.post(
+    "/rewards/starter/seen",
+    response_model=ApiResponse[bool],
+)
+async def mark_starter_reward_seen(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    grant = await StarterRewardService.mark_seen(db, current_user.id)
+    return ApiResponse(
+        success=True,
+        message="Starter reward acknowledged",
+        data=grant is not None,
+    )
 
 @router.get("/wallet", response_model=ApiResponse[WalletResponse])
 async def get_my_wallet(

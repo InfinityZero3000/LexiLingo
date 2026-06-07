@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.core.security import get_password_hash_async
 from app.models.rbac import Role
 from app.models.user import User
+from app.services.starter_reward_service import StarterRewardService
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +136,9 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
     )
 
     db.add(user)
+    await db.flush()
+    if role_slug == "user":
+        await StarterRewardService.grant_new_user_reward(db, user.id)
     await db.commit()
     await db.refresh(user)
     return user

@@ -607,7 +607,14 @@
     "earnTipFinishCourse": "Hoàn thành khoá học",
     "earnTipStreakBonus": "Thưởng chuỗi ngày liên tiếp",
     "earnTipAchievements": "Mở khóa thành tích",
-    "earnTipChallenges": "Thử thách hàng tuần"
+    "earnTipChallenges": "Thử thách hàng tuần",
+    "starterReward": {
+      "title": "Quà chào mừng!",
+      "description": "Dùng Gem để mở khóa vật phẩm đặc biệt trong cửa hàng.",
+      "action": "Tuyệt vời!",
+      "gemLabel": "Phần thưởng Gem",
+      "confirmation": "{gems} Gem đã được thêm vào ví của bạn."
+    }
   },
   "social": {
     "friends": "Bạn bè",

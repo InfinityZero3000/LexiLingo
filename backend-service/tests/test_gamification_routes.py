@@ -108,6 +108,42 @@ class TestWallet:
         assert data["success"] is True
         assert isinstance(data["data"], list)
 
+    @pytest.mark.asyncio
+    async def test_pending_starter_reward_can_be_acknowledged(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        db_session: AsyncSession,
+        test_user: User,
+    ):
+        from app.services.starter_reward_service import StarterRewardService
+
+        await StarterRewardService.grant_new_user_reward(
+            db_session,
+            test_user.id,
+        )
+        await db_session.commit()
+
+        pending = await async_client.get(
+            "/api/v1/gamification/rewards/starter/pending",
+            headers=auth_headers,
+        )
+        assert pending.status_code == 200
+        assert pending.json()["data"]["gems_awarded"] == 100
+
+        seen = await async_client.post(
+            "/api/v1/gamification/rewards/starter/seen",
+            headers=auth_headers,
+        )
+        assert seen.status_code == 200
+        assert seen.json()["data"] is True
+
+        no_longer_pending = await async_client.get(
+            "/api/v1/gamification/rewards/starter/pending",
+            headers=auth_headers,
+        )
+        assert no_longer_pending.json()["data"] is None
+
 
 class TestLeaderboard:
     """Tests for leaderboard endpoints"""

@@ -8,4 +8,8 @@ class AppNavigationService {
     if (navigator == null) return;
     await navigator.pushNamed(route);
   }
+
+  static void returnToRoot() {
+    navigatorKey.currentState?.popUntil((route) => route.isFirst);
+  }
 }

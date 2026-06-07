@@ -75,6 +75,7 @@ from app.models.rbac import (
 
 # Notification model
 from app.models.notification import Notification
+from app.models.reward_grant import UserRewardGrant
 
 # Reminder models
 from app.models.reminder import ReminderDelivery, UserReminderPreference
@@ -94,6 +95,7 @@ __all__ = [
     "User",
     "UserDevice",
     "RefreshToken",
+    "UserRewardGrant",
     # Course (Phase 2)
     "Course",
     "CourseCategory",
