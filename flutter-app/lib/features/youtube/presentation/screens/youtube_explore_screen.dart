@@ -891,7 +891,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
           ],
         ),
         labelColor: Colors.white,
-        unselectedLabelColor: isDark ? Colors.white58 : AppColors.textGrey,
+        unselectedLabelColor: isDark ? Colors.white54 : AppColors.textGrey,
         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
         padding: const EdgeInsets.all(4),

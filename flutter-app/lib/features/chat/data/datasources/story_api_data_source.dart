@@ -87,7 +87,7 @@ class StoryApiDataSource {
       final response = await _client.get(
         uri,
         headers: {'Content-Type': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to get stories: ${response.statusCode}');
@@ -108,7 +108,7 @@ class StoryApiDataSource {
         final retryResponse = await _client.get(
           retryUri,
           headers: {'Content-Type': 'application/json'},
-        );
+        ).timeout(const Duration(seconds: 30));
 
         if (retryResponse.statusCode == 200) {
           final retryJson =
@@ -138,7 +138,7 @@ class StoryApiDataSource {
       final response = await _client.get(
         uri,
         headers: {'Content-Type': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to get story: ${response.statusCode}');
@@ -167,7 +167,7 @@ class StoryApiDataSource {
         uri,
         headers: await _authHeaders(),
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         final detail = _responseDetail(response);
@@ -194,7 +194,7 @@ class StoryApiDataSource {
       final response = await _client.get(
         uri,
         headers: {'Content-Type': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException(
@@ -234,7 +234,7 @@ class StoryApiDataSource {
         uri,
         headers: await _authHeaders(),
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException(
@@ -272,7 +272,7 @@ class StoryApiDataSource {
         uri,
         headers: await _authHeaders(),
         body: jsonEncode(body),
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to send message: ${response.statusCode}');
@@ -292,7 +292,7 @@ class StoryApiDataSource {
       final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId');
       logDebug(_tag, 'getTopicSession: $uri');
 
-      final response = await _client.get(uri, headers: await _authHeaders());
+      final response = await _client.get(uri, headers: await _authHeaders()).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to get session: ${response.statusCode}');
@@ -314,7 +314,7 @@ class StoryApiDataSource {
       );
       logDebug(_tag, 'getTopicMessages: $uri');
 
-      final response = await _client.get(uri, headers: await _authHeaders());
+      final response = await _client.get(uri, headers: await _authHeaders()).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException('Failed to get messages: ${response.statusCode}');
@@ -348,7 +348,7 @@ class StoryApiDataSource {
       ).replace(queryParameters: query);
       logDebug(_tag, 'getTopicMessagesPaged: $uri');
 
-      final response = await _client.get(uri, headers: await _authHeaders());
+      final response = await _client.get(uri, headers: await _authHeaders()).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException(
@@ -391,7 +391,7 @@ class StoryApiDataSource {
     );
     logDebug(_tag, 'getTopicMessagesMetadata: $uri');
 
-    final response = await _client.get(uri, headers: await _authHeaders());
+    final response = await _client.get(uri, headers: await _authHeaders()).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 200) {
       throw ServerException(
@@ -424,7 +424,7 @@ class StoryApiDataSource {
       final response = await _client.get(
         uri,
         headers: {'Content-Type': 'application/json'},
-      );
+      ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
         throw ServerException(

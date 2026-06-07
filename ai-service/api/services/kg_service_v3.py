@@ -64,12 +64,7 @@ class KnowledgeGraphServiceV3:
         
         # Only destroy and recreate if the DB is corrupted or missing.
         # Check if schema already exists to avoid unnecessary re-seed.
-        needs_seed = False
-        if os.path.exists(self._db_path) and not os.path.isdir(self._db_path):
-            os.remove(self._db_path)
-            needs_seed = True
-        elif not os.path.isdir(self._db_path):
-            needs_seed = True
+        needs_seed = not os.path.exists(self._db_path)
         
         try:
             self._db = kuzu.Database(self._db_path)
@@ -80,6 +75,13 @@ class KnowledgeGraphServiceV3:
             if needs_seed or self.get_concept_count() == 0:
                 logger.info("[KG] Seeding default knowledge graph...")
                 self._seed_default_graph()
+                # Clear synced files metadata cache on fresh database
+                cache_path = self._db_path + "_synced_files.json"
+                if os.path.exists(cache_path):
+                    try:
+                        os.remove(cache_path)
+                    except Exception:
+                        pass
             else:
                 logger.info(f"[KG] Reusing existing KG with {self.get_concept_count()} concepts")
 
@@ -114,6 +116,13 @@ class KnowledgeGraphServiceV3:
             os.remove(self._db_path)
 
         os.makedirs(self._db_path, exist_ok=True)
+        # Clear synced files metadata cache on rebuild
+        cache_path = self._db_path + "_synced_files.json"
+        if os.path.exists(cache_path):
+            try:
+                os.remove(cache_path)
+            except Exception:
+                pass
         self._db = kuzu.Database(self._db_path)
         self._conn = kuzu.Connection(self._db)
         self._ensure_schema()
@@ -879,16 +888,38 @@ class KnowledgeGraphServiceV3:
         1. data/knowledge_extended.json  — legacy single-file, for backward compat
         2. data/kg/*.json                 — domain-specific files, one per topic area
         """
-        payloads: List[tuple[str, dict]] = []
+        import hashlib
+
+        cache_path = self._db_path + "_synced_files.json"
+        synced_metadata = {}
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, "r", encoding="utf-8") as f:
+                    synced_metadata = json.load(f)
+            except Exception:
+                pass
+
+        payloads: List[tuple[str, str, dict]] = []
+
+        def _get_file_hash(filepath: str) -> str:
+            try:
+                hasher = hashlib.md5()
+                with open(filepath, "rb") as f:
+                    hasher.update(f.read())
+                return hasher.hexdigest()
+            except Exception:
+                return ""
 
         # Source 1: legacy single file
         legacy = self._extended_knowledge_path()
         if os.path.isfile(legacy):
-            try:
-                with open(legacy, "r", encoding="utf-8") as f:
-                    payloads.append((legacy, json.load(f)))
-            except Exception as exc:
-                logger.warning("[KG] Failed loading %s: %s", legacy, exc)
+            current_hash = _get_file_hash(legacy)
+            if synced_metadata.get(legacy) != current_hash:
+                try:
+                    with open(legacy, "r", encoding="utf-8") as f:
+                        payloads.append((legacy, current_hash, json.load(f)))
+                except Exception as exc:
+                    logger.warning("[KG] Failed loading %s: %s", legacy, exc)
 
         # Source 2: domain directory
         kg_dir = self._kg_data_dir()
@@ -897,16 +928,23 @@ class KnowledgeGraphServiceV3:
                 if not fname.endswith(".json"):
                     continue
                 fpath = os.path.join(kg_dir, fname)
-                try:
-                    with open(fpath, "r", encoding="utf-8") as f:
-                        payloads.append((fpath, json.load(f)))
-                except Exception as exc:
-                    logger.warning("[KG] Failed loading %s: %s", fpath, exc)
+                current_hash = _get_file_hash(fpath)
+                if synced_metadata.get(fpath) != current_hash:
+                    try:
+                        with open(fpath, "r", encoding="utf-8") as f:
+                            payloads.append((fpath, current_hash, json.load(f)))
+                    except Exception as exc:
+                        logger.warning("[KG] Failed loading %s: %s", fpath, exc)
+
+        if not payloads:
+            logger.info("[KG] All external knowledge files are up-to-date (skipped sync)")
+            return
 
         total_concepts = 0
         total_edges = 0
+        new_synced_metadata = dict(synced_metadata)
 
-        for path, payload in payloads:
+        for path, file_hash, payload in payloads:
             if not isinstance(payload, dict):
                 continue
             concepts = payload.get("concepts")
@@ -963,9 +1001,15 @@ class KnowledgeGraphServiceV3:
                 )
             total_concepts += ins_c
             total_edges += ins_e
+            new_synced_metadata[path] = file_hash
 
         if total_concepts or total_edges:
             logger.info("[KG] Total synced: concepts=%d edges=%d", total_concepts, total_edges)
+            try:
+                with open(cache_path, "w", encoding="utf-8") as f:
+                    json.dump(new_synced_metadata, f, indent=2)
+            except Exception as e:
+                logger.warning("[KG] Failed to write synced files metadata cache: %s", e)
 
     def get_concepts(self) -> Dict[str, Dict[str, str]]:
         # Return warm in-memory cache if available (Phase 1 optimisation).

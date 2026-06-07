@@ -1,0 +1,10 @@
+{
+  "/app/data/knowledge_extended.json": "dfb7995c037a0a17ceeb6b2d9a3ca2a8",
+  "/app/data/kg/01_grammar_gaps.json": "e8405e58cb152f2741cc8dbf44fb7808",
+  "/app/data/kg/02_functional_language.json": "4ea5d917d960745ed9307c11005ed7f9",
+  "/app/data/kg/03_errors_vietnamese.json": "1669af4928892a12ddf649f783393f89",
+  "/app/data/kg/04_writing_phonology.json": "0546cded421885cf7100a9df52794e5f",
+  "/app/data/kg/05_vocabulary_advanced.json": "45c8ac1f8127fabc83eee3a7ebe3acea",
+  "/app/data/kg/06_tracecag_topic_expansion.json": "799c61b1b2c57e38df2b1e888287e60c",
+  "/app/data/kg/benchmark_entities.json": "900def977f1836d85406e1ddd038b46b"
+}

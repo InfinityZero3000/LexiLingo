@@ -205,7 +205,7 @@ class Settings(BaseSettings):
     # ============================================================
     KUZU_DB_PATH: str = os.getenv(
         "KUZU_DB_PATH",
-        os.path.join(os.path.dirname(__file__), "..", "data", "kuzu")
+        os.path.join(os.path.dirname(__file__), "..", "..", "data", "kuzu")
     )
     EMBEDDING_MODEL: str = os.getenv(
         "EMBEDDING_MODEL",

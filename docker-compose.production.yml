@@ -250,6 +250,7 @@ services:
     volumes:
       - ai_models:/app/models
       - ./ai-service/data:/app/data
+      - ./backend-service/data/media:/app/data/media:ro
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)\""]
       interval: 30s
