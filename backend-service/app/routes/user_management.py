@@ -16,7 +16,7 @@ from app.schemas.response import ApiResponse
 from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
 from app.models.rbac import Role
-from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress
+from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
 
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - User Management"])
@@ -39,6 +39,12 @@ class UserListResponse(BaseModel):
     provider: List[str]  # ["local"], ["google"], etc.
     created_at: datetime
     last_login: Optional[datetime] = None
+    avatar_url: Optional[str] = None
+    total_xp: int = 0
+    numeric_level: int = 1
+    rank: str = "bronze"
+    cefr_level: str = "A1"
+    streak_days: int = 0
 
     class Config:
         from_attributes = True
@@ -140,7 +146,7 @@ async def list_users(
     """
     # Build query with Role outerjoin for filtering/sorting
     # Use outerjoin so users without a role (role_id=NULL) are still included
-    query = select(User).outerjoin(User.role)
+    query = select(User, Streak.current_streak).outerjoin(User.role).outerjoin(Streak, Streak.user_id == User.id)
     
     # Apply filters
     filters = []
@@ -183,24 +189,30 @@ async def list_users(
     
     # Execute query
     result = await db.execute(query)
-    users = result.scalars().all()
+    rows = result.all()
     
     # Convert to response model
     users_list = [
         UserListResponse(
-            id=str(user.id),
-            email=user.email,
-            username=user.username,
-            display_name=user.display_name or user.username,
-            is_active=user.is_active,
-            is_verified=user.is_verified,
-            role_slug=user.role_slug,
-            role_level=user.role_level,
-            created_at=user.created_at,
-            last_login=user.last_login,
-            provider=user.provider if isinstance(user.provider, list) else [user.provider],
+            id=str(row[0].id),
+            email=row[0].email,
+            username=row[0].username,
+            display_name=row[0].display_name or row[0].username,
+            is_active=row[0].is_active,
+            is_verified=row[0].is_verified,
+            role_slug=row[0].role_slug,
+            role_level=row[0].role_level,
+            created_at=row[0].created_at,
+            last_login=row[0].last_login,
+            provider=row[0].provider if isinstance(row[0].provider, list) else [row[0].provider],
+            avatar_url=row[0].avatar_url,
+            total_xp=row[0].total_xp,
+            numeric_level=row[0].numeric_level,
+            rank=row[0].rank,
+            cefr_level=row[0].cefr_level,
+            streak_days=row[1] or 0,
         )
-        for user in users
+        for row in rows
     ]
     
     total_pages = (total + page_size - 1) // page_size
