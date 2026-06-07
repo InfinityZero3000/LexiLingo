@@ -11,7 +11,10 @@ import {
   getUserActivity,
   getRoleLabel,
   type UserUpdateData,
+  giftToUser,
+  type GiftRequest,
 } from '../../lib/userManagementApi';
+import { listCoursesAdmin, listShopItems } from '../../lib/adminApi';
 
 interface UserDetailModalProps {
   userId: string;
@@ -21,11 +24,19 @@ interface UserDetailModalProps {
 export default function UserDetailModal({ userId, onClose }: UserDetailModalProps) {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'activity'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'activity' | 'gift'>('info');
   
   // Form state
   const [formData, setFormData] = useState<UserUpdateData>({});
   
+  // Gifting Form states
+  const [giftType, setGiftType] = useState<'gems' | 'course' | 'avatar' | 'shop_item'>('gems');
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const [selectedShopItemId, setSelectedShopItemId] = useState<string>('');
+  const [amount, setAmount] = useState<number>(100);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   // Queries
   const { data: user, isLoading } = useQuery({
     queryKey: ['user-detail', userId],
@@ -36,6 +47,19 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     queryKey: ['user-activity', userId],
     queryFn: () => getUserActivity(userId, 30),
     enabled: activeTab === 'activity',
+  });
+
+  // Gifting Queries
+  const { data: coursesData, isLoading: isLoadingCourses } = useQuery({
+    queryKey: ['admin-courses-list'],
+    queryFn: () => listCoursesAdmin({ page_size: 100 }),
+    enabled: activeTab === 'gift',
+  });
+
+  const { data: shopItemsData, isLoading: isLoadingShopItems } = useQuery({
+    queryKey: ['admin-shop-items-list'],
+    queryFn: () => listShopItems(true),
+    enabled: activeTab === 'gift',
   });
   
   // Mutations
@@ -76,7 +100,73 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
       roleChangeMutation.mutate(level);
     }
   };
-  
+
+  const giftMutation = useMutation({
+    mutationFn: (payload: GiftRequest) => giftToUser(userId, payload),
+    onSuccess: (res) => {
+      if (res.success) {
+        setSuccessMessage(`Đã gửi quà thành công: ${res.data?.gift_description || ''}`);
+        setErrorMessage(null);
+        queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+        setAmount(giftType === 'gems' ? 100 : 1);
+        setSelectedCourseId('');
+        setSelectedShopItemId('');
+      } else {
+        setErrorMessage(res.message || 'Gửi quà thất bại');
+        setSuccessMessage(null);
+      }
+    },
+    onError: (err: any) => {
+      setErrorMessage(err?.message || 'Lỗi không xác định khi gửi quà');
+      setSuccessMessage(null);
+    }
+  });
+
+  const handleSendGift = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSuccessMessage(null);
+    setErrorMessage(null);
+
+    const payload: GiftRequest = {
+      gift_type: giftType,
+    };
+
+    if (giftType === 'gems') {
+      if (!amount || amount <= 0) {
+        setErrorMessage('Số lượng Gems phải lớn hơn 0');
+        return;
+      }
+      payload.amount = amount;
+    } else if (giftType === 'course') {
+      if (!selectedCourseId) {
+        setErrorMessage('Vui lòng chọn khóa học');
+        return;
+      }
+      payload.course_id = selectedCourseId;
+    } else if (giftType === 'avatar') {
+      if (!selectedShopItemId) {
+        setErrorMessage('Vui lòng chọn Avatar');
+        return;
+      }
+      payload.shop_item_id = selectedShopItemId;
+    } else if (giftType === 'shop_item') {
+      if (!selectedShopItemId) {
+        setErrorMessage('Vui lòng chọn vật phẩm');
+        return;
+      }
+      payload.shop_item_id = selectedShopItemId;
+      payload.amount = amount;
+    }
+
+    giftMutation.mutate(payload);
+  };
+
+  const coursesList = coursesData?.data?.courses || [];
+  const shopItemsList = shopItemsData?.data || [];
+  const avatarsList = shopItemsList.filter(item => item.item_type === 'avatar');
+  const consumablesList = shopItemsList.filter(item => item.item_type !== 'avatar');
+
   if (isLoading) {
     return (
       <div className="modal-overlay">
@@ -120,22 +210,40 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
         {/* Tabs */}
         <div className="tab-row" style={{ marginBottom: 20 }}>
           <button
-            onClick={() => setActiveTab('info')}
+            onClick={() => {
+              setActiveTab('info');
+              setSuccessMessage(null);
+              setErrorMessage(null);
+            }}
             className={`tab ${activeTab === 'info' ? 'active' : ''}`}
           >
             Thông tin
           </button>
           <button
-            onClick={() => setActiveTab('activity')}
+            onClick={() => {
+              setActiveTab('activity');
+              setSuccessMessage(null);
+              setErrorMessage(null);
+            }}
             className={`tab ${activeTab === 'activity' ? 'active' : ''}`}
           >
             Hoạt động
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('gift');
+              setSuccessMessage(null);
+              setErrorMessage(null);
+            }}
+            className={`tab ${activeTab === 'gift' ? 'active' : ''}`}
+          >
+            Gửi Quà
           </button>
         </div>
         
         {/* Content */}
         <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
-          {activeTab === 'info' ? (
+          {activeTab === 'info' && (
             <div className="stack">
               {/* Stats Grid */}
               <div className="card-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
@@ -278,8 +386,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                 </div>
               </div>
             </div>
-          ) : (
-            // Activity Timeline
+          )}
+
+          {activeTab === 'activity' && (
             <div className="stack" style={{ gap: 0 }}>
               {activities && activities.length > 0 ? (
                 activities.map((activity, index) => (
@@ -308,6 +417,146 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
               )}
             </div>
           )}
+
+          {activeTab === 'gift' && (
+            <div className="stack">
+              <div className="panel-inner">
+                <h4 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600 }}>Gửi Quà Tặng (Admin)</h4>
+                
+                {successMessage && (
+                  <div className="form-success" style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 8, background: 'rgba(34, 197, 94, 0.1)', color: '#16a34a', fontSize: 13, border: '1px solid rgba(34, 197, 94, 0.2)' }}>
+                    {successMessage}
+                  </div>
+                )}
+                
+                {errorMessage && (
+                  <div className="form-error" style={{ marginBottom: 16, padding: '10px 14px', borderRadius: 8, background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', fontSize: 13, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                    {errorMessage}
+                  </div>
+                )}
+
+                <form onSubmit={handleSendGift} className="form" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    Loại quà tặng
+                    <select 
+                      value={giftType} 
+                      onChange={(e) => {
+                        const val = e.target.value as any;
+                        setGiftType(val);
+                        setAmount(val === 'gems' ? 100 : 1);
+                        setSuccessMessage(null);
+                        setErrorMessage(null);
+                      }}
+                      style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--panel-soft)', color: 'var(--text)' }}
+                    >
+                      <option value="gems">💎 Gems (Tiền ảo)</option>
+                      <option value="course">📚 Khóa học (Course)</option>
+                      <option value="avatar">👤 Ảnh đại diện (Avatar Shop)</option>
+                      <option value="shop_item">🛍️ Vật phẩm hỗ trợ (Streak freeze, Heart refill, Double XP...)</option>
+                    </select>
+                  </label>
+
+                  {/* Course Dropdown */}
+                  {giftType === 'course' && (
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      Chọn Khóa học
+                      {isLoadingCourses ? (
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>Đang tải danh sách khóa học...</span>
+                      ) : (
+                        <select
+                          value={selectedCourseId}
+                          onChange={(e) => setSelectedCourseId(e.target.value)}
+                          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--panel-soft)', color: 'var(--text)' }}
+                          required
+                        >
+                          <option value="">-- Chọn Khóa học --</option>
+                          {coursesList.map((course: any) => (
+                            <option key={course.id} value={course.id}>
+                              [{course.level}] {course.title}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </label>
+                  )}
+
+                  {/* Avatar Dropdown */}
+                  {giftType === 'avatar' && (
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      Chọn Avatar
+                      {isLoadingShopItems ? (
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>Đang tải danh sách Avatar...</span>
+                      ) : (
+                        <select
+                          value={selectedShopItemId}
+                          onChange={(e) => setSelectedShopItemId(e.target.value)}
+                          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--panel-soft)', color: 'var(--text)' }}
+                          required
+                        >
+                          <option value="">-- Chọn Avatar --</option>
+                          {avatarsList.map((item: any) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} ({item.price_gems} Gems)
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </label>
+                  )}
+
+                  {/* Shop Item Dropdown */}
+                  {giftType === 'shop_item' && (
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      Chọn Vật phẩm Shop
+                      {isLoadingShopItems ? (
+                        <span style={{ fontSize: 12, color: 'var(--muted)' }}>Đang tải danh sách vật phẩm...</span>
+                      ) : (
+                        <select
+                          value={selectedShopItemId}
+                          onChange={(e) => setSelectedShopItemId(e.target.value)}
+                          style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--panel-soft)', color: 'var(--text)' }}
+                          required
+                        >
+                          <option value="">-- Chọn vật phẩm --</option>
+                          {consumablesList.map((item: any) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} ({item.item_type})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </label>
+                  )}
+
+                  {/* Amount / Quantity Input */}
+                  {(giftType === 'gems' || giftType === 'shop_item') && (
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {giftType === 'gems' ? 'Số lượng Gems' : 'Số lượng vật phẩm'}
+                      <input
+                        type="number"
+                        min={1}
+                        value={amount}
+                        onChange={(e) => setAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                        style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--panel-soft)', color: 'var(--text)' }}
+                        required
+                      />
+                    </label>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                    <button 
+                      type="submit" 
+                      className="primary-button" 
+                      disabled={giftMutation.isPending}
+                      style={{ padding: '10px 24px', borderRadius: 8, fontSize: 14, fontWeight: 600 }}
+                    >
+                      {giftMutation.isPending ? 'Đang gửi...' : 'Gửi Quà Tặng'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Footer */}
@@ -318,3 +567,4 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     </div>
   );
 }
+
