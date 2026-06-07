@@ -164,6 +164,45 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _startQuestion();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số câu đã hoàn thành.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    _timer?.cancel();
+    final provider = context.read<GamesProvider>();
+    final game = provider.grammarQuiz;
+    if (game != null) {
+      await provider.completeGame(
+        gameType: GameType.grammarQuiz,
+        score: _correctCount,
+        totalQuestions: game.questions.length,
+        correctAnswers: _correctCount,
+        answers: [
+          for (final q in game.questions)
+            {'id': q.id, 'answer': _submittedAnswers[q.id] ?? ''},
+        ],
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
     if (_isFinishing) return;
     _isFinishing = true;
@@ -213,19 +252,24 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final game = provider.grammarQuiz;
-        if (provider.error != null) {
-          return GameLoadState(
-            message: 'games.loadFailed'.tr(),
-            onRetry: () async {
-              await provider.loadGrammarQuiz();
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Consumer<GamesProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final game = provider.grammarQuiz;
+          if (provider.error != null) {
+            return GameLoadState(
+              message: 'games.loadFailed'.tr(),
+              onRetry: () async {
+                await provider.loadGrammarQuiz();
               if (mounted) _startQuestion();
             },
           );
@@ -473,7 +517,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 }

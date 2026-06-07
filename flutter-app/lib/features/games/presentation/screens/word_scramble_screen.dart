@@ -182,6 +182,43 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     _nextWord();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số từ đã hoàn thành.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    _timer?.cancel();
+    final provider = context.read<GamesProvider>();
+    final game = provider.wordScramble;
+    await provider.completeGame(
+      gameType: GameType.wordScramble,
+      score: _correctCount,
+      totalQuestions: game?.words.length ?? 0,
+      correctAnswers: _correctCount,
+      answers: [
+        for (final word in game?.words ?? <ScrambleWord>[])
+          {'id': word.wordId, 'answer': _submittedAnswers[word.wordId] ?? ''},
+      ],
+    );
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
     if (_isFinishing) return;
     _isFinishing = true;
@@ -226,7 +263,12 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Stack(
       alignment: Alignment.topCenter,
       children: [
         Consumer<GamesProvider>(
@@ -448,6 +490,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
           ],
         ),
       ],
+      ),
     );
   }
 }

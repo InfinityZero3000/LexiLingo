@@ -125,6 +125,44 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     _initWord();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số từ đã nghe-gõ đúng.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    final provider = context.read<GamesProvider>();
+    final game = provider.spellingBee;
+    if (game != null) {
+      await provider.completeGame(
+        gameType: GameType.spellingBee,
+        score: _correctCount,
+        totalQuestions: game.words.length,
+        correctAnswers: _correctCount,
+        answers: [
+          for (final word in game.words)
+            {'id': word.wordId, 'answer': _submittedAnswers[word.wordId] ?? ''},
+        ],
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
     if (_isFinishing) return;
     _isFinishing = true;
@@ -166,14 +204,19 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final game = provider.spellingBee;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Consumer<GamesProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final game = provider.spellingBee;
         if (provider.error != null) {
           return GameLoadState(
             message: 'games.loadFailed'.tr(),
@@ -441,7 +484,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 }

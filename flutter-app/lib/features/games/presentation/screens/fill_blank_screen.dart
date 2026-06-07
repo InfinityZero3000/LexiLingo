@@ -128,6 +128,45 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     _startQuestion();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số câu đã hoàn thành.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    _timer?.cancel();
+    final provider = context.read<GamesProvider>();
+    final game = provider.fillBlank;
+    if (game != null) {
+      await provider.completeGame(
+        gameType: GameType.fillBlank,
+        score: _correctCount,
+        totalQuestions: game.questions.length,
+        correctAnswers: _correctCount,
+        answers: [
+          for (final q in game.questions)
+            {'id': q.id, 'answer': _submittedAnswers[q.id] ?? ''},
+        ],
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
     if (_isFinishing) return;
     _isFinishing = true;
@@ -177,11 +216,16 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Consumer<GamesProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
           );
         }
         final game = provider.fillBlank;
@@ -439,7 +483,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 }

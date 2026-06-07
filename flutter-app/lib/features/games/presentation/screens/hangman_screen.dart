@@ -136,6 +136,41 @@ class _HangmanScreenState extends State<HangmanScreen>
     }
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('Bạn sẽ không nhận XP nếu chưa hoàn thành từ này.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    final provider = context.read<GamesProvider>();
+    final game = provider.hangman;
+    if (game != null) {
+      await provider.completeGame(
+        gameType: GameType.hangman,
+        score: 0,
+        totalQuestions: 1,
+        correctAnswers: 0,
+        answers: [{'id': game.wordId, 'answer': ''}],
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   Future<void> _finishGame(HangmanGame game) async {
     if (_isFinishing) return;
     _isFinishing = true;
@@ -179,7 +214,12 @@ class _HangmanScreenState extends State<HangmanScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Stack(
       alignment: Alignment.topCenter,
       children: [
         Consumer<GamesProvider>(
@@ -459,6 +499,7 @@ class _HangmanScreenState extends State<HangmanScreen>
           ],
         ),
       ],
+      ),
     );
   }
 }
