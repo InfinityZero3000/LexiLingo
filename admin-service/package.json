@@ -22,7 +22,7 @@
     "gsap": "^3.15.0",
     "lucide-react": "^1.14.0",
     "react": "^19.2.5",
-    "react-dom": "^19.2.6",
+    "react-dom": "^19.2.7",
     "react-hook-form": "^7.77.0",
     "react-router-dom": "^7.16.0",
     "recharts": "^3.8.1",
