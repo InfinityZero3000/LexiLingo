@@ -52,6 +52,7 @@ Color getTimeBasedIconColor({required bool isDark}) {
     return AppColorRoles.primary(isDark);
   }
 }
+
 /// Personalized greeting header with glassmorphism
 class PersonalizedGreetingHeader extends StatelessWidget {
   final String userName;
@@ -412,23 +413,26 @@ class _NotificationBellState extends State<_NotificationBell>
                   ),
                   if (widget.count > 0)
                     Positioned(
-                      top: 8,
-                      right: 8,
+                      top: 5,
+                      right: 5,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 2,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.dangerGradient[0],
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
+                          minWidth: 14,
+                          minHeight: 14,
                         ),
                         child: Text(
                           widget.count > 9 ? '9+' : widget.count.toString(),
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.surface,
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,

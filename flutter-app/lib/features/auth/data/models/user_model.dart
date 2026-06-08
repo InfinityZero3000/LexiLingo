@@ -12,6 +12,7 @@ class UserModel extends UserEntity {
     super.provider,
     super.isVerified,
     super.isOnboardingCompleted,
+    super.roleSlug,
     super.cefrLevel,
     super.totalXp,
     super.numericLevel,
@@ -63,6 +64,10 @@ class UserModel extends UserEntity {
       provider: _optionalString(json['provider']) ?? 'local',
       isVerified: json['is_verified'] as bool? ?? false,
       isOnboardingCompleted: json['is_onboarding_completed'] as bool? ?? false,
+      roleSlug:
+          _optionalString(json['role_slug']) ??
+          _optionalString(json['role']) ??
+          'user',
       cefrLevel: _optionalString(json['cefr_level']) ?? 'A1',
       totalXp: json['total_xp'] as int? ?? 0,
       numericLevel: json['numeric_level'] as int? ?? 1,
@@ -91,6 +96,7 @@ class UserModel extends UserEntity {
       'provider': provider,
       'is_verified': isVerified,
       'is_onboarding_completed': isOnboardingCompleted,
+      'role_slug': roleSlug,
       'cefr_level': cefrLevel,
       'level': cefrLevel,
       'total_xp': totalXp,
@@ -114,6 +120,7 @@ class UserModel extends UserEntity {
       provider: entity.provider,
       isVerified: entity.isVerified,
       isOnboardingCompleted: entity.isOnboardingCompleted,
+      roleSlug: entity.roleSlug,
       cefrLevel: entity.cefrLevel,
       totalXp: entity.totalXp,
       numericLevel: entity.numericLevel,

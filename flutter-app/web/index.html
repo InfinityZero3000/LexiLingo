@@ -53,6 +53,27 @@
   <title>LexiLingo - English Learning App</title>
   <link rel="manifest" href="manifest.json">
 
+  <style>
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      background: #e1f2ff;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+    }
+
+    flutter-view {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+
   <!-- Service Worker auto-update: force new SW to activate immediately and reload -->
   <script>
     if ('serviceWorker' in navigator) {

@@ -9,6 +9,7 @@ class UserEntity {
   final String provider; // 'local', 'google', 'facebook'
   final bool isVerified;
   final bool isOnboardingCompleted;
+  final String roleSlug; // 'user', 'admin', 'super_admin'
   final String cefrLevel; // CEFR level: A1, A2, B1, B2, C1, C2
   final int totalXp;
   final int numericLevel;
@@ -27,6 +28,7 @@ class UserEntity {
     this.provider = 'local',
     this.isVerified = false,
     this.isOnboardingCompleted = false,
+    this.roleSlug = 'user',
     this.cefrLevel = 'A1',
     this.totalXp = 0,
     this.numericLevel = 1,
@@ -46,6 +48,7 @@ class UserEntity {
     String? provider,
     bool? isVerified,
     bool? isOnboardingCompleted,
+    String? roleSlug,
     String? cefrLevel,
     int? totalXp,
     int? numericLevel,
@@ -65,6 +68,7 @@ class UserEntity {
       isVerified: isVerified ?? this.isVerified,
       isOnboardingCompleted:
           isOnboardingCompleted ?? this.isOnboardingCompleted,
+      roleSlug: roleSlug ?? this.roleSlug,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       totalXp: totalXp ?? this.totalXp,
       numericLevel: numericLevel ?? this.numericLevel,
@@ -74,5 +78,10 @@ class UserEntity {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
+  }
+
+  bool get canAccessAdminPanel {
+    final normalizedRole = roleSlug.trim().toLowerCase();
+    return normalizedRole == 'admin' || normalizedRole == 'super_admin';
   }
 }

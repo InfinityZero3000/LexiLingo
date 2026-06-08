@@ -34,226 +34,250 @@ class LoginScreen extends StatelessWidget {
     final isLoading = auth.state == AuthState.loading;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
+      backgroundColor: const Color(0xFFD4E9FF),
+      body: DecoratedBox(
+        key: const Key('admin-login-background'),
         decoration: const BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(-0.7, -0.8),
             radius: 1.4,
-            colors: [
-              Color(0xFFFFF0E6),
-              Color(0xFFE1F2FF),
-              Color(0xFFD4E9FF),
-            ],
+            colors: [Color(0xFFFFF0E6), Color(0xFFE1F2FF), Color(0xFFD4E9FF)],
             stops: [0.0, 0.45, 1.0],
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 460),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => _closeAdminPanel(context),
-                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
-                      label: const Text('Back to LexiLingo'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: AppColors.onSurfaceVariant,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 8,
-                        ),
-                      ),
+          child: LayoutBuilder(
+            builder: (context, viewport) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: viewport.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 18,
                     ),
-                    const SizedBox(height: 18),
-                    // Brand
-                    Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFFFF4D00), Color(0xFFFF6F2A)],
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x59FF4D00),
-                                blurRadius: 16,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.language,
-                            color: Colors.white,
-                            size: 26,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 460),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            TextButton.icon(
+                              onPressed: () => _closeAdminPanel(context),
+                              icon: const Icon(
+                                Icons.arrow_back_rounded,
+                                size: 18,
+                              ),
+                              label: const Text('Back to LexiLingo'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: AppColors.onSurfaceVariant,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            // Brand
+                            Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color(0xFFFF4D00),
+                                        Color(0xFFFF6F2A),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x59FF4D00),
+                                        blurRadius: 16,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.language,
+                                    color: Colors.white,
+                                    size: 26,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'LexiLingo',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.onSurface,
+                                        letterSpacing: -0.01,
+                                      ),
+                                    ),
+                                    Text(
+                                      'ADMIN CONSOLE',
+                                      style: GoogleFonts.spaceGrotesk(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.18,
+                                        color: AppColors.onSurfaceMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 56),
                             Text(
-                              'LexiLingo',
+                              'Admin Login',
                               style: GoogleFonts.spaceGrotesk(
-                                fontSize: 20,
+                                fontSize: 34,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.onSurface,
-                                letterSpacing: -0.01,
+                                letterSpacing: -0.02,
                               ),
                             ),
+                            const SizedBox(height: 8),
                             Text(
-                              'ADMIN CONSOLE',
+                              'Đăng nhập bằng tài khoản Google admin của bạn.',
                               style: GoogleFonts.spaceGrotesk(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.18,
-                                color: AppColors.onSurfaceMuted,
+                                fontSize: 15,
+                                color: AppColors.onSurfaceVariant,
                               ),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 56),
-                    Text(
-                      'Admin Login',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
-                        letterSpacing: -0.02,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Đăng nhập bằng tài khoản Google admin của bạn.',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 15,
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 48),
-                    // Google Sign-In button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () => _signInWithGoogle(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.surface,
-                          foregroundColor: AppColors.onSurface,
-                          elevation: 2,
-                          shadowColor: const Color(0x1A0A3256),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            side: const BorderSide(
-                              color: AppColors.outline,
-                              width: 1.2,
-                            ),
-                          ),
-                        ),
-                        child: isLoading
-                            ? const SizedBox(
-                                width: 22,
-                                height: 22,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: AppColors.primary,
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _GoogleLogo(),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    'Đăng nhập với Google',
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.onSurface,
+                            const SizedBox(height: 48),
+                            // Google Sign-In button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: isLoading
+                                    ? null
+                                    : () => _signInWithGoogle(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.surface,
+                                  foregroundColor: AppColors.onSurface,
+                                  elevation: 2,
+                                  shadowColor: const Color(0x1A0A3256),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    side: const BorderSide(
+                                      color: AppColors.outline,
+                                      width: 1.2,
                                     ),
                                   ),
-                                ],
+                                ),
+                                child: isLoading
+                                    ? const SizedBox(
+                                        width: 22,
+                                        height: 22,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                          color: AppColors.primary,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          _GoogleLogo(),
+                                          const SizedBox(width: 12),
+                                          Flexible(
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                'Đăng nhập với Google',
+                                                style: GoogleFonts.spaceGrotesk(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: AppColors.onSurface,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                               ),
-                      ),
-                    ),
-                    if (auth.error != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.errorContainer,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: AppColors.error,
-                              size: 16,
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                auth.error!,
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 13,
-                                  color: AppColors.error,
+                            if (auth.error != null) ...[
+                              const SizedBox(height: 16),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.errorContainer,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      color: AppColors.error,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        auth.error!,
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 13,
+                                          color: AppColors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 48),
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.outline),
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.shield_outlined,
+                                        size: 14,
+                                        color: AppColors.onSurfaceMuted,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Google OAuth · Admin only · Secured',
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 11,
+                                          color: AppColors.onSurfaceMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
-                    const SizedBox(height: 48),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.outline),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.shield_outlined,
-                              size: 14,
-                              color: AppColors.onSurfaceMuted,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Google OAuth · Admin only · Secured',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 11,
-                                color: AppColors.onSurfaceMuted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -310,10 +334,16 @@ class _GoogleLogoPainter extends CustomPainter {
     final arcR = r * 0.72;
     final rect = Rect.fromCircle(center: Offset(cx, cy), radius: arcR);
 
-    canvas.drawArc(rect, -0.52, 1.57, false, bluePaint);    // top-right (blue)
-    canvas.drawArc(rect, 1.05, 1.57, false, redPaint);      // bottom-right (red)
-    canvas.drawArc(rect, 2.62, 1.57, false, yellowPaint);   // bottom-left (yellow)
-    canvas.drawArc(rect, 4.19, 1.57, false, greenPaint);    // top-left (green)
+    canvas.drawArc(rect, -0.52, 1.57, false, bluePaint); // top-right (blue)
+    canvas.drawArc(rect, 1.05, 1.57, false, redPaint); // bottom-right (red)
+    canvas.drawArc(
+      rect,
+      2.62,
+      1.57,
+      false,
+      yellowPaint,
+    ); // bottom-left (yellow)
+    canvas.drawArc(rect, 4.19, 1.57, false, greenPaint); // top-left (green)
 
     // Horizontal bar (right side)
     final barPaint = Paint()

@@ -1,25 +1,48 @@
+"""Verify starter catalog quality and per-user seeding."""
+
 import asyncio
 import sys
 import uuid
-from sqlalchemy import select, func, delete
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+
+from sqlalchemy import delete, func, select
 
 sys.path.append("/app")
 
-from app.models.vocabulary import UserVocabulary, VocabularyItem
-from app.models.user import User
-from app.core.config import settings
+from app.core.database import AsyncSessionLocal
 from app.crud.vocabulary import vocabulary_crud
+from app.models.user import User
+from app.models.vocabulary import UserVocabulary, VocabularyItem
+from app.services.vocabulary_catalog_policy import (
+    STARTER_TOPIC_QUOTAS,
+    VocabularyCandidate,
+    has_tag,
+    select_balanced_starter_vocabulary,
+)
 
-async def main():
-    engine = create_async_engine(settings.async_database_url, echo=False)
-    AsyncSessionLocal = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
 
+async def main() -> None:
     async with AsyncSessionLocal() as session:
-        # 1. Create a temporary test user
+        catalog = list((await session.execute(select(VocabularyItem))).scalars().all())
+        basic_items = [item for item in catalog if has_tag(item.tags, "basic_200")]
+        assignments = select_balanced_starter_vocabulary(
+            VocabularyCandidate(
+                id=item.id,
+                word=item.word,
+                definition=item.definition,
+                usage_frequency=item.usage_frequency,
+                tags=item.tags,
+                created_at=item.created_at,
+            )
+            for item in basic_items
+        )
+        counts = {
+            topic: sum(assignment.topic == topic for assignment in assignments)
+            for topic in STARTER_TOPIC_QUOTAS
+        }
+        assert len(assignments) == 200
+        assert counts == STARTER_TOPIC_QUOTAS
+        print(f"Starter catalog verified: {counts}")
+
         test_user_id = uuid.uuid4()
         test_user = User(
             id=test_user_id,
@@ -30,52 +53,26 @@ async def main():
         )
         session.add(test_user)
         await session.commit()
-        print(f"Created test user: {test_user.username} (ID: {test_user_id})")
 
         try:
-            # 2. Check initial count in user_vocabulary
-            print(f"Database dialect: {session.bind.dialect.name}")
-            total_vocab = await session.scalar(select(func.count(VocabularyItem.id)))
-            print(f"Total vocabulary items in DB: {total_vocab}")
-            
-            # Count items tagged with basic_200
-            from sqlalchemy.dialects.postgresql import JSONB
-            from sqlalchemy import cast
-            if session.bind.dialect.name == "postgresql":
-                basic_cnt = await session.scalar(
-                    select(func.count(VocabularyItem.id)).where(cast(VocabularyItem.tags, JSONB).contains(["basic_200"]))
-                )
-            else:
-                basic_cnt = await session.scalar(
-                    select(func.count(VocabularyItem.id)).where(VocabularyItem.tags.contains(["basic_200"]))
-                )
-            print(f"Total basic_200 tagged items in DB: {basic_cnt}")
-
-            initial_count = await session.scalar(
-                select(func.count(UserVocabulary.id)).where(UserVocabulary.user_id == test_user_id)
+            await vocabulary_crud.ensure_basic_words_for_user(
+                session,
+                test_user_id,
             )
-            print(f"Initial user vocabulary count: {initial_count}")
-
-            # 3. Run the automatic seeding logic
-            print("Running ensure_basic_words_for_user...")
-            await vocabulary_crud.ensure_basic_words_for_user(session, test_user_id)
-
-            # 4. Check user_vocabulary count again
             after_count = await session.scalar(
-                select(func.count(UserVocabulary.id)).where(UserVocabulary.user_id == test_user_id)
+                select(func.count(UserVocabulary.id)).where(
+                    UserVocabulary.user_id == test_user_id
+                )
             )
-            print(f"User vocabulary count after seeding: {after_count}")
-
-            # Verify that we got exactly 200 words
             assert after_count == 200, f"Expected 200 words, got {after_count}"
-            print("Verification successful! Basic 200 words seeded perfectly.")
-
+            print("Per-user seeding verified: 200 words.")
         finally:
-            # Clean up test user and their vocabulary
-            await session.execute(delete(UserVocabulary).where(UserVocabulary.user_id == test_user_id))
+            await session.execute(
+                delete(UserVocabulary).where(UserVocabulary.user_id == test_user_id)
+            )
             await session.execute(delete(User).where(User.id == test_user_id))
             await session.commit()
-            print("Cleaned up test data.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
