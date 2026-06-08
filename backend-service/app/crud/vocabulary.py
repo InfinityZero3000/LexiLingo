@@ -799,10 +799,8 @@ class VocabularyCRUD:
         basic_item_ids = [r[0] for r in basic_items_result.all()]
         
         if not basic_item_ids:
-            # Mark as seeded even if empty, to avoid querying again
-            user_obj.has_seeded_basic_words = True
-            db.add(user_obj)
-            await db.commit()
+            # The source catalog may be populated later during deployment.
+            # Leave the flag unset so a later request can retry seeding.
             return
             
         # 3. Fetch vocabulary item IDs already in user's collection

@@ -1,28 +1,38 @@
 import pytest
 import uuid
 from sqlalchemy import select, delete, func
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, joinedload
-from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
-from app.core.config import settings
 from app.models.user import User
-from app.models.vocabulary import VocabularyItem, UserVocabulary, VocabularyReview, VocabularyDeck, VocabularyDeckItem
+from app.models.vocabulary import (
+    DifficultyLevel,
+    PartOfSpeech,
+    UserVocabulary,
+    VocabularyDeck,
+    VocabularyDeckItem,
+    VocabularyItem,
+    VocabularyReview,
+)
 from app.crud.vocabulary import vocabulary_crud
-DB_URL = settings.DATABASE_URL
 
-@pytest.fixture(scope="module")
-def anyio_backend():
-    return "asyncio"
 
 @pytest.fixture
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    from sqlalchemy.pool import NullPool
-    local_engine = create_async_engine(DB_URL, poolclass=NullPool, echo=False)
-    LocalSession = sessionmaker(local_engine, class_=AsyncSession, expire_on_commit=False)
-    async with LocalSession() as session:
-        yield session
-    await local_engine.dispose()
+async def basic_vocabulary_catalog(db_session: AsyncSession):
+    items = [
+        VocabularyItem(
+            word=f"basic-ci-{index:03d}",
+            definition=f"Basic CI vocabulary item {index}",
+            translation={"vi": f"tu-co-ban-{index}"},
+            part_of_speech=PartOfSpeech.NOUN,
+            difficulty_level=DifficultyLevel.A1,
+            tags=["basic_200"],
+        )
+        for index in range(200)
+    ]
+    db_session.add_all(items)
+    await db_session.commit()
+    return items
 
 @pytest.fixture
 async def temp_users(db_session: AsyncSession):
@@ -72,7 +82,24 @@ async def temp_users(db_session: AsyncSession):
     await db_session.commit()
 
 @pytest.mark.asyncio
-async def test_vocabulary_auto_seeding_and_isolation(db_session: AsyncSession, temp_users):
+async def test_empty_basic_catalog_does_not_mark_user_as_seeded(
+    db_session: AsyncSession,
+    temp_users,
+):
+    user_a, _ = temp_users
+
+    await vocabulary_crud.ensure_basic_words_for_user(db_session, user_a.id)
+    await db_session.refresh(user_a)
+
+    assert user_a.has_seeded_basic_words is False
+
+
+@pytest.mark.asyncio
+async def test_vocabulary_auto_seeding_and_isolation(
+    db_session: AsyncSession,
+    temp_users,
+    basic_vocabulary_catalog,
+):
     user_a, user_b = temp_users
     
     # 1. Verify initial count in user_vocabulary is 0 for both users
@@ -96,7 +123,11 @@ async def test_vocabulary_auto_seeding_and_isolation(db_session: AsyncSession, t
     assert cnt_b_after_seed == 200
 
 @pytest.mark.asyncio
-async def test_multi_user_srs_isolation(db_session: AsyncSession, temp_users):
+async def test_multi_user_srs_isolation(
+    db_session: AsyncSession,
+    temp_users,
+    basic_vocabulary_catalog,
+):
     user_a, user_b = temp_users
     
     # Seed words
@@ -143,11 +174,7 @@ async def test_multi_user_srs_isolation(db_session: AsyncSession, temp_users):
 @pytest.mark.asyncio
 async def test_deck_and_item_isolation(db_session: AsyncSession, temp_users):
     user_a, user_b = temp_users
-    
-    # Seed words
-    await vocabulary_crud.ensure_basic_words_for_user(db_session, user_a.id)
-    await vocabulary_crud.ensure_basic_words_for_user(db_session, user_b.id)
-    
+
     # User A creates a custom deck
     deck_a = VocabularyDeck(
         id=uuid.uuid4(),
