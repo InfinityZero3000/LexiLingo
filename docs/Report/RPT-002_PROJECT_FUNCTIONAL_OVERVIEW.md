@@ -46,7 +46,7 @@ Mục tiêu của hệ thống không chỉ là "trả lời câu hỏi" mà là
 | Nhóm | Tính Năng |
 |------|-----------|
 | **Learning Core** | Khóa học, roadmap, session bài học, CEFR assessment |
-| **AI Interaction** | Lexi Chat (GraphCAG), Topic Chat, phân tích hội thoại |
+| **AI Interaction** | Lexi Chat (TRACECAG), Topic Chat, phân tích hội thoại |
 | **Practice Content** | Games, News, Podcast, Books, Vocabulary review |
 | **Motivation Layer** | Wallet, Shop, Leaderboard, Achievement, Streak, XP |
 | **Account & Safety** | Login (Email/Google/Facebook), Register, Reset password, Profile, Settings |
@@ -65,7 +65,7 @@ Mở App
             │    └─ Gợi ý nội dung: course, news, podcast
             ├─ Tab 2: Learning (CourseListScreen)
             │    └─ Course → Lesson → LearningSession → Progress update
-            ├─ Tab 3: Lexi (LexiChatPage — GraphCAG AI)
+            ├─ Tab 3: Lexi (LexiChatPage — TRACECAG AI)
             │    └─ Chat → AI phân tích → Sửa lỗi → Cập nhật KG mastery
             ├─ Tab 4: Chat (StorySelectionPage → TopicChatPage)
             └─ Tab 5: Account (ProfilePage)

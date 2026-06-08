@@ -30,7 +30,8 @@
     "level": "Niveau",
     "rename": "Rebaptiser",
     "play": "Jouer",
-    "awesome": "Génial!"
+    "awesome": "Génial!",
+    "create": "Créer"
   },
   "auth": {
     "login": "Connexion",
@@ -203,7 +204,11 @@
     "startStreakToday": "Commencez votre séquence aujourd'hui !",
     "streakAtRisk": "À risque !",
     "doneForToday": "C'est fait pour aujourd'hui !",
-    "practiceToKeepStreak": "Entraînez-vous maintenant pour conserver votre séquence !"
+    "practiceToKeepStreak": "Entraînez-vous maintenant pour conserver votre séquence !",
+    "pointsCalendar": "Calendrier des Points",
+    "setupCheckinReminder": "Configurer le rappel",
+    "checkinReminder": "Rappel de pointage",
+    "setTime": "Définir l'heure"
   },
   "course": {
     "title": "Cours",
@@ -965,7 +970,12 @@
     "quickReply3": "Donnez-moi un défi de conversation quotidien.",
     "correctionLabel": "Correction",
     "pendingSync": "Synchronisation en attente",
-    "languageNotes": "Notes de langue"
+    "languageNotes": "Notes de langue",
+    "listenButton": "Écouter",
+    "viewNotesButton": "Voir notes",
+    "correctionsSection": "Corrections",
+    "vietnameseHintSection": "Indice en vietnamien",
+    "relatedConceptsSection": "Concepts liés"
   },
   "youtube": {
     "subtitles": "Sous-titres",
@@ -1085,6 +1095,43 @@
     "definitionHint": "Que signifie ce mot ?",
     "exampleSentenceLabel": "Phrase d'exemple (optionnel)",
     "exampleSentenceHint": "ex. She was resilient in the face of adversity.",
-    "failedToSaveWord": "Impossible d'enregistrer le mot"
+    "failedToSaveWord": "Impossible d'enregistrer le mot",
+    "systemTopicsHeader": "Sujets système",
+    "customDecksHeader": "Vos paquets",
+    "wordsCount": "mots",
+    "createCustomDeck": "Créer un paquet",
+    "createNewDeck": "Créer un nouveau paquet",
+    "deckName": "Nom du paquet",
+    "deckDescription": "Description",
+    "selectColor": "Choisir une couleur",
+    "addToDeck": "Ajouter au paquet",
+    "addToDeckTitle": "Ajouter au paquet",
+    "noDecksFound": "Aucun paquet trouvé.",
+    "deleteDeckTitle": "Supprimer le paquet",
+    "deleteDeckPrompt": "Êtes-vous sûr de vouloir supprimer le paquet '{}' ? Les mots à l'intérieur ne seront pas supprimés de votre compte.",
+    "showFront": "Afficher le recto",
+    "flipCard": "Retourner la carte",
+    "addWordFirst": "Veuillez d'abord ajouter ce mot à votre collection.",
+    "addToDeckSuccess": "Ajouté à \"{}\" avec succès",
+    "addToDeckFailed": "Échec de l'ajout au paquet",
+    "exampleLabel": "Exemple",
+    "cardBack": "Verso",
+    "cardFront": "Recto",
+    "createDeckFailed": "Échec de la création du paquet",
+    "deleteDeckFailed": "Échec de la suppression du paquet",
+    "startStudyFailed": "Échec du démarrage de la session",
+    "wordNotFound": "Mot introuvable dans le dictionnaire",
+    "topicGeneral": "Général",
+    "topicGeneralSubtitle": "Quiz audio uniquement",
+    "topicTravel": "Voyage",
+    "topicTravelSubtitle": "Explorer le monde",
+    "topicBusiness": "Affaires",
+    "topicBusinessSubtitle": "Carrière et travail",
+    "topicDailyLife": "Vie quotidienne",
+    "topicDailyLifeSubtitle": "Conversations quotidiennes",
+    "topicScience": "Science",
+    "topicScienceSubtitle": "Concepts et découvertes",
+    "topicTechnology": "Technologie",
+    "topicTechnologySubtitle": "Logiciels et ère numérique"
   }
 }

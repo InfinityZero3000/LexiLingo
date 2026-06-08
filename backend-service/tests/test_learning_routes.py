@@ -5,6 +5,7 @@ Testing lesson start, answer submission, and lesson completion
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
@@ -41,7 +42,7 @@ class TestLearningSession:
         assert attempt_data["lesson_id"] == str(test_lesson.id)
         assert attempt_data["lives_remaining"] == 3
         assert attempt_data["hints_available"] == 3
-        assert attempt_data["total_questions"] == 10
+        assert attempt_data["total_questions"] == len(test_lesson.content["exercises"])
     
     async def test_start_lesson_resume_existing(
         self,
@@ -351,7 +352,55 @@ class TestCourseRoadmap:
         assert "title" in first_unit
         assert "lessons" in first_unit
         assert isinstance(first_unit["lessons"], list)
-    
+
+    async def test_roadmap_numbers_follow_sorted_display_order(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_course_with_units: Course
+    ):
+        """Display numbers are one-based ordinals, not stored indexes."""
+        units_result = await db_session.execute(
+            select(Unit)
+            .where(Unit.course_id == test_course_with_units.id)
+            .order_by(Unit.order_index)
+        )
+        units = list(units_result.scalars().all())
+
+        for unit, order_index in zip(units, [10, 20, 30]):
+            unit.order_index = order_index
+            lessons_result = await db_session.execute(
+                select(Lesson)
+                .where(Lesson.unit_id == unit.id)
+                .order_by(Lesson.order_index)
+            )
+            lessons = list(lessons_result.scalars().all())
+            for lesson, lesson_order_index in zip(lessons, [5, 9]):
+                lesson.order_index = lesson_order_index
+
+        await db_session.commit()
+
+        response = await async_client.get(
+            f"/api/v1/learning/courses/{test_course_with_units.id}/roadmap",
+            headers=auth_headers
+        )
+
+        assert response.status_code == 200
+        units_data = response.json()["data"]["units"]
+        assert [unit["unit_number"] for unit in units_data] == [1, 2, 3]
+        assert [unit["title"] for unit in units_data] == [
+            "Unit 1",
+            "Unit 2",
+            "Unit 3",
+        ]
+        for unit_data in units_data:
+            assert [
+                lesson["lesson_number"] for lesson in unit_data["lessons"]
+            ] == [1, 2]
+            assert unit_data["lessons"][0]["is_locked"] is False
+            assert unit_data["lessons"][1]["is_locked"] is True
+
     async def test_roadmap_lesson_lock_state(
         self,
         async_client: AsyncClient,

@@ -48,6 +48,7 @@ class StoryService:
             difficulty_level=story.difficulty_level,
             category=story.category,
             estimated_minutes=story.estimated_minutes,
+            icon_key=story.icon_key,
             cover_image_url=story.cover_image_url,
             suggested_prompts=story.suggested_prompts,
             tags=story.tags,
@@ -170,6 +171,7 @@ class StoryService:
                     "difficulty_level": 1,
                     "category": 1,
                     "estimated_minutes": 1,
+                    "icon_key": 1,
                     "cover_image_url": 1,
                     "suggested_prompts": 1,
                     "tags": 1

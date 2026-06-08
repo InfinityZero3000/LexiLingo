@@ -56,6 +56,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
     try {
       await _repo.updateUser(widget.userId, {
         'numeric_level': int.tryParse(_levelCtrl.text) ?? 1,
+        'gems': int.tryParse(_gemsCtrl.text) ?? 0,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

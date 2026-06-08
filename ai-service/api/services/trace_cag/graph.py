@@ -195,6 +195,7 @@ class TraceCAGPipeline:
         benchmark_context: Optional[str] = None,
         benchmark_metadata: Optional[Dict[str, Any]] = None,
         kg_seed_concepts: Optional[List[str]] = None,
+        return_raw_state: bool = False,
     ) -> Dict[str, Any]:
         """
         Run the TraceCAG pipeline.
@@ -242,16 +243,19 @@ class TraceCAGPipeline:
         # Run the graph
         try:
             final_state = await self.compiled.ainvoke(initial_state)
-            
+
             # Add total latency
             total_latency_ms = int((time.time() - start_time) * 1000)
             final_state["latency_ms"] = total_latency_ms
-            
+
             logger.info(
                 f"[TraceCAG] Completed in {total_latency_ms}ms, "
                 f"models: {final_state.get('models_used', [])}"
             )
-            
+
+            if return_raw_state:
+                return dict(final_state)
+
             return self._format_response(final_state)
             
         except Exception as e:
@@ -369,6 +373,33 @@ class TraceCAGPipeline:
             } if state.get("tts_audio_bytes") or state.get("tts_audio_url") else None,
         }
     
+    async def analyze_for_streaming(
+        self,
+        user_input: str,
+        session_id: str,
+        user_id: Optional[str] = None,
+        learner_profile: Optional[Dict[str, Any]] = None,
+        conversation_history: Optional[List[Dict[str, Any]]] = None,
+        **kwargs: Any,
+    ) -> Dict[str, Any]:
+        """Run the pipeline with generation skipped; return raw state.
+
+        Used by the SSE streaming endpoint so it can stream LLM tokens itself
+        after the cheaper KG / diagnosis / retrieval steps have prepared context.
+        On a cache hit the cached tutor_response is already in the state and
+        the caller should use it directly instead of calling the LLM.
+        """
+        return await self.analyze(
+            user_input=user_input,
+            session_id=session_id,
+            user_id=user_id,
+            learner_profile=learner_profile,
+            conversation_history=conversation_history,
+            generation_policy="skip",
+            return_raw_state=True,
+            **kwargs,
+        )
+
     async def stream(
         self,
         user_input: str,

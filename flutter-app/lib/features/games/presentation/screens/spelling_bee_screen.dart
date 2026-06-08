@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 
 /// Spelling Bee game screen.
 ///
@@ -28,11 +29,12 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
   int _wordIndex = 0;
   int _playsLeft = 3;
   int _correctCount = 0;
-  int _totalXpEarned = 0;
   bool _gameLoaded = false;
   bool _answered = false;
   bool _isCorrect = false;
   bool _isPlaying = false;
+  bool _isFinishing = false;
+  final Map<String, String> _submittedAnswers = {};
 
   @override
   void initState() {
@@ -69,25 +71,25 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     final game = context.read<GamesProvider>().spellingBee!;
     final word = game.words[_wordIndex];
     final audioUrl = word.audioUrl;
-    setState(() {
-      _playsLeft--;
-      _isPlaying = true;
-    });
+    setState(() => _isPlaying = true);
     if (audioUrl == null || audioUrl.isEmpty) {
       if (mounted) setState(() => _isPlaying = false);
       return;
     }
     try {
       await _audioPlayer.setUrl(audioUrl);
-      await _audioPlayer.play();
+      final playback = _audioPlayer.play();
       await _audioPlayer.playerStateStream
-          .firstWhere((s) => s.processingState == ProcessingState.completed)
-          .timeout(const Duration(seconds: 8));
+          .firstWhere((state) => state.playing)
+          .timeout(const Duration(seconds: 3));
+      if (mounted) setState(() => _playsLeft--);
+      await playback;
     } catch (_) {
       // Fallback: open with url_launcher if just_audio fails
       final uri = Uri.tryParse(audioUrl);
       if (uri != null && await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+        final launched = await launchUrl(uri);
+        if (launched && mounted) setState(() => _playsLeft--);
       }
     } finally {
       if (mounted) setState(() => _isPlaying = false);
@@ -100,16 +102,10 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     final word = game.words[_wordIndex];
     final input = _inputController.text.trim().toLowerCase();
     final correct = word.word.toLowerCase();
+    _submittedAnswers[word.wordId] = _inputController.text.trim();
     final isCorrect = input == correct;
     if (isCorrect) {
       _correctCount++;
-      _totalXpEarned += word.xpFull ?? word.xpValue;
-    } else if (input.isNotEmpty) {
-      // Partial credit: more than 50% letters correct
-      final overlap = _countOverlap(input, correct);
-      if (overlap > correct.length ~/ 2) {
-        _totalXpEarned += word.xpPartial ?? 0;
-      }
     }
     setState(() {
       _answered = true;
@@ -117,15 +113,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     });
   }
 
-  int _countOverlap(String a, String b) {
-    int count = 0;
-    for (int i = 0; i < a.length && i < b.length; i++) {
-      if (a[i] == b[i]) count++;
-    }
-    return count;
-  }
-
   void _nextWord() {
+    if (!mounted || _isFinishing) return;
     final game = context.read<GamesProvider>().spellingBee;
     if (game == null) return;
     if (_wordIndex + 1 >= game.words.length) {
@@ -136,7 +125,47 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     _initWord();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số từ đã nghe-gõ đúng.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    final provider = context.read<GamesProvider>();
+    final game = provider.spellingBee;
+    if (game != null) {
+      await provider.completeGame(
+        gameType: GameType.spellingBee,
+        score: _correctCount,
+        totalQuestions: game.words.length,
+        correctAnswers: _correctCount,
+        answers: [
+          for (final word in game.words)
+            {'id': word.wordId, 'answer': _submittedAnswers[word.wordId] ?? ''},
+        ],
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
+    if (_isFinishing) return;
+    _isFinishing = true;
     final provider = context.read<GamesProvider>();
     final game = provider.spellingBee!;
     final xpResult = await provider.completeGame(
@@ -144,7 +173,13 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
       score: _correctCount,
       totalQuestions: game.words.length,
       correctAnswers: _correctCount,
-      baseXp: _totalXpEarned,
+      answers: [
+        for (final word in game.words)
+          {
+            'id': word.wordId,
+            'answer': _submittedAnswers[word.wordId] ?? '',
+          },
+      ],
     );
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -157,7 +192,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             score: _correctCount,
             totalQuestions: game.words.length,
             correctAnswers: _correctCount,
-            xpEarned: xpResult?.xpAwarded ?? _totalXpEarned,
+            xpEarned: xpResult?.xpAwarded ?? 0,
             durationSeconds: 0,
             xpResult: xpResult,
           ),
@@ -169,14 +204,42 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading || !_gameLoaded) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Consumer<GamesProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final game = provider.spellingBee;
+        if (provider.error != null) {
+          return GameLoadState(
+            message: 'games.loadFailed'.tr(),
+            onRetry: () async {
+              await provider.loadSpellingBee();
+              if (mounted) _initWord();
+            },
+          );
+        }
+        if (game == null || game.words.isEmpty) {
+          return GameLoadState(
+            message: 'games.emptyGame'.tr(),
+            onRetry: () async {
+              await provider.loadSpellingBee();
+              if (mounted) _initWord();
+            },
+          );
+        }
+        if (!_gameLoaded) {
           return const Scaffold(
             body: Center(child: LottieLoadingWidget.medium()),
           );
         }
-        final game = provider.spellingBee!;
         final word = game.words[_wordIndex];
 
         return Scaffold(
@@ -421,7 +484,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 }

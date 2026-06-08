@@ -43,4 +43,4 @@ data/kg_raw/edges_final.csv
 data/kg_raw/*.gz
 data/kg_raw/*.jsonl
 kg_raw/
-graphcag*
+TRACECAG*

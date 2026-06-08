@@ -45,8 +45,11 @@ def disable_rate_limiting(monkeypatch):
     monkeypatch.setattr(RateLimitMiddleware, "_testing", True)
 
 
-# Test database URL (use separate test database)
-TEST_DATABASE_URL = "postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test"
+# Test database URL (use separate test database, configurable via environment)
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test"
+)
 
 
 async def _reset_public_schema(engine) -> None:

@@ -253,6 +253,7 @@ class Story {
   final DifficultyLevel difficultyLevel;
   final String category;
   final int estimatedMinutes;
+  final String? iconKey;
   final String? coverImageUrl;
   final ContextDescription contextDescription;
   final RolePersona rolePersona;
@@ -271,6 +272,7 @@ class Story {
     required this.difficultyLevel,
     required this.category,
     this.estimatedMinutes = 15,
+    this.iconKey,
     this.coverImageUrl,
     required this.contextDescription,
     required this.rolePersona,
@@ -298,6 +300,7 @@ class Story {
           json['estimated_minutes'] as int? ??
           json['estimatedMinutes'] as int? ??
           15,
+      iconKey: json['icon_key'] as String? ?? json['iconKey'] as String?,
       coverImageUrl:
           json['cover_image_url'] as String? ??
           json['coverImageUrl'] as String?,
@@ -374,6 +377,7 @@ class Story {
     'category': category,
     'difficulty_level': difficultyLevel.code,
     'estimated_minutes': estimatedMinutes,
+    'icon_key': iconKey,
     'cover_image_url': coverImageUrl,
     'context_description': contextDescription.toJson(),
     'role_persona': rolePersona.toJson(),
@@ -393,6 +397,7 @@ class StoryListItem {
   final DifficultyLevel difficultyLevel;
   final String category;
   final int estimatedMinutes;
+  final String? iconKey;
   final String? coverImageUrl;
   final List<String> suggestedPrompts;
   final List<String> tags;
@@ -403,6 +408,7 @@ class StoryListItem {
     required this.difficultyLevel,
     required this.category,
     this.estimatedMinutes = 15,
+    this.iconKey,
     this.coverImageUrl,
     this.suggestedPrompts = const [],
     this.tags = const [],
@@ -422,6 +428,7 @@ class StoryListItem {
           json['estimated_minutes'] as int? ??
           json['estimatedMinutes'] as int? ??
           15,
+      iconKey: json['icon_key'] as String? ?? json['iconKey'] as String?,
       coverImageUrl:
           json['cover_image_url'] as String? ??
           json['coverImageUrl'] as String?,
@@ -445,6 +452,7 @@ class StoryListItem {
     'category': category,
     'difficulty_level': difficultyLevel.code,
     'estimated_minutes': estimatedMinutes,
+    'icon_key': iconKey,
     'cover_image_url': coverImageUrl,
     'suggested_prompts': suggestedPrompts,
     'tags': tags,

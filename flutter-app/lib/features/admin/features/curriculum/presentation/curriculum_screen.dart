@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../data/curriculum_repository.dart';
 
 class CurriculumScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
   final _repo = CurriculumRepository();
   List<Course> _courses = [];
   bool _loading = true;
+  String? _error;
   final _searchCtrl = TextEditingController();
 
   @override
@@ -30,12 +32,12 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
   }
 
   Future<void> _load([String? search]) async {
-    setState(() => _loading = true);
+    setState(() { _loading = true; _error = null; });
     try {
       final courses = await _repo.getCourses(search: search);
       if (mounted) setState(() { _courses = courses; _loading = false; });
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (mounted) setState(() { _loading = false; _error = 'Không thể tải danh sách courses.'; });
     }
   }
 
@@ -50,6 +52,10 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
             backgroundColor: AppColors.background,
             elevation: 0,
             scrolledUnderElevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+              onPressed: AdminShell.openDrawer,
+            ),
             title: Row(
               children: [
                 Container(
@@ -164,6 +170,32 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                if (_error != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(_error!,
+                              style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.error)),
+                        ),
+                        GestureDetector(
+                          onTap: () => _load(),
+                          child: Text('Retry',
+                              style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.error)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 // Create new course button
                 SizedBox(
                   width: double.infinity,

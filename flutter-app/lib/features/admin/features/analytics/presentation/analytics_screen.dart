@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -44,8 +44,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          onPressed: AdminShell.openDrawer,
         ),
         title: Text('Content Analytics',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
@@ -333,7 +333,7 @@ class _LineChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = AppColors.primaryContainer.withOpacity(0.3)
+      ..color = AppColors.primaryContainer.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     final w = size.width / (points.length - 1);

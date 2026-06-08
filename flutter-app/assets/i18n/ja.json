@@ -30,7 +30,8 @@
     "level": "レベル",
     "rename": "名前の変更",
     "play": "遊ぶ",
-    "awesome": "素晴らしい！"
+    "awesome": "素晴らしい！",
+    "create": "作成"
   },
   "auth": {
     "login": "ログイン",
@@ -203,7 +204,11 @@
     "startStreakToday": "今日から連続記録を始めましょう！",
     "streakAtRisk": "危険にさらされています!",
     "doneForToday": "今日はこれで終わりです！",
-    "practiceToKeepStreak": "連勝記録を維持するために今すぐ練習してください!"
+    "practiceToKeepStreak": "連勝記録を維持するために今すぐ練習してください!",
+    "pointsCalendar": "ポイントカレンダー",
+    "setupCheckinReminder": "チェックインリマインダーを設定",
+    "checkinReminder": "チェックインリマインダー",
+    "setTime": "時間を設定"
   },
   "course": {
     "title": "コース",
@@ -965,7 +970,12 @@
     "quickReply3": "日常会話にチャレンジしてみませんか。",
     "correctionLabel": "修正",
     "pendingSync": "同期保留中",
-    "languageNotes": "言語ノート"
+    "languageNotes": "言語ノート",
+    "listenButton": "再生",
+    "viewNotesButton": "メモを見る",
+    "correctionsSection": "修正",
+    "vietnameseHintSection": "ベトナム語ヒント",
+    "relatedConceptsSection": "関連概念"
   },
   "youtube": {
     "subtitles": "字幕",
@@ -1085,6 +1095,43 @@
     "definitionHint": "この単語の意味は？",
     "exampleSentenceLabel": "例文（任意）",
     "exampleSentenceHint": "例：She was resilient in the face of adversity.",
-    "failedToSaveWord": "単語の保存に失敗しました"
+    "failedToSaveWord": "単語の保存に失敗しました",
+    "systemTopicsHeader": "システムトピック",
+    "customDecksHeader": "あなたのデッキ",
+    "wordsCount": "単語",
+    "createCustomDeck": "デッキを作成",
+    "createNewDeck": "新しいデッキを作成",
+    "deckName": "デッキ名",
+    "deckDescription": "説明",
+    "selectColor": "色を選択",
+    "addToDeck": "デッキに追加",
+    "addToDeckTitle": "デッキに追加",
+    "noDecksFound": "デッキが見つかりません。",
+    "deleteDeckTitle": "デッキを削除",
+    "deleteDeckPrompt": "デッキ '{}' を削除してもよろしいですか？中の単語はアカウントから削除されません。",
+    "showFront": "表面を表示",
+    "flipCard": "カードを裏返す",
+    "addWordFirst": "まずこの単語をコレクションに追加してください。",
+    "addToDeckSuccess": "\"{}\" に正常に追加されました",
+    "addToDeckFailed": "デッキへの追加に失敗しました",
+    "exampleLabel": "例文",
+    "cardBack": "裏面",
+    "cardFront": "表面",
+    "createDeckFailed": "デッキの作成に失敗しました",
+    "deleteDeckFailed": "デッキの削除に失敗しました",
+    "startStudyFailed": "学習セッションを開始できませんでした",
+    "wordNotFound": "辞書に単語が見つかりません",
+    "topicGeneral": "総合",
+    "topicGeneralSubtitle": "リスニングクイズ",
+    "topicTravel": "旅行",
+    "topicTravelSubtitle": "世界を探索",
+    "topicBusiness": "ビジネス",
+    "topicBusinessSubtitle": "キャリアと仕事",
+    "topicDailyLife": "日常生活",
+    "topicDailyLifeSubtitle": "日常会話",
+    "topicScience": "科学",
+    "topicScienceSubtitle": "概念と発見",
+    "topicTechnology": "テクノロジー",
+    "topicTechnologySubtitle": "ソフトウェアとデジタル時代"
   }
 }

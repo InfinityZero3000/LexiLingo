@@ -17,7 +17,7 @@ Rank Tiers:
 """
 
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 from enum import Enum
 
 
@@ -46,6 +46,14 @@ class RankInfo:
     icon_url: str
     min_score: int
     max_score: Optional[int]
+
+
+@dataclass(frozen=True)
+class RankChange:
+    changed: bool
+    direction: Literal["promotion", "demotion", "unchanged"]
+    old_rank: str
+    new_rank: str
 
 
 # Proficiency value mapping (A1 to C2)
@@ -102,7 +110,7 @@ def calculate_rank_score(numeric_level: int, proficiency_level: str) -> float:
         Weighted score (0-100)
     """
     # Level contributes 60% of score (capped at level 100)
-    capped_level = min(numeric_level, 100)
+    capped_level = max(0, min(numeric_level, 100))
     level_score = (capped_level / 100) * 60
     
     # Proficiency contributes 40% of score
@@ -157,7 +165,7 @@ def calculate_rank(numeric_level: int, proficiency_level: str) -> RankInfo:
             break
     
     # Calculate component scores
-    capped_level = min(numeric_level, 100)
+    capped_level = max(0, min(numeric_level, 100))
     level_score = (capped_level / 100) * 60
     
     prof_value = get_proficiency_value(proficiency_level)
@@ -177,28 +185,44 @@ def calculate_rank(numeric_level: int, proficiency_level: str) -> RankInfo:
     )
 
 
+def check_rank_change(
+    old_level: int, old_proficiency: str,
+    new_level: int, new_proficiency: str
+) -> RankChange:
+    """Describe a rank promotion, demotion, or unchanged result."""
+    old_rank = calculate_rank(old_level, old_proficiency)
+    new_rank = calculate_rank(new_level, new_proficiency)
+
+    old_index = list(RankTier).index(old_rank.rank)
+    new_index = list(RankTier).index(new_rank.rank)
+    if new_index > old_index:
+        direction = "promotion"
+    elif new_index < old_index:
+        direction = "demotion"
+    else:
+        direction = "unchanged"
+
+    return RankChange(
+        changed=direction != "unchanged",
+        direction=direction,
+        old_rank=old_rank.rank.value,
+        new_rank=new_rank.rank.value,
+    )
+
+
 def check_rank_up(
     old_level: int, old_proficiency: str,
     new_level: int, new_proficiency: str
 ) -> Tuple[bool, Optional[str], Optional[str]]:
-    """
-    Check if user ranked up.
-    
-    Args:
-        old_level: Previous numeric level
-        old_proficiency: Previous proficiency level
-        new_level: New numeric level
-        new_proficiency: New proficiency level
-        
-    Returns:
-        Tuple of (ranked_up, old_rank, new_rank)
-    """
-    old_rank = calculate_rank(old_level, old_proficiency)
-    new_rank = calculate_rank(new_level, new_proficiency)
-    
-    if old_rank.rank != new_rank.rank:
-        return True, old_rank.rank.value, new_rank.rank.value
-    
+    """Backward-compatible promotion-only result."""
+    change = check_rank_change(
+        old_level,
+        old_proficiency,
+        new_level,
+        new_proficiency,
+    )
+    if change.direction == "promotion":
+        return True, change.old_rank, change.new_rank
     return False, None, None
 
 

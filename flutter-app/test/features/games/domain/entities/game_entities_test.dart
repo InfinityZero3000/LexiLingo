@@ -536,6 +536,7 @@ void main() {
         'new_level': 1,
         'level_progress_percent': 30.0,
         'xp_for_next_level': 70,
+        'current_xp_in_level': 30,
         'streak_days': 7,
         'message': '+30 XP earned!',
       };
@@ -543,6 +544,7 @@ void main() {
       expect(result.xpAwarded, 30);
       expect(result.multiplier, 1.5);
       expect(result.leveledUp, false);
+      expect(result.currentXpInLevel, 30);
       expect(result.streakDays, 7);
       expect(result.message, '+30 XP earned!');
     });
@@ -587,6 +589,94 @@ void main() {
         'total_xp': 1000,
       });
       expect(entry.isCurrentUser, false);
+    });
+  });
+
+  group('Canonical game API contracts', () {
+    test('MatchingGame parses canonical variant and definitions column', () {
+      final game = MatchingGame.fromJson(<String, dynamic>{
+        'cefr_level': 'A1',
+        'variant': 'definition',
+        'timer_seconds': 60,
+        'time_bonus_threshold': 0.5,
+        'base_xp': 10,
+        'pairs': <dynamic>[
+          <String, dynamic>{
+            'word_id': 'p1',
+            'word': 'cat',
+            'match_text': 'A small furry animal',
+            'variant': 'definition',
+          },
+        ],
+        'words_column': <dynamic>['cat'],
+        'definitions_column': <dynamic>['A small furry animal'],
+      });
+
+      expect(game.variant, 'definition');
+      expect(game.definitionsColumn, ['A small furry animal']);
+    });
+
+    test('MatchingGameData parses string columns from the API', () {
+      final game = MatchingGameData.fromJson(<String, dynamic>{
+        'pairs': <dynamic>[
+          <String, dynamic>{
+            'word_id': 'p1',
+            'word': 'cat',
+            'match_text': 'A small furry animal',
+            'variant': 'definition',
+          },
+        ],
+        'words_column': <dynamic>['cat'],
+        'definitions_column': <dynamic>['A small furry animal'],
+      });
+
+      expect(game.wordsColumn, ['cat']);
+      expect(game.definitionsColumn, ['A small furry animal']);
+    });
+
+    test('GrammarQuizGame keeps the string correct answer', () {
+      final game = GrammarQuizGame.fromJson(<String, dynamic>{
+        'cefr_level': 'A1',
+        'topic': 'to_be',
+        'timer_seconds_per_question': 12,
+        'total_xp': 10,
+        'questions': <dynamic>[
+          <String, dynamic>{
+            'id': 1,
+            'question': 'She ___ a teacher.',
+            'options': <dynamic>['are', 'is', 'am', 'be'],
+            'correct_answer': 'is',
+            'explanation': 'Use is with she.',
+            'topic': 'to_be',
+            'cefr_level': 'A1',
+          },
+        ],
+      });
+
+      expect(game.questions.single.correctAnswer, 'is');
+    });
+
+    test('HangmanGame parses server-provided hints and XP config', () {
+      final game = HangmanGame.fromJson(<String, dynamic>{
+        'word_id': 'h1',
+        'word': 'cat',
+        'letter_count': 3,
+        'category': 'animals',
+        'cefr_level': 'A1',
+        'base_xp': 8,
+        'max_lives': 6,
+        'hints': <String, dynamic>{
+          'hint1_free': 'A common pet',
+          'hint2_xp_cost': 2,
+          'hint2_definition': 'A small furry animal',
+          'hint3_xp_cost': 3,
+        },
+      });
+
+      expect(game.baseXp, 8);
+      expect(game.maxLives, 6);
+      expect(game.hints.hint1Free, 'A common pet');
+      expect(game.hints.hint2Definition, 'A small furry animal');
     });
   });
 }

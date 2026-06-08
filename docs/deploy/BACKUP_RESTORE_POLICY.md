@@ -64,7 +64,7 @@ bash ./scripts/restore-prod.sh \
 - Verify:
   - Core auth flows
   - News/category APIs
-  - AI GraphCAG health and chat endpoints
+  - AI TRACECAG health and chat endpoints
 - Record drill result and timestamp in ops notes.
 
 ## Security notes

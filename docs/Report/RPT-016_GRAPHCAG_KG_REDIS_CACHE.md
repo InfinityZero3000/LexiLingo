@@ -1,10 +1,10 @@
-# GraphCAG + KG + Redis KV Cache (giải thích dễ hiểu)
+# TRACECAG + KG + Redis KV Cache (giải thích dễ hiểu)
 
 Tài liệu này giải thích:
 - **KG (Knowledge Graph)** được biểu diễn thế nào (node/edge/triples)
-- **Redis KV cache** lưu cái gì trong GraphCAG
+- **Redis KV cache** lưu cái gì trong TRACECAG
 - “**Đẩy KG vào cache**” nghĩa đúng là gì (và không phải là gì)
-- Pipeline GraphCAG của LexiLingo chạy ra sao và cache hit/miss hoạt động thế nào
+- Pipeline TRACECAG của LexiLingo chạy ra sao và cache hit/miss hoạt động thế nào
 
 > Ghi chú quan trọng: “KV cache” trong tài liệu này là **Key–Value cache trong Redis** (application cache), **không phải** “KV cache” (attention cache) bên trong LLM.
 
@@ -18,14 +18,14 @@ Tài liệu này giải thích:
 
 ---
 
-## 2) GraphCAG là gì (cách hiểu đơn giản)
+## 2) TRACECAG là gì (cách hiểu đơn giản)
 
 Bạn có 2 thứ:
 
 - **KG (Knowledge Graph)**: giống như “bản đồ kiến thức” (khái niệm ngữ pháp/từ vựng, và quan hệ giữa chúng).
 - **CAG (Cache-Augmented Generation)**: trước khi chạy pipeline tốn kém, thử xem có thể **tái sử dụng** kết quả cũ không.
 
-**GraphCAG** = pipeline dạng **graph** (nhiều bước nối với nhau) + có **cửa kiểm tra cache** ở đầu (cache gate). Nếu cache hit, bạn trả lời nhanh; nếu miss, bạn đi qua KG expand → diagnose → retrieve → generate.
+**TRACECAG** = pipeline dạng **graph** (nhiều bước nối với nhau) + có **cửa kiểm tra cache** ở đầu (cache gate). Nếu cache hit, bạn trả lời nhanh; nếu miss, bạn đi qua KG expand → diagnose → retrieve → generate.
 
 ---
 
@@ -110,7 +110,7 @@ Trong pipeline, KG expansion thường được đưa vào state dưới dạng 
 
 ---
 
-## 5) Redis KV cache trong GraphCAG: lưu cái gì?
+## 5) Redis KV cache trong TRACECAG: lưu cái gì?
 
 Trong LexiLingo hiện có vài nhóm cache:
 
@@ -128,11 +128,11 @@ Mục tiêu: request sau biết người học đang ở level nào, hay mắc l
 Key:
 - `conversation:{session_id}:history` (list, sliding window)
 
-Mục tiêu: GraphCAG biết vài lượt chat gần đây.
+Mục tiêu: TRACECAG biết vài lượt chat gần đây.
 
-### 5.3 Response cache cho GraphCAG (cốt lõi của CAG)
+### 5.3 Response cache cho TRACECAG (cốt lõi của CAG)
 
-GraphCAG đang dùng 2 lớp chính:
+TRACECAG đang dùng 2 lớp chính:
 
 #### L0: exact-key cache (hit nhanh nhất)
 
@@ -150,7 +150,7 @@ GraphCAG đang dùng 2 lớp chính:
 
 ### 5.4 CacheEntry là gì? (value format)
 
-Trong GraphCAG, một entry có thể hiểu đơn giản là:
+Trong TRACECAG, một entry có thể hiểu đơn giản là:
 
 ```json
 {
@@ -254,7 +254,7 @@ Vì sao pack quan trọng?
 
 Cache không phải “mãi mãi đúng”. Khi dữ liệu/logic thay đổi, cache có thể sai.
 
-Trong GraphCAG có 2 kiểu “hết hạn”:
+Trong TRACECAG có 2 kiểu “hết hạn”:
 
 - **TTL**: entry tự hết hạn sau N giây (ví dụ 1800–3600s)
 - **Versioning** (đặc biệt cho L1 bucket): khi bạn đổi schema KG hoặc đổi prompt/policy, bucket nên bị invalidate.
@@ -283,7 +283,7 @@ Trong code có các version constant kiểu:
 
 ## 11) Liên hệ với code LexiLingo (để tra cứu)
 
-- GraphCAG pipeline: `ai-service/api/services/graph_cag/graph.py`
+- TRACECAG pipeline: `ai-service/api/services/graph_cag/graph.py`
 - Cache gate + Redis keys (`v1:resp:*`, `v1:resp_bucket:*`): `ai-service/api/services/graph_cag/nodes_v2.py`
 - State schema (CacheEntry/Fingerprint): `ai-service/api/services/graph_cag/state.py`
 - Redis client (learner/conversation caches): `ai-service/api/core/redis_client.py`
@@ -293,7 +293,7 @@ Trong code có các version constant kiểu:
 
 ## 12) Nếu bạn muốn nâng cấp “đẩy KG vào cache” thêm một bước
 
-Hiện tại GraphCAG đang cache chủ yếu “response + evidence text”. Nếu bạn muốn cache KG tốt hơn (KG nhỏ càng hiệu quả):
+Hiện tại TRACECAG đang cache chủ yếu “response + evidence text”. Nếu bạn muốn cache KG tốt hơn (KG nhỏ càng hiệu quả):
 
 - Cache theo concept:
   - `kg:expand:v1:{concept_id}:{depth}` → JSON subgraph

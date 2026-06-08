@@ -79,6 +79,7 @@ class BookProvider extends ChangeNotifier {
   List<Book> booksForLevel(String level) {
     final curated = _recommendedBooks
         .where((b) => b.cefrLevel == level)
+        .where((b) => _selectedTopic == null || b.topic == _selectedTopic)
         .toList();
     final browse = _levelBooks[level] ?? [];
     final seen = <String>{};
@@ -254,6 +255,9 @@ class BookProvider extends ChangeNotifier {
       // Strip Project Gutenberg header/footer boilerplate
       text = _stripGutenbergBoilerplate(text);
 
+      // Normalize Gutenberg's plain-text ALL CAPS convention to readable case
+      text = _normalizeGutenbergFormatting(text);
+
       _bookText = text;
       _pages = _paginateText(text, charsPerPage: charsPerPage);
 
@@ -275,11 +279,62 @@ class BookProvider extends ChangeNotifier {
     final startIdx = text.indexOf(startMarker);
     final endIdx = text.indexOf(endMarker);
     if (startIdx != -1) {
-      final bodyStart = text.indexOf('\n', startIdx) + 1;
+      // Skip past the marker line itself
+      final afterMarker = text.indexOf('\n', startIdx) + 1;
       final bodyEnd = endIdx != -1 ? endIdx : text.length;
-      return text.substring(bodyStart, bodyEnd).trim();
+      var body = text.substring(afterMarker, bodyEnd).trim();
+
+      // Skip Gutenberg's title/TOC block: look for the first actual paragraph
+      // which follows a blank line and is not entirely uppercase.
+      // Gutenberg books often have 20-50 lines of title/production notes first.
+      final lines = body.split('\n');
+      var contentStart = 0;
+      int blankCount = 0;
+      for (var i = 0; i < lines.length && i < 200; i++) {
+        final line = lines[i].trim();
+        if (line.isEmpty) {
+          blankCount++;
+        } else {
+          // A "content" line: mixed case, longer than 40 chars (real prose)
+          final letters = line.replaceAll(RegExp(r'[^A-Za-z]'), '');
+          if (letters.length > 40 && blankCount >= 1) {
+            final upperCount = letters
+                .split('')
+                .where((c) => c == c.toUpperCase())
+                .length;
+            final upperRatio = upperCount / letters.length;
+            if (upperRatio < 0.7) {
+              contentStart = lines.sublist(0, i).join('\n').length;
+              break;
+            }
+          }
+          blankCount = 0;
+        }
+      }
+      if (contentStart > 0) {
+        body = body.substring(contentStart).trim();
+      }
+
+      return body;
     }
     return text.trim();
+  }
+
+  // Regex for Roman numerals (I–XXXIX range sufficient for chapters)
+  static final _romanNumeralRe =
+      RegExp(r'^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$');
+
+  /// Convert all-caps words (2+ letters) to title case.
+  ///
+  /// Project Gutenberg plain-text files use ALL CAPS for chapter headings and
+  /// section titles. This makes them readable without altering normal prose.
+  String _normalizeGutenbergFormatting(String text) {
+    return text.replaceAllMapped(RegExp(r'\b[A-Z]{2,}\b'), (match) {
+      final word = match.group(0)!;
+      // Preserve valid Roman numerals so "Chapter II" stays "Chapter II"
+      if (_romanNumeralRe.hasMatch(word)) return word;
+      return word[0] + word.substring(1).toLowerCase();
+    });
   }
 
   List<String> _paginateText(String text, {required int charsPerPage}) {
@@ -288,13 +343,18 @@ class BookProvider extends ChangeNotifier {
     var offset = 0;
     while (offset < text.length) {
       var end = (offset + charsPerPage).clamp(0, text.length);
-      // Break at paragraph boundary to avoid mid-sentence cuts
+      // Snap to a paragraph boundary (double newline) within ±200 chars of
+      // the target end, but never before the current page start.
       if (end < text.length) {
-        final nextNewline = text.indexOf('\n\n', end - 200 > 0 ? end - 200 : 0);
+        final searchFrom =
+            (end - 200).clamp(offset + 1, text.length).toInt();
+        final nextNewline = text.indexOf('\n\n', searchFrom);
         if (nextNewline != -1 && nextNewline <= end + 200) {
           end = nextNewline + 2;
         }
       }
+      // Guard: ensure we always advance at least one character
+      if (end <= offset) end = (offset + charsPerPage).clamp(offset + 1, text.length);
       pages.add(text.substring(offset, end).trim());
       offset = end;
     }

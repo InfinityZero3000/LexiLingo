@@ -108,7 +108,7 @@ class LexiChatDataSource {
     );
     text = text.replaceAll(RegExp(r'<\/?think>', caseSensitive: false), '');
 
-    // Remove leaked internal GraphCAG payloads from assistant content.
+    // Remove leaked internal TRACECAG payloads from assistant content.
     text = text.replaceAll(
       RegExp(
         r'\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*',

@@ -20,10 +20,38 @@ class VocabLibraryPage extends StatefulWidget {
 class _VocabLibraryPageState extends State<VocabLibraryPage> {
   final TextEditingController _searchController = TextEditingController();
 
+  static const Map<String, _TagMeta> _tagMeta = {
+    'general':    _TagMeta(label: 'Tổng quát',  icon: Icons.hearing_rounded),
+    'travel':     _TagMeta(label: 'Du lịch',    icon: Icons.flight),
+    'business':   _TagMeta(label: 'Kinh doanh', icon: Icons.work),
+    'daily':      _TagMeta(label: 'Hàng ngày',  icon: Icons.coffee),
+    'science':    _TagMeta(label: 'Khoa học',   icon: Icons.science_rounded),
+    'technology': _TagMeta(label: 'Công nghệ',  icon: Icons.devices_rounded),
+    'ielts':      _TagMeta(label: 'IELTS',       icon: Icons.school_rounded),
+    'academic':   _TagMeta(label: 'Học thuật',  icon: Icons.menu_book_rounded),
+    'health':     _TagMeta(label: 'Sức khỏe',   icon: Icons.health_and_safety_rounded),
+    'food':       _TagMeta(label: 'Ẩm thực',    icon: Icons.restaurant_rounded),
+    'sports':     _TagMeta(label: 'Thể thao',   icon: Icons.sports_rounded),
+    'daily_life': _TagMeta(label: 'Hàng ngày',  icon: Icons.coffee_rounded),
+    'government': _TagMeta(label: 'Chính phủ',  icon: Icons.gavel_rounded),
+    'economics':  _TagMeta(label: 'Kinh tế',    icon: Icons.monetization_on_rounded),
+    'education':  _TagMeta(label: 'Giáo dục',   icon: Icons.school_rounded),
+    'lesson':     _TagMeta(label: 'Bài học',    icon: Icons.import_contacts_rounded),
+    'philosophy': _TagMeta(label: 'Triết học',  icon: Icons.psychology_rounded),
+    'basic_200':  _TagMeta(label: 'Từ cơ bản',  icon: Icons.star_outline_rounded),
+    'nature':     _TagMeta(label: 'Tự nhiên',   icon: Icons.nature_people_rounded),
+    'core-vocab': _TagMeta(label: 'Cốt lõi',    icon: Icons.grade_rounded),
+    'auto':       _TagMeta(label: 'Tự động lưu', icon: Icons.bolt_rounded),
+    'crawl':      _TagMeta(label: 'Thu thập',    icon: Icons.download_rounded),
+    'society':    _TagMeta(label: 'Xã hội',     icon: Icons.people_rounded),
+    'seed':       _TagMeta(label: 'Mầm',        icon: Icons.spa_rounded),
+    'history':    _TagMeta(label: 'Lịch sử',    icon: Icons.history_edu_rounded),
+  };
+
   @override
   Widget build(BuildContext context) {
     final vocabProvider = Provider.of<VocabProvider>(context);
-    List<VocabWord> words = vocabProvider.words;
+    final List<VocabWord> words = vocabProvider.filteredWords;
 
     return DefaultTabController(
       length: 2,
@@ -135,48 +163,33 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
 
                 // Filters
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    children: [
-                      _buildFilterChip('vocabulary.filterAll'.tr(), true),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        'vocabulary.filterTravel'.tr(),
-                        false,
-                        icon: Icons.flight,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        'vocabulary.filterBusiness'.tr(),
-                        false,
-                        icon: Icons.work,
-                      ),
-                      const SizedBox(width: 8),
-                      _buildFilterChip(
-                        'vocabulary.filterDaily'.tr(),
-                        false,
-                        icon: Icons.coffee,
-                      ),
-                    ],
-                  ),
-                ),
+                _buildTopicFilterBar(context, vocabProvider),
 
-                // "Recent Words" Header
+                // Words Header
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'vocabulary.recentWordsHeader'.tr(),
+                        vocabProvider.selectedTag == null
+                            ? 'vocabulary.recentWordsHeader'.tr()
+                            : (_tagMeta[vocabProvider.selectedTag]?.label ??
+                                    _capitalizeTag(vocabProvider.selectedTag!))
+                                .toUpperCase(),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
+                      if (!vocabProvider.isLoading)
+                        Text(
+                          '${words.length} từ',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -212,20 +225,483 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   }
 
   Widget _buildTopicFlashcardsTab(BuildContext context) {
-    return GridView.builder(
+    final vocabProvider = Provider.of<VocabProvider>(context);
+    final customDecks = vocabProvider.decks;
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.85,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section 1: System Topics Header
+          Text(
+            'vocabulary.systemTopicsHeader'.tr(),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 12),
+
+          // Grid for system topics
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: _topics.length,
+            itemBuilder: (context, index) {
+              final topic = _topics[index];
+              return _buildTopicCard(context, topic);
+            },
+          ),
+
+          const SizedBox(height: 24),
+
+          // Section 2: Custom Decks Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'vocabulary.customDecksHeader'.tr(),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, color: AppColors.primary),
+                onPressed: () => _showCreateDeckDialog(context, vocabProvider),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Grid for custom decks
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.85,
+            ),
+            itemCount: customDecks.length + 1, // +1 for the "Create Deck" card
+            itemBuilder: (context, index) {
+              if (index == customDecks.length) {
+                return _buildCreateDeckCard(context, vocabProvider);
+              }
+              final deck = customDecks[index];
+              return _buildCustomDeckCard(context, deck, vocabProvider);
+            },
+          ),
+        ],
       ),
-      itemCount: _topics.length,
-      itemBuilder: (context, index) {
-        final topic = _topics[index];
-        return _buildTopicCard(context, topic);
+    );
+  }
+
+  Widget _buildCustomDeckCard(
+    BuildContext context,
+    VocabularyDeck deck,
+    VocabProvider vocabProvider,
+  ) {
+    Color deckColor;
+    try {
+      final hex = deck.color.replaceAll('#', '');
+      deckColor = Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      deckColor = AppColors.primary;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [deckColor, deckColor.withValues(alpha: 0.7)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: deckColor.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onLongPress: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
+          onTap: () => _startDeckStudy(context, deck),
+          child: Stack(
+            clipBehavior: Clip.antiAlias,
+            children: [
+              Positioned(
+                top: -30,
+                right: -30,
+                child: Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Transform.rotate(
+                  angle: -0.25,
+                  child: Icon(
+                    Icons.collections_bookmark_rounded,
+                    size: 90,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.collections_bookmark_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
+                          onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
+                          constraints: const BoxConstraints(),
+                          padding: EdgeInsets.zero,
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      deck.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${deck.itemCount} ${'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()])}',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'vocabulary.startLearning'.tr(),
+                            style: TextStyle(
+                              color: deckColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            color: deckColor,
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateDeckCard(BuildContext context, VocabProvider vocabProvider) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.white24 : Colors.black12,
+          width: 2,
+          style: BorderStyle.solid,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _showCreateDeckDialog(context, vocabProvider),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.add_rounded,
+                  size: 40,
+                  color: isDark ? Colors.white54 : Colors.black54,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'vocabulary.createCustomDeck'.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white70 : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCreateDeckDialog(BuildContext context, VocabProvider vocabProvider) {
+    final nameController = TextEditingController();
+    final descController = TextEditingController();
+    String selectedColor = '#2196F3';
+
+    final List<String> colors = [
+      '#2196F3', // Blue
+      '#4CAF50', // Green
+      '#FF9800', // Orange
+      '#E91E63', // Pink
+      '#9C27B0', // Purple
+      '#9E9E9E', // Grey
+    ];
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('vocabulary.createNewDeck'.tr()),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: nameController,
+                      decoration: InputDecoration(
+                        labelText: 'vocabulary.deckName'.tr(),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: descController,
+                      decoration: InputDecoration(
+                        labelText: 'vocabulary.deckDescription'.tr(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'vocabulary.selectColor'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 48,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: colors.length,
+                        itemBuilder: (context, index) {
+                          final colorHex = colors[index];
+                          final color = Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16));
+                          final isSelected = selectedColor == colorHex;
+
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                selectedColor = colorHex;
+                              });
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border: isSelected
+                                    ? Border.all(color: Colors.black, width: 3)
+                                    : null,
+                              ),
+                              child: isSelected
+                                  ? const Icon(Icons.check, color: Colors.white, size: 18)
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('common.cancel'.tr()),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameController.text.trim().isEmpty) return;
+                    final success = await vocabProvider.createDeck(
+                      nameController.text.trim(),
+                      descController.text.trim().isEmpty ? null : descController.text.trim(),
+                      selectedColor,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      if (!success) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(vocabProvider.errorMessage ?? 'vocabulary.createDeckFailed'.tr()),
+                            backgroundColor: AppColors.errorBright,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Text('common.create'.tr()),
+                ),
+              ],
+            );
+          },
+        );
       },
     );
+  }
+
+  void _showDeleteDeckConfirmation(
+    BuildContext context,
+    VocabularyDeck deck,
+    VocabProvider vocabProvider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('vocabulary.deleteDeckTitle'.tr()),
+          content: Text(
+            'vocabulary.deleteDeckPrompt'.tr(args: [deck.name]),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('common.cancel'.tr()),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.errorBright,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final success = await vocabProvider.deleteDeck(deck.id);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  if (!success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(vocabProvider.errorMessage ?? 'vocabulary.deleteDeckFailed'.tr()),
+                        backgroundColor: AppColors.errorBright,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Text('common.delete'.tr()),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _startDeckStudy(BuildContext context, VocabularyDeck deck) async {
+    final flashcardProvider = Provider.of<FlashcardProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      ),
+    );
+
+    try {
+      await flashcardProvider.startDeckSession(deckId: deck.id);
+      if (context.mounted) {
+        Navigator.pop(context); // Dismiss loading dialog
+        if (flashcardProvider.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(flashcardProvider.errorMessage!),
+              backgroundColor: AppColors.errorBright,
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const FlashcardReviewScreen(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.pop(context); // Dismiss loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('vocabulary.startStudyFailed'.tr()),
+            backgroundColor: AppColors.errorBright,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildTopicCard(BuildContext context, _TopicConfig topic) {
@@ -250,70 +726,99 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () => _startTopicStudy(context, topic),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
+          child: Stack(
+            clipBehavior: Clip.antiAlias,
+            children: [
+              Positioned(
+                top: -30,
+                right: -30,
+                child: Container(
+                  width: 90,
+                  height: 90,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.1),
                   ),
+                ),
+              ),
+              Positioned(
+                right: -15,
+                bottom: -15,
+                child: Transform.rotate(
+                  angle: -0.25,
                   child: Icon(
                     topic.icon,
-                    color: Colors.white,
-                    size: 24,
+                    size: 90,
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
-                const Spacer(),
-                Text(
-                  topic.title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  topic.subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'vocabulary.startLearning'.tr(),
-                        style: TextStyle(
-                          color: topic.gradient[0],
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.play_arrow_rounded,
-                        color: topic.gradient[0],
-                        size: 14,
+                      child: Icon(
+                        topic.icon,
+                        color: Colors.white,
+                        size: 24,
                       ),
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      topic.titleKey.tr(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      topic.subtitleKey.tr(),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'vocabulary.startLearning'.tr(),
+                            style: TextStyle(
+                              color: topic.gradient[0],
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            color: topic.gradient[0],
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -358,7 +863,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         Navigator.pop(context); // Dismiss loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to start topic study: $e'),
+            content: Text('vocabulary.startStudyFailed'.tr()),
             backgroundColor: AppColors.errorBright,
           ),
         );
@@ -366,35 +871,88 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     }
   }
 
-  Widget _buildFilterChip(String label, bool isSelected, {IconData? icon}) {
+  Widget _buildTopicFilterBar(BuildContext context, VocabProvider vocabProvider) {
+    final availableTags = vocabProvider.availableTags;
+    final selectedTag = vocabProvider.selectedTag;
+
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _buildFilterChip(
+            'vocabulary.filterAll'.tr(),
+            selectedTag == null,
+            onTap: () => vocabProvider.setTagFilter(null),
+          ),
+          ...availableTags.map((tag) {
+            final meta = _tagMeta[tag];
+            return Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: _buildFilterChip(
+                meta?.label ?? _capitalizeTag(tag),
+                selectedTag == tag,
+                icon: meta?.icon,
+                onTap: () => vocabProvider.setTagFilter(
+                  selectedTag == tag ? null : tag,
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  String _capitalizeTag(String tag) =>
+      tag.isEmpty ? tag : tag[0].toUpperCase() + tag.substring(1);
+
+  Widget _buildFilterChip(
+    String label,
+    bool isSelected, {
+    IconData? icon,
+    VoidCallback? onTap,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return FilterChip(
-      selected: isSelected,
-      showCheckmark: false,
-      avatar: icon != null
-          ? Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : AppColors.textGrey,
-            )
-          : null,
-      label: Text(
-        label,
-        style: TextStyle(
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: EdgeInsets.symmetric(
+          horizontal: icon != null ? 10 : 14,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
           color: isSelected
-              ? Colors.white
-              : (isDark ? Colors.white70 : AppColors.textDark),
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          fontSize: 12,
+              ? AppColors.primary
+              : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.grey100),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.white : AppColors.textGrey,
+              ),
+              const SizedBox(width: 5),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white70 : AppColors.textDark),
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
       ),
-      backgroundColor: isDark
-          ? Colors.white.withValues(alpha: 0.06)
-          : AppColors.grey100,
-      selectedColor: AppColors.primary,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      side: BorderSide.none,
-      onSelected: (_) {},
     );
   }
 
@@ -816,7 +1374,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     }
     if (_wordFound == false) {
       return Tooltip(
-        message: 'Word not found in dictionary',
+        message: 'vocabulary.wordNotFound'.tr(),
         child: Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
       );
     }
@@ -862,17 +1420,23 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
+class _TagMeta {
+  final String label;
+  final IconData icon;
+  const _TagMeta({required this.label, required this.icon});
+}
+
 class _TopicConfig {
-  final String title;
+  final String titleKey;
   final String tag;
-  final String subtitle;
+  final String subtitleKey;
   final IconData icon;
   final List<Color> gradient;
 
   const _TopicConfig({
-    required this.title,
+    required this.titleKey,
     required this.tag,
-    required this.subtitle,
+    required this.subtitleKey,
     required this.icon,
     required this.gradient,
   });
@@ -880,44 +1444,44 @@ class _TopicConfig {
 
 const List<_TopicConfig> _topics = [
   _TopicConfig(
-    title: 'General',
+    titleKey: 'vocabulary.topicGeneral',
     tag: 'general',
-    subtitle: 'Audio-only Quiz',
+    subtitleKey: 'vocabulary.topicGeneralSubtitle',
     icon: Icons.hearing_rounded,
     gradient: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
   ),
   _TopicConfig(
-    title: 'Travel',
+    titleKey: 'vocabulary.topicTravel',
     tag: 'travel',
-    subtitle: 'Explore the world',
+    subtitleKey: 'vocabulary.topicTravelSubtitle',
     icon: Icons.flight_takeoff_rounded,
     gradient: [Color(0xFFF97316), Color(0xFFFACC15)],
   ),
   _TopicConfig(
-    title: 'Business',
+    titleKey: 'vocabulary.topicBusiness',
     tag: 'business',
-    subtitle: 'Career & Work',
+    subtitleKey: 'vocabulary.topicBusinessSubtitle',
     icon: Icons.business_center_rounded,
     gradient: [Color(0xFF0F766E), Color(0xFF14B8A6)],
   ),
   _TopicConfig(
-    title: 'Daily Life',
+    titleKey: 'vocabulary.topicDailyLife',
     tag: 'daily',
-    subtitle: 'Everyday conversations',
+    subtitleKey: 'vocabulary.topicDailyLifeSubtitle',
     icon: Icons.coffee_rounded,
     gradient: [Color(0xFF9333EA), Color(0xFFEC4899)],
   ),
   _TopicConfig(
-    title: 'Science',
+    titleKey: 'vocabulary.topicScience',
     tag: 'science',
-    subtitle: 'Concepts & Discoveries',
+    subtitleKey: 'vocabulary.topicScienceSubtitle',
     icon: Icons.science_rounded,
     gradient: [Color(0xFF06B6D4), Color(0xFF3B82F6)],
   ),
   _TopicConfig(
-    title: 'Technology',
+    titleKey: 'vocabulary.topicTechnology',
     tag: 'technology',
-    subtitle: 'Software & Digital Age',
+    subtitleKey: 'vocabulary.topicTechnologySubtitle',
     icon: Icons.devices_rounded,
     gradient: [Color(0xFF475569), Color(0xFF1E293B)],
   ),

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/services/sound_service.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
@@ -29,15 +30,51 @@ class LearningSessionScreen extends StatefulWidget {
 }
 
 class _LearningSessionScreenState extends State<LearningSessionScreen> {
+  bool _wasAnswered = false;
+  bool _wasCompleted = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LearningProvider>().startLesson(
-        widget.courseId,
-        widget.lessonId,
-      );
+      final provider = context.read<LearningProvider>();
+      provider.startLesson(widget.courseId, widget.lessonId);
+      provider.addListener(_onProviderChange);
     });
+  }
+
+  @override
+  void dispose() {
+    context.read<LearningProvider>().removeListener(_onProviderChange);
+    super.dispose();
+  }
+
+  void _onProviderChange() {
+    final provider = context.read<LearningProvider>();
+
+    // Lesson just completed
+    if (!_wasCompleted && provider.isCompleted) {
+      _wasCompleted = true;
+      SoundService.instance.playComplete();
+      return;
+    }
+
+    // Answer just submitted (isCurrentAnswered flipped from false → true)
+    final nowAnswered = provider.isCurrentAnswered;
+    if (!_wasAnswered && nowAnswered) {
+      final correct = provider.isCurrentCorrect ?? false;
+      if (correct) {
+        SoundService.instance.playCorrect();
+      } else {
+        SoundService.instance.playWrong();
+      }
+    }
+
+    // Reset tracking when moving to the next exercise
+    if (_wasAnswered && !nowAnswered) {
+      _wasCompleted = false;
+    }
+    _wasAnswered = nowAnswered;
   }
 
   @override
@@ -129,12 +166,26 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             // Show current exercise
             return Column(
               children: [
-                // Progress bar
-                LinearProgressIndicator(
-                  value: provider.progress,
-                  backgroundColor: Colors.grey[200],
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    AppColors.greenSuccessBright,
+                // Progress bar (thick, rounded — matches template)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: provider.progress,
+                      minHeight: 10,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColorRoles.primary(
+                          Theme.of(context).brightness == Brightness.dark,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
 
@@ -200,8 +251,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           return DialogueCompletionWidget(
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
-            userAnswer: provider.currentUserAnswer,
+            userAnswer:
+                provider.currentUserAnswer ?? provider.currentDraftAnswer,
             isCorrect: provider.isCurrentCorrect,
           );
         case 'dictation':
@@ -351,47 +404,86 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   }
 
   Widget _buildActionButtons(BuildContext context, LearningProvider provider) {
+    final answered = provider.isCurrentAnswered;
+    final correct = provider.isCurrentCorrect ?? false;
+    final canCheckDraft = provider.hasCurrentDraftAnswer;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    final disabledColor = theme.colorScheme.surfaceContainerHighest;
+    final actionForeground = answered || canCheckDraft
+        ? Colors.white
+        : AppColorRoles.textMuted(isDark);
+
+    // Button colour: correct=green, wrong=orange, not answered=primary blue
+    final checkColor = answered
+        ? (correct ? const Color(0xFF2DBD73) : const Color(0xFFFF6B35))
+        : primaryColor;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: Theme.of(context).scaffoldBackgroundColor,
+        border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
       ),
       child: Row(
         children: [
-          // Skip button (only if not answered)
-          if (!provider.isCurrentAnswered)
-            TextButton(
+          // Skip — always visible, outlined pill
+          Expanded(
+            child: OutlinedButton.icon(
               onPressed: () => provider.skipExercise(),
-              child: Text('common.skip'.tr()),
+              icon: const Icon(Icons.skip_next_rounded, size: 18),
+              label: Text('common.skip'.tr()),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primaryColor,
+                side: BorderSide(color: primaryColor, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
             ),
-
-          const Spacer(),
-
-          // Check/Continue button
-          ElevatedButton(
-            onPressed: provider.isCurrentAnswered
-                ? () => provider.nextExercise()
-                : null, // Disabled until answered
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-              backgroundColor: provider.isCurrentAnswered
-                  ? ((provider.isCurrentCorrect ?? false)
-                        ? AppColors.greenSuccessBright
-                        : AppColors.orange)
-                  : Colors.grey,
-            ),
-            child: Text(
-              provider.isCurrentAnswered
-                  ? 'lesson.continueButton'.tr()
-                  : 'lesson.checkAnswer'.tr(),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 12),
+          // Check / Continue — filled pill
+          Expanded(
+            flex: 2,
+            child: ElevatedButton.icon(
+              onPressed: answered
+                  ? () => provider.nextExercise()
+                  : canCheckDraft
+                  ? () => provider.submitCurrentDraftAnswer()
+                  : null,
+              icon: Icon(
+                answered
+                    ? (correct
+                          ? Icons.check_circle_outline
+                          : Icons.arrow_forward_rounded)
+                    : Icons.check_circle_outline,
+                size: 20,
+                color: actionForeground,
+              ),
+              label: Text(
+                answered
+                    ? 'lesson.continueButton'.tr()
+                    : 'lesson.checkAnswer'.tr(),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: actionForeground,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: checkColor,
+                disabledBackgroundColor: disabledColor,
+                disabledForegroundColor: AppColorRoles.textMuted(isDark),
+                foregroundColor: Colors.white,
+                elevation: answered ? 2 : 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+              ),
             ),
           ),
         ],
@@ -542,9 +634,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                           'percentage': '$percentage',
                         },
                       ),
-                      style: Theme.of(
-                        context,
-                      ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: AppColorRoles.textSecondary(
+                          Theme.of(context).brightness == Brightness.dark,
+                        ),
+                      ),
                     ),
                   ],
                 ),

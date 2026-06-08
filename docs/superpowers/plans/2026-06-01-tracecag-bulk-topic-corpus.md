@@ -45,7 +45,7 @@
 - Modify: `flutter-app/lib/features/chat/data/models/topic_session_model.dart`
 
 - [ ] Raise default story fetch limit from 20 to at least 100.
-- [ ] Change topic preferred LLM default from `graphcag` to `tracecag`.
+- [ ] Change topic preferred LLM default from `TRACECAG` to `tracecag`.
 
 ### Task 4: Category Icons
 

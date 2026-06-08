@@ -53,9 +53,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   @override
   void initState() {
     super.initState();
-    if (!kIsWeb) {
-      _tryInitHandler();
-    }
+    _tryInitHandler();
   }
 
   void _tryInitHandler({int attempt = 0}) {
@@ -179,32 +177,10 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
-        body: Center(
+        body: const Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
-            child: kIsWeb
-                // Web: audio_service not supported
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.headphones_rounded,
-                        size: 64,
-                        color: isDark ? Colors.white38 : Colors.grey,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'podcast.mobileOnly'.tr(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? Colors.white60 : Colors.grey[700],
-                        ),
-                      ),
-                    ],
-                  )
-                // Mobile: handler still initializing
-                : const LottieLoadingWidget.medium(),
+            child: LottieLoadingWidget.medium(),
           ),
         ),
       );

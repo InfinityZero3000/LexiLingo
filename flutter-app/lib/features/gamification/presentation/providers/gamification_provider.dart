@@ -1,19 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/inventory_item.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/starter_reward.dart';
 
 /// Gamification Provider
 /// Manages Shop, Wallet, Leaderboard, and Inventory state
 class GamificationProvider extends ChangeNotifier {
-  late final ApiClient _apiClient;
+  final ApiClient _apiClient;
+  final bool _enableStarterReward;
 
-  GamificationProvider() {
-    _apiClient = sl<ApiClient>();
-  }
+  GamificationProvider({ApiClient? apiClient, bool? enableStarterReward})
+    : _apiClient = apiClient ?? sl<ApiClient>(),
+      _enableStarterReward =
+          enableStarterReward ?? ApiConfig.enableStarterReward;
 
   bool _isSuccessResponse(Map<String, dynamic> response) {
     final success = response['success'];
@@ -35,6 +39,11 @@ class GamificationProvider extends ChangeNotifier {
   bool get isLoadingWallet => _isLoadingWallet;
   String? get walletError => _walletError;
   int get gems => _wallet?.gems ?? 0;
+  StarterRewardEntity? _pendingStarterReward;
+  bool _isLoadingStarterReward = false;
+
+  StarterRewardEntity? get pendingStarterReward => _pendingStarterReward;
+  bool get isLoadingStarterReward => _isLoadingStarterReward;
 
   // ============== Shop State ==============
   List<ShopItemEntity> _shopItems = [];
@@ -62,6 +71,14 @@ class GamificationProvider extends ChangeNotifier {
   List<InventoryItemEntity> get inventory => _inventory;
   bool get isLoadingInventory => _isLoadingInventory;
   String? get inventoryError => _inventoryError;
+  bool ownsItem(String shopItemId) =>
+      _inventory.any((entry) => entry.item.id == shopItemId);
+  List<String> get ownedAvatarUrls => _inventory
+      .where((entry) => entry.item.isAvatar)
+      .map((entry) => entry.item.avatarUrl)
+      .whereType<String>()
+      .toSet()
+      .toList();
 
   // ============== Leaderboard State ==============
   final Map<String, LeaderboardEntity> _leaderboards = {};
@@ -118,6 +135,47 @@ class GamificationProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error loading transactions: $e');
+    }
+  }
+
+  Future<StarterRewardEntity?> loadPendingStarterReward() async {
+    if (!_enableStarterReward) return null;
+    if (_isLoadingStarterReward) return _pendingStarterReward;
+    _isLoadingStarterReward = true;
+    notifyListeners();
+
+    try {
+      final response = await _apiClient.get(
+        '/gamification/rewards/starter/pending',
+      );
+      final data = _extractData(response);
+      _pendingStarterReward =
+          _isSuccessResponse(response) && data is Map<String, dynamic>
+          ? StarterRewardEntity.fromJson(data)
+          : null;
+      return _pendingStarterReward;
+    } catch (e) {
+      debugPrint('Error loading starter reward: $e');
+      return null;
+    } finally {
+      _isLoadingStarterReward = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> acknowledgeStarterReward() async {
+    if (!_enableStarterReward) return false;
+    try {
+      final response = await _apiClient.post(
+        '/gamification/rewards/starter/seen',
+      );
+      if (!_isSuccessResponse(response)) return false;
+      _pendingStarterReward = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      debugPrint('Error acknowledging starter reward: $e');
+      return false;
     }
   }
 
@@ -191,7 +249,8 @@ class GamificationProvider extends ChangeNotifier {
   Future<bool> useItem(String inventoryId) async {
     try {
       final response = await _apiClient.post(
-        '/gamification/inventory/$inventoryId/use',
+        '/gamification/inventory/use',
+        body: {'inventory_id': inventoryId},
       );
 
       if (_isSuccessResponse(response)) {
@@ -203,6 +262,31 @@ class GamificationProvider extends ChangeNotifier {
       debugPrint('Error using item: $e');
       return false;
     }
+  }
+
+  Future<String?> equipAvatar(String shopItemId) async {
+    InventoryItemEntity? inventoryItem;
+    for (final entry in _inventory) {
+      if (entry.item.id == shopItemId && entry.item.isAvatar) {
+        inventoryItem = entry;
+        break;
+      }
+    }
+    if (inventoryItem == null) return null;
+
+    try {
+      final response = await _apiClient.post(
+        '/gamification/inventory/avatar/equip',
+        body: {'inventory_id': inventoryItem.id},
+      );
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        return data['avatar_url'] as String?;
+      }
+    } catch (e) {
+      debugPrint('Error equipping avatar: $e');
+    }
+    return null;
   }
 
   // ============== Leaderboard Methods ==============

@@ -20,6 +20,16 @@ class ApiConfig {
   static bool get isDev => environment == 'development';
   static bool get isProd => environment == 'production';
 
+  /// Starter rewards require backend routes and a database migration.
+  /// Production must opt in only after those dependencies are deployed.
+  static bool get enableStarterReward {
+    final configured = _readEnv('ENABLE_STARTER_REWARD')?.trim().toLowerCase();
+    if (configured != null && configured.isNotEmpty) {
+      return configured == 'true' || configured == '1' || configured == 'yes';
+    }
+    return !isProd;
+  }
+
   // ── Backend URL ─────────────────────────────────────────────────────────────
 
   /// URL chính — local (dev) hoặc Render.com (prod).

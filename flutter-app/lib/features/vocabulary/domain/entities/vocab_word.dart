@@ -1,5 +1,6 @@
 class VocabWord {
   final int? id;
+  final String? userVocabularyId; // Backend UserVocabulary UUID
   final String word;
   final String definition;
   final bool isLearned;
@@ -7,9 +8,11 @@ class VocabWord {
   final String? audioUrl; // Remote audio URL for TTS playback
   final String? example; // Example sentence
   final String? partOfSpeech; // noun, verb, adjective…
+  final List<String>? tags; // Topic tags, e.g. ["business", "travel"]
 
   VocabWord({
     this.id,
+    this.userVocabularyId,
     required this.word,
     required this.definition,
     this.isLearned = false,
@@ -17,5 +20,6 @@ class VocabWord {
     this.audioUrl,
     this.example,
     this.partOfSpeech,
+    this.tags,
   });
 }

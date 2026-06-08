@@ -5,7 +5,7 @@ Request and response schemas for Course-related endpoints.
 Follows the envelope pattern defined in APP_DEVELOPMENT_PLAN.md.
 """
 
-from typing import Optional, List
+from typing import Optional, List, Any
 from datetime import datetime
 from pydantic import BaseModel, Field, validator
 import uuid
@@ -203,7 +203,9 @@ class LessonUpdate(BaseModel):
     xp_reward: Optional[int] = Field(None, ge=0)
     pass_threshold: Optional[int] = Field(None, ge=0, le=100)
     prerequisites: Optional[List[uuid.UUID]] = None
-    
+    estimated_minutes: Optional[int] = Field(None, ge=0)
+    content: Optional[Any] = None
+
     @validator('lesson_type')
     def validate_lesson_type(cls, v):
         if v is not None:
@@ -224,7 +226,16 @@ class LessonResponse(LessonBase):
     best_score: Optional[int] = None
     created_at: datetime
     updated_at: datetime
-    
+
+    class Config:
+        from_attributes = True
+
+
+class LessonDetailResponse(LessonResponse):
+    """Lesson response including full content/exercises (admin only)."""
+    estimated_minutes: int = 10
+    content: Optional[Any] = None
+
     class Config:
         from_attributes = True
 

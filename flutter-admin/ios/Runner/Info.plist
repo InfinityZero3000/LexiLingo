@@ -29,6 +29,10 @@
 	</array>
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>lexilingo-app</string>
+	</array>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>

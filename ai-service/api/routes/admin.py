@@ -12,8 +12,20 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 import logging
 import os
 import hmac
+import re
+from datetime import datetime
 
 from api.core.database import get_database
+from api.core.redis_client import get_redis
+from api.models.story_schemas import (
+    AdminStoryCreateRequest,
+    ContextDescription,
+    ConversationFlow,
+    LocalizedTitle,
+    RolePersona,
+    Story,
+    StoryListItem,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -72,6 +84,73 @@ def mask_api_key(api_key: Optional[str]) -> Optional[str]:
         return None
     
     return f"{api_key[:4]}***...***{api_key[-3:]}"
+
+
+def _slugify(value: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+    return slug or "topic"
+
+
+def _story_to_list_item(story: Story) -> StoryListItem:
+    return StoryListItem(
+        story_id=story.story_id,
+        title=story.title,
+        difficulty_level=story.difficulty_level,
+        category=story.category,
+        estimated_minutes=story.estimated_minutes,
+        icon_key=story.icon_key,
+        cover_image_url=story.cover_image_url,
+        suggested_prompts=story.suggested_prompts,
+        tags=story.tags,
+    )
+
+
+def _build_admin_story(payload: AdminStoryCreateRequest) -> Story:
+    title_en = payload.title.en.strip()
+    title_vi = payload.title.vi.strip() or title_en
+    story_id = payload.story_id or f"story_{_slugify(title_en)}"
+    category = payload.category.strip().lower() or "daily_life"
+    icon_key = (payload.icon_key or category).strip().lower() or category
+    opening_prompt = (
+        payload.opening_prompt
+        or (payload.conversation_flow.opening_prompt if payload.conversation_flow else None)
+        or f"Let's practice: {title_en}. What would you like to say first?"
+    )
+
+    tags = list(dict.fromkeys([*payload.tags, category, payload.difficulty_level.value, "admin_topic"]))
+
+    return Story(
+        story_id=story_id,
+        title=LocalizedTitle(en=title_en, vi=title_vi),
+        difficulty_level=payload.difficulty_level,
+        category=category,
+        estimated_minutes=payload.estimated_minutes,
+        icon_key=icon_key,
+        suggested_prompts=payload.suggested_prompts,
+        tags=tags,
+        is_published=payload.is_published,
+        context_description=payload.context_description
+        or ContextDescription(
+            setting=title_en,
+            scenario=f"Practice a real conversation about {title_en}.",
+            objectives=["Start the conversation", "Ask relevant questions", "Respond naturally"],
+        ),
+        role_persona=payload.role_persona
+        or RolePersona(
+            name="Lexi",
+            role="Conversation partner",
+            personality="Helpful and encouraging",
+            speaking_style="Natural, clear, and supportive",
+            background=f"Lexi helps learners practice {title_en}.",
+        ),
+        conversation_flow=payload.conversation_flow
+        or ConversationFlow(
+            opening_prompt=opening_prompt,
+            checkpoints=["Clarify the situation", "Practice key phrases", "Wrap up politely"],
+        ),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+    )
 
 
 async def get_stored_api_key(db: AsyncIOMotorDatabase) -> Optional[str]:
@@ -230,3 +309,56 @@ async def update_admin_config(
     except Exception as e:
         logger.error(f"Error updating admin config: {e}")
         raise HTTPException(status_code=500, detail="Failed to update configuration")
+
+
+@router.get("/topics")
+async def list_admin_topics(
+    limit: int = 100,
+    _key: str = Depends(verify_admin_api_key),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """List topic chat stories for admin management."""
+    cursor = (
+        db["stories"]
+        .find({"is_published": True})
+        .sort("updated_at", -1)
+        .limit(max(1, min(limit, 500)))
+    )
+    docs = await cursor.to_list(length=max(1, min(limit, 500)))
+    stories = []
+    for doc in docs:
+        doc.pop("_id", None)
+        try:
+            stories.append(StoryListItem(**doc).model_dump(mode="json"))
+        except Exception as exc:
+            logger.warning("Skipping invalid admin topic list item: %s", exc)
+    return {"success": True, "data": {"topics": stories, "total": len(stories)}}
+
+
+@router.post("/topics")
+async def create_admin_topic(
+    payload: AdminStoryCreateRequest,
+    _key: str = Depends(verify_admin_api_key),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    redis_client=Depends(get_redis),
+):
+    """Create or update a topic chat story from the admin console."""
+    story = _build_admin_story(payload)
+    doc = story.model_dump(mode="json")
+    await db["stories"].update_one(
+        {"story_id": story.story_id},
+        {"$set": {**doc, "updated_at": datetime.utcnow()}},
+        upsert=True,
+    )
+
+    try:
+        await redis_client.delete("topics:catalog:v2")
+        await redis_client.delete("topics:catalog")
+    except Exception as exc:
+        logger.warning("Failed to invalidate topic catalog cache: %s", exc)
+
+    return {
+        "success": True,
+        "message": "Topic saved",
+        "data": _story_to_list_item(story).model_dump(mode="json"),
+    }

@@ -668,6 +668,14 @@ class LexiChatProvider extends ChangeNotifier {
     _isLexiThinking = false;
     _isLexiTyping = false;
     _isSending = false;
+
+    if (_isUnauthorizedError(reason)) {
+      _error = 'Your login session expired. Please sign in again.';
+      logError(_tag, _error!);
+      notifyListeners();
+      return;
+    }
+
     notifyListeners();
     await sendMessage(text, userId: userId);
   }

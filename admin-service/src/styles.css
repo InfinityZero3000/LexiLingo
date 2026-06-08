@@ -830,15 +830,73 @@ textarea:focus {
 .login-page {
   min-height: 100vh;
   display: flex;
-  justify-content: flex-end; /* Move card to the right */
+  justify-content: flex-end;
   align-items: center;
-  padding: 32px 10%; /* Add right padding */
+  padding: 32px 10%;
   position: relative;
   overflow: hidden;
-  background:
-    radial-gradient(ellipse 80% 60% at 30% 50%, rgba(255, 122, 0, 0.08) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 50% at 70% 60%, rgba(42, 167, 161, 0.05) 0%, transparent 70%),
-    #FAFCFF; /* Trắng sáng */
+  background: #050B18;
+}
+
+/* ── Floating gradient orbs ──────────────────────────────────────── */
+.login-orb {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(90px);
+}
+
+.login-orb-1 {
+  width: 700px;
+  height: 700px;
+  top: -180px;
+  left: -120px;
+  background: radial-gradient(circle at 40% 40%, rgba(255, 90, 0, 0.28) 0%, transparent 65%);
+  animation: orb-drift-1 28s ease-in-out infinite alternate;
+}
+
+.login-orb-2 {
+  width: 600px;
+  height: 600px;
+  bottom: -100px;
+  right: 10%;
+  background: radial-gradient(circle at 60% 60%, rgba(42, 167, 161, 0.22) 0%, transparent 65%);
+  animation: orb-drift-2 35s ease-in-out infinite alternate;
+}
+
+.login-orb-3 {
+  width: 500px;
+  height: 500px;
+  top: 25%;
+  left: 32%;
+  background: radial-gradient(circle at 50% 50%, rgba(100, 60, 220, 0.16) 0%, transparent 65%);
+  animation: orb-drift-3 22s ease-in-out infinite alternate;
+}
+
+@keyframes orb-drift-1 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(60px, 40px) scale(1.18); }
+}
+
+@keyframes orb-drift-2 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(-50px, -60px) scale(1.12); }
+}
+
+@keyframes orb-drift-3 {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, -50px) scale(1.1); }
+}
+
+/* ── Dot mesh grid ──────────────────────────────────────────────── */
+.login-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
 }
 
 /* ── Top-right info bar ────────────────────────────────────────── */
@@ -851,12 +909,12 @@ textarea:focus {
   align-items: center;
   gap: 4px;
   padding: 7px 16px;
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: rgba(5, 11, 24, 0.78);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 40px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 1px 0 rgba(255,255,255,0.06) inset;
   animation: topbar-enter 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
 }
 
@@ -873,14 +931,14 @@ textarea:focus {
   border-radius: 24px;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #4A5568;
+  color: rgba(255, 255, 255, 0.65);
   text-decoration: none;
   transition: background 0.18s, color 0.18s;
   white-space: nowrap;
 }
 
 .login-topbar-link:hover {
-  background: rgba(255, 122, 0, 0.1);
+  background: rgba(255, 122, 0, 0.15);
   color: #FF7A00;
 }
 
@@ -896,7 +954,7 @@ textarea:focus {
 .login-topbar-sep {
   width: 1px;
   height: 16px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
   margin: 0 2px;
 }
@@ -906,27 +964,27 @@ textarea:focus {
   .login-topbar { right: 5%; padding: 7px 10px; gap: 0; }
   .login-topbar-link { padding: 5px 8px; }
 
-  /* Center the login card on mobile instead of right-aligned */
   .login-page {
     justify-content: center;
-    padding: 24px 16px;
+    align-items: center;
+    padding: 80px 16px 32px;
+    min-height: 100svh;
   }
 
   .login-card {
-    width: min(440px, 100%);
+    width: min(420px, 100%);
   }
 
-  /* Tighten inner card padding so button doesn't overflow */
   .login-header {
-    padding: 24px 20px 0;
+    padding: 24px 24px 0;
   }
 
   .login-body {
-    padding: 20px 20px 8px;
+    padding: 20px 24px 8px;
   }
 
   .login-footer {
-    padding: 16px 20px 20px;
+    padding: 16px 24px 24px;
   }
 
   .login-title {
@@ -987,7 +1045,7 @@ textarea:focus {
   font-size: clamp(2rem, 3vw, 2.9rem);
   font-weight: 800;
   line-height: 1.13;
-  color: #0D1B2A;
+  color: #FFFFFF;
   margin: 0 0 20px;
   letter-spacing: -0.035em;
 }
@@ -1011,7 +1069,7 @@ textarea:focus {
 
 .login-hero-desc {
   font-size: 1rem;
-  color: #4A5568;
+  color: rgba(255, 255, 255, 0.6);
   line-height: 1.7;
   margin: 0 0 28px;
   font-weight: 400;
@@ -1029,7 +1087,7 @@ textarea:focus {
   align-items: center;
   gap: 12px;
   font-size: 0.9rem;
-  color: #2D3748;
+  color: rgba(255, 255, 255, 0.75);
   font-weight: 500;
 }
 
@@ -1040,7 +1098,8 @@ textarea:focus {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: rgba(255, 122, 0, 0.1);
+  background: rgba(255, 122, 0, 0.14);
+  border: 1px solid rgba(255, 122, 0, 0.22);
   color: #FF7A00;
   flex-shrink: 0;
 }
@@ -1050,12 +1109,12 @@ textarea:focus {
   align-items: center;
   gap: 0;
   padding: 20px 24px;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 .login-hero-stat {
@@ -1069,14 +1128,14 @@ textarea:focus {
 .login-hero-stat-num {
   font-size: 1.55rem;
   font-weight: 800;
-  color: #0D1B2A;
+  color: #FFFFFF;
   letter-spacing: -0.04em;
   line-height: 1;
 }
 
 .login-hero-stat-label {
   font-size: 0.72rem;
-  color: #8A96A3;
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1085,7 +1144,7 @@ textarea:focus {
 .login-hero-stat-divider {
   width: 1px;
   height: 40px;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
 }
 
@@ -1099,22 +1158,32 @@ textarea:focus {
   position: relative;
   z-index: 2;
   width: min(440px, calc(100% - 16px));
-  /* Glassmorphism Effect */
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(32px) saturate(1.3);
-  -webkit-backdrop-filter: blur(32px) saturate(1.3);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 24px;
+  background: rgba(8, 18, 38, 0.78);
+  backdrop-filter: blur(40px) saturate(1.8);
+  -webkit-backdrop-filter: blur(40px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
   box-shadow:
-    0 32px 80px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(255, 255, 255, 0.9) inset,
-    0 1px 0 rgba(255, 255, 255, 1.0) inset;
+    0 40px 100px rgba(0, 0, 0, 0.55),
+    0 0 80px rgba(255, 90, 0, 0.07),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Initial state for GSAP entrance — JS takes over from here */
   opacity: 0;
   transform: translateY(40px) scale(0.97);
+}
+
+/* Orange → teal gradient accent line at top of card */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.9), rgba(42, 167, 161, 0.6), transparent);
+  z-index: 1;
 }
 
 @keyframes card-enter {
@@ -1145,14 +1214,14 @@ textarea:focus {
   background: linear-gradient(135deg, #ff4d00 0%, #ff6f2a 100%);
   display: grid;
   place-items: center;
-  box-shadow: 0 4px 16px rgba(255, 77, 0, 0.35);
+  box-shadow: 0 4px 20px rgba(255, 77, 0, 0.5), 0 0 40px rgba(255, 77, 0, 0.2);
 }
 
 .login-brand-title {
   font-family: "Space Grotesk", sans-serif;
   font-size: 20px;
   font-weight: 700;
-  color: #1A2835;
+  color: #FFFFFF;
   letter-spacing: -0.01em;
 }
 
@@ -1161,7 +1230,7 @@ textarea:focus {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: rgba(26, 40, 53, 0.45);
+  color: rgba(255, 255, 255, 0.38);
   margin-top: 1px;
 }
 
@@ -1174,14 +1243,14 @@ textarea:focus {
   font-family: "Space Grotesk", sans-serif;
   font-size: 28px;
   font-weight: 700;
-  color: #1a2835;
+  color: #FFFFFF;
   letter-spacing: -0.02em;
 }
 
 .login-subtitle {
   margin: 0 0 28px;
   font-size: 14px;
-  color: rgba(26, 40, 53, 0.5);
+  color: rgba(255, 255, 255, 0.45);
   line-height: 1.5;
 }
 
@@ -1206,8 +1275,8 @@ textarea:focus {
   gap: 10px;
   padding: 14px 24px;
   border-radius: 24px;
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(26, 40, 53, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
   font-weight: 500;
 }
@@ -1218,9 +1287,9 @@ textarea:focus {
   gap: 8px;
   padding: 12px 16px;
   border-radius: 12px;
-  background: rgba(220, 53, 69, 0.08);
-  border: 1px solid rgba(220, 53, 69, 0.2);
-  color: #c0392b;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  color: #ff6b7a;
   font-size: 13px;
   line-height: 1.4;
   margin-top: 16px;
@@ -1234,7 +1303,7 @@ textarea:focus {
 .login-spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.1);
   border-top-color: #ff4d00;
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
@@ -1247,9 +1316,10 @@ textarea:focus {
 /* Security badges */
 .login-security-badges {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  gap: 16px;
   margin-bottom: 12px;
+  justify-content: center;
 }
 
 .security-badge {
@@ -1257,24 +1327,25 @@ textarea:focus {
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: rgba(26, 40, 53, 0.5);
+  color: rgba(255, 255, 255, 0.35);
   justify-content: center;
 }
 
 .security-badge svg {
   color: #ff4d00;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .login-footer {
-  padding: 20px 36px 28px;
+  padding: 16px 36px 28px;
   text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .login-footer p {
   margin: 0;
   font-size: 12px;
-  color: rgba(26, 40, 53, 0.4);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 .center-page {

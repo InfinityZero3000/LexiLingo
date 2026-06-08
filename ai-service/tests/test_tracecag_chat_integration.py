@@ -72,6 +72,7 @@ def mock_lexi_store(monkeypatch):
     store.delete_session = AsyncMock()
     store.init_messages = AsyncMock()
     monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr("api.routes.lexi_chat.enforce_user_quota", AsyncMock(return_value=MagicMock()))
     return store
 
 
@@ -222,7 +223,8 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
     monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
 
     response = await lexi_route.lexi_chat(
-        lexi_route.LexiChatRequest(
+        request_context=MagicMock(),
+        request=lexi_route.LexiChatRequest(
             user_id="u1",
             message="voice input",
             input_type="voice",
@@ -231,6 +233,7 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
             learner_level="B1",
         ),
         db=mock_lexi_db,
+        current_user=MagicMock(user_id="u1"),
     )
 
     assert response.lexi_response == "Lexi response from TraceCAG"
@@ -270,7 +273,8 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
 
     response = await lexi_route.lexi_chat(
-        lexi_route.LexiChatRequest(
+        request_context=MagicMock(),
+        request=lexi_route.LexiChatRequest(
             user_id="u1",
             message="text input",
             input_type="text",
@@ -278,6 +282,7 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
             learner_level="B1",
         ),
         db=mock_lexi_db,
+        current_user=MagicMock(user_id="u1"),
     )
 
     assert response.lexi_response == "Lexi response from degraded TraceCAG"

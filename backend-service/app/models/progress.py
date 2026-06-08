@@ -194,6 +194,7 @@ class LessonAttempt(Base):
     total_questions: Mapped[int] = mapped_column(Integer, default=0)
     correct_answers: Mapped[int] = mapped_column(Integer, default=0)
     hints_used: Mapped[int] = mapped_column(Integer, default=0)
+    bonus_hints: Mapped[int] = mapped_column(Integer, default=0)
     lives_remaining: Mapped[int] = mapped_column(Integer, default=5)
     
     # Performance metrics

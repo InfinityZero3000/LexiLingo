@@ -1,7 +1,7 @@
 # FastAPI and Server
 fastapi>=0.136.3
-uvicorn[standard]>=0.48.0
-python-multipart>=0.0.30
+uvicorn[standard]>=0.49.0
+python-multipart>=0.0.32
 
 # PostgreSQL (production)
 asyncpg>=0.31.0
@@ -40,10 +40,13 @@ httpx>=0.28.1
 feedparser>=6.0.12
 
 # News article full-text extraction
-trafilatura>=2.0.0
+trafilatura>=2.1.0
+
+# YouTube captions (no OAuth needed — uses public transcript endpoints)
+youtube-transcript-api>=0.6.3
 
 # Redis (async client — used by quota manager and rate limiting)
-redis>=5.0.0,<6.0.0
+redis>=6.4.0,<7.0.0
 
 
 # Background jobs

@@ -70,26 +70,40 @@ class ProgressCRUD:
         xp_earned: int = 0
     ) -> UserCourseProgress:
         """Update user's course progress"""
+        # Count actual passed lessons for this course from lesson_completions
+        count_result = await db.execute(
+            select(func.count(LessonCompletion.id))
+            .join(Lesson, Lesson.id == LessonCompletion.lesson_id)
+            .join(Unit, Unit.id == Lesson.unit_id)
+            .where(
+                and_(
+                    Unit.course_id == course_id,
+                    LessonCompletion.user_id == user_id,
+                    LessonCompletion.is_passed == True,
+                )
+            )
+        )
+        actual_lessons_completed = count_result.scalar() or 0
+
         progress = await ProgressCRUD.get_user_progress(db, user_id, course_id)
-        
+
         if not progress:
-            # Create new progress record
             progress = UserCourseProgress(
                 user_id=user_id,
                 course_id=course_id,
                 progress_percentage=progress_percentage,
-                lessons_completed=1,
+                lessons_completed=actual_lessons_completed,
                 total_xp_earned=xp_earned,
                 started_at=datetime.now(timezone.utc),
                 last_activity_at=datetime.now(timezone.utc)
             )
             db.add(progress)
         else:
-            # Update existing progress
             progress.progress_percentage = progress_percentage
+            progress.lessons_completed = actual_lessons_completed
             progress.total_xp_earned += xp_earned
             progress.last_activity_at = datetime.now(timezone.utc)
-        
+
         await db.commit()
         await db.refresh(progress)
         return progress

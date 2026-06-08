@@ -16,7 +16,7 @@ from app.schemas.response import ApiResponse
 from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
 from app.models.rbac import Role
-from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress
+from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
 
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - User Management"])
@@ -39,6 +39,12 @@ class UserListResponse(BaseModel):
     provider: List[str]  # ["local"], ["google"], etc.
     created_at: datetime
     last_login: Optional[datetime] = None
+    avatar_url: Optional[str] = None
+    total_xp: int = 0
+    numeric_level: int = 1
+    rank: str = "bronze"
+    cefr_level: str = "A1"
+    streak_days: int = 0
 
     class Config:
         from_attributes = True
@@ -140,7 +146,7 @@ async def list_users(
     """
     # Build query with Role outerjoin for filtering/sorting
     # Use outerjoin so users without a role (role_id=NULL) are still included
-    query = select(User).outerjoin(User.role)
+    query = select(User, Streak.current_streak).outerjoin(User.role).outerjoin(Streak, Streak.user_id == User.id)
     
     # Apply filters
     filters = []
@@ -183,24 +189,30 @@ async def list_users(
     
     # Execute query
     result = await db.execute(query)
-    users = result.scalars().all()
+    rows = result.all()
     
     # Convert to response model
     users_list = [
         UserListResponse(
-            id=str(user.id),
-            email=user.email,
-            username=user.username,
-            display_name=user.display_name or user.username,
-            is_active=user.is_active,
-            is_verified=user.is_verified,
-            role_slug=user.role_slug,
-            role_level=user.role_level,
-            created_at=user.created_at,
-            last_login=user.last_login,
-            provider=user.provider if isinstance(user.provider, list) else [user.provider],
+            id=str(row[0].id),
+            email=row[0].email,
+            username=row[0].username,
+            display_name=row[0].display_name or row[0].username,
+            is_active=row[0].is_active,
+            is_verified=row[0].is_verified,
+            role_slug=row[0].role_slug,
+            role_level=row[0].role_level,
+            created_at=row[0].created_at,
+            last_login=row[0].last_login,
+            provider=row[0].provider if isinstance(row[0].provider, list) else [row[0].provider],
+            avatar_url=row[0].avatar_url,
+            total_xp=row[0].total_xp,
+            numeric_level=row[0].numeric_level,
+            rank=row[0].rank,
+            cefr_level=row[0].cefr_level,
+            streak_days=row[1] or 0,
         )
-        for user in users
+        for row in rows
     ]
     
     total_pages = (total + page_size - 1) // page_size
@@ -708,3 +720,191 @@ async def bulk_user_action(
             "requested_count": len(data.user_ids)
         }
     )
+
+
+# ============================================================================
+# Admin Gifting
+# ============================================================================
+
+from enum import Enum
+
+class GiftType(str, Enum):
+    course = "course"
+    avatar = "avatar"
+    shop_item = "shop_item"
+    gems = "gems"
+
+class GiftRequest(BaseModel):
+    gift_type: GiftType
+    course_id: Optional[UUID] = None
+    shop_item_id: Optional[UUID] = None
+    amount: Optional[int] = Field(None, ge=1, description="Number of gems or item quantity")
+
+
+@router.post("/{user_id}/gift", response_model=ApiResponse[dict])
+async def send_gift_to_user(
+    user_id: UUID,
+    data: GiftRequest,
+    admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Send a gift to a user from Admin.
+    Allows gifting Gems, Course enrollment, Avatars, or other Shop Items.
+    """
+    # 1. Verify user exists
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    gift_desc = ""
+
+    # 2. Process based on gift type
+    if data.gift_type == GiftType.gems:
+        if not data.amount:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Amount is required for gems gift"
+            )
+        
+        from app.crud.gamification import WalletCRUD
+        await WalletCRUD.add_gems(
+            db,
+            user_id=user_id,
+            amount=data.amount,
+            source="admin_gift",
+            description=f"Gifted by admin {admin.username}",
+            commit=True
+        )
+        gift_desc = f"{data.amount} Gems"
+
+    elif data.gift_type == GiftType.course:
+        if not data.course_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Course ID is required for course gift"
+            )
+        
+        from app.crud.course import CourseCRUD
+        course = await CourseCRUD.get_course(db, data.course_id)
+        if not course:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Course not found"
+            )
+        
+        # Check if already enrolled
+        is_enrolled = await CourseCRUD.is_user_enrolled(db, user_id, data.course_id)
+        if is_enrolled:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User is already enrolled in this course"
+            )
+        
+        # Enroll user
+        progress = UserCourseProgress(
+            user_id=user_id,
+            course_id=data.course_id,
+            progress_percentage=0.0
+        )
+        db.add(progress)
+        await db.commit()
+        gift_desc = f"Khóa học: {course.title}"
+
+    elif data.gift_type in (GiftType.avatar, GiftType.shop_item):
+        if not data.shop_item_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Shop Item ID is required"
+            )
+        
+        from app.crud.gamification import ShopCRUD
+        item = await ShopCRUD.get_item(db, data.shop_item_id)
+        if not item:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Shop item not found"
+            )
+        
+        # Validate gift type vs item type
+        if data.gift_type == GiftType.avatar and item.item_type != "avatar":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Selected item is not an avatar"
+            )
+        if data.gift_type == GiftType.shop_item and item.item_type == "avatar":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Please use avatar gift type for avatar items"
+            )
+
+        qty = data.amount or 1
+
+        # Avatars can only be owned once
+        from app.models.gamification import UserInventory
+        if item.item_type == "avatar":
+            owned_result = await db.execute(
+                select(UserInventory).where(
+                    and_(
+                        UserInventory.user_id == user_id,
+                        UserInventory.shop_item_id == data.shop_item_id,
+                    )
+                )
+            )
+            if owned_result.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="User already owns this avatar"
+                )
+            qty = 1
+
+        # Add to inventory (or update quantity)
+        inventory_result = await db.execute(
+            select(UserInventory).where(
+                and_(
+                    UserInventory.user_id == user_id,
+                    UserInventory.shop_item_id == data.shop_item_id
+                )
+            )
+        )
+        inventory = inventory_result.scalar_one_or_none()
+        
+        if inventory:
+            inventory.quantity += qty
+        else:
+            inventory = UserInventory(
+                user_id=user_id,
+                shop_item_id=data.shop_item_id,
+                quantity=qty
+            )
+            db.add(inventory)
+        
+        await db.commit()
+        gift_desc = f"{qty}x {item.name}"
+
+    # 3. Create user in-app notification
+    from app.models.notification import Notification
+    notification = Notification(
+        user_id=user_id,
+        title="Quà tặng từ Admin",
+        body=f"Bạn đã nhận được quà tặng từ Admin: {gift_desc}!",
+        type="system",
+        data={"gift_type": data.gift_type, "gift_desc": gift_desc}
+    )
+    db.add(notification)
+    await db.commit()
+
+    # 4. Invalidate wallet cache
+    from app.core.cache import delete_cached, build_cache_key
+    await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
+
+    return ApiResponse(
+        success=True,
+        message=f"Gift successfully sent: {gift_desc}",
+        data={"gift_description": gift_desc}
+    )
+

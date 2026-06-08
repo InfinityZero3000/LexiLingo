@@ -107,6 +107,7 @@ def _make_mock_session(
     mock_session.execute = fake_execute
     mock_session.add = MagicMock()
     mock_session.commit = AsyncMock()
+    mock_session.flush = AsyncMock()
     mock_session.refresh = AsyncMock(side_effect=fake_refresh)
     return mock_session
 

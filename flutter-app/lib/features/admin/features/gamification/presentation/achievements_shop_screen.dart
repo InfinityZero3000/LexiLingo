@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 
 class AchievementsShopScreen extends StatefulWidget {
   const AchievementsShopScreen({super.key});
@@ -50,8 +50,8 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          onPressed: AdminShell.openDrawer,
         ),
         title: Text('Achievements & Shop',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
@@ -322,9 +322,13 @@ class _ReviewRow extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 28,
-          height: 28,
-          color: AppColors.surfaceContainerHigh,
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: AppColors.primaryContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Icon(Icons.military_tech, color: AppColors.primary, size: 20),
         ),
         const SizedBox(width: 10),
         Expanded(

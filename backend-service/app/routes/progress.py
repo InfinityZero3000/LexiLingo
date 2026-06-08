@@ -33,7 +33,8 @@ from app.schemas.progress import (
 )
 from app.schemas.response import ApiResponse
 from app.models.user import User
-from app.models.progress import Streak, DailyActivity
+from app.models.progress import Streak, DailyActivity, LessonCompletion
+from app.models.course import Lesson, Unit
 from app.services import check_achievements_for_user
 from app.services.level_service import (
     LevelService, calculate_numeric_level, get_numeric_level_progress,
@@ -78,14 +79,33 @@ async def get_my_progress(
     rows = await ProgressCRUD.get_user_progress_with_courses(
         db, uid, limit=10
     )
-    
+
+    # Fetch accurate lessons_completed counts from lesson_completions in one query
+    course_ids = [str(course.id) for _, course in rows]
+    lesson_counts: dict[str, int] = {}
+    if course_ids:
+        lc_result = await db.execute(
+            select(Unit.course_id, func.count(LessonCompletion.id).label("cnt"))
+            .join(Lesson, Lesson.id == LessonCompletion.lesson_id)
+            .join(Unit, Unit.id == Lesson.unit_id)
+            .where(
+                and_(
+                    LessonCompletion.user_id == uid,
+                    LessonCompletion.is_passed == True,
+                    Unit.course_id.in_(course_ids),
+                )
+            )
+            .group_by(Unit.course_id)
+        )
+        lesson_counts = {str(row.course_id): row.cnt for row in lc_result.all()}
+
     course_progress_list = []
     for progress, course in rows:
         course_progress_list.append({
             'course_id': str(course.id),
             'course_title': course.title,
             'progress_percentage': progress.progress_percentage,
-            'lessons_completed': progress.lessons_completed,
+            'lessons_completed': lesson_counts.get(str(course.id), 0),
             'total_lessons': course.total_lessons or 0,
             'total_xp_earned': progress.total_xp_earned,
             'started_at': progress.started_at,

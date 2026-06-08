@@ -5,8 +5,13 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 /// Three subtle bouncing dots with clean design.
 class LexiTypingIndicator extends StatefulWidget {
   final bool isThinking;
+  final String name;
 
-  const LexiTypingIndicator({super.key, this.isThinking = false});
+  const LexiTypingIndicator({
+    super.key,
+    this.isThinking = false,
+    this.name = 'Lexi',
+  });
 
   @override
   State<LexiTypingIndicator> createState() => _LexiTypingIndicatorState();
@@ -14,39 +19,34 @@ class LexiTypingIndicator extends StatefulWidget {
 
 class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
     with TickerProviderStateMixin {
-  late final List<AnimationController> _controllers;
-  late final List<Animation<double>> _animations;
+  late final AnimationController _controller;
+  late final List<Animation<double>> _dotOffsets;
 
   @override
   void initState() {
     super.initState();
-    _controllers = List.generate(3, (i) {
-      return AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 600),
-      )..repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+
+    _dotOffsets = List.generate(3, (index) {
+      final start = index * 0.16;
+      return TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 0, end: -5), weight: 45),
+        TweenSequenceItem(tween: Tween(begin: -5, end: 0), weight: 55),
+      ]).animate(
+        CurvedAnimation(
+          parent: _controller,
+          curve: Interval(start, start + 0.52, curve: Curves.easeInOutCubic),
+        ),
+      );
     });
-
-    // Stagger the start
-    for (int i = 0; i < 3; i++) {
-      Future.delayed(Duration(milliseconds: i * 180), () {
-        if (mounted) _controllers[i].forward();
-      });
-    }
-
-    _animations = _controllers.map((c) {
-      return Tween<double>(
-        begin: 0,
-        end: -6,
-      ).animate(CurvedAnimation(parent: c, curve: Curves.easeInOut));
-    }).toList();
   }
 
   @override
   void dispose() {
-    for (final c in _controllers) {
-      c.dispose();
-    }
+    _controller.dispose();
     super.dispose();
   }
 
@@ -74,7 +74,7 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.isThinking ? 'Lexi is thinking' : 'Lexi is typing',
+                  widget.isThinking ? '${widget.name} is thinking' : '${widget.name} is typing',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
@@ -85,10 +85,10 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
                 const SizedBox(width: 10),
                 ...List.generate(3, (i) {
                   return AnimatedBuilder(
-                    animation: _animations[i],
+                    animation: _controller,
                     builder: (_, child) {
                       return Transform.translate(
-                        offset: Offset(0, _animations[i].value),
+                        offset: Offset(0, _dotOffsets[i].value),
                         child: child,
                       );
                     },

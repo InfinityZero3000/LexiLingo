@@ -28,6 +28,7 @@ from collections import OrderedDict
 from api.services.trace_cag.state import (
     TraceCAGState, DiagnosisError, CacheFingerprint, CacheEntry, BucketVersionRecord,
 )
+from api.services.trace_cag.l1_state_cache import L1Candidate, L1Request, decide_l1_reuse
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
 from api.services.document_intelligence import get_doc_intel_service
@@ -41,6 +42,24 @@ _PROVIDER_NEXT_REQUEST_AT: Dict[str, float] = {}
 _PROVIDER_LAST_WAIT_LOG_AT: Dict[str, float] = {}
 _PROVIDER_DISABLED_UNTIL: Dict[str, float] = {}
 _KG_QUERY_CACHE: "OrderedDict[str, Dict[str, Any]]" = OrderedDict()
+
+# Persistent httpx clients per provider — reuses TCP/TLS connections across LLM calls.
+# Created lazily on first use; not closed (process-lifetime singletons).
+_HTTPX_CLIENTS: Dict[str, Any] = {}
+
+
+def _get_httpx_client(provider: str) -> Any:
+    """Return a long-lived httpx.AsyncClient for *provider*, creating it on first use."""
+    if provider not in _HTTPX_CLIENTS:
+        import httpx
+        _HTTPX_CLIENTS[provider] = httpx.AsyncClient(
+            limits=httpx.Limits(
+                max_connections=20,
+                max_keepalive_connections=10,
+                keepalive_expiry=30,
+            ),
+        )
+    return _HTTPX_CLIENTS[provider]
 
 _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
     "You are Lexi, an expert English tutor. "
@@ -87,7 +106,7 @@ def _kg_cache_key(query: str, level: str, top_k: int) -> str:
 
 def _kg_cache_get(key: str) -> Optional[List[Dict[str, Any]]]:
     now = time.monotonic()
-    ttl_seconds = max(1, _env_int("GRAPHCAG_KG_QUERY_CACHE_TTL_SECONDS", 900))
+    ttl_seconds = max(1, _env_int("TRACECAG_KG_QUERY_CACHE_TTL_SECONDS", 900))
     item = _KG_QUERY_CACHE.get(key)
     if not item:
         return None
@@ -99,7 +118,7 @@ def _kg_cache_get(key: str) -> Optional[List[Dict[str, Any]]]:
 
 
 def _kg_cache_set(key: str, data: List[Dict[str, Any]]) -> None:
-    max_entries = max(1, _env_int("GRAPHCAG_KG_QUERY_CACHE_MAX_ENTRIES", 200))
+    max_entries = max(1, _env_int("TRACECAG_KG_QUERY_CACHE_MAX_ENTRIES", 200))
     _KG_QUERY_CACHE[key] = {"ts": time.monotonic(), "data": list(data)}
     _KG_QUERY_CACHE.move_to_end(key)
     while len(_KG_QUERY_CACHE) > max_entries:
@@ -127,11 +146,11 @@ def _pack_kg_nodes_for_context(nodes: List[Dict[str, Any]], token_budget: int) -
 
 def _provider_rpm(provider: str) -> int:
     defaults = {
-        "groq": 28,
+        "groq": 8,  # 1 active key × 8 safe RPM (TPM-bound)
         "gemini": 10,
         "ollama": 120,
     }
-    raw = os.getenv(f"GRAPHCAG_{provider.upper()}_RPM", str(defaults.get(provider, 30)))
+    raw = os.getenv(f"TRACECAG_{provider.upper()}_RPM", str(defaults.get(provider, 30)))
     try:
         return max(1, int(raw))
     except ValueError:
@@ -182,8 +201,9 @@ def _is_low_quality_benchmark_answer(answer: str, context: str, model_used: str)
         return True
     model_name = str(model_used or "").strip().lower()
     if model_name == "extractive_fallback":
-        # Allow caching high-support extractive answers to improve warm-hit behavior.
-        min_support = _env_float("GRAPHCAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT", 0.76)
+        # Allow caching extractive answers with reasonable support to improve warm-hit rate.
+        # 0.45 captures entity-span answers that may not verbatim-match long contexts (multi-hop QA).
+        min_support = _env_float("TRACECAG_BENCHMARK_EXTRACTIVE_CACHE_MIN_SUPPORT", 0.45)
         support = _benchmark_answer_support_ratio(text, context)
         if support < min_support:
             return True
@@ -192,7 +212,7 @@ def _is_low_quality_benchmark_answer(answer: str, context: str, model_used: str)
     if any(marker in low for marker in ["i cannot", "i can't", "unable to", "not enough information", "insufficient"]):
         return True
 
-    min_quality = _env_float("GRAPHCAG_BENCHMARK_CACHE_MIN_QUALITY", 0.20)
+    min_quality = _env_float("TRACECAG_BENCHMARK_CACHE_MIN_QUALITY", 0.12)
     if _benchmark_cache_quality_score(text, context, model_used) < min_quality:
         return True
     return False
@@ -298,7 +318,7 @@ def _provider_pressure_score() -> float:
     providers = ("groq", "gemini", "ollama")
     disabled = sum(1 for provider in providers if _provider_is_disabled(provider))
     max_cooldown = max((_provider_cooldown_seconds(provider) for provider in providers), default=0.0)
-    cooldown_component = min(1.0, max_cooldown / max(1.0, _env_float("GRAPHCAG_ADAPTIVE_COOLDOWN_SCALE", 120.0)))
+    cooldown_component = min(1.0, max_cooldown / max(1.0, _env_float("TRACECAG_ADAPTIVE_COOLDOWN_SCALE", 120.0)))
     disabled_component = min(1.0, disabled / max(len(providers), 1))
     return _clip01((0.65 * cooldown_component) + (0.35 * disabled_component))
 
@@ -341,9 +361,9 @@ def _adaptive_context_features(
 
 
 def _adaptive_weighting() -> tuple[float, float, float]:
-    f1_w = _env_float("GRAPHCAG_ADAPTIVE_W_F1", 0.52)
-    retrieval_w = _env_float("GRAPHCAG_ADAPTIVE_W_RETRIEVAL", 0.31)
-    pcc_w = _env_float("GRAPHCAG_ADAPTIVE_W_PCC", 0.17)
+    f1_w = _env_float("TRACECAG_ADAPTIVE_W_F1", 0.52)
+    retrieval_w = _env_float("TRACECAG_ADAPTIVE_W_RETRIEVAL", 0.31)
+    pcc_w = _env_float("TRACECAG_ADAPTIVE_W_PCC", 0.17)
     total = max(f1_w + retrieval_w + pcc_w, 1e-6)
     return f1_w / total, retrieval_w / total, pcc_w / total
 
@@ -423,7 +443,7 @@ def _choose_adaptive_profile(
             dual_incorrect=dual_incorrect,
         )
 
-    epsilon = _clip01(_env_float("GRAPHCAG_ADAPTIVE_EPSILON", 0.03))
+    epsilon = _clip01(_env_float("TRACECAG_ADAPTIVE_EPSILON", 0.03))
     explore = random.random() < epsilon
     if explore:
         chosen_profile = random.choice(list(_ADAPTIVE_PROFILES.keys()))
@@ -462,10 +482,10 @@ def report_adaptive_benchmark_feedback(
     if profile_name not in _ADAPTIVE_PROFILES:
         return
 
-    target_latency = max(50.0, _env_float("GRAPHCAG_ADAPTIVE_TARGET_LATENCY_MS", 380.0))
-    target_incorrect = _clip01(_env_float("GRAPHCAG_ADAPTIVE_TARGET_INCORRECT_REUSE", 0.12))
-    lr = max(0.001, _env_float("GRAPHCAG_ADAPTIVE_LR", 0.07))
-    dual_lr = max(0.001, _env_float("GRAPHCAG_ADAPTIVE_DUAL_LR", 0.04))
+    target_latency = max(50.0, _env_float("TRACECAG_ADAPTIVE_TARGET_LATENCY_MS", 380.0))
+    target_incorrect = _clip01(_env_float("TRACECAG_ADAPTIVE_TARGET_INCORRECT_REUSE", 0.12))
+    lr = max(0.001, _env_float("TRACECAG_ADAPTIVE_LR", 0.07))
+    dual_lr = max(0.001, _env_float("TRACECAG_ADAPTIVE_DUAL_LR", 0.04))
 
     retrieval_score = (0.50 * recall_at_1) + (0.30 * recall_at_3) + (0.20 * recall_at_5)
     safety_score = 0.0 if incorrect_reuse else 1.0
@@ -524,8 +544,8 @@ async def _throttled_post_json(
     cooling key does not block other callers (e.g. a rotated key) from proceeding.
     The lock is held only during the actual HTTP round-trip + timestamp update.
     """
-    # Allow benchmark mode to fast-fail immediately via GRAPHCAG_LLM_MAX_RETRIES=1
-    env_retries = os.getenv("GRAPHCAG_LLM_MAX_RETRIES")
+    # Allow benchmark mode to fast-fail immediately via TRACECAG_LLM_MAX_RETRIES=1
+    env_retries = os.getenv("TRACECAG_LLM_MAX_RETRIES")
     if env_retries:
         try:
             max_retries = max(1, int(env_retries))
@@ -572,8 +592,8 @@ async def _throttled_post_json(
             if residual > 0:
                 continue  # release lock immediately, re-enter wait loop
 
-            async with httpx_module.AsyncClient(timeout=timeout) as client:
-                response = await client.post(url, headers=headers, json=payload)
+            client = _get_httpx_client(provider)
+            response = await client.post(url, headers=headers, json=payload, timeout=timeout)
 
             _PROVIDER_NEXT_REQUEST_AT[provider] = time.monotonic() + min_interval
 
@@ -606,7 +626,7 @@ async def _throttled_post_json(
 
 
 def _benchmark_provider_order() -> List[str]:
-    provider = os.getenv("GRAPHCAG_BENCHMARK_LLM_PROVIDER", "auto").strip().lower()
+    provider = os.getenv("TRACECAG_BENCHMARK_LLM_PROVIDER", "auto").strip().lower()
     if provider == "template":
         logger.warning("[benchmark] provider='template' is deprecated; switching to auto/extractive fallback")
         provider = "auto"
@@ -614,11 +634,11 @@ def _benchmark_provider_order() -> List[str]:
         return [provider]
 
     order: List[str] = []
-    if os.getenv("GROQ_API_KEY", ""):
+    if os.getenv("GROQ_API_KEY", "") or os.getenv("GROQ_API_KEYS", ""):
         order.append("groq")
-    if _env_flag("GRAPHCAG_ENABLE_GEMINI_FALLBACK", False) and os.getenv("GEMINI_API_KEY", ""):
+    if _env_flag("TRACECAG_ENABLE_GEMINI_FALLBACK", False) and os.getenv("GEMINI_API_KEY", ""):
         order.append("gemini")
-    if _env_flag("GRAPHCAG_ENABLE_OLLAMA_FALLBACK", False):
+    if _env_flag("TRACECAG_ENABLE_OLLAMA_FALLBACK", False):
         order.append("ollama")
 
     order = [provider for provider in order if not _provider_is_disabled(provider)]
@@ -646,21 +666,21 @@ def _cefr_distance(a: str, b: str) -> int:
 # ============================================================
 
 # Reuse-risk weights (tunable, sum to ~1.0)
-_W_INTENT = _env_float("GRAPHCAG_PCC_W_INTENT", 0.30)      # w1: intent mismatch (0/1)
-_W_CONCEPT = _env_float("GRAPHCAG_PCC_W_CONCEPT", 0.25)    # w2: concept drift (1-Jaccard)
-_W_LEVEL = _env_float("GRAPHCAG_PCC_W_LEVEL", 0.20)        # w3: normalized level drift
-_W_PROGRESS = _env_float("GRAPHCAG_PCC_W_PROGRESS", 0.10)  # w4: profile progress drift
-_W_STALENESS = _env_float("GRAPHCAG_PCC_W_STALENESS", 0.15)  # w5: staleness ratio
+_W_INTENT = _env_float("TRACECAG_PCC_W_INTENT", 0.30)      # w1: intent mismatch (0/1)
+_W_CONCEPT = _env_float("TRACECAG_PCC_W_CONCEPT", 0.25)    # w2: concept drift (1-Jaccard)
+_W_LEVEL = _env_float("TRACECAG_PCC_W_LEVEL", 0.20)        # w3: normalized level drift
+_W_PROGRESS = _env_float("TRACECAG_PCC_W_PROGRESS", 0.10)  # w4: profile progress drift
+_W_STALENESS = _env_float("TRACECAG_PCC_W_STALENESS", 0.15)  # w5: staleness ratio
 
 # Thresholds for ternary decision
-_TAU_REUSE = _env_float("GRAPHCAG_PCC_TAU_REUSE", 0.25)  # τ₀: max risk for direct reuse
-_TAU_PATCH = _env_float("GRAPHCAG_PCC_TAU_PATCH", 0.55)  # τ₁: max risk for delta patching
+_TAU_REUSE = _env_float("TRACECAG_PCC_TAU_REUSE", 0.25)  # τ₀: max risk for direct reuse
+_TAU_PATCH = _env_float("TRACECAG_PCC_TAU_PATCH", 0.55)  # τ₁: max risk for delta patching
 
 # L1 ranking weights (paper-inspired: risk + overlap + recency)
-_L1_RISK_WEIGHT = _env_float("GRAPHCAG_L1_RISK_WEIGHT", 1.0)
-_L1_OVERLAP_WEIGHT = _env_float("GRAPHCAG_L1_OVERLAP_WEIGHT", 0.5)
-_L1_RECENCY_WEIGHT = _env_float("GRAPHCAG_L1_RECENCY_WEIGHT", 0.3)
-_L1_RECENCY_LAMBDA = _env_float("GRAPHCAG_L1_RECENCY_LAMBDA", 0.10)
+_L1_RISK_WEIGHT = _env_float("TRACECAG_L1_RISK_WEIGHT", 1.0)
+_L1_OVERLAP_WEIGHT = _env_float("TRACECAG_L1_OVERLAP_WEIGHT", 0.5)
+_L1_RECENCY_WEIGHT = _env_float("TRACECAG_L1_RECENCY_WEIGHT", 0.3)
+_L1_RECENCY_LAMBDA = _env_float("TRACECAG_L1_RECENCY_LAMBDA", 0.10)
 
 
 def _is_exact_reuse_match(fingerprint: CacheFingerprint, entry: CacheEntry) -> bool:
@@ -755,6 +775,94 @@ def _build_fingerprint(state: TraceCAGState) -> CacheFingerprint:
         level=state.get("learner_profile", {}).get("level", "B1"),
         root_concepts=state.get("diagnosis_root_causes", []),
         session_turn=len(state.get("conversation_history", [])),
+    )
+
+
+def _l1_signature_concepts(user_input: str, fingerprint: Mapping[str, Any]) -> set[str]:
+    raw_concepts = {str(concept) for concept in (fingerprint.get("root_concepts") or [])}
+    concepts = {concept for concept in raw_concepts if not concept.startswith("token:")}
+    concepts.update(f"entity:{entity}" for entity in _extract_l1_entities(user_input))
+    if not concepts:
+        concepts.update(raw_concepts)
+    return {str(concept) for concept in concepts if str(concept).strip()}
+
+
+def _evidence_dependency_hash(entry: CacheEntry) -> str:
+    parts: list[str] = []
+    for item in entry.get("retrieval_trace") or []:
+        if isinstance(item, dict):
+            item_id = str(item.get("item_id") or "")
+            title = str(item.get("title") or "")
+            if item_id or title:
+                parts.append(f"{item_id}:{title}")
+    if not parts:
+        for item in entry.get("evidence_bundle") or []:
+            if isinstance(item, dict):
+                content = str(item.get("content") or "")
+                if content:
+                    parts.append(content[:120])
+    if not parts:
+        return ""
+    material = "|".join(sorted(parts))
+    return hashlib.md5(material.encode()).hexdigest()
+
+
+def _build_l1_request_signature(
+    *,
+    user_input: str,
+    normalized: str,
+    fingerprint: CacheFingerprint,
+    level: str,
+    intent_hint: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+) -> L1Request:
+    return L1Request(
+        query_norm=normalized,
+        intent=intent_hint,
+        level=level,
+        profile_epoch=profile_epoch,
+        session_turn=len(conversation_history),
+        concepts=_l1_signature_concepts(user_input, fingerprint),
+        entities=_extract_l1_entities(user_input),
+        answer_target=_answer_target_hint(user_input),
+        relation_hints=_relation_hints(user_input),
+        evidence_hash="",
+    )
+
+
+def _build_l1_candidate_signature(
+    *,
+    cache_key: str,
+    entry: CacheEntry,
+    current_level: str,
+    current_profile: Mapping[str, Any],
+) -> L1Candidate:
+    candidate_fp = entry.get("fingerprint") or {}
+    candidate_query = str(candidate_fp.get("query_norm") or "").strip().lower()
+    candidate_profile = entry.get("profile_snapshot") or dict(current_profile)
+    candidate_level = str(
+        candidate_fp.get("level")
+        or (candidate_profile if isinstance(candidate_profile, Mapping) else {}).get("level")
+        or current_level
+    )
+    execution_plan = entry.get("execution_plan") or {}
+    candidate_intent = str(candidate_fp.get("intent") or execution_plan.get("intent") or "")
+
+    return L1Candidate(
+        cache_key=cache_key,
+        query_norm=candidate_query,
+        intent=candidate_intent,
+        level=candidate_level,
+        profile_epoch=_profile_epoch(candidate_profile if isinstance(candidate_profile, Mapping) else current_profile),
+        session_turn=int(candidate_fp.get("session_turn") or 0),
+        concepts=_l1_signature_concepts(candidate_query, candidate_fp),
+        entities=_extract_l1_entities(candidate_query),
+        answer_target=_answer_target_hint(candidate_query),
+        relation_hints=_relation_hints(candidate_query),
+        evidence_hash=_evidence_dependency_hash(entry),
+        created_at=float(entry.get("created_at") or time.monotonic()),
+        ttl=int(entry.get("ttl") or 3600),
     )
 
 
@@ -927,6 +1035,75 @@ def _extract_lightweight_graph_concepts(user_input: str) -> list[str]:
     return sorted(concepts)
 
 
+_L1_ENTITY_STOPWORDS = {
+    "what", "which", "who", "whom", "whose", "where", "when", "why", "how",
+    "many", "much", "the", "a", "an", "of", "in", "on", "for", "to", "from",
+    "by", "with", "and", "or", "that", "this", "those", "these", "was", "were",
+    "is", "are", "did", "does", "do", "had", "has", "have", "came", "come",
+    "out", "first", "film", "movie", "person", "company", "corporation",
+    "behind", "makes", "made", "make", "creator", "created", "founder",
+    "founded", "director", "directed", "writer", "author", "mother", "father",
+    "wife", "brother", "grandfather", "born", "birth", "year", "date", "times",
+    "taller", "higher", "country", "city", "language", "award", "won",
+}
+
+
+def _extract_l1_entities(user_input: str) -> set[str]:
+    """Extract cheap stable entity-ish tokens for SCAR-L1 candidate pooling."""
+    text = (user_input or "").lower()
+    tokens = re.findall(r"[a-z0-9][a-z0-9'-]{2,}", text)
+    entities = {
+        token.strip("-'")
+        for token in tokens
+        if token not in _L1_ENTITY_STOPWORDS and len(token.strip("-'")) >= 3
+    }
+    return {token for token in entities if token}
+
+
+def _answer_target_hint(user_input: str) -> str:
+    """Cheap answer-target class used as a hard SCAR-L1 compatibility signal."""
+    text = (user_input or "").lower()
+    if any(token in text for token in ["when", "what year", "which year", "date"]):
+        return "time"
+    if any(token in text for token in ["where", "country", "city", "place", "located"]):
+        return "place"
+    if any(token in text for token in ["how many", "how much", "times", "number"]):
+        return "number"
+    if any(token in text for token in ["who", "mother", "father", "wife", "brother", "grandfather", "founder", "director"]):
+        return "person"
+    if any(token in text for token in ["which", "what"]):
+        return "entity"
+    return "feedback"
+
+
+def _relation_hints(user_input: str) -> set[str]:
+    """Map lexical cues into coarse relation classes for SCAR-L1 safety checks."""
+    text = (user_input or "").lower()
+    relation_map = {
+        "founder": ("founder", "founded", "co-founded", "created", "creator"),
+        "maker": ("makes", "made by", "manufacturer", "behind"),
+        "birth": ("born", "birth"),
+        "director": ("director", "directed"),
+        "author": ("writer", "author", "wrote"),
+        "family": ("mother", "father", "wife", "brother", "grandfather"),
+        "mother": ("mother",),
+        "father": ("father",),
+        "wife": ("wife",),
+        "brother": ("brother",),
+        "grandfather": ("grandfather",),
+        "time_order": ("came out first", "came first", "first", "earlier", "before", "released", "debut"),
+        "comparison": ("taller", "higher", "larger", "older", "younger"),
+        "location": ("where", "country", "city", "located", "place"),
+        "award": ("award", "won"),
+        "predecessor": ("predecessor", "succeeded"),
+    }
+    hints: set[str] = set()
+    for relation, cues in relation_map.items():
+        if any(cue in text for cue in cues):
+            hints.add(relation)
+    return hints
+
+
 def _infer_intent_pre_diagnosis(user_input: str) -> str:
     text = (user_input or "").lower()
     if any(token in text for token in ["why", "explain", "what does", "how does"]):
@@ -1005,6 +1182,47 @@ def _build_graph_bucket(
     return hashlib.md5(bucket_material.encode()).hexdigest()
 
 
+def _build_l1_bucket_aliases(
+    user_input: str,
+    level: str,
+    intent: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+) -> list[str]:
+    """Return primary and SCAR-L1 alias buckets for near-hit candidate pooling."""
+    primary = _build_graph_bucket(user_input, level, intent, profile_epoch, conversation_history)
+    aliases = [primary]
+    conv_bucket = str(len(conversation_history) // 2)
+    entities = sorted(_extract_l1_entities(user_input))[:8]
+    relations = sorted(_relation_hints(user_input))[:5]
+    answer_target = _answer_target_hint(user_input)
+
+    if entities or relations:
+        material = "|".join([
+            "scar_l1_state",
+            str(level),
+            str(intent),
+            str(profile_epoch),
+            conv_bucket,
+            answer_target,
+        ] + relations + entities)
+        aliases.append(hashlib.md5(material.encode()).hexdigest())
+
+    if entities:
+        # Broad entity alias lets SCAR-L1 inspect potentially relevant unsafe
+        # shifts, then reject them with answer-target/relation certificates.
+        material = "|".join([
+            "scar_l1_entity",
+            str(level),
+            str(intent),
+            str(profile_epoch),
+            conv_bucket,
+        ] + entities)
+        aliases.append(hashlib.md5(material.encode()).hexdigest())
+
+    return list(dict.fromkeys(alias for alias in aliases if alias))
+
+
 def _register_graph_bucket(
     bucket: str,
     cache_key: str,
@@ -1019,6 +1237,20 @@ def _register_graph_bucket(
     _MEM_GRAPH_BUCKETS[bucket] = keys[:_MEM_BUCKET_MAX_ITEMS]
     if refresh_version:
         _write_bucket_version(bucket, profile_epoch=profile_epoch)
+
+
+def _register_l1_bucket_aliases(
+    user_input: str,
+    level: str,
+    intent: str,
+    profile_epoch: int,
+    conversation_history: list[dict[str, Any]],
+    cache_key: str,
+) -> list[str]:
+    buckets = _build_l1_bucket_aliases(user_input, level, intent, profile_epoch, conversation_history)
+    for alias in buckets:
+        _register_graph_bucket(alias, cache_key, profile_epoch=profile_epoch)
+    return buckets
 
 
 async def _register_graph_bucket_redis(bucket: str, cache_key: str, ttl: int) -> None:
@@ -1181,8 +1413,18 @@ async def _write_cache_entry(
     # Unconditional write still goes to L0 (exact key); the bucket registration
     # is the extra step that makes this entry discoverable as an L1 near-hit.
     if _is_pcc_stable(state):
-        _register_graph_bucket(graph_bucket, cache_key, profile_epoch=profile_epoch)
-        logger.debug(f"[_write_cache_entry] L1 promote key={cache_key[:8]} bucket={graph_bucket[:8]}")
+        buckets = _register_l1_bucket_aliases(
+            user_input,
+            level,
+            intent_hint,
+            profile_epoch,
+            state.get("conversation_history", []),
+            cache_key,
+        )
+        logger.debug(
+            f"[_write_cache_entry] L1 promote key={cache_key[:8]} "
+            f"buckets={','.join(bucket[:8] for bucket in buckets)}"
+        )
     else:
         logger.debug(f"[_write_cache_entry] L1 skipped (not PCC-stable) key={cache_key[:8]}")
 
@@ -1194,7 +1436,14 @@ async def _write_cache_entry(
         redis_client = await RedisClient.get_instance()
         await redis_client.set(f"v1:resp:{cache_key}", json.dumps(entry), ex=ttl)
         if should_promote_l1:
-            await _register_graph_bucket_redis(graph_bucket, cache_key, ttl)
+            for alias in _build_l1_bucket_aliases(
+                user_input,
+                level,
+                intent_hint,
+                profile_epoch,
+                state.get("conversation_history", []),
+            ):
+                await _register_graph_bucket_redis(alias, cache_key, ttl)
         logger.debug(f"[_write_cache_entry] Cached key={cache_key[:8]} ttl={ttl}s")
     except Exception as e:
         logger.debug(f"[_write_cache_entry] Redis write failed: {e}")
@@ -1340,6 +1589,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     benchmark_task = state.get("benchmark_task") or ""
     profile_epoch = _profile_epoch(learner_profile)
     bucket = _build_graph_bucket(user_input, level, intent_hint, profile_epoch, conversation_history)
+    l1_buckets = _build_l1_bucket_aliases(user_input, level, intent_hint, profile_epoch, conversation_history)
 
     # Build lightweight fingerprint (pre-diagnosis: intent/root_concepts unknown)
     fingerprint = CacheFingerprint(
@@ -1387,6 +1637,15 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     normalized = user_input.strip().lower()
     cache_raw = f"{normalized}||{level}"
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+    l1_request = _build_l1_request_signature(
+        user_input=user_input,
+        normalized=normalized,
+        fingerprint=fingerprint,
+        level=level,
+        intent_hint=intent_hint,
+        profile_epoch=profile_epoch,
+        conversation_history=conversation_history,
+    )
 
     # --- Try in-process cache ---
     now = time.monotonic()
@@ -1450,20 +1709,27 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     # Algorithm 3, lines 3–5: validate bucket version before inspecting candidates.
     # If the bucket is stale (version mismatch or TTL expired) → invalidate and
     # fall through to L2 reconstruction immediately.
-    if not _bucket_version_valid(bucket, current_profile_epoch=profile_epoch):
-        _invalidate_bucket(bucket)
-        logger.info(f"[cache_gate_node] L1 bucket stale/invalid → invalidated, fall L2 (bucket={bucket[:8]})")
-        return _with_adaptive({
-            "cache_hit": False,
-            "cache_decision": "full",
-            "cache_layer": "none",
-            "cache_bucket": bucket,
-            "reuse_risk": 1.0,
-            "cache_fingerprint": fingerprint,
-            "path": "slow",
-        })
-    candidate_keys = [item for item in await _get_bucket_candidate_keys(bucket) if item != cache_key]
-    best_candidate: tuple[str, CacheEntry, float, float] | None = None
+    valid_l1_buckets: list[str] = []
+    for candidate_bucket in l1_buckets:
+        if _bucket_version_valid(candidate_bucket, current_profile_epoch=profile_epoch):
+            valid_l1_buckets.append(candidate_bucket)
+            continue
+        _invalidate_bucket(candidate_bucket)
+        logger.info(
+            f"[cache_gate_node] L1 bucket stale/invalid -> invalidated "
+            f"(bucket={candidate_bucket[:8]})"
+        )
+
+    candidate_keys: list[str] = []
+    seen_candidate_keys: set[str] = set()
+    for candidate_bucket in valid_l1_buckets:
+        for item in await _get_bucket_candidate_keys(candidate_bucket):
+            if item == cache_key or item in seen_candidate_keys:
+                continue
+            seen_candidate_keys.add(item)
+            candidate_keys.append(item)
+
+    best_candidate: tuple[str, CacheEntry, float, float, str] | None = None
 
     # Fetch all L1 candidates concurrently.
     import asyncio as _asyncio
@@ -1476,16 +1742,38 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             continue
         if not _cache_entry_quality_ok_for_benchmark(candidate_entry, benchmark_task):
             continue
-        rank_score, rho = _rank_l1_candidate(fingerprint, candidate_entry, now)
-        if rho > tau_patch:
+        l1_candidate = _build_l1_candidate_signature(
+            cache_key=candidate_key,
+            entry=candidate_entry,
+            current_level=level,
+            current_profile=learner_profile,
+        )
+        decision = decide_l1_reuse(
+            l1_request,
+            l1_candidate,
+            now=now,
+            tau_reuse=tau_reuse,
+            tau_patch=tau_patch,
+        )
+        if decision.decision == "full":
+            logger.debug(
+                f"[cache_gate_node] L1 reject key={candidate_key[:8]} "
+                f"reasons={','.join(decision.reasons)}"
+            )
             continue
-        if best_candidate is None or rank_score > best_candidate[2]:
-            best_candidate = (candidate_key, candidate_entry, rank_score, rho)
+        if best_candidate is None or decision.rank_score > best_candidate[2]:
+            best_candidate = (
+                candidate_key,
+                candidate_entry,
+                decision.rank_score,
+                decision.risk,
+                decision.decision,
+            )
 
     if best_candidate is not None:
-        _, entry, _, rho = best_candidate
-        logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} ρ={rho:.3f}")
-        if rho <= tau_reuse:
+        _, entry, _, rho, l1_decision = best_candidate
+        logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} decision={l1_decision} ρ={rho:.3f}")
+        if l1_decision == "reuse":
             _resp_text = entry.get("response", "")
             return _with_adaptive({
                 "cache_hit": True,
@@ -1821,7 +2109,8 @@ Be encouraging and focus on the most important errors first."""
         used_model = "qwen_grammar"
 
         if not (result.get("success") and result.get("data")):
-            groq_key = os.getenv("GROQ_API_KEY", "")
+            from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+            groq_key = await get_available_groq_key(estimated_tokens=150)
             groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3-32b"))
             if groq_key:
                 try:
@@ -1840,7 +2129,10 @@ Be encouraging and focus on the most important errors first."""
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:
-                        content = resp.json()["choices"][0]["message"]["content"]
+                        data = resp.json()
+                        tokens = data.get("usage", {}).get("total_tokens", 150)
+                        await record_groq_key_usage(groq_key, tokens)
+                        content = data["choices"][0]["message"]["content"]
                         result = {"success": True, "data": content}
                         used_model = f"groq/{groq_model}"
                     else:
@@ -2296,8 +2588,8 @@ def _compute_evidence_budget(
     benchmark_candidates: bool,
     adaptive_profile: str = "",
 ) -> int:
-    base = max(2, _env_int("GRAPHCAG_EVIDENCE_BUDGET_BASE", 5))
-    max_budget = max(base, _env_int("GRAPHCAG_EVIDENCE_BUDGET_MAX", 9))
+    base = max(2, _env_int("TRACECAG_EVIDENCE_BUDGET_BASE", 5))
+    max_budget = max(base, _env_int("TRACECAG_EVIDENCE_BUDGET_MAX", 9))
     complexity = _question_complexity_score(question)
     budget = base + max(0, complexity - 2)
 
@@ -2524,7 +2816,7 @@ def _rank_benchmark_candidates(
 
 
 def _ranker_enabled() -> bool:
-    return _env_flag("GRAPHCAG_USE_LEARNED_RANKER", True)
+    return _env_flag("TRACECAG_USE_LEARNED_RANKER", True)
 
 
 def _candidate_feature_vector(question: str, item: Dict[str, Any]) -> Dict[str, float]:
@@ -2599,14 +2891,14 @@ def _rank_with_online_ranker(
         return sorted(evidence_items, key=lambda item: float(item.get("fusion_score", item.get("vec_sim", 0.0))), reverse=True)
 
     ranker = get_retrieval_ranker()
-    blended_weight = _clip01(_env_float("GRAPHCAG_RANKER_BLEND", 0.42))
+    blended_weight = _clip01(_env_float("TRACECAG_RANKER_BLEND", 0.42))
 
     # Keep graph/title heuristic dominant until online ranker has enough updates.
     mode = str(benchmark_mode or "").strip().lower()
     if mode == "trace-cag_rapid":
         snapshot = ranker.snapshot()
         updates = int(snapshot.get("updates", 0) or 0)
-        warmup_updates = max(1, _env_int("GRAPHCAG_RANKER_WARMUP_UPDATES", 40))
+        warmup_updates = max(1, _env_int("TRACECAG_RANKER_WARMUP_UPDATES", 40))
         if updates < warmup_updates:
             blended_weight = min(blended_weight, 0.22)
         else:
@@ -2716,9 +3008,9 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     start_time = time.time()
     retrieve_start = time.monotonic()
 
-    kg_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_KG_MS", 120.0))
-    vector_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_VECTOR_MS", 80.0))
-    fusion_budget_ms = max(0.0, _env_float("GRAPHCAG_RETRIEVE_BUDGET_FUSION_MS", 40.0))
+    kg_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_KG_MS", 120.0))
+    vector_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_VECTOR_MS", 80.0))
+    fusion_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_FUSION_MS", 40.0))
     total_budget_ms = kg_budget_ms + vector_budget_ms + fusion_budget_ms
 
     def _elapsed_ms() -> float:
@@ -2789,8 +3081,8 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             from api.services.kg_service_v3 import get_kg_service
 
             learner_level = state.get("learner_profile", {}).get("level", "B1")
-            top_k = max(1, _env_int("GRAPHCAG_KG_TOPK", 8))
-            token_budget = max(32, _env_int("GRAPHCAG_KG_CONTEXT_TOKEN_BUDGET", 160))
+            top_k = max(1, _env_int("TRACECAG_KG_TOPK", 8))
+            token_budget = max(32, _env_int("TRACECAG_KG_CONTEXT_TOKEN_BUDGET", 160))
 
             cache_key = _kg_cache_key(user_input, learner_level, top_k)
             queried_nodes = _kg_cache_get(cache_key)
@@ -3109,8 +3401,8 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "recency_lambda": _RECENCY_LAMBDA,
             },
             "kg_topk": {
-                "top_k": max(1, _env_int("GRAPHCAG_KG_TOPK", 8)),
-                "context_token_budget": max(32, _env_int("GRAPHCAG_KG_CONTEXT_TOKEN_BUDGET", 160)),
+                "top_k": max(1, _env_int("TRACECAG_KG_TOPK", 8)),
+                "context_token_budget": max(32, _env_int("TRACECAG_KG_CONTEXT_TOKEN_BUDGET", 160)),
                 "query_cache_size": len(_KG_QUERY_CACHE),
             },
             "jit_graph": jit_graph_meta,
@@ -3123,7 +3415,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             "ranker": benchmark_ranker,
             "learned_ranker": {
                 "enabled": _ranker_enabled(),
-                "blend": _clip01(_env_float("GRAPHCAG_RANKER_BLEND", 0.42)),
+                "blend": _clip01(_env_float("TRACECAG_RANKER_BLEND", 0.42)),
                 "snapshot": ranker_snapshot,
             },
             "adaptive": {
@@ -3134,6 +3426,205 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         },
         "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),
     }
+
+
+# ============================================================
+# STREAMING HELPERS: Build prompt + stream tokens from LLM
+# ============================================================
+
+def build_generation_prompt(
+    state: Dict[str, Any],
+) -> tuple[str, List[Dict[str, Any]]]:
+    """Extract (system_prompt, messages) from raw pipeline state.
+
+    Used by the streaming endpoint so it can call the LLM with streaming
+    enabled after the rest of the pipeline (KG, diagnosis, retrieval) has
+    prepared the context.
+    """
+    errors = state.get("diagnosis_errors", [])
+    intent = state.get("diagnosis_intent", "correct")
+    level = (state.get("learner_profile") or {}).get("level", "B1")
+    user_input = str(state.get("user_input") or "")
+    context = str(state.get("retrieved_context") or "")
+    vietnamese_hint = state.get("vietnamese_hint")
+    session_turn = len(state.get("conversation_history") or [])
+    prev_overall = state.get("overall_score", 0.5)
+    fluency_score = state.get("fluency_score", 0.8)
+    error_count = len(errors)
+
+    difficulty = _compute_difficulty_ramp(session_turn, prev_overall)
+
+    if intent == "explain" and fluency_score > 0.7:
+        strategy = "socratic"
+    elif error_count == 0:
+        strategy = "praise"
+    elif error_count <= 2:
+        strategy = "feedback"
+    else:
+        strategy = "scaffold"
+
+    system_prompt = (
+        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
+        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
+        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
+        "Gently correct mistakes with encouraging context.\n"
+        f"The learner's current CEFR level is: {level}\n"
+        f"Difficulty setting for this turn: {difficulty}\n"
+    )
+    if context:
+        system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
+
+    if strategy == "socratic":
+        system_prompt += (
+            "\nStrategy: SOCRATIC. Guide through short questions, don't reveal answer.\n"
+        )
+        if errors:
+            hints = "\n".join(
+                f"- '{e.get('span','')}' → '{e.get('correction','')}'"
+                for e in errors[:3]
+            )
+            system_prompt += f"\n--- Errors (hints only) ---\n{hints}\n"
+    elif errors:
+        errs_text = "\n".join(
+            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
+            for e in errors[:3]
+        )
+        system_prompt += f"\n--- Errors Found ---\n{errs_text}\n"
+        system_prompt += f"Strategy: {strategy}. Weave corrections naturally.\n"
+    else:
+        system_prompt += "\nNo errors found — praise the learner's effort!\n"
+
+    if vietnamese_hint:
+        system_prompt += f"\n--- Vietnamese Hint ---\n{vietnamese_hint}\n"
+
+    messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
+    for msg in (state.get("conversation_history") or [])[-12:]:
+        role = msg.get("role")
+        content = msg.get("content", "")
+        if role and content:
+            messages.append({"role": role, "content": content})
+        elif msg.get("user"):
+            messages.append({"role": "user", "content": msg["user"]})
+            if msg.get("ai"):
+                messages.append({"role": "assistant", "content": msg["ai"]})
+    messages.append({"role": "user", "content": user_input})
+
+    return system_prompt, messages
+
+
+async def stream_llm_tokens(
+    *,
+    system_prompt: str,
+    messages: List[Dict[str, Any]],
+    user_input: str,
+) -> "AsyncGenerator[str, None]":
+    """Stream tokens from Groq (preferred) then Gemini as fallback.
+
+    Yields raw text deltas as they arrive from the provider.
+    Falls back silently to Gemini if Groq is unavailable or rate-limited.
+    """
+    from typing import AsyncGenerator as _AG  # local import avoids circular
+
+    async def _try_groq() -> "AsyncGenerator[str, None]":
+        import httpx as _httpx
+        from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+
+        groq_key = await get_available_groq_key(estimated_tokens=512)
+        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+        if not groq_key or _provider_is_disabled("groq"):
+            return
+
+        client = _get_httpx_client("groq")
+        tokens_yielded = 0
+        try:
+            async with client.stream(
+                "POST",
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {groq_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": groq_model,
+                    "messages": messages,
+                    "max_tokens": 512,
+                    "temperature": 0.7,
+                    "stream": True,
+                },
+                timeout=25.0,
+            ) as resp:
+                if resp.status_code != 200:
+                    logger.warning("[stream_llm_tokens] Groq status %d", resp.status_code)
+                    return
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data = line[6:]
+                    if data.strip() == "[DONE]":
+                        break
+                    try:
+                        obj = json.loads(data)
+                        delta = obj["choices"][0]["delta"].get("content") or ""
+                        if delta:
+                            tokens_yielded += len(delta.split())
+                            yield delta
+                    except Exception:
+                        pass
+            await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
+        except Exception as exc:
+            logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
+
+    async def _try_gemini() -> "AsyncGenerator[str, None]":
+        gemini_key = os.getenv("GEMINI_API_KEY", "")
+        if not gemini_key or _provider_is_disabled("gemini"):
+            return
+
+        import httpx as _httpx
+
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"gemini-2.0-flash:streamGenerateContent?key={gemini_key}&alt=sse"
+        )
+        request_body = {
+            "contents": [{"role": "user", "parts": [{"text": user_input}]}],
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+        }
+        client = _get_httpx_client("gemini")
+        try:
+            async with client.stream(
+                "POST", url, json=request_body, timeout=25.0
+            ) as resp:
+                if resp.status_code != 200:
+                    logger.warning("[stream_llm_tokens] Gemini status %d", resp.status_code)
+                    return
+                async for line in resp.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data = line[6:]
+                    try:
+                        obj = json.loads(data)
+                        text = (
+                            obj.get("candidates", [{}])[0]
+                            .get("content", {})
+                            .get("parts", [{}])[0]
+                            .get("text", "")
+                        )
+                        if text:
+                            yield text
+                    except Exception:
+                        pass
+        except Exception as exc:
+            logger.warning("[stream_llm_tokens] Gemini stream error: %s", exc)
+
+    # Try Groq first; if it yields nothing, fall back to Gemini
+    got_tokens = False
+    async for token in _try_groq():
+        got_tokens = True
+        yield token
+
+    if not got_tokens:
+        async for token in _try_gemini():
+            yield token
 
 
 # ============================================================
@@ -3149,9 +3640,13 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     into the system prompt. This is the SINGLE place where LLM
     generation happens — callers should NOT make a separate LLM call.
     """
+    # When the streaming endpoint handles generation externally, skip this node.
+    if state.get("generation_policy") == "skip":
+        return {}
+
     logger.info("[generate_node] Generating grounded tutor response...")
     start_time = time.time()
-    
+
     errors = state.get("diagnosis_errors", [])
     intent = state.get("diagnosis_intent", "correct")
     level = state.get("learner_profile", {}).get("level", "B1")
@@ -3268,7 +3763,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     response = ""
     model_used = "llm_unavailable"
 
-    local_llama_enabled = _env_flag("GRAPHCAG_ENABLE_LOCAL_LLAMA_KV", False)
+    local_llama_enabled = _env_flag("TRACECAG_ENABLE_LOCAL_LLAMA_KV", False)
     if local_llama_enabled and not response:
         try:
             local_llama = get_local_llama_kv_service()
@@ -3315,8 +3810,9 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             # Race Groq and Gemini concurrently; first successful response wins.
             # Ollama is kept as last-resort with a tighter 15s timeout.
             import asyncio as _asyncio
+            from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_key = os.getenv("GROQ_API_KEY", "")
+            groq_key = await get_available_groq_key(estimated_tokens=512)
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
@@ -3332,8 +3828,11 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         httpx_module=httpx,
                         timeout=20.0,
                     )
-                    if resp.status_code == 200:
-                        return resp.json()["choices"][0]["message"]["content"], f"groq/{groq_model}"
+                    if resp is not None and resp.status_code == 200:
+                        data = resp.json()
+                        tokens = data.get("usage", {}).get("total_tokens", 500)
+                        await record_groq_key_usage(groq_key, tokens)
+                        return data["choices"][0]["message"]["content"], f"groq/{groq_model}"
                 except Exception as e:
                     logger.warning(f"[generate_node] Groq failed: {e}")
                 return None, None
@@ -3355,7 +3854,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         httpx_module=httpx,
                         timeout=20.0,
                     )
-                    if resp.status_code == 200:
+                    if resp is not None and resp.status_code == 200:
                         candidates = resp.json().get("candidates", [])
                         if candidates:
                             return candidates[0]["content"]["parts"][0]["text"], "gemini-2.0-flash"
@@ -3411,7 +3910,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         timeout=15.0,
                         max_retries=1,
                     )
-                    if resp.status_code == 200:
+                    if resp is not None and resp.status_code == 200:
                         response = resp.json().get("message", {}).get("content", "")
                         model_used = f"ollama/{ollama_model}"
                 except Exception as e:
@@ -3771,6 +4270,7 @@ def _postprocess_benchmark_qa_answer(
     *,
     support_floor: float = 0.4,
     grounding_margin: float = 0.18,
+    model_used: str = "",
 ) -> str:
     """Normalize LLM output into a concise benchmark answer span."""
     text = str(raw_answer or "").strip()
@@ -3782,29 +4282,41 @@ def _postprocess_benchmark_qa_answer(
     text = text.replace("```", "").strip()
     text = re.sub(r"^\s*(final\s+answer|answer)\s*:\s*", "", text, flags=re.IGNORECASE)
     lines = [line.strip() for line in text.splitlines() if line.strip()]
-    candidate = (lines[0] if lines else text).strip(" \t\n\r\"'`“”")
+    candidate = (lines[0] if lines else text).strip(" \t\n\r\"'`""")
 
     low = candidate.lower().strip().rstrip(".!")
     if low in {"yes", "no", "unknown"}:
         return low
 
+    # Strong LLM models (70b+) produce high-quality answers that should be trusted
+    # more than extractive span matching. Only override for clear hallucinations.
+    model_name = str(model_used or "").strip().lower()
+    is_strong_llm = any(tag in model_name for tag in ("70b", "7b", "gemini", "gpt", "claude")) and model_name not in ("extractive_fallback", "extractive_policy")
+
     extractive_answer = _generate_extractive_qa_response(question, context)
     llm_support = _answer_support_score(candidate, context)
     extractive_support = _answer_support_score(extractive_answer, context)
 
-    # Prefer extractive fallback only when LLM grounding is clearly weak.
-    # This avoids over-correcting short, high-quality LLM answers that often score better on EM/F1.
-    weak_llm_cutoff = max(0.38, support_floor - 0.02)
-    strong_extractive_cutoff = max(0.72, llm_support + grounding_margin)
+    # For strong LLMs, require a larger grounding gap before preferring extractive.
+    # For weaker/extractive fallbacks, use tighter grounding enforcement.
+    if is_strong_llm:
+        weak_llm_cutoff = max(0.20, support_floor - 0.18)
+        effective_grounding_margin = max(grounding_margin, 0.30)
+    else:
+        weak_llm_cutoff = max(0.38, support_floor - 0.02)
+        effective_grounding_margin = grounding_margin
+
+    strong_extractive_cutoff = max(0.72, llm_support + effective_grounding_margin)
     if extractive_answer and llm_support < weak_llm_cutoff and extractive_support >= strong_extractive_cutoff:
         return extractive_answer
 
-    candidate_tokens = _content_tokens(candidate)
-    context_tokens = set(_content_tokens(context))
-    if candidate_tokens:
-        support = sum(1 for tok in candidate_tokens if tok in context_tokens) / max(len(candidate_tokens), 1)
-        if support < support_floor and extractive_support >= (llm_support + 0.05):
-            return extractive_answer
+    if not is_strong_llm:
+        candidate_tokens = _content_tokens(candidate)
+        context_tokens = set(_content_tokens(context))
+        if candidate_tokens:
+            support = sum(1 for tok in candidate_tokens if tok in context_tokens) / max(len(candidate_tokens), 1)
+            if support < support_floor and extractive_support >= (llm_support + 0.05):
+                return extractive_answer
 
     # For long explanatory outputs, fallback to deterministic span extraction.
     if len(candidate.split()) > 20 or any(token in low for token in ["because", "according to", "based on", "the answer"]):
@@ -3812,6 +4324,46 @@ def _postprocess_benchmark_qa_answer(
             return extractive_answer
 
     return candidate
+
+
+_BENCHMARK_CONTEXT_MAX_CHARS = int(os.getenv("TRACECAG_BENCHMARK_CONTEXT_MAX_CHARS", "3000"))
+
+
+def _truncate_benchmark_context(context: str, question: str, max_chars: int = _BENCHMARK_CONTEXT_MAX_CHARS) -> str:
+    """Truncate context to keep token usage within TPM budget.
+
+    Keeps the most relevant passages by scoring each paragraph's lexical overlap
+    with the question, then greedily fills up to max_chars.
+    """
+    if not context or len(context) <= max_chars:
+        return context
+
+    paragraphs = [p.strip() for p in re.split(r"\n{2,}|\n(?=[A-Z])|(?<=\.)\s{2,}", context) if p.strip()]
+    if not paragraphs:
+        return context[:max_chars]
+
+    q_tokens = set(_content_tokens(question))
+
+    def _relevance(para: str) -> float:
+        p_tokens = set(_content_tokens(para))
+        if not p_tokens or not q_tokens:
+            return 0.0
+        return len(p_tokens & q_tokens) / max(len(q_tokens), 1)
+
+    scored = sorted(enumerate(paragraphs), key=lambda iv: _relevance(iv[1]), reverse=True)
+    selected: list[tuple[int, str]] = []
+    total = 0
+    for idx, para in scored:
+        if total + len(para) + 2 > max_chars:
+            break
+        selected.append((idx, para))
+        total += len(para) + 2
+
+    if not selected:
+        return context[:max_chars]
+
+    selected.sort(key=lambda iv: iv[0])
+    return "\n\n".join(p for _, p in selected)
 
 
 async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
@@ -3831,12 +4383,16 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     else:
         response = ""
         model_used = "llm_unavailable"
+        truncated_context = _truncate_benchmark_context(clean_context, question)
         system_prompt = (
-            "You are answering a public QA benchmark. Use only the provided context. "
-            "Return only the final answer, with no explanation, no preamble, and no extra sentences. "
-            "If the answer is yes or no, return exactly yes or no. If the answer is unknown from the context, return unknown."
+            "You are a precise QA system for multi-hop reasoning benchmarks. "
+            "The context spans multiple passages — read ALL of them, identify key entities and facts, "
+            "then chain the evidence to reach the answer. "
+            "Output ONLY the minimal final answer: a short entity/phrase (1–6 words), 'yes', or 'no'. "
+            "Never explain, never add punctuation or preamble. "
+            "If genuinely unanswerable from the context, output exactly: unknown"
         )
-        user_prompt = f"Question: {question}\n\nContext:\n{context}\n\nFinal answer only:"
+        user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
 
         try:
             import httpx
@@ -3851,28 +4407,46 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                     break
 
                 if provider == "groq":
-                    groq_key = os.getenv("GROQ_API_KEY", "")
+                    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, get_groq_key_pool
                     groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-                    if not groq_key:
-                        continue
-                    try:
-                        resp = await _throttled_post_json(
-                            provider="groq",
-                            url="https://api.groq.com/openai/v1/chat/completions",
-                            headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                            payload={"model": groq_model, "messages": messages, "max_tokens": 64, "temperature": 0.0},
-                            httpx_module=httpx,
-                            timeout=30.0,
-                        )
-                        if resp.status_code == 200:
-                            response = resp.json()["choices"][0]["message"]["content"].strip()
-                            model_used = f"groq/{groq_model}"
-                        else:
-                            logger.warning(
-                                f"[_generate_benchmark_qa_response] Groq returned {resp.status_code}: {resp.text[:200]}"
+                    # Retry across all available keys — skip keys returning 401 (expired/invalid)
+                    _pool = get_groq_key_pool()
+                    _max_key_tries = _pool.count if _pool else 4
+                    _tried_groq_keys: set = set()
+                    for _key_attempt in range(_max_key_tries):
+                        groq_key = await get_available_groq_key(estimated_tokens=96)
+                        if not groq_key or groq_key in _tried_groq_keys:
+                            break
+                        _tried_groq_keys.add(groq_key)
+                        try:
+                            resp = await _throttled_post_json(
+                                provider="groq",
+                                url="https://api.groq.com/openai/v1/chat/completions",
+                                headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
+                                payload={"model": groq_model, "messages": messages, "max_tokens": 96, "temperature": 0.0},
+                                httpx_module=httpx,
+                                timeout=30.0,
                             )
-                    except Exception as e:
-                        logger.warning(f"[_generate_benchmark_qa_response] Groq failed: {e}")
+                            if resp is not None and resp.status_code == 200:
+                                data = resp.json()
+                                tokens = data.get("usage", {}).get("total_tokens", 96)
+                                await record_groq_key_usage(groq_key, tokens)
+                                response = data["choices"][0]["message"]["content"].strip()
+                                model_used = f"groq/{groq_model}"
+                                break
+                            elif resp is not None and resp.status_code == 401:
+                                logger.warning(
+                                    f"[_generate_benchmark_qa_response] Groq key invalid (401), trying next key"
+                                )
+                                continue
+                            else:
+                                logger.warning(
+                                    f"[_generate_benchmark_qa_response] Groq returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
+                                )
+                                break
+                        except Exception as e:
+                            logger.warning(f"[_generate_benchmark_qa_response] Groq failed: {e}")
+                            break
 
                 elif provider == "gemini":
                     gemini_key = os.getenv("GEMINI_API_KEY", "")
@@ -3883,7 +4457,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                         request_body = {
                             "contents": [{"parts": [{"text": user_prompt}]}],
                             "system_instruction": {"parts": [{"text": system_prompt}]},
-                            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 64},
+                            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 96},
                         }
                         resp = await _throttled_post_json(
                             provider="gemini",
@@ -3892,14 +4466,14 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             httpx_module=httpx,
                             timeout=30.0,
                         )
-                        if resp.status_code == 200:
+                        if resp is not None and resp.status_code == 200:
                             candidates = resp.json().get("candidates", [])
                             if candidates:
                                 response = candidates[0]["content"]["parts"][0]["text"].strip()
                                 model_used = "gemini-2.0-flash"
                         else:
                             logger.warning(
-                                f"[_generate_benchmark_qa_response] Gemini returned {resp.status_code}: {resp.text[:200]}"
+                                f"[_generate_benchmark_qa_response] Gemini returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
                             )
                     except Exception as e:
                         logger.warning(f"[_generate_benchmark_qa_response] Gemini failed: {e}")
@@ -3915,18 +4489,18 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                                 "model": ollama_model,
                                 "messages": messages,
                                 "stream": False,
-                                "options": {"num_predict": 64, "temperature": 0.0},
+                                "options": {"num_predict": 96, "temperature": 0.0},
                             },
                             httpx_module=httpx,
                             timeout=60.0,
                             max_retries=1,
                         )
-                        if resp.status_code == 200:
+                        if resp is not None and resp.status_code == 200:
                             response = resp.json().get("message", {}).get("content", "").strip()
                             model_used = f"ollama/{ollama_model}"
                         else:
                             logger.warning(
-                                f"[_generate_benchmark_qa_response] Ollama returned {resp.status_code}: {resp.text[:200]}"
+                                f"[_generate_benchmark_qa_response] Ollama returned {getattr(resp, 'status_code', 'n/a')}: {getattr(resp, 'text', '')[:200]}"
                             )
                     except Exception as e:
                         logger.warning(f"[_generate_benchmark_qa_response] Ollama failed: {e}")
@@ -3940,7 +4514,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     adaptive_profile = str(state.get("adaptive_profile") or "").strip().lower()
     adaptive_config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced") if adaptive_profile else None
     support_floor = float(state.get("adaptive_controller", {}).get("support_floor") or (adaptive_config.support_floor if adaptive_config else 0.4))
-    grounding_margin = float(_env_float("GRAPHCAG_BENCHMARK_GROUNDING_MARGIN", 0.18))
+    grounding_margin = float(_env_float("TRACECAG_BENCHMARK_GROUNDING_MARGIN", 0.18))
 
     response = _postprocess_benchmark_qa_answer(
         question,
@@ -3948,6 +4522,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         clean_context,
         support_floor=max(0.2, min(0.8, support_floor)),
         grounding_margin=max(0.02, min(0.35, grounding_margin)),
+        model_used=model_used,
     )
 
     overall_score = 1.0 if response and response.lower() != "unknown" else 0.0

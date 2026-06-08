@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.dependencies import get_current_user, get_current_user_optional, get_current_admin
 from app.core.cache import build_cache_key, get_cached, set_cached
 from app.models.user import User
 from app.crud.course_category import CourseCategoryCRUD
@@ -195,14 +195,13 @@ async def get_courses_by_category(
 async def create_category(
     category_data: CourseCategoryCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin)
 ):
     """
     Create a new course category.
     
     **Admin only** - Requires authentication.
     """
-    # TODO: Add admin role check
     
     # Check if slug already exists
     existing = await CourseCategoryCRUD.get_category_by_slug(db, category_data.slug)
@@ -235,14 +234,13 @@ async def update_category(
     category_id: uuid.UUID,
     update_data: CourseCategoryUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin)
 ):
     """
     Update a course category.
     
     **Admin only** - Requires authentication.
     """
-    # TODO: Add admin role check
     
     # Check if slug is being changed and if it's already taken
     if update_data.slug:
@@ -273,14 +271,13 @@ async def update_category(
 async def delete_category(
     category_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin)
 ):
     """
     Delete a course category (soft delete).
     
     **Admin only** - Requires authentication.
     """
-    # TODO: Add admin role check
     
     success = await CourseCategoryCRUD.delete_category(db, category_id)
     
@@ -300,14 +297,13 @@ async def delete_category(
 @router.post("/update-counts", response_model=ApiResponse[dict])
 async def update_course_counts(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_admin)
 ):
     """
     Update course counts for all categories.
     
     **Admin only** - Should be called periodically or after course changes.
     """
-    # TODO: Add admin role check
     
     await CourseCategoryCRUD.update_course_counts(db)
     

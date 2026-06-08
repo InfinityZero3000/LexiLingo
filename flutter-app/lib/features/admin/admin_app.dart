@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_provider.dart';
+import 'shared/admin_exit_scope.dart';
 
 /// Full-screen admin panel embedded inside the main flutter-app.
 /// Opened via Navigator.push from profile_page when the user is an admin.
@@ -38,13 +39,16 @@ class _AdminAppState extends State<AdminApp> {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
       ),
-      child: ChangeNotifierProvider.value(
-        value: _authProvider,
-        child: MaterialApp.router(
-          title: 'LexiLingo Admin',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          routerConfig: _router,
+      child: AdminExitScope(
+        onExit: () => Navigator.of(context).maybePop(),
+        child: ChangeNotifierProvider.value(
+          value: _authProvider,
+          child: MaterialApp.router(
+            title: 'LexiLingo Admin',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            routerConfig: _router,
+          ),
         ),
       ),
     );

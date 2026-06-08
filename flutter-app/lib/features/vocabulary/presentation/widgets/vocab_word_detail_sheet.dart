@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 
 /// Full flashcard bottom sheet for a [VocabWord].
 /// Front: word + IPA + part of speech + tap hint.
@@ -99,7 +101,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Flashcard',
+                      'vocabulary.flashcard'.tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -169,7 +171,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                           Expanded(
                             child: _ActionButton(
                               icon: Icons.flip,
-                              label: _showBack ? 'Show Front' : 'Flip Card',
+                              label: _showBack ? 'vocabulary.showFront'.tr() : 'vocabulary.flipCard'.tr(),
                               onTap: _flip,
                               color: AppColors.primary,
                             ),
@@ -186,6 +188,16 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                           ],
                         ],
                       ),
+
+                      if (widget.word.userVocabularyId != null) ...[
+                        const SizedBox(height: 12),
+                        _ActionButton(
+                          icon: Icons.bookmark_add_outlined,
+                          label: 'vocabulary.addToDeck'.tr(),
+                          onTap: () => _showAddToDeckOptions(context),
+                          color: AppColors.primary,
+                        ),
+                      ],
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -193,6 +205,89 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showAddToDeckOptions(BuildContext context) {
+    final vocabProvider = Provider.of<VocabProvider>(context, listen: false);
+    final userVocabId = widget.word.userVocabularyId;
+
+    if (userVocabId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('vocabulary.addWordFirst'.tr())),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final decks = vocabProvider.decks;
+            return Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'vocabulary.addToDeckTitle'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                  const SizedBox(height: 12),
+                  if (decks.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text('vocabulary.noDecksFound'.tr()),
+                      ),
+                    )
+                  else
+                    Flexible(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: decks.length,
+                        itemBuilder: (context, index) {
+                          final deck = decks[index];
+                          Color deckColor;
+                          try {
+                            deckColor = Color(int.parse('FF${deck.color.replaceAll('#', '')}', radix: 16));
+                          } catch (_) {
+                            deckColor = AppColors.primary;
+                          }
+
+                          return ListTile(
+                            leading: Icon(Icons.bookmark, color: deckColor),
+                            title: Text(deck.name),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                              onPressed: () async {
+                                final success = await vocabProvider.addWordToDeck(deck.id, userVocabId);
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        success
+                                            ? 'vocabulary.addToDeckSuccess'.tr(args: [deck.name])
+                                            : 'vocabulary.addToDeckFailed'.tr(),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
@@ -389,7 +484,7 @@ class _CardBack extends StatelessWidget {
           // Example
           if (word.example != null && word.example!.isNotEmpty) ...[
             const SizedBox(height: 20),
-            _SectionLabel(label: 'Example'),
+            _SectionLabel(label: 'vocabulary.exampleLabel'.tr()),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.all(14),
@@ -470,7 +565,7 @@ class _FlipHintChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        showBack ? 'Back' : 'Front',
+        showBack ? 'vocabulary.cardBack'.tr() : 'vocabulary.cardFront'.tr(),
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,

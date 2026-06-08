@@ -8,6 +8,7 @@ from uuid import UUID
 from datetime import datetime, timezone
 from math import radians, sin, cos, sqrt, atan2
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -20,6 +21,7 @@ from app.core.cache import (
     set_cached,
 )
 from app.models.user import User
+from app.models.gamification import ShopItem, UserInventory
 from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
 )
@@ -28,18 +30,44 @@ from app.schemas.gamification import (
     WalletResponse, WalletHistoryResponse, WalletTransactionResponse,
     LeaderboardResponse, LeaderboardUserEntry, UserLeagueStatusResponse,
     ShopItemResponse, PurchaseRequest, PurchaseResponse,
-    InventoryResponse, UserInventoryItemResponse, UseItemRequest, UseItemResponse,
+    EquipAvatarRequest, EquipAvatarResponse, InventoryResponse,
+    UserInventoryItemResponse, UseItemRequest, UseItemResponse,
     FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
     ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
-    LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse
+    LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse,
+    StarterRewardResponse,
 )
 from app.schemas.response import ApiResponse
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.starter_reward_service import StarterRewardService
 
 router = APIRouter(prefix="/gamification", tags=["Gamification"])
 
 
 SOCIAL_LOCATION_TTL_SECONDS = 6 * 60 * 60
+LEAGUE_ZONE_SIZE = 3
+
+
+def is_in_promotion_zone(
+    rank: Optional[int],
+    total_participants: int,
+) -> bool:
+    if rank is None or total_participants <= 0:
+        return False
+    return rank <= min(LEAGUE_ZONE_SIZE, total_participants)
+
+
+def is_in_demotion_zone(
+    rank: Optional[int],
+    total_participants: int,
+) -> bool:
+    if rank is None or total_participants <= LEAGUE_ZONE_SIZE:
+        return False
+    demotion_start = max(
+        LEAGUE_ZONE_SIZE + 1,
+        total_participants - LEAGUE_ZONE_SIZE + 1,
+    )
+    return rank >= demotion_start
 
 
 def _social_location_key(user_id: UUID) -> str:
@@ -225,6 +253,51 @@ async def check_all_achievements(
 # Wallet Endpoints
 # ============================================================================
 
+@router.get(
+    "/rewards/starter/pending",
+    response_model=ApiResponse[Optional[StarterRewardResponse]],
+)
+async def get_pending_starter_reward(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    grant = await StarterRewardService.get_pending(db, current_user.id)
+    if not grant:
+        return ApiResponse(
+            success=True,
+            message="No pending starter reward",
+            data=None,
+        )
+
+    wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
+    return ApiResponse(
+        success=True,
+        message="Pending starter reward retrieved",
+        data=StarterRewardResponse(
+            reward_key=grant.reward_key,
+            gems_awarded=grant.gems_awarded,
+            current_balance=wallet.gems,
+            title="Welcome gift",
+            body=f"{grant.gems_awarded} Gems have been added to your wallet.",
+        ),
+    )
+
+
+@router.post(
+    "/rewards/starter/seen",
+    response_model=ApiResponse[bool],
+)
+async def mark_starter_reward_seen(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    grant = await StarterRewardService.mark_seen(db, current_user.id)
+    return ApiResponse(
+        success=True,
+        message="Starter reward acknowledged",
+        data=grant is not None,
+    )
+
 @router.get("/wallet", response_model=ApiResponse[WalletResponse])
 async def get_my_wallet(
     db: AsyncSession = Depends(get_db),
@@ -335,7 +408,8 @@ async def get_leaderboard(
             normalized_league,
         )
         total_participants = fallback_total
-        for rank, user in enumerate(fallback_users, 1):
+        fallback_ranks = LeaderboardCRUD.rank_scores([0] * len(fallback_users))
+        for rank, user in zip(fallback_ranks, fallback_users):
             is_current = user.id == current_user.id
             if is_current:
                 current_user_rank = rank
@@ -347,12 +421,17 @@ async def get_leaderboard(
                 display_name=user.display_name,
                 avatar_url=user.avatar_url,
                 user_rank=user.rank,
-                xp_earned=user.total_xp,
+                xp_earned=0,
                 lessons_completed=0,
                 is_current_user=is_current,
             ))
-    
-    for rank, (entry, user) in enumerate(entries, 1):
+
+    weekly_scores = [
+        entry.xp_earned if entry is not None else 0
+        for entry, _ in entries
+    ]
+    weekly_ranks = LeaderboardCRUD.rank_scores(weekly_scores)
+    for rank, (entry, user) in zip(weekly_ranks, entries):
         is_current = user.id == current_user.id
         if is_current:
             current_user_rank = rank
@@ -435,6 +514,10 @@ async def get_my_league_status(
 
     entry = await LeaderboardCRUD.get_or_create_entry(db, current_user.id)
     rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
+    total_participants = await LeaderboardCRUD.count_rank_participants(
+        db,
+        current_user.rank,
+    )
     _, week_end = LeaderboardCRUD.get_current_week_range()
     
     hours_remaining = int((week_end - datetime.now(timezone.utc)).total_seconds() / 3600)
@@ -454,8 +537,8 @@ async def get_my_league_status(
             current_rank=rank,
             xp_earned=entry.xp_earned,
             lessons_completed=entry.lessons_completed,
-            is_in_promotion_zone=rank <= 3 if rank else False,
-            is_in_demotion_zone=False,  # TODO: Implement based on league size
+            is_in_promotion_zone=is_in_promotion_zone(rank, total_participants),
+            is_in_demotion_zone=is_in_demotion_zone(rank, total_participants),
             week_ends_in_hours=max(0, hours_remaining),
             rank_icon_url=rank_info.icon_url
         )
@@ -558,6 +641,55 @@ async def get_my_inventory(
             items=response_items,
             total_items=len(response_items)
         )
+    )
+
+
+@router.post(
+    "/inventory/avatar/equip",
+    response_model=ApiResponse[EquipAvatarResponse],
+)
+async def equip_owned_avatar(
+    request: EquipAvatarRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(UserInventory, ShopItem)
+        .join(ShopItem, ShopItem.id == UserInventory.shop_item_id)
+        .where(
+            and_(
+                UserInventory.id == request.inventory_id,
+                UserInventory.user_id == current_user.id,
+                ShopItem.item_type == "avatar",
+            )
+        )
+    )
+    owned = result.first()
+    if not owned:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Owned avatar not found",
+        )
+
+    inventory, item = owned
+    avatar_url = (item.effects or {}).get("avatar_url") or item.icon_url
+    if not avatar_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Avatar item has no image URL",
+        )
+
+    current_user.avatar_url = avatar_url
+    await db.commit()
+    await db.refresh(current_user)
+
+    return ApiResponse(
+        success=True,
+        message=f"{item.name} equipped",
+        data=EquipAvatarResponse(
+            avatar_url=avatar_url,
+            inventory_id=inventory.id,
+        ),
     )
 
 

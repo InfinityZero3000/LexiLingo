@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 
 /// Grammar Quiz game screen.
 ///
@@ -29,7 +30,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   int? _selectedIndex;
   bool _answered = false;
   bool _gameLoaded = false;
+  bool _isFinishing = false;
   String? _feedbackText;
+  final Map<String, String> _submittedAnswers = {};
 
   // Per-topic correct tracking for mastery message
   final Map<String, int> _topicCorrect = {};
@@ -83,7 +86,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     if (_answered) return;
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
-    _recordTopic(game.topic, false);
+    _submittedAnswers[q.id] = '';
+    _recordTopic(q.topic, false);
     setState(() {
       _answered = true;
       _feedbackText =
@@ -97,16 +101,17 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _timer?.cancel();
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
-    final correct = index == q.correctIndex;
+    final correct = q.options[index] == q.correctAnswer;
+    _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
-    _recordTopic(game.topic, correct);
-    final masteryMsg = _buildMasteryMessage(game.topic);
+    _recordTopic(q.topic, correct);
+    final masteryMsg = _buildMasteryMessage(q.topic);
     setState(() {
       _selectedIndex = index;
       _answered = true;
       _feedbackText = correct
-          ? q.grammarTip.isNotEmpty
-                ? q.grammarTip
+          ? q.explanation.isNotEmpty
+                ? q.explanation
                 : 'grammarQuiz.correctFeedback'.tr()
           : '${q.explanation.isNotEmpty ? q.explanation : 'grammarQuiz.incorrectFeedback'.tr()}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
     });
@@ -148,6 +153,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       .join(' ');
 
   void _nextQuestion() {
+    if (!mounted || _isFinishing) return;
     final game = context.read<GamesProvider>().grammarQuiz;
     if (game == null) return;
     if (_questionIndex + 1 >= game.questions.length) {
@@ -158,7 +164,48 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _startQuestion();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số câu đã hoàn thành.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    _timer?.cancel();
+    final provider = context.read<GamesProvider>();
+    final game = provider.grammarQuiz;
+    if (game != null) {
+      await provider.completeGame(
+        gameType: GameType.grammarQuiz,
+        score: _correctCount,
+        totalQuestions: game.questions.length,
+        correctAnswers: _correctCount,
+        answers: [
+          for (final q in game.questions)
+            {'id': q.id, 'answer': _submittedAnswers[q.id] ?? ''},
+        ],
+      );
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
+    if (_isFinishing) return;
+    _isFinishing = true;
     _timer?.cancel();
     final provider = context.read<GamesProvider>();
     final game = provider.grammarQuiz!;
@@ -174,7 +221,13 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       score: _correctCount,
       totalQuestions: game.questions.length,
       correctAnswers: _correctCount,
-      baseXp: game.totalXp,
+      answers: [
+        for (final question in game.questions)
+          {
+            'id': question.id,
+            'answer': _submittedAnswers[question.id] ?? '',
+          },
+      ],
     );
     if (!mounted) return;
     Navigator.pushReplacement(
@@ -187,7 +240,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
             score: _correctCount,
             totalQuestions: game.questions.length,
             correctAnswers: _correctCount,
-            xpEarned: xpResult?.xpAwarded ?? game.totalXp,
+            xpEarned: xpResult?.xpAwarded ?? 0,
             durationSeconds: 0,
             xpResult: xpResult,
           ),
@@ -199,14 +252,42 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamesProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading || !_gameLoaded) {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Consumer<GamesProvider>(
+        builder: (context, provider, _) {
+          if (provider.isLoading) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final game = provider.grammarQuiz;
+          if (provider.error != null) {
+            return GameLoadState(
+              message: 'games.loadFailed'.tr(),
+              onRetry: () async {
+                await provider.loadGrammarQuiz();
+              if (mounted) _startQuestion();
+            },
+          );
+        }
+        if (game == null || game.questions.isEmpty) {
+          return GameLoadState(
+            message: 'games.emptyGame'.tr(),
+            onRetry: () async {
+              await provider.loadGrammarQuiz();
+              if (mounted) _startQuestion();
+            },
+          );
+        }
+        if (!_gameLoaded) {
           return const Scaffold(
             body: Center(child: LottieLoadingWidget.medium()),
           );
         }
-        final game = provider.grammarQuiz!;
         final q = game.questions[_questionIndex];
 
         return Scaffold(
@@ -318,7 +399,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                             ).colorScheme.onSurface;
                             IconData? icon;
                             if (_answered) {
-                              if (i == q.correctIndex) {
+                              if (q.options[i] == q.correctAnswer) {
                                 bg = AppColors.greenSuccess.withValues(
                                   alpha: 0.1,
                                 );
@@ -381,7 +462,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               decoration: BoxDecoration(
                                 color:
                                     _answered &&
-                                        _selectedIndex == q.correctIndex
+                                        _selectedIndex != null &&
+                                        q.options[_selectedIndex!] ==
+                                            q.correctAnswer
                                     ? AppColors.greenSuccess.withValues(
                                         alpha: 0.08,
                                       )
@@ -390,7 +473,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 border: Border.all(
                                   color:
                                       _answered &&
-                                          _selectedIndex == q.correctIndex
+                                          _selectedIndex != null &&
+                                          q.options[_selectedIndex!] ==
+                                              q.correctAnswer
                                       ? AppColors.greenSuccess
                                       : AppColors.errorBright,
                                 ),
@@ -432,7 +517,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 }

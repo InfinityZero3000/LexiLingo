@@ -16,7 +16,7 @@ LexiLingo là nền tảng học tiếng Anh enterprise-grade, tích hợp AI v�
 
 | Feature | Mô tả | Vị trí |
 |---------|--------|--------|
-| **GraphCAG Pipeline** | Graph + Cache-Augmented Generation qua LangGraph StateGraph | `ai-service/api/services/graph_cag/` |
+| **TRACECAG Pipeline** | Graph + Cache-Augmented Generation qua LangGraph StateGraph | `ai-service/api/services/graph_cag/` |
 | **Smart Model Router** | Tự động chọn model phù hợp dựa trên độ phức tạp | `ai-service/api/services/smart_router.py` |
 | **Model Gateway** | Quản lý vòng đời tất cả AI models với lazy loading | `ai-service/api/services/model_gateway.py` |
 | **CEFR Assessment** | Đánh giá trình độ tự động từ A1 đến C2 | `backend-service/app/services/proficiency_service.py` |
@@ -63,7 +63,7 @@ LexiLingo là nền tảng học tiếng Anh enterprise-grade, tích hợp AI v�
 | Feature | Mô tả | Route |
 |---------|--------|-------|
 | **AI Tutor Chat** | Trò chuyện với gia sư AI cơ bản | `/api/v1/chat/` |
-| **Lexi Chat (Advanced)** | Chat nâng cao với GraphCAG pipeline, voice support | `/api/v1/lexi/` |
+| **Lexi Chat (Advanced)** | Chat nâng cao với TRACECAG pipeline, voice support | `/api/v1/lexi/` |
 | **Topic Chat** | Chat theo chủ đề với context đặc biệt | `/api/v1/topics/` |
 | **Speech-to-Text** | Chuyển giọng nói thành văn bản (Whisper) | `/api/v1/stt/` |
 | **Text-to-Speech** | Tạo âm thanh từ văn bản (Piper/gTTS) | `/api/v1/tts/` |
@@ -108,8 +108,8 @@ Phase 6: Lexi Chat (Story Adventure) → LexiChatProvider
 
 ## 4. Key Highlights — Tính Năng Liên Biệt
 
-### 4.1 GraphCAG Pipeline (Đặc sắc nhất)
-Không giống RAG truyền thống, GraphCAG kết hợp:
+### 4.1 TRACECAG Pipeline (Đặc sắc nhất)
+Không giống RAG truyền thống, TRACECAG kết hợp:
 - **KuzuDB Knowledge Graph**: Đồ thị curriculum với quan hệ prerequisite
 - **Redis Cache-Augmented Generation (CAG)**: Cache context người học, không cần re-retrieve
 - **LangGraph StateGraph**: Orchestration đa bước stateful với conditional routing

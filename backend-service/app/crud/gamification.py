@@ -7,14 +7,15 @@ from typing import List, Optional, Tuple
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 from sqlalchemy import select, func, and_, or_, desc
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.models.gamification import (
     Achievement, UserAchievement, UserWallet, WalletTransaction,
     LeaderboardEntry, UserFollowing, ActivityFeed, ShopItem, UserInventory
 )
 from app.models.user import User
+from app.crud.leaderboard import competition_rank
 
 
 # ============================================================================
@@ -122,7 +123,11 @@ class WalletCRUD:
     """CRUD operations for User Wallet"""
     
     @staticmethod
-    async def get_or_create_wallet(db: AsyncSession, user_id: UUID) -> UserWallet:
+    async def get_or_create_wallet(
+        db: AsyncSession,
+        user_id: UUID,
+        commit: bool = True,
+    ) -> UserWallet:
         """Get user's wallet, create if not exists (handles race condition)."""
         result = await db.execute(
             select(UserWallet).where(UserWallet.user_id == user_id)
@@ -130,20 +135,41 @@ class WalletCRUD:
         wallet = result.scalar_one_or_none()
         
         if not wallet:
-            try:
-                wallet = UserWallet(user_id=user_id, gems=0)
-                db.add(wallet)
-                await db.commit()
-                await db.refresh(wallet)
-            except Exception:
-                await db.rollback()
-                # Another request created it concurrently — re-fetch
-                result = await db.execute(
-                    select(UserWallet).where(UserWallet.user_id == user_id)
-                )
-                wallet = result.scalar_one_or_none()
-                if not wallet:
-                    raise
+            wallet = UserWallet(
+                user_id=user_id,
+                gems=0,
+                total_gems_earned=0,
+                total_gems_spent=0,
+            )
+            if commit:
+                try:
+                    db.add(wallet)
+                    await db.commit()
+                    await db.refresh(wallet)
+                except IntegrityError:
+                    await db.rollback()
+                    result = await db.execute(
+                        select(UserWallet).where(
+                            UserWallet.user_id == user_id
+                        )
+                    )
+                    wallet = result.scalar_one_or_none()
+                    if not wallet:
+                        raise
+            else:
+                try:
+                    async with db.begin_nested():
+                        db.add(wallet)
+                        await db.flush()
+                except IntegrityError:
+                    result = await db.execute(
+                        select(UserWallet).where(
+                            UserWallet.user_id == user_id
+                        )
+                    )
+                    wallet = result.scalar_one_or_none()
+                    if not wallet:
+                        raise
         
         return wallet
     
@@ -157,7 +183,11 @@ class WalletCRUD:
         commit: bool = True,
     ) -> Tuple[UserWallet, WalletTransaction]:
         """Add gems to user's wallet"""
-        wallet = await WalletCRUD.get_or_create_wallet(db, user_id)
+        wallet = await WalletCRUD.get_or_create_wallet(
+            db,
+            user_id,
+            commit=commit,
+        )
         
         wallet.gems += amount
         wallet.total_gems_earned += amount
@@ -395,7 +425,7 @@ class LeaderboardCRUD:
         league: str,
         limit: int = 30,
     ) -> Tuple[List[User], int]:
-        """Fallback leaderboard from users table when weekly entries are empty."""
+        """Return league users for a zero-XP weekly leaderboard."""
         league_filter = league.lower().strip()
 
         base_query = select(User).where(User.is_active == True)
@@ -407,7 +437,7 @@ class LeaderboardCRUD:
 
         result = await db.execute(
             base_query
-            .order_by(desc(User.total_xp), desc(User.updated_at))
+            .order_by(desc(User.updated_at), User.id)
             .limit(limit)
         )
         return list(result.scalars().all()), total
@@ -452,6 +482,18 @@ class LeaderboardCRUD:
         rank = result.scalar() + 1
         return rank
 
+    @staticmethod
+    def rank_scores(scores: List[int]) -> List[int]:
+        """Expose the canonical competition ranking policy."""
+        from app.crud.leaderboard import competition_ranks
+
+        return competition_ranks(scores)
+
+    @staticmethod
+    def rank_for_score(score: int, scores: List[int]) -> int:
+        """Return the canonical rank for a score among league scores."""
+        return competition_rank(score, scores)
+
 
 # ============================================================================
 # Shop CRUD
@@ -495,6 +537,20 @@ class ShopCRUD:
         
         if item.stock_quantity is not None and item.stock_quantity < quantity:
             return None, "Insufficient stock"
+
+        if item.item_type == "avatar":
+            if quantity != 1:
+                return None, "Avatars can only be purchased once"
+            owned_result = await db.execute(
+                select(UserInventory).where(
+                    and_(
+                        UserInventory.user_id == user_id,
+                        UserInventory.shop_item_id == item_id,
+                    )
+                )
+            )
+            if owned_result.scalar_one_or_none():
+                return None, "Avatar already owned"
         
         total_cost = item.price_gems * quantity
         

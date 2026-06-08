@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, BookOpen, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
-  Shield, Database, Bot, ArrowRight, ArrowLeft
+  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare
 } from "lucide-react";
 
 // Lazy-loaded components
@@ -21,6 +21,8 @@ const SuperAdminDashboard = lazy(() => import("./pages/SuperAdminDashboard").the
 const CoursesPage = lazy(() => import("./pages/CoursesPage").then(m => ({ default: m.CoursesPage })));
 const UnitsPage = lazy(() => import("./pages/UnitsPage").then(m => ({ default: m.UnitsPage })));
 const LessonsPage = lazy(() => import("./pages/LessonsPage").then(m => ({ default: m.LessonsPage })));
+const LessonExercisesPage = lazy(() => import("./pages/LessonExercisesPage").then(m => ({ default: m.LessonExercisesPage })));
+const TopicsPage = lazy(() => import("./pages/TopicsPage").then(m => ({ default: m.TopicsPage })));
 const VocabularyPage = lazy(() => import("./pages/VocabularyPage").then(m => ({ default: m.VocabularyPage })));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage").then(m => ({ default: m.AchievementsPage })));
 const ShopPage = lazy(() => import("./pages/ShopPage").then(m => ({ default: m.ShopPage })));
@@ -54,6 +56,7 @@ const AppRoutes = () => {
     { to: "/admin/courses", label: t.nav.courses, icon: <BookOpen size={18} /> },
     { to: "/admin/units", label: t.nav.units, icon: <Layers size={18} /> },
     { to: "/admin/lessons", label: t.nav.lessons, icon: <FileText size={18} /> },
+    { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} /> },
     { to: "/admin/content-lab", label: t.nav.grammarTest, icon: <PenTool size={18} /> },
     { to: "/admin/content-analytics", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} /> },
     { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} /> },
@@ -92,8 +95,10 @@ const AppRoutes = () => {
               <Route path="/admin/courses" element={<CoursesPage />} />
               <Route path="/admin/courses/:courseId/units" element={<UnitsPage />} />
               <Route path="/admin/courses/:courseId/units/:unitId/lessons" element={<LessonsPage />} />
+              <Route path="/admin/courses/:courseId/units/:unitId/lessons/:lessonId/exercises" element={<LessonExercisesPage />} />
               <Route path="/admin/units" element={<UnitsPage />} />
               <Route path="/admin/lessons" element={<LessonsPage />} />
+              <Route path="/admin/topics" element={<TopicsPage />} />
               <Route path="/admin/content-lab" element={<ContentLabPage />} />
               <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
@@ -134,4 +139,3 @@ const App = () => {
 };
 
 export default App;
-

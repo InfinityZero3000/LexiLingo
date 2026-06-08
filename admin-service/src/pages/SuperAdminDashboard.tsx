@@ -147,7 +147,7 @@ export const SuperAdminDashboard = () => {
               <div className="mini-desc">Text-to-Speech • en_US-lessac</div>
             </div>
             <div>
-              <div className="mini-title">GraphCAG</div>
+              <div className="mini-title">TRACECAG</div>
               <div className="mini-desc">Knowledge Graph • Custom Pipeline</div>
             </div>
           </div>

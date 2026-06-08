@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/network/api_config.dart';
-import '../../../../core/error/exceptions.dart';
 import '../models/story_model.dart';
 import '../models/topic_session_model.dart';
 
@@ -31,23 +32,17 @@ class TopicMessagesMetadataResult {
 /// Connects to AI Service on port 8001
 class StoryApiDataSource {
   final String baseUrl;
-  final http.Client _client;
-  final Future<Map<String, String>> Function()? _authHeaderProvider;
+  final AiApiClient? _apiClient;
 
   StoryApiDataSource({
+    AiApiClient? apiClient,
     String? baseUrl,
     http.Client? client,
     Future<Map<String, String>> Function()? authHeaderProvider,
   }) : baseUrl = baseUrl ?? ApiConfig.aiServiceUrl,
-       _client = client ?? http.Client(),
-       _authHeaderProvider = authHeaderProvider;
+       _apiClient = apiClient;
 
-  Future<Map<String, String>> _authHeaders() async {
-    final base = {'Content-Type': 'application/json'};
-    if (_authHeaderProvider == null) return base;
-    final auth = await _authHeaderProvider();
-    return {...base, ...auth};
-  }
+  AiApiClient get apiClient => _apiClient ?? sl<AiApiClient>();
 
   /// Get all available stories
   Future<List<StoryListItem>> getStories({
@@ -63,48 +58,36 @@ class StoryApiDataSource {
       }
       queryParams['limit'] = limit.toString();
 
-      final uri = Uri.parse(
-        '$baseUrl/topics/stories',
-      ).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
-
-      logDebug(_tag, 'getStories: $uri');
-
-      final response = await _client.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
+      final uri = Uri(
+        path: '/topics/stories',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
+      final pathWithQuery = uri.toString();
 
-      if (response.statusCode != 200) {
-        throw ServerException('Failed to get stories: ${response.statusCode}');
-      }
+      logDebug(_tag, 'getStories: $pathWithQuery');
 
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = await apiClient.get(pathWithQuery);
       final storiesJson = json['stories'] as List<dynamic>? ?? [];
 
       if (storiesJson.isEmpty &&
           queryParams['category'] == null &&
           queryParams['difficulty_level'] == null) {
-        final retryUri = Uri.parse('$baseUrl/topics/stories').replace(
-          queryParameters: {
-            'limit': limit.toString(),
-            'bypass_cache': 'true',
-          },
+        final retryUri = Uri(
+          path: '/topics/stories',
+          queryParameters: {'limit': limit.toString(), 'bypass_cache': 'true'},
         );
+        final retryPathWithQuery = retryUri.toString();
 
-        logDebug(_tag, 'getStories retry with bypass_cache: $retryUri');
+        logDebug(_tag, 'getStories retry with bypass_cache: $retryPathWithQuery');
 
-        final retryResponse = await _client.get(
-          retryUri,
-          headers: {'Content-Type': 'application/json'},
-        );
-
-        if (retryResponse.statusCode == 200) {
-          final retryJson =
-              jsonDecode(retryResponse.body) as Map<String, dynamic>;
+        try {
+          final retryJson = await apiClient.get(retryPathWithQuery);
           final retryStoriesJson = retryJson['stories'] as List<dynamic>? ?? [];
           return retryStoriesJson
               .map((e) => StoryListItem.fromJson(e as Map<String, dynamic>))
               .toList();
+        } catch (retryErr) {
+          logError(_tag, 'getStories retry failed: $retryErr');
         }
       }
 
@@ -120,19 +103,8 @@ class StoryApiDataSource {
   /// Get story details by ID
   Future<Story> getStoryDetails(String storyId) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/stories/$storyId');
-      logDebug(_tag, 'getStoryDetails: $uri');
-
-      final response = await _client.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode != 200) {
-        throw ServerException('Failed to get story: ${response.statusCode}');
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      logDebug(_tag, 'getStoryDetails: $storyId');
+      final json = await apiClient.get('/topics/stories/$storyId');
       return Story.fromJson(json);
     } catch (e) {
       logError(_tag, 'getStoryDetails error: $e');
@@ -146,22 +118,10 @@ class StoryApiDataSource {
     required String userId,
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/stories/warm');
-      logDebug(_tag, 'warmTopicCache: $uri');
-
+      logDebug(_tag, 'warmTopicCache: $storyId');
       final body = {'story_id': storyId, 'user_id': userId};
-
-      final response = await _client.post(
-        uri,
-        headers: await _authHeaders(),
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode != 200) {
-        throw ServerException('Failed to warm cache: ${response.statusCode}');
-      }
-
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      final json = await apiClient.post('/topics/stories/warm', body: body);
+      return json;
     } catch (e) {
       logError(_tag, 'warmTopicCache error: $e');
       rethrow;
@@ -171,23 +131,9 @@ class StoryApiDataSource {
   /// Get available categories
   Future<List<String>> getCategories() async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/categories');
-      logDebug(_tag, 'getCategories: $uri');
-
-      final response = await _client.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode != 200) {
-        throw ServerException(
-          'Failed to get categories: ${response.statusCode}',
-        );
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      logDebug(_tag, 'getCategories');
+      final json = await apiClient.get('/topics/categories');
       final categories = json['categories'] as List<dynamic>? ?? [];
-
       return categories.cast<String>();
     } catch (e) {
       logError(_tag, 'getCategories error: $e');
@@ -203,9 +149,7 @@ class StoryApiDataSource {
     String preferredLlm = 'tracecag',
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/topic-sessions');
-      logDebug(_tag, 'startTopicSession: $uri');
-
+      logDebug(_tag, 'startTopicSession storyId=$storyId');
       final body = {
         'user_id': userId,
         'story_id': storyId,
@@ -213,19 +157,7 @@ class StoryApiDataSource {
         'preferred_llm': preferredLlm,
       };
 
-      final response = await _client.post(
-        uri,
-        headers: await _authHeaders(),
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode != 200) {
-        throw ServerException(
-          'Failed to start session: ${response.statusCode}',
-        );
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final json = await apiClient.post('/topics/topic-sessions', body: body);
       return TopicSession.fromJson(json);
     } catch (e) {
       logError(_tag, 'startTopicSession error: $e');
@@ -240,28 +172,17 @@ class StoryApiDataSource {
     required String message,
   }) async {
     try {
-      final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages',
-      );
-      logDebug(_tag, 'sendTopicMessage: $uri');
-
+      logDebug(_tag, 'sendTopicMessage sessionId=$sessionId');
       final body = {
         'session_id': sessionId,
         'user_id': userId,
         'message': message,
       };
 
-      final response = await _client.post(
-        uri,
-        headers: await _authHeaders(),
-        body: jsonEncode(body),
+      final json = await apiClient.post(
+        '/topics/topic-sessions/$sessionId/messages',
+        body: body,
       );
-
-      if (response.statusCode != 200) {
-        throw ServerException('Failed to send message: ${response.statusCode}');
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
       return TopicChatResponse.fromJson(json);
     } catch (e) {
       logError(_tag, 'sendTopicMessage error: $e');
@@ -272,16 +193,8 @@ class StoryApiDataSource {
   /// Get topic session details
   Future<TopicSession> getTopicSession(String sessionId) async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/topic-sessions/$sessionId');
-      logDebug(_tag, 'getTopicSession: $uri');
-
-      final response = await _client.get(uri, headers: await _authHeaders());
-
-      if (response.statusCode != 200) {
-        throw ServerException('Failed to get session: ${response.statusCode}');
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      logDebug(_tag, 'getTopicSession sessionId=$sessionId');
+      final json = await apiClient.get('/topics/topic-sessions/$sessionId');
       return TopicSession.fromJson(json);
     } catch (e) {
       logError(_tag, 'getTopicSession error: $e');
@@ -292,20 +205,11 @@ class StoryApiDataSource {
   /// Get messages for a topic session
   Future<List<TopicChatMessage>> getTopicMessages(String sessionId) async {
     try {
-      final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages?limit=0',
+      logDebug(_tag, 'getTopicMessages sessionId=$sessionId');
+      final json = await apiClient.get(
+        '/topics/topic-sessions/$sessionId/messages?limit=0',
       );
-      logDebug(_tag, 'getTopicMessages: $uri');
-
-      final response = await _client.get(uri, headers: await _authHeaders());
-
-      if (response.statusCode != 200) {
-        throw ServerException('Failed to get messages: ${response.statusCode}');
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
       final messagesJson = json['messages'] as List<dynamic>? ?? [];
-
       return messagesJson
           .map((e) => TopicChatMessage.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -321,25 +225,16 @@ class StoryApiDataSource {
     String? cursor,
   }) async {
     try {
-      final query = <String, String>{
-        'limit': limit < 1 ? '1' : (limit > 200 ? '200' : '$limit'),
-        if (cursor != null && cursor.isNotEmpty) 'cursor': cursor,
-      };
-
-      final uri = Uri.parse(
-        '$baseUrl/topics/topic-sessions/$sessionId/messages/paged',
-      ).replace(queryParameters: query);
-      logDebug(_tag, 'getTopicMessagesPaged: $uri');
-
-      final response = await _client.get(uri, headers: await _authHeaders());
-
-      if (response.statusCode != 200) {
-        throw ServerException(
-          'Failed to get paged messages: ${response.statusCode}',
-        );
+      final safeLimit = limit < 1 ? 1 : (limit > 200 ? 200 : limit);
+      final query = StringBuffer('limit=$safeLimit');
+      if (cursor != null && cursor.isNotEmpty) {
+        query.write('&cursor=${Uri.encodeComponent(cursor)}');
       }
 
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final path = '/topics/topic-sessions/$sessionId/messages/paged?${query.toString()}';
+      logDebug(_tag, 'getTopicMessagesPaged: $path');
+
+      final json = await apiClient.get(path);
       final messagesJson = json['messages'] as List<dynamic>? ?? [];
       final pagination = Map<String, dynamic>.from(
         (json['pagination'] ?? const <String, dynamic>{}) as Map,
@@ -369,20 +264,10 @@ class StoryApiDataSource {
   Future<TopicMessagesMetadataResult> getTopicMessagesMetadata(
     String sessionId,
   ) async {
-    final uri = Uri.parse(
-      '$baseUrl/topics/topic-sessions/$sessionId/messages/metadata',
-    );
-    logDebug(_tag, 'getTopicMessagesMetadata: $uri');
+    final path = '/topics/topic-sessions/$sessionId/messages/metadata';
+    logDebug(_tag, 'getTopicMessagesMetadata: $path');
 
-    final response = await _client.get(uri, headers: await _authHeaders());
-
-    if (response.statusCode != 200) {
-      throw ServerException(
-        'Failed to get topic metadata: ${response.statusCode}',
-      );
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final json = await apiClient.get(path);
     final metadata = Map<String, dynamic>.from(
       (json['metadata'] ?? const <String, dynamic>{}) as Map,
     );
@@ -401,21 +286,9 @@ class StoryApiDataSource {
   /// Check LLM health
   Future<Map<String, dynamic>> checkLlmHealth() async {
     try {
-      final uri = Uri.parse('$baseUrl/topics/llm/health');
-      logDebug(_tag, 'checkLlmHealth: $uri');
-
-      final response = await _client.get(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode != 200) {
-        throw ServerException(
-          'LLM health check failed: ${response.statusCode}',
-        );
-      }
-
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      logDebug(_tag, 'checkLlmHealth');
+      final json = await apiClient.get('/topics/llm/health');
+      return json;
     } catch (e) {
       logError(_tag, 'checkLlmHealth error: $e');
       rethrow;

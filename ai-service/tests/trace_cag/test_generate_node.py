@@ -12,7 +12,49 @@ from unittest.mock import AsyncMock, patch
 class TestGenerateNode:
     """Tests for generate_node function."""
 
+    @pytest.fixture(autouse=True)
+    def mock_throttled_post(self):
+        """Automatically mock _throttled_post_json in nodes_v2 to speed up tests."""
+        from unittest.mock import AsyncMock, MagicMock, patch
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "Mocked tutor response text from Groq/Gemini."
+                    }
+                }
+            ],
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [{"text": "Mocked tutor response text from Groq/Gemini."}]
+                    }
+                }
+            ],
+            "usage": {
+                "total_tokens": 100
+            }
+        }
+        with patch("api.services.trace_cag.nodes_v2._throttled_post_json", new_callable=AsyncMock) as mock_post:
+            mock_post.return_value = mock_resp
+            yield mock_post
+
+    @pytest.fixture(autouse=True)
+    def mock_redis(self):
+        """Automatically mock RedisClient to avoid connection attempts and timeouts during tests."""
+        from unittest.mock import AsyncMock, patch
+        mock_redis_client = AsyncMock()
+        mock_redis_client.ping = AsyncMock(return_value=True)
+        mock_redis_client.set = AsyncMock()
+        mock_redis_client.get = AsyncMock(return_value=None)
+        
+        with patch("api.core.redis_client.RedisClient.get_instance", new=AsyncMock(return_value=mock_redis_client)):
+            yield mock_redis_client
+
     @pytest.fixture
+
     def state_with_errors(self, sample_state_after_diagnosis):
         """State with grammar errors for testing."""
         return sample_state_after_diagnosis
@@ -129,14 +171,23 @@ class TestGenerateNode:
     @pytest.mark.asyncio
     async def test_generate_fallback_on_failure(self, state_with_errors, mock_model_gateway):
         """Test template fallback when gateway fails."""
+        from unittest.mock import AsyncMock, MagicMock
         mock_model_gateway.execute_task.return_value = {
             "success": False,
             "error": "Gateway error",
         }
 
+        # Mock HTTP post to fail so fallback chain triggers
+        mock_fail = MagicMock()
+        mock_fail.status_code = 500
+
         with patch(
             "api.services.trace_cag.nodes_v2.get_gateway",
             return_value=mock_model_gateway,
+        ), patch(
+            "api.services.trace_cag.nodes_v2._throttled_post_json",
+            new_callable=AsyncMock,
+            return_value=mock_fail,
         ):
             from api.services.trace_cag.nodes_v2 import generate_node
 

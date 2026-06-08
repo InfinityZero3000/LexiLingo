@@ -17,14 +17,14 @@ const AI_MODELS = [
   { name: "Gemini 2.0 Flash", type: "LLM / Chat", provider: "Google AI", mode: "API Cloud", usage: "Chat, Grammar Check, Topic Conversation" },
   { name: "Whisper Base", type: "STT (Speech-to-Text)", provider: "OpenAI", mode: "Local CPU", usage: "Phát âm, Listening exercises" },
   { name: "Piper TTS", type: "TTS (Text-to-Speech)", provider: "Piper", mode: "Local CPU", usage: "Phát âm từ vựng, đọc câu" },
-  { name: "GraphCAG", type: "Knowledge Graph", provider: "Custom", mode: "Local", usage: "Trả lời câu hỏi ngữ pháp, context-aware" },
+  { name: "TRACECAG", type: "Knowledge Graph", provider: "Custom", mode: "Local", usage: "Trả lời câu hỏi ngữ pháp, context-aware" },
 ];
 
 const PIPELINES = [
   { name: "Chat Pipeline", components: "Gemini → Response Filter → Cache", status: "active" },
   { name: "Voice Pipeline", components: "Whisper STT → Gemini → Piper TTS", status: "active" },
   { name: "Grammar Check", components: "Input → Gemini → Correction → Score", status: "active" },
-  { name: "GraphCAG Query", components: "Query → Graph Lookup → LLM Synthesis", status: "active" },
+  { name: "TRACECAG Query", components: "Query → Graph Lookup → LLM Synthesis", status: "active" },
 ];
 
 export const AiModelsPage = () => {
@@ -130,12 +130,14 @@ export const AiModelsPage = () => {
             { header: t.aiModelsPage.model, render: (r) => <span className="table-title">{r.name}</span> },
             { header: t.aiModelsPage.typeCol, render: (r) => <StatusPill tone="info" label={r.type} /> },
             { header: t.aiModelsPage.provider, render: (r) => <span className="table-meta">{r.provider}</span> },
-            { header: t.aiModelsPage.mode, render: (r) => (
-              <StatusPill
-                tone={r.mode.includes("Cloud") ? "warning" : "success"}
-                label={r.mode}
-              />
-            ), align: "center" },
+            {
+              header: t.aiModelsPage.mode, render: (r) => (
+                <StatusPill
+                  tone={r.mode.includes("Cloud") ? "warning" : "success"}
+                  label={r.mode}
+                />
+              ), align: "center"
+            },
             { header: t.aiModelsPage.usedFor, render: (r) => <span className="table-meta" style={{ fontSize: 13 }}>{r.usage}</span> },
           ]}
           rows={AI_MODELS}
@@ -148,9 +150,11 @@ export const AiModelsPage = () => {
         <DataTable
           columns={[
             { header: t.aiModelsPage.pipeline, render: (r) => <span className="table-title">{r.name}</span> },
-            { header: t.aiModelsPage.components, render: (r) => (
-              <span className="table-meta" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.components}</span>
-            ) },
+            {
+              header: t.aiModelsPage.components, render: (r) => (
+                <span className="table-meta" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.components}</span>
+              )
+            },
             { header: t.aiModelsPage.pipelineStatus, render: (r) => <StatusPill tone="success" label={t.common.active} />, align: "center" },
           ]}
           rows={PIPELINES}

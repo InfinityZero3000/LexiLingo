@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
@@ -36,6 +37,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isCheckingAuth = true;
   bool _isJustLoggedIn = false;
   String? _errorMessage;
+  late final StreamSubscription<void> _sessionExpiredSub;
 
   AuthProvider({
     required this.signInWithGoogleUseCase,
@@ -49,6 +51,23 @@ class AuthProvider extends ChangeNotifier {
     required this.facebookSignInService,
   }) {
     _checkCurrentUser();
+    _sessionExpiredSub = SessionExpiredService.instance.onSessionExpired.listen(
+      (_) => _onSessionExpired(),
+    );
+  }
+
+  void _onSessionExpired() {
+    _user = null;
+    _errorMessage = null;
+    _isJustLoggedIn = false;
+    UserScopeService.clearActiveUserId();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _sessionExpiredSub.cancel();
+    super.dispose();
   }
 
   // Getters
@@ -63,6 +82,17 @@ class AuthProvider extends ChangeNotifier {
   // Clear just logged in flag (call after welcome screen)
   void clearJustLoggedIn() {
     _isJustLoggedIn = false;
+    notifyListeners();
+  }
+
+  Future<void> refreshCurrentUser() async {
+    final result = await getCurrentUserUseCase(NoParams());
+    result.fold((failure) => _errorMessage = _getFailureMessage(failure), (
+      user,
+    ) {
+      _user = user;
+      _errorMessage = null;
+    });
     notifyListeners();
   }
 

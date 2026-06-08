@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../data/users_repository.dart';
 
 class UsersScreen extends StatefulWidget {
@@ -57,6 +58,10 @@ class _UsersScreenState extends State<UsersScreen> {
             backgroundColor: AppColors.background,
             elevation: 0,
             scrolledUnderElevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+              onPressed: AdminShell.openDrawer,
+            ),
             title: Row(
               children: [
                 const Icon(Icons.language, color: AppColors.primary, size: 24),

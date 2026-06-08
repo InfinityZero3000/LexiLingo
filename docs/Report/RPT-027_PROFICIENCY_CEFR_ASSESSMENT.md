@@ -8,7 +8,7 @@
 
 Hệ thống đánh giá năng lực của LexiLingo khác biệt hoàn toàn với hệ thống XP. Trong khi XP đại diện cho **sự nỗ lực và thời gian** (cày cuốc), hệ thống Proficiency đo lường **kỹ năng thực tế** dựa trên độ chính xác và độ khó của các bài tập người dùng thực hiện.
 
-Mục tiêu cốt lõi: Xác định chính xác trình độ CEFR (A1 → C2) của người dùng để GraphCAG và AI Tutor cung cấp nội dung phù hợp.
+Mục tiêu cốt lõi: Xác định chính xác trình độ CEFR (A1 → C2) của người dùng để TRACECAG và AI Tutor cung cấp nội dung phù hợp.
 
 ---
 
@@ -27,11 +27,11 @@ Thuật toán đánh giá là một hàm đa chiều tính toán dựa trên:
 | Kỹ năng | Weight | Nguồn Data Thường Gặp |
 |---------|--------|-----------------------|
 | `VOCABULARY` | 25% | Spaced Repetition, Word Scramble, Matching |
-| `GRAMMAR` | 25% | Grammar Quiz, Fill Blank, GraphCAG phân tích lỗi |
+| `GRAMMAR` | 25% | Grammar Quiz, Fill Blank, TRACECAG phân tích lỗi |
 | `READING` | 15% | News Reading, Reading Comprehension |
 | `LISTENING` | 15% | Spelling Bee, Podcast, YouTube subtitles |
 | `SPEAKING` | 10% | AI Voice Chat (Fluency score) |
-| `WRITING` | 10% | Chat messages (GraphCAG chấm điểm) |
+| `WRITING` | 10% | Chat messages (TRACECAG chấm điểm) |
 
 ### 2.2 Hệ Số Độ Khó (Difficulty Multiplier)
 
@@ -109,7 +109,7 @@ Service cũng phân tích độ cải thiện của user bằng cách so sánh 3
 
 ---
 
-## 7. Tích Hợp Lên AI Service (GraphCAG)
+## 7. Tích Hợp Lên AI Service (TRACECAG)
 
 Điểm Proficiency được xem là "Source of Truth" về trình độ của user:
 
@@ -117,11 +117,11 @@ Service cũng phân tích độ cải thiện của user bằng cách so sánh 3
 [Backend Proficiency DB] ──(Sync)──► [AI Service Learner Profile]
 ```
 
-Khi user chat, GraphCAG nhận `{"level": "B1", "weaknesses": ["listening", "grammar_past_tense"]}`.
-Dữ liệu này được GraphCAG dùng để:
+Khi user chat, TRACECAG nhận `{"level": "B1", "weaknesses": ["listening", "grammar_past_tense"]}`.
+Dữ liệu này được TRACECAG dùng để:
 1. Quyết định độ khó của câu từ chối/phản hồi.
 2. Quyết định có nên ngắt lời để sửa lỗi Grammar không (A1 sửa lỗi nhiều hơn C1).
 
 ---
 
-*Tham khảo: [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md), [RPT-025](RPT-025_GAMIFICATION_XP_SYSTEM.md)*
+*Tham khảo: [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md), [RPT-025](RPT-025_GAMIFICATION_XP_SYSTEM.md)*

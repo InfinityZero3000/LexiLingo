@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../../auth/presentation/auth_provider.dart';
 
 class SuperDashboardScreen extends StatefulWidget {
@@ -82,8 +83,8 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => context.pop(),
+          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          onPressed: AdminShell.openDrawer,
         ),
         title: Row(
           children: [
@@ -357,7 +358,7 @@ class _AuditRow extends StatelessWidget {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 16),

@@ -337,14 +337,14 @@ class JITGraphService:
                 return default
 
         return JITGraphConfig(
-            enabled=_flag("GRAPHCAG_ENABLE_JIT_MINIGRAPH", True),
-            model_name=os.getenv("GRAPHCAG_JIT_GLINER_MODEL", "urchade/gliner_small-v2.1"),
-            threshold=max(0.05, min(0.95, _f("GRAPHCAG_JIT_GLINER_THRESHOLD", 0.45))),
-            max_nodes=max(2, _i("GRAPHCAG_JIT_MAX_NODES", 10)),
-            max_edges=max(1, _i("GRAPHCAG_JIT_MAX_EDGES", 14)),
-            max_chars=max(240, _i("GRAPHCAG_JIT_MAX_CHARS", 1200)),
-            cache_ttl_seconds=max(10, _i("GRAPHCAG_JIT_CACHE_TTL_SECONDS", 900)),
-            cache_max_entries=max(16, _i("GRAPHCAG_JIT_CACHE_MAX_ENTRIES", 512)),
+            enabled=_flag("TRACECAG_ENABLE_JIT_MINIGRAPH", True),
+            model_name=os.getenv("TRACECAG_JIT_GLINER_MODEL", "urchade/gliner_small-v2.1"),
+            threshold=max(0.05, min(0.95, _f("TRACECAG_JIT_GLINER_THRESHOLD", 0.45))),
+            max_nodes=max(2, _i("TRACECAG_JIT_MAX_NODES", 10)),
+            max_edges=max(1, _i("TRACECAG_JIT_MAX_EDGES", 14)),
+            max_chars=max(240, _i("TRACECAG_JIT_MAX_CHARS", 1200)),
+            cache_ttl_seconds=max(10, _i("TRACECAG_JIT_CACHE_TTL_SECONDS", 900)),
+            cache_max_entries=max(16, _i("TRACECAG_JIT_CACHE_MAX_ENTRIES", 512)),
         )
 
 

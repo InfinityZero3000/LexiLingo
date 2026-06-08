@@ -142,6 +142,14 @@ class WalletTransactionResponse(BaseModel):
         from_attributes = True
 
 
+class StarterRewardResponse(BaseModel):
+    reward_key: str
+    gems_awarded: int
+    current_balance: int
+    title: str
+    body: str
+
+
 class WalletHistoryResponse(BaseModel):
     """Wallet with transaction history"""
     wallet: WalletResponse
@@ -245,6 +253,17 @@ class PurchaseResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+
+class EquipAvatarRequest(BaseModel):
+    """Equip an avatar owned in the user's inventory."""
+    inventory_id: UUID
+
+
+class EquipAvatarResponse(BaseModel):
+    """Result of equipping a permanent avatar cosmetic."""
+    avatar_url: str
+    inventory_id: UUID
 
 
 class UserInventoryItemResponse(BaseModel):

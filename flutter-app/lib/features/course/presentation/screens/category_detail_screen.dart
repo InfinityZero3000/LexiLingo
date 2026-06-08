@@ -86,6 +86,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
@@ -158,7 +159,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         child: Text(
                           '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
                           style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: Colors.grey[600]),
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                         ),
                       ),
                       // Sort dropdown
@@ -169,13 +172,13 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             Icon(
                               _sortOption.icon,
                               size: 18,
-                              color: Colors.grey[600],
+                              color: AppColorRoles.textSecondary(isDark),
                             ),
                             const SizedBox(width: 4),
                             Icon(
                               Icons.arrow_drop_down,
                               size: 18,
-                              color: Colors.grey[600],
+                              color: AppColorRoles.textSecondary(isDark),
                             ),
                           ],
                         ),
@@ -209,7 +212,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                       IconButton(
                         icon: Icon(
                           _isGridView ? Icons.view_list : Icons.grid_view,
-                          color: Colors.grey[600],
+                          color: AppColorRoles.textSecondary(isDark),
                         ),
                         onPressed: () {
                           setState(() => _isGridView = !_isGridView);
@@ -246,13 +249,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         Icon(
                           Icons.folder_open,
                           size: 64,
-                          color: Colors.grey[400],
+                          color: AppColorRoles.textMuted(isDark),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'course.noCourses'.tr(),
                           style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(color: Colors.grey[600]),
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                         ),
                       ],
                     ),
@@ -283,7 +288,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             delayPerItem: const Duration(milliseconds: 50),
             child: _CourseCard(
               course: course,
-              onTap: () => _navigateToCourseDetail(context, course.id),
+              onTap: () => _navigateToCourseDetail(context, course),
             ),
           );
         }, childCount: courses.length),
@@ -310,7 +315,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
             delayPerItem: const Duration(milliseconds: 50),
             child: _CourseGridCard(
               course: course,
-              onTap: () => _navigateToCourseDetail(context, course.id),
+              onTap: () => _navigateToCourseDetail(context, course),
             ),
           );
         }, childCount: courses.length),
@@ -318,11 +323,15 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
 
-  void _navigateToCourseDetail(BuildContext context, String courseId) {
+  void _navigateToCourseDetail(BuildContext context, CourseEntity course) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CourseDetailScreen(courseId: courseId),
+        builder: (context) => CourseDetailScreen(
+          courseId: course.id,
+          initialThumbnailUrl: course.thumbnailUrl,
+          fallbackThumbnailUrl: _courseImageUrl(course),
+        ),
       ),
     );
   }
@@ -364,6 +373,116 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 }
 
+String _courseImageUrl(CourseEntity course) {
+  if (course.thumbnailUrl != null) return course.thumbnailUrl!;
+  final tags = course.tags.map((t) => t.toLowerCase()).toSet();
+  final level = course.level.toLowerCase();
+  final pick = course.id.hashCode.abs();
+
+  const ielts = [
+    'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam pencil
+    'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
+    'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', // graduation cap
+  ];
+  const business = [
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
+    'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80', // financial charts
+    'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&q=80', // laptop workspace
+  ];
+  const conversation = [
+    'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop at café
+    'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
+    'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&q=80', // laptop keyboard
+  ];
+  const grammar = [
+    'https://images.unsplash.com/photo-1471899236350-e3016bf1a395?w=800&q=80', // fountain pen
+    'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=800&q=80', // spiral notebook
+    'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80', // pen on paper
+  ];
+  const vocabulary = [
+    'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
+    'https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=800&q=80', // stacked books
+    'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80', // desk with books
+  ];
+  const reading = [
+    'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
+    'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=800&q=80', // stacked books
+    'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80', // open book
+  ];
+  const listening = [
+    'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80', // headphones
+    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80', // headphones 2
+    'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=800&q=80', // headphones 3
+  ];
+  const writing = [
+    'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&q=80', // desk + notepad
+    'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
+    'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80', // pen on paper
+  ];
+  const travel = [
+    'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=80', // world map
+    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80', // open road
+    'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80', // mountain lake
+  ];
+  const beginner = [
+    'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80', // colored crayons
+    'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=800&q=80', // colored pencils
+    'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
+  ];
+  const intermediate = [
+    'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80', // open book pages
+    'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop on desk
+    'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
+  ];
+  const advanced = [
+    'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
+    'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam paper
+    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // office buildings
+  ];
+
+  if (tags.contains('ielts') ||
+      tags.contains('test-prep') ||
+      tags.contains('exam')) {
+    return ielts[pick % ielts.length];
+  }
+  if (tags.contains('business') || tags.contains('business-english')) {
+    return business[pick % business.length];
+  }
+  if (tags.contains('conversation') || tags.contains('speaking')) {
+    return conversation[pick % conversation.length];
+  }
+  if (tags.contains('grammar')) {
+    return grammar[pick % grammar.length];
+  }
+  if (tags.contains('vocabulary') || tags.contains('vocab')) {
+    return vocabulary[pick % vocabulary.length];
+  }
+  if (tags.contains('reading')) {
+    return reading[pick % reading.length];
+  }
+  if (tags.contains('listening')) {
+    return listening[pick % listening.length];
+  }
+  if (tags.contains('writing')) {
+    return writing[pick % writing.length];
+  }
+  if (tags.contains('travel')) {
+    return travel[pick % travel.length];
+  }
+  switch (level) {
+    case 'beginner':
+    case 'elementary':
+      return beginner[pick % beginner.length];
+    case 'intermediate':
+    case 'upper-intermediate':
+      return intermediate[pick % intermediate.length];
+    case 'advanced':
+      return advanced[pick % advanced.length];
+    default:
+      return reading[pick % reading.length];
+  }
+}
+
 /// Course Card Widget for grid view
 class _CourseCard extends StatelessWidget {
   final CourseEntity course;
@@ -392,15 +511,12 @@ class _CourseCard extends StatelessWidget {
                 child: SizedBox(
                   width: 100,
                   height: 100,
-                  child: course.thumbnailUrl != null
-                      ? Image.network(
-                          course.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderImage();
-                          },
-                        )
-                      : _buildPlaceholderImage(),
+                  child: Image.network(
+                    _courseImageUrl(course),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        _buildPlaceholderImage(context),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -426,7 +542,7 @@ class _CourseCard extends StatelessWidget {
                       Text(
                         course.description!,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: AppColorRoles.textSecondary(isDark),
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -460,7 +576,11 @@ class _CourseCard extends StatelessWidget {
               ),
 
               // Arrow icon
-              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              Icon(
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: AppColorRoles.textMuted(isDark),
+              ),
             ],
           ),
         ),
@@ -468,10 +588,11 @@ class _CourseCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholderImage() {
+  Widget _buildPlaceholderImage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Colors.grey[200],
-      child: Icon(Icons.book, size: 40, color: Colors.grey[400]),
+      color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey200,
+      child: Icon(Icons.book, size: 40, color: AppColorRoles.textMuted(isDark)),
     );
   }
 
@@ -523,14 +644,12 @@ class _CourseGridCard extends StatelessWidget {
                 ),
                 child: SizedBox(
                   width: double.infinity,
-                  child: course.thumbnailUrl != null
-                      ? Image.network(
-                          course.thumbnailUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _buildPlaceholderImage(),
-                        )
-                      : _buildPlaceholderImage(),
+                  child: Image.network(
+                    _courseImageUrl(course),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                        _buildPlaceholderImage(context),
+                  ),
                 ),
               ),
             ),
@@ -583,10 +702,17 @@ class _CourseGridCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholderImage() {
+  Widget _buildPlaceholderImage(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      color: Colors.grey[200],
-      child: Center(child: Icon(Icons.book, size: 40, color: Colors.grey[400])),
+      color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey200,
+      child: Center(
+        child: Icon(
+          Icons.book,
+          size: 40,
+          color: AppColorRoles.textMuted(isDark),
+        ),
+      ),
     );
   }
 

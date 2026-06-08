@@ -103,6 +103,9 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.4.1
 
+  # YouTube embedded player (Phase 1: YouTube Video Integration)
+  youtube_player_iframe: ^6.0.2
+
   # Localization
   easy_localization: ^3.0.7
   flutter_facebook_auth: ^7.1.5
@@ -156,6 +159,7 @@ flutter:
     - assets/course/
     - assets/ranking/
     - assets/i18n/
+    - assets/sounds/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -39,8 +39,8 @@ class GameCard extends StatelessWidget {
     GameType.spellingBee: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=400&h=300',
     // Colorful books stacked — grammar quiz / study
     GameType.grammarQuiz: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=400&h=300',
-    // Crossword / word puzzle tiles — hangman word-guessing game
-    GameType.hangman: 'https://images.unsplash.com/photo-1555654266-5e4c0e62ab09?auto=format&fit=crop&q=80&w=400&h=300',
+    // Letter tiles on table — hangman word-guessing game
+    GameType.hangman: 'https://images.unsplash.com/photo-1517770413964-df8ca61194a6?auto=format&fit=crop&q=80&w=400&h=300',
   };
 
   @override

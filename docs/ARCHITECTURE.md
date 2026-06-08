@@ -9,7 +9,7 @@
 
 LexiLingo là ứng dụng học tiếng Anh AI-first với kiến trúc **monorepo 5 service**, kết hợp:
 
-- **GraphCAG** — Graph-Context Augmented Generation: ground câu trả lời AI vào live knowledge graph của người học (thay vì RAG trên static documents)
+- **TRACECAG** — Graph-Context Augmented Generation: ground câu trả lời AI vào live knowledge graph của người học (thay vì RAG trên static documents)
 - **TraceCag Pipeline** — LangGraph StateGraph: Diagnose → Retrieve → Ground → Generate
 - **CEFR Adaptive Curriculum** — Nội dung tự điều chỉnh A1→C2
 - **Real-time Voice** — Dual-stream STT/TTS đồng thời qua WebSocket
@@ -236,7 +236,7 @@ app/core/
 | **Vietnamese** | LLaMA3-VI 3B (lazy-loaded) |
 | **Port** | 8080 (internal) |
 
-**TraceCag Pipeline (trái tim của GraphCAG):**
+**TraceCag Pipeline (trái tim của TRACECAG):**
 
 ```
 User Input
@@ -390,7 +390,7 @@ MCP Tools:
 [Backend] Return next word in queue → [Mobile] Show next card
 ```
 
-### 4.2 AI Chat với GraphCAG
+### 4.2 AI Chat với TRACECAG
 
 ```
 [Mobile] User sends message
@@ -476,7 +476,7 @@ CI/CD (.github/workflows/):
 
 | Decision | Rationale |
 |---|---|
-| **GraphCAG over RAG** | RAG retrieves from static docs; GraphCAG grounds on live learner mastery state — personalized per user per session |
+| **TRACECAG over RAG** | RAG retrieves from static docs; TRACECAG grounds on live learner mastery state — personalized per user per session |
 | **KuzuDB for knowledge graph** | Embedded graph DB (no separate server), optimized for BFS traversal, CEFR prerequisite chains |
 | **LangGraph StateGraph** | Explicit node routing (Diagnose→Retrieve→Ground→Generate) với conditional edges cho error recovery |
 | **Dual-stream WebSocket** | STT và TTS chạy song song — giảm perceived latency xuống < 500ms cho speaking practice |

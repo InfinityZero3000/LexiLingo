@@ -19,8 +19,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _flagsReady = false;
-
   static const double _flagWidth = 48;
   static const double _flagHeight = 32;
 
@@ -29,7 +27,6 @@ class _SettingsPageState extends State<SettingsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSettings();
-      _precacheFlagImages(context);
     });
   }
 
@@ -42,21 +39,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _precacheFlagImages(BuildContext context) async {
-    for (final locale in AppLocales.supportedLocales) {
-      final imageUrl = AppLocales.flagPngUrlOf(locale.languageCode);
-      try {
-        await precacheImage(CachedNetworkImageProvider(imageUrl), context);
-      } catch (_) {
-        // Ignore preload failures; each row has its own fallback.
-      }
-    }
-
-    if (!mounted) return;
-
-    setState(() => _flagsReady = true);
-  }
-
   Widget _buildFlagWidget(BuildContext context, String languageCode) {
     final imageUrl = AppLocales.flagPngUrlOf(languageCode);
 
@@ -65,14 +47,14 @@ class _SettingsPageState extends State<SettingsPage> {
       child: SizedBox(
         width: _flagWidth,
         height: _flagHeight,
-        child: _flagsReady
-            ? Image.network(
-                imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    _buildFlagFallback(context, languageCode),
-              )
-            : _buildFlagSkeleton(context),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          fadeInDuration: Duration.zero,
+          placeholder: (_, __) => _buildFlagSkeleton(context),
+          errorWidget: (_, __, ___) =>
+              _buildFlagFallback(context, languageCode),
+        ),
       ),
     );
   }
@@ -261,10 +243,13 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          children: SettingsProvider.availableLanguages.map((lang) {
+          children: SettingsProvider.availableLanguages.asMap().entries.map((
+            entry,
+          ) {
+            final lang = entry.value;
             final isSelected = currentLocaleCode == lang['code'];
             return AnimatedListItem(
-              index: SettingsProvider.availableLanguages.indexOf(lang),
+              index: entry.key,
               duration: const Duration(milliseconds: 200),
               delayPerItem: const Duration(milliseconds: 30),
               child: Padding(
@@ -603,12 +588,13 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: themes.map((theme) {
             final isSelected = settings.theme == theme['code'];
+            final themeCode = theme['code'] as String;
 
             return InkWell(
-              onTap: () {
+              key: Key('settings-theme-$themeCode'),
+              onTap: () async {
                 if (isSelected) return;
-                final themeCode = theme['code'] as String;
-                settings.updateTheme(themeCode);
+                await settings.updateTheme(themeCode);
               },
               borderRadius: BorderRadius.circular(12),
               child: Container(

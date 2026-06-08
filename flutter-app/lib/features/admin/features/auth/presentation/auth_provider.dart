@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
 import '../data/auth_repository.dart';
 
 enum AuthState { unknown, authenticated, unauthenticated, loading }
 
 class AuthProvider extends ChangeNotifier {
   final _repo = AuthRepository();
+  final _googleSignIn = GoogleSignInService();
 
   AuthState _state = AuthState.unknown;
   AdminUser? _user;
@@ -19,8 +21,39 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> init() async {
     _user = await _repo.getMe();
-    _state = _user != null ? AuthState.authenticated : AuthState.unauthenticated;
+    _state = _user != null
+        ? AuthState.authenticated
+        : AuthState.unauthenticated;
     notifyListeners();
+  }
+
+  Future<bool> loginWithGoogle() async {
+    _error = null;
+    _state = AuthState.loading;
+    notifyListeners();
+    try {
+      final idToken = await _googleSignIn.signIn();
+      if (idToken == null) {
+        _error = 'Đăng nhập Google bị hủy';
+        _state = AuthState.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+      if (idToken == GoogleSignInService.redirectInProgressMarker) {
+        _state = AuthState.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+      _user = await _repo.loginWithGoogle(idToken);
+      _state = AuthState.authenticated;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = _parseError(e);
+      _state = AuthState.unauthenticated;
+      notifyListeners();
+      return false;
+    }
   }
 
   Future<bool> requestOtp(String email) async {
@@ -66,9 +99,11 @@ class AuthProvider extends ChangeNotifier {
 
   String _parseError(dynamic e) {
     final str = e.toString();
-    if (str.contains('404')) return 'Email không tồn tại hoặc không có quyền admin';
+    if (str.contains('401')) return 'Tài khoản không được xác thực';
     if (str.contains('403')) return 'Tài khoản không có quyền truy cập admin';
-    if (str.contains('400')) return 'OTP không hợp lệ hoặc đã hết hạn';
+    if (str.contains('Admin Google OAuth not configured')) {
+      return 'Google OAuth admin chưa được cấu hình trên server';
+    }
     if (str.contains('SocketException') || str.contains('connection')) {
       return 'Không thể kết nối máy chủ';
     }

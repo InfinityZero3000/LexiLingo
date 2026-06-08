@@ -58,6 +58,7 @@ export const LessonsPage = () => {
     lesson_type: "lesson",
     xp_reward: 10,
     pass_threshold: 80,
+    estimated_minutes: 10,
   });
 
   const resetForm = () => {
@@ -68,6 +69,7 @@ export const LessonsPage = () => {
       lesson_type: "lesson",
       xp_reward: 10,
       pass_threshold: 80,
+      estimated_minutes: 10,
     });
     setEditingId(null);
   };
@@ -128,6 +130,9 @@ export const LessonsPage = () => {
   const unitMap = new Map(units.map(u => [u.id, u.title]));
   const courseMap = new Map(courses.map(c => [c.id, c.title]));
 
+  // Map unitId → courseId for standalone navigation
+  const unitCourseMap = new Map(units.map(u => [u.id, u.course_id]));
+
   const handleEdit = (lesson: LessonItem) => {
     setEditingId(lesson.id);
     setForm({
@@ -137,8 +142,20 @@ export const LessonsPage = () => {
       lesson_type: lesson.lesson_type,
       xp_reward: lesson.xp_reward,
       pass_threshold: lesson.pass_threshold,
+      estimated_minutes: lesson.estimated_minutes ?? 10,
     });
     setShowForm(true);
+  };
+
+  const handleEditExercises = (lesson: LessonItem) => {
+    const cId = paramCourseId || unitCourseMap.get(lesson.unit_id) || "";
+    const uId = paramUnitId || lesson.unit_id;
+    if (cId && uId) {
+      navigate(`/admin/courses/${cId}/units/${uId}/lessons/${lesson.id}/exercises`);
+    } else {
+      // Fallback if we don't have enough context
+      navigate(`/admin/courses/_/units/${uId}/lessons/${lesson.id}/exercises`);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -149,7 +166,7 @@ export const LessonsPage = () => {
     setError(null);
     try {
       if (editingId) {
-        await updateLesson(editingId, form);
+        await updateLesson(editingId, { ...form });
       } else {
         await createLesson({
           ...form,
@@ -280,6 +297,14 @@ export const LessonsPage = () => {
                 header: t.common.actions,
                 render: (row: LessonItem) => (
                   <div className="table-actions">
+                    <button
+                      className="ghost-button small"
+                      style={{ color: "var(--accent-2)", borderColor: "var(--accent-2)" }}
+                      onClick={() => handleEditExercises(row)}
+                      title="Quản lý bài tập"
+                    >
+                      Bài tập ({row.total_exercises})
+                    </button>
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
                     <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
                   </div>
@@ -339,6 +364,12 @@ export const LessonsPage = () => {
                 <label>
                   Ngưỡng đạt (%)
                   <input type="number" min={0} max={100} value={form.pass_threshold} onChange={(e) => setForm({ ...form, pass_threshold: Number(e.target.value) })} />
+                </label>
+              </div>
+              <div className="form-row">
+                <label>
+                  Thời lượng (phút)
+                  <input type="number" min={1} max={120} value={form.estimated_minutes} onChange={(e) => setForm({ ...form, estimated_minutes: Number(e.target.value) })} />
                 </label>
               </div>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>

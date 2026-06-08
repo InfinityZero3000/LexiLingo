@@ -63,6 +63,13 @@ geo $block_ip {
 map $http_origin $cors_allow_origin {
     default "";
     ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
+    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app$   $http_origin;
+}
+
+# Used to detect OPTIONS (CORS preflight) requests at server level
+map $request_method $is_options_request {
+    default 0;
+    OPTIONS 1;
 }
 
 log_format main_json escape=json
@@ -226,13 +233,9 @@ server {
     add_header X-Content-Type-Options nosniff always;
     add_header Referrer-Policy strict-origin-when-cross-origin always;
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-    add_header Access-Control-Allow-Origin $cors_allow_origin always;
-    add_header Access-Control-Allow-Credentials "true" always;
-    add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
-    add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id,X-Idempotency-Key,X-AI-Service-Secret" always;
-    add_header Access-Control-Expose-Headers "X-Request-Id,X-RateLimit-Remaining-Minute,X-RateLimit-Remaining-Day" always;
-    add_header Access-Control-Max-Age 3600 always;
-    add_header Vary "Origin" always;
+    # CORS headers at server level — inherited by `if { return }` blocks
+    # (location blocks that define their own add_header must re-include these)
+    include /etc/nginx/snippets/cors-headers.conf;
 
     client_max_body_size 10m;
     limit_req_status 429;
@@ -264,13 +267,33 @@ server {
     if ($block_ip)   { return 444; }
     if ($is_scanner) { return 444; }
 
-    if ($request_method = OPTIONS) {
+    # -----------------------------------------------------------------------
+    # CORS preflight (OPTIONS) — handled in a dedicated named location.
+    # NOTE: `add_header` is NOT allowed inside `if` at server context in nginx.
+    # Using `if` only for `return` is safe; headers must be in a location block.
+    # -----------------------------------------------------------------------
+    if ($is_options_request) {
         return 204;
+    }
+
+    # CORS headers on 5xx/gateway errors so browser doesn't show a false CORS error
+    # when the backend is temporarily unavailable.
+    error_page 502 503 504 @upstream_error;
+    location @upstream_error {
+        default_type application/json;
+        add_header Access-Control-Allow-Origin $cors_allow_origin always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
+        add_header Access-Control-Allow-Headers "Authorization,Content-Type,X-Api-Key,X-Admin-Key,X-Request-Id,X-Idempotency-Key,X-AI-Service-Secret" always;
+        add_header Vary "Origin" always;
+        return 502 '{"error":{"code":"SERVICE_UNAVAILABLE","message":"Service temporarily unavailable. Please try again."}}';
     }
 
     location @rate_limited {
         default_type application/json;
         add_header Retry-After 60 always;
+        add_header Access-Control-Allow-Origin $cors_allow_origin always;
+        add_header Access-Control-Allow-Credentials "true" always;
         return 429 '{"detail":"too_many_requests","retry_after_seconds":60}';
     }
 
@@ -335,6 +358,14 @@ server {
         proxy_pass http://backend_upstream;
     }
 
+    location = /api/v1/auth/google {
+        # 10r/m + burst=5: same as login — OAuth token exchange should be infrequent
+        limit_req zone=auth_login_per_ip burst=5 nodelay;
+        limit_conn auth_conn_per_ip 8;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://backend_upstream;
+    }
+
     location /api/v1/ai/ {
         limit_req zone=ai_general_per_ip burst=20 nodelay;
         include /etc/nginx/snippets/proxy-common.conf;
@@ -350,6 +381,29 @@ server {
     location /api/v1/topics/ {
         limit_req zone=ai_general_per_ip burst=20 nodelay;
         include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
+    # SSE streaming endpoint — long-lived connection, must not buffer or timeout early.
+    # Explicit CORS include is required because adding add_header in a location
+    # block overrides the server-level include, so we repeat it here alongside
+    # X-Accel-Buffering which signals CDN/Cloudflare not to buffer the stream.
+    #
+    # QUIC (HTTP/3) FIX: ERR_QUIC_PROTOCOL_ERROR occurs because Cloudflare's HTTP/3
+    # implementation drops long-lived SSE connections via QUIC multiplexing.
+    # `Alt-Svc: clear` instructs the browser to NOT upgrade this endpoint to QUIC,
+    # forcing HTTP/1.1 or HTTP/2 which are compatible with SSE.
+    location = /api/v1/lexi/stream {
+        limit_req zone=ai_chat_per_ip burst=12 nodelay;
+        # Use SSE-specific proxy config with buffering disabled and a long
+        # finite read timeout. The AI service emits heartbeat events every 2.5s.
+        include /etc/nginx/snippets/proxy-sse.conf;
+        proxy_buffering off;
+        proxy_cache off;
+        include /etc/nginx/snippets/cors-headers.conf;
+        add_header X-Accel-Buffering no always;
+        add_header Cache-Control no-cache always;
+        add_header Alt-Svc 'clear' always; # Disable QUIC/HTTP3 for SSE — prevents ERR_QUIC_PROTOCOL_ERROR
         proxy_pass http://ai_upstream;
     }
 

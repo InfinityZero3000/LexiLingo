@@ -165,12 +165,12 @@ Tách biệt với AI service, quản lý từ vựng trong context học tập:
 
 ---
 
-## 6. Tích Hợp Với GraphCAG
+## 6. Tích Hợp Với TRACECAG
 
 Spaced repetition tích hợp với KuzuDB Knowledge Graph:
 
 ```
-GraphCAG phân tích lỗi user
+TRACECAG phân tích lỗi user
     │
     ├─ Phát hiện: user hay nhầm Present Perfect vs Past Simple
     ├─ Gọi: SpacedRepetitionService.seed_concepts_for_user(
@@ -222,4 +222,4 @@ Trong `MyProgressScreen`, người dùng thấy:
 
 ---
 
-*Tham khảo: [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-027](RPT-027_PROFICIENCY_CEFR_ASSESSMENT.md)*
+*Tham khảo: [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-027](RPT-027_PROFICIENCY_CEFR_ASSESSMENT.md)*

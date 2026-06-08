@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
+import 'package:lexilingo_app/core/services/sound_service.dart';
+import 'package:lexilingo_app/core/services/theme_preference_store.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
@@ -9,17 +11,24 @@ import 'package:lexilingo_app/features/user/domain/repositories/settings_reposit
 class SettingsProvider extends ChangeNotifier {
   final SettingsRepository _repository;
   final NotificationService _notificationService;
+  final ThemePreferenceStore _themePreferenceStore;
 
   Settings? _settings;
   String? _activeUserId;
+  late String _theme;
+  Future<void> _themePersistenceQueue = Future.value();
   bool _isLoading = false;
   String? _error;
 
   SettingsProvider({
     required SettingsRepository repository,
     required NotificationService notificationService,
+    required ThemePreferenceStore themePreferenceStore,
   }) : _repository = repository,
-       _notificationService = notificationService;
+       _notificationService = notificationService,
+       _themePreferenceStore = themePreferenceStore {
+    _theme = _themePreferenceStore.readTheme();
+  }
 
   Settings? get settings => _settings;
   bool get isLoading => _isLoading;
@@ -28,7 +37,7 @@ class SettingsProvider extends ChangeNotifier {
   // Default values
   String get language => _settings?.language ?? 'en';
   int get dailyGoalXP => _settings?.dailyGoalXP ?? 50;
-  String get theme => _normalizeTheme(_settings?.theme);
+  String get theme => _theme;
   bool get notificationEnabled => _settings?.notificationEnabled ?? true;
   String get notificationTime => _settings?.notificationTime ?? '09:00';
   bool get soundEnabled => _settings?.soundEnabled ?? true;
@@ -87,6 +96,9 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Load settings for user
   Future<void> loadSettings(String userId) async {
+    // Skip reload if already loaded for this user — avoids spinner flash on re-entry
+    if (_activeUserId == userId && _settings != null && !_isLoading) return;
+
     _activeUserId = userId;
     _isLoading = true;
     _error = null;
@@ -97,13 +109,19 @@ class SettingsProvider extends ChangeNotifier {
     // stored settings still carry the entity default ('en').
     final savedLocale = await LocaleService.getSavedLocale();
 
+    var shouldPersistMigratedTheme = false;
     try {
       final result = await _repository.getSettings(userId);
       result.fold(
         (failure) {
           _error = failure.message;
           // Create default settings seeded with the locally-chosen locale.
-          _settings = Settings(id: 0, userId: userId, language: savedLocale);
+          _settings = Settings(
+            id: 0,
+            userId: userId,
+            language: savedLocale,
+            theme: _theme,
+          );
         },
         (settings) {
           // If the stored language is still the entity default ('en') but the
@@ -113,18 +131,32 @@ class SettingsProvider extends ChangeNotifier {
               (settings.language == 'en' && savedLocale != 'en')
               ? savedLocale
               : settings.language;
-          _settings = settings.copyWith(
-            theme: _normalizeTheme(settings.theme),
-            language: effectiveLang,
-          );
+          if (!_themePreferenceStore.hasPreference) {
+            _theme = ThemePreferenceStore.normalizeTheme(settings.theme);
+            shouldPersistMigratedTheme = true;
+          }
+          _settings = settings.copyWith(theme: _theme, language: effectiveLang);
         },
       );
+      if (shouldPersistMigratedTheme) {
+        try {
+          await _themePreferenceStore.writeTheme(_theme);
+        } catch (e) {
+          _error = e.toString();
+        }
+      }
     } catch (e) {
       _error = e.toString();
       // Keep settings usable even if cached payload is malformed.
-      _settings = Settings(id: 0, userId: userId, language: savedLocale);
+      _settings = Settings(
+        id: 0,
+        userId: userId,
+        language: savedLocale,
+        theme: _theme,
+      );
     } finally {
       _isLoading = false;
+      SoundService.instance.setEnabled(_settings?.soundEnabled ?? true);
       notifyListeners();
       // Sync reminder asynchronously — must not block isLoading flag.
       if (_settings != null && _error == null) {
@@ -197,33 +229,50 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update theme preference
   Future<void> updateTheme(String theme) async {
-    final normalizedTheme = _normalizeTheme(theme);
+    final normalizedTheme = ThemePreferenceStore.normalizeTheme(theme);
+    _theme = normalizedTheme;
     if (_settings == null && _activeUserId != null) {
       _settings = Settings(id: 0, userId: _activeUserId!);
     }
-    if (_settings == null) return;
-
-    final oldTheme = _settings!.theme;
-    _settings = _settings!.copyWith(theme: normalizedTheme);
+    if (_settings != null) {
+      _settings = _settings!.copyWith(theme: normalizedTheme);
+    }
+    _error = null;
     notifyListeners();
 
-    try {
-      final result = await _repository.updateSettings(_settings!);
-      result.fold(
-        (failure) {
-          _settings = _settings!.copyWith(theme: oldTheme);
-          _error = failure.message;
-          notifyListeners();
-        },
-        (_) {
-          _error = null;
-        },
-      );
-    } catch (e) {
-      _settings = _settings!.copyWith(theme: oldTheme);
-      _error = e.toString();
+    final settingsToPersist = _settings;
+    final persistence = _themePersistenceQueue.then(
+      (_) => _persistTheme(normalizedTheme, settingsToPersist),
+    );
+    _themePersistenceQueue = persistence.then<void>((_) {});
+    final persistenceError = await persistence;
+
+    if (persistenceError != null && _theme == normalizedTheme) {
+      _error = persistenceError;
       notifyListeners();
     }
+  }
+
+  Future<String?> _persistTheme(
+    String normalizedTheme,
+    Settings? settingsToPersist,
+  ) async {
+    String? persistenceError;
+    try {
+      await _themePreferenceStore.writeTheme(normalizedTheme);
+    } catch (e) {
+      persistenceError = e.toString();
+    }
+
+    if (settingsToPersist != null) {
+      try {
+        final result = await _repository.updateSettings(settingsToPersist);
+        result.fold((failure) => persistenceError = failure.message, (_) {});
+      } catch (e) {
+        persistenceError = e.toString();
+      }
+    }
+    return persistenceError;
   }
 
   /// Update notification settings
@@ -332,6 +381,8 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> updateSoundEnabled(bool enabled) async {
     if (_settings == null) return;
 
+    SoundService.instance.setEnabled(enabled);
+
     final oldEnabled = _settings!.soundEnabled;
     _settings = _settings!.copyWith(soundEnabled: enabled);
     notifyListeners();
@@ -341,6 +392,7 @@ class SettingsProvider extends ChangeNotifier {
       result.fold(
         (failure) {
           _settings = _settings!.copyWith(soundEnabled: oldEnabled);
+          SoundService.instance.setEnabled(oldEnabled);
           _error = failure.message;
           notifyListeners();
         },
@@ -350,6 +402,7 @@ class SettingsProvider extends ChangeNotifier {
       );
     } catch (e) {
       _settings = _settings!.copyWith(soundEnabled: oldEnabled);
+      SoundService.instance.setEnabled(oldEnabled);
       _error = e.toString();
       notifyListeners();
     }
@@ -396,19 +449,6 @@ class SettingsProvider extends ChangeNotifier {
         return ThemeMode.dark;
       default:
         return ThemeMode.system;
-    }
-  }
-
-  String _normalizeTheme(String? rawTheme) {
-    switch ((rawTheme ?? '').trim().toLowerCase()) {
-      case 'light':
-        return 'light';
-      case 'dark':
-        return 'dark';
-      case 'system':
-        return 'system';
-      default:
-        return 'system';
     }
   }
 }

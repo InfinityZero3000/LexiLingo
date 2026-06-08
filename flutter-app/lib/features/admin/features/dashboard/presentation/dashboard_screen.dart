@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
 
@@ -17,7 +18,9 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? _kpis;
   List<double> _dauSeries = [];
+  List<Map<String, dynamic>> _languages = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -26,31 +29,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _load() async {
+    setState(() { _error = null; });
     try {
       final results = await Future.wait([
         ApiClient.instance.get('/admin/analytics/dashboard/kpis'),
         ApiClient.instance.get('/admin/analytics/dashboard/engagement', params: {'weeks': 10}),
       ]);
-      // KPIs response: {"kpis": {...}} — no ApiResponse wrapper
       final kpisRaw = results[0];
-      // Engagement response: {"data": [...]} — no ApiResponse wrapper
       final engagementRaw = results[1];
 
-      final List<dynamic> weekData =
-          (engagementRaw['data'] as List?) ?? [];
+      final List<dynamic> weekData = (engagementRaw['data'] as List?) ?? [];
       final dau = weekData
           .map<double>((e) => ((e['dau'] as num?) ?? 0).toDouble())
           .toList();
 
+      // Language distribution from KPI data or engagement
+      final kpisMap = kpisRaw['kpis'] as Map<String, dynamic>?;
+      List<Map<String, dynamic>> langs = [];
+      final rawLangs = kpisMap?['language_distribution'] as List?;
+      if (rawLangs != null && rawLangs.isNotEmpty) {
+        langs = rawLangs
+            .take(3)
+            .map<Map<String, dynamic>>((e) => {
+                  'lang': (e['language'] ?? e['lang'] ?? '').toString(),
+                  'pct': ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
+                })
+            .toList();
+      }
+
       if (mounted) {
         setState(() {
-          _kpis = kpisRaw['kpis'] as Map<String, dynamic>?;
+          _kpis = kpisMap;
           _dauSeries = dau;
+          _languages = langs;
           _loading = false;
         });
       }
-    } catch (_) {
-      if (mounted) setState(() => _loading = false);
+    } catch (e) {
+      if (mounted) setState(() { _loading = false; _error = 'Không thể tải dữ liệu. Kéo xuống để thử lại.'; });
     }
   }
 
@@ -71,6 +87,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               backgroundColor: AppColors.background,
               elevation: 0,
               scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+                onPressed: AdminShell.openDrawer,
+              ),
               title: Row(
                 children: [
                   Container(
@@ -130,6 +150,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // Error banner
+                  if (_error != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(_error!,
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 13, color: AppColors.error)),
+                          ),
+                          GestureDetector(
+                            onTap: _load,
+                            child: Text('Retry',
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.error)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   // Quick Actions
                   Text(
                     'Quick Actions',
@@ -229,13 +280,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     _SectionCard(
                       title: 'Languages',
                       child: Column(
-                        children: [
-                          _LanguageBar(lang: 'English', pct: 0.42),
-                          const SizedBox(height: 10),
-                          _LanguageBar(lang: 'French', pct: 0.28),
-                          const SizedBox(height: 10),
-                          _LanguageBar(lang: 'Japanese', pct: 0.15),
-                        ],
+                        children: _languages.isNotEmpty
+                            ? _languages.asMap().entries.map((entry) {
+                                final i = entry.key;
+                                final l = entry.value;
+                                return Column(
+                                  children: [
+                                    if (i > 0) const SizedBox(height: 10),
+                                    _LanguageBar(
+                                      lang: l['lang'] as String,
+                                      pct: (l['pct'] as double).clamp(0.0, 1.0),
+                                    ),
+                                  ],
+                                );
+                              }).toList()
+                            : [
+                                _LanguageBar(lang: 'English', pct: 0.42),
+                                const SizedBox(height: 10),
+                                _LanguageBar(lang: 'French', pct: 0.28),
+                                const SizedBox(height: 10),
+                                _LanguageBar(lang: 'Japanese', pct: 0.15),
+                              ],
                       ),
                     ),
                     const SizedBox(height: 16),

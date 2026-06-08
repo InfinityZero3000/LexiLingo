@@ -13,6 +13,8 @@ Tests cover:
 """
 
 import pytest
+import uuid
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -158,10 +160,12 @@ class TestFillBlank:
         response = await auth_client.get(f"{BASE}/fill-blank?level=A1")
         assert response.status_code == 200
         data = response.json()
+        assert uuid.UUID(data["session_id"])
         assert data["game"] == "fill_blank"
         assert "questions" in data
         assert "timer_seconds_per_question" in data
         assert "total" in data
+        assert data["total_xp"] == data["total"] * 10
 
     @pytest.mark.asyncio
     async def test_default_level_a1(self, auth_client: AsyncClient):
@@ -224,11 +228,13 @@ class TestGrammarQuiz:
         response = await auth_client.get(f"{BASE}/grammar-quiz?level=A1")
         assert response.status_code == 200
         data = response.json()
+        assert uuid.UUID(data["session_id"])
         assert data["game"] == "grammar_quiz"
         assert "questions" in data
         assert "timer_seconds_per_question" in data
         assert "total" in data
         assert "cefr_level" in data
+        assert data["total_xp"] == data["total"] * 10
 
     @pytest.mark.asyncio
     async def test_each_question_has_required_fields(self, auth_client: AsyncClient):
@@ -287,12 +293,17 @@ class TestWordScramble:
 
     @pytest.mark.asyncio
     async def test_returns_word_scramble_structure(self, auth_client: AsyncClient):
+        from app.routes.games import XP_BY_LEVEL
+
         response = await auth_client.get(f"{BASE}/word-scramble?level=A1&count=3")
         assert response.status_code == 200
         data = response.json()
+        assert uuid.UUID(data["session_id"])
         assert data["game"] == "word_scramble"
         assert "words" in data
         assert "timer_seconds" in data
+        assert data["base_xp_per_word"] == XP_BY_LEVEL["A1"]
+        assert data["streak_bonus_threshold"] == 3
         assert "cefr_level" in data
 
     @pytest.mark.asyncio
@@ -332,6 +343,7 @@ class TestSpellingBee:
         response = await auth_client.get(f"{BASE}/spelling-bee?level=A1&count=3")
         assert response.status_code == 200
         data = response.json()
+        assert uuid.UUID(data["session_id"])
         assert data["game"] == "spelling_bee"
         assert "words" in data
         assert "timer_seconds" in data
@@ -360,6 +372,7 @@ class TestHangman:
         response = await auth_client.get(f"{BASE}/hangman?level=A1")
         assert response.status_code == 200
         data = response.json()
+        assert uuid.UUID(data["session_id"])
         assert "word_id" in data
         assert "word" in data
         assert "category" in data
@@ -368,6 +381,12 @@ class TestHangman:
         assert "letter_count" in data
         assert "xp_value" in data
         assert "cefr_level" in data
+        assert data["base_xp"] == data["xp_value"]
+        assert data["max_lives"] == 6
+        assert data["hints"]["hint1_free"] == data["hint"]
+        assert data["hints"]["hint2_definition"] == data["definition"]
+        assert data["hints"]["hint2_xp_cost"] >= 0
+        assert data["hints"]["hint3_xp_cost"] >= 0
 
     @pytest.mark.asyncio
     async def test_letter_count_matches_word_length(self, auth_client: AsyncClient):
@@ -397,12 +416,15 @@ class TestMatchingGame:
         response = await auth_client.get(f"{BASE}/matching?level=A1")
         assert response.status_code == 200
         data = response.json()
+        assert uuid.UUID(data["session_id"])
         assert data["game"] == "matching"
         assert "pairs" in data
         assert "words_column" in data
         assert "definitions_column" in data
         assert "timer_seconds" in data
         assert "total_pairs" in data
+        assert data["base_xp"] >= 0
+        assert data["time_bonus_threshold"] == 0.5
 
     @pytest.mark.asyncio
     async def test_columns_have_same_length(self, auth_client: AsyncClient):
@@ -423,6 +445,197 @@ class TestMatchingGame:
         response = await auth_client.get(f"{BASE}/matching?level=A1&count=5")
         assert response.status_code == 200
         assert "pairs" in response.json()
+
+
+# ============================================================================
+# Route Tests — POST /games/sessions/{id}/complete
+# ============================================================================
+
+class TestGameSessionCompletion:
+    @pytest.mark.asyncio
+    async def test_completes_session_with_server_verified_score(self):
+        from app.routes.games import complete_game_session
+        from app.schemas.games import GameSessionCompleteRequest
+
+        session_id = uuid.uuid4()
+        user_id = uuid.uuid4()
+        session = MagicMock()
+        session.id = session_id
+        session.user_id = user_id
+        session.game_type = "grammar_quiz"
+        session.started_at = datetime.now(timezone.utc) - timedelta(seconds=20)
+        session.created_at = session.started_at
+        session.completed_at = None
+        session.xp_awarded = False
+        session.session_data = {
+            "expected_items": [
+                {"id": "1", "answer": "is", "xp_value": 10},
+                {"id": "2", "answer": "are", "xp_value": 10},
+            ]
+        }
+        user = MagicMock()
+        user.id = user_id
+        db = MagicMock()
+        db.commit = AsyncMock()
+        xp_result = MagicMock()
+        xp_result.xp_awarded = 10
+        xp_result.to_dict.return_value = {
+            "xp_awarded": 10,
+            "current_xp_in_level": 10,
+        }
+
+        with patch(
+            "app.routes.games.get_game_session_for_update",
+            new_callable=AsyncMock,
+            return_value=session,
+        ), patch(
+            "app.routes.games.award_xp_transaction",
+            new_callable=AsyncMock,
+            return_value=xp_result,
+        ) as award_mock, patch(
+            "app.routes.games.check_achievements_for_user",
+            new_callable=AsyncMock,
+            return_value=[],
+        ) as achievement_mock, patch(
+            "app.routes.games.invalidate_cache",
+            new_callable=AsyncMock,
+        ):
+            response = await complete_game_session(
+                session_id=session_id,
+                body=GameSessionCompleteRequest(
+                    answers=[
+                        {"id": "1", "answer": "is"},
+                        {"id": "2", "answer": "wrong"},
+                    ]
+                ),
+                db=db,
+                current_user=user,
+            )
+
+        assert response.correct_count == 1
+        assert response.total_count == 2
+        assert response.base_xp == 10
+        assert response.xp_awarded == 10
+        assert session.completed_at is not None
+        assert session.xp_awarded is True
+        db.commit.assert_awaited_once()
+        award_mock.assert_awaited_once()
+        assert award_mock.await_args.kwargs["source_id"] == str(session_id)
+        assert award_mock.await_args.kwargs["commit"] is False
+        achievement_mock.assert_awaited_once_with(
+            db,
+            user_id,
+            "game_complete",
+        )
+
+    @pytest.mark.asyncio
+    async def test_returns_existing_award_for_completed_session(self):
+        from app.routes.games import complete_game_session
+        from app.schemas.games import GameSessionCompleteRequest
+
+        session = MagicMock()
+        session.id = uuid.uuid4()
+        session.user_id = uuid.uuid4()
+        session.game_type = "hangman"
+        session.completed_at = datetime.now(timezone.utc)
+        session.xp_awarded = True
+        session.correct_answers = 1
+        session.total_questions = 1
+        session.xp_earned = 10
+        session.duration_seconds = 30
+        session.session_data = {
+            "score_result": {"raw_xp": 15, "penalties": 5, "base_xp": 10}
+        }
+        user = MagicMock()
+        user.id = session.user_id
+        existing_award = MagicMock()
+        existing_award.xp_awarded = 10
+        existing_award.base_xp = 10
+        existing_award.to_dict.return_value = {
+            "xp_awarded": 10,
+            "new_total_xp": 100,
+        }
+
+        with patch(
+            "app.routes.games.get_game_session_for_update",
+            new_callable=AsyncMock,
+            return_value=session,
+        ), patch(
+            "app.routes.games.get_existing_xp_award",
+            new_callable=AsyncMock,
+            return_value=existing_award,
+        ), patch(
+            "app.routes.games.check_achievements_for_user",
+            new_callable=AsyncMock,
+        ) as achievement_mock:
+            response = await complete_game_session(
+                session_id=session.id,
+                body=GameSessionCompleteRequest(),
+                db=MagicMock(),
+                current_user=user,
+            )
+
+        assert response.award_status == "already_awarded"
+        assert response.xp_awarded == 10
+        assert response.raw_xp == 15
+        assert response.penalties == 5
+        achievement_mock.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_rejects_expired_session(self):
+        from fastapi import HTTPException
+        from app.routes.games import complete_game_session
+        from app.schemas.games import GameSessionCompleteRequest
+
+        session = MagicMock()
+        session.user_id = uuid.uuid4()
+        session.started_at = datetime.now(timezone.utc) - timedelta(hours=3)
+        session.created_at = session.started_at
+        session.completed_at = None
+        session.xp_awarded = False
+        user = MagicMock()
+        user.id = session.user_id
+
+        with patch(
+            "app.routes.games.get_game_session_for_update",
+            new_callable=AsyncMock,
+            return_value=session,
+        ):
+            with pytest.raises(HTTPException) as exc:
+                await complete_game_session(
+                    session_id=uuid.uuid4(),
+                    body=GameSessionCompleteRequest(),
+                    db=MagicMock(),
+                    current_user=user,
+                )
+
+        assert exc.value.status_code == 410
+
+    @pytest.mark.asyncio
+    async def test_rejects_another_users_session(self):
+        from fastapi import HTTPException
+        from app.routes.games import complete_game_session
+        from app.schemas.games import GameSessionCompleteRequest
+
+        session = MagicMock()
+        session.user_id = uuid.uuid4()
+        user = MagicMock()
+        user.id = uuid.uuid4()
+
+        with patch(
+            "app.routes.games.get_game_session_for_update",
+            new_callable=AsyncMock,
+            return_value=session,
+        ):
+            with pytest.raises(HTTPException) as exc:
+                await complete_game_session(
+                    session_id=uuid.uuid4(),
+                    body=GameSessionCompleteRequest(),
+                    db=MagicMock(),
+                    current_user=user,
+                )
+
+        assert exc.value.status_code == 403
 
 
 # ============================================================================

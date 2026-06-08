@@ -25,6 +25,7 @@ from app.core.cache import build_cache_key, get_cached, set_cached, delete_cache
 from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
+from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
     UserVocabularyCreate,
@@ -145,7 +146,7 @@ async def get_vocabulary_item(
 @router.get("/collection", response_model=UserVocabularyListResponse)
 async def get_user_collection(
     vocab_status: Optional[str] = Query(None, alias="status", description="learning, reviewing, mastered"),
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(50, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -155,7 +156,7 @@ async def get_user_collection(
 
     Query params:
     - status: Filter by learning status (learning/reviewing/mastered)
-    - limit: Results per page (max 100)
+    - limit: Results per page (max 1000)
     - offset: Pagination offset
 
     Returns:
@@ -173,6 +174,10 @@ async def get_user_collection(
                 detail=f"Invalid status. Must be one of: learning, reviewing, mastered, archived"
             )
     
+    # Auto-seed basic words if missing
+    if not current_user.has_seeded_basic_words:
+        await vocabulary_crud.ensure_basic_words_for_user(db, current_user)
+
     # Get user vocabulary with vocabulary items eager-loaded (no N+1)
     user_vocab_list = await vocabulary_crud.get_user_vocabulary_list(
         db,
@@ -432,6 +437,10 @@ async def get_due_vocabulary(
     - Includes full vocabulary details
     - Daily progress percentage
     """
+    # Auto-seed basic words if missing
+    if not current_user.has_seeded_basic_words:
+        await vocabulary_crud.ensure_basic_words_for_user(db, current_user)
+
     # Get due vocabulary
     due_vocab = await vocabulary_crud.get_due_vocabulary(
         db,
@@ -701,3 +710,143 @@ async def get_user_decks(
     """Get all vocabulary decks for current user"""
     decks = await vocabulary_crud.get_user_decks(db, current_user.id)
     return decks
+
+
+@router.get("/decks/{deck_id}/items", response_model=List[UserVocabularyWithItem])
+async def get_deck_items(
+    deck_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get all items inside a specific vocabulary deck"""
+    deck = await vocabulary_crud.get_deck(db, deck_id)
+    if not deck:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deck not found"
+        )
+    if deck.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to access this deck"
+        )
+    
+    items = await vocabulary_crud.get_deck_items(db, deck_id)
+    
+    # Format to match UserVocabularyWithItem
+    result = []
+    for uv in items:
+        result.append({
+            **uv.__dict__,
+            "vocabulary": uv.vocabulary,
+            "is_due": uv.is_due,
+            "accuracy": uv.accuracy
+        })
+    return result
+
+
+@router.post("/decks/{deck_id}/items", response_model=UserVocabularyResponse)
+async def add_to_deck(
+    deck_id: uuid.UUID,
+    request_data: AddToDeckRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Add a vocabulary item to a custom deck"""
+    # Check deck ownership
+    deck = await vocabulary_crud.get_deck(db, deck_id)
+    if not deck:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deck not found"
+        )
+    if deck.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this deck"
+        )
+        
+    # Check user vocabulary ownership
+    from sqlalchemy import select
+    from app.models.vocabulary import UserVocabulary
+    
+    result = await db.execute(
+        select(UserVocabulary).where(UserVocabulary.id == request_data.user_vocabulary_id)
+    )
+    user_vocab = result.scalar_one_or_none()
+    if not user_vocab:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User vocabulary item not found"
+        )
+    if user_vocab.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to use this vocabulary item"
+        )
+        
+    await vocabulary_crud.add_to_deck(
+        db,
+        deck_id=deck_id,
+        user_vocabulary_id=request_data.user_vocabulary_id,
+        order=request_data.order
+    )
+    
+    return user_vocab
+
+
+@router.delete("/decks/{deck_id}", response_model=MessageResponse)
+async def delete_deck(
+    deck_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a custom vocabulary deck"""
+    deck = await vocabulary_crud.get_deck(db, deck_id)
+    if not deck:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deck not found"
+        )
+    if deck.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to delete this deck"
+        )
+        
+    await vocabulary_crud.delete_deck(db, deck_id)
+    return MessageResponse(
+        message="Deck deleted successfully"
+    )
+
+
+@router.delete("/decks/{deck_id}/items/{user_vocabulary_id}", response_model=MessageResponse)
+async def remove_from_deck(
+    deck_id: uuid.UUID,
+    user_vocabulary_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Remove a vocabulary item from a custom deck"""
+    deck = await vocabulary_crud.get_deck(db, deck_id)
+    if not deck:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Deck not found"
+        )
+    if deck.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this deck"
+        )
+        
+    removed = await vocabulary_crud.remove_from_deck(db, deck_id, user_vocabulary_id)
+    if not removed:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Item not found in this deck"
+        )
+        
+    return MessageResponse(
+        message="Item removed from deck successfully"
+    )

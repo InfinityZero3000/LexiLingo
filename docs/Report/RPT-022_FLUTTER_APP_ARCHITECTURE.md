@@ -199,7 +199,7 @@ LexiChatPage
 ├── User types / speaks
 ├── LexiChatProvider.sendMessage(text)
 │   └── AI Service POST /api/v1/lexi/chat
-│       └── GraphCAG Pipeline
+│       └── TRACECAG Pipeline
 │           → SSE streaming response
 ├── Display streaming chunks
 ├── Show corrections sidebar

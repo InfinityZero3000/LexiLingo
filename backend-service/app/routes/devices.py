@@ -21,6 +21,7 @@ from app.schemas.devices import (
 from app.schemas.common import MessageResponse
 from app.schemas.response import ApiResponse
 from typing import List
+from app.services.starter_reward_service import StarterRewardService
 
 router = APIRouter(prefix="/devices", tags=["Devices"])
 
@@ -103,6 +104,13 @@ async def register_device(
 
     await db.commit()
     await db.refresh(device)
+
+    if request.fcm_token:
+        await StarterRewardService.deliver_pending_push(
+            db,
+            current_user.id,
+            tokens=[request.fcm_token],
+        )
 
     return ApiResponse(
         success=True,

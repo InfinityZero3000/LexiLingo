@@ -23,7 +23,7 @@ from app.crud.course import CourseCRUD, UnitCRUD, LessonCRUD
 from app.schemas.course import (
     CourseCreate, CourseUpdate, CourseResponse,
     UnitCreate, UnitUpdate, UnitResponse,
-    LessonCreate, LessonUpdate, LessonResponse
+    LessonCreate, LessonUpdate, LessonResponse, LessonDetailResponse
 )
 from app.schemas.response import ApiResponse
 from app.schemas.content import (
@@ -386,6 +386,55 @@ async def delete_lesson(
         message="Lesson deleted successfully",
         data={"deleted": True, "lesson_id": str(lesson_id)}
     )
+
+
+@router.get("/lessons/{lesson_id}", response_model=ApiResponse[dict])
+async def get_lesson_detail(
+    lesson_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """Get a single lesson with full content/exercises (admin only)."""
+    lesson = await LessonCRUD.get_lesson(db, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    data = LessonDetailResponse.model_validate(lesson).model_dump()
+    return ApiResponse(success=True, message="Lesson retrieved", data=data)
+
+
+class LessonContentUpdate(LessonUpdate):
+    """Dedicated schema for updating lesson exercises content."""
+    pass
+
+
+@router.put("/lessons/{lesson_id}/content", response_model=ApiResponse[dict])
+async def update_lesson_content(
+    lesson_id: UUID,
+    payload: LessonContentUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+):
+    """Update lesson exercises and estimated_minutes (admin only)."""
+    lesson = await LessonCRUD.get_lesson(db, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+
+    update_data = payload.model_dump(exclude_unset=True)
+
+    # Derive total_exercises from exercises array inside content
+    if "content" in update_data and update_data["content"]:
+        exercises = update_data["content"].get("exercises", [])
+        update_data["total_exercises"] = len(exercises)
+
+    for field, value in update_data.items():
+        setattr(lesson, field, value)
+
+    await db.commit()
+    await db.refresh(lesson)
+
+    data = LessonDetailResponse.model_validate(lesson).model_dump()
+    return ApiResponse(success=True, message="Lesson content updated", data=data)
 
 
 # ============================================================================
@@ -1309,26 +1358,22 @@ async def seed_sample_data(
             created["achievements"] += 1
     
     # Sample Shop Items
-    sample_shop_items = [
-        {"name": "Streak Freeze", "description": "Protect your streak for one day", 
-         "item_type": "streak_freeze", "price_gems": 200},
-        {"name": "Double XP (1 hour)", "description": "Earn double XP for 1 hour", 
-         "item_type": "double_xp", "price_gems": 150},
-        {"name": "Hint Pack (5)", "description": "5 additional hints for lessons", 
-         "item_type": "hint_pack", "price_gems": 100},
-        {"name": "Heart Refill", "description": "Refill all hearts instantly", 
-         "item_type": "heart_refill", "price_gems": 350},
-    ]
+    from app.core.shop_catalog import SHOP_CATALOG
+    sample_shop_items = SHOP_CATALOG
     
     for item_data in sample_shop_items:
         # Check if exists
         result = await db.execute(
             select(ShopItem).where(ShopItem.name == item_data["name"])
         )
-        if not result.scalar_one_or_none():
+        existing_item = result.scalar_one_or_none()
+        if not existing_item:
             item = ShopItem(**item_data)
             db.add(item)
             created["shop_items"] += 1
+        else:
+            for field, value in item_data.items():
+                setattr(existing_item, field, value)
 
     # Sample Course Categories
     sample_categories = [
@@ -2099,4 +2144,3 @@ async def reset_quota(
         message=f"Quota reset for {api_name}",
         data=await QuotaManager.get_usage(api_name),
     )
-

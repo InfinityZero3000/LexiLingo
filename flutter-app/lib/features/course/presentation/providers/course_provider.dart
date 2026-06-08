@@ -37,10 +37,16 @@ class CourseProvider with ChangeNotifier {
   String? _selectedLanguage;
   String? _selectedLevel;
 
+  // Client-side filters (applied on top of server-fetched courses)
+  String? _selectedCategorySlug;
+  bool _showEnrolledOnly = false;
+  String _sortOrder = 'default';
+
   // State: Course Detail
   CourseDetailEntity? _courseDetail;
   bool _isLoadingDetail = false;
   String? _detailError;
+  final Map<String, CourseDetailEntity> _detailCache = {};
 
   // State: Enrollment
   bool _isEnrolling = false;
@@ -66,6 +72,39 @@ class CourseProvider with ChangeNotifier {
   bool get hasMorePages => _currentPage < _totalPages;
   String? get selectedLanguage => _selectedLanguage;
   String? get selectedLevel => _selectedLevel;
+  String? get selectedCategorySlug => _selectedCategorySlug;
+  bool get showEnrolledOnly => _showEnrolledOnly;
+  String get sortOrder => _sortOrder;
+
+  bool get hasActiveFilters =>
+      _selectedLanguage != null ||
+      _selectedLevel != null ||
+      _selectedCategorySlug != null ||
+      _showEnrolledOnly ||
+      _sortOrder != 'default';
+
+  /// Courses after applying client-side category/enrolled/sort filters
+  List<CourseEntity> get filteredCourses {
+    var result = _courses.where((c) {
+      if (_selectedCategorySlug != null &&
+          !c.tags.any((t) =>
+              t.toLowerCase() == _selectedCategorySlug!.toLowerCase())) {
+        return false;
+      }
+      if (_showEnrolledOnly && c.isEnrolled != true) return false;
+      return true;
+    }).toList();
+
+    switch (_sortOrder) {
+      case 'lessons':
+        result.sort((a, b) => b.totalLessons.compareTo(a.totalLessons));
+      case 'xp':
+        result.sort((a, b) => b.totalXp.compareTo(a.totalXp));
+      case 'az':
+        result.sort((a, b) => a.title.compareTo(b.title));
+    }
+    return result;
+  }
 
   CourseDetailEntity? get courseDetail => _courseDetail;
   bool get isLoadingDetail => _isLoadingDetail;
@@ -163,8 +202,29 @@ class CourseProvider with ChangeNotifier {
     await loadCourses(page: 1, language: _selectedLanguage, level: level);
   }
 
-  /// Clear all filters
+  /// Apply client-side filters (category, enrolled, sort)
+  void setClientFilters({
+    String? categorySlug,
+    bool clearCategory = false,
+    bool? enrolledOnly,
+    String? sortOrder,
+  }) {
+    if (clearCategory) {
+      _selectedCategorySlug = null;
+    } else if (categorySlug != null) {
+      _selectedCategorySlug =
+          _selectedCategorySlug == categorySlug ? null : categorySlug;
+    }
+    if (enrolledOnly != null) _showEnrolledOnly = enrolledOnly;
+    if (sortOrder != null) _sortOrder = sortOrder;
+    notifyListeners();
+  }
+
+  /// Clear all filters (server + client)
   Future<void> clearFilters() async {
+    _selectedCategorySlug = null;
+    _showEnrolledOnly = false;
+    _sortOrder = 'default';
     await loadCourses(page: 1);
   }
 
@@ -251,10 +311,21 @@ class CourseProvider with ChangeNotifier {
   }
 
   /// Load course detail with roadmap
-  Future<void> loadCourseDetail(String courseId) async {
+  Future<void> loadCourseDetail(String courseId, {bool forceRefresh = false}) async {
+    if (_isLoadingDetail) return;
+
+    if (!forceRefresh && _detailCache.containsKey(courseId)) {
+      _courseDetail = _detailCache[courseId];
+      _detailError = null;
+      notifyListeners();
+      return;
+    }
+
     _isLoadingDetail = true;
     _detailError = null;
-    _courseDetail = null;
+    if (_courseDetail?.id != courseId) {
+      _courseDetail = null;
+    }
     notifyListeners();
 
     final result = await getCourseDetailUseCase(courseId);
@@ -267,6 +338,8 @@ class CourseProvider with ChangeNotifier {
       },
       (detail) {
         _courseDetail = detail;
+        _detailCache[courseId] = detail;
+        _detailError = null;
         _isLoadingDetail = false;
         notifyListeners();
       },
@@ -313,6 +386,7 @@ class CourseProvider with ChangeNotifier {
             userProgress: _courseDetail!.userProgress ?? 0.0,
             units: _courseDetail!.units,
           );
+          _detailCache[courseId] = _courseDetail!;
         }
 
         // Update course in list
@@ -448,6 +522,7 @@ class CourseProvider with ChangeNotifier {
   void reset() {
     _courses = [];
     _courseDetail = null;
+    _detailCache.clear();
     _isLoadingCourses = false;
     _isLoadingDetail = false;
     _isEnrolling = false;

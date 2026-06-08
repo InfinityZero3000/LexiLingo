@@ -8,6 +8,10 @@
 set -e
 set -o pipefail
 
+# Add npm global bin to PATH so pnpm/vercel are found regardless of shell config
+_NPM_GLOBAL_BIN="$(npm prefix -g 2>/dev/null)/bin"
+[[ -d "$_NPM_GLOBAL_BIN" && ":$PATH:" != *":$_NPM_GLOBAL_BIN:"* ]] && export PATH="$_NPM_GLOBAL_BIN:$PATH"
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

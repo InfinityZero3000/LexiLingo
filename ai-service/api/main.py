@@ -23,6 +23,7 @@ from pymongo.errors import OperationFailure
 from api.core.database import mongodb_manager, get_database
 from api.core.redis_client import RedisClient, get_redis
 from api.core.rate_limiter import RedisRateLimiter
+from api.core.groq_key_pool import build_groq_key_pool, GroqKeyPool
 from api.core.config import get_settings
 
 # Setup logging
@@ -46,7 +47,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
@@ -54,7 +54,7 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
 # Global clients
 _gateway_initialized = False
 _http_client: Optional[httpx.AsyncClient] = None
-_groq_limiter: Optional[RedisRateLimiter] = None
+_groq_pool: Optional[GroqKeyPool] = None
 
 
 async def _ensure_mongo_indexes() -> None:
@@ -155,8 +155,8 @@ async def _ensure_mongo_indexes() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan events."""
-    global _gateway_initialized, _http_client, _groq_limiter
-    
+    global _gateway_initialized, _http_client, _groq_pool
+
     # Startup
     try:
         await mongodb_manager.connect()
@@ -164,16 +164,14 @@ async def lifespan(app: FastAPI):
         logger.info(" MongoDB connected")
     except Exception as e:
         logger.warning(f"MongoDB connection failed: {e}")
-    
+
     try:
         redis_conn = await get_redis()
-        _groq_limiter = RedisRateLimiter(
-            redis_client=redis_conn,
-            prefix="groq",
-            rpm_limit=30,
-            tpm_limit=12000,
-            rpd_limit=14400
-        )
+        _groq_pool = build_groq_key_pool(redis_conn)
+        if _groq_pool:
+            logger.info(" Groq key pool initialized with %d key(s)", _groq_pool.count)
+        else:
+            logger.warning("No Groq API keys configured")
         logger.info(" Redis & Rate Limiter initialized")
     except Exception as e:
         logger.warning(f"Redis initialization failed: {e}")
@@ -237,14 +235,16 @@ app.add_middleware(
 
 # Helper Functions for Providers (re-exported for routers)
 async def get_groq_response(message: str, db: AsyncIOMotorDatabase) -> Optional[str]:
-    global _http_client, _groq_limiter
-    if not GROQ_API_KEY or not _http_client or not _groq_limiter:
+    global _http_client, _groq_pool
+    if not _http_client or not _groq_pool:
         return None
-    if not await _groq_limiter.can_request():
+    slot = await _groq_pool.get_available()
+    if not slot:
         return None
+    api_key, limiter = slot
     try:
         url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {GROQ_API_KEY}"}
+        headers = {"Authorization": f"Bearer {api_key}"}
         payload = {
             "model": GROQ_MODEL,
             "messages": [{"role": "user", "content": message}],
@@ -254,7 +254,7 @@ async def get_groq_response(message: str, db: AsyncIOMotorDatabase) -> Optional[
         if response.status_code == 200:
             data = response.json()
             content = data["choices"][0]["message"]["content"]
-            await _groq_limiter.record(data.get("usage", {}).get("total_tokens", 500))
+            await limiter.record(data.get("usage", {}).get("total_tokens", 500))
             return content
     except Exception as e:
         logger.error(f"Groq error: {e}")

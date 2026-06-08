@@ -195,7 +195,11 @@ class Settings(BaseSettings):
     STT_LANGUAGE: str = os.getenv("STT_LANGUAGE", "en")
     
     # Piper VITS - Text-to-Speech
-    TTS_MODEL_PATH: str = os.getenv("TTS_MODEL_PATH", "en_US-lessac-medium")
+    # Accept PIPER_MODEL_PATH as alias for TTS_MODEL_PATH
+    TTS_MODEL_PATH: str = (
+        os.getenv("TTS_MODEL_PATH")
+        or os.getenv("PIPER_MODEL_PATH", "en_US-lessac-medium")
+    )
     TTS_CONFIG_PATH: str = os.getenv("TTS_CONFIG_PATH", "")
     TTS_SPEAKER_ID: int = int(os.getenv("TTS_SPEAKER_ID", "0"))
     TTS_VOICE: str = os.getenv("TTS_VOICE", "en_US-lessac-medium")
@@ -205,7 +209,7 @@ class Settings(BaseSettings):
     # ============================================================
     KUZU_DB_PATH: str = os.getenv(
         "KUZU_DB_PATH",
-        os.path.join(os.path.dirname(__file__), "..", "data", "kuzu")
+        os.path.join(os.path.dirname(__file__), "..", "..", "data", "kuzu")
     )
     EMBEDDING_MODEL: str = os.getenv(
         "EMBEDDING_MODEL",

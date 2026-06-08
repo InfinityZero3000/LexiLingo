@@ -140,47 +140,39 @@ class RankAssetIcon extends StatelessWidget {
 
     final isMaster = data.key == 'master';
 
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: isMaster
-              ? [const Color(0xFF5AB6FF), const Color(0xFFFFD64F)]
-              : [
-                  data.color.withValues(alpha: 0.2),
-                  data.color.withValues(alpha: 0.05),
-                ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: isMaster
-              ? const Color(0xFF5AB6FF).withValues(alpha: 0.5)
-              : data.color.withValues(alpha: 0.28),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isMaster
-                ? const Color(0xFF5AB6FF).withValues(alpha: 0.3)
-                : data.color.withValues(alpha: 0.24),
-            blurRadius: size * 0.22,
-            offset: Offset(0, size * 0.08),
-          ),
-        ],
-      ),
-      child: ClipOval(
-        child: Padding(
-          padding: EdgeInsets.all(size * paddingRatio),
-          child: Center(
-            child: Transform.translate(
-              offset: iconOffset,
-              child: Transform.scale(scale: iconScale, child: icon),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Soft gradient glow — no border, no clip
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: isMaster
+                      ? [
+                          const Color(0xFF5AB6FF).withValues(alpha: 0.28),
+                          const Color(0xFFFFD64F).withValues(alpha: 0.12),
+                          Colors.transparent,
+                        ]
+                      : [
+                          data.color.withValues(alpha: 0.22),
+                          data.color.withValues(alpha: 0.06),
+                          Colors.transparent,
+                        ],
+                  stops: const [0.0, 0.55, 1.0],
+                ),
+              ),
             ),
           ),
-        ),
+          Transform.translate(
+            offset: iconOffset,
+            child: Transform.scale(scale: iconScale, child: icon),
+          ),
+        ],
       ),
     );
   }

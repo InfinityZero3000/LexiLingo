@@ -13,11 +13,13 @@ from enum import Enum
 class QuestionType(str, Enum):
     """Question types in lessons"""
     MULTIPLE_CHOICE = "multiple_choice"
+    TRUE_FALSE = "true_false"
     FILL_BLANK = "fill_blank"
     MATCHING = "matching"
     LISTENING = "listening"
     SPEAKING = "speaking"
     TRANSLATION = "translation"
+    TRANSLATE = "translate"
 
 
 class MasteryLevel(str, Enum):
@@ -143,7 +145,7 @@ class LessonStartResponse(BaseModel):
 
 class AnswerSubmitRequest(BaseModel):
     """Submit an answer for a question"""
-    question_id: UUID
+    question_id: str
     question_type: QuestionType
     user_answer: str | Dict[str, Any]
     time_spent_ms: int = Field(..., ge=0)

@@ -12,6 +12,7 @@ import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
@@ -670,7 +671,9 @@ class _LexiChatPageState extends State<LexiChatPage>
           );
         }
 
-        final messages = provider.messages;
+        final messages = provider.messages
+            .where((message) => !_isEmptyStreamingLexiMessage(message))
+            .toList(growable: false);
         final isResponding = provider.isLexiResponding;
 
         return ListView.builder(
@@ -706,6 +709,12 @@ class _LexiChatPageState extends State<LexiChatPage>
         );
       },
     );
+  }
+
+  bool _isEmptyStreamingLexiMessage(LexiMessage message) {
+    return message.isLexi &&
+        message.syncStatus == 'streaming' &&
+        message.content.trim().isEmpty;
   }
 
   // ── Minimalist Input Bar ────────────────────────────────────────────────
@@ -766,7 +775,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                     )
                   else
                     Icon(
-                      _isWebSpeechActive ? Icons.graphic_eq : Icons.mic,
+                      _isWebSpeechActive
+                          ? Icons.graphic_eq
+                          : Icons.pause_rounded,
                       color: _isWebSpeechActive
                           ? Colors.blue
                           : AppColors.errorBright,

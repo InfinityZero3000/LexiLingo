@@ -15,6 +15,7 @@ class LeaderboardPodium extends StatefulWidget {
   final List<LeaderboardEntryEntity> entries;
   final int totalParticipants;
   final Future<void> Function()? onRefresh;
+  final void Function(LeaderboardEntryEntity?)? onEntrySelected;
 
   const LeaderboardPodium({
     super.key,
@@ -23,6 +24,7 @@ class LeaderboardPodium extends StatefulWidget {
     required this.entries,
     required this.totalParticipants,
     this.onRefresh,
+    this.onEntrySelected,
   });
 
   @override
@@ -58,13 +60,14 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
   LeaderboardEntryEntity? _findCurrentUserEntry(List<LeaderboardEntryEntity> entries) {
     final currentUserEntries = entries.where((e) => e.isCurrentUser);
     if (currentUserEntries.isNotEmpty) return currentUserEntries.first;
-    return entries.isNotEmpty ? entries.first : null;
+    return null;
   }
 
   void _onEntryTap(LeaderboardEntryEntity entry) {
     setState(() {
       _selectedEntry = entry;
     });
+    widget.onEntrySelected?.call(entry);
   }
 
   static const _backgroundAspectRatio = 941 / 1672;
@@ -366,13 +369,12 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                 controller: scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  // Drag Handle & Selected User Info
+                  // Drag Handle & League Info
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
                       child: Column(
                         children: [
-                          // Drag Indicator
                           Container(
                             width: 40,
                             height: 4,
@@ -382,7 +384,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                          _buildSelectedUserHeader(context),
+                          _buildLeaguePanelHeader(context),
                         ],
                       ),
                     ),
@@ -429,224 +431,66 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
     );
   }
 
-  Widget _buildSelectedUserHeader(BuildContext context) {
+  Widget _buildLeaguePanelHeader(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColorRoles.primary(isDark);
-    final entry = _selectedEntry;
 
-    if (entry == null) {
-      // Fallback: show league + participants when no entry
-      return Row(
-        children: [
-          RankAssetIcon(rank: widget.league, size: 34),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'leaderboard.title'.tr(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? AppColors.textInverted : AppColors.textDark,
-                  ),
-                ),
-                widget.league == 'master'
-                    ? ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds),
-                        child: Text(
-                          rankDisplayNameFor(widget.league),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        rankDisplayNameFor(widget.league),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: rankVisualDataFor(widget.league).color,
-                        ),
-                      ),
-              ],
-            ),
-          ),
-          Text(
-            'leaderboard.participants'.tr(
-              namedArgs: {'count': widget.totalParticipants.toString()},
-            ),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColorRoles.textMuted(isDark),
-            ),
-          ),
-        ],
-      );
-    }
-
-    final rankColor = rankVisualDataFor(entry.userRank).color;
-    final isMasterEntry = entry.userRank == 'master';
     return Row(
       children: [
-        // Avatar
-        Container(
-          width: 46,
-          height: 46,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white.withValues(alpha: 0.72),
-            border: Border.all(
-              color: entry.isCurrentUser
-                  ? primaryColor
-                  : Colors.white.withValues(alpha: 0.84),
-              width: entry.isCurrentUser ? 2 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: (entry.isCurrentUser ? primaryColor : rankColor)
-                    .withValues(alpha: 0.2),
-                blurRadius: 8,
-              ),
-            ],
-          ),
-          child: ClipOval(
-            child: NetworkAvatarImage(
-              imageUrl: entry.avatarUrl,
-              fallback: _buildInitialAvatar(context, entry),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Name + league + XP info
+        RankAssetIcon(rank: widget.league, size: 34),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Flexible(
-                    child: Text(
-                      entry.displayName.isNotEmpty
-                          ? entry.displayName
-                          : entry.username,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: entry.isCurrentUser
-                            ? primaryColor
-                            : (isDark
-                                  ? AppColors.textInverted
-                                  : AppColors.textDark),
-                      ),
-                    ),
-                  ),
-                  if (entry.isCurrentUser) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 7,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'YOU',
-                        style: TextStyle(
-                          fontSize: 9,
+              Text(
+                'leaderboard.title'.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? AppColors.textInverted : AppColors.textDark,
+                ),
+              ),
+              widget.league == 'master'
+                  ? ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ).createShader(bounds),
+                      child: Text(
+                        rankDisplayNameFor(widget.league),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                         ),
                       ),
+                    )
+                  : Text(
+                      rankDisplayNameFor(widget.league),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: rankVisualDataFor(widget.league).color,
+                      ),
                     ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 3),
-              Row(
-                children: [
-                  RankAssetIcon(
-                    rank: entry.userRank,
-                    size: 16,
-                    decorated: false,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: isMasterEntry
-                        ? ShaderMask(
-                            shaderCallback: (bounds) => const LinearGradient(
-                              colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ).createShader(bounds),
-                            child: Text(
-                              '${rankDisplayNameFor(entry.userRank)} · ${entry.xpEarned} XP',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          )
-                        : Text(
-                            '${rankDisplayNameFor(entry.userRank)} · ${entry.xpEarned} XP',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: rankColor,
-                            ),
-                          ),
-                  ),
-                ],
-              ),
             ],
           ),
         ),
-        const SizedBox(width: 8),
-        // Rank position + participants
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '#${entry.rank}',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                color: _getRankColor(entry.rank),
-              ),
-            ),
-            Text(
-              'leaderboard.participants'.tr(
-                namedArgs: {'count': widget.totalParticipants.toString()},
-              ),
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColorRoles.textMuted(isDark),
-              ),
-            ),
-          ],
+        Text(
+          'leaderboard.participants'.tr(
+            namedArgs: {'count': widget.totalParticipants.toString()},
+          ),
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColorRoles.textMuted(isDark),
+          ),
         ),
       ],
     );

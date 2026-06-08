@@ -1,65 +1,205 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
+import '../../features/auth/data/auth_repository.dart';
+import '../../features/auth/presentation/auth_provider.dart';
 
-class AdminShell extends StatelessWidget {
+class AdminShell extends StatefulWidget {
   final Widget child;
   const AdminShell({super.key, required this.child});
 
-  int _locationIndex(BuildContext context) {
+  static final _scaffoldKey = GlobalKey<ScaffoldState>();
+  static void openDrawer() => _scaffoldKey.currentState?.openDrawer();
+
+  @override
+  State<AdminShell> createState() => _AdminShellState();
+}
+
+class _AdminShellState extends State<AdminShell> {
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
     final loc = GoRouterState.of(context).matchedLocation;
-    if (loc.startsWith('/curriculum')) return 1;
-    if (loc.startsWith('/users')) return 2;
-    if (loc.startsWith('/settings')) return 3;
-    return 0;
+
+    return Scaffold(
+      key: AdminShell._scaffoldKey,
+      backgroundColor: AppColors.background,
+      drawer: _AdminDrawer(auth: auth, currentLoc: loc),
+      body: widget.child,
+    );
+  }
+}
+
+class _AdminDrawer extends StatelessWidget {
+  final AuthProvider auth;
+  final String currentLoc;
+
+  const _AdminDrawer({required this.auth, required this.currentLoc});
+
+  void _navigate(BuildContext context, String route) {
+    Navigator.of(context).pop();
+    context.go(route);
+  }
+
+  bool _isActive(String route) {
+    if (route == '/dashboard') return currentLoc == '/dashboard' || currentLoc == '/';
+    return currentLoc.startsWith(route);
   }
 
   @override
   Widget build(BuildContext context) {
-    final idx = _locationIndex(context);
-
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.outlineVariant)),
+    final user = auth.user;
+    return Drawer(
+      backgroundColor: AppColors.surface,
+      child: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(user),
+            const Divider(height: 1, color: AppColors.outline),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.only(bottom: 8),
+                children: [
+                  _section('OVERVIEW'),
+                  _item(context, icon: Icons.dashboard_outlined, activeIcon: Icons.dashboard, label: 'Dashboard', route: '/dashboard'),
+                  _section('CONTENT'),
+                  _item(context, icon: Icons.menu_book_outlined, activeIcon: Icons.menu_book, label: 'Courses', route: '/curriculum'),
+                  _item(context, icon: Icons.topic_outlined, activeIcon: Icons.topic, label: 'Topics', route: '/topics'),
+                  _item(context, icon: Icons.book_outlined, activeIcon: Icons.book, label: 'Vocabulary', route: '/vocabulary'),
+                  _item(context, icon: Icons.quiz_outlined, activeIcon: Icons.quiz, label: 'Grammar & Tests', route: '/grammar'),
+                  _item(context, icon: Icons.bar_chart_outlined, activeIcon: Icons.bar_chart, label: 'Analytics', route: '/analytics'),
+                  _section('USERS'),
+                  _item(context, icon: Icons.group_outlined, activeIcon: Icons.group, label: 'User Management', route: '/users'),
+                  _section('GAMIFICATION'),
+                  _item(context, icon: Icons.military_tech_outlined, activeIcon: Icons.military_tech, label: 'Achievements & Shop', route: '/achievements'),
+                  _section('SYSTEM'),
+                  _item(context, icon: Icons.campaign_outlined, activeIcon: Icons.campaign, label: 'Banner Ads', route: '/ads'),
+                  _item(context, icon: Icons.manage_search_outlined, activeIcon: Icons.manage_search, label: 'Audit Logs', route: '/logs'),
+                  _item(context, icon: Icons.monitor_heart_outlined, activeIcon: Icons.monitor_heart, label: 'System Health', route: '/system-health'),
+                  _item(context, icon: Icons.tune_outlined, activeIcon: Icons.tune, label: 'System Config', route: '/system-settings'),
+                  _item(context, icon: Icons.settings_outlined, activeIcon: Icons.settings, label: 'Settings', route: '/settings'),
+                  if (auth.isSuperAdmin) ...[
+                    _section('SUPER ADMIN'),
+                    _item(context, icon: Icons.admin_panel_settings_outlined, activeIcon: Icons.admin_panel_settings, label: 'Super Dashboard', route: '/super/dashboard'),
+                    _item(context, icon: Icons.manage_accounts_outlined, activeIcon: Icons.manage_accounts, label: 'Admin Management', route: '/super/admins'),
+                  ],
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: AppColors.outline),
+            _buildLogout(context),
+            const SizedBox(height: 4),
+          ],
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+      ),
+    );
+  }
+
+  Widget _buildHeader(AdminUser? user) {
+    final initials = (user?.displayName.isNotEmpty == true)
+        ? user!.displayName.split(' ').take(2).map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').join()
+        : 'A';
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary, width: 2),
+            ),
+            child: ClipOval(
+              child: user?.avatarUrl != null
+                  ? Image.network(user!.avatarUrl!, fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _initialsAvatar(initials))
+                  : _initialsAvatar(initials),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _NavItem(
-                  icon: Icons.dashboard_outlined,
-                  activeIcon: Icons.dashboard,
-                  label: 'Dashboard',
-                  selected: idx == 0,
-                  onTap: () => context.go('/dashboard'),
+                Text(user?.displayName ?? 'Admin',
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.onSurface),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                Text(user?.email ?? '',
+                    style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: auth.isSuperAdmin ? AppColors.primary : AppColors.primaryContainer,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    auth.isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN',
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: auth.isSuperAdmin ? Colors.white : AppColors.primary,
+                        letterSpacing: 0.5),
+                  ),
                 ),
-                _NavItem(
-                  icon: Icons.menu_book_outlined,
-                  activeIcon: Icons.menu_book,
-                  label: 'Curriculum',
-                  selected: idx == 1,
-                  onTap: () => context.go('/curriculum'),
-                ),
-                _NavItem(
-                  icon: Icons.group_outlined,
-                  activeIcon: Icons.group,
-                  label: 'Users',
-                  selected: idx == 2,
-                  onTap: () => context.go('/users'),
-                ),
-                _NavItem(
-                  icon: Icons.settings_outlined,
-                  activeIcon: Icons.settings,
-                  label: 'Settings',
-                  selected: idx == 3,
-                  onTap: () => context.go('/settings'),
-                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _initialsAvatar(String initials) => Container(
+        color: AppColors.primaryContainer,
+        alignment: Alignment.center,
+        child: Text(initials,
+            style: GoogleFonts.spaceGrotesk(
+                color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 16)),
+      );
+
+  Widget _section(String label) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+        child: Text(label,
+            style: GoogleFonts.spaceGrotesk(
+                fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.onSurfaceMuted, letterSpacing: 0.8)),
+      );
+
+  Widget _item(BuildContext context,
+      {required IconData icon,
+      required IconData activeIcon,
+      required String label,
+      required String route}) {
+    final active = _isActive(route);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+      child: Material(
+        color: active ? const Color(0x1AFF4D00) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => _navigate(context, route),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: [
+                Icon(active ? activeIcon : icon, size: 20,
+                    color: active ? AppColors.primaryBright : AppColors.onSurfaceMuted),
+                const SizedBox(width: 14),
+                Text(label,
+                    style: GoogleFonts.spaceGrotesk(
+                        fontSize: 13,
+                        fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                        color: active ? AppColors.primaryBright : AppColors.onSurface)),
               ],
             ),
           ),
@@ -67,55 +207,32 @@ class AdminShell extends StatelessWidget {
       ),
     );
   }
-}
 
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final IconData activeIcon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.activeIcon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            selected
-                ? Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(activeIcon, color: AppColors.primary, size: 22),
-                  )
-                : Icon(icon, color: AppColors.onSurfaceMuted, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 10,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? AppColors.primary : AppColors.onSurfaceMuted,
+  Widget _buildLogout(BuildContext context) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          child: InkWell(
+            onTap: () async {
+              Navigator.of(context).pop();
+              await auth.logout();
+              if (context.mounted) context.go('/login');
+            },
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.logout_rounded, size: 20, color: AppColors.error),
+                  const SizedBox(width: 14),
+                  Text('Logout',
+                      style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.error)),
+                ],
               ),
             ),
-          ],
+          ),
         ),
-      ),
-    );
-  }
+      );
 }

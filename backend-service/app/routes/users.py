@@ -11,7 +11,7 @@ from typing import List, Optional
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.progress import UserProgress, LessonAttempt, Streak
+from app.models.progress import UserProgress, LessonAttempt, Streak, UserCourseProgress, LessonCompletion
 from app.models.gamification import UserAchievement, UserWallet
 from app.models.vocabulary import UserVocabulary
 from app.schemas.user import UserResponse, UserUpdate
@@ -355,26 +355,26 @@ async def get_user_stats(
     # Calculate level status
     level_status = LevelService.calculate_level_status(current_user.total_xp)
     
-    # Get course stats
-    courses_query = select(func.count(UserProgress.id)).where(
-        UserProgress.user_id == current_user.id
+    # Get course stats from user_course_progress (active progress system)
+    courses_query = select(func.count(UserCourseProgress.id)).where(
+        UserCourseProgress.user_id == current_user.id
     )
     courses_enrolled = (await db.execute(courses_query)).scalar() or 0
-    
-    completed_query = select(func.count(UserProgress.id)).where(
-        UserProgress.user_id == current_user.id,
-        UserProgress.status == "completed"
+
+    completed_query = select(func.count(UserCourseProgress.id)).where(
+        UserCourseProgress.user_id == current_user.id,
+        UserCourseProgress.progress_percentage >= 100
     )
     courses_completed = (await db.execute(completed_query)).scalar() or 0
-    
-    # Get lesson stats
-    lessons_query = select(func.count(LessonAttempt.id)).where(
-        LessonAttempt.user_id == current_user.id,
-        LessonAttempt.passed == True
+
+    # Get lesson stats from lesson_completions (active progress system)
+    lessons_query = select(func.count(LessonCompletion.id)).where(
+        LessonCompletion.user_id == current_user.id,
+        LessonCompletion.is_passed == True
     )
     lessons_completed = (await db.execute(lessons_query)).scalar() or 0
-    
-    # Get study time (sum of all lesson attempts in ms, convert to minutes)
+
+    # Get study time from lesson_attempts (still used for session metadata)
     study_time_query = select(func.sum(LessonAttempt.time_spent_ms)).where(
         LessonAttempt.user_id == current_user.id
     )

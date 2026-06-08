@@ -33,7 +33,7 @@ CATEGORY_ID = "00000000-0000-0000-0000-000000000020"
 async def auth_client():
     from app.main import app
     from app.core.database import get_db
-    from app.core.dependencies import get_current_user
+    from app.core.dependencies import get_current_user, get_current_admin
 
     mock_result = MagicMock()
     mock_result.scalar.return_value = None
@@ -69,8 +69,12 @@ async def auth_client():
     async def mock_get_current_user():
         return mock_user
 
+    async def mock_get_current_admin():
+        return mock_user
+
     app.dependency_overrides[get_db] = mock_get_db
     app.dependency_overrides[get_current_user] = mock_get_current_user
+    app.dependency_overrides[get_current_admin] = mock_get_current_admin
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

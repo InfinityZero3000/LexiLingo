@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import '../../data/models/story_model.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import '../utils/topic_icon_resolver.dart';
 
 /// Enhanced Topic Card for Selection Screen
 class TopicCard extends StatelessWidget {
@@ -43,7 +44,7 @@ class TopicCard extends StatelessWidget {
                     ),
                     child: Center(
                       child: Icon(
-                        _getCategoryIcon(story.category),
+                        TopicIconResolver.forStory(story),
                         size: 40,
                         color: color,
                       ),
@@ -198,48 +199,6 @@ class TopicCard extends StatelessWidget {
         return AppColors.errorBright;
       case DifficultyLevel.C2:
         return AppColors.purple;
-    }
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'travel':
-        return Icons.flight;
-      case 'business':
-      case 'work':
-        return Icons.business_center;
-      case 'daily_life':
-      case 'housing':
-        return Icons.home;
-      case 'food':
-      case 'cafe':
-        return Icons.restaurant;
-      case 'shopping':
-        return Icons.shopping_bag;
-      case 'finance':
-        return Icons.account_balance_wallet;
-      case 'health':
-        return Icons.local_hospital;
-      case 'education':
-        return Icons.school;
-      case 'technology':
-        return Icons.devices;
-      case 'services':
-        return Icons.support_agent;
-      case 'culture':
-        return Icons.museum;
-      case 'leisure':
-        return Icons.sports_soccer;
-      case 'social':
-        return Icons.groups;
-      case 'emergency':
-        return Icons.emergency;
-      case 'environment':
-        return Icons.eco;
-      case 'media':
-        return Icons.mic;
-      default:
-        return Icons.chat_bubble;
     }
   }
 

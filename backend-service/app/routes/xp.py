@@ -8,28 +8,23 @@ Endpoints:
 - GET  /api/xp/leaderboard — Weekly top users
 """
 
-import logging
 import uuid
 from datetime import datetime, date, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.models.progress import Streak, DailyActivity
+from app.models.progress import Streak
 from app.models.games import XPTransaction
-from app.services.level_service import (
-    get_numeric_level_progress,
-    check_numeric_level_up,
-)
-from app.services.rank_service import calculate_rank, apply_rank_info_to_user
-
-logger = logging.getLogger(__name__)
+from app.services.level_service import get_numeric_level_progress
+from app.services.xp_service import award_xp_transaction
+from app.crud.leaderboard import competition_ranks
 
 router = APIRouter(prefix="/xp", tags=["XP System"])
 
@@ -80,6 +75,7 @@ class XPAwardResponse(BaseModel):
     leveled_up: bool
     old_level: int
     new_level: int
+    current_xp_in_level: int
     level_progress_percent: float
     xp_for_next_level: int
     streak_days: int
@@ -163,149 +159,23 @@ async def award_xp(
     - 7+ days → 1.5× multiplier
     - 30+ days → 2.0× multiplier
     """
-    user_id = current_user.id
-
-    # ── 1. Anti-cheat: duration check for game sources ──────────────────────
-    if body.source == "game" and body.duration_seconds is not None:
-        if body.duration_seconds < MIN_GAME_DURATION:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Game too short — possible cheating detected.",
-            )
-
-    # ── 2. Anti-cheat: duplicate source_id check ────────────────────────────
-    if body.source_id:
-        existing = await db.execute(
-            select(XPTransaction).where(
-                XPTransaction.user_id == user_id,
-                XPTransaction.source_id == body.source_id,
-            )
-        )
-        if existing.scalar_one_or_none():
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="XP already awarded for this activity.",
-            )
-
-    # ── 3. Cap base XP per source ────────────────────────────────────────────
-    source_cap = XP_SOURCE_CAPS.get(body.source, 50)
-    base_xp = min(body.base_xp, source_cap)
-
-    # ── 4. Apply streak multiplier ────────────────────────────────────────────
-    streak_days = await _get_streak_days(user_id, db)
-    multiplier = _calculate_streak_multiplier(streak_days)
-    raw_awarded = int(base_xp * multiplier)
-
-    # ── 5. Daily XP cap ──────────────────────────────────────────────────────
-    daily_xp_today = await _get_daily_xp(user_id, db)
-    cap_remaining = max(0, DAILY_XP_CAP - daily_xp_today)
-    xp_awarded = min(raw_awarded, cap_remaining)
-
-    if xp_awarded <= 0:
-        # Daily cap reached
-        return XPAwardResponse(
-            xp_awarded=0,
-            base_xp=base_xp,
-            multiplier=multiplier,
-            new_total_xp=current_user.total_xp,
-            daily_xp_today=daily_xp_today,
-            daily_cap_remaining=0,
-            leveled_up=False,
-            old_level=current_user.numeric_level,
-            new_level=current_user.numeric_level,
-            level_progress_percent=0.0,
-            xp_for_next_level=0,
-            streak_days=streak_days,
-            message="Daily XP cap (500) reached. Come back tomorrow!",
+    if body.source == "game":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Game XP must be awarded through a completed game session.",
         )
 
-    # ── 6. Check level up BEFORE applying XP ─────────────────────────────────
-    old_xp = current_user.total_xp or 0
-    new_xp = old_xp + xp_awarded
-    leveled_up, old_level, new_level = check_numeric_level_up(old_xp, new_xp)
-
-    # ── 7. Update User.total_xp, numeric_level, and rank ─────────────────────
-    rank_info = calculate_rank(new_level, current_user.level or "A1")
-    
-    current_user.total_xp = new_xp
-    current_user.numeric_level = new_level
-    apply_rank_info_to_user(current_user, rank_info)
-
-    await db.execute(
-        update(User)
-        .where(User.id == user_id)
-        .values(
-            total_xp=new_xp,
-            numeric_level=new_level,
-            rank=rank_info.rank.value,
-            rank_score=rank_info.score,
-            rank_level_score=rank_info.level_score,
-            rank_proficiency_score=rank_info.proficiency_score,
-        )
-    )
-
-    # ── 8. Record XPTransaction ───────────────────────────────────────────────
-    tx = XPTransaction(
-        user_id=user_id,
-        amount=xp_awarded,
-        base_amount=base_xp,
-        multiplier=multiplier,
+    result = await award_xp_transaction(
+        db=db,
+        user=current_user,
         source=body.source,
+        base_xp=body.base_xp,
         source_id=body.source_id,
         source_detail=body.source_detail,
-        level_before=old_level,
-        level_after=new_level,
-        leveled_up=leveled_up,
+        daily_xp_loader=_get_daily_xp,
+        streak_loader=_get_streak_days,
     )
-    db.add(tx)
-
-    # ── 9. Update DailyActivity ───────────────────────────────────────────────
-    today = date.today()
-    result = await db.execute(
-        select(DailyActivity).where(
-            DailyActivity.user_id == user_id,
-            DailyActivity.activity_date == today,
-        )
-    )
-    daily = result.scalar_one_or_none()
-    if daily:
-        await db.execute(
-            update(DailyActivity)
-            .where(DailyActivity.user_id == user_id, DailyActivity.activity_date == today)
-            .values(xp_earned=DailyActivity.xp_earned + xp_awarded)
-        )
-    else:
-        db.add(DailyActivity(user_id=user_id, activity_date=today, xp_earned=xp_awarded))
-
-    await db.commit()
-
-    # ── 10. Build response ────────────────────────────────────────────────────
-    level_info = get_numeric_level_progress(new_xp)
-
-    logger.info(
-        f"XP awarded: user={user_id} source={body.source} +{xp_awarded} XP "
-        f"(base={base_xp}×{multiplier:.1f}) total={new_xp} level={new_level}"
-    )
-
-    message = f"+{xp_awarded} XP earned!"
-    if leveled_up:
-        message = f"Level up! You reached level {new_level}! +{xp_awarded} XP"
-
-    return XPAwardResponse(
-        xp_awarded=xp_awarded,
-        base_xp=base_xp,
-        multiplier=multiplier,
-        new_total_xp=new_xp,
-        daily_xp_today=daily_xp_today + xp_awarded,
-        daily_cap_remaining=max(0, cap_remaining - xp_awarded),
-        leveled_up=leveled_up,
-        old_level=old_level,
-        new_level=new_level,
-        level_progress_percent=level_info.level_progress_percent,
-        xp_for_next_level=level_info.xp_for_next_level,
-        streak_days=streak_days,
-        message=message,
-    )
+    return XPAwardResponse(**result.to_dict())
 
 
 @router.get("/profile", response_model=XPProfileResponse)
@@ -399,8 +269,10 @@ async def get_leaderboard(
     )
     rows = result.all()
 
+    weekly_scores = [int(weekly_xp or 0) for _, weekly_xp in rows]
+    ranks = competition_ranks(weekly_scores)
     entries = []
-    for rank, (user, weekly_xp) in enumerate(rows, start=1):
+    for rank, (user, weekly_xp) in zip(ranks, rows):
         entries.append(
             {
                 "rank": rank,
@@ -450,4 +322,5 @@ async def get_leaderboard(
         },
         "week_start": week_start.isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
+        "scope": "overall",
     }

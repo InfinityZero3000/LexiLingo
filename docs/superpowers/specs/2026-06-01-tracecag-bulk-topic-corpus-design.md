@@ -51,4 +51,4 @@ The script must validate:
 
 ## UI Changes
 
-Flutter topic loading should request enough stories to show the new topic set, not the old default `limit=20`. Topic session defaults should use `tracecag` instead of `graphcag`.
+Flutter topic loading should request enough stories to show the new topic set, not the old default `limit=20`. Topic session defaults should use `tracecag` instead of `TRACECAG`.

@@ -2,6 +2,9 @@ class ApiEndpoints {
   static const String baseUrl = 'https://api.lexilingo.me/api/v1';
 
   // Auth
+  static const String userLogin = '/auth/login';
+  static const String adminLogin = '/auth/admin/login';
+  static const String googleLogin = '/auth/google';
   static const String adminRequestOtp = '/auth/admin/request-otp';
   static const String adminVerifyOtp = '/auth/admin/verify-otp';
   static const String refreshToken = '/auth/refresh';
@@ -10,8 +13,10 @@ class ApiEndpoints {
 
   // Dashboard analytics — raw JSON (no ApiResponse wrapper)
   static const String analyticsKpis = '/admin/analytics/dashboard/kpis';
-  static const String analyticsEngagement = '/admin/analytics/dashboard/engagement';
-  static const String analyticsUserGrowth = '/admin/analytics/dashboard/user-growth';
+  static const String analyticsEngagement =
+      '/admin/analytics/dashboard/engagement';
+  static const String analyticsUserGrowth =
+      '/admin/analytics/dashboard/user-growth';
 
   // Admin CRUD
   static const String adminCourses = '/admin/courses';

@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/letter_tile.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 
 /// Word Scramble game screen.
@@ -28,11 +29,12 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
   int _currentWordIndex = 0;
   int _timeLeft = 60;
   int _correctCount = 0;
-  int _totalXpEarned = 0;
   bool _gameLoaded = false;
   bool _showHint = false;
   bool _wordAnswered = false;
+  bool _isFinishing = false;
   String? _xpPopup;
+  final Map<String, String> _submittedAnswers = {};
 
   // Letter tile state
   List<String> _poolLetters = []; // Available pool
@@ -135,7 +137,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     if (answer == correct) {
       _timer?.cancel();
       _correctCount++;
-      _totalXpEarned += word.xpValue;
+      _submittedAnswers[word.wordId] = answer;
       setState(() {
         _slotCorrect = List<bool>.filled(_answerSlots.length, true);
         _wordAnswered = true;
@@ -158,6 +160,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
   }
 
   void _nextWord() {
+    if (!mounted || _isFinishing) return;
     final game = context.read<GamesProvider>().wordScramble;
     if (game == null) return;
     if (_currentWordIndex + 1 >= game.words.length) {
@@ -169,10 +172,56 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
   }
 
   void _skipWord() {
+    final game = context.read<GamesProvider>().wordScramble;
+    if (game != null && _currentWordIndex < game.words.length) {
+      _submittedAnswers.putIfAbsent(
+        game.words[_currentWordIndex].wordId,
+        () => '',
+      );
+    }
     _nextWord();
   }
 
+  Future<void> _abandonGame() async {
+    if (_isFinishing) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Thoát game?'),
+        content: const Text('XP sẽ được tính dựa trên số từ đã hoàn thành.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tiếp tục chơi'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Thoát'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _isFinishing) return;
+    _isFinishing = true;
+    _timer?.cancel();
+    final provider = context.read<GamesProvider>();
+    final game = provider.wordScramble;
+    await provider.completeGame(
+      gameType: GameType.wordScramble,
+      score: _correctCount,
+      totalQuestions: game?.words.length ?? 0,
+      correctAnswers: _correctCount,
+      answers: [
+        for (final word in game?.words ?? <ScrambleWord>[])
+          {'id': word.wordId, 'answer': _submittedAnswers[word.wordId] ?? ''},
+      ],
+    );
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _finishGame() async {
+    if (_isFinishing) return;
+    _isFinishing = true;
     _timer?.cancel();
     final provider = context.read<GamesProvider>();
     final game = provider.wordScramble;
@@ -181,7 +230,13 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       score: _correctCount,
       totalQuestions: game?.words.length ?? 0,
       correctAnswers: _correctCount,
-      baseXp: _totalXpEarned,
+      answers: [
+        for (final word in game?.words ?? <ScrambleWord>[])
+          {
+            'id': word.wordId,
+            'answer': _submittedAnswers[word.wordId] ?? '',
+          },
+      ],
     );
     if (!mounted) return;
     final result = GameResult(
@@ -190,7 +245,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       score: _correctCount,
       totalQuestions: game?.words.length ?? 0,
       correctAnswers: _correctCount,
-      xpEarned: xpResult?.xpAwarded ?? _totalXpEarned,
+      xpEarned: xpResult?.xpAwarded ?? 0,
       durationSeconds: 0,
       xpResult: xpResult,
     );
@@ -208,17 +263,45 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _abandonGame();
+      },
+      child: Stack(
       alignment: Alignment.topCenter,
       children: [
         Consumer<GamesProvider>(
           builder: (context, provider, _) {
-            if (provider.isLoading || !_gameLoaded) {
+            if (provider.isLoading) {
               return const Scaffold(
                 body: Center(child: LottieLoadingWidget.medium()),
               );
             }
-            final game = provider.wordScramble!;
+            final game = provider.wordScramble;
+            if (provider.error != null) {
+              return GameLoadState(
+                message: 'games.loadFailed'.tr(),
+                onRetry: () async {
+                  await provider.loadWordScramble();
+                  if (mounted) _initWord();
+                },
+              );
+            }
+            if (game == null || game.words.isEmpty) {
+              return GameLoadState(
+                message: 'games.emptyGame'.tr(),
+                onRetry: () async {
+                  await provider.loadWordScramble();
+                  if (mounted) _initWord();
+                },
+              );
+            }
+            if (!_gameLoaded) {
+              return const Scaffold(
+                body: Center(child: LottieLoadingWidget.medium()),
+              );
+            }
             final word = game.words[_currentWordIndex];
             return Scaffold(
               appBar: AppBar(
@@ -407,6 +490,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
           ],
         ),
       ],
+      ),
     );
   }
 }

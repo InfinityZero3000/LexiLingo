@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -106,19 +107,47 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                 ],
                               ),
                               const Spacer(),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: primaryAccent.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.tune_rounded,
-                                    color: primaryAccent,
+                              Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: provider.hasActiveFilters
+                                          ? primaryAccent
+                                          : primaryAccent.withValues(
+                                              alpha: 0.14),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        Icons.tune_rounded,
+                                        color: provider.hasActiveFilters
+                                            ? Colors.white
+                                            : primaryAccent,
+                                      ),
+                                      onPressed: () =>
+                                          _showFilterSheet(context),
+                                      tooltip: 'Filter',
+                                    ),
                                   ),
-                                  onPressed: () => _showFilterSheet(context),
-                                  tooltip: 'Filter',
-                                ),
+                                  if (provider.hasActiveFilters)
+                                    Positioned(
+                                      top: 6,
+                                      right: 6,
+                                      child: Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: Theme.of(context)
+                                                .scaffoldBackgroundColor,
+                                            width: 1.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),
@@ -153,12 +182,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                 )
               else if (provider.courses.isEmpty)
                 SliverFillRemaining(
-                  child: EmptyStateWidget.courses(
-                    onExplore: () {
-                      provider.refreshCourses();
-                      provider.loadCategories();
-                    },
-                  ),
+                  child: EmptyStateWidget.courses(),
                 )
               else
                 _buildCourseContent(context, provider),
@@ -171,18 +195,26 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   Widget _buildCourseContent(BuildContext context, CourseProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayCourses = provider.filteredCourses;
+
+    // Show empty-filtered state when client-side filters result in nothing
+    if (displayCourses.isEmpty) {
+      return SliverFillRemaining(
+        child: EmptyStateWidget.searchResults(),
+      );
+    }
+
     final categories = provider.categories;
     final nonEmptyCategorySections =
         <MapEntry<CourseCategoryEntity, List<CourseEntity>>>[];
     final mappedCourseIds = <String>{};
 
     for (final category in categories) {
-      final categoryCourses = provider.courses
+      final categoryCourses = displayCourses
           .where(
             (c) =>
                 c.tags.contains(category.slug) ||
                 c.tags.contains(category.name.toLowerCase()) ||
-                // fallback: if course has no tags, don't show it here unless category is general
                 (c.tags.isEmpty && category.slug == 'general'),
           )
           .toList();
@@ -195,25 +227,61 @@ class _CourseListScreenState extends State<CourseListScreen> {
       }
     }
 
-    final totalCourses = provider.courses.length;
+    final totalCourses = displayCourses.length;
     final mappingCoverage = totalCourses == 0
         ? 0.0
         : mappedCourseIds.length / totalCourses;
 
-    // Only switch to category mode when enough courses actually map to those categories.
-    // This avoids list flicker/disappear while loading additional pages.
     final shouldUseCategories =
         categories.isNotEmpty &&
         nonEmptyCategorySections.isNotEmpty &&
         mappingCoverage >= 0.6;
 
-    final sections = shouldUseCategories
-        ? nonEmptyCategorySections
-        : provider.coursesByCategory.keys.toList();
+    // When client-side sort is active, skip category grouping and show flat list
+    final forceFlat = provider.sortOrder != 'default';
+
+    if (forceFlat || !shouldUseCategories) {
+      // Flat grouped-by-level list
+      final grouped = <String, List<CourseEntity>>{};
+      for (final course in displayCourses) {
+        grouped.putIfAbsent(course.level, () => []).add(course);
+      }
+      final levelKeys = grouped.keys.toList();
+
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index == levelKeys.length) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: LottieLoadingWidget.small(),
+                ),
+              );
+            }
+            final levelKey = levelKeys[index];
+            final courses = grouped[levelKey]!;
+            return _CategorySection(
+              categoryId: levelKey,
+              title: levelKey,
+              description:
+                  '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
+              icon: _getLevelIcon(levelKey),
+              color: _getLevelColor(levelKey, isDark: isDark),
+              courses: courses,
+              onCourseTap: (course, fallbackThumbnailUrl) =>
+                  _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
+              onSeeAll: null,
+            );
+          },
+          childCount: levelKeys.length + (provider.isLoadingCourses ? 1 : 0),
+        ),
+      );
+    }
 
     return SliverList(
       delegate: SliverChildBuilderDelegate((context, index) {
-        if (index == sections.length) {
+        if (index == nonEmptyCategorySections.length) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
@@ -222,54 +290,39 @@ class _CourseListScreenState extends State<CourseListScreen> {
           );
         }
 
-        if (shouldUseCategories) {
-          final section =
-              sections[index]
-                  as MapEntry<CourseCategoryEntity, List<CourseEntity>>;
-          final category = section.key;
-          final categoryCourses = section.value;
+        final section = nonEmptyCategorySections[index];
+        final category = section.key;
+        final categoryCourses = section.value;
 
-          return _CategorySection(
-            categoryId: category.id,
-            title: category.name,
-            description:
-                '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
-            icon: _parseCategoryIcon(category.icon ?? 'book'),
-            color: _parseCategoryColor(category.color, isDark: isDark),
-            courses: categoryCourses,
-            onCourseTap: (courseId) =>
-                _navigateToCourseDetail(context, courseId),
-            onSeeAll: () => _navigateToCategoryDetail(context, category.id),
-          );
-        } else {
-          final groupedCourses = provider.coursesByCategory;
-          final levelKey = sections[index] as String;
-          final courses = groupedCourses[levelKey]!;
-
-          return _CategorySection(
-            categoryId: levelKey,
-            title: levelKey,
-            description:
-                '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
-            icon: _getLevelIcon(levelKey),
-            color: _getLevelColor(levelKey, isDark: isDark),
-            courses: courses,
-            onCourseTap: (courseId) =>
-                _navigateToCourseDetail(context, courseId),
-            onSeeAll: null,
-          );
-        }
-      }, childCount: sections.length + (provider.isLoadingCourses ? 1 : 0)),
+        return _CategorySection(
+          categoryId: category.id,
+          title: category.name,
+          description:
+              '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
+          icon: _parseCategoryIcon(category.icon ?? 'book'),
+          color: _parseCategoryColor(category.color, isDark: isDark),
+          courses: categoryCourses,
+          onCourseTap: (course, fallbackThumbnailUrl) =>
+              _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
+          onSeeAll: () => _navigateToCategoryDetail(context, category.id),
+        );
+      }, childCount: nonEmptyCategorySections.length + (provider.isLoadingCourses ? 1 : 0)),
     );
   }
 
-  void _navigateToCourseDetail(BuildContext context, String courseId) {
+  void _navigateToCourseDetail(
+    BuildContext context,
+    CourseEntity course,
+    String fallbackThumbnailUrl,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CourseDetailScreen(
-          courseId: courseId,
-          heroTag: 'discovery-course-image-$courseId',
+          courseId: course.id,
+          heroTag: 'discovery-course-image-${course.id}',
+          initialThumbnailUrl: course.thumbnailUrl,
+          fallbackThumbnailUrl: fallbackThumbnailUrl,
         ),
       ),
     );
@@ -350,7 +403,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
   void _showFilterSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => _FilterSheet(),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => const _FilterSheet(),
     );
   }
 }
@@ -448,7 +505,8 @@ class _CategorySection extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<CourseEntity> courses;
-  final Function(String courseId) onCourseTap;
+  final void Function(CourseEntity course, String fallbackThumbnailUrl)
+  onCourseTap;
   final VoidCallback? onSeeAll;
 
   const _CategorySection({
@@ -537,7 +595,8 @@ class _CategorySection extends StatelessWidget {
                 child: _HorizontalCourseCard(
                   course: course,
                   compact: isCompactMobile,
-                  onTap: () => onCourseTap(course.id),
+                  onTap: (fallbackThumbnailUrl) =>
+                      onCourseTap(course, fallbackThumbnailUrl),
                 ),
               );
             },
@@ -555,7 +614,7 @@ class _CategorySection extends StatelessWidget {
 class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
   final bool compact;
-  final VoidCallback onTap;
+  final ValueChanged<String> onTap;
 
   const _HorizontalCourseCard({
     required this.course,
@@ -571,6 +630,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     final contentPadding = compact ? 10.0 : 12.0;
     final titleFontSize = compact ? 13.0 : 14.0;
     final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
+    final displayTags = _visibleCourseTags(course);
 
     return Container(
       width: cardWidth,
@@ -582,7 +642,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(cardRadius),
         ),
         child: InkWell(
-          onTap: onTap,
+          onTap: () => onTap(_getCourseImageUrl()),
           borderRadius: BorderRadius.circular(cardRadius),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -600,15 +660,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         // Background image or placeholder
-                        course.thumbnailUrl != null
-                            ? Image.network(
-                                course.thumbnailUrl!,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return _buildHeroPlaceholder(context);
-                                },
-                              )
-                            : _buildHeroPlaceholder(context),
+                        _buildCourseThumbnail(context),
 
                         // Gradient overlay for better text visibility
                         Container(
@@ -766,7 +818,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    course.language,
+                                    _getLanguageLabel(course.language),
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
@@ -778,8 +830,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            // Extra course.tags chips
-                            ...course.tags.map(
+                            // Learner-facing tags only. Internal seed/crawl
+                            // metadata stays in data for filtering/imports.
+                            ...displayTags.map(
                               (tag) => Padding(
                                 padding: const EdgeInsets.only(left: 5),
                                 child: Container(
@@ -883,12 +936,121 @@ class _HorizontalCourseCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHeroPlaceholder(BuildContext context) {
-    // Generate a unique gradient based on course ID
+  String _getCourseImageUrl() {
+    final tags = course.tags.map((t) => t.toLowerCase()).toSet();
+    final level = course.level.toLowerCase();
+    final pick = course.id.hashCode.abs();
+
+    const ielts = [
+      'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam pencil
+      'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
+      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', // graduation cap
+    ];
+    const business = [
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',    // financial charts
+      'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&q=80', // laptop workspace
+    ];
+    const conversation = [
+      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop at café
+      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
+      'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&q=80', // laptop keyboard
+    ];
+    const grammar = [
+      'https://images.unsplash.com/photo-1471899236350-e3016bf1a395?w=800&q=80', // fountain pen
+      'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=800&q=80', // spiral notebook
+      'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80', // pen on paper
+    ];
+    const vocabulary = [
+      'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
+      'https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=800&q=80', // stacked books
+      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80', // desk with books
+    ];
+    const reading = [
+      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
+      'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=800&q=80', // stacked books
+      'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80', // open book
+    ];
+    const listening = [
+      'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80', // headphones
+      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80', // headphones 2
+      'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=800&q=80', // headphones 3
+    ];
+    const writing = [
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&q=80', // desk + notepad
+      'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
+      'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80', // pen on paper
+    ];
+    const travel = [
+      'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=80', // world map
+      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80', // open road
+      'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80', // mountain lake
+    ];
+    const beginner = [
+      'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80', // colored crayons
+      'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=800&q=80', // colored pencils
+      'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
+    ];
+    const intermediate = [
+      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80',    // open book pages
+      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop on desk
+      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
+    ];
+    const advanced = [
+      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
+      'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam paper
+      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // office buildings
+    ];
+
+    if (tags.contains('ielts') || tags.contains('test-prep') || tags.contains('exam')) {
+      return ielts[pick % ielts.length];
+    }
+    if (tags.contains('business') || tags.contains('business-english')) {
+      return business[pick % business.length];
+    }
+    if (tags.contains('conversation') || tags.contains('speaking')) {
+      return conversation[pick % conversation.length];
+    }
+    if (tags.contains('grammar')) {
+      return grammar[pick % grammar.length];
+    }
+    if (tags.contains('vocabulary') || tags.contains('vocab')) {
+      return vocabulary[pick % vocabulary.length];
+    }
+    if (tags.contains('reading')) {
+      return reading[pick % reading.length];
+    }
+    if (tags.contains('listening')) {
+      return listening[pick % listening.length];
+    }
+    if (tags.contains('writing')) {
+      return writing[pick % writing.length];
+    }
+    if (tags.contains('travel')) {
+      return travel[pick % travel.length];
+    }
+
+    switch (level) {
+      case 'beginner':
+      case 'elementary':
+        return beginner[pick % beginner.length];
+      case 'intermediate':
+      case 'upper-intermediate':
+        return intermediate[pick % intermediate.length];
+      case 'advanced':
+        return advanced[pick % advanced.length];
+      default:
+        return reading[pick % reading.length];
+    }
+  }
+
+  Widget _buildCourseThumbnail(BuildContext context) {
+    final primaryUrl = course.thumbnailUrl;
+    final fallbackUrl = _getCourseImageUrl();
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
 
-    return Container(
+    Widget gradientLoading() => Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -896,57 +1058,136 @@ class _HorizontalCourseCard extends StatelessWidget {
           colors: gradientColors,
         ),
       ),
-      child: Stack(
-        children: [
-          // Decorative circles
-          Positioned(
-            top: -20,
-            right: -20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.1),
-              ),
-            ),
+    );
+
+    Widget finalFallback(BuildContext ctx) => Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
+        ),
+      ),
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).colorScheme.surface.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
           ),
-          Positioned(
-            bottom: -10,
-            left: -10,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.1),
-              ),
-            ),
+          child: Icon(
+            Icons.school,
+            size: 32,
+            color: Theme.of(ctx).colorScheme.surface,
           ),
-          // Icon in center
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surface.withValues(alpha: 0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.school,
-                size: 32,
-                color: Theme.of(context).colorScheme.surface,
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
+
+    // DB thumbnail exists: try it first, fall back to computed URL on error
+    if (primaryUrl != null) {
+      return CachedNetworkImage(
+        imageUrl: primaryUrl,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => gradientLoading(),
+        errorWidget: (_, __, ___) => CachedNetworkImage(
+          imageUrl: fallbackUrl,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => gradientLoading(),
+          errorWidget: (ctx, __, ___) => finalFallback(ctx),
+        ),
+      );
+    }
+
+    return CachedNetworkImage(
+      imageUrl: fallbackUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => gradientLoading(),
+      errorWidget: (ctx, __, ___) => finalFallback(ctx),
+    );
+  }
+
+  static const Set<String> _hiddenCourseTagKeys = {
+    'seed',
+    'seeded',
+    'crawl',
+    'crawled',
+    'crawler',
+    'source',
+    'import',
+    'imported',
+    'generated',
+    'auto',
+    'automatic',
+    'internal',
+    'system',
+    'demo',
+    'sample',
+    'kg',
+    'tracecag',
+    'trace_cag',
+    'TRACECAG',
+    'graph_cag',
+  };
+
+  List<String> _visibleCourseTags(CourseEntity course) {
+    final hiddenKeys = {
+      ..._hiddenCourseTagKeys,
+      _normalizeTagKey(course.language),
+      _normalizeTagKey(_getLanguageCode(course.language)),
+      _normalizeTagKey(_getLanguageLabel(course.language)),
+      _normalizeTagKey(course.level),
+    };
+    final seen = <String>{};
+    final visible = <String>[];
+
+    for (final tag in course.tags) {
+      final key = _normalizeTagKey(tag);
+      if (key.isEmpty) continue;
+      if (hiddenKeys.contains(key)) continue;
+      if (key.contains('crawl') || key.contains('seed')) continue;
+      if (RegExp(r'^[abc][12]$').hasMatch(key)) continue;
+      if (!seen.add(key)) continue;
+
+      visible.add(_formatCourseTag(tag));
+    }
+
+    return visible;
+  }
+
+  String _normalizeTagKey(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  String _formatCourseTag(String tag) {
+    final key = _normalizeTagKey(tag);
+    const aliases = {
+      'vocab': 'Vocabulary',
+      'vocabulary': 'Vocabulary',
+      'grammar': 'Grammar',
+      'conversation': 'Conversation',
+      'speaking': 'Speaking',
+      'listening': 'Listening',
+      'reading': 'Reading',
+      'writing': 'Writing',
+      'pronunciation': 'Pronunciation',
+      'business': 'Business',
+      'travel': 'Travel',
+      'exam': 'Exam Prep',
+    };
+    final alias = aliases[key];
+    if (alias != null) return alias;
+
+    return key
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
+        .join(' ');
   }
 
   List<Color> _getGradientFromHash(int hash) {
@@ -965,24 +1206,75 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   String _getLanguageCode(String language) {
     switch (language.toLowerCase()) {
+      case 'en':
+      case 'en-us':
+      case 'en_us':
       case 'english':
         return 'EN';
+      case 'es':
       case 'spanish':
         return 'ES';
+      case 'fr':
       case 'french':
         return 'FR';
+      case 'de':
       case 'german':
         return 'DE';
+      case 'ja':
+      case 'jp':
       case 'japanese':
         return 'JP';
+      case 'zh':
+      case 'cn':
       case 'chinese':
         return 'CN';
+      case 'ko':
+      case 'kr':
       case 'korean':
         return 'KR';
+      case 'vi':
+      case 'vn':
       case 'vietnamese':
         return 'VN';
       default:
         return 'INT';
+    }
+  }
+
+  String _getLanguageLabel(String language) {
+    switch (language.toLowerCase()) {
+      case 'en':
+      case 'en-us':
+      case 'en_us':
+      case 'english':
+        return 'English';
+      case 'es':
+      case 'spanish':
+        return 'Spanish';
+      case 'fr':
+      case 'french':
+        return 'French';
+      case 'de':
+      case 'german':
+        return 'German';
+      case 'ja':
+      case 'jp':
+      case 'japanese':
+        return 'Japanese';
+      case 'zh':
+      case 'cn':
+      case 'chinese':
+        return 'Chinese';
+      case 'ko':
+      case 'kr':
+      case 'korean':
+        return 'Korean';
+      case 'vi':
+      case 'vn':
+      case 'vietnamese':
+        return 'Vietnamese';
+      default:
+        return language;
     }
   }
 
@@ -1078,254 +1370,476 @@ class _HorizontalCourseCard extends StatelessWidget {
 }
 
 /// Filter Sheet Widget
-class _FilterSheet extends StatelessWidget {
+class _FilterSheet extends StatefulWidget {
   const _FilterSheet();
+
+  @override
+  State<_FilterSheet> createState() => _FilterSheetState();
+}
+
+class _FilterSheetState extends State<_FilterSheet> {
+  late String? _language;
+  late String? _level;
+  late String? _categorySlug;
+  late bool _enrolledOnly;
+  late String _sortOrder;
+
+  static const List<(String, String?, Color)> _levels = [
+    ('All', null, Colors.grey),
+    ('Beginner', 'Beginner', AppColors.greenSuccessBright),
+    ('Elementary', 'Elementary', Colors.lightGreen),
+    ('Pre-Intermediate', 'Pre-Intermediate', Colors.teal),
+    ('Intermediate', 'Intermediate', AppColors.orange),
+    ('Upper-Intermediate', 'Upper-Intermediate', AppColors.deepOrange),
+    ('Advanced', 'Advanced', AppColors.errorBright),
+  ];
+
+  static const _sortOptions = [
+    ('Default', 'default', Icons.sort),
+    ('Most Lessons', 'lessons', Icons.book_outlined),
+    ('Highest XP', 'xp', Icons.star_outline),
+    ('A → Z', 'az', Icons.sort_by_alpha),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    final p = context.read<CourseProvider>();
+    _language = p.selectedLanguage;
+    _level = p.selectedLevel;
+    _categorySlug = p.selectedCategorySlug;
+    _enrolledOnly = p.showEnrolledOnly;
+    _sortOrder = p.sortOrder;
+  }
+
+
+  bool get _hasAnyFilter =>
+      _language != null ||
+      _level != null ||
+      _categorySlug != null ||
+      _enrolledOnly ||
+      _sortOrder != 'default';
+
+  Future<void> _applyFilters() async {
+    final provider = context.read<CourseProvider>();
+    final serverParamsChanged =
+        _language != provider.selectedLanguage || _level != provider.selectedLevel;
+
+    // Apply client-side filters first (instant)
+    provider.setClientFilters(
+      categorySlug: _categorySlug,
+      clearCategory: _categorySlug == null,
+      enrolledOnly: _enrolledOnly,
+      sortOrder: _sortOrder,
+    );
+
+    if (serverParamsChanged) {
+      await provider.loadCourses(page: 1, language: _language, level: _level);
+    }
+
+    if (mounted) Navigator.pop(context);
+  }
+
+  void _clearAll() {
+    setState(() {
+      _language = null;
+      _level = null;
+      _categorySlug = null;
+      _enrolledOnly = false;
+      _sortOrder = 'default';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<CourseProvider>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryAccent = AppColorRoles.primary(isDark);
+    final categories = provider.categories;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          const SizedBox(height: 20),
-
-          // Header
-          Row(
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: primaryAccent,
-                  borderRadius: BorderRadius.circular(12),
+              // Handle + header (fixed)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Column(
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: primaryAccent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            Icons.tune_rounded,
+                            color: Theme.of(context).colorScheme.surface,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'course.filterCourses'.tr(),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_hasAnyFilter)
+                          TextButton.icon(
+                            onPressed: _clearAll,
+                            icon: const Icon(Icons.clear_all, size: 18),
+                            label: Text('common.clear'.tr()),
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.red[400]),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                 ),
-                child: Icon(
-                  Icons.tune_rounded,
+              ),
+              const Divider(height: 1),
+
+              // Scrollable filter sections
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  children: [
+                    // ── Language ──────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.language,
+                      color: primaryAccent,
+                      label: 'common.language'.tr(),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _Chip(
+                          label: 'All',
+                          isSelected: _language == null,
+                          color: Colors.grey,
+                          onTap: () => setState(() => _language = null),
+                        ),
+                        _Chip(
+                          label: 'English',
+                          isSelected: _language == 'English',
+                          color: primaryAccent,
+                          prefix: _LangBadge(
+                              'EN', primaryAccent, _language == 'English'),
+                          onTap: () => setState(() => _language = 'English'),
+                        ),
+                        _Chip(
+                          label: 'Spanish',
+                          isSelected: _language == 'Spanish',
+                          color: AppColors.orange,
+                          prefix: _LangBadge(
+                              'ES', AppColors.orange, _language == 'Spanish'),
+                          onTap: () => setState(() => _language = 'Spanish'),
+                        ),
+                        _Chip(
+                          label: 'Vietnamese',
+                          isSelected: _language == 'Vietnamese',
+                          color: AppColors.errorBright,
+                          prefix: _LangBadge('VI', AppColors.errorBright,
+                              _language == 'Vietnamese'),
+                          onTap: () =>
+                              setState(() => _language = 'Vietnamese'),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Level ─────────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.signal_cellular_alt,
+                      color: AppColors.purple,
+                      label: 'common.level'.tr(),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _levels
+                          .map(
+                            (e) => _Chip(
+                              label: e.$1,
+                              isSelected: _level == e.$2,
+                              color: e.$3,
+                              onTap: () => setState(() => _level = e.$2),
+                            ),
+                          )
+                          .toList(),
+                    ),
+
+                    // ── Category ──────────────────────────────────────
+                    if (categories.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _SectionHeader(
+                        icon: Icons.category_outlined,
+                        color: AppColors.teal,
+                        label: 'Category',
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _Chip(
+                            label: 'All',
+                            isSelected: _categorySlug == null,
+                            color: Colors.grey,
+                            onTap: () => setState(() => _categorySlug = null),
+                          ),
+                          ...categories.map(
+                            (cat) => _Chip(
+                              label: cat.name,
+                              isSelected: _categorySlug == cat.slug,
+                              color: _parseCategoryColor(
+                                  cat.color, isDark: isDark),
+                              onTap: () => setState(
+                                  () => _categorySlug = _categorySlug == cat.slug
+                                      ? null
+                                      : cat.slug),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    // ── Enrolled ──────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.bookmark_outline,
+                      color: Colors.amber[700]!,
+                      label: 'My Enrollments',
+                    ),
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _enrolledOnly = !_enrolledOnly),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: _enrolledOnly
+                              ? Colors.amber[700]!.withValues(alpha: 0.12)
+                              : Colors.grey.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _enrolledOnly
+                                ? Colors.amber[700]!
+                                : Colors.grey.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.school,
+                              size: 18,
+                              color: _enrolledOnly
+                                  ? Colors.amber[700]
+                                  : Colors.grey,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Show enrolled courses only',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: _enrolledOnly
+                                    ? Colors.amber[700]
+                                    : (isDark
+                                        ? Colors.white70
+                                        : Colors.black87),
+                              ),
+                            ),
+                            const Spacer(),
+                            Switch.adaptive(
+                              value: _enrolledOnly,
+                              onChanged: (v) =>
+                                  setState(() => _enrolledOnly = v),
+                              activeThumbColor: Colors.amber[700],
+                              activeTrackColor:
+                                  Colors.amber[700]!.withValues(alpha: 0.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // ── Sort By ───────────────────────────────────────
+                    _SectionHeader(
+                      icon: Icons.sort,
+                      color: AppColors.primary,
+                      label: 'Sort By',
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _sortOptions
+                          .map(
+                            (s) => _Chip(
+                              label: s.$1,
+                              isSelected: _sortOrder == s.$2,
+                              color: AppColors.primary,
+                              prefix: Icon(
+                                s.$3,
+                                size: 14,
+                                color: _sortOrder == s.$2
+                                    ? Colors.white
+                                    : AppColors.primary,
+                              ),
+                              onTap: () => setState(() => _sortOrder = s.$2),
+                            ),
+                          )
+                          .toList(),
+                    ),
+
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+
+              // Apply button (fixed at bottom)
+              Container(
+                padding: EdgeInsets.fromLTRB(
+                    20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
+                decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  size: 20,
+                  border: Border(
+                    top: BorderSide(
+                        color: isDark ? Colors.white12 : Colors.black12),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'course.filterCourses'.tr(),
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              if (provider.selectedLanguage != null ||
-                  provider.selectedLevel != null)
-                TextButton.icon(
-                  onPressed: () {
-                    provider.clearFilters();
-                    Navigator.pop(context);
-                  },
-                  icon: const Icon(Icons.clear_all, size: 18),
-                  label: Text('common.clear'.tr()),
-                  style: TextButton.styleFrom(foregroundColor: Colors.red[400]),
-                ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Language Filter
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: primaryAccent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.language, size: 16, color: primaryAccent),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'common.language'.tr(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: _applyFilters,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: primaryAccent,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildFilterChip(
-                context: context,
-                label: 'All',
-                isSelected: provider.selectedLanguage == null,
-                color: Colors.grey,
-                onTap: () {
-                  provider.filterByLanguage(null);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'English',
-                isSelected: provider.selectedLanguage == 'English',
-                color: primaryAccent,
-                iconWidget: _buildLanguageIcon(
-                  'EN',
-                  primaryAccent,
-                  provider.selectedLanguage == 'English',
-                ),
-                onTap: () {
-                  provider.filterByLanguage('English');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Spanish',
-                isSelected: provider.selectedLanguage == 'Spanish',
-                color: AppColors.orange,
-                iconWidget: _buildLanguageIcon(
-                  'ES',
-                  AppColors.orange,
-                  provider.selectedLanguage == 'Spanish',
-                ),
-                onTap: () {
-                  provider.filterByLanguage('Spanish');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Vietnamese',
-                isSelected: provider.selectedLanguage == 'Vietnamese',
-                color: AppColors.errorBright,
-                iconWidget: _buildLanguageIcon(
-                  'VI',
-                  AppColors.errorBright,
-                  provider.selectedLanguage == 'Vietnamese',
-                ),
-                onTap: () {
-                  provider.filterByLanguage('Vietnamese');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-
-          // Level Filter
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.purple.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.signal_cellular_alt,
-                  size: 16,
-                  color: AppColors.purple,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'common.level'.tr(),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _buildFilterChip(
-                context: context,
-                label: 'All',
-                isSelected: provider.selectedLevel == null,
-                color: Colors.grey,
-                onTap: () {
-                  provider.filterByLevel(null);
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Beginner',
-                isSelected: provider.selectedLevel == 'Beginner',
-                color: AppColors.greenSuccessBright,
-                onTap: () {
-                  provider.filterByLevel('Beginner');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Intermediate',
-                isSelected: provider.selectedLevel == 'Intermediate',
-                color: AppColors.orange,
-                onTap: () {
-                  provider.filterByLevel('Intermediate');
-                  Navigator.pop(context);
-                },
-              ),
-              _buildFilterChip(
-                context: context,
-                label: 'Advanced',
-                isSelected: provider.selectedLevel == 'Advanced',
-                color: AppColors.errorBright,
-                onTap: () {
-                  provider.filterByLevel('Advanced');
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 24),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildFilterChip({
-    required BuildContext context,
-    required String label,
-    required bool isSelected,
-    required Color color,
-    Widget? iconWidget,
-    required VoidCallback onTap,
-  }) {
+  Color _parseCategoryColor(String? colorHex, {required bool isDark}) {
+    if (colorHex == null || colorHex.isEmpty) {
+      return AppColorRoles.primary(isDark);
+    }
+    try {
+      final hex = colorHex.replaceAll('#', '');
+      return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
+    } catch (_) {
+      return AppColorRoles.primary(isDark);
+    }
+  }
+}
+
+/// Compact section header row used inside _FilterSheet
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String label;
+
+  const _SectionHeader({
+    required this.icon,
+    required this.color,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: color),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+        ),
+      ],
+    );
+  }
+}
+
+/// Animated filter chip used inside _FilterSheet
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color color;
+  final Widget? prefix;
+  final VoidCallback onTap;
+
+  const _Chip({
+    required this.label,
+    required this.isSelected,
+    required this.color,
+    this.prefix,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           gradient: isSelected
@@ -1350,7 +1864,7 @@ class _FilterSheet extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (iconWidget != null) ...[iconWidget, const SizedBox(width: 6)],
+            if (prefix != null) ...[prefix!, const SizedBox(width: 6)],
             Text(
               label,
               style: TextStyle(
@@ -1372,8 +1886,18 @@ class _FilterSheet extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildLanguageIcon(String code, Color color, bool isSelected) {
+/// Language badge prefix (e.g. "EN", "ES") inside a chip
+class _LangBadge extends StatelessWidget {
+  final String code;
+  final Color color;
+  final bool isSelected;
+
+  const _LangBadge(this.code, this.color, this.isSelected);
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(

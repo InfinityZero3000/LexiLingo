@@ -183,4 +183,19 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
       return Left(ServerFailure('Unexpected error: $e'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<UserVocabularyEntity>>> getDeckItems(String deckId) async {
+    try {
+      final models = await remoteDataSource.getDeckItems(deckId);
+      final entities = models.map((model) => model.toEntity()).toList();
+      return Right(entities);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: $e'));
+    }
+  }
 }

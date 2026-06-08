@@ -48,7 +48,7 @@ Sau khi xác thực, `MainScreen` đóng vai trò hub trung tâm, gồm 5 tab ch
 |-----|---------|---------|
 | Discovery | `HomePageNew` | Tổng hợp gợi ý nội dung, streak, XP |
 | Learning | `CourseListScreen` | Danh sách khóa học theo cấp độ |
-| Lexi | `LexiChatPage` | Trò chuyện với AI tutor (GraphCAG) |
+| Lexi | `LexiChatPage` | Trò chuyện với AI tutor (TRACECAG) |
 | Chat | `StorySelectionPage` | Chat theo chủ đề |
 | Account | `ProfilePage` | Hồ sơ, thành tích, cài đặt |
 
@@ -68,7 +68,7 @@ Sau khi xác thực, `MainScreen` đóng vai trò hub trung tâm, gồm 5 tab ch
 ### 3.4 Nhóm AI Chat và Luyện Giao Tiếp
 
 Hệ thống chat được triển khai theo hai hướng:
-- **`LexiChatPage`** — Tương tác nhanh, trợ lý AI liên tục qua GraphCAG Pipeline (phân tích ngữ pháp, sửa lỗi, CEFR scoring).
+- **`LexiChatPage`** — Tương tác nhanh, trợ lý AI liên tục qua TRACECAG Pipeline (phân tích ngữ pháp, sửa lỗi, CEFR scoring).
 - **`StorySelectionPage` → `TopicChatPage`** — Học theo chủ đề có định hướng (business, travel, daily life...).
 
 **Điểm mạnh:**
@@ -132,7 +132,7 @@ Dựa trên route map và danh mục screen đã wiring, bộ tính năng Flutte
 |-------|-----------|
 | Auth flow rõ ràng | ✅ Hoàn chỉnh |
 | Học có cấu trúc | ✅ Hoàn chỉnh |
-| Chat AI | ✅ Hoàn chỉnh (Basic + GraphCAG) |
+| Chat AI | ✅ Hoàn chỉnh (Basic + TRACECAG) |
 | Content & Game hóa | ✅ Hoàn chỉnh |
 | Quản lý tài khoản | ✅ Hoàn chỉnh |
 | Voice luyện tập | ✅ Có — cần mở rộng |

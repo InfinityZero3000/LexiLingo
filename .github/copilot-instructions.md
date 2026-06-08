@@ -63,7 +63,7 @@ LexiLingo is an English learning app with 4 services:
 
 ## Graph-CAG Pipeline Rules
 When modifying the AI pipeline:
-1. **State**: All data flows through `GraphCAGState` TypedDict in `state.py`
+1. **State**: All data flows through `TRACECAGState` TypedDict in `state.py`
 2. **Nodes**: Each node is a pure function `async def node(state) -> dict` in `nodes_v2.py`
 3. **Edges**: Routing logic in `edges.py` — conditional edges decide next node
 4. **Graph**: Compiled in `graph.py` — add nodes/edges there
@@ -74,7 +74,7 @@ When modifying the AI pipeline:
 ## MCP Tools Reference
 
 ### ai-service MCP (runtime, HTTP at :8001/mcp/)
-- `analyze_text` → GraphCAG pipeline
+- `analyze_text` → TRACECAG pipeline
 - `get_user_profile` → learning_patterns_repo
 - `expand_concepts` → kg_service_v3
 - `assess_level` → assessment_service
@@ -95,7 +95,7 @@ When modifying the AI pipeline:
 3. MCP resource URIs inconsistent: `learner://profile/` vs `learner_profile://`
 4. Architecture doc mentions Qwen3-1.7B but code uses `Qwen3-1.7B`
 5. DualStreamOrchestrator coded but WebSocket integration unclear
-6. `cag_service.py` (content auto-gen) not connected to GraphCAG pipeline
+6. `cag_service.py` (content auto-gen) not connected to TRACECAG pipeline
 
 ## Testing
 - Backend: `pytest` with fixtures in `tests/`

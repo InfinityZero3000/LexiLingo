@@ -1,8 +1,11 @@
+import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
+from starlette.requests import Request
 
 from api.routes import lexi_chat as lexi_route
+from api.core.auth import AuthenticatedUser
 
 
 @pytest.fixture
@@ -76,7 +79,11 @@ async def test_list_lexi_sessions_returns_mongo_rows(mock_db):
     cursor.to_list = AsyncMock(return_value=rows)
     mock_db["lexi_sessions"].find.return_value = cursor
 
-    result = await lexi_route.list_lexi_sessions(user_id="u1", db=mock_db)
+    result = await lexi_route.list_lexi_sessions(
+        user_id="u1",
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+    )
 
     assert result.success is True
     assert len(result.sessions) == 2
@@ -87,6 +94,11 @@ async def test_list_lexi_sessions_returns_mongo_rows(mock_db):
 @pytest.mark.asyncio
 async def test_rename_lexi_session_updates_db_and_cache(mock_db, mock_store):
     mock_db["lexi_sessions"].update_one.return_value = MagicMock(matched_count=1)
+    mock_db["lexi_sessions"].find_one.return_value = {
+        "session_id": "s1",
+        "user_id": "u1",
+        "title": "Old",
+    }
     mock_store.get_session.return_value = {
         "session_id": "s1",
         "title": "Old",
@@ -98,6 +110,7 @@ async def test_rename_lexi_session_updates_db_and_cache(mock_db, mock_store):
         session_id="s1",
         request=req,
         db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert result["success"] is True
@@ -112,7 +125,12 @@ async def test_rename_lexi_session_not_found_raises_404(mock_db, mock_store):
 
     req = lexi_route.LexiSessionRenameRequest(title="X")
     with pytest.raises(HTTPException) as exc:
-        await lexi_route.rename_lexi_session(session_id="missing", request=req, db=mock_db)
+        await lexi_route.rename_lexi_session(
+            session_id="missing",
+            request=req,
+            db=mock_db,
+            current_user=AuthenticatedUser(user_id="u1", claims={}),
+        )
 
     assert exc.value.status_code == 404
 
@@ -151,7 +169,12 @@ async def test_get_messages_fallback_rehydrates_cache(mock_db, mock_store):
     )
     mock_db["lexi_messages"].find.return_value = cursor
 
-    result = await lexi_route.get_lexi_messages(session_id="s1", db=mock_db)
+    result = await lexi_route.get_lexi_messages(
+        session_id="s1",
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+        full=True,
+    )
 
     assert result["success"] is True
     assert result["session_id"] == "s1"
@@ -162,7 +185,15 @@ async def test_get_messages_fallback_rehydrates_cache(mock_db, mock_store):
 
 @pytest.mark.asyncio
 async def test_delete_lexi_session_cleans_db_and_cache(mock_db, mock_store):
-    result = await lexi_route.delete_lexi_session(session_id="s1", db=mock_db)
+    mock_db["lexi_sessions"].find_one.return_value = {
+        "session_id": "s1",
+        "user_id": "u1",
+    }
+    result = await lexi_route.delete_lexi_session(
+        session_id="s1",
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+    )
 
     assert result["success"] is True
     mock_db["lexi_sessions"].delete_one.assert_awaited_once_with({"session_id": "s1"})
@@ -191,6 +222,101 @@ def test_sanitize_lexi_response_fixes_misaligned_bold_markers():
     assert "(15 mins), **" not in sanitized
     assert "**good**" in sanitized
     assert sanitized.count("**") == 2
+
+
+@pytest.mark.asyncio
+async def test_lexi_stream_starts_before_session_store_finishes(
+    mock_db,
+    mock_store,
+    monkeypatch,
+):
+    session_gate = asyncio.Event()
+
+    async def _slow_has_session(_session_id):
+        await session_gate.wait()
+        return False
+
+    mock_store.has_session.side_effect = _slow_has_session
+    monkeypatch.setattr(
+        lexi_route,
+        "enforce_user_quota",
+        AsyncMock(
+            return_value=MagicMock(
+                rpm_used=1,
+                rpm_limit=30,
+                rpd_used=1,
+                rpd_limit=500,
+            )
+        ),
+    )
+
+    request_context = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/v1/lexi/stream",
+            "headers": [],
+        }
+    )
+    response = await lexi_route.lexi_stream_chat(
+        request_context=request_context,
+        request=lexi_route.LexiChatRequest(
+            user_id="u1",
+            session_id="s1",
+            message="hello",
+            enable_tts=False,
+        ),
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+    )
+
+    first_chunk = await asyncio.wait_for(
+        anext(response.body_iterator),
+        timeout=0.1,
+    )
+
+    assert first_chunk == "event: thinking\ndata: {}\n\n"
+    mock_store.has_session.assert_not_awaited()
+    session_gate.set()
+    await response.body_iterator.aclose()
+
+
+@pytest.mark.asyncio
+async def test_lexi_stream_returns_503_when_quota_check_times_out(
+    mock_db,
+    mock_store,
+    monkeypatch,
+):
+    async def _stalled_quota(*_args, **_kwargs):
+        await asyncio.Event().wait()
+
+    monkeypatch.setenv("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", "0.01")
+    monkeypatch.setattr(lexi_route, "enforce_user_quota", _stalled_quota)
+
+    request_context = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/v1/lexi/stream",
+            "headers": [],
+        }
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await lexi_route.lexi_stream_chat(
+            request_context=request_context,
+            request=lexi_route.LexiChatRequest(
+                user_id="u1",
+                session_id="s1",
+                message="hello",
+                enable_tts=False,
+            ),
+            db=mock_db,
+            current_user=AuthenticatedUser(user_id="u1", claims={}),
+        )
+
+    assert exc.value.status_code == 503
+    mock_store.has_session.assert_not_awaited()
 
 
 def test_sanitize_lexi_response_fixes_escaped_misaligned_bold_markers():

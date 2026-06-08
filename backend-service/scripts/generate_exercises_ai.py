@@ -97,12 +97,17 @@ async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str
                 return data.get("exercises", [])
             elif response.status_code == 429:
                 # Rate limit, wait and retry
-                wait_time = 5 * (attempt + 1)
+                wait_time = 15 * (attempt + 1)
                 print(f"    [Rate limit 429] Lesson '{lesson_title}' - retrying in {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            elif response.status_code in (503, 500, 502):
+                # Service temporarily unavailable — back off longer
+                wait_time = 10 * (attempt + 1)
+                print(f"    [HTTP Error {response.status_code}] Lesson '{lesson_title}' - retrying in {wait_time}s...")
                 await asyncio.sleep(wait_time)
             else:
                 print(f"    [HTTP Error {response.status_code}] Lesson '{lesson_title}' - retrying...")
-                await asyncio.sleep(2)
+                await asyncio.sleep(5)
         except Exception as e:
             print(f"    [Error] Lesson '{lesson_title}': {e} - retrying...")
             await asyncio.sleep(2)

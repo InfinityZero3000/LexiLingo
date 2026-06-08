@@ -10,7 +10,16 @@ Models:
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Float, Index
+from sqlalchemy import (
+    String,
+    Integer,
+    Boolean,
+    ForeignKey,
+    Text,
+    Float,
+    Index,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -149,6 +158,15 @@ class XPTransaction(Base):
     __table_args__ = (
         Index("idx_xp_transactions_user_created", "user_id", "created_at"),
         Index("idx_xp_transactions_source", "source"),
+        Index(
+            "uq_xp_transactions_user_source_ref",
+            "user_id",
+            "source",
+            "source_id",
+            unique=True,
+            postgresql_where=text("source_id IS NOT NULL"),
+            sqlite_where=text("source_id IS NOT NULL"),
+        ),
     )
 
     def __repr__(self) -> str:

@@ -188,11 +188,11 @@ class OnlinePairwiseRetrievalRanker:
 
 def _build_config() -> RankerConfig:
     return RankerConfig(
-        learning_rate=max(0.001, _env_float("GRAPHCAG_RANKER_LEARNING_RATE", 0.045)),
-        l2_penalty=max(0.0, _env_float("GRAPHCAG_RANKER_L2", 0.008)),
-        exploration=max(0.0, _env_float("GRAPHCAG_RANKER_EXPLORATION", 0.06)),
-        max_training_items=max(4, _env_int("GRAPHCAG_RANKER_MAX_TRAINING_ITEMS", 12)),
-        min_pairs=max(1, _env_int("GRAPHCAG_RANKER_MIN_PAIRS", 2)),
+        learning_rate=max(0.001, _env_float("TRACECAG_RANKER_LEARNING_RATE", 0.045)),
+        l2_penalty=max(0.0, _env_float("TRACECAG_RANKER_L2", 0.008)),
+        exploration=max(0.0, _env_float("TRACECAG_RANKER_EXPLORATION", 0.06)),
+        max_training_items=max(4, _env_int("TRACECAG_RANKER_MAX_TRAINING_ITEMS", 12)),
+        min_pairs=max(1, _env_int("TRACECAG_RANKER_MIN_PAIRS", 2)),
     )
 
 

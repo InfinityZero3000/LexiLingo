@@ -212,3 +212,28 @@ export function getRoleColor(role_level: number): string {
       return 'default';
   }
 }
+
+// ============================================================================
+// Admin Gifting API
+// ============================================================================
+
+export interface GiftRequest {
+  gift_type: 'course' | 'avatar' | 'shop_item' | 'gems';
+  course_id?: string;
+  shop_item_id?: string;
+  amount?: number;
+}
+
+export async function giftToUser(
+  userId: string,
+  data: GiftRequest
+): Promise<{ success: boolean; message: string; data: { gift_description: string } }> {
+  return apiFetch<{ success: boolean; message: string; data: { gift_description: string } }>(
+    `${ENV.backendUrl}/admin/users/${userId}/gift`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
+  );
+}
+

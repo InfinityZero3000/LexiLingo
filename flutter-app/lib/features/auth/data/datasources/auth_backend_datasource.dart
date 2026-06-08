@@ -123,7 +123,7 @@ class AuthBackendDataSource {
     final request = RefreshTokenRequest(refreshToken: refreshToken);
 
     final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
-      '/auth/refresh-token',
+      '/auth/refresh',
       body: request.toJson(),
       fromJson: (data) => data as Map<String, dynamic>,
     );

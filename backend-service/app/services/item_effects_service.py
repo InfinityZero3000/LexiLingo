@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
 
 from app.models.gamification import UserInventory, ShopItem
-from app.models.progress import Streak
+from app.models.progress import LessonAttempt, Streak
 
 
 class ItemEffectsService:
@@ -124,8 +124,8 @@ class ItemEffectsService:
             streak = Streak(user_id=user_id, freeze_count=0)
             self.db.add(streak)
         
-        # Add freeze count
-        streak.freeze_count += 1
+        quantity = max(1, int((shop_item.effects or {}).get("quantity", 1)))
+        streak.freeze_count += quantity
         
         return True, f"Streak freeze added! You now have {streak.freeze_count} freezes.", {
             "freeze_count": streak.freeze_count,
@@ -158,14 +158,20 @@ class ItemEffectsService:
         inventory: UserInventory,
         shop_item: ShopItem,
     ) -> Tuple[bool, str, Optional[Dict]]:
-        """Handle hint pack usage - adds hints to user's account."""
+        """Add purchased hints to the user's unfinished lesson attempt."""
         effects = shop_item.effects or {}
-        hint_count = effects.get('quantity', 5)
-        
-        # TODO: Add hints to user profile/preferences
-        # For now, just return success
-        return True, f"Added {hint_count} hints to your account!", {
+        hint_count = max(1, int(effects.get('quantity', 5)))
+        attempt = await self._get_active_lesson_attempt(user_id)
+        if not attempt:
+            return False, "Start a lesson before using a hint pack", None
+
+        attempt.bonus_hints += hint_count
+        return True, f"Added {hint_count} hints to your active lesson!", {
             "hints_added": hint_count,
+            "hints_remaining": max(
+                0,
+                3 + attempt.bonus_hints - attempt.hints_used,
+            ),
             "effect": "hints"
         }
     
@@ -175,12 +181,33 @@ class ItemEffectsService:
         inventory: UserInventory,
         shop_item: ShopItem,
     ) -> Tuple[bool, str, Optional[Dict]]:
-        """Handle heart/life refill."""
-        # TODO: Implement lives system
+        """Restore hearts on the user's unfinished lesson attempt."""
+        attempt = await self._get_active_lesson_attempt(user_id)
+        if not attempt:
+            return False, "Start a lesson before using a heart refill", None
+
+        max_hearts = max(1, int((shop_item.effects or {}).get("hearts", 3)))
+        attempt.lives_remaining = max_hearts
         return True, "Hearts refilled to maximum!", {
-            "hearts_restored": 5,
+            "hearts_restored": max_hearts,
             "effect": "hearts"
         }
+
+    async def _get_active_lesson_attempt(
+        self,
+        user_id: UUID,
+    ) -> Optional[LessonAttempt]:
+        result = await self.db.execute(
+            select(LessonAttempt)
+            .where(
+                and_(
+                    LessonAttempt.user_id == user_id,
+                    LessonAttempt.finished_at.is_(None),
+                )
+            )
+            .order_by(LessonAttempt.started_at.desc())
+        )
+        return result.scalars().first()
     
     async def _handle_cosmetic(
         self,

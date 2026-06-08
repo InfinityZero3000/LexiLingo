@@ -1,6 +1,6 @@
 {
   "version": "1.1.0",
-  "description": "Topic-specific knowledge graphs for LexiLingo GraphCAG",
+  "description": "Topic-specific knowledge graphs for LexiLingo TRACECAG",
   "concepts": [
     {
       "id": "concept:collocation.boarding_procedures",

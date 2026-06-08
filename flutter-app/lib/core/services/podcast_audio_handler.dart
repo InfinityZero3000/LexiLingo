@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
 
@@ -43,10 +44,9 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     );
     mediaItem.add(item);
 
-    final localFile = episode.localPath != null
-        ? File(episode.localPath!)
-        : null;
-    final useLocal = localFile != null && localFile.existsSync();
+    final useLocal = !kIsWeb &&
+        episode.localPath != null &&
+        File(episode.localPath!).existsSync();
 
     final AudioSource source;
     if (useLocal) {

@@ -231,6 +231,9 @@ main() {
     wait_for_service "ai-service" 300
     wait_for_service "backend-service" 300
     wait_for_service "gateway" 180
+
+    log "Reloading gateway Nginx config to refresh upstream DNS resolutions..."
+    run "${DOCKER_COMPOSE_CMD} exec -T gateway nginx -s reload"
   fi
 
   if [[ "${SKIP_SMOKE}" == false ]]; then

@@ -8,6 +8,9 @@ from hardcoded data (no API cost). All cacheable responses use APICacheService.
 Phase 4: Podcast Feature.
 """
 
+import calendar
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import hashlib
 import logging
 import re
@@ -49,63 +52,63 @@ CEFR_LEVELS = {
 CURATED_PODCASTS = [
     # A1-A2 — slow, clear speech
     {
+        "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9s1.rss").hexdigest()[:12],
+        "title": "BBC Learning English Stories",
+        "author": "BBC Learning English",
+        "description": (
+            "Classic stories retold in clear, simple English. Each episode"
+            " teaches vocabulary through short dramas perfect for beginners."
+        ),
+        "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9s1.rss",
+        "artwork_url": "http://ichef.bbci.co.uk/images/ic/3000x3000/p0hxqksj.jpg",
+        "episode_count": 100,
+        "categories": ["education", "stories"],
+        "cefr_level": "A1",
+        "language": "en",
+    },
+    {
         "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9tn.rss").hexdigest()[:12],
         "title": "BBC 6 Minute English",
         "author": "BBC Learning English",
         "description": (
             "Every week we ask an interesting question about the world and discuss"
-            " the answer in easy, B1-level English. With vocabulary explanations."
+            " the answer in easy English. With vocabulary explanations."
         ),
         "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9tn.rss",
-        "artwork_url": "https://ichef.bbci.co.uk/images/ic/1200x1200/p09jnvlt.jpg",
-        "episode_count": 0,
+        "artwork_url": "http://ichef.bbci.co.uk/images/ic/3000x3000/p0hxqkd0.jpg",
+        "episode_count": 500,
         "categories": ["education", "learning"],
         "cefr_level": "A2",
         "language": "en",
     },
-    {
-        "id": hashlib.md5(b"https://www.eslpod.com/eslpod/website/simple_sound/eslpodcast.rss").hexdigest()[:12],
-        "title": "ESL Pod",
-        "author": "Dr. Jeff McQuillan",
-        "description": (
-            "Slow, clear English conversations with detailed explanations of"
-            " vocabulary and grammar, perfect for beginner ESL learners."
-        ),
-        "feed_url": "https://www.eslpod.com/eslpod/website/simple_sound/eslpodcast.rss",
-        "artwork_url": "https://cdn.eslpod.com/img/icon.jpg",
-        "episode_count": 0,
-        "categories": ["education", "esl"],
-        "cefr_level": "A1",
-        "language": "en",
-    },
     # B1-B2 — normal conversational speed
     {
-        "id": hashlib.md5(b"https://allears.libsyn.com/rss").hexdigest()[:12],
-        "title": "All Ears English",
-        "author": "Lindsay McMahon & Michelle Kaplan",
+        "id": hashlib.md5(b"https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20").hexdigest()[:12],
+        "title": "VOA Learning English",
+        "author": "Voice of America",
         "description": (
-            "Real English conversations about American culture, idioms, and"
-            " expressions. Connection NOT perfection is our motto."
+            "Clear, slow-paced English news and stories using limited vocabulary."
+            " Formerly VOA Special English — perfect for building fluency."
         ),
-        "feed_url": "https://allears.libsyn.com/rss",
-        "artwork_url": "https://ssl-static.libsyn.com/p/assets/7/2/b/7/72b739d4b0c1e2f3/AEE_New_2022_AlbumArt.jpg",
-        "episode_count": 0,
-        "categories": ["education", "english"],
+        "feed_url": "https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20",
+        "artwork_url": "https://gdb.voanews.com/0684e143-ca54-4c31-bbc7-c26e19b2fb70.jpg",
+        "episode_count": 250,
+        "categories": ["education", "news"],
         "cefr_level": "B1",
         "language": "en",
     },
     {
-        "id": hashlib.md5(b"https://culips.com/feed/podcast").hexdigest()[:12],
-        "title": "Culips ESL Podcast",
-        "author": "Culips",
+        "id": hashlib.md5(b"https://feeds.feedburner.com/businessenglishpod").hexdigest()[:12],
+        "title": "Business English Pod",
+        "author": "Business English Pod",
         "description": (
-            "Authentic English conversations about everyday topics with full"
-            " transcripts. Great for intermediate listeners."
+            "Professional English for the workplace — presentations, meetings,"
+            " negotiations, and everyday business communication skills."
         ),
-        "feed_url": "https://culips.com/feed/podcast",
-        "artwork_url": "https://culips.com/wp-content/uploads/culips-podcast-album-art-3000.jpg",
-        "episode_count": 0,
-        "categories": ["education", "esl"],
+        "feed_url": "https://feeds.feedburner.com/businessenglishpod",
+        "artwork_url": "https://www.businessenglishpod.com/wordpress/wp-content/uploads/Business-English-Pod-iTunes-3000.jpeg",
+        "episode_count": 350,
+        "categories": ["education", "business"],
         "cefr_level": "B2",
         "language": "en",
     },
@@ -119,8 +122,8 @@ CURATED_PODCASTS = [
             " profound questions of our time with the world's greatest thinkers."
         ),
         "feed_url": "https://feeds.npr.org/510298/podcast.xml",
-        "artwork_url": "https://media.npr.org/assets/img/2022/01/19/ted-radio-hour_tile_npr-network-01_sq-64a0e68af71c9fc53b820ac7f3e8e88a91b0da6.jpg",
-        "episode_count": 0,
+        "artwork_url": "https://media.npr.org/assets/img/2022/09/23/ted-radio-hour_tile_npr-network-01_sq-3ca507bd2dfa5c26d7db5b41c2b981b24a8789fa.jpg?s=1400&c=66&f=jpg",
+        "episode_count": 300,
         "categories": ["education", "technology", "society"],
         "cefr_level": "C1",
         "language": "en",
@@ -134,8 +137,8 @@ CURATED_PODCASTS = [
             " by professional broadcast journalists."
         ),
         "feed_url": "https://feeds.npr.org/500005/podcast.xml",
-        "artwork_url": "https://media.npr.org/assets/img/2018/08/03/npr_nprnewsnow_podcasttile_sq-fd4d9b32d97b5c5b1440f45b5a05c9b9c4fbba4.jpg",
-        "episode_count": 0,
+        "artwork_url": "https://media.npr.org/assets/img/2023/01/24/npr-news-now_tile_sq-2334a5fd44563fa94cdcdb27384b0f05987c2d15.jpg?s=1400&c=66&f=jpg",
+        "episode_count": 3650,
         "categories": ["news"],
         "cefr_level": "C2",
         "language": "en",
@@ -220,13 +223,21 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
             headers=_PROXY_CORS,
         )
 
-    # Reduced timeout to 8s so FastAPI responds before any upstream proxy can
-    # generate its own 502 (which would lack CORS headers entirely).
-    async with httpx.AsyncClient(timeout=8.0) as client:
+    # 5s timeout — keeps FastAPI response time below nginx's proxy_read_timeout
+    # so the 502 is generated by FastAPI (with CORS headers) not by nginx (without).
+    async with httpx.AsyncClient(timeout=5.0) as client:
         try:
             resp = await client.get(
                 url,
-                headers={"User-Agent": "LexiLingo/1.0 (English learning app; podcast-artwork-proxy)"},
+                # Browser-like UA avoids 403 from CDNs that block non-browser clients.
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    ),
+                    "Accept": "image/webp,image/avif,image/*,*/*;q=0.8",
+                },
                 follow_redirects=True
             )
             if resp.status_code != 200:
@@ -255,18 +266,11 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
             )
         except HTTPException:
             raise
-        except httpx.RequestError as e:
-            logger.error("HTTP request error proxying podcast image %s: %s", url, e)
+        except Exception as e:
+            logger.error("Error proxying podcast image %s: %s", url, e)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
-                detail=f"Failed to reach image source: {str(e)}",
-                headers=_PROXY_CORS,
-            )
-        except Exception as e:
-            logger.error("Unexpected error proxying podcast image %s: %s", url, e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Internal proxy error.",
+                detail="Image proxy error",
                 headers=_PROXY_CORS,
             )
 
@@ -616,10 +620,28 @@ async def _parse_with_feedparser(feed_url: str, limit: int) -> dict:
 
         # Published date
         published_at = ""
-        if entry.get("published"):
-            published_at = entry.published
-        elif entry.get("updated"):
-            published_at = entry.updated
+        if entry.get("published_parsed"):
+            try:
+                epoch = calendar.timegm(entry.published_parsed)
+                published_at = datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat()
+            except Exception:
+                pass
+        
+        if not published_at and entry.get("updated_parsed"):
+            try:
+                epoch = calendar.timegm(entry.updated_parsed)
+                published_at = datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat()
+            except Exception:
+                pass
+
+        if not published_at:
+            raw_date = entry.get("published") or entry.get("updated") or ""
+            if raw_date:
+                try:
+                    dt = parsedate_to_datetime(raw_date)
+                    published_at = dt.isoformat()
+                except Exception:
+                    published_at = raw_date
 
         # Episode number
         ep_number_raw = entry.get("itunes_episode", None)
@@ -710,12 +732,21 @@ async def _parse_with_elementtree(feed_url: str, limit: int) -> dict:
             or ""
         )
 
+        raw_date = _elem_text(item, "pubDate") or ""
+        published_at = ""
+        if raw_date:
+            try:
+                dt = parsedate_to_datetime(raw_date)
+                published_at = dt.isoformat()
+            except Exception:
+                published_at = raw_date
+
         episodes.append({
             "guid": _elem_text(item, "guid") or _elem_text(item, "link") or "",
             "title": _elem_text(item, "title") or "",
             "audio_url": audio_url,
             "duration_seconds": duration_seconds,
-            "published_at": _elem_text(item, "pubDate") or "",
+            "published_at": published_at,
             "description": _strip_html(raw_desc),
             "episode_number": episode_number,
             "image_url": image_url or None,

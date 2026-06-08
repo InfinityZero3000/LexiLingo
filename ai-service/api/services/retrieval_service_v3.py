@@ -83,12 +83,18 @@ class RetrievalServiceV3:
         self._precompute_analytics()
     
     def _precompute_analytics(self) -> None:
-        """Pre-compute graph analytics for faster retrieval."""
+        """Pre-compute graph analytics and warm the concept embedding cache."""
         try:
             self.analytics.compute_centrality()
             logger.info("Graph analytics pre-computed successfully")
+            
+            # Pre-warm concept embeddings
+            concepts = self.kg.get_concepts()
+            if concepts:
+                self._refresh_concept_cache(concepts)
+                logger.info(f"Concept embedding cache pre-warmed successfully for {len(concepts)} concepts")
         except Exception as e:
-            logger.warning(f"Failed to pre-compute analytics: {e}")
+            logger.warning(f"Failed to pre-compute analytics or embeddings: {e}")
     
     async def retrieve(
         self,
@@ -182,7 +188,11 @@ class RetrievalServiceV3:
                 continue
                 
             # Cosine similarity
-            similarity = float(np.dot(query_vec, concept_vec))
+            try:
+                similarity = float(np.dot(query_vec, concept_vec))
+            except ValueError:
+                # Handle shape mismatch safely if mixed dimension modes occur
+                similarity = 0.0
             
             # Filter by minimum similarity
             if similarity < self.config.min_similarity:

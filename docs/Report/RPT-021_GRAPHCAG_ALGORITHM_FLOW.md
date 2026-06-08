@@ -1,12 +1,12 @@
-# RPT-021 — GraphCAG Algorithm Flow: Phân Tích Chi Tiết Thuật Toán
+# RPT-021 — TRACECAG Algorithm Flow: Phân Tích Chi Tiết Thuật Toán
 
-> **Cập nhật:** 2026-04-24 | **Pipeline Version:** GraphCAG v3 với RAPID Cache
+> **Cập nhật:** 2026-04-24 | **Pipeline Version:** TRACECAG v3 với RAPID Cache
 
 ---
 
-## 1. Giới Thiệu GraphCAG
+## 1. Giới Thiệu TRACECAG
 
-**GraphCAG = Graph-augmented Cache-Augmented Generation**
+**TRACECAG = Graph-augmented Cache-Augmented Generation**
 
 Đây là thuật toán AI cốt lõi của LexiLingo, kết hợp:
 
@@ -28,12 +28,12 @@
 
 ---
 
-## 2. GraphCAG State — Trung Tâm Dữ Liệu
+## 2. TRACECAG State — Trung Tâm Dữ Liệu
 
 ```python
 # File: ai-service/api/services/graph_cag/state.py
 
-GraphCAGState (TypedDict):
+TRACECAGState (TypedDict):
     # === INPUT (set at start) ===
     user_input: str              # "I goes to school yesterday"
     session_id: str              # UUID cho phiên
@@ -96,7 +96,7 @@ GraphCAGState (TypedDict):
 ### 3.1 Entry Point
 
 ```python
-# Caller: lexi_chat.py → GraphCAGPipeline.analyze()
+# Caller: lexi_chat.py → TRACECAGPipeline.analyze()
 
 pipeline = await get_graph_cag()
 result = await pipeline.analyze(
@@ -116,7 +116,7 @@ result = await pipeline.analyze(
 ```python
 # File: graph.py
 
-graph = StateGraph(GraphCAGState)
+graph = StateGraph(TRACECAGState)
 
 # Nodes
 graph.add_node("input_node",        input_node)
@@ -599,7 +599,7 @@ Invalidation:
 ```
 File: ai-service/api/routes/lexi_chat.py (50KB)
 
-GraphCAG analyze() 
+TRACECAG analyze() 
     → Streaming response via SSE or WebSocket
     → Client receives:
        {"event": "thinking", "data": {...}}
@@ -611,4 +611,4 @@ GraphCAG analyze()
 
 ---
 
-*Tham khảo: [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-016](RPT-016_GRAPHCAG_KG_REDIS_CACHE.md) | [RPT-018](RPT-018_FEATURE_ANALYSIS.md)*
+*Tham khảo: [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-016](RPT-016_TRACECAG_KG_REDIS_CACHE.md) | [RPT-018](RPT-018_FEATURE_ANALYSIS.md)*

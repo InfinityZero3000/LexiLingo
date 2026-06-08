@@ -85,13 +85,11 @@ class EmptyStateWidget extends StatelessWidget {
   }
 
   /// Factory for empty course list
-  factory EmptyStateWidget.courses({VoidCallback? onExplore}) {
-    return EmptyStateWidget(
+  factory EmptyStateWidget.courses() {
+    return const EmptyStateWidget(
       icon: Icons.school_outlined,
       title: 'No Courses Yet',
       description: 'Start your learning journey by exploring our courses.',
-      actionLabel: onExplore != null ? 'Explore Courses' : null,
-      onAction: onExplore,
       iconColor: Colors.blue,
     );
   }

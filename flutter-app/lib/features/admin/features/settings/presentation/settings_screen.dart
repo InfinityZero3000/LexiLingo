@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/admin_shell.dart';
 import '../../auth/presentation/auth_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -31,6 +31,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             pinned: true,
             backgroundColor: AppColors.background,
             elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+              onPressed: AdminShell.openDrawer,
+            ),
             title: Row(
               children: [
                 const Icon(Icons.language, color: AppColors.primary, size: 22),
@@ -255,107 +259,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Quick Links
-                _Card(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Admin Tools',
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 16, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 12),
-                      _ToolLink(
-                        icon: Icons.bar_chart_outlined,
-                        label: 'Content Analytics',
-                        onTap: () => context.push('/settings/analytics'),
-                      ),
-                      const Divider(height: 12),
-                      _ToolLink(
-                        icon: Icons.book_outlined,
-                        label: 'Vocabulary Library',
-                        onTap: () => context.push('/settings/vocabulary'),
-                      ),
-                      const Divider(height: 12),
-                      _ToolLink(
-                        icon: Icons.quiz_outlined,
-                        label: 'Grammar & Tests',
-                        onTap: () => context.push('/settings/grammar'),
-                      ),
-                      const Divider(height: 12),
-                      _ToolLink(
-                        icon: Icons.military_tech_outlined,
-                        label: 'Achievements & Shop',
-                        onTap: () => context.push('/settings/achievements'),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Super Admin section — only for super admins
-                if (isSuperAdmin) ...[
-                  const SizedBox(height: 16),
-                  _Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text('SUPER ADMIN',
-                                  style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                      letterSpacing: 0.05)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        _ToolLink(
-                          icon: Icons.admin_panel_settings_outlined,
-                          label: 'Super Admin Dashboard',
-                          onTap: () => context.push('/settings/super-dashboard'),
-                        ),
-                        const Divider(height: 12),
-                        _ToolLink(
-                          icon: Icons.monitor_heart_outlined,
-                          label: 'System Core Health',
-                          onTap: () => context.push('/settings/system-health'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 16),
-
                 // Switch to User Zone — only visible for whitelisted accounts
                 if (auth.hasUserZoneAccess) ...[
                   _UserZoneSwitchCard(user: user),
                   const SizedBox(height: 16),
                 ],
-
-                // Logout
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      await auth.logout();
-                      if (context.mounted) context.go('/login');
-                    },
-                    icon: const Icon(Icons.logout, size: 16),
-                    label: Text('Sign Out',
-                        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.error),
-                      foregroundColor: AppColors.error,
-                    ),
-                  ),
-                ),
               ]),
             ),
           ),
@@ -582,35 +490,6 @@ class _SessionRow extends StatelessWidget {
   }
 }
 
-class _ToolLink extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ToolLink({required this.icon, required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: AppColors.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(label,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-            ),
-            const Icon(Icons.chevron_right, size: 16, color: AppColors.onSurfaceMuted),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────
 // Switch to User Zone card + bottom sheet

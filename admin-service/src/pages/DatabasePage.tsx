@@ -98,7 +98,7 @@ export const DatabasePage = () => {
                 />
               } />
               <ConfigRow label={t.database.driver} value="Motor (async)" />
-              <ConfigRow label={t.database.usageLabel} value="GraphCAG, Chat History, Analytics" />
+              <ConfigRow label={t.database.usageLabel} value="TRACECAG, Chat History, Analytics" />
             </tbody>
           </table>
         </div>

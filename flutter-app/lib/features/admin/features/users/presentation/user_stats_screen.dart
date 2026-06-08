@@ -51,11 +51,44 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
     }
   }
 
+  Future<void> _toggleBlock() async {
+    final isActive = _data?['is_active'] == true;
+    try {
+      if (isActive) {
+        await _repo.blockUser(widget.userId);
+      } else {
+        await _repo.unblockUser(widget.userId);
+      }
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isActive ? 'User đã bị block' : 'User đã được unblock',
+                style: GoogleFonts.spaceGrotesk()),
+            backgroundColor: isActive ? AppColors.error : AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Thao tác thất bại', style: GoogleFonts.spaceGrotesk()),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
       await _repo.updateUser(widget.userId, {
         'numeric_level': int.tryParse(_levelCtrl.text) ?? 1,
+        'gems': int.tryParse(_gemsCtrl.text) ?? 0,
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,14 +124,18 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         ),
         actions: [
           OutlinedButton(
-            onPressed: () {},
+            onPressed: _loading ? null : _toggleBlock,
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.error),
-              foregroundColor: AppColors.error,
+              side: BorderSide(
+                color: _data?['is_active'] == true ? AppColors.error : AppColors.success,
+              ),
+              foregroundColor: _data?['is_active'] == true ? AppColors.error : AppColors.success,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             ),
-            child: Text('Reset Progress',
-                style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600)),
+            child: Text(
+              _data?['is_active'] == true ? 'Block' : 'Unblock',
+              style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
           const SizedBox(width: 8),
           ElevatedButton(
