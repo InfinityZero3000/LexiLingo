@@ -89,7 +89,7 @@ class RedisRateLimiter:
                 # Use a unique identifier for the set member to allow multiple requests at the same timestamp
                 member = f"{now}-{tokens_used}"
                 pipe.zadd(rpm_key, {member: now})
-                pipe.zadd(tpm_key, {f"{now}-{tokens_used}-tokens": tokens_used}, score=now)
+                pipe.zadd(tpm_key, {f"{now}-{tokens_used}-tokens": now})  # score=now for time-window cleanup; member encodes token count
                 pipe.zadd(rpd_key, {member: now})
                 # Set TTL
                 pipe.expire(rpm_key, 65)
