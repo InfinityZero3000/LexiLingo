@@ -8,6 +8,8 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 /// Manages flashcard review session state
 /// Clean Architecture: Presentation layer orchestrates use cases
 class FlashcardProvider extends ChangeNotifier {
+  static const int _collectionCompatibilityPageSize = 100;
+
   final GetDueVocabularyUseCase getDueVocabularyUseCase;
   final SubmitReviewUseCase submitReviewUseCase;
   final VocabularyRepository vocabularyRepository;
@@ -140,7 +142,7 @@ class FlashcardProvider extends ChangeNotifier {
 
           // 2. Fetch user's collection to check what is already saved
           final collectionResult = await vocabularyRepository.getUserCollection(
-            limit: 1000, // get a lot so we can map it
+            limit: _collectionCompatibilityPageSize,
           );
 
           await collectionResult.fold(
@@ -154,7 +156,7 @@ class FlashcardProvider extends ChangeNotifier {
 
               // Create lookup map of user collection by vocabularyId
               final collectionMap = {
-                for (var uc in userCollection) uc.vocabularyId: uc
+                for (var uc in userCollection) uc.vocabularyId: uc,
               };
 
               for (final item in vocabItems) {
@@ -162,10 +164,14 @@ class FlashcardProvider extends ChangeNotifier {
 
                 // 3. If not in user collection, add it on the fly
                 if (userVocab == null) {
-                  final addResult = await vocabularyRepository.addToCollection(item.id);
+                  final addResult = await vocabularyRepository.addToCollection(
+                    item.id,
+                  );
                   addResult.fold(
                     (failure) {
-                      debugPrint('Failed to auto-add item to collection: ${item.id}');
+                      debugPrint(
+                        'Failed to auto-add item to collection: ${item.id}',
+                      );
                     },
                     (addedUserVocab) {
                       userVocab = addedUserVocab;
@@ -213,7 +219,10 @@ class FlashcardProvider extends ChangeNotifier {
   }
 
   /// Start a new review session for a custom deck
-  Future<void> startDeckSession({required String deckId, int limit = 20}) async {
+  Future<void> startDeckSession({
+    required String deckId,
+    int limit = 20,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     _currentSession = null;

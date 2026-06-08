@@ -1,6 +1,8 @@
+import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
+from starlette.requests import Request
 
 from api.routes import lexi_chat as lexi_route
 from api.core.auth import AuthenticatedUser
@@ -220,6 +222,101 @@ def test_sanitize_lexi_response_fixes_misaligned_bold_markers():
     assert "(15 mins), **" not in sanitized
     assert "**good**" in sanitized
     assert sanitized.count("**") == 2
+
+
+@pytest.mark.asyncio
+async def test_lexi_stream_starts_before_session_store_finishes(
+    mock_db,
+    mock_store,
+    monkeypatch,
+):
+    session_gate = asyncio.Event()
+
+    async def _slow_has_session(_session_id):
+        await session_gate.wait()
+        return False
+
+    mock_store.has_session.side_effect = _slow_has_session
+    monkeypatch.setattr(
+        lexi_route,
+        "enforce_user_quota",
+        AsyncMock(
+            return_value=MagicMock(
+                rpm_used=1,
+                rpm_limit=30,
+                rpd_used=1,
+                rpd_limit=500,
+            )
+        ),
+    )
+
+    request_context = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/v1/lexi/stream",
+            "headers": [],
+        }
+    )
+    response = await lexi_route.lexi_stream_chat(
+        request_context=request_context,
+        request=lexi_route.LexiChatRequest(
+            user_id="u1",
+            session_id="s1",
+            message="hello",
+            enable_tts=False,
+        ),
+        db=mock_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+    )
+
+    first_chunk = await asyncio.wait_for(
+        anext(response.body_iterator),
+        timeout=0.1,
+    )
+
+    assert first_chunk == "event: thinking\ndata: {}\n\n"
+    mock_store.has_session.assert_not_awaited()
+    session_gate.set()
+    await response.body_iterator.aclose()
+
+
+@pytest.mark.asyncio
+async def test_lexi_stream_returns_503_when_quota_check_times_out(
+    mock_db,
+    mock_store,
+    monkeypatch,
+):
+    async def _stalled_quota(*_args, **_kwargs):
+        await asyncio.Event().wait()
+
+    monkeypatch.setenv("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", "0.01")
+    monkeypatch.setattr(lexi_route, "enforce_user_quota", _stalled_quota)
+
+    request_context = Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": "/api/v1/lexi/stream",
+            "headers": [],
+        }
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        await lexi_route.lexi_stream_chat(
+            request_context=request_context,
+            request=lexi_route.LexiChatRequest(
+                user_id="u1",
+                session_id="s1",
+                message="hello",
+                enable_tts=False,
+            ),
+            db=mock_db,
+            current_user=AuthenticatedUser(user_id="u1", claims={}),
+        )
+
+    assert exc.value.status_code == 503
+    mock_store.has_session.assert_not_awaited()
 
 
 def test_sanitize_lexi_response_fixes_escaped_misaligned_bold_markers():

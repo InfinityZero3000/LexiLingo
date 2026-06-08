@@ -71,12 +71,21 @@ jobs:
           AI_SERVICE_URL_FALLBACK=
           ENABLE_VOICE_FEATURE=true
           ENABLE_GAMIFICATION=true
+          ENABLE_STARTER_REWARD=false
           DEBUG_MODE=false
           EOF
           printf 'GOOGLE_SERVER_CLIENT_ID=%s\n' "$GOOGLE_SERVER_CLIENT_ID" >> assets/env/prod_config
 
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub
+
+      - name: Verify vocabulary collection API compatibility
+        run: |
+          if grep -Fq 'vocabulary/collection?limit=1000' build/web/main.dart.js; then
+            echo "Unsupported vocabulary collection limit found in production bundle"
+            exit 1
+          fi
+          grep -Fq 'vocabulary/collection?limit=100' build/web/main.dart.js
 
       - name: Install JS deps for Vercel hooks
         run: npm ci

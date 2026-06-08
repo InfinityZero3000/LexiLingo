@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
@@ -10,11 +11,13 @@ import 'package:lexilingo_app/features/gamification/domain/entities/starter_rewa
 /// Gamification Provider
 /// Manages Shop, Wallet, Leaderboard, and Inventory state
 class GamificationProvider extends ChangeNotifier {
-  late final ApiClient _apiClient;
+  final ApiClient _apiClient;
+  final bool _enableStarterReward;
 
-  GamificationProvider() {
-    _apiClient = sl<ApiClient>();
-  }
+  GamificationProvider({ApiClient? apiClient, bool? enableStarterReward})
+    : _apiClient = apiClient ?? sl<ApiClient>(),
+      _enableStarterReward =
+          enableStarterReward ?? ApiConfig.enableStarterReward;
 
   bool _isSuccessResponse(Map<String, dynamic> response) {
     final success = response['success'];
@@ -136,6 +139,7 @@ class GamificationProvider extends ChangeNotifier {
   }
 
   Future<StarterRewardEntity?> loadPendingStarterReward() async {
+    if (!_enableStarterReward) return null;
     if (_isLoadingStarterReward) return _pendingStarterReward;
     _isLoadingStarterReward = true;
     notifyListeners();
@@ -160,6 +164,7 @@ class GamificationProvider extends ChangeNotifier {
   }
 
   Future<bool> acknowledgeStarterReward() async {
+    if (!_enableStarterReward) return false;
     try {
       final response = await _apiClient.post(
         '/gamification/rewards/starter/seen',

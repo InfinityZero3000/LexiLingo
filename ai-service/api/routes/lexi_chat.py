@@ -22,6 +22,7 @@ import uuid
 import time
 import base64
 import hashlib
+from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import AsyncGenerator, Optional, List, Dict, Any
@@ -1013,7 +1014,7 @@ async def lexi_stream_chat(
 
     Returns a text/event-stream response. Events:
       • ``thinking``  — sent immediately to signal the pipeline has started
-      • ``: ping``    — SSE comment sent every 2.5 s to keep QUIC/proxy alive
+      • ``heartbeat`` — SSE data event sent every 2.5 s to keep proxies alive
       • ``chunk``     — one word at a time as the response is "typed out"
       • ``done``      — final event carrying message_id, corrections, audio, etc.
       • ``error``     — sent if the pipeline raises an unrecoverable error
@@ -1027,47 +1028,34 @@ async def lexi_stream_chat(
     auth_user_id = enforce_user_scope(current_user, request.user_id)
     request = request.model_copy(update={"user_id": auth_user_id})
 
-    quota = await enforce_user_quota(
-        current_user.user_id,
-        "lexi.chat",
-        token_cost=default_token_cost_for_endpoint("lexi.chat", text=request.message),
-        fail_closed=True,
+    quota_timeout_s = max(
+        0.5,
+        float(os.getenv("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", "5")),
     )
-
-    # ── Session management (parallel read optimisation) ──
-    session_id = request.session_id or str(uuid.uuid4())
-    _sess_exists, history = await asyncio.gather(
-        _store.has_session(session_id),
-        _store.get_messages(session_id),
-    )
-    if not _sess_exists:
-        now_iso = datetime.utcnow().isoformat()
-        await asyncio.gather(
-            _store.set_session(session_id, {
-                "session_id": session_id,
-                "user_id": request.user_id,
-                "created_at": now_iso,
-                "updated_at": now_iso,
-                "title": "Lexi Chat",
-                "message_count": 0,
-                "persona": "lexi",
-                "story_context": request.story_context,
-            }),
-            _store.init_messages(session_id),
-            db["lexi_sessions"].update_one(
-                {"session_id": session_id},
-                {"$set": {
-                    "session_id": session_id,
-                    "user_id": request.user_id,
-                    "title": "Lexi Chat",
-                    "created_at": now_iso,
-                    "updated_at": now_iso,
-                    "message_count": 0,
-                    "persona": "lexi",
-                }},
-                upsert=True,
+    try:
+        quota = await asyncio.wait_for(
+            enforce_user_quota(
+                current_user.user_id,
+                "lexi.chat",
+                token_cost=default_token_cost_for_endpoint(
+                    "lexi.chat",
+                    text=request.message,
+                ),
+                fail_closed=True,
             ),
+            timeout=quota_timeout_s,
         )
+    except asyncio.TimeoutError as exc:
+        logger.error(
+            "Lexi /stream quota check timed out after %.1fs",
+            quota_timeout_s,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="AI quota service is temporarily unavailable",
+        ) from exc
+
+    session_id = request.session_id or str(uuid.uuid4())
 
     async def _sse_generator() -> AsyncGenerator[str, None]:
         from api.services.orchestrator import get_orchestrator
@@ -1076,10 +1064,90 @@ async def lexi_stream_chat(
 
         user_text = request.message
 
-        # 1. Thinking signal — sent immediately so the client shows the indicator
+        # 1. Open the SSE response before touching Redis/Mongo. This prevents a
+        # degraded session store from holding the HTTP response until the edge
+        # proxy returns a 504.
         yield f"event: thinking\ndata: {{}}\n\n"
 
-        # 2. Context preparation — KG + diagnose + retrieve, NO LLM generation.
+        # 2. Session management. Keep sending data events while Redis/Mongo is
+        # slow so Cloudflare and nginx do not treat the stream as idle.
+        async def _prepare_session() -> List[Dict[str, Any]]:
+            sess_exists, session_history = await asyncio.gather(
+                _store.has_session(session_id),
+                _store.get_messages(session_id),
+            )
+            if not sess_exists:
+                now_iso = datetime.utcnow().isoformat()
+                await asyncio.gather(
+                    _store.set_session(session_id, {
+                        "session_id": session_id,
+                        "user_id": request.user_id,
+                        "created_at": now_iso,
+                        "updated_at": now_iso,
+                        "title": "Lexi Chat",
+                        "message_count": 0,
+                        "persona": "lexi",
+                        "story_context": request.story_context,
+                    }),
+                    _store.init_messages(session_id),
+                    db["lexi_sessions"].update_one(
+                        {"session_id": session_id},
+                        {"$set": {
+                            "session_id": session_id,
+                            "user_id": request.user_id,
+                            "title": "Lexi Chat",
+                            "created_at": now_iso,
+                            "updated_at": now_iso,
+                            "message_count": 0,
+                            "persona": "lexi",
+                        }},
+                        upsert=True,
+                    ),
+                )
+            return session_history
+
+        session_task = asyncio.create_task(_prepare_session())
+        loop = asyncio.get_event_loop()
+        session_timeout_s = max(
+            _HEARTBEAT_INTERVAL_S,
+            float(os.getenv("LEXI_STREAM_SESSION_TIMEOUT_SECONDS", "15")),
+        )
+        session_deadline = loop.time() + session_timeout_s
+        while not session_task.done():
+            if loop.time() >= session_deadline:
+                session_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await session_task
+                logger.error(
+                    "Lexi /stream session preparation timed out after %.1fs",
+                    session_timeout_s,
+                )
+                yield (
+                    f"event: error\ndata: "
+                    f"{json.dumps({'error': 'Chat session service is temporarily unavailable.'})}\n\n"
+                )
+                return
+            try:
+                await asyncio.wait_for(
+                    asyncio.shield(session_task),
+                    timeout=_HEARTBEAT_INTERVAL_S,
+                )
+            except asyncio.TimeoutError:
+                yield f"event: heartbeat\ndata: {{}}\n\n"
+            except Exception:
+                break
+
+        try:
+            history = await session_task
+        except Exception as exc:
+            logger.error("Lexi /stream session preparation error: %s", exc)
+            yield (
+                f"event: error\ndata: "
+                f"{json.dumps({'error': 'Chat session service is temporarily unavailable.'})}\n\n"
+            )
+            return
+
+        # 3. Context preparation — KG + diagnose + retrieve, NO LLM generation.
         #    Heartbeat pings keep the SSE connection alive while this runs.
         #    get_orchestrator() may block on cold start (model loading); run it as
         #    a task so we can keep pinging while it initialises.
