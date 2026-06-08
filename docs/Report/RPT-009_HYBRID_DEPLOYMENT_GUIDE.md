@@ -195,7 +195,7 @@ services:
         sync: false  # Nhập manual từ Supabase
       - key: AI_SERVICE_URL
         value: https://your-tunnel-url.trycloudflare.com  # Từ Step 1
-      - key: JWT_SECRET_KEY
+      - key: SECRET_KEY
         generateValue: true
       - key: FIREBASE_SERVICE_ACCOUNT
         sync: false

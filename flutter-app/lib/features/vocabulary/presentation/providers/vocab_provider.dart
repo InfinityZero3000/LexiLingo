@@ -32,6 +32,8 @@ class DictionaryLookupResult {
 }
 
 class VocabProvider extends ChangeNotifier {
+  static const int _backendCollectionPageSize = 100;
+
   final GetWordsUseCase getWordsUseCase;
   final AddWordUseCase addWordUseCase;
   final ApiClient? _apiClient;
@@ -83,6 +85,7 @@ class VocabProvider extends ChangeNotifier {
     _selectedTag = tag;
     notifyListeners();
   }
+
   DictionaryLookupResult? get lookupResult => _lookupResult;
   bool get isLookingUp => _isLookingUp;
 
@@ -130,7 +133,9 @@ class VocabProvider extends ChangeNotifier {
   }
 
   Future<List<VocabWord>> _fetchBackendCollection() async {
-    final response = await _apiClient!.get('/vocabulary/collection?limit=100');
+    final response = await _apiClient!.get(
+      '/vocabulary/collection?limit=$_backendCollectionPageSize',
+    );
     final items = (response['items'] as List<dynamic>? ?? []);
     return items
         .map((item) {
@@ -286,10 +291,12 @@ class VocabProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _apiClient!.get('/vocabulary/decks');
+      final response = await _apiClient.get('/vocabulary/decks');
       final items = response['data'] ?? response;
       if (items is List) {
-        _decks = items.map((d) => VocabularyDeck.fromJson(d as Map<String, dynamic>)).toList();
+        _decks = items
+            .map((d) => VocabularyDeck.fromJson(d as Map<String, dynamic>))
+            .toList();
       } else {
         _decks = [];
       }
@@ -302,15 +309,24 @@ class VocabProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> createDeck(String name, String? description, String color) async {
+  Future<bool> createDeck(
+    String name,
+    String? description,
+    String color,
+  ) async {
     if (_apiClient == null) return false;
     _isLoading = true;
     notifyListeners();
 
     try {
-      final descParam = description != null ? '&description=${Uri.encodeComponent(description)}' : '';
+      final descParam = description != null
+          ? '&description=${Uri.encodeComponent(description)}'
+          : '';
       final colorParam = '&color=${Uri.encodeComponent(color)}';
-      await _apiClient!.post('/vocabulary/decks?name=${Uri.encodeComponent(name)}$descParam$colorParam');
+      await _apiClient.post(
+        '/vocabulary/decks?name=${Uri.encodeComponent(name)}'
+        '$descParam$colorParam',
+      );
       _errorMessage = null;
       await loadDecks();
       return true;
@@ -326,7 +342,7 @@ class VocabProvider extends ChangeNotifier {
   Future<bool> addWordToDeck(String deckId, String userVocabularyId) async {
     if (_apiClient == null) return false;
     try {
-      await _apiClient!.post(
+      await _apiClient.post(
         '/vocabulary/decks/$deckId/items',
         body: {'user_vocabulary_id': userVocabularyId},
       );
@@ -338,10 +354,15 @@ class VocabProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> removeWordFromDeck(String deckId, String userVocabularyId) async {
+  Future<bool> removeWordFromDeck(
+    String deckId,
+    String userVocabularyId,
+  ) async {
     if (_apiClient == null) return false;
     try {
-      await _apiClient!.delete('/vocabulary/decks/$deckId/items/$userVocabularyId');
+      await _apiClient.delete(
+        '/vocabulary/decks/$deckId/items/$userVocabularyId',
+      );
       await loadDecks();
       return true;
     } catch (e) {
@@ -355,7 +376,7 @@ class VocabProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      await _apiClient!.delete('/vocabulary/decks/$deckId');
+      await _apiClient.delete('/vocabulary/decks/$deckId');
       await loadDecks();
       return true;
     } catch (e) {

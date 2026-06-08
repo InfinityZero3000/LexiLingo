@@ -291,6 +291,23 @@ class TestGetUserCollection:
             response = await client.get(f"{BASE}/collection?status=mastered")
         assert response.status_code == 200
 
+    @pytest.mark.asyncio
+    async def test_limit_100_is_accepted(self, auth_client):
+        client, _, _, _ = auth_client
+        with patch(
+            "app.crud.vocabulary.vocabulary_crud.get_user_vocabulary_list",
+            new=AsyncMock(return_value=[]),
+        ):
+            response = await client.get(f"{BASE}/collection?limit=100")
+        assert response.status_code == 200
+        assert response.json()["limit"] == 100
+
+    @pytest.mark.asyncio
+    async def test_limit_above_1000_is_rejected(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.get(f"{BASE}/collection?limit=1001")
+        assert response.status_code == 422
+
 
 # ============================================================================
 # POST /api/v1/vocabulary/collection  — Add to collection (auth, query param)
