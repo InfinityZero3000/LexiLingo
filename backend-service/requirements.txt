@@ -46,7 +46,7 @@ trafilatura>=2.1.0
 youtube-transcript-api>=0.6.3
 
 # Redis (async client — used by quota manager and rate limiting)
-redis>=5.0.0,<6.0.0
+redis>=6.4.0,<7.0.0
 
 
 # Background jobs
