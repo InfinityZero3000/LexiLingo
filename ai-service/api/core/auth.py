@@ -27,8 +27,8 @@ class AuthenticatedUser(BaseModel):
 def _jwt_secret() -> str:
     # Prefer dedicated AI JWT secret, fallback to backend SECRET_KEY for compatibility.
     return (
-        os.getenv("AI_JWT_SECRET_KEY")
-        or os.getenv("JWT_SECRET_KEY")
+        os.getenv("AI_SECRET_KEY")
+        or os.getenv("SECRET_KEY")
         or os.getenv("SECRET_KEY")
         or ""
     )

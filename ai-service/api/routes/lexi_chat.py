@@ -1086,7 +1086,7 @@ async def lexi_stream_chat(
         try:
             orch_task = asyncio.create_task(get_orchestrator())
             loop = asyncio.get_event_loop()
-            orch_deadline = loop.time() + 60.0
+            orch_deadline = loop.time() + 45.0  # Reduced from 60s: total must fit within Cloudflare's 100s proxy timeout
             while not orch_task.done():
                 if loop.time() >= orch_deadline:
                     orch_task.cancel()
@@ -1098,7 +1098,9 @@ async def lexi_stream_chat(
                 try:
                     await asyncio.wait_for(asyncio.shield(orch_task), timeout=_HEARTBEAT_INTERVAL_S)
                 except asyncio.TimeoutError:
-                    yield ": ping\n\n"
+                    # Use proper SSE data event (not comment) — Cloudflare flushes data events
+                    # immediately but may buffer SSE comment lines (`: ping`).
+                    yield f"event: heartbeat\ndata: {{}}\n\n"
                 except Exception:
                     break
             orchestrator = await orch_task
@@ -1113,7 +1115,7 @@ async def lexi_stream_chat(
             )
 
             loop = asyncio.get_event_loop()
-            ctx_deadline = loop.time() + 25.0
+            ctx_deadline = loop.time() + 15.0  # Reduced from 25s: orch(45) + ctx(15) + LLM < 90s
             while not ctx_task.done():
                 if loop.time() >= ctx_deadline:
                     ctx_task.cancel()
@@ -1128,7 +1130,8 @@ async def lexi_stream_chat(
                         asyncio.shield(ctx_task), timeout=_HEARTBEAT_INTERVAL_S
                     )
                 except asyncio.TimeoutError:
-                    yield ": ping\n\n"
+                    # Use proper SSE data event — Cloudflare flushes data events immediately
+                    yield f"event: heartbeat\ndata: {{}}\n\n"
                 except Exception:
                     break
 

@@ -53,7 +53,7 @@ Sử dụng checklist này để đảm bảo hoàn thành đầy đủ các bư
   - [ ] AI_SERVICE_URL: (tunnel URL)
   - [ ] FIREBASE_SERVICE_ACCOUNT: (paste JSON)
   - [ ] FIREBASE_PROJECT_ID
-  - [ ] JWT_SECRET_KEY: (auto-generated)
+  - [ ] SECRET_KEY: (auto-generated)
 - [ ] Click "Apply" để deploy
 - [ ] Đợi ~5-10 phút để build
 - [ ] Test: `curl https://[YOUR-APP].onrender.com/health`
