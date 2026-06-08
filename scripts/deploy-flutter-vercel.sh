@@ -157,6 +157,7 @@ AI_SERVICE_URL=${ai_base_url}
 AI_SERVICE_URL_FALLBACK=
 ENABLE_VOICE_FEATURE=true
 ENABLE_GAMIFICATION=true
+ENABLE_STARTER_REWARD=false
 DEBUG_MODE=false
 GOOGLE_SERVER_CLIENT_ID=${google_id_env}
 EOF
@@ -188,6 +189,16 @@ fi
 
 if [[ -f "build/web/assets/.env" || -f "build/web/assets/.env.production" ]]; then
   printf "${RED}✗${NC} Raw .env files were bundled into the web build\n"
+  exit 1
+fi
+
+if grep -Fq 'vocabulary/collection?limit=1000' build/web/main.dart.js; then
+  printf "${RED}✗${NC} Unsupported vocabulary collection limit found in production bundle\n"
+  exit 1
+fi
+
+if ! grep -Fq 'vocabulary/collection?limit=100' build/web/main.dart.js; then
+  printf "${RED}✗${NC} Expected vocabulary collection compatibility request is missing\n"
   exit 1
 fi
 

@@ -50,6 +50,9 @@ void main() {
           );
         }
 
+        expect(request.url.path, '/vocabulary/collection');
+        expect(request.url.queryParameters['limit'], '100');
+
         return http.Response(
           jsonEncode({
             'items': saved

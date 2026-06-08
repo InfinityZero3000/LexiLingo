@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 from jose import jwt
 
-from api.core.auth import _decode_backend_jwt, get_current_user
+from api.core.auth import _decode_backend_jwt, _jwt_secret, get_current_user
 
 
 @pytest.mark.asyncio
@@ -55,3 +55,11 @@ def test_decode_backend_jwt_requires_access_token_type(monkeypatch):
     )
 
     assert _decode_backend_jwt(refresh_token) is None
+
+
+def test_jwt_secret_does_not_accept_legacy_aliases(monkeypatch):
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    monkeypatch.setenv("JWT_SECRET_KEY", "legacy-secret")
+    monkeypatch.setenv("AI_JWT_SECRET_KEY", "legacy-ai-secret")
+
+    assert _jwt_secret() == ""
