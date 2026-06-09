@@ -430,17 +430,16 @@ class ApiClient {
 
   /// Parse error response and throw ApiErrorException
   Future<void> _handleErrorResponse(ApiResponse response) async {
-    // Handle 401 Unauthorized
+    // Give an existing session one chance to refresh. If refresh is not
+    // possible, keep parsing the response so callers receive the backend's
+    // actual auth error instead of a generic "Unauthorized".
     if (response.statusCode == 401) {
-      // Try to refresh token if callback is provided
       if (_onUnauthorized != null) {
         final refreshed = await _onUnauthorized();
         if (refreshed) {
-          // Token was refreshed, caller should retry
           throw TokenRefreshedException();
         }
       }
-      throw UnauthorizedException('Unauthorized');
     }
 
     if (response.body.isEmpty) {
@@ -460,6 +459,10 @@ class ApiClient {
       if (e is UnauthorizedException) rethrow;
       if (e is TokenRefreshedException) rethrow;
       // If parsing fails, throw generic error
+    }
+
+    if (response.statusCode == 401) {
+      throw UnauthorizedException('Unauthorized');
     }
 
     throw ServerException(

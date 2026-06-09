@@ -197,6 +197,31 @@ void main() {
     expect(preferences.getString(AppConstants.themeModeKey), 'light');
   });
 
+  test('local theme persistence is not blocked by settings sync', () async {
+    SharedPreferences.setMockInitialValues({});
+    final preferences = await SharedPreferences.getInstance();
+    final repository = _FakeSettingsRepository(
+      loadedSettings: const Settings(id: 1, userId: 'user-1'),
+    );
+    repository.updateCompleter = Completer<Either<Failure, void>>();
+    final provider = SettingsProvider(
+      repository: repository,
+      notificationService: _FakeNotificationService(),
+      themePreferenceStore: ThemePreferenceStore(preferences),
+    );
+    await provider.loadSettings('user-1');
+
+    final darkUpdate = provider.updateTheme('dark');
+    final lightUpdate = provider.updateTheme('light');
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(preferences.getString(AppConstants.themeModeKey), 'light');
+
+    repository.updateCompleter!.complete(const Right(null));
+    await Future.wait([darkUpdate, lightUpdate]);
+  });
+
   testWidgets('changing provider theme rebuilds MaterialApp immediately', (
     tester,
   ) async {

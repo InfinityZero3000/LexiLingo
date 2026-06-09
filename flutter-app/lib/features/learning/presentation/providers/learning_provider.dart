@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model
 import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
 import 'package:lexilingo_app/features/learning/data/models/lesson_complete_model.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
+import 'package:lexilingo_app/features/learning/domain/services/speaking_answer_matcher.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/start_lesson_usecase.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/submit_answer_usecase.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/complete_lesson_usecase.dart';
@@ -291,6 +292,11 @@ class LearningProvider with ChangeNotifier {
                 correctAnswer.replaceAll(RegExp(r'[^\w\s]'), '');
       case ExerciseType.translate:
         return _calculateSimilarity(userAnswer, correctAnswer) > 0.7;
+      case ExerciseType.speaking:
+        return SpeakingAnswerMatcher.evaluate(
+          transcript: answer,
+          target: exercise.correctAnswer,
+        ).isApproved;
       default:
         return false;
     }
