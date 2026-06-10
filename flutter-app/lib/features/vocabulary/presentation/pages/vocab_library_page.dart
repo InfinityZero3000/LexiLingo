@@ -1032,17 +1032,30 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              def,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                fontSize: 14,
-                              ),
-                            ),
+                            Builder(builder: (context) {
+                              final displayDef = def.isEmpty
+                                  ? 'vocabulary.noDefinitionYet'.tr()
+                                  : def;
+                              return Text(
+                                displayDef,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: def.isEmpty
+                                      ? Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant
+                                            .withValues(alpha: 0.45)
+                                      : Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                  fontSize: 14,
+                                  fontStyle: def.isEmpty
+                                      ? FontStyle.italic
+                                      : FontStyle.normal,
+                                ),
+                              );
+                            }),
                           ],
                         ),
                       ),

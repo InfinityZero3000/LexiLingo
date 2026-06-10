@@ -476,10 +476,45 @@ class _CardBack extends StatelessWidget {
           // Definition
           _SectionLabel(label: 'vocabulary.definition'.tr()),
           const SizedBox(height: 8),
-          Text(
-            word.definition,
-            style: TextStyle(fontSize: 16, height: 1.6, color: cs.onSurface),
-          ),
+          word.definition.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 16,
+                        color: AppColors.primary.withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'vocabulary.noDefinitionYet'.tr(),
+                          style: TextStyle(
+                            fontSize: 14,
+                            height: 1.5,
+                            fontStyle: FontStyle.italic,
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Text(
+                  word.definition,
+                  style: TextStyle(fontSize: 16, height: 1.6, color: cs.onSurface),
+                ),
 
           // Example
           if (word.example != null && word.example!.isNotEmpty) ...[

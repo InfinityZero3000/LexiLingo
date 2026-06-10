@@ -150,7 +150,7 @@ class VocabProvider extends ChangeNotifier {
           return VocabWord(
             userVocabularyId: item['id'] as String?,
             word: word,
-            definition: vocab['definition'] as String? ?? '',
+            definition: _cleanDefinition(vocab['definition'] as String? ?? ''),
             pronunciation: vocab['pronunciation'] as String?,
             audioUrl: vocab['audio_url'] as String?,
             partOfSpeech: vocab['part_of_speech'] as String?,
@@ -160,6 +160,19 @@ class VocabProvider extends ChangeNotifier {
         })
         .whereType<VocabWord>()
         .toList();
+  }
+
+  /// Strips auto-generated seeded/placeholder definitions that were inserted
+  /// by data-import scripts and should not be surfaced to the user.
+  static String _cleanDefinition(String raw) {
+    const _seededPrefixes = [
+      'Seeded from crawled',
+      '#N/A',
+    ];
+    for (final prefix in _seededPrefixes) {
+      if (raw.startsWith(prefix)) return '';
+    }
+    return raw;
   }
 
   /// Look up a word in the free Dictionary API.

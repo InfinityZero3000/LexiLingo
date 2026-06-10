@@ -11,6 +11,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ===== VocabularyItem Schemas =====
 
+# Prefixes that mark auto-generated / placeholder definitions that should not
+# be displayed as-is to end-users.
+_SEEDED_DEFINITION_PREFIXES = (
+    "Seeded from crawled",
+    "#N/A",
+)
+
+
 class VocabularyItemBase(BaseModel):
     """Base vocabulary item schema"""
     word: str = Field(..., max_length=255, description="The vocabulary word")
@@ -21,6 +29,16 @@ class VocabularyItemBase(BaseModel):
     part_of_speech: str = Field(..., description="noun, verb, adjective, etc.")
     difficulty_level: str = Field(..., description="A1, A2, B1, B2, C1, C2")
     tags: Optional[List[str]] = Field(None, description="Tags for categorization")
+
+    @field_validator("definition", mode="before")
+    @classmethod
+    def clean_seeded_definition(cls, v: Any) -> Any:
+        """Replace auto-generated placeholder definitions with an empty string
+        so that consumers (mobile/web clients) can fall back to their own UI.
+        """
+        if isinstance(v, str) and v.startswith(_SEEDED_DEFINITION_PREFIXES):
+            return ""
+        return v
 
 
 class VocabularyItemCreate(VocabularyItemBase):

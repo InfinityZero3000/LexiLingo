@@ -332,10 +332,23 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               ),
             ),
             const SizedBox(height: 8),
-            Text(
-              vocabulary.definition,
-              style: const TextStyle(fontSize: 18, height: 1.5),
-            ),
+            vocabulary.definition.isEmpty
+                ? Text(
+                    'vocabulary.noDefinitionYet'.tr(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      height: 1.5,
+                      fontStyle: FontStyle.italic,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.45),
+                    ),
+                  )
+                : Text(
+                    vocabulary.definition,
+                    style: const TextStyle(fontSize: 18, height: 1.5),
+                  ),
 
             // Localized translation
             if (vocabulary.getTranslation(context.locale.languageCode) !=
