@@ -151,7 +151,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                         _fieldLabel('Log Level'),
                         const SizedBox(height: 6),
                         DropdownButtonFormField<String>(
-                          value: _logLevel,
+                          initialValue: _logLevel,
                           style: GoogleFonts.spaceGrotesk(fontSize: 14, color: AppColors.onSurface),
                           decoration: const InputDecoration(isDense: true),
                           items: _logLevels
@@ -278,7 +278,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               ],
             ),
           ),
-          Switch(value: value, onChanged: onChanged, activeColor: AppColors.primary),
+          Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.primary),
         ],
       );
 }

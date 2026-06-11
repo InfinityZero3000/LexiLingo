@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/podcast_audio_handler.dart';
@@ -179,7 +178,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
         ),
         body: const Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: EdgeInsets.all(32),
             child: LottieLoadingWidget.medium(),
           ),
         ),

@@ -535,7 +535,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
                                           color: AppColors.onSurfaceMuted)),
                                   const SizedBox(height: 4),
                                   DropdownButtonFormField<String>(
-                                    value: _selectedLeague,
+                                    initialValue: _selectedLeague,
                                     decoration: const InputDecoration(isDense: true),
                                     style: GoogleFonts.spaceGrotesk(
                                         fontSize: 13, color: AppColors.onSurface),

@@ -172,6 +172,12 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
           final currentCard = session.currentCard;
 
           if (currentCard == null) {
+            if (!session.isCompleted) {
+              // Loaded cards exhausted while background preload is still running
+              return const Center(
+                child: CircularProgressIndicator(strokeWidth: 3),
+              );
+            }
             return Center(child: Text('flashcard.sessionComplete'.tr()));
           }
 
