@@ -50,7 +50,7 @@ redis>=6.4.0,<7.0.0
 
 
 # Background jobs
-celery[redis]>=5.4,<6
+celery[redis]>=5.6.3,<6
 
 # System metrics (used by admin monitoring endpoints)
 psutil>=6.1.1
