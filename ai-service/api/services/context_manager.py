@@ -8,12 +8,11 @@ Following architecture.md Section 2.1:
 - Semantic Memory (Knowledge Graph)
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 
 from api.core.redis_client import LearnerProfileCache, ConversationCache
-from api.models.schemas import ChatMessage
 
 
 class ContextManager:
@@ -73,7 +72,7 @@ class ContextManager:
             "history": history,
             "learner_profile": learner_profile,
             "context_summary": context_summary,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
     def _build_context_summary(

@@ -13,7 +13,7 @@ import logging
 import os
 import hmac
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
 from api.core.database import get_database
 from api.core.redis_client import get_redis
@@ -148,8 +148,8 @@ def _build_admin_story(payload: AdminStoryCreateRequest) -> Story:
             opening_prompt=opening_prompt,
             checkpoints=["Clarify the situation", "Practice key phrases", "Wrap up politely"],
         ),
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
     )
 
 
@@ -347,7 +347,7 @@ async def create_admin_topic(
     doc = story.model_dump(mode="json")
     await db["stories"].update_one(
         {"story_id": story.story_id},
-        {"$set": {**doc, "updated_at": datetime.utcnow()}},
+        {"$set": {**doc, "updated_at": datetime.now(timezone.utc)}},
         upsert=True,
     )
 

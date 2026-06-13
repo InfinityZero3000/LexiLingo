@@ -8,7 +8,7 @@ Tracks CPU, memory, disk usage and provides health checks.
 import psutil
 import logging
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class PerformanceMonitor:
             "memory": self.get_memory_stats(),
             "disk": self.get_disk_stats(),
             "network": self.get_network_stats(),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
         }
     
     def get_cpu_stats(self) -> Dict[str, Any]:
@@ -198,7 +198,7 @@ class PerformanceMonitor:
             "warnings": warnings,
             "warning_count": len(warnings),
             "critical_count": sum(1 for w in warnings if w["severity"] == "critical"),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
         }
     
     def get_process_stats(self) -> Dict[str, Any]:

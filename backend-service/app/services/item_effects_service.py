@@ -322,13 +322,37 @@ class DailyChallengeService:
         from datetime import date
         
         today = date.today()
-        
-        # Check if already claimed - using DailyActivity as claim tracker
-        # In a full implementation, you'd have a dedicated ChallengeRewardClaim table
-        
-        # Award XP
-        # TODO: Update user's XP in User model
-        
+
+        # Award XP to User.total_xp and DailyActivity
+        if xp_reward > 0:
+            from app.models.user import User
+            from app.models.progress import DailyActivity
+
+            user_result = await self.db.execute(select(User).where(User.id == user_id))
+            user = user_result.scalar_one_or_none()
+            if user is not None:
+                user.total_xp = (user.total_xp or 0) + xp_reward
+
+            activity_result = await self.db.execute(
+                select(DailyActivity).where(
+                    and_(DailyActivity.user_id == user_id, DailyActivity.activity_date == today)
+                )
+            )
+            activity = activity_result.scalar_one_or_none()
+            if activity is not None:
+                activity.xp_earned = (activity.xp_earned or 0) + xp_reward
+            else:
+                self.db.add(DailyActivity(
+                    user_id=user_id,
+                    activity_date=today,
+                    xp_earned=xp_reward,
+                    lessons_completed=0,
+                    study_time_minutes=0,
+                ))
+
+            from app.crud.gamification import LeaderboardCRUD
+            await LeaderboardCRUD.add_xp(self.db, user_id, xp_reward)
+
         # Award gems if applicable
         if gems_reward > 0:
             await WalletCRUD.add_gems(

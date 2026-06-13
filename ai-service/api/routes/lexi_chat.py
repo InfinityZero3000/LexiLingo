@@ -24,7 +24,7 @@ import base64
 import hashlib
 from contextlib import suppress
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import AsyncGenerator, Optional, List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Header, Request
@@ -151,7 +151,7 @@ class _LexiIdempotencyStore:
         return f"{self._PREFIX}{user_id}:{session_id}:{idempotency_key}"
 
     def _cleanup_mem(self):
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         stale = [
             k
             for k, v in self._mem.items()
@@ -213,7 +213,7 @@ class _LexiIdempotencyStore:
         self._cleanup_mem()
         self._mem[key] = {
             **payload,
-            "expires_at": datetime.utcnow() + self._TTL,
+            "expires_at": datetime.now(timezone.utc) + self._TTL,
         }
 
 
@@ -698,7 +698,7 @@ async def _run_lexi_pipeline(
 
     # ── Persist messages ──
     message_id = str(uuid.uuid4())
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
 
     # Fire all independent writes concurrently: Redis appends + MongoDB writes
     await asyncio.gather(
@@ -831,7 +831,7 @@ async def create_lexi_session(
     request = request.model_copy(update={"user_id": auth_user_id})
 
     session_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     
     await _store.set_session(session_id, {
         "session_id": session_id,
@@ -907,7 +907,7 @@ async def lexi_chat(
         _store.get_messages(session_id),
     )
     if not _session_exists:
-        now_iso = datetime.utcnow().isoformat()
+        now_iso = datetime.now(timezone.utc).isoformat()
         await asyncio.gather(
             _store.set_session(session_id, {
                 "session_id": session_id,
@@ -1067,7 +1067,7 @@ async def lexi_stream_chat(
         # 1. Open the SSE response before touching Redis/Mongo. This prevents a
         # degraded session store from holding the HTTP response until the edge
         # proxy returns a 504.
-        yield f"event: thinking\ndata: {{}}\n\n"
+        yield "event: thinking\ndata: {}\n\n"
 
         # 2. Session management. Keep sending data events while Redis/Mongo is
         # slow so Cloudflare and nginx do not treat the stream as idle.
@@ -1077,7 +1077,7 @@ async def lexi_stream_chat(
                 _store.get_messages(session_id),
             )
             if not sess_exists:
-                now_iso = datetime.utcnow().isoformat()
+                now_iso = datetime.now(timezone.utc).isoformat()
                 await asyncio.gather(
                     _store.set_session(session_id, {
                         "session_id": session_id,
@@ -1107,7 +1107,7 @@ async def lexi_stream_chat(
             return session_history
 
         session_task = asyncio.create_task(_prepare_session())
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         session_timeout_s = max(
             _HEARTBEAT_INTERVAL_S,
             float(os.getenv("LEXI_STREAM_SESSION_TIMEOUT_SECONDS", "15")),
@@ -1133,7 +1133,7 @@ async def lexi_stream_chat(
                     timeout=_HEARTBEAT_INTERVAL_S,
                 )
             except asyncio.TimeoutError:
-                yield f"event: heartbeat\ndata: {{}}\n\n"
+                yield "event: heartbeat\ndata: {}\n\n"
             except Exception:
                 break
 
@@ -1153,7 +1153,7 @@ async def lexi_stream_chat(
         #    a task so we can keep pinging while it initialises.
         try:
             orch_task = asyncio.create_task(get_orchestrator())
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             orch_deadline = loop.time() + 45.0  # Reduced from 60s: total must fit within Cloudflare's 100s proxy timeout
             while not orch_task.done():
                 if loop.time() >= orch_deadline:
@@ -1168,7 +1168,7 @@ async def lexi_stream_chat(
                 except asyncio.TimeoutError:
                     # Use proper SSE data event (not comment) — Cloudflare flushes data events
                     # immediately but may buffer SSE comment lines (`: ping`).
-                    yield f"event: heartbeat\ndata: {{}}\n\n"
+                    yield "event: heartbeat\ndata: {}\n\n"
                 except Exception:
                     break
             orchestrator = await orch_task
@@ -1182,7 +1182,7 @@ async def lexi_stream_chat(
                 )
             )
 
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             ctx_deadline = loop.time() + 15.0  # Reduced from 25s: orch(45) + ctx(15) + LLM < 90s
             while not ctx_task.done():
                 if loop.time() >= ctx_deadline:
@@ -1199,7 +1199,7 @@ async def lexi_stream_chat(
                     )
                 except asyncio.TimeoutError:
                     # Use proper SSE data event — Cloudflare flushes data events immediately
-                    yield f"event: heartbeat\ndata: {{}}\n\n"
+                    yield "event: heartbeat\ndata: {}\n\n"
                 except Exception:
                     break
 
@@ -1277,7 +1277,7 @@ async def lexi_stream_chat(
 
         # 5. Persist messages (parallelised)
         message_id = str(uuid.uuid4())
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
 
         async def _stream_persist():
             await asyncio.gather(
@@ -1463,7 +1463,7 @@ async def get_lexi_messages(
             "id": m.get("id", str(uuid.uuid4())),
             "role": m.get("role", "user"),
             "content": m.get("content", ""),
-            "timestamp": m.get("timestamp", datetime.utcnow().isoformat()),
+            "timestamp": m.get("timestamp", datetime.now(timezone.utc).isoformat()),
         }
         for m in messages
     ]
@@ -1472,8 +1472,8 @@ async def get_lexi_messages(
     await _store.set_session(session_id, {
         "session_id": session_doc.get("session_id"),
         "user_id": session_doc.get("user_id", "demo_user"),
-        "created_at": session_doc.get("created_at", datetime.utcnow().isoformat()),
-        "updated_at": session_doc.get("updated_at", datetime.utcnow().isoformat()),
+        "created_at": session_doc.get("created_at", datetime.now(timezone.utc).isoformat()),
+        "updated_at": session_doc.get("updated_at", datetime.now(timezone.utc).isoformat()),
         "title": session_doc.get("title", "Lexi Chat"),
         "message_count": session_doc.get("message_count", len(payload)),
         "persona": session_doc.get("persona", "lexi"),
@@ -1644,8 +1644,8 @@ async def list_lexi_sessions(
             session_id=row.get("session_id", ""),
             user_id=row.get("user_id", user_id),
             title=row.get("title", "Lexi Chat"),
-            created_at=row.get("created_at", datetime.utcnow().isoformat()),
-            updated_at=row.get("updated_at", row.get("created_at", datetime.utcnow().isoformat())),
+            created_at=row.get("created_at", datetime.now(timezone.utc).isoformat()),
+            updated_at=row.get("updated_at", row.get("created_at", datetime.now(timezone.utc).isoformat())),
             message_count=int(row.get("message_count", 0)),
         )
         for row in rows
@@ -1667,7 +1667,7 @@ async def rename_lexi_session(
     if not title:
         raise HTTPException(status_code=400, detail="Title cannot be empty")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     result = await db["lexi_sessions"].update_one(
         {"session_id": session_id},
         {"$set": {"title": title, "updated_at": now}},

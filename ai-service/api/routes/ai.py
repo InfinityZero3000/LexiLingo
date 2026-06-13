@@ -13,13 +13,11 @@ from api.core.database import get_database
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.models.schemas import (
     LogInteractionRequest,
-    LogInteractionResponse,
-    UserLearningPattern,
-    ErrorResponse
+    LogInteractionResponse
 )
 from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
-from api.services.trace_cag import get_trace_cag, TraceCAGPipeline
+from api.services.trace_cag import get_trace_cag
 from api.services.v3_pipeline import get_v3_pipeline
 
 router = APIRouter()
@@ -133,8 +131,8 @@ async def analyze_with_v3(request: AnalyzeRequest):
 async def trace_cag_health():
     """Health check endpoint for TraceCAG."""
     try:
-        pipeline = await get_trace_cag()
-        
+        await get_trace_cag()  # raises if the pipeline cannot initialize
+
         return {
             "status": "healthy",
             "pipeline": "TraceCAG",
@@ -300,8 +298,8 @@ async def get_monitoring_dashboard():
         
         telemetry = get_telemetry()
         perf_monitor = get_performance_monitor()
-        trace_cag = await get_trace_cag()
-        
+        await get_trace_cag()  # raises if the pipeline cannot initialize
+
         return {
             "telemetry": telemetry.get_dashboard_data(),
             "system": perf_monitor.get_system_stats(),

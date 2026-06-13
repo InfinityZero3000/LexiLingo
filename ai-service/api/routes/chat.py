@@ -13,7 +13,7 @@ import json
 import uuid
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 
 from api.core.database import get_database
@@ -149,7 +149,7 @@ async def create_session(
     """Create a new chat session in MongoDB."""
     try:
         session_id = str(uuid.uuid4())
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         session = {
             "session_id": session_id,
@@ -224,7 +224,7 @@ async def send_message(
             "user_id": msg_req.user_id,
             "content": msg_req.message,
             "role": MessageRole.USER.value,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         import asyncio as _asyncio
         _save_user_msg_task = _asyncio.ensure_future(
@@ -297,10 +297,10 @@ async def send_message(
             "session_id": msg_req.session_id,
             "content": ai_response,
             "role": MessageRole.ASSISTANT.value,
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(timezone.utc),
             "model": model_used
         }
-        _now = datetime.utcnow()
+        _now = datetime.now(timezone.utc)
         await _asyncio.gather(
             _save_user_msg_task,
             db["chat_messages"].insert_one(ai_message),

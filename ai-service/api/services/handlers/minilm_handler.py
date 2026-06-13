@@ -9,8 +9,7 @@ Manages sentence-transformers/all-MiniLM-L6-v2 for:
 
 import asyncio
 import logging
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
@@ -66,7 +65,7 @@ class MiniLMHandler:
                 return
             self._loading = True
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 await loop.run_in_executor(None, self._load_sync)
                 self._loaded = True
                 logger.info(
@@ -131,7 +130,7 @@ class MiniLMHandler:
                 embeddings = _l2_normalize(embeddings)
             return embeddings
 
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         embeddings = await loop.run_in_executor(
             None,
             lambda: self.model.encode(

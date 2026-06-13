@@ -37,7 +37,6 @@ class GeminiHandler:
         self.config = config or GeminiConfig()
         self._client = None
         self._loaded = False
-        self._loading = False
         self._lock = asyncio.Lock()
         
     @property
@@ -58,12 +57,6 @@ class GeminiHandler:
             if self._loaded:
                 return True
                 
-            if self._loading:
-                while self._loading:
-                    await asyncio.sleep(0.1)
-                return self._loaded
-            
-            self._loading = True
             try:
                 logger.info("[GeminiHandler] Initializing Gemini client...")
                 
@@ -87,8 +80,6 @@ class GeminiHandler:
                 logger.error(f"[GeminiHandler] Failed to initialize: {e}")
                 self._loaded = False
                 return False
-            finally:
-                self._loading = False
     
     async def unload(self) -> None:
         """Cleanup resources."""

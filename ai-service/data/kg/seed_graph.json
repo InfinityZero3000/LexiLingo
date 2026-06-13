@@ -1,0 +1,1003 @@
+{
+  "concepts": [
+    {
+      "id": "concept:grammar.subject_verb_agreement",
+      "title": "Subject-verb agreement",
+      "keywords": "subject verb agreement I you we they base verb goes go",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.third_person_s",
+      "title": "Third-person -s",
+      "keywords": "third person he she it adds s",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.present_simple",
+      "title": "Present Simple",
+      "keywords": "present simple routines habits every day always usually",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.articles_a_an",
+      "title": "Articles a/an",
+      "keywords": "article a an indefinite countable singular noun",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.to_be",
+      "title": "Verb to be",
+      "keywords": "am is are was were be being been",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.plural_nouns",
+      "title": "Plural nouns",
+      "keywords": "plural s es ies irregular plurals",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.questions_yes_no",
+      "title": "Yes/No Questions",
+      "keywords": "question do does is are did yes no short answer form",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.question_words",
+      "title": "Question Words (Wh-)",
+      "keywords": "what where when who why how question wh information",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.imperatives",
+      "title": "Imperatives",
+      "keywords": "imperative command request go sit stop don't please open close",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.demonstratives",
+      "title": "Demonstratives",
+      "keywords": "demonstrative this that these those near far singular plural",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.there_is_are",
+      "title": "There is / There are",
+      "keywords": "there is are was were existence location some any",
+      "level": "A1"
+    },
+    {
+      "id": "concept:error.missing_auxiliary",
+      "title": "Missing Auxiliary (do/does/did)",
+      "keywords": "missing auxiliary do does did question negative you like he like",
+      "level": "A1"
+    },
+    {
+      "id": "concept:grammar.past_simple",
+      "title": "Past Simple",
+      "keywords": "past simple ed yesterday last ago regular irregular",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.past_time_markers",
+      "title": "Past time markers",
+      "keywords": "yesterday last ago past time markers week month",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.future_will",
+      "title": "Future with will",
+      "keywords": "will future prediction promise tomorrow next",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.going_to",
+      "title": "Going to for plans",
+      "keywords": "going to plan intention future arranged",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.comparatives",
+      "title": "Comparatives",
+      "keywords": "comparative er more than bigger better worse",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.superlatives",
+      "title": "Superlatives",
+      "keywords": "superlative est most the biggest best worst",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.adverbs_frequency",
+      "title": "Adverbs of Frequency",
+      "keywords": "always usually often sometimes rarely never frequency adverb hardly ever",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.countable_uncountable",
+      "title": "Countable & Uncountable Nouns",
+      "keywords": "countable uncountable noun water rice some any much many few little piece of",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.possessive_s",
+      "title": "Possessive 's",
+      "keywords": "possessive s apostrophe mine yours his hers its our their belong",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.word_order",
+      "title": "English Word Order (SVO)",
+      "keywords": "word order subject verb object SVO sentence structure position adverb",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.conjunctions",
+      "title": "Conjunctions & Connectors",
+      "keywords": "conjunction and but or so because although however therefore connector linking",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.prepositions_time",
+      "title": "Prepositions of Time (at/on/in)",
+      "keywords": "preposition time at on in during for since until by before after",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.prepositions_place",
+      "title": "Prepositions of Place (at/on/in)",
+      "keywords": "preposition place at on in under above next to between behind in front of",
+      "level": "A1"
+    },
+    {
+      "id": "concept:error.preposition_confusion",
+      "title": "Preposition Confusion",
+      "keywords": "wrong preposition at in on for to from with about by during Vietnamese",
+      "level": "A2"
+    },
+    {
+      "id": "concept:error.overuse_very",
+      "title": "Overuse of 'Very'",
+      "keywords": "overuse very extremely incredibly absolutely terribly awfully stronger adjective",
+      "level": "A2"
+    },
+    {
+      "id": "concept:error.word_order_svo",
+      "title": "Word Order (SVO) Error",
+      "keywords": "word order SVO Vietnamese influence adverb before verb subject position",
+      "level": "A2"
+    },
+    {
+      "id": "concept:vocab.daily_life",
+      "title": "Daily Life Vocabulary",
+      "keywords": "daily routine morning evening food home family",
+      "level": "A1"
+    },
+    {
+      "id": "concept:vocab.emotions_feelings",
+      "title": "Emotions & Feelings",
+      "keywords": "happy sad angry excited nervous scared worried proud embarrassed surprised lonely bored",
+      "level": "A1"
+    },
+    {
+      "id": "concept:vocab.body_parts",
+      "title": "Body Parts",
+      "keywords": "head face eyes ears nose mouth neck shoulder arm hand finger back leg knee foot",
+      "level": "A1"
+    },
+    {
+      "id": "concept:vocab.transport",
+      "title": "Transport & Commuting",
+      "keywords": "bus train car bike taxi plane subway metro ticket station platform commute",
+      "level": "A2"
+    },
+    {
+      "id": "concept:vocab.home_housing",
+      "title": "Home & Housing",
+      "keywords": "house flat apartment room kitchen bedroom bathroom living room furniture rent buy",
+      "level": "A2"
+    },
+    {
+      "id": "concept:vocab.health",
+      "title": "Health & Medicine",
+      "keywords": "health doctor hospital medicine sick ill pain symptoms treatment headache fever cold flu",
+      "level": "A2"
+    },
+    {
+      "id": "concept:vocab.travel",
+      "title": "Travel & Tourism",
+      "keywords": "travel trip holiday journey destination sightseeing hotel visa passport airport tourist",
+      "level": "A2"
+    },
+    {
+      "id": "concept:vocab.shopping",
+      "title": "Shopping & Money",
+      "keywords": "shop store buy sell price cost cheap expensive change receipt discount sale cashier",
+      "level": "A2"
+    },
+    {
+      "id": "concept:conversation.expressing_feelings",
+      "title": "Expressing Feelings",
+      "keywords": "feeling emotion express happy sad angry nervous afraid tell how feel",
+      "level": "A1"
+    },
+    {
+      "id": "concept:conversation.small_talk",
+      "title": "Small Talk & Social Chat",
+      "keywords": "small talk weather how are you nice to meet you chat greet conversation starter",
+      "level": "A2"
+    },
+    {
+      "id": "concept:grammar.present_perfect",
+      "title": "Present Perfect",
+      "keywords": "present perfect have has ed experience ever never since for",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.present_continuous",
+      "title": "Present Continuous",
+      "keywords": "present continuous progressive ing now currently at the moment",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.conditionals_first",
+      "title": "First Conditional",
+      "keywords": "if will first conditional real possible future",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.modal_can_could",
+      "title": "Modal: can/could",
+      "keywords": "can could ability permission possibility request",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.modal_must_should",
+      "title": "Modal: must/should",
+      "keywords": "must should obligation advice necessity recommendation",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.passive_voice",
+      "title": "Passive Voice",
+      "keywords": "passive voice be done was made is being by agent",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.present_perfect_continuous",
+      "title": "Present Perfect Continuous",
+      "keywords": "present perfect continuous have been doing since for how long tired dirty",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.phrasal_verbs_common",
+      "title": "Common Phrasal Verbs",
+      "keywords": "phrasal verb look up give up turn on pick up put off run out figure out come across break down",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.gerund_infinitive",
+      "title": "Gerund & Infinitive",
+      "keywords": "gerund infinitive enjoy doing want to need to good at interested in avoid after preposition",
+      "level": "B1"
+    },
+    {
+      "id": "concept:error.make_do_confusion",
+      "title": "Make vs Do Confusion",
+      "keywords": "make do confusion make a decision do homework make friends do exercise",
+      "level": "B1"
+    },
+    {
+      "id": "concept:error.tell_say_confusion",
+      "title": "Tell vs Say Confusion",
+      "keywords": "tell say confusion tell me said to me told said that report",
+      "level": "B1"
+    },
+    {
+      "id": "concept:error.wrong_tense_reported",
+      "title": "Wrong Tense in Reported Speech",
+      "keywords": "reported speech tense shift past present said told would could had",
+      "level": "B1"
+    },
+    {
+      "id": "concept:error.gerund_after_preposition",
+      "title": "Gerund After Preposition",
+      "keywords": "gerund after preposition at by in of about interested in good at",
+      "level": "B1"
+    },
+    {
+      "id": "concept:vocab.work_business",
+      "title": "Work & Business",
+      "keywords": "work office meeting business job career professional",
+      "level": "B1"
+    },
+    {
+      "id": "concept:vocab.personality_traits",
+      "title": "Personality & Character",
+      "keywords": "personality kind friendly shy confident brave honest patient creative ambitious generous stubborn",
+      "level": "B1"
+    },
+    {
+      "id": "concept:vocab.social_media",
+      "title": "Social Media & Internet",
+      "keywords": "social media post share like follow comment hashtag profile feed story viral trending influencer",
+      "level": "B1"
+    },
+    {
+      "id": "concept:vocab.technology",
+      "title": "Technology & Gadgets",
+      "keywords": "technology device gadget smartphone computer software app internet digital smart screen battery",
+      "level": "B1"
+    },
+    {
+      "id": "concept:conversation.telephone_email",
+      "title": "Telephone & Email",
+      "keywords": "phone call email message send reply forward subject dear regards hold speak",
+      "level": "B1"
+    },
+    {
+      "id": "concept:conversation.complaint_feedback",
+      "title": "Complaint & Feedback",
+      "keywords": "complain complaint feedback problem issue unhappy disappointed refund exchange",
+      "level": "B1"
+    },
+    {
+      "id": "concept:conversation.making_appointments",
+      "title": "Making Appointments",
+      "keywords": "appointment schedule meeting arrange confirm cancel reschedule available time slot book",
+      "level": "B1"
+    },
+    {
+      "id": "concept:conversation.expressing_opinions",
+      "title": "Expressing Opinions",
+      "keywords": "opinion think believe feel agree disagree in my view personally I think as far as",
+      "level": "B1"
+    },
+    {
+      "id": "concept:grammar.past_perfect",
+      "title": "Past Perfect",
+      "keywords": "past perfect had done before after earlier",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.conditionals_second",
+      "title": "Second Conditional",
+      "keywords": "if would second conditional unreal hypothetical imagine",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.conditionals_third",
+      "title": "Third Conditional",
+      "keywords": "if would have third conditional past unreal regret",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.relative_clauses",
+      "title": "Relative Clauses",
+      "keywords": "relative clause who which that whose whom defining non-defining",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.reported_speech",
+      "title": "Reported Speech",
+      "keywords": "reported speech indirect said told asked that would",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.wish_regret",
+      "title": "Wish & Regret Structures",
+      "keywords": "wish regret if only I wish had done would rather had better could have should have",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.noun_clauses",
+      "title": "Noun Clauses",
+      "keywords": "noun clause that what where how whether I think believe know say",
+      "level": "B2"
+    },
+    {
+      "id": "concept:vocab.academic",
+      "title": "Academic Vocabulary",
+      "keywords": "academic research study analyze evaluate evidence",
+      "level": "B2"
+    },
+    {
+      "id": "concept:vocab.culture_customs",
+      "title": "Culture & Customs",
+      "keywords": "culture tradition custom festival celebration ceremony ritual etiquette manners diverse heritage",
+      "level": "B2"
+    },
+    {
+      "id": "concept:conversation.job_interview",
+      "title": "Job Interview",
+      "keywords": "job interview cv resume experience skill strength weakness salary position apply",
+      "level": "B2"
+    },
+    {
+      "id": "concept:grammar.inversion",
+      "title": "Inversion",
+      "keywords": "inversion never rarely seldom hardly scarcely not only",
+      "level": "C1"
+    },
+    {
+      "id": "concept:grammar.cleft_sentences",
+      "title": "Cleft Sentences",
+      "keywords": "cleft it is what who emphasis focus",
+      "level": "C1"
+    },
+    {
+      "id": "concept:grammar.mixed_conditionals",
+      "title": "Mixed Conditionals",
+      "keywords": "mixed conditional past present result cause",
+      "level": "C1"
+    },
+    {
+      "id": "concept:grammar.ellipsis_substitution",
+      "title": "Ellipsis & Substitution",
+      "keywords": "ellipsis substitution so do I neither can she omission avoid repetition cohesion",
+      "level": "C1"
+    },
+    {
+      "id": "concept:grammar.subjunctive",
+      "title": "Subjunctive Mood",
+      "keywords": "subjunctive mood suggest recommend if I were essential necessary that he go formal",
+      "level": "C1"
+    },
+    {
+      "id": "concept:vocab.formal_register",
+      "title": "Formal Register & Academic Style",
+      "keywords": "formal register academic style therefore thus hence regarding henceforth hereby aforementioned",
+      "level": "C1"
+    },
+    {
+      "id": "concept:grammar.hedging",
+      "title": "Hedging Language",
+      "keywords": "hedging seems appears likely probably tends to apparently arguably possibly may well",
+      "level": "C2"
+    },
+    {
+      "id": "concept:grammar.discourse_cohesion",
+      "title": "Discourse Markers & Cohesion",
+      "keywords": "furthermore nevertheless however in contrast on the other hand accordingly consequently nonetheless",
+      "level": "C2"
+    },
+    {
+      "id": "concept:error.article_omission",
+      "title": "Article Omission",
+      "keywords": "missing article the a an Vietnamese learner",
+      "level": "A1"
+    },
+    {
+      "id": "concept:error.tense_confusion",
+      "title": "Tense Confusion",
+      "keywords": "wrong tense past present future confused",
+      "level": "A2"
+    },
+    {
+      "id": "concept:error.subject_pronoun_drop",
+      "title": "Subject Pronoun Drop",
+      "keywords": "missing subject pronoun I he she it",
+      "level": "A1"
+    },
+    {
+      "id": "concept:qa.person_nationality",
+      "title": "Person and Nationality",
+      "keywords": "person nationality born citizen country same nationality",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.person_profession",
+      "title": "Person and Profession",
+      "keywords": "person profession occupation manager actor singer director",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.film_director",
+      "title": "Film and Director",
+      "keywords": "film movie directed by director",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.album_release",
+      "title": "Album Release",
+      "keywords": "album release released year music track",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.book_author",
+      "title": "Book and Author",
+      "keywords": "book novel author wrote written",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.location_country",
+      "title": "Location and Country",
+      "keywords": "location city country in located where",
+      "level": "A2"
+    },
+    {
+      "id": "concept:qa.location_region",
+      "title": "Location and Region",
+      "keywords": "region state province county district",
+      "level": "A2"
+    },
+    {
+      "id": "concept:qa.organization_founder",
+      "title": "Organization and Founder",
+      "keywords": "organization founded founder company institute",
+      "level": "B2"
+    },
+    {
+      "id": "concept:qa.organization_headquarters",
+      "title": "Organization Headquarters",
+      "keywords": "organization headquarters based in office",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.sports_team_league",
+      "title": "Sports Team and League",
+      "keywords": "team league club football basketball",
+      "level": "B1"
+    },
+    {
+      "id": "concept:qa.time_event",
+      "title": "Time and Event",
+      "keywords": "when year date founded released born",
+      "level": "A2"
+    },
+    {
+      "id": "concept:qa.bridge_comparison",
+      "title": "Bridge Comparison",
+      "keywords": "both same compare comparison relation",
+      "level": "B2"
+    }
+  ],
+  "edges": [
+    {
+      "from": "concept:grammar.present_simple",
+      "to": "concept:grammar.past_simple",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.present_simple",
+      "to": "concept:grammar.present_continuous",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.to_be",
+      "to": "concept:grammar.present_continuous",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.to_be",
+      "to": "concept:grammar.passive_voice",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.to_be",
+      "to": "concept:grammar.questions_yes_no",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.to_be",
+      "to": "concept:grammar.there_is_are",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.to_be",
+      "to": "concept:grammar.demonstratives",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.subject_verb_agreement",
+      "to": "concept:grammar.third_person_s",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.subject_verb_agreement",
+      "to": "concept:grammar.present_simple",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.questions_yes_no",
+      "to": "concept:grammar.question_words",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.questions_yes_no",
+      "to": "concept:error.missing_auxiliary",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.question_words",
+      "to": "concept:grammar.present_simple",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.question_words",
+      "to": "concept:grammar.to_be",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.plural_nouns",
+      "to": "concept:grammar.countable_uncountable",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.plural_nouns",
+      "to": "concept:grammar.demonstratives",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.missing_auxiliary",
+      "to": "concept:grammar.questions_yes_no",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.past_simple",
+      "to": "concept:grammar.present_perfect",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.past_simple",
+      "to": "concept:grammar.past_perfect",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.future_will",
+      "to": "concept:grammar.conditionals_first",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.adverbs_frequency",
+      "to": "concept:grammar.present_simple",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.countable_uncountable",
+      "to": "concept:error.article_omission",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.possessive_s",
+      "to": "concept:grammar.plural_nouns",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.possessive_s",
+      "to": "concept:vocab.daily_life",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.comparatives",
+      "to": "concept:grammar.superlatives",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.articles_a_an",
+      "to": "concept:error.article_omission",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.past_time_markers",
+      "to": "concept:error.tense_confusion",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.preposition_confusion",
+      "to": "concept:grammar.prepositions_time",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.preposition_confusion",
+      "to": "concept:grammar.prepositions_place",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.word_order_svo",
+      "to": "concept:grammar.word_order",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.word_order_svo",
+      "to": "concept:grammar.present_simple",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.word_order_svo",
+      "to": "concept:grammar.adverbs_frequency",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.conditionals_first",
+      "to": "concept:grammar.conditionals_second",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.present_perfect",
+      "to": "concept:grammar.past_perfect",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.present_perfect_continuous",
+      "to": "concept:grammar.present_perfect",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.present_perfect_continuous",
+      "to": "concept:grammar.present_continuous",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.phrasal_verbs_common",
+      "to": "concept:grammar.gerund_infinitive",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.phrasal_verbs_common",
+      "to": "concept:vocab.daily_life",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.make_do_confusion",
+      "to": "concept:grammar.phrasal_verbs_common",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.tell_say_confusion",
+      "to": "concept:grammar.reported_speech",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.gerund_after_preposition",
+      "to": "concept:grammar.gerund_infinitive",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.wrong_tense_reported",
+      "to": "concept:grammar.reported_speech",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:error.wrong_tense_reported",
+      "to": "concept:error.tense_confusion",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.conditionals_second",
+      "to": "concept:grammar.conditionals_third",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.conditionals_second",
+      "to": "concept:grammar.mixed_conditionals",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:grammar.wish_regret",
+      "to": "concept:grammar.conditionals_second",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.wish_regret",
+      "to": "concept:grammar.conditionals_third",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.noun_clauses",
+      "to": "concept:grammar.relative_clauses",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.noun_clauses",
+      "to": "concept:grammar.reported_speech",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.ellipsis_substitution",
+      "to": "concept:grammar.inversion",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.subjunctive",
+      "to": "concept:grammar.conditionals_second",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.subjunctive",
+      "to": "concept:grammar.modal_must_should",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.hedging",
+      "to": "concept:grammar.modal_can_could",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.hedging",
+      "to": "concept:vocab.formal_register",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.discourse_cohesion",
+      "to": "concept:grammar.conjunctions",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:grammar.discourse_cohesion",
+      "to": "concept:vocab.formal_register",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.emotions_feelings",
+      "to": "concept:conversation.expressing_feelings",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.emotions_feelings",
+      "to": "concept:vocab.daily_life",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.body_parts",
+      "to": "concept:vocab.health",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.transport",
+      "to": "concept:vocab.travel",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.transport",
+      "to": "concept:vocab.daily_life",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.home_housing",
+      "to": "concept:vocab.daily_life",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.personality_traits",
+      "to": "concept:conversation.job_interview",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.personality_traits",
+      "to": "concept:conversation.small_talk",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.social_media",
+      "to": "concept:vocab.technology",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.culture_customs",
+      "to": "concept:vocab.daily_life",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.formal_register",
+      "to": "concept:vocab.academic",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:vocab.formal_register",
+      "to": "concept:vocab.work_business",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.expressing_feelings",
+      "to": "concept:vocab.emotions_feelings",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.expressing_feelings",
+      "to": "concept:conversation.small_talk",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.telephone_email",
+      "to": "concept:conversation.making_appointments",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.telephone_email",
+      "to": "concept:vocab.work_business",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.job_interview",
+      "to": "concept:vocab.work_business",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.job_interview",
+      "to": "concept:vocab.personality_traits",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.complaint_feedback",
+      "to": "concept:vocab.shopping",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:conversation.complaint_feedback",
+      "to": "concept:conversation.expressing_opinions",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.person_profession",
+      "to": "concept:qa.film_director",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.person_profession",
+      "to": "concept:qa.organization_founder",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.film_director",
+      "to": "concept:qa.person_nationality",
+      "relation": "bridge_to"
+    },
+    {
+      "from": "concept:qa.film_director",
+      "to": "concept:qa.time_event",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.album_release",
+      "to": "concept:qa.time_event",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.album_release",
+      "to": "concept:qa.person_profession",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.book_author",
+      "to": "concept:qa.person_profession",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.book_author",
+      "to": "concept:qa.bridge_comparison",
+      "relation": "bridge_to"
+    },
+    {
+      "from": "concept:qa.location_region",
+      "to": "concept:qa.location_country",
+      "relation": "prerequisite_of"
+    },
+    {
+      "from": "concept:qa.organization_founder",
+      "to": "concept:qa.organization_headquarters",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.organization_founder",
+      "to": "concept:qa.location_country",
+      "relation": "bridge_to"
+    },
+    {
+      "from": "concept:qa.sports_team_league",
+      "to": "concept:qa.location_country",
+      "relation": "related_to"
+    },
+    {
+      "from": "concept:qa.sports_team_league",
+      "to": "concept:qa.bridge_comparison",
+      "relation": "bridge_to"
+    },
+    {
+      "from": "concept:qa.time_event",
+      "to": "concept:qa.bridge_comparison",
+      "relation": "related_to"
+    }
+  ]
+}

@@ -37,7 +37,6 @@ class HuBERTHandler:
         self.model = None
         self.processor = None
         self._loaded = False
-        self._loading = False
         self._lock = asyncio.Lock()
         
     @property
@@ -60,12 +59,6 @@ class HuBERTHandler:
             if self._loaded:
                 return True
                 
-            if self._loading:
-                while self._loading:
-                    await asyncio.sleep(0.1)
-                return self._loaded
-            
-            self._loading = True
             try:
                 logger.info("[HuBERTHandler] Loading HuBERT model...")
                 
@@ -73,7 +66,6 @@ class HuBERTHandler:
                     HubertForCTC,
                     Wav2Vec2Processor,
                 )
-                import torch
                 
                 # Detect device
                 device = self._detect_device()
@@ -81,15 +73,20 @@ class HuBERTHandler:
                 # Load model
                 model_path = self.config.model_path or self.config.model_id
                 
-                self.processor = Wav2Vec2Processor.from_pretrained(model_path)
-                self.model = HubertForCTC.from_pretrained(model_path)
-                
+                # Load off the event loop — from_pretrained blocks for seconds
+                self.processor = await asyncio.to_thread(
+                    Wav2Vec2Processor.from_pretrained, model_path
+                )
+                self.model = await asyncio.to_thread(
+                    HubertForCTC.from_pretrained, model_path
+                )
+
                 # Move to device
                 if device == "cuda":
-                    self.model = self.model.cuda()
+                    self.model = await asyncio.to_thread(self.model.cuda)
                 elif device == "mps":
-                    self.model = self.model.to("mps")
-                
+                    self.model = await asyncio.to_thread(self.model.to, "mps")
+
                 self.model.eval()
                 self._device = device
                 
@@ -101,8 +98,6 @@ class HuBERTHandler:
                 logger.error(f"[HuBERTHandler] Failed to load: {e}")
                 self._loaded = False
                 return False
-            finally:
-                self._loading = False
     
     def _detect_device(self) -> str:
         """Detect best available device."""
@@ -134,7 +129,7 @@ class HuBERTHandler:
             import torch
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-        except:
+        except Exception:
             pass
             
         logger.info("[HuBERTHandler] Model unloaded")
@@ -169,7 +164,7 @@ class HuBERTHandler:
         waveform = await self._load_audio(audio)
         
         # Run analysis in executor
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None,
             self._analyze_sync,
@@ -186,7 +181,6 @@ class HuBERTHandler:
     ) -> Dict[str, Any]:
         """Synchronous pronunciation analysis."""
         import torch
-        import numpy as np
         
         # Process audio
         inputs = self.processor(
@@ -354,7 +348,6 @@ class HuBERTHandler:
     
     async def _load_audio(self, audio: Union[str, bytes]) -> any:
         """Load audio and resample if needed."""
-        import numpy as np
         
         # Handle different input types
         if isinstance(audio, str):
@@ -364,7 +357,7 @@ class HuBERTHandler:
                     if "base64," in audio:
                         audio = audio.split("base64,")[1]
                     audio = base64.b64decode(audio)
-                except:
+                except Exception:
                     pass
         
         # Load with librosa or soundfile
@@ -384,7 +377,6 @@ class HuBERTHandler:
     
     async def _load_audio_file(self, path: str):
         """Load audio file."""
-        import numpy as np
         
         try:
             import librosa

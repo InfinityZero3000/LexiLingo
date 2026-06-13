@@ -11,7 +11,6 @@ import logging
 import json
 from typing import Dict, List, Optional, Any, AsyncIterator
 import httpx
-import asyncio
 
 logger = logging.getLogger(__name__)
 

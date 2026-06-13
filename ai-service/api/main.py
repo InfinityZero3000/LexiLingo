@@ -5,7 +5,7 @@ Main entry point for the AI Service.
 Initializes resources and includes modular routers.
 """
 
-from fastapi import FastAPI, HTTPException, Request, Depends, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
@@ -13,16 +13,15 @@ from contextlib import asynccontextmanager
 import logging
 import os
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import OperationFailure
 
 # Core imports
-from api.core.database import mongodb_manager, get_database
+from api.core.database import mongodb_manager
 from api.core.redis_client import RedisClient, get_redis
-from api.core.rate_limiter import RedisRateLimiter
 from api.core.groq_key_pool import build_groq_key_pool, GroqKeyPool
 from api.core.config import get_settings
 
@@ -310,7 +309,7 @@ async def visualizer_redirect():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 async def _run_model_warmup() -> None:

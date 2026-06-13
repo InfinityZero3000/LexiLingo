@@ -80,13 +80,16 @@ class KnowledgeGraphServiceV3:
                 if os.path.exists(cache_path):
                     try:
                         os.remove(cache_path)
-                    except Exception:
+                    except Exception as _exc:
+                        logger.debug("[kg_service_v3] ignored: %s", _exc)
                         pass
             else:
                 logger.info(f"[KG] Reusing existing KG with {self.get_concept_count()} concepts")
 
-            # Keep KG in sync with optional external knowledge bundle.
-            self._sync_external_knowledge()
+            # Benchmark evaluation is read-oriented and must not mutate the KG
+            # snapshot that the run is meant to measure.
+            if os.getenv("TRACECAG_KG_SKIP_SYNC", "").lower() not in {"1", "true", "yes", "on"}:
+                self._sync_external_knowledge()
 
             # Warm in-memory caches after all DB writes are done.
             self._build_concept_cache()
@@ -115,19 +118,24 @@ class KnowledgeGraphServiceV3:
         elif os.path.exists(self._db_path):
             os.remove(self._db_path)
 
-        os.makedirs(self._db_path, exist_ok=True)
+        # Current Kuzu Python releases use a database file at ``_db_path``.
+        # Creating a directory with that name makes the subsequent open fail
+        # with "Database path cannot be a directory".
+        os.makedirs(os.path.dirname(self._db_path), exist_ok=True)
         # Clear synced files metadata cache on rebuild
         cache_path = self._db_path + "_synced_files.json"
         if os.path.exists(cache_path):
             try:
                 os.remove(cache_path)
-            except Exception:
+            except Exception as _exc:
+                logger.debug("[kg_service_v3] ignored: %s", _exc)
                 pass
         self._db = kuzu.Database(self._db_path)
         self._conn = kuzu.Connection(self._db)
         self._ensure_schema()
         self._seed_default_graph()
-        self._sync_external_knowledge()
+        if os.getenv("TRACECAG_KG_SKIP_SYNC", "").lower() not in {"1", "true", "yes", "on"}:
+            self._sync_external_knowledge()
         self._build_concept_cache()
         self._recovery_attempted = True
 
@@ -172,680 +180,30 @@ class KnowledgeGraphServiceV3:
             pass  # column already exists
 
     def _seed_default_graph(self) -> None:
+        """Seed built-in curriculum concepts from data/kg/seed_graph.json.
+
+        The JSON file is the source of truth for the default graph.  Editing
+        seed_graph.json and restarting the service (or deleting the Kuzu DB)
+        is enough to update the seeded knowledge — no code changes required.
         """
-        Seed comprehensive curriculum concepts for English learning.
-        
-        Structure:
-        - Grammar concepts (A1 → C2)
-        - Vocabulary domains
-        - Pronunciation patterns
-        - Common error patterns for Vietnamese learners
-        """
-        nodes: Dict[str, Dict[str, str]] = {
-            # ============================================
-            # GRAMMAR - Level A1 (Beginner)
-            # ============================================
-            "concept:grammar.subject_verb_agreement": {
-                "title": "Subject-verb agreement",
-                "keywords": "subject verb agreement I you we they base verb goes go",
-                "level": "A1",
-            },
-            "concept:grammar.third_person_s": {
-                "title": "Third-person -s",
-                "keywords": "third person he she it adds s",
-                "level": "A1",
-            },
-            "concept:grammar.present_simple": {
-                "title": "Present Simple",
-                "keywords": "present simple routines habits every day always usually",
-                "level": "A1",
-            },
-            "concept:grammar.articles_a_an": {
-                "title": "Articles a/an",
-                "keywords": "article a an indefinite countable singular noun",
-                "level": "A1",
-            },
-            "concept:grammar.to_be": {
-                "title": "Verb to be",
-                "keywords": "am is are was were be being been",
-                "level": "A1",
-            },
-            "concept:grammar.plural_nouns": {
-                "title": "Plural nouns",
-                "keywords": "plural s es ies irregular plurals",
-                "level": "A1",
-            },
-            "concept:grammar.questions_yes_no": {
-                "title": "Yes/No Questions",
-                "keywords": "question do does is are did yes no short answer form",
-                "level": "A1",
-            },
-            "concept:grammar.question_words": {
-                "title": "Question Words (Wh-)",
-                "keywords": "what where when who why how question wh information",
-                "level": "A1",
-            },
-            "concept:grammar.imperatives": {
-                "title": "Imperatives",
-                "keywords": "imperative command request go sit stop don't please open close",
-                "level": "A1",
-            },
-            "concept:grammar.demonstratives": {
-                "title": "Demonstratives",
-                "keywords": "demonstrative this that these those near far singular plural",
-                "level": "A1",
-            },
-            "concept:grammar.there_is_are": {
-                "title": "There is / There are",
-                "keywords": "there is are was were existence location some any",
-                "level": "A1",
-            },
-            "concept:error.missing_auxiliary": {
-                "title": "Missing Auxiliary (do/does/did)",
-                "keywords": "missing auxiliary do does did question negative you like he like",
-                "level": "A1",
-            },
+        seed_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "data", "kg", "seed_graph.json")
+        )
+        try:
+            with open(seed_path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+        except Exception as exc:
+            logger.error("[KG] Cannot load seed_graph.json (%s): %s", seed_path, exc)
+            return
 
-            # ============================================
-            # GRAMMAR - Level A2 (Elementary)
-            # ============================================
-            "concept:grammar.past_simple": {
-                "title": "Past Simple",
-                "keywords": "past simple ed yesterday last ago regular irregular",
-                "level": "A2",
-            },
-            "concept:grammar.past_time_markers": {
-                "title": "Past time markers",
-                "keywords": "yesterday last ago past time markers week month",
-                "level": "A2",
-            },
-            "concept:grammar.future_will": {
-                "title": "Future with will",
-                "keywords": "will future prediction promise tomorrow next",
-                "level": "A2",
-            },
-            "concept:grammar.going_to": {
-                "title": "Going to for plans",
-                "keywords": "going to plan intention future arranged",
-                "level": "A2",
-            },
-            "concept:grammar.comparatives": {
-                "title": "Comparatives",
-                "keywords": "comparative er more than bigger better worse",
-                "level": "A2",
-            },
-            "concept:grammar.superlatives": {
-                "title": "Superlatives",
-                "keywords": "superlative est most the biggest best worst",
-                "level": "A2",
-            },
-            "concept:grammar.adverbs_frequency": {
-                "title": "Adverbs of Frequency",
-                "keywords": "always usually often sometimes rarely never frequency adverb hardly ever",
-                "level": "A2",
-            },
-            "concept:grammar.countable_uncountable": {
-                "title": "Countable & Uncountable Nouns",
-                "keywords": "countable uncountable noun water rice some any much many few little piece of",
-                "level": "A2",
-            },
-            "concept:grammar.possessive_s": {
-                "title": "Possessive 's",
-                "keywords": "possessive s apostrophe mine yours his hers its our their belong",
-                "level": "A2",
-            },
-            "concept:error.preposition_confusion": {
-                "title": "Preposition Confusion",
-                "keywords": "wrong preposition at in on for to from with about by during Vietnamese",
-                "level": "A2",
-            },
-            "concept:error.overuse_very": {
-                "title": "Overuse of 'Very'",
-                "keywords": "overuse very extremely incredibly absolutely terribly awfully stronger adjective",
-                "level": "A2",
-            },
-            "concept:error.word_order_svo": {
-                "title": "Word Order (SVO) Error",
-                "keywords": "word order SVO Vietnamese influence adverb before verb subject position",
-                "level": "A2",
-            },
-            "concept:vocab.emotions_feelings": {
-                "title": "Emotions & Feelings",
-                "keywords": "happy sad angry excited nervous scared worried proud embarrassed surprised lonely bored",
-                "level": "A1",
-            },
-            "concept:vocab.body_parts": {
-                "title": "Body Parts",
-                "keywords": "head face eyes ears nose mouth neck shoulder arm hand finger back leg knee foot",
-                "level": "A1",
-            },
-            "concept:vocab.transport": {
-                "title": "Transport & Commuting",
-                "keywords": "bus train car bike taxi plane subway metro ticket station platform commute",
-                "level": "A2",
-            },
-            "concept:vocab.home_housing": {
-                "title": "Home & Housing",
-                "keywords": "house flat apartment room kitchen bedroom bathroom living room furniture rent buy",
-                "level": "A2",
-            },
-            "concept:conversation.expressing_feelings": {
-                "title": "Expressing Feelings",
-                "keywords": "feeling emotion express happy sad angry nervous afraid tell how feel",
-                "level": "A1",
-            },
-
-            # ============================================
-            # GRAMMAR - Level B1 (Intermediate)
-            # ============================================
-            "concept:grammar.present_perfect": {
-                "title": "Present Perfect",
-                "keywords": "present perfect have has ed experience ever never since for",
-                "level": "B1",
-            },
-            "concept:grammar.present_continuous": {
-                "title": "Present Continuous",
-                "keywords": "present continuous progressive ing now currently at the moment",
-                "level": "B1",
-            },
-            "concept:grammar.conditionals_first": {
-                "title": "First Conditional",
-                "keywords": "if will first conditional real possible future",
-                "level": "B1",
-            },
-            "concept:grammar.modal_can_could": {
-                "title": "Modal: can/could",
-                "keywords": "can could ability permission possibility request",
-                "level": "B1",
-            },
-            "concept:grammar.modal_must_should": {
-                "title": "Modal: must/should",
-                "keywords": "must should obligation advice necessity recommendation",
-                "level": "B1",
-            },
-            "concept:grammar.passive_voice": {
-                "title": "Passive Voice",
-                "keywords": "passive voice be done was made is being by agent",
-                "level": "B1",
-            },
-            "concept:grammar.present_perfect_continuous": {
-                "title": "Present Perfect Continuous",
-                "keywords": "present perfect continuous have been doing since for how long tired dirty",
-                "level": "B1",
-            },
-            "concept:grammar.phrasal_verbs_common": {
-                "title": "Common Phrasal Verbs",
-                "keywords": "phrasal verb look up give up turn on pick up put off run out figure out come across break down",
-                "level": "B1",
-            },
-            "concept:error.make_do_confusion": {
-                "title": "Make vs Do Confusion",
-                "keywords": "make do confusion make a decision do homework make friends do exercise",
-                "level": "B1",
-            },
-            "concept:error.tell_say_confusion": {
-                "title": "Tell vs Say Confusion",
-                "keywords": "tell say confusion tell me said to me told said that report",
-                "level": "B1",
-            },
-            "concept:vocab.personality_traits": {
-                "title": "Personality & Character",
-                "keywords": "personality kind friendly shy confident brave honest patient creative ambitious generous stubborn",
-                "level": "B1",
-            },
-            "concept:vocab.social_media": {
-                "title": "Social Media & Internet",
-                "keywords": "social media post share like follow comment hashtag profile feed story viral trending influencer",
-                "level": "B1",
-            },
-            "concept:conversation.telephone_email": {
-                "title": "Telephone & Email",
-                "keywords": "phone call email message send reply forward subject dear regards hold speak",
-                "level": "B1",
-            },
-            "concept:conversation.complaint_feedback": {
-                "title": "Complaint & Feedback",
-                "keywords": "complain complaint feedback problem issue unhappy disappointed refund exchange",
-                "level": "B1",
-            },
-
-            # ============================================
-            # GRAMMAR - Level B2 (Upper-Intermediate)
-            # ============================================
-            "concept:grammar.past_perfect": {
-                "title": "Past Perfect",
-                "keywords": "past perfect had done before after earlier",
-                "level": "B2",
-            },
-            "concept:grammar.conditionals_second": {
-                "title": "Second Conditional",
-                "keywords": "if would second conditional unreal hypothetical imagine",
-                "level": "B2",
-            },
-            "concept:grammar.conditionals_third": {
-                "title": "Third Conditional",
-                "keywords": "if would have third conditional past unreal regret",
-                "level": "B2",
-            },
-            "concept:grammar.relative_clauses": {
-                "title": "Relative Clauses",
-                "keywords": "relative clause who which that whose whom defining non-defining",
-                "level": "B2",
-            },
-            "concept:grammar.reported_speech": {
-                "title": "Reported Speech",
-                "keywords": "reported speech indirect said told asked that would",
-                "level": "B2",
-            },
-            "concept:grammar.wish_regret": {
-                "title": "Wish & Regret Structures",
-                "keywords": "wish regret if only I wish had done would rather had better could have should have",
-                "level": "B2",
-            },
-            "concept:grammar.noun_clauses": {
-                "title": "Noun Clauses",
-                "keywords": "noun clause that what where how whether I think believe know say",
-                "level": "B2",
-            },
-            "concept:vocab.culture_customs": {
-                "title": "Culture & Customs",
-                "keywords": "culture tradition custom festival celebration ceremony ritual etiquette manners diverse heritage",
-                "level": "B2",
-            },
-            "concept:conversation.job_interview": {
-                "title": "Job Interview",
-                "keywords": "job interview cv resume experience skill strength weakness salary position apply",
-                "level": "B2",
-            },
-
-            # ============================================
-            # GRAMMAR - Level C1 (Advanced)
-            # ============================================
-            "concept:grammar.inversion": {
-                "title": "Inversion",
-                "keywords": "inversion never rarely seldom hardly scarcely not only",
-                "level": "C1",
-            },
-            "concept:grammar.cleft_sentences": {
-                "title": "Cleft Sentences",
-                "keywords": "cleft it is what who emphasis focus",
-                "level": "C1",
-            },
-            "concept:grammar.mixed_conditionals": {
-                "title": "Mixed Conditionals",
-                "keywords": "mixed conditional past present result cause",
-                "level": "C1",
-            },
-            "concept:grammar.ellipsis_substitution": {
-                "title": "Ellipsis & Substitution",
-                "keywords": "ellipsis substitution so do I neither can she omission avoid repetition cohesion",
-                "level": "C1",
-            },
-            "concept:grammar.subjunctive": {
-                "title": "Subjunctive Mood",
-                "keywords": "subjunctive mood suggest recommend if I were essential necessary that he go formal",
-                "level": "C1",
-            },
-            "concept:vocab.formal_register": {
-                "title": "Formal Register & Academic Style",
-                "keywords": "formal register academic style therefore thus hence regarding henceforth hereby aforementioned",
-                "level": "C1",
-            },
-
-            # ============================================
-            # GRAMMAR - Level C2 (Proficiency)
-            # ============================================
-            "concept:grammar.hedging": {
-                "title": "Hedging Language",
-                "keywords": "hedging seems appears likely probably tends to apparently arguably possibly may well",
-                "level": "C2",
-            },
-            "concept:grammar.discourse_cohesion": {
-                "title": "Discourse Markers & Cohesion",
-                "keywords": "furthermore nevertheless however in contrast on the other hand accordingly consequently nonetheless",
-                "level": "C2",
-            },
-
-            # ============================================
-            # VOCABULARY DOMAINS
-            # ============================================
-            "concept:vocab.daily_life": {
-                "title": "Daily Life Vocabulary",
-                "keywords": "daily routine morning evening food home family",
-                "level": "A1",
-            },
-            "concept:vocab.work_business": {
-                "title": "Work & Business",
-                "keywords": "work office meeting business job career professional",
-                "level": "B1",
-            },
-            "concept:vocab.academic": {
-                "title": "Academic Vocabulary",
-                "keywords": "academic research study analyze evaluate evidence",
-                "level": "B2",
-            },
-            
-            # ============================================
-            # COMMON ERRORS (Vietnamese Learners)
-            # ============================================
-            "concept:error.article_omission": {
-                "title": "Article Omission",
-                "keywords": "missing article the a an Vietnamese learner",
-                "level": "A1",
-            },
-            "concept:error.tense_confusion": {
-                "title": "Tense Confusion",
-                "keywords": "wrong tense past present future confused",
-                "level": "A2",
-            },
-            "concept:error.subject_pronoun_drop": {
-                "title": "Subject Pronoun Drop",
-                "keywords": "missing subject pronoun I he she it",
-                "level": "A1",
-            },
-            "concept:error.wrong_tense_reported": {
-                "title": "Wrong Tense in Reported Speech",
-                "keywords": "reported speech tense shift past present said told would could had",
-                "level": "B1",
-            },
-            "concept:error.gerund_after_preposition": {
-                "title": "Gerund After Preposition",
-                "keywords": "gerund after preposition at by in of about interested in good at",
-                "level": "B1",
-            },
-
-            # ============================================
-            # QA / MULTI-HOP BRIDGE CONCEPTS
-            # ============================================
-            "concept:qa.person_nationality": {
-                "title": "Person and Nationality",
-                "keywords": "person nationality born citizen country same nationality",
-                "level": "B1",
-            },
-            "concept:qa.person_profession": {
-                "title": "Person and Profession",
-                "keywords": "person profession occupation manager actor singer director",
-                "level": "B1",
-            },
-            "concept:qa.film_director": {
-                "title": "Film and Director",
-                "keywords": "film movie directed by director",
-                "level": "B1",
-            },
-            "concept:qa.album_release": {
-                "title": "Album Release",
-                "keywords": "album release released year music track",
-                "level": "B1",
-            },
-            "concept:qa.book_author": {
-                "title": "Book and Author",
-                "keywords": "book novel author wrote written",
-                "level": "B1",
-            },
-            "concept:qa.location_country": {
-                "title": "Location and Country",
-                "keywords": "location city country in located where",
-                "level": "A2",
-            },
-            "concept:qa.location_region": {
-                "title": "Location and Region",
-                "keywords": "region state province county district",
-                "level": "A2",
-            },
-            "concept:qa.organization_founder": {
-                "title": "Organization and Founder",
-                "keywords": "organization founded founder company institute",
-                "level": "B2",
-            },
-            "concept:qa.organization_headquarters": {
-                "title": "Organization Headquarters",
-                "keywords": "organization headquarters based in office",
-                "level": "B1",
-            },
-            "concept:qa.sports_team_league": {
-                "title": "Sports Team and League",
-                "keywords": "team league club football basketball",
-                "level": "B1",
-            },
-            "concept:qa.time_event": {
-                "title": "Time and Event",
-                "keywords": "when year date founded released born",
-                "level": "A2",
-            },
-            "concept:qa.bridge_comparison": {
-                "title": "Bridge Comparison",
-                "keywords": "both same compare comparison relation",
-                "level": "B2",
-            },
-        }
-
-        # Edge format: from -> [(to, relation)]
-        edges: Dict[str, List[Tuple[str, str]]] = {
-            # A1 → A2 prerequisites
-            "concept:grammar.present_simple": [
-                ("concept:grammar.past_simple", "prerequisite_of"),
-                ("concept:grammar.present_continuous", "prerequisite_of"),
-            ],
-            "concept:grammar.to_be": [
-                ("concept:grammar.present_continuous", "prerequisite_of"),
-                ("concept:grammar.passive_voice", "prerequisite_of"),
-            ],
-            "concept:grammar.subject_verb_agreement": [
-                ("concept:grammar.third_person_s", "related_to"),
-                ("concept:grammar.present_simple", "related_to"),
-            ],
-            
-            # A2 → B1 prerequisites
-            "concept:grammar.past_simple": [
-                ("concept:grammar.present_perfect", "prerequisite_of"),
-                ("concept:grammar.past_perfect", "prerequisite_of"),
-            ],
-            "concept:grammar.future_will": [
-                ("concept:grammar.conditionals_first", "prerequisite_of"),
-            ],
-            
-            # B1 → B2 prerequisites
-            "concept:grammar.conditionals_first": [
-                ("concept:grammar.conditionals_second", "prerequisite_of"),
-            ],
-            "concept:grammar.conditionals_second": [
-                ("concept:grammar.conditionals_third", "prerequisite_of"),
-                ("concept:grammar.mixed_conditionals", "prerequisite_of"),
-            ],
-            "concept:grammar.present_perfect": [
-                ("concept:grammar.past_perfect", "prerequisite_of"),
-            ],
-            
-            # Related concepts
-            "concept:grammar.comparatives": [
-                ("concept:grammar.superlatives", "related_to"),
-            ],
-            "concept:grammar.articles_a_an": [
-                ("concept:error.article_omission", "related_to"),
-            ],
-            "concept:grammar.past_time_markers": [
-                ("concept:error.tense_confusion", "related_to"),
-            ],
-            "concept:qa.person_profession": [
-                ("concept:qa.film_director", "related_to"),
-                ("concept:qa.organization_founder", "related_to"),
-            ],
-            "concept:qa.film_director": [
-                ("concept:qa.person_nationality", "bridge_to"),
-                ("concept:qa.time_event", "related_to"),
-            ],
-            "concept:qa.album_release": [
-                ("concept:qa.time_event", "related_to"),
-                ("concept:qa.person_profession", "related_to"),
-            ],
-            "concept:qa.book_author": [
-                ("concept:qa.person_profession", "related_to"),
-                ("concept:qa.bridge_comparison", "bridge_to"),
-            ],
-            "concept:qa.location_region": [
-                ("concept:qa.location_country", "prerequisite_of"),
-            ],
-            "concept:qa.organization_founder": [
-                ("concept:qa.organization_headquarters", "related_to"),
-                ("concept:qa.location_country", "bridge_to"),
-            ],
-            "concept:qa.sports_team_league": [
-                ("concept:qa.location_country", "related_to"),
-                ("concept:qa.bridge_comparison", "bridge_to"),
-            ],
-            "concept:qa.time_event": [
-                ("concept:qa.bridge_comparison", "related_to"),
-            ],
-
-            # ── New A1 grammar edges ──────────────────────────────────
-            "concept:grammar.to_be": [
-                ("concept:grammar.questions_yes_no", "prerequisite_of"),
-                ("concept:grammar.there_is_are", "prerequisite_of"),
-                ("concept:grammar.demonstratives", "related_to"),
-            ],
-            "concept:grammar.questions_yes_no": [
-                ("concept:grammar.question_words", "related_to"),
-                ("concept:error.missing_auxiliary", "related_to"),
-            ],
-            "concept:grammar.question_words": [
-                ("concept:grammar.present_simple", "related_to"),
-                ("concept:grammar.to_be", "related_to"),
-            ],
-            "concept:grammar.plural_nouns": [
-                ("concept:grammar.countable_uncountable", "prerequisite_of"),
-                ("concept:grammar.demonstratives", "related_to"),
-            ],
-            "concept:error.missing_auxiliary": [
-                ("concept:grammar.questions_yes_no", "related_to"),
-            ],
-
-            # ── New A2 grammar edges ──────────────────────────────────
-            "concept:grammar.adverbs_frequency": [
-                ("concept:grammar.present_simple", "related_to"),
-            ],
-            "concept:grammar.countable_uncountable": [
-                ("concept:error.article_omission", "related_to"),
-            ],
-            "concept:grammar.possessive_s": [
-                ("concept:grammar.plural_nouns", "related_to"),
-                ("concept:vocab.daily_life", "related_to"),
-            ],
-            "concept:error.preposition_confusion": [
-                ("concept:grammar.prepositions_time", "related_to"),
-                ("concept:grammar.prepositions_place", "related_to"),
-            ],
-            "concept:error.word_order_svo": [
-                ("concept:grammar.word_order", "related_to"),
-                ("concept:grammar.present_simple", "related_to"),
-                ("concept:grammar.adverbs_frequency", "related_to"),
-            ],
-
-            # ── New B1 grammar edges ──────────────────────────────────
-            "concept:grammar.present_perfect_continuous": [
-                ("concept:grammar.present_perfect", "related_to"),
-                ("concept:grammar.present_continuous", "related_to"),
-            ],
-            "concept:grammar.phrasal_verbs_common": [
-                ("concept:grammar.gerund_infinitive", "related_to"),
-                ("concept:vocab.daily_life", "related_to"),
-            ],
-            "concept:error.make_do_confusion": [
-                ("concept:grammar.phrasal_verbs_common", "related_to"),
-            ],
-            "concept:error.tell_say_confusion": [
-                ("concept:grammar.reported_speech", "related_to"),
-            ],
-            "concept:error.gerund_after_preposition": [
-                ("concept:grammar.gerund_infinitive", "related_to"),
-            ],
-            "concept:error.wrong_tense_reported": [
-                ("concept:grammar.reported_speech", "related_to"),
-                ("concept:error.tense_confusion", "related_to"),
-            ],
-
-            # ── New B2 grammar edges ──────────────────────────────────
-            "concept:grammar.wish_regret": [
-                ("concept:grammar.conditionals_second", "related_to"),
-                ("concept:grammar.conditionals_third", "related_to"),
-            ],
-            "concept:grammar.noun_clauses": [
-                ("concept:grammar.relative_clauses", "related_to"),
-                ("concept:grammar.reported_speech", "related_to"),
-            ],
-
-            # ── New C1 grammar edges ──────────────────────────────────
-            "concept:grammar.ellipsis_substitution": [
-                ("concept:grammar.inversion", "related_to"),
-            ],
-            "concept:grammar.subjunctive": [
-                ("concept:grammar.conditionals_second", "related_to"),
-                ("concept:grammar.modal_must_should", "related_to"),
-            ],
-
-            # ── New C2 grammar edges ──────────────────────────────────
-            "concept:grammar.hedging": [
-                ("concept:grammar.modal_can_could", "related_to"),
-                ("concept:vocab.formal_register", "related_to"),
-            ],
-            "concept:grammar.discourse_cohesion": [
-                ("concept:grammar.conjunctions", "related_to"),
-                ("concept:vocab.formal_register", "related_to"),
-            ],
-
-            # ── New vocab edges ───────────────────────────────────────
-            "concept:vocab.emotions_feelings": [
-                ("concept:conversation.expressing_feelings", "related_to"),
-                ("concept:vocab.daily_life", "related_to"),
-            ],
-            "concept:vocab.body_parts": [
-                ("concept:vocab.health", "related_to"),
-            ],
-            "concept:vocab.transport": [
-                ("concept:vocab.travel", "related_to"),
-                ("concept:vocab.daily_life", "related_to"),
-            ],
-            "concept:vocab.home_housing": [
-                ("concept:vocab.daily_life", "related_to"),
-            ],
-            "concept:vocab.personality_traits": [
-                ("concept:conversation.job_interview", "related_to"),
-                ("concept:conversation.small_talk", "related_to"),
-            ],
-            "concept:vocab.social_media": [
-                ("concept:vocab.technology", "related_to"),
-            ],
-            "concept:vocab.culture_customs": [
-                ("concept:vocab.daily_life", "related_to"),
-            ],
-            "concept:vocab.formal_register": [
-                ("concept:vocab.academic", "related_to"),
-                ("concept:vocab.work_business", "related_to"),
-            ],
-
-            # ── New conversation edges ────────────────────────────────
-            "concept:conversation.expressing_feelings": [
-                ("concept:vocab.emotions_feelings", "related_to"),
-                ("concept:conversation.small_talk", "related_to"),
-            ],
-            "concept:conversation.telephone_email": [
-                ("concept:conversation.making_appointments", "related_to"),
-                ("concept:vocab.work_business", "related_to"),
-            ],
-            "concept:conversation.job_interview": [
-                ("concept:vocab.work_business", "related_to"),
-                ("concept:vocab.personality_traits", "related_to"),
-            ],
-            "concept:conversation.complaint_feedback": [
-                ("concept:vocab.shopping", "related_to"),
-                ("concept:conversation.expressing_opinions", "related_to"),
-            ],
-        }
-
-        # Insert nodes (with level)
-        for node_id, meta in nodes.items():
-            title = meta.get("title", "")
-            keywords = meta.get("keywords", "")
-            level = meta.get("level", "B1")
+        concepts_inserted = 0
+        for concept in payload.get("concepts", []):
+            node_id = str(concept.get("id") or "").strip()
+            if not node_id:
+                continue
+            title = str(concept.get("title") or node_id).strip()
+            keywords = str(concept.get("keywords") or "").strip()
+            level = str(concept.get("level") or "B1").strip() or "B1"
             try:
                 self._conn.execute(
                     "MERGE (c:Concept {id: $id}) "
@@ -853,20 +211,31 @@ class KnowledgeGraphServiceV3:
                     "ON MATCH SET c.title = $title, c.keywords = $keywords, c.level = $level",
                     {"id": node_id, "title": title, "keywords": keywords, "level": level},
                 )
-            except Exception:
+                concepts_inserted += 1
+            except Exception as _exc:
+                logger.debug("[kg_service_v3] ignored: %s", _exc)
                 continue
 
-        # Insert edges
-        for from_id, rels in edges.items():
-            for to_id, relation in rels:
-                try:
-                    self._conn.execute(
-                        "MATCH (a:Concept), (b:Concept) WHERE a.id = $from AND b.id = $to "
-                        "MERGE (a)-[:Edge {relation: $relation}]->(b)",
-                        {"from": from_id, "to": to_id, "relation": relation},
-                    )
-                except Exception:
-                    continue
+        edges_inserted = 0
+        for edge in payload.get("edges", []):
+            from_id = str(edge.get("from") or "").strip()
+            to_id = str(edge.get("to") or "").strip()
+            relation = str(edge.get("relation") or "related_to").strip() or "related_to"
+            if not from_id or not to_id:
+                continue
+            try:
+                self._conn.execute(
+                    "MATCH (a:Concept), (b:Concept) WHERE a.id = $from AND b.id = $to "
+                    "MERGE (a)-[:Edge {relation: $relation}]->(b)",
+                    {"from": from_id, "to": to_id, "relation": relation},
+                )
+                edges_inserted += 1
+            except Exception as _exc:
+                logger.debug("[kg_service_v3] ignored: %s", _exc)
+                continue
+
+        logger.info("[KG] Seeded from seed_graph.json: concepts=%d edges=%d", concepts_inserted, edges_inserted)
+        return
 
     def _extended_knowledge_path(self) -> str:
         configured = os.getenv("KG_EXTENDED_KNOWLEDGE_PATH", "").strip()
@@ -896,7 +265,8 @@ class KnowledgeGraphServiceV3:
             try:
                 with open(cache_path, "r", encoding="utf-8") as f:
                     synced_metadata = json.load(f)
-            except Exception:
+            except Exception as _exc:
+                logger.debug("[kg_service_v3] ignored: %s", _exc)
                 pass
 
         payloads: List[tuple[str, str, dict]] = []
@@ -972,7 +342,8 @@ class KnowledgeGraphServiceV3:
                         {"id": node_id, "title": title, "keywords": keywords, "level": level},
                     )
                     ins_c += 1
-                except Exception:
+                except Exception as _exc:
+                    logger.debug("[kg_service_v3] ignored: %s", _exc)
                     continue
 
             if isinstance(edges, list):
@@ -991,7 +362,8 @@ class KnowledgeGraphServiceV3:
                             {"from": from_id, "to": to_id, "relation": relation},
                         )
                         ins_e += 1
-                    except Exception:
+                    except Exception as _exc:
+                        logger.debug("[kg_service_v3] ignored: %s", _exc)
                         continue
 
             if ins_c or ins_e:
@@ -1164,7 +536,6 @@ class KnowledgeGraphServiceV3:
         Complements get_seed_concepts_fast() by catching semantic matches that
         exact keyword matching misses (e.g. 'struggling' → 'error_*' concepts).
         """
-        import math
 
         if not self._tfidf_vectors or not self._tfidf_idf:
             return []
@@ -1353,7 +724,8 @@ class KnowledgeGraphServiceV3:
                     ],
                 })
                 await _redis.setex(_cache_key, 1800, _payload)
-        except Exception:
+        except Exception as _exc:
+            logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
         # ─────────────────────────────────────────────────────────────────
 
@@ -1392,7 +764,8 @@ class KnowledgeGraphServiceV3:
                     "ON MATCH SET m.score = min(1.0, max(0.0, m.score + $delta))",
                     {"uid": user_id, "cid": concept_id, "score": 0.5, "delta": delta},
                 )
-            except Exception:
+            except Exception as _exc:
+                logger.debug("[kg_service_v3] ignored: %s", _exc)
                 continue
 
         return None
@@ -1418,7 +791,8 @@ class KnowledgeGraphServiceV3:
             while result.has_next():  # type: ignore[union-attr]
                 row: list = result.get_next()  # type: ignore[union-attr]
                 mastery[row[0]] = row[1]
-        except Exception:
+        except Exception as _exc:
+            logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
         
         return mastery
@@ -1439,8 +813,7 @@ class KnowledgeGraphServiceV3:
             List of recommended concept dicts with id, title, reason
         """
         recommendations: List[Dict[str, Any]] = []
-        level_order = ["A1", "A2", "B1", "B2", "C1", "C2"]
-        
+
         try:
             # Get user's current mastery
             user_mastery = await self.get_user_mastery(user_id)
@@ -1477,7 +850,8 @@ class KnowledgeGraphServiceV3:
                             "reason": "New concept to explore",
                         })
                         
-        except Exception:
+        except Exception as _exc:
+            logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
         
         return recommendations[:limit]
@@ -1501,7 +875,8 @@ class KnowledgeGraphServiceV3:
             while result.has_next():  # type: ignore[union-attr]
                 row: list = result.get_next()  # type: ignore[union-attr]
                 prerequisites.append(row[0])
-        except Exception:
+        except Exception as _exc:
+            logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
         
         return prerequisites
@@ -1525,7 +900,8 @@ class KnowledgeGraphServiceV3:
             while result.has_next():  # type: ignore[union-attr]
                 row: list = result.get_next()  # type: ignore[union-attr]
                 next_concepts.append(row[0])
-        except Exception:
+        except Exception as _exc:
+            logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
         
         return next_concepts
@@ -1536,7 +912,8 @@ class KnowledgeGraphServiceV3:
             result = self._conn.execute("MATCH (c:Concept) RETURN count(c)")
             if result.has_next():  # type: ignore[union-attr]
                 return result.get_next()[0]  # type: ignore[union-attr]
-        except Exception:
+        except Exception as _exc:
+            logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
         return 0
 
@@ -1587,4 +964,3 @@ class KnowledgeGraphServiceV3:
             }
             for score, concept_id, meta in scored[:top_k]
         ]
-

@@ -13,36 +13,37 @@ def clean_env(monkeypatch):
 
 def test_gemini_embeddings_success(clean_env):
     """Test successful Gemini cloud embedding generation and normalization."""
-    # Mock genai response
-    mock_response = {
-        "embedding": [
-            [0.5, 0.5, 0.5, 0.5],
-            [1.0, 0.0, 0.0, 0.0]
-        ]
-    }
-    
-    # Mock google.generativeai
+    # embed_content is called once per text (singular `content=` param).
+    responses = [
+        {"embedding": [0.5, 0.5, 0.5, 0.5]},
+        {"embedding": [1.0, 0.0, 0.0, 0.0]},
+    ]
+
     mock_genai = MagicMock()
-    mock_genai.embed_content.return_value = mock_response
+    mock_genai.embed_content.side_effect = responses
 
     service = EmbeddingServiceV3()
-    
+
     with patch.dict("sys.modules", {"google.generativeai": mock_genai}):
         embeddings = service.embed_texts(["hello", "world"])
-        
-        # Verify call to genai.embed_content
-        mock_genai.embed_content.assert_called_once_with(
+
+        # Verify called once per text with singular `content=` parameter.
+        assert mock_genai.embed_content.call_count == 2
+        mock_genai.embed_content.assert_any_call(
             model="models/text-embedding-004",
-            contents=["hello", "world"]
+            content="hello",
         )
-        
+        mock_genai.embed_content.assert_any_call(
+            model="models/text-embedding-004",
+            content="world",
+        )
+
         # Verify shape (2 texts, 4 dimensions)
         assert embeddings.shape == (2, 4)
-        
+
         # Verify unit vector normalization (norms should be 1.0)
         norms = np.linalg.norm(embeddings, axis=1)
         np.testing.assert_allclose(norms, [1.0, 1.0], rtol=1e-5)
-        # For [0.5, 0.5, 0.5, 0.5], unit vector is [0.5, 0.5, 0.5, 0.5] / sqrt(1.0) = [0.5, 0.5, 0.5, 0.5]
         np.testing.assert_allclose(embeddings[0], [0.5, 0.5, 0.5, 0.5], rtol=1e-5)
         np.testing.assert_allclose(embeddings[1], [1.0, 0.0, 0.0, 0.0], rtol=1e-5)
 

@@ -41,7 +41,6 @@ class QwenHandler:
         self.model: Optional[Any] = None
         self.tokenizer: Optional[Any] = None
         self._loaded = False
-        self._loading = False
         self._lock = asyncio.Lock()
         
     @property
@@ -70,13 +69,6 @@ class QwenHandler:
             if self._loaded:  # Double-check
                 return True
                 
-            if self._loading:
-                # Wait for another load to complete
-                while self._loading:
-                    await asyncio.sleep(0.1)
-                return self._loaded
-            
-            self._loading = True
             try:
                 logger.info("[QwenHandler] Loading Qwen model...")
                 
@@ -98,17 +90,19 @@ class QwenHandler:
                     self._loaded = False
                     return False
                 
-                # Load tokenizer
-                tokenizer = AutoTokenizer.from_pretrained(
+                # Load tokenizer off the event loop — from_pretrained blocks
+                tokenizer = await asyncio.to_thread(
+                    AutoTokenizer.from_pretrained,
                     model_path,
                     trust_remote_code=True,
                     local_files_only=True,
                 )
-                
+
                 # Load model with appropriate dtype
                 dtype = torch.float16 if device != "cpu" else torch.float32
                 
-                model = AutoModelForCausalLM.from_pretrained(
+                model = await asyncio.to_thread(
+                    AutoModelForCausalLM.from_pretrained,
                     model_path,
                     torch_dtype=dtype,
                     device_map=device if device != "mps" else "auto",
@@ -116,10 +110,10 @@ class QwenHandler:
                     low_cpu_mem_usage=True,
                     local_files_only=True,
                 )
-                
+
                 if device == "mps":
-                    model = model.to("mps")
-                
+                    model = await asyncio.to_thread(model.to, "mps")
+
                 model.eval()
 
                 self.tokenizer = tokenizer
@@ -133,8 +127,6 @@ class QwenHandler:
                 logger.error(f"[QwenHandler] Failed to load model: {e}")
                 self._loaded = False
                 return False
-            finally:
-                self._loading = False
     
     def _detect_device(self) -> str:
         """Detect best available device."""
@@ -168,7 +160,7 @@ class QwenHandler:
             import torch
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-        except:
+        except Exception:
             pass
             
         logger.info("[QwenHandler] Model unloaded")
@@ -208,34 +200,36 @@ class QwenHandler:
         else:
             full_messages = messages
         
-        # Apply chat template
-        text = tokenizer.apply_chat_template(
-            full_messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        
-        # Tokenize
-        inputs = tokenizer(text, return_tensors="pt")
-        inputs = {k: v.to(model.device) for k, v in inputs.items()}
-        
-        # Generate
-        import torch
-        with torch.no_grad():
-            outputs = model.generate(
-                **inputs,
-                max_new_tokens=max_tokens,
-                temperature=temperature or self.config.temperature,
-                top_p=self.config.top_p,
-                do_sample=True,
-                pad_token_id=tokenizer.eos_token_id,
+        def _generate_sync() -> str:
+            # Apply chat template
+            text = tokenizer.apply_chat_template(
+                full_messages,
+                tokenize=False,
+                add_generation_prompt=True,
             )
-        
-        # Decode only the new tokens
-        new_tokens = outputs[0][inputs["input_ids"].shape[1]:]
-        response = tokenizer.decode(new_tokens, skip_special_tokens=True)
-        
-        return response.strip()
+
+            # Tokenize
+            inputs = tokenizer(text, return_tensors="pt")
+            inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+            # Generate
+            import torch
+            with torch.no_grad():
+                outputs = model.generate(
+                    **inputs,
+                    max_new_tokens=max_tokens,
+                    temperature=temperature or self.config.temperature,
+                    top_p=self.config.top_p,
+                    do_sample=True,
+                    pad_token_id=tokenizer.eos_token_id,
+                )
+
+            # Decode only the new tokens
+            new_tokens = outputs[0][inputs["input_ids"].shape[1]:]
+            return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+        # Inference blocks for seconds — keep it off the event loop
+        return await asyncio.to_thread(_generate_sync)
     
     async def analyze_grammar(
         self,

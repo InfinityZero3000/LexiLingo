@@ -3,7 +3,7 @@ Health check routes
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
@@ -61,14 +61,14 @@ async def health_check():
         mongodb="connected" if mongodb_ok else "disconnected",
         redis="connected" if redis_ok else "disconnected",
         version=settings.API_VERSION,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
 
 
 @router.get("/ping")
 async def ping():
     """Simple ping endpoint for quick checks."""
-    return {"ping": "pong", "timestamp": datetime.utcnow().isoformat()}
+    return {"ping": "pong", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @router.post("/warmup")

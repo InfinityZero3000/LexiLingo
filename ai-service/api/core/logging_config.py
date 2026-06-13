@@ -9,11 +9,11 @@ import logging
 import json
 import time
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from contextvars import ContextVar
 
 # Context variable for request tracking
-request_context: ContextVar[Dict[str, Any]] = ContextVar('request_context', default={})
+request_context: ContextVar[Optional[Dict[str, Any]]] = ContextVar('request_context', default=None)
 
 
 class StructuredFormatter(logging.Formatter):
@@ -27,7 +27,7 @@ class StructuredFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         log_data = {
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -226,7 +226,7 @@ def set_request_context(
 
 def clear_request_context():
     """Clear request context."""
-    request_context.set({})
+    request_context.set(None)
 
 
 # Create default logger instance

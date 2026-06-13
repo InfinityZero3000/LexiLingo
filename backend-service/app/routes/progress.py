@@ -112,9 +112,31 @@ async def get_my_progress(
             'last_activity_at': progress.last_activity_at,
         })
     
+    seven_days_ago = date.today() - timedelta(days=7)
+    activity_rows = await db.execute(
+        select(DailyActivity)
+        .where(
+            and_(
+                DailyActivity.user_id == uid,
+                DailyActivity.activity_date >= seven_days_ago,
+            )
+        )
+        .order_by(DailyActivity.activity_date.desc())
+    )
+    recent_activity = [
+        {
+            "date": str(row.activity_date),
+            "xp_earned": row.xp_earned,
+            "lessons_completed": row.lessons_completed,
+            "study_time_minutes": row.study_time_minutes,
+            "daily_goal_met": row.daily_goal_met,
+        }
+        for row in activity_rows.scalars().all()
+    ]
+
     response_data = {
         'summary': stats,
-        'recent_activity': [],  # TODO: Implement activity tracking
+        'recent_activity': recent_activity,
         'course_progress': course_progress_list
     }
 

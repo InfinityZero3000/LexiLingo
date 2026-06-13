@@ -13,9 +13,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import re
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +258,7 @@ class LocalLlamaKVService:
         if self._llm is None:
             return 0
         if hasattr(self._llm, "n_tokens"):
-            value = getattr(self._llm, "n_tokens")
+            value = self._llm.n_tokens
             if isinstance(value, int):
                 return value
         return int(getattr(self._llm, "_n_tokens", 0))
@@ -269,10 +268,10 @@ class LocalLlamaKVService:
             return
         try:
             if hasattr(self._llm, "_n_tokens"):
-                setattr(self._llm, "_n_tokens", value)
+                self._llm._n_tokens = value
                 return
             if hasattr(self._llm, "n_tokens"):
-                setattr(self._llm, "n_tokens", value)
+                self._llm.n_tokens = value
         except Exception:
             pass
 

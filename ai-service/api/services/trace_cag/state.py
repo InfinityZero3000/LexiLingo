@@ -179,6 +179,7 @@ class TraceCAGState(TypedDict, total=False):
     adaptive_profile: Optional[str]
     adaptive_features: Dict[str, float]
     adaptive_controller: Dict[str, Any]
+    cache_gate_meta: Dict[str, Any]
 
     # ============================================
     # Metadata
@@ -288,6 +289,7 @@ def create_initial_state(
         adaptive_profile=None,
         adaptive_features={},
         adaptive_controller={},
+        cache_gate_meta={},
         
         # Metadata
         cache_policy=cache_policy,
