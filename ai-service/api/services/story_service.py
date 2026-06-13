@@ -9,7 +9,7 @@ import logging
 from pathlib import Path
 from typing import List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime
+from datetime import datetime, timezone
 
 from api.models.story_schemas import (
     Story,
@@ -222,8 +222,8 @@ class StoryService:
             The story_id of the created story
         """
         doc = story.model_dump()
-        doc["created_at"] = datetime.utcnow()
-        doc["updated_at"] = datetime.utcnow()
+        doc["created_at"] = datetime.now(timezone.utc)
+        doc["updated_at"] = datetime.now(timezone.utc)
         
         # Convert nested models to dicts
         if hasattr(doc.get("title"), "model_dump"):
@@ -243,7 +243,7 @@ class StoryService:
         Returns:
             True if story was updated, False otherwise
         """
-        updates["updated_at"] = datetime.utcnow()
+        updates["updated_at"] = datetime.now(timezone.utc)
         
         result = await self.collection.update_one(
             {"story_id": story_id},
@@ -264,7 +264,7 @@ class StoryService:
         """
         result = await self.collection.update_one(
             {"story_id": story_id},
-            {"$set": {"is_published": False, "updated_at": datetime.utcnow()}}
+            {"$set": {"is_published": False, "updated_at": datetime.now(timezone.utc)}}
         )
         
         return result.modified_count > 0

@@ -14,12 +14,13 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
+from app.models.progress import Streak
 from app.models.proficiency import (
     UserProficiencyProfile,
     UserSkillScore,
@@ -309,6 +310,11 @@ async def get_proficiency_profile(
                 "exercises_completed": 0,
             }
     
+    # Get streak days
+    streak_result = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
+    streak_row = streak_result.scalar_one_or_none()
+    streak_days = streak_row.current_streak if streak_row else 0
+
     # Get level check info
     skill_scores_dict = {
         SkillType(k): v["score"] for k, v in skills.items()
@@ -319,7 +325,7 @@ async def get_proficiency_profile(
         exercises_completed=profile.total_exercises_completed,
         lessons_completed=profile.total_lessons_completed,
         accuracy=profile.accuracy,
-        streak_days=0,  # TODO: Get from streak tracking
+        streak_days=streak_days,
     )
     
     return {
@@ -569,14 +575,18 @@ async def check_level_requirements(
         SkillType(skill_score.skill.value): skill_score.score
         for skill_score in skill_scores
     }
-    
+
+    streak_result2 = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
+    streak_row2 = streak_result2.scalar_one_or_none()
+    streak_days2 = streak_row2.current_streak if streak_row2 else 0
+
     level_check = ProficiencyService.get_level_requirements_check(
         current_level=ProficiencyLevel(profile.assessed_level),
         skill_scores=skill_scores_dict,
         exercises_completed=profile.total_exercises_completed,
         lessons_completed=profile.total_lessons_completed,
         accuracy=profile.accuracy,
-        streak_days=0,  # TODO: Integrate with streak system
+        streak_days=streak_days2,
     )
     
     return {

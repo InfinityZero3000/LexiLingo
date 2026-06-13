@@ -27,6 +27,39 @@ from app.models.vocabulary import (
     PartOfSpeech,
     DifficultyLevel,
 )
+from app.services.vocabulary_catalog_policy import (
+    VocabularyCandidate,
+    canonical_topic,
+    has_tag,
+    is_placeholder_definition,
+    normalize_all_tags,
+    select_balanced_starter_vocabulary,
+)
+
+
+_PLACEHOLDER_DEFINITION_VALUES = (
+    "",
+    "#n/a",
+    "#n/a yet",
+    "n/a",
+    "n/a yet",
+    "n.a.",
+    "not available",
+    "not available yet",
+    "unknown",
+    "tbd",
+    "todo",
+    "---",
+)
+
+
+def _valid_definition_conditions():
+    return (
+        VocabularyItem.definition.is_not(None),
+        func.lower(func.trim(VocabularyItem.definition)).notin_(
+            _PLACEHOLDER_DEFINITION_VALUES
+        ),
+    )
 
 
 class VocabularyCRUD:
@@ -71,21 +104,33 @@ class VocabularyCRUD:
             conditions.append(VocabularyItem.lesson_id == lesson_id)
         if difficulty_level:
             conditions.append(VocabularyItem.difficulty_level == difficulty_level)
-        if tag:
-            if db.bind.dialect.name == "postgresql":
-                from sqlalchemy.dialects.postgresql import JSONB
-                from sqlalchemy import cast
-                conditions.append(cast(VocabularyItem.tags, JSONB).contains([tag]))
-            else:
-                conditions.append(VocabularyItem.tags.contains([tag]))
+        conditions.extend(_valid_definition_conditions())
         
         if conditions:
             query = query.where(and_(*conditions))
-        
-        query = query.limit(limit).offset(offset).order_by(VocabularyItem.word)
+
+        query = query.order_by(
+            VocabularyItem.usage_frequency.desc().nullslast(),
+            VocabularyItem.created_at,
+            func.lower(VocabularyItem.word),
+            VocabularyItem.id,
+        )
         
         result = await db.execute(query)
-        return list(result.scalars().all())
+        items = [
+            item
+            for item in result.scalars().all()
+            if not is_placeholder_definition(item.definition)
+        ]
+        if tag:
+            expected_tag = canonical_topic(tag)
+            items = [
+                item
+                for item in items
+                if expected_tag in normalize_all_tags(item.tags)
+            ]
+            return items[offset : offset + limit]
+        return items[offset : offset + limit]
     
     async def search_vocabulary(
         self,
@@ -95,11 +140,16 @@ class VocabularyCRUD:
     ) -> List[VocabularyItem]:
         """Search vocabulary by word (case-insensitive)"""
         query = select(VocabularyItem).where(
-            VocabularyItem.word.ilike(f"%{search_term}%")
+            VocabularyItem.word.ilike(f"%{search_term}%"),
+            *_valid_definition_conditions(),
         ).limit(limit).order_by(VocabularyItem.word)
         
         result = await db.execute(query)
-        return list(result.scalars().all())
+        return [
+            item
+            for item in result.scalars().all()
+            if not is_placeholder_definition(item.definition)
+        ]
 
     async def find_vocabulary_by_word(
         self,
@@ -185,7 +235,12 @@ class VocabularyCRUD:
         query = (
             select(UserVocabulary)
             .options(joinedload(UserVocabulary.vocabulary))  # avoid N+1
+            .join(
+                VocabularyItem,
+                VocabularyItem.id == UserVocabulary.vocabulary_id,
+            )
             .where(UserVocabulary.user_id == user_id)
+            .where(*_valid_definition_conditions())
         )
 
         if status:
@@ -297,13 +352,24 @@ class VocabularyCRUD:
         Get vocabulary items due for review.
         Ordered by next_review_date (oldest first).
         """
-        query = select(UserVocabulary).where(
-            and_(
-                UserVocabulary.user_id == user_id,
-                UserVocabulary.next_review_date <= datetime.now(timezone.utc),
-                UserVocabulary.status != VocabularyStatus.ARCHIVED
+        query = (
+            select(UserVocabulary)
+            .join(
+                VocabularyItem,
+                VocabularyItem.id == UserVocabulary.vocabulary_id,
             )
-        ).order_by(UserVocabulary.next_review_date).limit(limit)
+            .options(joinedload(UserVocabulary.vocabulary))
+            .where(
+                and_(
+                    UserVocabulary.user_id == user_id,
+                    UserVocabulary.next_review_date <= datetime.now(timezone.utc),
+                    UserVocabulary.status != VocabularyStatus.ARCHIVED,
+                ),
+                *_valid_definition_conditions(),
+            )
+            .order_by(UserVocabulary.next_review_date)
+            .limit(limit)
+        )
         
         result = await db.execute(query)
         return list(result.scalars().all())
@@ -315,12 +381,19 @@ class VocabularyCRUD:
     ) -> int:
         """Count vocabulary items due for review"""
         result = await db.execute(
-            select(func.count()).select_from(UserVocabulary).where(
+            select(func.count())
+            .select_from(UserVocabulary)
+            .join(
+                VocabularyItem,
+                VocabularyItem.id == UserVocabulary.vocabulary_id,
+            )
+            .where(
                 and_(
                     UserVocabulary.user_id == user_id,
                     UserVocabulary.next_review_date <= datetime.now(timezone.utc),
-                    UserVocabulary.status != VocabularyStatus.ARCHIVED
-                )
+                    UserVocabulary.status != VocabularyStatus.ARCHIVED,
+                ),
+                *_valid_definition_conditions(),
             )
         )
         return result.scalar() or 0
@@ -696,8 +769,15 @@ class VocabularyCRUD:
         query = (
             select(UserVocabulary)
             .join(VocabularyDeckItem, VocabularyDeckItem.user_vocabulary_id == UserVocabulary.id)
+            .join(
+                VocabularyItem,
+                VocabularyItem.id == UserVocabulary.vocabulary_id,
+            )
             .options(joinedload(UserVocabulary.vocabulary))
-            .where(VocabularyDeckItem.deck_id == deck_id)
+            .where(
+                VocabularyDeckItem.deck_id == deck_id,
+                *_valid_definition_conditions(),
+            )
             .order_by(VocabularyDeckItem.order, VocabularyDeckItem.added_at.desc())
         )
         result = await db.execute(query)
@@ -782,26 +862,40 @@ class VocabularyCRUD:
             return
 
         user_id = user_obj.id
-        from sqlalchemy.dialects.postgresql import JSONB
-        from sqlalchemy import cast, insert
+        from sqlalchemy import insert
         
         # 2. Fetch all 'basic_200' vocabulary item IDs
-        if db.bind.dialect.name == "postgresql":
-            basic_items_query = select(VocabularyItem.id).where(
-                cast(VocabularyItem.tags, JSONB).contains(["basic_200"])
-            )
-        else:
-            basic_items_query = select(VocabularyItem.id).where(
-                VocabularyItem.tags.contains(["basic_200"])
-            )
-            
+        basic_items_query = select(VocabularyItem)
         basic_items_result = await db.execute(basic_items_query)
-        basic_item_ids = [r[0] for r in basic_items_result.all()]
+        basic_items = [
+            item
+            for item in basic_items_result.scalars().all()
+            if has_tag(item.tags, "basic_200")
+        ]
         
-        if not basic_item_ids:
+        if not basic_items:
             # The source catalog may be populated later during deployment.
             # Leave the flag unset so a later request can retry seeding.
             return
+
+        try:
+            assignments = select_balanced_starter_vocabulary(
+                VocabularyCandidate(
+                    id=item.id,
+                    word=item.word,
+                    definition=item.definition,
+                    usage_frequency=item.usage_frequency,
+                    tags=item.tags,
+                    created_at=item.created_at,
+                )
+                for item in basic_items
+            )
+        except ValueError:
+            # Migration or catalog import has not produced a complete balanced
+            # starter set yet. Do not mark the user as seeded with partial data.
+            return
+
+        basic_item_ids = [assignment.candidate.id for assignment in assignments]
             
         # 3. Fetch vocabulary item IDs already in user's collection
         user_vocab_query = select(UserVocabulary.vocabulary_id).where(

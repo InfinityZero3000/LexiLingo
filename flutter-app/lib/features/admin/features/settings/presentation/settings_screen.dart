@@ -362,7 +362,7 @@ class _DropdownField extends StatelessWidget {
                 color: AppColors.onSurfaceMuted)),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           items: [DropdownMenuItem(value: value, child: Text(value))],
           onChanged: (_) {},
           style: GoogleFonts.spaceGrotesk(fontSize: 14, color: AppColors.onSurface),
@@ -406,7 +406,7 @@ class _ToggleRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: AppColors.primary,
+          activeThumbColor: AppColors.primary,
         ),
       ],
     );

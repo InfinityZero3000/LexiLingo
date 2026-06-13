@@ -30,12 +30,10 @@ from api.services.trace_cag.nodes_v2 import (
 )
 from api.services.trace_cag.edges import (
     route_after_diagnosis,
-    should_generate_tts,
     check_cache_hit,
     route_voice_or_text,
     should_analyze_pronunciation,
 )
-from api.services.model_gateway import get_gateway
 
 logger = logging.getLogger(__name__)
 

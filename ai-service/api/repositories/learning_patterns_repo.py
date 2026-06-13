@@ -6,7 +6,7 @@ Redis provides fast read access, MongoDB provides persistence and aggregation.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
@@ -42,7 +42,7 @@ class ImprovementRate(BaseModel):
 class LearningPattern(BaseModel):
     """Complete learning pattern for a user."""
     user_id: str
-    analyzed_at: datetime = Field(default_factory=datetime.utcnow)
+    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     common_errors: List[ErrorPattern] = Field(default_factory=list)
     improvement_rate: ImprovementRate = Field(default_factory=ImprovementRate)
     strengths: List[str] = Field(default_factory=list)
@@ -199,7 +199,7 @@ class LearningPatternRepository:
             db = await self._get_db()
 
             # Get recent interactions (last 30 days)
-            cutoff = datetime.utcnow() - timedelta(days=30)
+            cutoff = datetime.now(timezone.utc) - timedelta(days=30)
 
             # Aggregate grammar errors
             error_pipeline = [
@@ -297,7 +297,7 @@ class LearningPatternRepository:
                     "$set": {
                         "estimated_level": new_level,
                         "next_level_progress": progress,
-                        "analyzed_at": datetime.utcnow(),
+                        "analyzed_at": datetime.now(timezone.utc),
                     }
                 },
                 upsert=True,

@@ -7,7 +7,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, func, or_, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +28,8 @@ router = APIRouter(prefix="/admin/users", tags=["Admin - User Management"])
 
 class UserListResponse(BaseModel):
     """User list response with metadata"""
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     username: str
@@ -46,12 +48,11 @@ class UserListResponse(BaseModel):
     cefr_level: str = "A1"
     streak_days: int = 0
 
-    class Config:
-        from_attributes = True
-
 
 class UserDetailResponse(BaseModel):
     """Detailed user information"""
+    model_config = ConfigDict(from_attributes=True)
+
     id: str
     email: str
     username: str
@@ -64,15 +65,11 @@ class UserDetailResponse(BaseModel):
     provider: List[str]  # ["local"], ["google"], etc.
     created_at: datetime
     last_login: Optional[datetime] = None
-    total_xp: int = 0    
-    # Stats
+    total_xp: int = 0
     courses_enrolled: int = 0
     courses_completed: int = 0
     lessons_completed: int = 0
     daily_activities: int = 0
-    
-    class Config:
-        from_attributes = True
 
 
 class UserUpdateRequest(BaseModel):
@@ -99,13 +96,12 @@ class BulkActionRequest(BaseModel):
 
 class ActivityLogResponse(BaseModel):
     """User activity log entry"""
+    model_config = ConfigDict(from_attributes=True)
+
     activity_date: str
     activity_type: str
     description: str
     xp_earned: int = 0
-    
-    class Config:
-        from_attributes = True
 
 
 class PaginatedUsersResponse(BaseModel):

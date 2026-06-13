@@ -10,7 +10,7 @@ Tracks performance metrics for AI pipeline:
 
 import logging
 from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from collections import defaultdict
 import statistics
 
@@ -56,7 +56,7 @@ class ExecutionMetrics:
         self.model_usage: Dict[str, int] = defaultdict(int)
         
         # Time-based metrics
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self.hourly_requests: Dict[str, int] = defaultdict(int)
         
         logger.info("ExecutionMetrics initialized")
@@ -93,7 +93,7 @@ class ExecutionMetrics:
             self.model_usage[model] += 1
         
         # Record hourly request
-        hour_key = datetime.utcnow().strftime("%Y-%m-%d %H:00")
+        hour_key = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:00")
         self.hourly_requests[hour_key] += 1
         
         logger.debug(
@@ -139,7 +139,7 @@ class ExecutionMetrics:
         Returns:
             Dict with all metrics
         """
-        uptime = (datetime.utcnow() - self.start_time).total_seconds()
+        uptime = (datetime.now(timezone.utc) - self.start_time).total_seconds()
         
         return {
             "overview": {
@@ -227,7 +227,7 @@ class ExecutionMetrics:
     
     def _calculate_rpm(self) -> float:
         """Calculate requests per minute."""
-        uptime_minutes = (datetime.utcnow() - self.start_time).total_seconds() / 60
+        uptime_minutes = (datetime.now(timezone.utc) - self.start_time).total_seconds() / 60
         if uptime_minutes == 0:
             return 0.0
         
@@ -292,7 +292,7 @@ Uptime: {stats['overview']['uptime_seconds']}s
         self.error_types.clear()
         self.model_usage.clear()
         self.hourly_requests.clear()
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         
         logger.info("Metrics reset")
 

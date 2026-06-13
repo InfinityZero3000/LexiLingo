@@ -6,9 +6,9 @@ Implements CEFR level inference algorithm.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -69,7 +69,7 @@ class LevelAssessment(BaseModel):
     strengths: List[str] = Field(default_factory=list)
     areas_to_improve: List[str] = Field(default_factory=list)
     recommendations: List[str] = Field(default_factory=list)
-    assessed_at: datetime = Field(default_factory=datetime.utcnow)
+    assessed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     next_assessment: Optional[datetime] = None
 
 
@@ -135,7 +135,7 @@ class AssessmentService:
             Complete level assessment
         """
         try:
-            db = await self._get_db()
+            await self._get_db()  # ensure the connection is initialized
 
             # Check if recent assessment exists
             if not force:
@@ -177,7 +177,7 @@ class AssessmentService:
                 strengths=strengths,
                 areas_to_improve=improvements,
                 recommendations=recommendations,
-                next_assessment=datetime.utcnow() + timedelta(days=7),
+                next_assessment=datetime.now(timezone.utc) + timedelta(days=7),
             )
 
             # Save assessment
@@ -208,7 +208,7 @@ class AssessmentService:
         """Calculate assessment metrics from interactions."""
         try:
             db = await self._get_db()
-            cutoff = datetime.utcnow() - timedelta(days=days)
+            cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
             # Aggregate interaction data
             pipeline = [
@@ -284,8 +284,8 @@ class AssessmentService:
         """Calculate if errors are improving, stable, or declining."""
         try:
             db = await self._get_db()
-            cutoff = datetime.utcnow() - timedelta(days=days)
-            midpoint = datetime.utcnow() - timedelta(days=days // 2)
+            cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+            midpoint = datetime.now(timezone.utc) - timedelta(days=days // 2)
 
             # Compare first half vs second half error rates
             pipeline = [
@@ -405,7 +405,7 @@ class AssessmentService:
         """Get assessment if done within last 24 hours."""
         try:
             db = await self._get_db()
-            cutoff = datetime.utcnow() - timedelta(hours=24)
+            cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
 
             doc = await db[self.COLLECTION_ASSESSMENTS].find_one(
                 {"user_id": user_id, "assessed_at": {"$gte": cutoff}},
@@ -466,7 +466,7 @@ class AssessmentService:
             history = LevelHistory(
                 user_id=user_id,
                 level=new_level,
-                changed_at=datetime.utcnow(),
+                changed_at=datetime.now(timezone.utc),
                 reason=f"{direction} from {old_level.value} to {new_level.value}",
                 confidence=confidence,
             )

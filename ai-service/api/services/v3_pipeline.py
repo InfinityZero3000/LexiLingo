@@ -35,8 +35,7 @@ from api.services.background_jobs_v3 import BackgroundJobsV3
 from api.services.diagnoser_v3 import DiagnoserV3
 from api.services.grounded_response_v3 import GroundedResponseV3
 from api.services.kg_service_v3 import KnowledgeGraphServiceV3
-from api.services.retrieval_service_v3 import RetrievalConfig, RetrievalServiceV3
-from api.services.graph_analytics import get_graph_analytics
+from api.services.retrieval_service_v3 import RetrievalServiceV3
 
 
 logger = logging.getLogger(__name__)

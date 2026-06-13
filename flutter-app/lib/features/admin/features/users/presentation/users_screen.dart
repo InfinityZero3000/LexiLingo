@@ -23,8 +23,6 @@ class _UsersScreenState extends State<UsersScreen> {
   String? _activeFilter;
   final _searchCtrl = TextEditingController();
 
-  static const _pageSize = 20;
-
   @override
   void initState() {
     super.initState();

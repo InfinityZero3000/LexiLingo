@@ -39,9 +39,9 @@ import logging
 import time
 import psutil
 from enum import Enum
-from typing import Any, Dict, Optional, List, Callable, Awaitable
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from typing import Any, Dict, Optional, Callable, Awaitable
+from dataclasses import dataclass
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -313,7 +313,7 @@ class ModelGateway:
         # Check memory before loading
         current_memory = self._get_used_memory_mb()
         if current_memory + model_info.estimated_memory_mb > self.max_memory_mb:
-            logger.warning(f"Memory pressure detected, freeing space...")
+            logger.warning("Memory pressure detected, freeing space...")
             await self._free_memory(model_info.estimated_memory_mb)
         
         logger.info(f"Loading model: {model_name} (est. {model_info.estimated_memory_mb}MB)...")

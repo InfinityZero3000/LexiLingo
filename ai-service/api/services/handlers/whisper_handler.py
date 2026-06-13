@@ -38,7 +38,6 @@ class WhisperHandler:
         self.config = config or WhisperConfig()
         self.model = None
         self._loaded = False
-        self._loading = False
         self._lock = asyncio.Lock()
         
     @property
@@ -67,13 +66,7 @@ class WhisperHandler:
         async with self._lock:
             if self._loaded:
                 return True
-                
-            if self._loading:
-                while self._loading:
-                    await asyncio.sleep(0.1)
-                return self._loaded
-            
-            self._loading = True
+
             try:
                 logger.info(f"[WhisperHandler] Loading Whisper {self.config.model_size}...")
                 
@@ -87,25 +80,24 @@ class WhisperHandler:
                 if device == "cpu" and compute_type == "float16":
                     compute_type = "int8"
                 
-                # Load model
+                # Load model off the event loop — the constructor blocks for seconds
                 model_path = self.config.model_path or self.config.model_size
-                
-                self.model = WhisperModel(
+
+                self.model = await asyncio.to_thread(
+                    WhisperModel,
                     model_path,
                     device=device,
                     compute_type=compute_type,
                 )
-                
+
                 self._loaded = True
                 logger.info(f"[WhisperHandler]  Whisper loaded on {device}")
                 return True
-                
+
             except Exception as e:
                 logger.error(f"[WhisperHandler] Failed to load: {e}")
                 self._loaded = False
                 return False
-            finally:
-                self._loading = False
     
     def _detect_device(self) -> str:
         """Detect best available device."""
@@ -116,7 +108,7 @@ class WhisperHandler:
             import torch
             if torch.cuda.is_available():
                 return "cuda"
-        except:
+        except Exception:
             pass
         return "cpu"
     
@@ -162,7 +154,7 @@ class WhisperHandler:
         
         try:
             # Run transcription in executor to not block
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(
                 None,
                 self._transcribe_sync,
@@ -176,7 +168,7 @@ class WhisperHandler:
             if audio_path.startswith(tempfile.gettempdir()):
                 try:
                     os.remove(audio_path)
-                except:
+                except Exception:
                     pass
     
     def _transcribe_sync(
@@ -232,7 +224,7 @@ class WhisperHandler:
                         audio = audio.split("base64,")[1]
                     audio_bytes = base64.b64decode(audio)
                     return await self._save_temp_audio(audio_bytes)
-                except:
+                except Exception:
                     pass
             # Assume it's a file path
             return audio

@@ -1029,6 +1029,7 @@ abstract class  LocaleKeys {
   static const vocabulary_exampleSentenceLabel = 'vocabulary.exampleSentenceLabel';
   static const vocabulary_exampleSentenceHint = 'vocabulary.exampleSentenceHint';
   static const vocabulary_failedToSaveWord = 'vocabulary.failedToSaveWord';
+  static const vocabulary_noDefinitionYet = 'vocabulary.noDefinitionYet';
   static const vocabulary = 'vocabulary';
 
 }

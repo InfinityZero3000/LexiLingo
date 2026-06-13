@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
@@ -47,7 +47,7 @@ async def ingest_ai_audit_event(
     user_id = str(payload.get("user_id") or "unknown")
     event = {
         **payload,
-        "received_at": datetime.utcnow().isoformat(),
+        "received_at": datetime.now(timezone.utc).isoformat(),
     }
 
     redis_client = await get_redis()

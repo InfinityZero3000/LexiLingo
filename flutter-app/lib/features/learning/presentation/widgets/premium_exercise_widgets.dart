@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
+import 'lesson_speaking_recorder.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // Semantic exercise colors
@@ -2506,8 +2507,6 @@ class PronunciationPracticeWidget extends StatefulWidget {
 
 class _PronunciationPracticeWidgetState
     extends State<PronunciationPracticeWidget> {
-  bool _hasTapped = false;
-
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
@@ -2575,50 +2574,16 @@ class _PronunciationPracticeWidgetState
             ),
           ),
           const Spacer(),
-          // Microphone button
           Center(
-            child: GestureDetector(
-              onTap: widget.isAnswered
-                  ? null
-                  : () {
-                      setState(() => _hasTapped = true);
-                      widget.onAnswer(widget.exercise.correctAnswer);
-                    },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _hasTapped || widget.isAnswered
-                      ? colors.primary
-                      : Colors.transparent,
-                  border: Border.all(color: colors.primary, width: 2.5),
-                  boxShadow: (_hasTapped || widget.isAnswered)
-                      ? [
-                          BoxShadow(
-                            color: colors.primary.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 4,
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  size: 36,
-                  color: (_hasTapped || widget.isAnswered)
-                      ? Colors.white
-                      : colors.primary,
-                ),
-              ),
+            child: LessonSpeakingRecorder(
+              targetText: widget.exercise.correctAnswer.isNotEmpty
+                  ? widget.exercise.correctAnswer
+                  : widget.exercise.question,
+              isAnswered: widget.isAnswered,
+              onApproved: widget.onAnswer,
+              primaryColor: colors.primary,
+              secondaryTextColor: colors.textSecondary,
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Nhấn để nói',
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
-            textAlign: TextAlign.center,
           ),
           const Spacer(),
         ],
@@ -2935,8 +2900,6 @@ class SpeakingRepeatWidget extends StatefulWidget {
 }
 
 class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
-  bool _hasTapped = false;
-
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
@@ -3005,50 +2968,16 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
             ),
           ),
           const Spacer(),
-          // Microphone
           Center(
-            child: GestureDetector(
-              onTap: widget.isAnswered
-                  ? null
-                  : () {
-                      setState(() => _hasTapped = true);
-                      widget.onAnswer(widget.exercise.correctAnswer);
-                    },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _hasTapped || widget.isAnswered
-                      ? colors.primary
-                      : Colors.transparent,
-                  border: Border.all(color: colors.primary, width: 2.5),
-                  boxShadow: (_hasTapped || widget.isAnswered)
-                      ? [
-                          BoxShadow(
-                            color: colors.primary.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            spreadRadius: 4,
-                          ),
-                        ]
-                      : [],
-                ),
-                child: Icon(
-                  Icons.mic_rounded,
-                  size: 36,
-                  color: (_hasTapped || widget.isAnswered)
-                      ? Colors.white
-                      : colors.primary,
-                ),
-              ),
+            child: LessonSpeakingRecorder(
+              targetText: widget.exercise.correctAnswer.isNotEmpty
+                  ? widget.exercise.correctAnswer
+                  : widget.exercise.question,
+              isAnswered: widget.isAnswered,
+              onApproved: widget.onAnswer,
+              primaryColor: colors.primary,
+              secondaryTextColor: colors.textSecondary,
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Nhấn để bắt đầu nói',
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
-            textAlign: TextAlign.center,
           ),
           const Spacer(),
         ],

@@ -16,7 +16,8 @@ class SettingsProvider extends ChangeNotifier {
   Settings? _settings;
   String? _activeUserId;
   late String _theme;
-  Future<void> _themePersistenceQueue = Future.value();
+  Future<void> _localThemePersistenceQueue = Future.value();
+  Future<void> _settingsPersistenceQueue = Future.value();
   bool _isLoading = false;
   String? _error;
 
@@ -98,6 +99,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> loadSettings(String userId) async {
     // Skip reload if already loaded for this user — avoids spinner flash on re-entry
     if (_activeUserId == userId && _settings != null && !_isLoading) return;
+    if (_activeUserId == userId && _isLoading) return;
 
     _activeUserId = userId;
     _isLoading = true;
@@ -241,11 +243,27 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
 
     final settingsToPersist = _settings;
-    final persistence = _themePersistenceQueue.then(
-      (_) => _persistTheme(normalizedTheme, settingsToPersist),
+    final localPersistence = _localThemePersistenceQueue.then(
+      (_) => _persistLocalTheme(normalizedTheme),
     );
-    _themePersistenceQueue = persistence.then<void>((_) {});
-    final persistenceError = await persistence;
+    _localThemePersistenceQueue = localPersistence.then<void>((_) {});
+
+    final settingsPersistence = _settingsPersistenceQueue.then(
+      (_) => _persistUserSettings(settingsToPersist),
+    );
+    _settingsPersistenceQueue = settingsPersistence.then<void>((_) {});
+
+    final persistenceErrors = await Future.wait([
+      localPersistence,
+      settingsPersistence,
+    ]);
+    String? persistenceError;
+    for (final error in persistenceErrors) {
+      if (error != null) {
+        persistenceError = error;
+        break;
+      }
+    }
 
     if (persistenceError != null && _theme == normalizedTheme) {
       _error = persistenceError;
@@ -253,26 +271,24 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<String?> _persistTheme(
-    String normalizedTheme,
-    Settings? settingsToPersist,
-  ) async {
-    String? persistenceError;
+  Future<String?> _persistLocalTheme(String normalizedTheme) async {
     try {
       await _themePreferenceStore.writeTheme(normalizedTheme);
+      return null;
     } catch (e) {
-      persistenceError = e.toString();
+      return e.toString();
     }
+  }
 
-    if (settingsToPersist != null) {
-      try {
-        final result = await _repository.updateSettings(settingsToPersist);
-        result.fold((failure) => persistenceError = failure.message, (_) {});
-      } catch (e) {
-        persistenceError = e.toString();
-      }
+  Future<String?> _persistUserSettings(Settings? settingsToPersist) async {
+    if (settingsToPersist == null) return null;
+
+    try {
+      final result = await _repository.updateSettings(settingsToPersist);
+      return result.fold((failure) => failure.message, (_) => null);
+    } catch (e) {
+      return e.toString();
     }
-    return persistenceError;
   }
 
   /// Update notification settings

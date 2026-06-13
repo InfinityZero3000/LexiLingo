@@ -19,6 +19,7 @@ from app.models.user import User
 from app.models.course import Course, Unit, Lesson
 from app.models.progress import (
     UserProgress,
+    UserCourseProgress,
     LessonAttempt,
     QuestionAttempt,
     Streak,
@@ -593,10 +594,12 @@ async def _validate_answer(
                 correct_answer = str(ex.get('correct_answer', ''))
                 explanation = ex.get('explanation', 'Check the correct answer and try again.')
 
-                user_ans_normalized = _normalize_answer(user_answer, question_type)
-                correct_ans_normalized = _normalize_answer(correct_answer, question_type)
-
-                is_correct = user_ans_normalized == correct_ans_normalized
+                is_correct = _answers_match(
+                    user_answer,
+                    correct_answer,
+                    question_type,
+                    ex.get("ui_type"),
+                )
                 return is_correct, correct_answer, explanation
 
     # Fallback: look up in the dynamic demo exercise set for this lesson
@@ -606,14 +609,68 @@ async def _validate_answer(
             if demo_ex.id == question_id:
                 correct_answer = demo_ex.correct_answer
                 explanation = demo_ex.explanation or "Check the correct answer and try again."
-                user_ans_normalized = _normalize_answer(user_answer, question_type)
-                correct_ans_normalized = _normalize_answer(correct_answer, question_type)
-                is_correct = user_ans_normalized == correct_ans_normalized
+                is_correct = _answers_match(
+                    user_answer,
+                    correct_answer,
+                    question_type,
+                    demo_ex.ui_type,
+                )
                 return is_correct, correct_answer, explanation
 
     # Last resort: direct comparison
     is_correct = _normalize_answer(user_answer, question_type) == _normalize_answer(correct_answer, question_type)
     return is_correct, correct_answer, explanation
+
+
+async def _find_next_lesson(db: AsyncSession, current_lesson: Lesson) -> Optional[UUID]:
+    """Return the UUID of the next lesson after current_lesson.
+
+    Checks same-unit lessons by order_index first, then falls back to the
+    first lesson of the next unit (ordered by order_index).
+    """
+    unit_result = await db.execute(select(Unit).where(Unit.id == current_lesson.unit_id))
+    unit = unit_result.scalar_one_or_none()
+    if not unit:
+        return None
+
+    next_in_unit = await db.execute(
+        select(Lesson)
+        .where(
+            and_(
+                Lesson.unit_id == unit.id,
+                Lesson.order_index > current_lesson.order_index,
+            )
+        )
+        .order_by(Lesson.order_index)
+        .limit(1)
+    )
+    nxt = next_in_unit.scalar_one_or_none()
+    if nxt:
+        return nxt.id
+
+    next_unit = await db.execute(
+        select(Unit)
+        .where(
+            and_(
+                Unit.course_id == unit.course_id,
+                Unit.order_index > unit.order_index,
+            )
+        )
+        .order_by(Unit.order_index)
+        .limit(1)
+    )
+    nu = next_unit.scalar_one_or_none()
+    if not nu:
+        return None
+
+    first_in_next = await db.execute(
+        select(Lesson)
+        .where(Lesson.unit_id == nu.id)
+        .order_by(Lesson.order_index)
+        .limit(1)
+    )
+    first = first_in_next.scalar_one_or_none()
+    return first.id if first else None
 
 
 def _normalize_answer(answer: any, question_type: str) -> str:
@@ -650,6 +707,62 @@ def _normalize_answer(answer: any, question_type: str) -> str:
             return 'false'
     
     return ans_str
+
+
+def _answers_match(
+    user_answer: any,
+    correct_answer: any,
+    question_type: str,
+    ui_type: Optional[str] = None,
+) -> bool:
+    if str(ui_type or "").lower() in {
+        "speaking_repeat",
+        "pronunciation_practice",
+    }:
+        return _speaking_answers_match(user_answer, correct_answer)
+
+    return _normalize_answer(user_answer, question_type) == _normalize_answer(
+        correct_answer,
+        question_type,
+    )
+
+
+def _speaking_answers_match(
+    user_answer: any,
+    correct_answer: any,
+    approval_threshold: float = 0.85,
+) -> bool:
+    user_normalized = _normalize_answer(user_answer, "translate")
+    correct_normalized = _normalize_answer(correct_answer, "translate")
+    if not user_normalized or not correct_normalized:
+        return False
+
+    similarity = _text_similarity(user_normalized, correct_normalized)
+    return similarity >= approval_threshold
+
+
+def _text_similarity(first: str, second: str) -> float:
+    if first == second:
+        return 1.0 if first else 0.0
+    if not first or not second:
+        return 0.0
+
+    previous = list(range(len(second) + 1))
+    for first_index, first_character in enumerate(first):
+        current = [first_index + 1]
+        for second_index, second_character in enumerate(second):
+            substitution_cost = 0 if first_character == second_character else 1
+            current.append(
+                min(
+                    current[second_index] + 1,
+                    previous[second_index + 1] + 1,
+                    previous[second_index] + substitution_cost,
+                )
+            )
+        previous = current
+
+    longest_length = max(len(first), len(second))
+    return (longest_length - previous[-1]) / longest_length
 
 
 @router.post("/attempts/{attempt_id}/complete", response_model=ApiResponse[LessonCompleteResponse])
@@ -862,6 +975,10 @@ async def complete_lesson(
     time_sec = attempt.time_spent_ms // 1000
     accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0
 
+    next_lesson_id = None
+    if attempt.passed:
+        next_lesson_id = await _find_next_lesson(db, lesson)
+
     return ApiResponse(
         success=True,
         message="Congratulations!" if attempt.passed else "Keep practicing!",
@@ -873,7 +990,7 @@ async def complete_lesson(
             time_spent_seconds=time_sec,
             accuracy=accuracy,
             stars_earned=stars,
-            next_lesson_unlocked=None,  # TODO
+            next_lesson_unlocked=next_lesson_id,
             achievements_unlocked=unlocked_achievements,
             total_questions=attempt.total_questions,
             correct_answers=attempt.correct_answers,
@@ -918,7 +1035,19 @@ async def get_course_roadmap(
     result = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
     streak = result.scalar_one_or_none()
     current_streak = streak.current_streak if streak else 0
-    
+
+    # Get total XP earned for this course
+    cp_result = await db.execute(
+        select(UserCourseProgress).where(
+            and_(
+                UserCourseProgress.user_id == current_user.id,
+                UserCourseProgress.course_id == course_id,
+            )
+        )
+    )
+    course_progress = cp_result.scalar_one_or_none()
+    total_xp_earned = course_progress.total_xp_earned if course_progress else 0
+
     # Build roadmap
     units_roadmap = []
     completed_units = 0
@@ -1014,7 +1143,7 @@ async def get_course_roadmap(
             total_lessons=total_lessons,
             completed_lessons=completed_lessons_count,
             completion_percentage=overall_comp,
-            total_xp_earned=0,  # TODO: Calculate from attempts
+            total_xp_earned=total_xp_earned,
             current_streak=current_streak,
             units=units_roadmap
         )

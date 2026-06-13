@@ -24,7 +24,7 @@ from api.models.v3_schemas import (
     VectorHit,
 )
 from api.services.embedding_service_v3 import EmbeddingServiceV3
-from api.services.graph_analytics import GraphAnalyticsService, get_graph_analytics
+from api.services.graph_analytics import get_graph_analytics
 from api.services.kg_service_v3 import KnowledgeGraphServiceV3
 
 

@@ -93,13 +93,15 @@ class RedisClient:
         if cls._instance:
             try:
                 await cls._instance.aclose()
-            except Exception:
+            except Exception as _exc:
+                logger.debug("[redis_client] ignored: %s", _exc)
                 pass
             cls._instance = None
         if cls._pool:
             try:
                 await cls._pool.disconnect()
-            except Exception:
+            except Exception as _exc:
+                logger.debug("[redis_client] ignored: %s", _exc)
                 pass
             cls._pool = None
 

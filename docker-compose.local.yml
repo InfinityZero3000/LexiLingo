@@ -66,6 +66,27 @@ services:
       redis-ai:
         condition: service_started
 
+  # PostgreSQL for backend integration tests (lexilingo_test DB)
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: lexilingo-postgres-test
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: lexilingo
+      POSTGRES_PASSWORD: lexilingo_pass
+      POSTGRES_DB: lexilingo_test
+    tmpfs:
+      - /var/lib/postgresql/data   # in-memory → fast tests, no persistent state
+    restart: "no"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lexilingo -d lexilingo_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - lexilingo-network
+
   # Redis cache dedicated for AI
   redis-ai:
     image: redis:7-alpine

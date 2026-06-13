@@ -6,12 +6,13 @@ Manages Piper TTS for speech synthesis.
 
 import logging
 import asyncio
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 from dataclasses import dataclass
 import os
 import tempfile
 import subprocess
 import shutil
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +43,6 @@ class PiperHandler:
         self._piper_path: Optional[str] = None
         self._model_path: Optional[str] = None
         self._loaded = False
-        self._loading = False
         self._lock = asyncio.Lock()
         
     @property
@@ -65,12 +65,6 @@ class PiperHandler:
             if self._loaded:
                 return True
                 
-            if self._loading:
-                while self._loading:
-                    await asyncio.sleep(0.1)
-                return self._loaded
-            
-            self._loading = True
             try:
                 logger.info("[PiperHandler] Initializing Piper TTS...")
                 
@@ -80,7 +74,7 @@ class PiperHandler:
                 if not self._piper_path:
                     # Try using piper-tts Python package
                     try:
-                        from piper import PiperVoice
+                        from piper import PiperVoice  # noqa: F401 — availability probe
                         self._use_python = True
                         logger.info("[PiperHandler] Using piper-tts Python package")
                     except ImportError:
@@ -110,15 +104,13 @@ class PiperHandler:
                         self._model_path = self.config.model_path
                 
                 self._loaded = True
-                logger.info(f"[PiperHandler]  Piper initialized")
+                logger.info("[PiperHandler]  Piper initialized")
                 return True
                 
             except Exception as e:
                 logger.error(f"[PiperHandler] Failed to initialize: {e}")
                 self._loaded = False
                 return False
-            finally:
-                self._loading = False
     
     async def _find_piper(self) -> Optional[str]:
         """Find piper executable."""
@@ -176,7 +168,7 @@ class PiperHandler:
         length_scale = 1.0 / (speed or 1.0)  # Invert for piper
         
         # Generate audio
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         
         if hasattr(self, "_use_python") and self._use_python:
             audio_bytes, duration = await loop.run_in_executor(
@@ -263,8 +255,8 @@ class PiperHandler:
             if self.config.speaker_id is not None:
                 cmd.extend(["--speaker", str(self.config.speaker_id)])
             
-            # Run piper
-            process = subprocess.run(
+            # Run piper (check=True raises CalledProcessError on failure)
+            subprocess.run(
                 cmd,
                 input=text.encode("utf-8"),
                 capture_output=True,
@@ -291,12 +283,15 @@ class PiperHandler:
         to_format: str,
     ) -> bytes:
         """Convert audio format using ffmpeg."""
-        with tempfile.NamedTemporaryFile(suffix=f".{from_format}", delete=False) as f:
-            f.write(audio_bytes)
-            input_path = f.name
-        
+
+        def _write_temp() -> str:
+            with tempfile.NamedTemporaryFile(suffix=f".{from_format}", delete=False) as f:
+                f.write(audio_bytes)
+                return f.name
+
+        input_path = await asyncio.to_thread(_write_temp)
         output_path = input_path.replace(f".{from_format}", f".{to_format}")
-        
+
         try:
             cmd = ["ffmpeg", "-y", "-i", input_path, output_path]
             process = await asyncio.create_subprocess_exec(
@@ -305,10 +300,9 @@ class PiperHandler:
                 stderr=asyncio.subprocess.DEVNULL,
             )
             await process.wait()
-            
+
             if os.path.exists(output_path):
-                with open(output_path, "rb") as f:
-                    return f.read()
+                return await asyncio.to_thread(lambda: Path(output_path).read_bytes())
             return audio_bytes
             
         finally:
@@ -316,7 +310,7 @@ class PiperHandler:
                 if os.path.exists(path):
                     try:
                         os.remove(path)
-                    except:
+                    except Exception:
                         pass
     
     async def invoke(self, params: Dict[str, Any]) -> Dict[str, Any]:

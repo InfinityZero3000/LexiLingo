@@ -12,7 +12,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from bson import ObjectId
 import base64
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import time
 import logging
@@ -30,7 +30,6 @@ from api.models.story_schemas import (
     StartTopicSessionResponse,
     TopicChatRequest,
     TopicChatResponse,
-    ListStoriesRequest,
     ListStoriesResponse,
     StoryListItem,
     DifficultyLevel,
@@ -392,7 +391,7 @@ async def start_topic_session(
         
         # Create session
         session_id = str(uuid.uuid4())
-        created_at = datetime.utcnow()
+        created_at = datetime.now(timezone.utc)
         
         session = {
             "session_id": session_id,
@@ -560,7 +559,8 @@ async def send_topic_message(
                 _sg = await get_subgraph(session.get("story_id", ""), redis_client)
                 if _sg:
                     _kg_seeds = _sg.get("seed_concepts", [])
-            except Exception:
+            except Exception as _exc:
+                logger.debug("[topic_chat] ignored: %s", _exc)
                 pass
 
         # Always run TraceCAG first for topic sessions.
@@ -658,7 +658,7 @@ async def send_topic_message(
             "user_id": request.user_id,
             "content": request.message,
             "role": "user",
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         await db["chat_messages"].insert_one(user_message)
         
@@ -673,7 +673,7 @@ async def send_topic_message(
             "session_id": session_id,
             "content": display_response,
             "role": "assistant",
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(timezone.utc)
         }
         await db["chat_messages"].insert_one(ai_message_doc)
         
@@ -681,7 +681,7 @@ async def send_topic_message(
         await db["chat_sessions"].update_one(
             {"session_id": session_id},
             {
-                "$set": {"last_activity": datetime.utcnow()},
+                "$set": {"last_activity": datetime.now(timezone.utc)},
                 "$inc": {"message_count": 2}
             }
         )

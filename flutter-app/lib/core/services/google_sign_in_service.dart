@@ -160,8 +160,17 @@ class GoogleSignInService {
   /// Mobile: use google_sign_in package to get the Google id_token.
   Future<String?> _signInMobile() async {
     try {
-      // Disconnect (revoke) first so account picker is always shown
-      await _googleSignIn.disconnect();
+      // Clear only the local session before showing the account picker.
+      // disconnect() revokes OAuth access over the network and can fail before
+      // signIn() starts, leaving users unable to log in again.
+      try {
+        await _googleSignIn.signOut();
+      } on PlatformException catch (e) {
+        logWarn(
+          _tag,
+          'Could not clear previous Google session: ${e.code} ${e.message}',
+        );
+      }
 
       final GoogleSignInAccount? account = await _googleSignIn.signIn();
       if (account == null) {
@@ -215,11 +224,11 @@ class GoogleSignInService {
     return e.message ?? 'Google Sign-In failed on mobile.';
   }
 
-  /// Sign out from Google and revoke access so account picker is shown on next sign-in
+  /// Sign out from Google without revoking the user's OAuth grant.
   Future<void> signOut() async {
     try {
       if (!kIsWeb) {
-        await _googleSignIn.disconnect();
+        await _googleSignIn.signOut();
       } else {
         await FirebaseAuth.instance.signOut();
       }

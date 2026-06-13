@@ -91,29 +91,25 @@ class EmbeddingServiceV3:
             try:
                 import google.generativeai as genai
                 genai.configure(api_key=gemini_key)
-                
-                # Use standard text-embedding-004 model
-                response = genai.embed_content(
-                    model="models/text-embedding-004",
-                    contents=texts,
-                )
-                if response and "embedding" in response:
-                    embeddings = response["embedding"]
-                    if isinstance(embeddings, list) and len(embeddings) > 0:
-                        if isinstance(embeddings[0], list):
-                            # List of list of floats
-                            arr = np.array(embeddings, dtype=np.float32)
-                            norms = np.linalg.norm(arr, axis=1, keepdims=True)
-                            norms[norms == 0] = 1.0  # avoid division by zero
-                            logger.info(f"Generated {len(texts)} embeddings via Gemini API")
-                            return arr / norms
-                        elif isinstance(embeddings[0], (int, float)):
-                            # Single list of floats
-                            arr = np.array([embeddings], dtype=np.float32)
-                            norms = np.linalg.norm(arr, axis=1, keepdims=True)
-                            norms[norms == 0] = 1.0
-                            logger.info("Generated 1 embedding via Gemini API")
-                            return arr / norms
+
+                # embed_content takes `content` (singular) per call.
+                # Batch by calling once per text then stacking.
+                rows: list[list[float]] = []
+                for text in texts:
+                    response = genai.embed_content(
+                        model="models/text-embedding-004",
+                        content=text,
+                    )
+                    emb = response.get("embedding") if isinstance(response, dict) else getattr(response, "embedding", None)
+                    if not emb or not isinstance(emb, list):
+                        raise ValueError(f"Unexpected Gemini embedding response: {response!r}")
+                    rows.append(emb)
+
+                arr = np.array(rows, dtype=np.float32)
+                norms = np.linalg.norm(arr, axis=1, keepdims=True)
+                norms[norms == 0] = 1.0
+                logger.info(f"Generated {len(texts)} embeddings via Gemini API")
+                return arr / norms
             except Exception as e:
                 logger.warning(f"Failed to generate embeddings via Gemini API: {e}. Falling back to local model.")
 

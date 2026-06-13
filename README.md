@@ -273,7 +273,7 @@ The AI tutor uses a **LangGraph StateGraph** (`ai-service/api/services/trace_cag
 
 ### TRACE-CAG Architecture
 
-![TRACE-CAG Architecture](docs/trace_cag.png)
+![TRACE-CAG Architecture](docs/tracecag.png)
 
 TRACE-CAG runs as a **hierarchical, memory-first pipeline** with three reuse tiers:
 

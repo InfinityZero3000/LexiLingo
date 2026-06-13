@@ -11,7 +11,6 @@ NO HuggingFace dependency - pure Ollama API.
 """
 
 import logging
-import asyncio
 import json
 import os
 import httpx
@@ -97,7 +96,7 @@ class OllamaQwenHandler:
                     )
                 
                 self._loaded = True
-                logger.info(f"[OllamaQwenHandler]  Connected to Ollama")
+                logger.info("[OllamaQwenHandler]  Connected to Ollama")
                 return True
             else:
                 logger.error(f"[OllamaQwenHandler] Ollama not responding: {response.status_code} (marking Ollama as offline)")

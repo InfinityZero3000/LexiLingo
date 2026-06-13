@@ -373,11 +373,12 @@ async def _patched_pipeline(
     import api.services.trace_cag.graph as _graph_mod
     _graph_mod._trace_cag_instance = None
 
-    # Also reset node gateway singleton
+    # Also reset node gateway singleton and in-process cache
     import api.services.trace_cag.nodes_v2 as _nodes_mod
+    import api.services.trace_cag.cache_utils as _cache_mod
     _nodes_mod._gateway_instance = None
-    _nodes_mod._MEM_RESPONSE_CACHE.clear()
-    _nodes_mod._MEM_GRAPH_BUCKETS.clear()
+    _cache_mod._MEM_RESPONSE_CACHE.clear()
+    _cache_mod._MEM_GRAPH_BUCKETS.clear()
 
     # Create a fake kg_service_v3 module for patching
     fake_kg_module = MagicMock()
@@ -957,6 +958,7 @@ async def test_scenario_l1_writeback_pcc_stable():
     """
     import hashlib
     import api.services.trace_cag.nodes_v2 as _nodes_mod
+    import api.services.trace_cag.cache_utils as _cache_mod
 
     trace = PipelineTrace(
         test_name="L1 Write-Back — PCCStable Gate",
@@ -983,15 +985,15 @@ async def test_scenario_l1_writeback_pcc_stable():
         # _write_cache_entry call has stable PCC context.
         cache_key_raw = f"i go to school yesterday.||B1"
         cache_key = hashlib.md5(cache_key_raw.encode()).hexdigest()
-        if cache_key in _nodes_mod._MEM_RESPONSE_CACHE:
-            _exp, _entry = _nodes_mod._MEM_RESPONSE_CACHE[cache_key]
+        if cache_key in _cache_mod._MEM_RESPONSE_CACHE:
+            _exp, _entry = _cache_mod._MEM_RESPONSE_CACHE[cache_key]
             _entry["fingerprint"]["root_concepts"] = ["concept:grammar.past_tense"]
             # Force bucket registration so L1 has a candidate
-            epoch = _nodes_mod._profile_epoch({"level": trace.learner_level})
-            bucket_raw = _nodes_mod._build_graph_bucket(
+            epoch = _cache_mod._profile_epoch({"level": trace.learner_level})
+            bucket_raw = _cache_mod._build_graph_bucket(
                 trace.user_input, trace.learner_level, "correct", epoch, []
             )
-            _nodes_mod._register_graph_bucket(bucket_raw, cache_key)
+            _cache_mod._register_graph_bucket(bucket_raw, cache_key)
 
         # ── Pass 2: slightly different surface form → same concept bucket ───
         near_input = "i go to school yesterday."
@@ -1019,13 +1021,13 @@ async def test_scenario_l1_writeback_pcc_stable():
     )
     trace.add_check(
         "bucket_has_entries",
-        len(_nodes_mod._MEM_GRAPH_BUCKETS) > 0,
-        f"buckets={len(_nodes_mod._MEM_GRAPH_BUCKETS)}",
+        len(_cache_mod._MEM_GRAPH_BUCKETS) > 0,
+        f"buckets={len(_cache_mod._MEM_GRAPH_BUCKETS)}",
     )
     trace.add_check(
         "bucket_version_recorded",
-        len(_nodes_mod._MEM_BUCKET_VERSIONS) > 0,
-        f"versions recorded={len(_nodes_mod._MEM_BUCKET_VERSIONS)}",
+        len(_cache_mod._MEM_BUCKET_VERSIONS) > 0,
+        f"versions recorded={len(_cache_mod._MEM_BUCKET_VERSIONS)}",
     )
 
     print_trace(trace)
@@ -1042,6 +1044,7 @@ async def test_scenario_l1_invalidation_on_version_change():
     then runs, it calls _invalidate_bucket() and falls through to L2.
     """
     import api.services.trace_cag.nodes_v2 as _nodes_mod
+    import api.services.trace_cag.cache_utils as _cache_mod
 
     trace = PipelineTrace(
         test_name="L1 Invalidation — Version Mismatch (Algorithm 3)",
@@ -1066,41 +1069,41 @@ async def test_scenario_l1_invalidation_on_version_change():
         )
 
         # Confirm L1 bucket was written
-        epoch = _nodes_mod._profile_epoch({"level": "B2"})
-        bucket = _nodes_mod._build_graph_bucket(trace.user_input, "B2", "correct", epoch, [])
-        had_bucket = bucket in _nodes_mod._MEM_GRAPH_BUCKETS
+        epoch = _cache_mod._profile_epoch({"level": "B2"})
+        bucket = _cache_mod._build_graph_bucket(trace.user_input, "B2", "correct", epoch, [])
+        had_bucket = bucket in _cache_mod._MEM_GRAPH_BUCKETS
         trace.add_check("bucket_populated", had_bucket, f"bucket={bucket[:8]}")
 
-        version_recorded = bucket in _nodes_mod._MEM_BUCKET_VERSIONS
+        version_recorded = bucket in _cache_mod._MEM_BUCKET_VERSIONS
         trace.add_check(
             "version_recorded",
             version_recorded,
-            f"version keys={list(_nodes_mod._MEM_BUCKET_VERSIONS.keys())[:3]}",
+            f"version keys={list(_cache_mod._MEM_BUCKET_VERSIONS.keys())[:3]}",
         )
 
         # Confirm _bucket_version_valid returns True before bump
-        valid_before = _nodes_mod._bucket_version_valid(bucket)
+        valid_before = _cache_mod._bucket_version_valid(bucket)
         trace.add_check("valid_before_bump", valid_before)
 
         # ── Simulate KG schema upgrade ───────────────────────────────────────
-        old_version = _nodes_mod._GRAPH_SCHEMA_VERSION
-        _nodes_mod._GRAPH_SCHEMA_VERSION = old_version + 99  # force mismatch
+        old_version = _cache_mod._GRAPH_SCHEMA_VERSION
+        _cache_mod._GRAPH_SCHEMA_VERSION = old_version + 99  # force mismatch
 
         try:
             # Version check must now fail
-            valid_after = _nodes_mod._bucket_version_valid(bucket)
+            valid_after = _cache_mod._bucket_version_valid(bucket)
             trace.add_check("invalid_after_bump", not valid_after, f"valid={valid_after}")
 
             # Invalidate explicitly (as cache_gate_node would do)
-            _nodes_mod._invalidate_bucket(bucket)
+            _cache_mod._invalidate_bucket(bucket)
             trace.add_check(
                 "bucket_evicted",
-                bucket not in _nodes_mod._MEM_GRAPH_BUCKETS,
-                f"bucket still present: {bucket in _nodes_mod._MEM_GRAPH_BUCKETS}",
+                bucket not in _cache_mod._MEM_GRAPH_BUCKETS,
+                f"bucket still present: {bucket in _cache_mod._MEM_GRAPH_BUCKETS}",
             )
             trace.add_check(
                 "version_record_removed",
-                bucket not in _nodes_mod._MEM_BUCKET_VERSIONS,
+                bucket not in _cache_mod._MEM_BUCKET_VERSIONS,
             )
 
             # ── Pass 2: must go to L2 because bucket is gone ─────────────────
@@ -1116,7 +1119,7 @@ async def test_scenario_l1_invalidation_on_version_change():
             )
 
         finally:
-            _nodes_mod._GRAPH_SCHEMA_VERSION = old_version  # restore
+            _cache_mod._GRAPH_SCHEMA_VERSION = old_version  # restore
 
     trace.nodes = second_nodes
     trace.final_response = second_result

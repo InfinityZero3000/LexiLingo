@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List
 from uuid import uuid4
 
@@ -20,7 +20,7 @@ class AIRepository:
             request.model_dump() if hasattr(request, "model_dump") else dict(request)
         )
         payload.setdefault("interaction_id", str(uuid4()))
-        payload.setdefault("created_at", datetime.utcnow())
+        payload.setdefault("created_at", datetime.now(timezone.utc))
         await self.collection.insert_one(payload)
         return str(payload["interaction_id"])
 
@@ -37,7 +37,7 @@ class AIRepository:
     async def update_feedback(self, interaction_id: str, feedback: Dict[str, Any]) -> bool:
         result = await self.collection.update_one(
             {"interaction_id": interaction_id},
-            {"$set": {"feedback": feedback, "feedback_updated_at": datetime.utcnow()}},
+            {"$set": {"feedback": feedback, "feedback_updated_at": datetime.now(timezone.utc)}},
         )
         if result.matched_count > 0:
             return True
@@ -45,14 +45,14 @@ class AIRepository:
         if ObjectId.is_valid(interaction_id):
             result = await self.collection.update_one(
                 {"_id": ObjectId(interaction_id)},
-                {"$set": {"feedback": feedback, "feedback_updated_at": datetime.utcnow()}},
+                {"$set": {"feedback": feedback, "feedback_updated_at": datetime.now(timezone.utc)}},
             )
             return result.matched_count > 0
 
         return False
 
     async def get_user_error_stats(self, user_id: str, days: int = 30) -> List[Dict[str, Any]]:
-        since = datetime.utcnow() - timedelta(days=max(days, 1))
+        since = datetime.now(timezone.utc) - timedelta(days=max(days, 1))
         pipeline = [
             {"$match": {"user_id": user_id, "created_at": {"$gte": since}}},
             {"$project": {"error_types": {"$ifNull": ["$metadata.error_types", []]}}},

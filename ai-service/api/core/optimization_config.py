@@ -163,13 +163,5 @@ default_config = OptimizationConfig()
 
 
 def get_optimization_config() -> OptimizationConfig:
-    """
-    Get optimization configuration.
-    
-    Can be extended to load from environment variables or config file.
-    
-    Returns:
-        OptimizationConfig instance
-    """
-    # TODO: Load from environment or config file
+    """Return the shared OptimizationConfig instance."""
     return default_config

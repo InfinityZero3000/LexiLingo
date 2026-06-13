@@ -43,4 +43,21 @@ data/kg_raw/edges_final.csv
 data/kg_raw/*.gz
 data/kg_raw/*.jsonl
 kg_raw/
-TRACECAG*
+
+# Large generated kg_output artifacts (regenerate with generate_tracecag_topic_corpus.py / crawl_topic_knowledge.py)
+data/kg_output/finetune_samples.jsonl
+data/kg_output/tracecag_topic_quadruples.jsonl
+data/kg_output/tracecag_topic_edges.jsonl
+data/kg_output/tracecag_knowledge_prefix.full.txt
+data/kg_output/kg_checkpoint*.jsonl
+data/kg_output/preprocessed_dataset.jsonl
+data/kg_output/entity_cards.json
+data/kg_output/quadruples.json
+data/kg_output/nodes.json
+data/kg_output/edges.json
+data/kg_output/topic_crawl_report.json
+data/kg_output/tracecag_topic_corpus_report.json
+data/sample_stories.expanded.json
+
+# Crawler cache
+.crawl4ai/

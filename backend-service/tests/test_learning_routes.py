@@ -12,6 +12,34 @@ from datetime import datetime
 from app.models.course import Course, Unit, Lesson
 from app.models.user import User
 from app.models.progress import LessonAttempt, UserProgress, Streak
+from app.routes.learning import _answers_match, _speaking_answers_match
+
+
+def test_speaking_answer_match_allows_minor_stt_difference():
+    assert _speaking_answers_match(
+        "Could you please speak more slow",
+        "Could you please speak more slowly",
+    )
+
+
+def test_speaking_answer_match_rejects_different_sentence():
+    assert not _speaking_answers_match(
+        "What time does the train leave",
+        "Could you please speak more slowly",
+    )
+
+
+def test_answer_match_applies_fuzzy_threshold_only_to_speaking_ui():
+    transcript = "Could you please speak more slow"
+    target = "Could you please speak more slowly"
+
+    assert _answers_match(
+        transcript,
+        target,
+        "translation",
+        "speaking_repeat",
+    )
+    assert not _answers_match(transcript, target, "translation")
 
 
 @pytest.mark.asyncio

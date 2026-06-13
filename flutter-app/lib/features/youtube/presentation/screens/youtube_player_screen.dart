@@ -5,7 +5,6 @@ import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
-import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';

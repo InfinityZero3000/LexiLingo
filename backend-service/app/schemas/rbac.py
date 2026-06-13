@@ -4,7 +4,7 @@ RBAC Schemas — Roles, Permissions, Audit Logs
 
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field, UUID4
+from pydantic import BaseModel, ConfigDict, Field, UUID4
 
 
 # ── Role ──────────────────────────────────────────────────
@@ -28,13 +28,12 @@ class RoleUpdate(BaseModel):
 
 
 class RoleResponse(RoleBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID4
     is_system: bool
     is_active: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class RoleWithPermissions(RoleResponse):
@@ -56,16 +55,17 @@ class PermissionCreate(PermissionBase):
 
 
 class PermissionResponse(PermissionBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID4
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 # ── Audit Log ─────────────────────────────────────────────
 
 class AuditLogResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID4
     user_id: Optional[UUID4] = None
     action: str
@@ -74,9 +74,6 @@ class AuditLogResponse(BaseModel):
     details: Optional[str] = None
     ip_address: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 # ── Role Assignment ───────────────────────────────────────
@@ -89,6 +86,8 @@ class AssignRoleRequest(BaseModel):
 # ── Notification ──────────────────────────────────────────
 
 class NotificationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID4
     title: str
     body: str
@@ -97,9 +96,6 @@ class NotificationResponse(BaseModel):
     is_read: bool
     read_at: Optional[datetime] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 # Resolve forward references

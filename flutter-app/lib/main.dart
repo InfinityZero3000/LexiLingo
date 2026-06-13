@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:sqflite/sqflite.dart';
@@ -337,6 +338,14 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.themeMode,
             themeAnimationDuration: Duration.zero,
+            builder: (context, child) {
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: AppTheme.systemUiOverlayStyle(
+                  Theme.of(context).brightness,
+                ),
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
             // Localization — easy_localization handles locale state
             locale: context.locale,
             supportedLocales: context.supportedLocales,

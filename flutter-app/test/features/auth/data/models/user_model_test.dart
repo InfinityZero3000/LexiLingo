@@ -12,6 +12,7 @@ void main() {
       'avatar_url': 'https://example.com/avatar.jpg',
       'provider': 'local',
       'is_verified': true,
+      'role_slug': 'admin',
       'cefr_level': 'B1',
       'total_xp': 500,
       'numeric_level': 3,
@@ -34,6 +35,8 @@ void main() {
       expect(user.avatarUrl, 'https://example.com/avatar.jpg');
       expect(user.provider, 'local');
       expect(user.isVerified, true);
+      expect(user.roleSlug, 'admin');
+      expect(user.canAccessAdminPanel, true);
       expect(user.cefrLevel, 'B1');
       expect(user.totalXp, 500);
       expect(user.numericLevel, 3);
@@ -50,6 +53,7 @@ void main() {
         displayName: 'Test User',
         provider: 'local',
         isVerified: false,
+        roleSlug: 'super_admin',
         cefrLevel: 'A1',
         totalXp: 0,
         numericLevel: 1,
@@ -67,6 +71,7 @@ void main() {
       expect(json['display_name'], 'Test User');
       expect(json['provider'], 'local');
       expect(json['is_verified'], false);
+      expect(json['role_slug'], 'super_admin');
       expect(json['level'], 'A1');
       expect(json['total_xp'], 0);
       expect(json['numeric_level'], 1);
@@ -111,6 +116,7 @@ void main() {
         displayName: 'Test User',
         provider: 'google',
         isVerified: true,
+        roleSlug: 'admin',
         cefrLevel: 'B2',
         totalXp: 1000,
         numericLevel: 4,
@@ -126,6 +132,7 @@ void main() {
       expect(model.email, entity.email);
       expect(model.username, entity.username);
       expect(model.provider, 'google');
+      expect(model.roleSlug, 'admin');
       expect(model.cefrLevel, 'B2');
       expect(model.totalXp, 1000);
       expect(model.numericLevel, 4);
@@ -147,10 +154,32 @@ void main() {
       // Assert
       expect(user.provider, 'local'); // Default
       expect(user.isVerified, false); // Default
+      expect(user.roleSlug, 'user'); // Default
+      expect(user.canAccessAdminPanel, false);
       expect(user.cefrLevel, 'A1'); // Default
       expect(user.totalXp, 0); // Default
       expect(user.numericLevel, 1); // Default
       expect(user.currentStreak, 0); // Default
+    });
+
+    test('should parse legacy role field and normalize access checks', () {
+      final admin = UserModel.fromJson({
+        ...testJson,
+        'role_slug': null,
+        'role': ' ADMIN ',
+      });
+      final superAdmin = UserModel.fromJson({
+        ...testJson,
+        'role_slug': 'SUPER_ADMIN',
+      });
+      final regularUser = UserModel.fromJson({
+        ...testJson,
+        'role_slug': 'user',
+      });
+
+      expect(admin.canAccessAdminPanel, true);
+      expect(superAdmin.canAccessAdminPanel, true);
+      expect(regularUser.canAccessAdminPanel, false);
     });
   });
 }

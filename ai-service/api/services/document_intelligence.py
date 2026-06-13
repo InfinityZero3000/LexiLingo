@@ -8,8 +8,7 @@ import os
 import hashlib
 import logging
 import httpx
-import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import numpy as np
 from api.services.embedding_service_v3 import EmbeddingServiceV3
 

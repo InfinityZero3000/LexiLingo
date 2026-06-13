@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional, Dict, List, Literal
+from typing import Optional, Dict, List
 from dataclasses import dataclass
 from enum import Enum
 

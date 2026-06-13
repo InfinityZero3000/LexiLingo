@@ -5,12 +5,11 @@ Centralized metrics collection and monitoring for performance tracking.
 Tracks request latencies, cache hit rates, error rates, and custom metrics.
 """
 
-import time
 import logging
 from typing import Dict, List, Any, Optional
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import statistics
 
 logger = logging.getLogger(__name__)
@@ -87,7 +86,7 @@ class TelemetryService:
             name=name,
             value=value,
             unit=unit,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             tags=tags or {}
         )
         
@@ -165,7 +164,7 @@ class TelemetryService:
             "counters": dict(self.counters),
             "gauges": dict(self.gauges),
             "performance_checks": self.check_performance_targets(),
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z"
         }
     
     def check_performance_targets(self) -> Dict[str, Any]:
@@ -229,7 +228,7 @@ class TelemetryService:
         Returns:
             List of recent metric data points
         """
-        cutoff = datetime.utcnow() - timedelta(minutes=minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=minutes)
         metrics_queue = self.metrics.get(metric_name, deque())
         
         return [
@@ -239,7 +238,7 @@ class TelemetryService:
     
     def _cleanup_old_metrics(self, name: str):
         """Remove metrics older than retention period."""
-        cutoff = datetime.utcnow() - timedelta(minutes=self.retention_minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=self.retention_minutes)
         
         metrics_queue = self.metrics[name]
         while metrics_queue and metrics_queue[0].timestamp < cutoff:

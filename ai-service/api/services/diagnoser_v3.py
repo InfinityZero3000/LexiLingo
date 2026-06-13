@@ -9,7 +9,6 @@ classifier/LLM without changing the contract.
 from __future__ import annotations
 
 import re
-from typing import Optional
 
 from api.models.v3_schemas import DiagnosisV3, SuspectedError, V3PipelineContext
 

@@ -86,13 +86,8 @@ class _ProfilePageState extends State<ProfilePage>
     await proficiencyProvider.loadProfile();
   }
 
-  static const _adminUsernames = {'nhthang312'};
-  static const _adminEmails = {'thefirestar312@gmail.com'};
-
   bool _isAdminUser(UserEntity? user) {
-    if (user == null) return false;
-    return _adminUsernames.contains(user.username.toLowerCase()) ||
-        _adminEmails.contains(user.email.toLowerCase());
+    return user?.canAccessAdminPanel ?? false;
   }
 
   void _openAdminPanel() {

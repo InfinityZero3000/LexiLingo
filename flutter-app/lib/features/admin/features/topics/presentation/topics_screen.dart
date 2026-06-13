@@ -314,7 +314,7 @@ class _AddTopicSheetState extends State<_AddTopicSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _level,
+              initialValue: _level,
               decoration: InputDecoration(
                   labelText: 'CEFR Level',
                   labelStyle: GoogleFonts.spaceGrotesk(fontSize: 12)),

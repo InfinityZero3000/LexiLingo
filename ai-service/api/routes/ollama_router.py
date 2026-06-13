@@ -5,7 +5,7 @@ Testing endpoints for Ollama service
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
+from typing import Optional
 import logging
 
 from api.services.ollama_service import get_ollama_service

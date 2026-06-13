@@ -5,7 +5,6 @@ Redis-backed sliding window rate limiter for multi-worker safety.
 import time
 import logging
 import redis.asyncio as redis
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 

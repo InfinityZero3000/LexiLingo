@@ -6,6 +6,7 @@ import time
 import pytest
 
 import api.services.trace_cag.nodes_v2 as nodes
+import api.services.trace_cag.cache_utils as cache_mod
 
 
 @pytest.mark.asyncio
@@ -61,8 +62,8 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
     async def fake_get_bucket_candidate_keys(_bucket):
         return [candidate_key] if _bucket == bucket else []
 
-    monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
-    monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
+    monkeypatch.setattr(cache_mod, "_get_cache_entry", fake_get_cache_entry)
+    monkeypatch.setattr(cache_mod, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
 
     result = await nodes.cache_gate_node(
         {
@@ -124,8 +125,8 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
     async def fake_get_bucket_candidate_keys(_bucket):
         return [candidate_key]
 
-    monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
-    monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
+    monkeypatch.setattr(cache_mod, "_get_cache_entry", fake_get_cache_entry)
+    monkeypatch.setattr(cache_mod, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
 
     result = await nodes.cache_gate_node(
         {
@@ -187,8 +188,8 @@ async def test_cache_gate_l1_rejects_answer_target_shift(monkeypatch):
     async def fake_get_bucket_candidate_keys(_bucket):
         return [candidate_key]
 
-    monkeypatch.setattr(nodes, "_get_cache_entry", fake_get_cache_entry)
-    monkeypatch.setattr(nodes, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
+    monkeypatch.setattr(cache_mod, "_get_cache_entry", fake_get_cache_entry)
+    monkeypatch.setattr(cache_mod, "_get_bucket_candidate_keys", fake_get_bucket_candidate_keys)
 
     result = await nodes.cache_gate_node(
         {
