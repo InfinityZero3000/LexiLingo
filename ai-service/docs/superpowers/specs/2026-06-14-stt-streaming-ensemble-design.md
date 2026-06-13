@@ -1,7 +1,7 @@
 # STT Streaming Ensemble Design
 
-**Date:** 2026-06-14  
-**Status:** Approved input design, pending written-spec review  
+**Date:** 2026-06-14
+**Status:** Written specification reviewed, pending user approval
 **Scope:** LexiLingo `ai-service` realtime speech-to-text path
 
 ## 1. Goal
@@ -137,6 +137,28 @@ The old `STTService` and `WhisperHandler` cease to be independent public STT
 implementations. ModelGateway may retain a compatibility registration that
 delegates to the unified verifier, but it must not load a second Whisper model.
 
+Core interfaces are intentionally narrow:
+
+```python
+class PrimarySTTEngine(Protocol):
+    async def create_session(self, config: SessionAudioConfig) -> PrimarySTTSession: ...
+
+class PrimarySTTSession(Protocol):
+    async def push_audio(self, pcm16: bytes, start_ms: int, end_ms: int) -> PartialResult | None: ...
+    async def finalize(self, audio: AudioSegment) -> PrimaryResult: ...
+    async def close(self) -> None: ...
+
+class VerifierEngine(Protocol):
+    async def verify(self, audio: AudioSegment, language: str) -> VerificationResult: ...
+
+class FinalTranscriptSink(Protocol):
+    async def submit(self, event: FinalTranscriptEvent) -> None: ...
+```
+
+Engine result types contain text, timestamps, language, score values, and score
+provenance. They do not know about WebSockets or TRACE-CAG. `VoiceSession`
+coordinates these interfaces but does not instantiate model weights.
+
 ## 6. Model Lifecycle
 
 `STTModelRegistry` is created in FastAPI lifespan startup and closed during
@@ -150,6 +172,20 @@ shutdown.
 - Primary streaming capacity is controlled by active session limits and, if the
   runtime is not safe for concurrent decoder state, by an engine worker pool.
 - Session objects own decoder session state, not model weights.
+
+Readiness policy is explicit:
+
+- If STT is disabled, application readiness does not depend on STT.
+- If Moonshine fails and degraded Whisper-primary mode is enabled and ready,
+  the application reports STT as `degraded` and accepts sessions with reduced
+  partial behavior.
+- If neither primary nor degraded primary is ready, STT reports `unavailable`;
+  the rest of the AI service may start, but new STT sessions receive
+  `MODEL_NOT_READY`.
+- If only the verifier is unavailable, STT remains ready and low-confidence
+  finals are marked uncertain according to fallback policy.
+- An invalid explicit model path is a configuration error and fails startup,
+  because silently ignoring an operator-supplied path hides deployment faults.
 
 Default realtime settings:
 
