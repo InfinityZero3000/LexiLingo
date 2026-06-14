@@ -406,7 +406,8 @@
     "categorySocial": "Cộng đồng",
     "categoryMilestone": "Cột mốc thành tích",
     "unlockedCount": "{unlocked} / {total} thành tích",
-    "awesome": "Tuyệt vời!"
+    "awesome": "Tuyệt vời!",
+    "share": "Chia sẻ thành tích"
   },
   "profile": {
     "title": "Hồ sơ",
@@ -521,7 +522,7 @@
     "theme": "Giao diện",
     "theme_subtitle": "Tuỳ chỉnh màu sắc",
     "darkMode": "Chế độ tối",
-    "about": "Về ứng dụng",
+    "about": "Thông tin",
     "privacy": "Quyền riêng tư",
     "terms": "Điều khoản",
     "version": "Phiên bản {version}",
@@ -555,7 +556,22 @@
     "goal_insane_label": "Bứt phá",
     "goal_insane_description": "1 giờ/ngày",
     "goal_progress": "Tiến độ hiện tại {percent}%",
-    "goal_updated": "Đã cập nhật mục tiêu hàng ngày thành {xp} XP."
+    "goal_updated": "Đã cập nhật mục tiêu hàng ngày thành {xp} XP.",
+    "delete_account": "Xóa tài khoản",
+    "delete_account_confirm": "Hành động này không thể hoàn tác. Toàn bộ tiến độ, chuỗi ngày học và dữ liệu của bạn sẽ bị xóa vĩnh viễn ngay lập tức.",
+    "delete_account_confirm_btn": "Xóa tài khoản của tôi",
+    "delete_account_error": "Không thể xóa tài khoản. Vui lòng thử lại.",
+    "about_subtitle": "Pháp lý & thông tin ứng dụng",
+    "referral": "Mời bạn & Nhận quà",
+    "referral_subtitle": "Mời bạn bè và cùng nhận gems",
+    "invite_friends": "Mời bạn bè",
+    "invite_friends_subtitle": "Nhận 50 gems cho mỗi bạn tham gia",
+    "invite_title": "Mời bạn bè, nhận gems!",
+    "invite_desc": "Chia sẻ mã của bạn. Cả hai đều nhận 50 gems khi bạn bè tham gia.",
+    "invite_message": "🎓 Hãy học tiếng Anh cùng mình trên LexiLingo! Dùng mã của mình để nhận 50 gems miễn phí.",
+    "share_invite": "Chia sẻ link mời",
+    "code_copied": "Đã sao chép mã!",
+    "referral_count": "{count} bạn đã tham gia qua mã của bạn"
   },
   "notifications": {
     "pageTitle": "Thông báo",
@@ -723,18 +739,19 @@
     "testCompleted": "Đã hoàn thành kiểm tra"
   },
   "premium": {
-    "title": "LexiLingo Premium",
-    "upgrade": "Nâng cấp Premium",
-    "proFeatures": "Mở khóa tính năng Pro",
-    "subscriptionPlan": "Gói đăng ký",
-    "monthly": "Hàng tháng",
-    "yearly": "Hàng năm",
-    "lifetime": "Trọn đời",
-    "restorePurchases": "Khôi phục giao dịch",
-    "manageSubscription": "Quản lý gói đăng ký",
-    "cancelSubscription": "Hủy đăng ký",
-    "noAds": "Không quảng cáo",
-    "unlimitedHearts": "Không giới hạn trái tim"
+    "title": "Nâng cấp Premium",
+    "subtitle": "Mở khóa trải nghiệm LexiLingo đầy đủ",
+    "feature_unlimited": "Bài học & bài tập không giới hạn",
+    "feature_ai": "Gia sư AI không giới hạn hàng ngày",
+    "feature_offline": "Tải bài học để học offline",
+    "feature_ads": "Xóa toàn bộ quảng cáo",
+    "monthly": "Hàng tháng — {price}/tháng",
+    "annual": "Hàng năm — {price}/năm",
+    "restore": "Khôi phục mua hàng",
+    "success": "Đã mở khóa Premium!",
+    "restored": "Khôi phục mua hàng thành công!",
+    "no_purchases": "Không tìm thấy giao dịch trước đó.",
+    "unavailable": "Đăng ký không khả dụng ở khu vực của bạn."
   },
   "support": {
     "faq": "Câu hỏi thường gặp",
@@ -1153,5 +1170,10 @@
     "topicTechnology": "Công nghệ",
     "topicTechnologySubtitle": "Phần mềm & Kỷ nguyên số",
     "noDefinitionYet": "Chưa có định nghĩa"
+  },
+  "legal": {
+    "privacy_title": "Chính sách bảo mật",
+    "terms_title": "Điều khoản sử dụng",
+    "last_updated": "Cập nhật lần cuối: {date}"
   }
 }

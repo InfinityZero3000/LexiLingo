@@ -80,7 +80,9 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         "exp": expire,
         "iat": datetime.now(timezone.utc),
         "jti": uuid.uuid4().hex,
-        "type": "access"  # Token type marker
+        "type": "access",
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
     })
     
     encoded_jwt = jwt.encode(
@@ -101,7 +103,9 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
         "exp": expire,
         "iat": datetime.now(timezone.utc),
         "jti": uuid.uuid4().hex,
-        "type": "refresh"  # Token type marker
+        "type": "refresh",
+        "iss": settings.JWT_ISSUER,
+        "aud": settings.JWT_AUDIENCE,
     })
     
     encoded_jwt = jwt.encode(
@@ -127,7 +131,9 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
         payload = jwt.decode(
             token,
             settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM]
+            algorithms=[settings.ALGORITHM],
+            issuer=settings.JWT_ISSUER,
+            audience=settings.JWT_AUDIENCE,
         )
         return payload
     except JWTError:
@@ -243,4 +249,3 @@ async def verify_google_token(id_token: str, audience: str | None = None) -> Opt
     except Exception as e:
         logger.error(f"Google token verification failed: {type(e).__name__}: {e}")
         return None
-

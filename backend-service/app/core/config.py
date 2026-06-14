@@ -69,6 +69,8 @@ class Settings(BaseSettings):
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
+    JWT_ISSUER: str = "lexilingo-backend"
+    JWT_AUDIENCE: str = "lexilingo-services"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
@@ -132,6 +134,9 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Error Tracking
+    SENTRY_DSN: str | None = None
 
     # Email (SMTP)
     SMTP_HOST: str | None = None

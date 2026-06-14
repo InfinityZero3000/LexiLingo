@@ -9,8 +9,11 @@ import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:lexilingo_app/firebase_options.dart';
+import 'package:lexilingo_app/core/services/deep_link_service.dart';
+import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
@@ -113,6 +116,14 @@ void main() async {
     );
     debugPrint('Firebase initialized successfully');
 
+    // Crashlytics: route Flutter framework errors to Crashlytics in release
+    if (!kIsWeb) {
+      FlutterError.onError = kReleaseMode
+          ? FirebaseCrashlytics.instance.recordFlutterFatalError
+          : FlutterError.presentError;
+      // Also catch async errors thrown outside the Flutter widget tree
+    }
+
     // Initialize Firebase Cloud Messaging
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
     // Push notification permission should not block app startup
@@ -153,34 +164,77 @@ void main() async {
     );
   }
 
-  runApp(
-    EasyLocalization(
-      supportedLocales: const [
-        Locale('vi'),
-        Locale('en'),
-        Locale('ja'),
-        Locale('ko'),
-        Locale('zh'),
-        Locale('fr'),
-        Locale('es'),
-      ],
-      path: 'assets/i18n',
-      fallbackLocale: const Locale('vi'),
-      startLocale: const Locale('vi'),
-      useOnlyLangCode: true,
-      assetLoader: NetworkFirstAssetLoader(),
-      child: const LexiLingoApp(),
-    ),
-  );
+  // Wrap runApp in runZonedGuarded so uncaught async errors are forwarded to
+  // Crashlytics. In release mode only — dev keeps the default red-screen behavior.
+  if (!kIsWeb && kReleaseMode) {
+    runZonedGuarded(
+      () => runApp(
+        EasyLocalization(
+          supportedLocales: const [
+            Locale('vi'),
+            Locale('en'),
+            Locale('ja'),
+            Locale('ko'),
+            Locale('zh'),
+            Locale('fr'),
+            Locale('es'),
+          ],
+          path: 'assets/i18n',
+          fallbackLocale: const Locale('vi'),
+          startLocale: const Locale('vi'),
+          useOnlyLangCode: true,
+          assetLoader: NetworkFirstAssetLoader(),
+          child: const LexiLingoApp(),
+        ),
+      ),
+      (error, stack) =>
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
+    );
+  } else {
+    runApp(
+      EasyLocalization(
+        supportedLocales: const [
+          Locale('vi'),
+          Locale('en'),
+          Locale('ja'),
+          Locale('ko'),
+          Locale('zh'),
+          Locale('fr'),
+          Locale('es'),
+        ],
+        path: 'assets/i18n',
+        fallbackLocale: const Locale('vi'),
+        startLocale: const Locale('vi'),
+        useOnlyLangCode: true,
+        assetLoader: NetworkFirstAssetLoader(),
+        child: const LexiLingoApp(),
+      ),
+    );
+  }
 
-  // Initialize Firebase Messaging after UI starts rendering
-  // so the permission dialog doesn't appear over a blank screen
+  // Initialize Firebase Messaging and Deep Links after UI starts rendering
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     try {
       await FirebaseMessagingService.instance.initialize();
       debugPrint('Firebase Messaging initialized successfully');
     } catch (e) {
       debugPrint('Warning: Firebase Messaging initialization failed: $e');
+    }
+    try {
+      await DeepLinkService.instance.init();
+      debugPrint('Deep link service initialized');
+    } catch (e) {
+      debugPrint('Warning: Deep link service initialization failed: $e');
+    }
+    if (!kIsWeb) {
+      try {
+        await PurchasesService.instance.init(
+          iosApiKey: dotenv.maybeGet('REVENUECAT_API_KEY_IOS'),
+          androidApiKey: dotenv.maybeGet('REVENUECAT_API_KEY_ANDROID'),
+        );
+      } catch (e) {
+        debugPrint('Warning: RevenueCat initialization failed: $e');
+      }
     }
   });
 }
@@ -219,6 +273,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _syncQueueRunner?.stop();
+    DeepLinkService.instance.dispose();
     super.dispose();
   }
 
