@@ -1,10 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/course_progress_card.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/xp_line_chart.dart';
 
 /// My Progress Screen
 /// Displays user's overall progress statistics
@@ -133,6 +136,11 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
 
                   const SizedBox(height: 24),
 
+                  // Weekly Overview Charts
+                  _WeeklyOverviewSection(),
+
+                  const SizedBox(height: 24),
+
                   // Course Progress
                   Text(
                     'progress.courseProgressTitle'.tr(),
@@ -196,7 +204,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
     IconData icon,
   ) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
@@ -213,6 +221,107 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Weekly overview section showing XP trend and lessons bar chart.
+class _WeeklyOverviewSection extends StatefulWidget {
+  const _WeeklyOverviewSection();
+
+  @override
+  State<_WeeklyOverviewSection> createState() => _WeeklyOverviewSectionState();
+}
+
+class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = AppColorRoles.primary(isDark);
+
+    return Consumer<HomeProvider>(
+      builder: (context, homeProvider, _) {
+        final weekly = homeProvider.weeklyProgress;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Weekly Overview',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '${weekly.totalXP} XP · ${weekly.totalLessons} lessons · ${weekly.daysActive}/7 days active',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColorRoles.textMuted(isDark),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceDarkMuted
+                    : AppColors.grey100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                indicator: BoxDecoration(
+                  color: primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                labelColor: Colors.white,
+                unselectedLabelColor: AppColorRoles.textMuted(isDark),
+                labelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: const [
+                  Tab(text: 'XP'),
+                  Tab(text: 'Lessons'),
+                  Tab(text: 'Activity'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 200,
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  XpLineChart(weeklyProgress: weekly),
+                  LessonsBarChart(weeklyProgress: weekly),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: WeekActivityHeatmap(weeklyProgress: weekly),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

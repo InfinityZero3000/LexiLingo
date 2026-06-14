@@ -2,6 +2,10 @@
 
 import json
 import logging
+from urllib.parse import quote
+
+from resources.common import freshness, source, upstream_error
+from utils.api_client import UpstreamServiceError, call_ai_service
 
 logger = logging.getLogger(__name__)
 
@@ -16,29 +20,41 @@ async def get(session_id: str) -> str:
     - context_embedding
     """
     logger.info(f"Fetching conversation history: session_id={session_id}")
-    
+    safe_session_id = quote(session_id, safe="")
+
     try:
-        # TODO: Fetch from Redis/MongoDB
-        # For now, return mock data
+        try:
+            response = await call_ai_service(
+                "GET", f"/api/v1/lexi/sessions/{safe_session_id}/messages?full=true"
+            )
+            entity = "lexi_messages"
+        except UpstreamServiceError as exc:
+            if exc.status_code != 404:
+                raise
+            response = await call_ai_service(
+                "GET", f"/api/v1/topics/topic-sessions/{safe_session_id}/messages"
+            )
+            entity = "chat_messages"
         history = {
             "session_id": session_id,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": "Hello! Can you explain present perfect?",
-                    "timestamp": "2026-01-31T10:30:00Z",
-                },
-                {
-                    "role": "assistant",
-                    "content": "Of course! Present perfect is used for...",
-                    "timestamp": "2026-01-31T10:30:05Z",
-                },
-            ],
-            "context_summary": "User is learning present perfect tense at B1 level",
+            "messages": response.get("messages", []),
+            "context_summary": response.get("context_summary"),
+            "source": source("ai-service", "mongodb", entity),
+            "freshness": freshness(),
+            "error": None,
         }
-        
         return json.dumps(history, ensure_ascii=False)
-    
+
     except Exception as e:
         logger.error(f"Error fetching conversation history: {e}")
-        return json.dumps({"error": str(e), "session_id": session_id})
+        return json.dumps(
+            {
+                "session_id": session_id,
+                "messages": [],
+                "context_summary": None,
+                "source": source("ai-service", "mongodb", "conversation"),
+                "freshness": freshness("unavailable"),
+                "error": upstream_error(e),
+            },
+            ensure_ascii=False,
+        )

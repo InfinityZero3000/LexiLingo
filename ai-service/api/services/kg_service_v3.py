@@ -15,13 +15,17 @@ from typing import Any, Dict, List, Optional, Tuple
 import os
 import shutil
 import time
-import json
 import re
 
 import kuzu
 
 from api.core.config import settings
 from api.models.v3_schemas import KGHits, KGExpandedNode, KGPath
+from api.services.kg_data_loader import (
+    load_json_object,
+    merge_knowledge_payload,
+    sync_knowledge_files,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -190,52 +194,17 @@ class KnowledgeGraphServiceV3:
             os.path.join(os.path.dirname(__file__), "..", "..", "data", "kg", "seed_graph.json")
         )
         try:
-            with open(seed_path, "r", encoding="utf-8") as f:
-                payload = json.load(f)
-        except Exception as exc:
+            payload = load_json_object(seed_path)
+        except (OSError, ValueError) as exc:
             logger.error("[KG] Cannot load seed_graph.json (%s): %s", seed_path, exc)
             return
 
-        concepts_inserted = 0
-        for concept in payload.get("concepts", []):
-            node_id = str(concept.get("id") or "").strip()
-            if not node_id:
-                continue
-            title = str(concept.get("title") or node_id).strip()
-            keywords = str(concept.get("keywords") or "").strip()
-            level = str(concept.get("level") or "B1").strip() or "B1"
-            try:
-                self._conn.execute(
-                    "MERGE (c:Concept {id: $id}) "
-                    "ON CREATE SET c.title = $title, c.keywords = $keywords, c.level = $level "
-                    "ON MATCH SET c.title = $title, c.keywords = $keywords, c.level = $level",
-                    {"id": node_id, "title": title, "keywords": keywords, "level": level},
-                )
-                concepts_inserted += 1
-            except Exception as _exc:
-                logger.debug("[kg_service_v3] ignored: %s", _exc)
-                continue
-
-        edges_inserted = 0
-        for edge in payload.get("edges", []):
-            from_id = str(edge.get("from") or "").strip()
-            to_id = str(edge.get("to") or "").strip()
-            relation = str(edge.get("relation") or "related_to").strip() or "related_to"
-            if not from_id or not to_id:
-                continue
-            try:
-                self._conn.execute(
-                    "MATCH (a:Concept), (b:Concept) WHERE a.id = $from AND b.id = $to "
-                    "MERGE (a)-[:Edge {relation: $relation}]->(b)",
-                    {"from": from_id, "to": to_id, "relation": relation},
-                )
-                edges_inserted += 1
-            except Exception as _exc:
-                logger.debug("[kg_service_v3] ignored: %s", _exc)
-                continue
-
-        logger.info("[KG] Seeded from seed_graph.json: concepts=%d edges=%d", concepts_inserted, edges_inserted)
-        return
+        stats = merge_knowledge_payload(self._conn, payload)
+        logger.info(
+            "[KG] Seeded from seed_graph.json: concepts=%d edges=%d",
+            stats.concepts,
+            stats.edges,
+        )
 
     def _extended_knowledge_path(self) -> str:
         configured = os.getenv("KG_EXTENDED_KNOWLEDGE_PATH", "").strip()
@@ -257,131 +226,19 @@ class KnowledgeGraphServiceV3:
         1. data/knowledge_extended.json  — legacy single-file, for backward compat
         2. data/kg/*.json                 — domain-specific files, one per topic area
         """
-        import hashlib
-
         cache_path = self._db_path + "_synced_files.json"
-        synced_metadata = {}
-        if os.path.exists(cache_path):
-            try:
-                with open(cache_path, "r", encoding="utf-8") as f:
-                    synced_metadata = json.load(f)
-            except Exception as _exc:
-                logger.debug("[kg_service_v3] ignored: %s", _exc)
-                pass
-
-        payloads: List[tuple[str, str, dict]] = []
-
-        def _get_file_hash(filepath: str) -> str:
-            try:
-                hasher = hashlib.md5()
-                with open(filepath, "rb") as f:
-                    hasher.update(f.read())
-                return hasher.hexdigest()
-            except Exception:
-                return ""
-
-        # Source 1: legacy single file
+        paths: List[str] = []
         legacy = self._extended_knowledge_path()
         if os.path.isfile(legacy):
-            current_hash = _get_file_hash(legacy)
-            if synced_metadata.get(legacy) != current_hash:
-                try:
-                    with open(legacy, "r", encoding="utf-8") as f:
-                        payloads.append((legacy, current_hash, json.load(f)))
-                except Exception as exc:
-                    logger.warning("[KG] Failed loading %s: %s", legacy, exc)
+            paths.append(legacy)
 
-        # Source 2: domain directory
         kg_dir = self._kg_data_dir()
         if os.path.isdir(kg_dir):
             for fname in sorted(os.listdir(kg_dir)):
-                if not fname.endswith(".json"):
-                    continue
-                fpath = os.path.join(kg_dir, fname)
-                current_hash = _get_file_hash(fpath)
-                if synced_metadata.get(fpath) != current_hash:
-                    try:
-                        with open(fpath, "r", encoding="utf-8") as f:
-                            payloads.append((fpath, current_hash, json.load(f)))
-                    except Exception as exc:
-                        logger.warning("[KG] Failed loading %s: %s", fpath, exc)
+                if fname.endswith(".json"):
+                    paths.append(os.path.join(kg_dir, fname))
 
-        if not payloads:
-            logger.info("[KG] All external knowledge files are up-to-date (skipped sync)")
-            return
-
-        total_concepts = 0
-        total_edges = 0
-        new_synced_metadata = dict(synced_metadata)
-
-        for path, file_hash, payload in payloads:
-            if not isinstance(payload, dict):
-                continue
-            concepts = payload.get("concepts")
-            edges = payload.get("edges")
-            if not isinstance(concepts, list):
-                continue
-
-            ins_c = 0
-            ins_e = 0
-
-            for concept in concepts:
-                if not isinstance(concept, dict):
-                    continue
-                node_id = str(concept.get("id") or "").strip()
-                if not node_id:
-                    continue
-                title = str(concept.get("title") or node_id).strip()
-                keywords = str(concept.get("keywords") or "").strip()
-                level = str(concept.get("level") or "B1").strip() or "B1"
-                try:
-                    self._conn.execute(
-                        "MERGE (c:Concept {id: $id}) "
-                        "ON CREATE SET c.title = $title, c.keywords = $keywords, c.level = $level "
-                        "ON MATCH SET c.title = $title, c.keywords = $keywords, c.level = $level",
-                        {"id": node_id, "title": title, "keywords": keywords, "level": level},
-                    )
-                    ins_c += 1
-                except Exception as _exc:
-                    logger.debug("[kg_service_v3] ignored: %s", _exc)
-                    continue
-
-            if isinstance(edges, list):
-                for edge in edges:
-                    if not isinstance(edge, dict):
-                        continue
-                    from_id = str(edge.get("from") or "").strip()
-                    to_id = str(edge.get("to") or "").strip()
-                    relation = str(edge.get("relation") or "related_to").strip() or "related_to"
-                    if not from_id or not to_id:
-                        continue
-                    try:
-                        self._conn.execute(
-                            "MATCH (a:Concept), (b:Concept) WHERE a.id = $from AND b.id = $to "
-                            "MERGE (a)-[:Edge {relation: $relation}]->(b)",
-                            {"from": from_id, "to": to_id, "relation": relation},
-                        )
-                        ins_e += 1
-                    except Exception as _exc:
-                        logger.debug("[kg_service_v3] ignored: %s", _exc)
-                        continue
-
-            if ins_c or ins_e:
-                logger.info(
-                    "[KG] Synced %s: concepts=%d edges=%d",
-                    os.path.basename(path), ins_c, ins_e,
-                )
-            total_concepts += ins_c
-            total_edges += ins_e
-            new_synced_metadata[path] = file_hash
-
-        if total_concepts or total_edges:
-            logger.info("[KG] Total synced: concepts=%d edges=%d", total_concepts, total_edges)
-            try:
-                with open(cache_path, "w", encoding="utf-8") as f:
-                    json.dump(new_synced_metadata, f, indent=2)
-            except Exception as e:
-                logger.warning("[KG] Failed to write synced files metadata cache: %s", e)
+        sync_knowledge_files(self._conn, paths, cache_path)
 
     def get_concepts(self) -> Dict[str, Dict[str, str]]:
         # Return warm in-memory cache if available (Phase 1 optimisation).

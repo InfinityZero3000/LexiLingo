@@ -13,6 +13,7 @@ Endpoints:
 """
 
 import uuid
+from datetime import date
 from typing import List, Optional
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
@@ -56,6 +57,46 @@ def _pronunciation_feedback(score: float) -> tuple[int, str, int]:
     if score >= 60:
         return 2, "Good", 3
     return 1, "Try again", 1
+
+
+# ===== Word of the Day =====
+
+@router.get("/word-of-day", response_model=VocabularyItemResponse)
+async def get_word_of_day(
+    db: AsyncSession = Depends(get_db),
+) -> VocabularyItemResponse:
+    """Return a deterministic word of the day — no auth required.
+
+    Selection: date.toordinal() % total_count, giving a stable word per calendar day.
+    Cached for 24h so repeated calls within the same day hit Redis, not the DB.
+    """
+    cache_key = build_cache_key("word_of_day", str(date.today()))
+    cached = await get_cached(cache_key)
+    if cached:
+        return VocabularyItemResponse.model_validate(cached)
+
+    from sqlalchemy import func, select as sa_select
+    from app.models.vocabulary import VocabularyItem as VocabModel
+
+    count_result = await db.execute(sa_select(func.count()).select_from(VocabModel))
+    total = count_result.scalar_one()
+    if total == 0:
+        raise HTTPException(status_code=404, detail="No vocabulary items found")
+
+    offset = date.today().toordinal() % total
+    item_result = await db.execute(
+        sa_select(VocabModel)
+        .order_by(VocabModel.created_at, VocabModel.id)
+        .offset(offset)
+        .limit(1)
+    )
+    item = item_result.scalar_one_or_none()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Word of the day not available")
+
+    response = VocabularyItemResponse.model_validate(item)
+    await set_cached(cache_key, response.model_dump(mode="json"), ttl=86400)
+    return response
 
 
 # ===== Vocabulary Items (Master List) =====

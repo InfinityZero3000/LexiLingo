@@ -5,6 +5,8 @@ Main entry point for the AI Service.
 Initializes resources and includes modular routers.
 """
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -29,26 +31,31 @@ from api.core.config import get_settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Load .env file
 from dotenv import load_dotenv
 load_dotenv()
 
 # Settings (loaded after dotenv so env vars are available)
 settings = get_settings()
 
-# Load .env file
-from dotenv import load_dotenv
-load_dotenv()
-
+# Sentry — only active when DSN is configured
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.ENVIRONMENT,
+        integrations=[FastApiIntegration()],
+        traces_sample_rate=0.2,
+        send_default_pii=False,
+    )
+    logger.info("Sentry error tracking enabled")
 
 # Environment Configuration
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "")
+MONGODB_URI = settings.MONGODB_URI
+MONGODB_DATABASE = settings.MONGODB_DATABASE
 GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
+OLLAMA_BASE_URL = settings.OLLAMA_BASE_URL
+OLLAMA_MODEL = settings.OLLAMA_MODEL
 
 # Global clients
 _gateway_initialized = False
@@ -189,6 +196,14 @@ async def lifespan(app: FastAPI):
             logger.info(" ModelGateway initialized")
         except Exception as e:
             logger.warning(f"Failed to initialize gateway: {e}")
+
+    try:
+        from api.services.stt.runtime import start_stt_runtime
+
+        await start_stt_runtime()
+        logger.info(" Streaming STT runtime initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize streaming STT runtime: {e}")
     
     yield
     
@@ -200,6 +215,12 @@ async def lifespan(app: FastAPI):
     if _gateway_initialized:
         from api.services.gateway_setup import shutdown_gateway
         await shutdown_gateway()
+    try:
+        from api.services.stt.runtime import stop_stt_runtime
+
+        await stop_stt_runtime()
+    except Exception as e:
+        logger.warning(f"Failed to stop streaming STT runtime cleanly: {e}")
 
 
 # FastAPI App
@@ -263,9 +284,10 @@ async def get_gemini_response(message: str, db: AsyncIOMotorDatabase) -> Optiona
     if not GEMINI_API_KEY or not _http_client:
         return None
     try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+        headers = {"x-goog-api-key": GEMINI_API_KEY}
         payload = {"contents": [{"parts": [{"text": message}]}]}
-        response = await _http_client.post(url, json=payload)
+        response = await _http_client.post(url, json=payload, headers=headers)
         if response.status_code == 200:
             return response.json()["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:

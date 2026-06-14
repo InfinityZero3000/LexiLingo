@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 
@@ -112,24 +113,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Difficulty badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: _getDifficultyColor(
-                vocabulary.difficultyLevel,
-              ).withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              vocabulary.difficultyLevel,
-              style: TextStyle(
-                color: _getDifficultyColor(vocabulary.difficultyLevel),
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          CefrBadge(level: vocabulary.difficultyLevel, size: CefrBadgeSize.large),
 
           const SizedBox(height: 24),
 
@@ -442,19 +426,4 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
     );
   }
 
-  Color _getDifficultyColor(String level) {
-    switch (level) {
-      case 'A1':
-      case 'A2':
-        return AppColors.greenSuccessBright;
-      case 'B1':
-      case 'B2':
-        return AppColors.orange;
-      case 'C1':
-      case 'C2':
-        return AppColors.errorBright;
-      default:
-        return Colors.grey;
-    }
-  }
 }

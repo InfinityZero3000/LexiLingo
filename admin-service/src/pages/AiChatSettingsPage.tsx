@@ -148,7 +148,7 @@ export const AiChatSettingsPage = () => {
           label={t.aiChat.features}
           value={`${[config.enable_voice, config.enable_grammar, config.enable_topic].filter(Boolean).length}/3`}
           note={t.aiChat.modulesEnabled}
-          accent="purple"
+          accent="ink"
         />
       </div>
 

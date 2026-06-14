@@ -49,6 +49,7 @@ import 'package:lexilingo_app/features/social/presentation/providers/social_prov
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/word_of_day_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
     as vocab_di;
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -430,6 +431,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 create: (_) => vocab_di.getIt<FlashcardProvider>(),
                 child: const FlashcardReviewScreen(),
               ),
+              '/vocabulary/word-of-day': (context) => const WordOfDayScreen(),
               // Phase 4: Podcast
               '/podcast': (context) => const PodcastExploreScreen(),
               '/podcast/detail': (context) {

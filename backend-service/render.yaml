@@ -50,8 +50,10 @@ services:
         sync: false
       
       # CORS Origins
-      - key: ENABLE_APP_CORS
-        value: "false"
+      # GATEWAY_HANDLES_CORS is unset (defaults to false) — backend handles CORS
+      # directly on Render since there is no Nginx gateway in the request path.
+      # Set GATEWAY_HANDLES_CORS=true only if you add an Nginx/Kong gateway
+      # in front of this service (gateway must use proxy_hide_header to avoid duplicates).
       - key: ALLOWED_ORIGINS
         value: https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me
       - key: CORS_ALLOW_ORIGIN_REGEX

@@ -48,7 +48,7 @@ export const UserGrowthChart: React.FC<Props> = ({ data, loading }) => {
               const date = new Date(value);
               return date.toLocaleDateString("vi-VN");
             }}
-            formatter={(value: number) => [value.toLocaleString(), ""]}
+            formatter={(value) => [Number(value ?? 0).toLocaleString(), ""]}
           />
           <Legend />
           <Line 

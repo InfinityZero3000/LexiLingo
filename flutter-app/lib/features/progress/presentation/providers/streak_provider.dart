@@ -16,12 +16,14 @@ class StreakProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   StreakUpdateResult? _lastUpdateResult;
+  bool _milestoneJustReached = false;
 
   // Getters
   StreakEntity? get streak => _streak;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   StreakUpdateResult? get lastUpdateResult => _lastUpdateResult;
+  bool get milestoneJustReached => _milestoneJustReached;
 
   /// Current streak count (0 if not loaded)
   int get currentStreak => _streak?.currentStreak ?? 0;
@@ -95,6 +97,8 @@ class StreakProvider extends ChangeNotifier {
           streakAtRisk: false,
           weeklyActivity: updatedWeekly,
         );
+        _milestoneJustReached =
+            updateResult.streakIncreased && _streak!.isMilestone;
         success = true;
       },
     );
@@ -145,6 +149,12 @@ class StreakProvider extends ChangeNotifier {
     return success;
   }
 
+  /// Clear the milestone flag after the overlay has been shown.
+  void clearMilestone() {
+    _milestoneJustReached = false;
+    notifyListeners();
+  }
+
   /// Clear error message
   void clearError() {
     _errorMessage = null;
@@ -157,6 +167,7 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _lastUpdateResult = null;
+    _milestoneJustReached = false;
     notifyListeners();
   }
 }

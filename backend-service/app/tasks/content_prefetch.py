@@ -188,3 +188,59 @@ async def _fetch_rss_feed(feed_url: str) -> list[dict]:
     from app.routes.podcasts import _fetch_rss_episodes
     res = await _fetch_rss_episodes(feed_url=feed_url, limit=20)
     return res.get("episodes", [])
+
+
+# ──────────────────────────────────────────────────────────
+#  Word of the Day Notification
+# ──────────────────────────────────────────────────────────
+
+async def send_word_of_day_notification(db: AsyncSession) -> dict:
+    """Send the daily Word of the Day push notification to all users at 8:00 AM UTC."""
+    from sqlalchemy import func, select as sa_select
+    from app.models.vocabulary import VocabularyItem as VocabModel
+    from app.models.user import UserDevice
+    from app.services.push_notification_service import PushNotificationService
+
+    count_result = await db.execute(sa_select(func.count()).select_from(VocabModel))
+    total = count_result.scalar_one()
+    if total == 0:
+        logger.warning("Word-of-day task: no vocabulary items found, skipping push")
+        return {"sent": 0, "skipped": 0}
+
+    offset = date.today().toordinal() % total
+    item_result = await db.execute(
+        sa_select(VocabModel)
+        .order_by(VocabModel.created_at, VocabModel.id)
+        .offset(offset)
+        .limit(1)
+    )
+    vocab = item_result.scalar_one_or_none()
+    if vocab is None:
+        logger.warning("Word-of-day task: could not select vocabulary item")
+        return {"sent": 0, "skipped": 0}
+
+    devices_result = await db.execute(
+        sa_select(UserDevice).where(UserDevice.fcm_token.isnot(None))
+    )
+    devices = devices_result.scalars().all()
+    tokens = [d.fcm_token for d in devices if d.fcm_token]
+
+    if not tokens:
+        logger.info("Word-of-day task: no FCM tokens registered, skipping push")
+        return {"sent": 0, "skipped": 0}
+
+    push = PushNotificationService()
+    ok = await push.send_word_of_day(
+        tokens=tokens,
+        word=vocab.word,
+        definition=vocab.definition,
+    )
+
+    result = {
+        "word": vocab.word,
+        "sent": len(tokens) if ok else 0,
+        "skipped": len(tokens) if not ok else 0,
+        "ts": date.today().isoformat(),
+    }
+    logger.info("Word-of-day notification: %s", result)
+    return result
