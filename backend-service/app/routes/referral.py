@@ -115,12 +115,12 @@ async def claim_referral_code(
     ).scalar_one_or_none()
 
     if referrer_wallet:
-        referrer_wallet.gems_balance += _REFERRAL_REWARD_GEMS
+        referrer_wallet.gems += _REFERRAL_REWARD_GEMS
         db.add(
             WalletTransaction(
                 user_id=referrer.id,
                 transaction_type="referral_reward",
-                gems_amount=_REFERRAL_REWARD_GEMS,
+                amount=_REFERRAL_REWARD_GEMS,
                 description=f"Referral reward for inviting {locked_user.username}",
             )
         )
@@ -134,12 +134,12 @@ async def claim_referral_code(
 
     gems_awarded = 0
     if new_user_wallet:
-        new_user_wallet.gems_balance += _REFERRAL_REWARD_GEMS
+        new_user_wallet.gems += _REFERRAL_REWARD_GEMS
         db.add(
             WalletTransaction(
                 user_id=locked_user.id,
                 transaction_type="referral_bonus",
-                gems_amount=_REFERRAL_REWARD_GEMS,
+                amount=_REFERRAL_REWARD_GEMS,
                 description=f"Welcome bonus for using referral code {code.upper()}",
             )
         )
