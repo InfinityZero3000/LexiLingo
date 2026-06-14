@@ -129,8 +129,12 @@ system-testing/
 # deployment artifacts
 dist/
 build/
+*.tsbuildinfo
 .deploy/
 backups/
+
+# Runtime-generated knowledge graph sync metadata
+**/data/*_synced_files.json
 
 # gateway runtime security logs
 gateway/nginx/logs/*.log
