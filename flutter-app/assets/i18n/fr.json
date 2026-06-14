@@ -406,7 +406,8 @@
     "categorySocial": "Social et communautaire",
     "categoryMilestone": "Jalons de réalisation",
     "unlockedCount": "Réalisations {unlocked} / {total}",
-    "awesome": "Génial!"
+    "awesome": "Génial!",
+    "share": "Partager l'exploit"
   },
   "profile": {
     "title": "Profil",
@@ -555,7 +556,22 @@
     "goal_insane_label": "Fou",
     "goal_insane_description": "1 heure/jour",
     "goal_progress": "Progrès actuel {percent}%",
-    "goal_updated": "Objectif quotidien mis à jour vers {xp} XP."
+    "goal_updated": "Objectif quotidien mis à jour vers {xp} XP.",
+    "delete_account": "Supprimer le compte",
+    "delete_account_confirm": "Cette action est irréversible. Toute votre progression, vos séries et vos données seront supprimées immédiatement.",
+    "delete_account_confirm_btn": "Supprimer mon compte",
+    "delete_account_error": "Impossible de supprimer le compte. Veuillez réessayer.",
+    "about_subtitle": "Informations légales et app",
+    "referral": "(Referral) Invite & Earn",
+    "referral_subtitle": "(Referral) Invite friends and earn gems together",
+    "invite_friends": "(Referral) Invite Friends",
+    "invite_friends_subtitle": "(Referral) Get 50 gems for each friend who joins",
+    "invite_title": "(Referral) Invite Friends, Earn Gems!",
+    "invite_desc": "(Referral) Share your code. Both you and your friend get 50 gems when they join.",
+    "invite_message": "(Referral) 🎓 Join me on LexiLingo and learn English together! Use my referral code for 50 free gems.",
+    "share_invite": "(Referral) Share Invite Link",
+    "code_copied": "(Referral) Code copied!",
+    "referral_count": "(Referral) {count} friend(s) joined via your code"
   },
   "notifications": {
     "pageTitle": "Notifications",
@@ -716,18 +732,19 @@
     "testCompleted": "Test terminé"
   },
   "premium": {
-    "title": "LexiLingo Premium",
-    "upgrade": "Passer à Premium",
-    "proFeatures": "Débloquer les fonctionnalités Pro",
-    "subscriptionPlan": "Abonnement",
-    "monthly": "Mensuel",
-    "yearly": "Annuel",
-    "lifetime": "À vie",
-    "restorePurchases": "Restaurer les achats",
-    "manageSubscription": "Gérer l'abonnement",
-    "cancelSubscription": "Annuler l'abonnement",
-    "noAds": "Sans publicité",
-    "unlimitedHearts": "Cœurs illimités"
+    "title": "(Premium) Go Premium",
+    "subtitle": "(Premium) Unlock the full LexiLingo experience",
+    "feature_unlimited": "(Premium) Unlimited lessons & exercises",
+    "feature_ai": "(Premium) AI tutor with no daily limits",
+    "feature_offline": "(Premium) Download lessons for offline learning",
+    "feature_ads": "(Premium) Remove all ads",
+    "monthly": "(Premium) Monthly — {price}/month",
+    "annual": "(Premium) Annual — {price}/year",
+    "restore": "(Premium) Restore Purchases",
+    "success": "(Premium) Premium unlocked! Enjoy LexiLingo Pro.",
+    "restored": "(Premium) Purchases restored successfully!",
+    "no_purchases": "(Premium) No previous purchases found.",
+    "unavailable": "(Premium) Subscription not available in your region."
   },
   "support": {
     "faq": "FAQ",
@@ -1134,5 +1151,10 @@
     "topicTechnology": "Technologie",
     "topicTechnologySubtitle": "Logiciels et ère numérique",
     "noDefinitionYet": "Définition non disponible"
+  },
+  "legal": {
+    "privacy_title": "Politique de confidentialité",
+    "terms_title": "Conditions d'utilisation",
+    "last_updated": "Dernière mise à jour : {date}"
   }
 }

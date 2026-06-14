@@ -24,6 +24,7 @@ class LocalCacheService {
     'book': Duration(days: 7),
     'dictionary': Duration(days: 30),
     'game': Duration(hours: 12),
+    'flashcard': Duration(hours: 6),
   };
 
   /// Get cached data or fetch from network.

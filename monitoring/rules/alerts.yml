@@ -1,0 +1,45 @@
+groups:
+  - name: lexilingo_backend
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[5m]))
+          /
+          sum(rate(http_requests_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High 5xx error rate"
+          description: "More than 5% of requests are returning 5xx errors."
+
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 response time > 2s"
+          description: "95th percentile latency exceeds 2 seconds."
+
+      - alert: BackendDown
+        expr: up{job="lexilingo-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "LexiLingo backend has been unreachable for 1 minute."
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes{job="lexilingo-backend"} > 512 * 1024 * 1024
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend memory usage > 512MB"
+          description: "Backend process is using more than 512MB RAM."
