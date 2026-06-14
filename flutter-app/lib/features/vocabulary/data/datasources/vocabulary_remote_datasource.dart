@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
+import 'package:lexilingo_app/core/services/local_cache_service.dart';
 import 'package:lexilingo_app/features/vocabulary/data/models/pronunciation_evaluation_model.dart';
 import 'package:lexilingo_app/features/vocabulary/data/models/vocabulary_item_model.dart';
 import 'package:lexilingo_app/features/vocabulary/data/models/user_vocabulary_model.dart';
@@ -168,13 +169,18 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
   @override
   Future<List<UserVocabularyModel>> getDueVocabulary({int limit = 20}) async {
     try {
-      final response = await apiClient.get('/vocabulary/due?limit=$limit');
-
-      // Response: {"items": [...], "total_due": 10}
-      final List<dynamic> dueItems = response['items'] as List<dynamic>;
-
-      return dueItems
-          .map((json) => UserVocabularyModel.fromJson(json))
+      final cacheKey = 'due_vocab_$limit';
+      final cached = await LocalCacheService.instance.getOrFetchList(
+        key: cacheKey,
+        type: 'flashcard',
+        fetchFn: () async {
+          final response = await apiClient.get('/vocabulary/due?limit=$limit');
+          final List<dynamic> items = response['items'] as List<dynamic>;
+          return items;
+        },
+      );
+      return (cached ?? [])
+          .map((json) => UserVocabularyModel.fromJson(json as Map<String, dynamic>))
           .toList();
     } on ServerException {
       rethrow;
