@@ -314,6 +314,7 @@ services:
       - "--web.enable-lifecycle"
     networks:
       - lexilingo-network
+      - lexilingo-prod
 
   # ============================================
   # Grafana — metrics dashboard
@@ -340,6 +341,7 @@ services:
       - prometheus
     networks:
       - lexilingo-network
+      - lexilingo-prod
 
 volumes:
   postgres_data:

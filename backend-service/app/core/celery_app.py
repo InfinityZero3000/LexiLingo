@@ -47,33 +47,6 @@ if Celery is not None:
             "task": "app.tasks.content_agent.cleanup_expired_content_agent_uploads",
             "schedule": crontab(hour=3, minute=15),
         },
-    }
-else:
-    class _FallbackCelery:
-        """Tiny import-time fallback so tests can run before dependencies install."""
-
-        def __init__(self) -> None:
-            self.conf = SimpleNamespace(
-                timezone="UTC",
-                enable_utc=True,
-                task_acks_late=True,
-                worker_prefetch_multiplier=1,
-                beat_schedule={
-                    "scan-fsrs-reminders": {
-                        "task": "app.tasks.reminders.scan_fsrs_reminders",
-                        "schedule": settings.REMINDER_SCAN_INTERVAL_SECONDS,
-                    },
-                    "send-streak-alerts": {
-                        "task": "app.tasks.streak_reminders.send_streak_alerts",
-                        "schedule": 86400,  # fallback: 24h when Celery is not installed
-                    },
-                    "cleanup-expired-content-agent-uploads": {
-                        "task": (
-                            "app.tasks.content_agent."
-                            "cleanup_expired_content_agent_uploads"
-                        ),
-                        "schedule": 86400,
-                    },
                 },
             )
 
