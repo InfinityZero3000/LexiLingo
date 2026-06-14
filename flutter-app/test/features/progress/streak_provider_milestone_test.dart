@@ -60,6 +60,14 @@ class _StubProgressRepository implements ProgressRepository {
       throw UnimplementedError();
 
   @override
+  Future<Either<Failure, StreakEntity>> restoreStreak() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyReward() async =>
+      throw UnimplementedError();
+
+  @override
   Future<Either<Failure, DailyChallengesResponse>> getDailyChallenges() async =>
       throw UnimplementedError();
 

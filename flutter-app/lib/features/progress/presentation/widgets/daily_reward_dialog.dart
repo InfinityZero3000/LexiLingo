@@ -8,7 +8,10 @@ import 'package:lexilingo_app/features/gamification/presentation/providers/gamif
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 
 /// Shows the daily reward celebration dialog.
-Future<Object?> showDailyRewardDialog(BuildContext context, StreakProvider streakProvider) {
+Future<Object?> showDailyRewardDialog(
+  BuildContext context,
+  StreakProvider streakProvider,
+) {
   return showGeneralDialog(
     context: context,
     barrierDismissible: false,
@@ -19,9 +22,7 @@ Future<Object?> showDailyRewardDialog(BuildContext context, StreakProvider strea
       return Dialog(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        child: _DailyRewardDialogContent(
-          streakProvider: streakProvider,
-        ),
+        child: _DailyRewardDialogContent(streakProvider: streakProvider),
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -31,10 +32,7 @@ Future<Object?> showDailyRewardDialog(BuildContext context, StreakProvider strea
       );
       return ScaleTransition(
         scale: curved,
-        child: FadeTransition(
-          opacity: animation,
-          child: child,
-        ),
+        child: FadeTransition(opacity: animation, child: child),
       );
     },
   );
@@ -43,12 +41,11 @@ Future<Object?> showDailyRewardDialog(BuildContext context, StreakProvider strea
 class _DailyRewardDialogContent extends StatefulWidget {
   final StreakProvider streakProvider;
 
-  const _DailyRewardDialogContent({
-    required this.streakProvider,
-  });
+  const _DailyRewardDialogContent({required this.streakProvider});
 
   @override
-  State<_DailyRewardDialogContent> createState() => _DailyRewardDialogContentState();
+  State<_DailyRewardDialogContent> createState() =>
+      _DailyRewardDialogContentState();
 }
 
 class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
@@ -85,7 +82,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
 
     if (data != null) {
       final int gemsAwarded = data['gems_awarded'] ?? 0;
-      
+
       // Reload wallet to sync gems count on UI
       context.read<GamificationProvider>().loadWallet();
 
@@ -95,9 +92,8 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       // Show success dialog celebration
       AnimatedSuccessDialog.show(
         context,
-        title: 'gamification.dailyRewardClaimed'.tr(defaultValue: 'Daily Reward Claimed!'),
+        title: 'gamification.dailyRewardClaimed'.tr(),
         message: 'gamification.gemsReceived'.tr(
-          defaultValue: 'You received {gems} gems!',
           namedArgs: {'gems': '$gemsAwarded'},
         ),
         autoCloseDuration: const Duration(seconds: 3),
@@ -106,10 +102,11 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       setState(() {
         _isClaiming = false;
       });
-      final errorMsg = widget.streakProvider.errorMessage ?? 'common.failed'.tr();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMsg)),
-      );
+      final errorMsg =
+          widget.streakProvider.errorMessage ?? 'common.failed'.tr();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMsg)));
     }
   }
 
@@ -119,9 +116,9 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     final currentStreak = streak.currentStreak;
     final dayIndex = (currentStreak > 0 ? (currentStreak - 1) : 0) % 7;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    final bgGradient = isDark 
-        ? const [Color(0xFF132333), Color(0xFF0F1B26)] 
+
+    final bgGradient = isDark
+        ? const [Color(0xFF132333), Color(0xFF0F1B26)]
         : const [Colors.white, Color(0xFFF0F6FB)];
     final primaryColor = AppColorRoles.primary(isDark);
     final textTheme = Theme.of(context).textTheme;
@@ -164,7 +161,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                 ),
               ),
             ),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
               child: Column(
@@ -206,10 +203,10 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                     },
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Title
                   Text(
-                    'gamification.dailyStreakRewardAvailable'.tr(defaultValue: 'Daily Streak Reward!'),
+                    'gamification.dailyStreakRewardAvailable'.tr(),
                     textAlign: TextAlign.center,
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
@@ -218,20 +215,20 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Subtitle
                   Text(
-                    'gamification.dailyStreakRewardSubtitle'.tr(
-                      defaultValue: "You've kept your streak alive! Claim your daily reward now.",
-                    ),
+                    'gamification.dailyStreakRewardSubtitle'.tr(),
                     textAlign: TextAlign.center,
                     style: textTheme.bodyMedium?.copyWith(
-                      color: isDark ? const Color(0xFFB5C8D8) : AppColors.textGrey,
+                      color: isDark
+                          ? const Color(0xFFB5C8D8)
+                          : AppColors.textGrey,
                       height: 1.4,
                     ),
                   ),
                   const SizedBox(height: 28),
-                  
+
                   // 7-day reward tracker horizontal list
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -257,7 +254,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Action Button
                   SizedBox(
                     width: double.infinity,
@@ -279,11 +276,13 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                               height: 24,
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Text(
-                              'gamification.claimDailyRewardButton'.tr(defaultValue: 'Claim Gems'),
+                              'gamification.claimDailyRewardButton'.tr(),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -293,12 +292,16 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Skip / Close text button
                   TextButton(
-                    onPressed: _isClaiming ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isClaiming
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     style: TextButton.styleFrom(
-                      foregroundColor: isDark ? Colors.white60 : AppColors.textGrey,
+                      foregroundColor: isDark
+                          ? Colors.white60
+                          : AppColors.textGrey,
                     ),
                     child: Text('common.close'.tr()),
                   ),
@@ -324,18 +327,26 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     Color cardBg;
     Border? border;
     double scale = 1.0;
-    
+
     if (isActive) {
       cardBg = isDark ? const Color(0xFF384D63) : Colors.white;
       border = Border.all(color: AppColors.orange, width: 2.5);
       scale = 1.05;
     } else if (isClaimed) {
       cardBg = isDark ? const Color(0xFF1E2F40) : const Color(0xFFE2F0D9);
-      border = Border.all(color: isDark ? const Color(0xFF2E4154) : const Color(0xFFAAD38D), width: 1);
+      border = Border.all(
+        color: isDark ? const Color(0xFF2E4154) : const Color(0xFFAAD38D),
+        width: 1,
+      );
     } else {
       // Locked
-      cardBg = isDark ? const Color(0xFF172433).withValues(alpha: 0.6) : const Color(0xFFF1F5F9);
-      border = Border.all(color: isDark ? const Color(0xFF243547) : const Color(0xFFE2E8F0), width: 1);
+      cardBg = isDark
+          ? const Color(0xFF172433).withValues(alpha: 0.6)
+          : const Color(0xFFF1F5F9);
+      border = Border.all(
+        color: isDark ? const Color(0xFF243547) : const Color(0xFFE2E8F0),
+        width: 1,
+      );
     }
 
     final card = Container(
@@ -366,8 +377,8 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
               color: isActive
                   ? AppColors.orange
                   : isDark
-                      ? Colors.white60
-                      : AppColors.textGrey,
+                  ? Colors.white60
+                  : AppColors.textGrey,
             ),
           ),
           const SizedBox(height: 6),
@@ -383,8 +394,8 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
               color: isActive
                   ? AppColors.purpleLight
                   : isDark
-                      ? Colors.white24
-                      : AppColors.textMuted,
+                  ? Colors.white24
+                  : AppColors.textMuted,
               size: 16,
             ),
             const SizedBox(height: 4),
@@ -396,8 +407,8 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                 color: isActive
                     ? (isDark ? Colors.white : AppColors.textDark)
                     : isDark
-                        ? Colors.white30
-                        : AppColors.textMuted,
+                    ? Colors.white30
+                    : AppColors.textMuted,
               ),
             ),
           ],
@@ -407,9 +418,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: scale != 1.0
-          ? Transform.scale(scale: scale, child: card)
-          : card,
+      child: scale != 1.0 ? Transform.scale(scale: scale, child: card) : card,
     );
   }
 }
