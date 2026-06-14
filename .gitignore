@@ -149,6 +149,7 @@ scripts
 .claude/worktrees/
 
 # Local tool caches
+.claude/
 .claire/
 .crawl4ai/
 ai-service/.crawl4ai/

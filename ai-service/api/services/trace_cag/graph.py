@@ -25,14 +25,10 @@ from api.services.trace_cag.nodes_v2 import (
     vietnamese_node,
     tts_node,
     ask_clarify_node,
-    stt_node,
-    pronunciation_node,
 )
 from api.services.trace_cag.edges import (
     route_after_diagnosis,
     check_cache_hit,
-    route_voice_or_text,
-    should_analyze_pronunciation,
 )
 
 logger = logging.getLogger(__name__)
@@ -101,8 +97,6 @@ class TraceCAGPipeline:
         graph.add_node("vietnamese_node", vietnamese_node)
         graph.add_node("tts_node", tts_node)
         graph.add_node("ask_clarify_node", ask_clarify_node)
-        graph.add_node("stt_node", stt_node)
-        graph.add_node("pronunciation_node", pronunciation_node)
         
         # ============================================
         # SET ENTRY POINT
@@ -114,18 +108,8 @@ class TraceCAGPipeline:
         # ADD EDGES
         # ============================================
 
-        # Input → STT (voice) or Cache Gate (text)
-        graph.add_conditional_edges(
-            "input_node",
-            route_voice_or_text,
-            {
-                "stt_node": "stt_node",
-                "cache_gate_node": "cache_gate_node",
-            }
-        )
-
-        # STT → Cache Gate (after transcription, continue normal flow)
-        graph.add_edge("stt_node", "cache_gate_node")
+        # Realtime STT finalizes audio before TRACE-CAG is invoked.
+        graph.add_edge("input_node", "cache_gate_node")
 
         # Cache Gate → (END if hit) or (kg_diagnose if miss)
         # kg_diagnose_node runs kg_expand + diagnose concurrently via asyncio.gather
@@ -158,18 +142,7 @@ class TraceCAGPipeline:
         # Ask clarify → END (already has complete tutor_response, skip generate)
         graph.add_edge("ask_clarify_node", END)
 
-        # Conditional: generate → pronunciation (voice) or END (text)
-        graph.add_conditional_edges(
-            "generate_node",
-            should_analyze_pronunciation,
-            {
-                "pronunciation_node": "pronunciation_node",
-                "end": END,
-            }
-        )
-
-        # Pronunciation → END (pronunciation result is in state for the response)
-        graph.add_edge("pronunciation_node", END)
+        graph.add_edge("generate_node", END)
 
         # TTS → end (node remains registered but unreachable; TTS handled externally)
         graph.add_edge("tts_node", END)
@@ -184,6 +157,7 @@ class TraceCAGPipeline:
         input_type: str = "text",
         learner_profile: Optional[Dict[str, Any]] = None,
         conversation_history: Optional[List[Dict[str, Any]]] = None,
+        stt_final: Optional[Dict[str, Any]] = None,
         *,
         cache_policy: str = "on",
         retrieval_policy: str = "full",
@@ -218,6 +192,7 @@ class TraceCAGPipeline:
             user_id=user_id,
             input_type=input_type,
             learner_profile=learner_profile,
+            stt_final=stt_final,
             cache_policy=cache_policy,
             retrieval_policy=retrieval_policy,
             diagnosis_policy=diagnosis_policy,

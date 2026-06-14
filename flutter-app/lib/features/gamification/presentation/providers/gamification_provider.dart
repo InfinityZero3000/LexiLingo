@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
@@ -69,6 +70,12 @@ class GamificationProvider extends ChangeNotifier {
   String? _inventoryError;
 
   List<InventoryItemEntity> get inventory => _inventory;
+
+  /// Active boosts: items that are currently active and have not expired.
+  List<InventoryItemEntity> get activeBoosts => _inventory
+      .where((i) => i.isActive && !i.isExpired && i.expiresAt != null)
+      .toList();
+
   bool get isLoadingInventory => _isLoadingInventory;
   String? get inventoryError => _inventoryError;
   bool ownsItem(String shopItemId) =>
@@ -88,6 +95,10 @@ class GamificationProvider extends ChangeNotifier {
   String? _leaderboardError;
   String _selectedLeague = 'bronze';
 
+  // League change detection (populated by loadLeagueStatus)
+  String? _leagueChangedFrom;
+  String? _leagueChangedTo;
+
   LeaderboardEntity? get leaderboard =>
       _leaderboards[_selectedLeague.toLowerCase()];
   LeaderboardEntity? leaderboardFor(String league) =>
@@ -99,6 +110,17 @@ class GamificationProvider extends ChangeNotifier {
       _loadingLeaderboardLeagues.contains(league.toLowerCase());
   String? get leaderboardError => _leaderboardError;
   String get selectedLeague => _selectedLeague;
+
+  /// Non-null when the user was promoted or demoted since the last session.
+  String? get leagueChangedFrom => _leagueChangedFrom;
+  String? get leagueChangedTo => _leagueChangedTo;
+
+  /// Call after showing LeagueCeremonyScreen to clear the pending state.
+  void clearLeagueChange() {
+    _leagueChangedFrom = null;
+    _leagueChangedTo = null;
+    notifyListeners();
+  }
 
   // ============== Wallet Methods ==============
   Future<void> loadWallet() async {
@@ -320,6 +342,8 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
+  static const _leaguePrefKey = 'lexilingo.last_known_league';
+
   Future<void> loadLeagueStatus() async {
     _isLoadingLeagueStatus = true;
     notifyListeners();
@@ -329,6 +353,7 @@ class GamificationProvider extends ChangeNotifier {
       final data = _extractData(response);
       if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
         _leagueStatus = LeagueStatusEntity.fromJson(data);
+        await _detectLeagueChange(_leagueStatus!.league);
       }
     } catch (e) {
       debugPrint('Error loading league status: $e');
@@ -336,6 +361,16 @@ class GamificationProvider extends ChangeNotifier {
       _isLoadingLeagueStatus = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _detectLeagueChange(String currentLeague) async {
+    final prefs = await SharedPreferences.getInstance();
+    final previous = prefs.getString(_leaguePrefKey);
+    if (previous != null && previous != currentLeague) {
+      _leagueChangedFrom = previous;
+      _leagueChangedTo = currentLeague;
+    }
+    await prefs.setString(_leaguePrefKey, currentLeague);
   }
 
   void setLeague(String league) {

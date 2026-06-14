@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/achievements/presentation/providers/achie
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_unlock_overlay.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -30,7 +31,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Future<void> _loadData() async {
     final provider = context.read<AchievementProvider>();
     await provider.loadAll();
-    await provider.loadMyAchievements();
+    final newlyUnlocked = await provider.checkAchievements();
+    if (newlyUnlocked.isNotEmpty && mounted) {
+      await AchievementUnlockOverlay.show(
+        context,
+        achievements: newlyUnlocked,
+        onDismiss: provider.clearRecentlyUnlocked,
+      );
+    }
   }
 
   @override

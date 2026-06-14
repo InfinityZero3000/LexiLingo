@@ -10,11 +10,21 @@ import {
   updateUserRole,
   getUserActivity,
   getRoleLabel,
-  type UserUpdateData,
+  type UserUpdateData as ApiUserUpdateData,
   giftToUser,
   type GiftRequest,
 } from '../../lib/userManagementApi';
 import { listCoursesAdmin, listShopItems } from '../../lib/adminApi';
+
+type UserUpdateData = ApiUserUpdateData & {
+  bio?: string;
+};
+
+type UserDetailView = Awaited<ReturnType<typeof getUserDetail>> & {
+  bio?: string | null;
+  language_preference?: string | null;
+  notification_enabled?: boolean;
+};
 
 interface UserDetailModalProps {
   userId: string;
@@ -38,9 +48,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Queries
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery<UserDetailView>({
     queryKey: ['user-detail', userId],
-    queryFn: () => getUserDetail(userId),
+    queryFn: () => getUserDetail(userId) as Promise<UserDetailView>,
   });
   
   const { data: activities } = useQuery({
@@ -567,4 +577,3 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     </div>
   );
 }
-

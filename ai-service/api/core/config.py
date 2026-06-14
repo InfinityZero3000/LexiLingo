@@ -153,6 +153,7 @@ class Settings(BaseSettings):
     # Logging Configuration
     # ============================================================
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
     LOG_AI_INTERACTIONS: bool = True
     LOG_PERFORMANCE_METRICS: bool = True
     
@@ -186,11 +187,12 @@ class Settings(BaseSettings):
     # ============================================================
     # STT / TTS Configuration
     # ============================================================
-    # Faster-Whisper v3 - Speech-to-Text
-    STT_MODEL_NAME: str = os.getenv("STT_MODEL_NAME", "large-v3")
+    # Legacy short-clip STT compatibility. Realtime settings live in
+    # api.services.stt.config.STTConfig.
+    STT_MODEL_NAME: str = os.getenv("STT_VERIFY_MODEL", "base.en")
     STT_DEVICE: str = os.getenv("STT_DEVICE", "cpu")
     STT_COMPUTE_TYPE: str = os.getenv("STT_COMPUTE_TYPE", "int8")
-    STT_BEAM_SIZE: int = int(os.getenv("STT_BEAM_SIZE", "5"))
+    STT_BEAM_SIZE: int = int(os.getenv("STT_BEAM_SIZE", "1"))
     STT_VAD: bool = os.getenv("STT_VAD", "true").lower() == "true"
     STT_LANGUAGE: str = os.getenv("STT_LANGUAGE", "en")
     

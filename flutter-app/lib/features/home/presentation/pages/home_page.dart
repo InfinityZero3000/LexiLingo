@@ -29,6 +29,8 @@ import 'package:lexilingo_app/features/notifications/presentation/providers/noti
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/word_of_day_card.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/active_boosts_bar.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -154,44 +156,85 @@ class _HomePageNewState extends State<HomePageNew> {
                 homeProvider.refreshData(),
                 context.read<StreakProvider>().loadStreak(),
               ]),
-              child: ListView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 24.0),
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildHeader(context, homeProvider, authProvider),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStreakCard(context, homeProvider),
-                  const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'home.quickActions'.tr()),
-                  const SizedBox(height: 8),
-                  _buildQuickActionsHorizontal(context),
-                  const SizedBox(height: 12),
-                  _buildLevelAndDailyGoalRow(context, homeProvider),
-                  const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DailyChallengesCard(),
-                  ),
-                  const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DailyReviewCard(),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSectionTitle(
-                    context,
-                    'home.continueLearningSection'.tr(),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildEnrolledCoursesSection(context, homeProvider),
-                  const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'home.featuredCourses'.tr()),
-                  const SizedBox(height: 8),
-                  _buildFeaturedCourses(context, homeProvider),
-                ],
+                child: StaggeredList(
+                  itemDelay: const Duration(milliseconds: 55),
+                  itemDuration: const Duration(milliseconds: 460),
+                  slideOffset: 22,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _buildHeader(context, homeProvider, authProvider),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _buildStreakCard(context, homeProvider),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(
+                            context,
+                            'home.quickActions'.tr(),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildQuickActionsHorizontal(context),
+                        ],
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: ActiveBoostsBar(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: WordOfDayCard(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _buildLevelAndDailyGoalRow(context, homeProvider),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: DailyChallengesCard(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: DailyReviewCard(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(
+                            context,
+                            'home.continueLearningSection'.tr(),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildEnrolledCoursesSection(context, homeProvider),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(
+                            context,
+                            'home.featuredCourses'.tr(),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildFeaturedCourses(context, homeProvider),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },

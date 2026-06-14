@@ -539,16 +539,13 @@ async def _synthesize_tts(text: str) -> Optional[str]:
 
 # ─── Helper: STT transcription ──────────────────────────────────────────────
 async def _transcribe_audio(audio_base64: str) -> Optional[str]:
-    """Transcribe base64 audio using ModelGateway Whisper."""
+    """Compatibility path for short clips while clients migrate to WebSocket STT."""
     try:
-        from api.services.model_gateway import get_gateway
-        
-        audio_bytes = base64.b64decode(audio_base64)
-        gateway = await get_gateway()
-        result = await gateway.invoke("whisper", "transcribe", {"audio_bytes": audio_bytes})
-        text = result.get("data", {}).get("text", "") if result.get("success") else ""
-        if not text:
-            text = result.get("text", "")
+        from api.services.handlers.whisper_handler import get_whisper_handler
+
+        audio_bytes = base64.b64decode(audio_base64, validate=True)
+        result = await get_whisper_handler().transcribe(audio=audio_bytes, language="en")
+        text = result.get("text", "")
         logger.info(f" Lexi STT: '{text[:50]}...'")
         return text if text else None
     except Exception as e:

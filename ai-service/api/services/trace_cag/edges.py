@@ -11,26 +11,19 @@ from api.services.trace_cag.state import TraceCAGState
 
 def route_voice_or_text(
     state: TraceCAGState,
-) -> Literal["stt_node", "cache_gate_node"]:
+) -> Literal["cache_gate_node"]:
     """
-    After input_node: route voice input to STT transcription first.
-    Text input skips directly to the cache gate.
+    STT is finalized before TRACE-CAG, so every input continues as text.
     """
-    if state.get("input_type") == "voice" and state.get("audio_bytes"):
-        return "stt_node"
     return "cache_gate_node"
 
 
 def should_analyze_pronunciation(
     state: TraceCAGState,
-) -> Literal["pronunciation_node", "end"]:
+) -> Literal["end"]:
     """
-    After generate_node (voice path only):
-    run pronunciation analysis before returning when audio is present.
-    Text input falls through to END directly.
+    Pronunciation analysis is a separate explicit audio workflow.
     """
-    if state.get("input_type") == "voice" and state.get("audio_bytes"):
-        return "pronunciation_node"
     return "end"
 
 

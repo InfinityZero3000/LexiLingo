@@ -41,7 +41,7 @@ export const AdminManagementPage = () => {
         email: u.email,
         display_name: u.display_name ?? u.username,
         role: u.role_slug as "admin" | "super_admin",
-        provider: u.provider ?? "—",
+        provider: Array.isArray(u.provider) ? u.provider : [u.provider ?? "—"],
         is_active: u.is_active,
         created_at: u.created_at,
         last_login_at: u.last_login ?? undefined,
@@ -162,7 +162,7 @@ export const AdminManagementPage = () => {
                   </td>
                   <td>
                     <StatusPill 
-                      tone={admin.is_active ? "success" : "neutral"} 
+                      tone={admin.is_active ? "success" : "neutral"}
                       label={admin.is_active ? t.common.active : t.common.inactive} 
                     />
                   </td>
