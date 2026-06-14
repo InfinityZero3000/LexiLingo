@@ -63,4 +63,6 @@ paths = [
   '''(^|/)gateway/kong/kong\.yml$''',
   '''(^|/)backend-service/test_firebase_api\.py$''',
   '''(^|/)scripts/clean-git-history\.sh$''',
+  '''(^|/)scripts/start-all\.sh$''',
+  '''(^|/)flutter-app/build/web/main\.dart\.js$''',
 ]
