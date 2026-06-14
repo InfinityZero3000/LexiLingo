@@ -57,6 +57,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
 
 
+def _sanitize_lesson_context(value):
+    if isinstance(value, dict):
+        return {
+            key: _sanitize_lesson_context(item)
+            for key, item in value.items()
+            if key not in {"correct_answer", "is_correct", "answer"}
+        }
+    if isinstance(value, list):
+        return [_sanitize_lesson_context(item) for item in value]
+    return value
+
+
 @router.post("/lessons/{lesson_id}/start", response_model=ApiResponse[LessonStartResponse])
 async def start_lesson(
     lesson_id: UUID,
@@ -207,6 +219,37 @@ async def get_lesson_content(
             total_exercises=len(exercises),
             exercises=exercises
         )
+    )
+
+
+@router.get("/lessons/{lesson_id}/context")
+async def get_lesson_context(
+    lesson_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Return real lesson context without answer material or demo fallback."""
+    result = await db.execute(select(Lesson).where(Lesson.id == lesson_id))
+    lesson = result.scalar_one_or_none()
+    if not lesson:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
+
+    raw_content = lesson.content if isinstance(lesson.content, dict) else {}
+    content = _sanitize_lesson_context(raw_content)
+    return ApiResponse(
+        success=True,
+        message="Lesson context retrieved",
+        data={
+            "id": str(lesson.id),
+            "title": lesson.title,
+            "description": lesson.description,
+            "level": content.get("level"),
+            "vocabulary": content.get("vocabulary", []),
+            "grammar_points": content.get("grammar_points", []),
+            "objectives": content.get("objectives", []),
+            "content": content,
+            "updated_at": lesson.updated_at.isoformat() if lesson.updated_at else None,
+        },
     )
 
 

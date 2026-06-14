@@ -8,8 +8,10 @@ from app.core.config import settings
 
 try:  # pragma: no cover - exercised only when dependency is installed
     from celery import Celery
+    from celery.schedules import crontab
 except ImportError:  # pragma: no cover - local test env may not install Celery yet
     Celery = None  # type: ignore[assignment]
+    crontab = None  # type: ignore[assignment]
 
 
 if Celery is not None:
@@ -17,7 +19,7 @@ if Celery is not None:
         "lexilingo",
         broker=settings.effective_celery_broker_url,
         backend=settings.effective_celery_result_backend,
-        include=["app.tasks.reminders"],
+        include=["app.tasks.reminders", "app.tasks.streak_reminders"],
     )
     celery_app.conf.timezone = "UTC"
     celery_app.conf.enable_utc = True
@@ -27,7 +29,11 @@ if Celery is not None:
         "scan-fsrs-reminders": {
             "task": "app.tasks.reminders.scan_fsrs_reminders",
             "schedule": settings.REMINDER_SCAN_INTERVAL_SECONDS,
-        }
+        },
+        "send-streak-alerts": {
+            "task": "app.tasks.streak_reminders.send_streak_alerts",
+            "schedule": crontab(hour=20, minute=0),
+        },
     }
 else:
     class _FallbackCelery:
@@ -43,7 +49,11 @@ else:
                     "scan-fsrs-reminders": {
                         "task": "app.tasks.reminders.scan_fsrs_reminders",
                         "schedule": settings.REMINDER_SCAN_INTERVAL_SECONDS,
-                    }
+                    },
+                    "send-streak-alerts": {
+                        "task": "app.tasks.streak_reminders.send_streak_alerts",
+                        "schedule": 86400,  # fallback: 24h when Celery is not installed
+                    },
                 },
             )
 

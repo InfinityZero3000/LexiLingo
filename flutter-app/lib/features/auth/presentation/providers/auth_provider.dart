@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/deep_link_service.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
@@ -210,9 +211,8 @@ class AuthProvider extends ChangeNotifier {
         _user = user;
         _errorMessage = null;
         _isJustLoggedIn = true;
-        FirebaseMessagingService.instance.registerTokenWithBackend(
-          sl<ApiClient>(),
-        );
+        FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+        unawaited(_claimPendingReferral());
       },
     );
   }
@@ -247,10 +247,8 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true;
-          // Register FCM token with backend after successful Facebook sign-in
-          FirebaseMessagingService.instance.registerTokenWithBackend(
-            sl<ApiClient>(),
-          );
+          FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+          unawaited(_claimPendingReferral());
         },
       );
     } catch (e) {
@@ -287,11 +285,9 @@ class AuthProvider extends ChangeNotifier {
         (user) {
           _user = user;
           _errorMessage = null;
-          _isJustLoggedIn = true; // Set flag for welcome screen
-          // Register FCM token with backend after successful email sign-in
-          FirebaseMessagingService.instance.registerTokenWithBackend(
-            sl<ApiClient>(),
-          );
+          _isJustLoggedIn = true;
+          FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+          unawaited(_claimPendingReferral());
         },
       );
     } catch (e) {
@@ -395,6 +391,19 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  // Claim a pending referral code stored by DeepLinkService before sign-in.
+  Future<void> _claimPendingReferral() async {
+    final code = DeepLinkService.instance.pendingReferralCode;
+    if (code == null) return;
+    DeepLinkService.instance.pendingReferralCode = null;
+    try {
+      await sl<ApiClient>().post('/referral/claim/$code', body: {});
+      debugPrint('Referral code $code claimed successfully');
+    } catch (e) {
+      debugPrint('Referral claim failed (non-blocking): $e');
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     try {
@@ -410,6 +419,30 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Sign out error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Permanently delete current user account (GDPR hard delete)
+  Future<void> deleteAccount() async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final apiClient = sl<ApiClient>();
+      await apiClient.delete('/users/me/permanent');
+
+      await googleSignInService.signOut();
+      await signOutUseCase(NoParams());
+      await FirebaseMessagingService.instance.clearRegisteredToken();
+      _user = null;
+    } catch (e) {
+      debugPrint("Delete account error: $e");
+      _errorMessage = _parseErrorMessage(e.toString());
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();

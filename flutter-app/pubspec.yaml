@@ -73,6 +73,7 @@ dependencies:
   firebase_core: ^3.8.1
   firebase_auth: ^5.3.4
   firebase_messaging: ^15.1.5
+  firebase_crashlytics: ^4.3.0
   cloud_firestore: ^5.5.2
   firedart: ^0.9.8
   flutter_dotenv: ^6.0.0
@@ -105,6 +106,18 @@ dependencies:
 
   # YouTube embedded player (Phase 1: YouTube Video Integration)
   youtube_player_iframe: ^6.0.2
+
+  # Social sharing
+  share_plus: ^10.1.4
+
+  # In-app rating
+  in_app_review: ^2.0.9
+
+  # Deep links (Android App Links + iOS Universal Links)
+  app_links: ^6.3.3
+
+  # Premium subscriptions (RevenueCat)
+  purchases_flutter: ^8.10.0
 
   # Localization
   easy_localization: ^3.0.7

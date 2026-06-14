@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/rating_service.dart';
 import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
 import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model.dart';
 import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
@@ -273,6 +276,7 @@ class LearningProvider with ChangeNotifier {
       (lessonComplete) {
         _lessonResult = lessonComplete;
         _xpEarned = lessonComplete.totalXpEarned;
+        unawaited(RatingService.instance.onLessonCompleted());
       },
     );
     notifyListeners();

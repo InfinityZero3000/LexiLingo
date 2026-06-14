@@ -4,16 +4,31 @@ User Routes
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_
+from sqlalchemy import select, func, or_, delete as sa_delete
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.user import User
-from app.models.progress import UserProgress, LessonAttempt, Streak, UserCourseProgress, LessonCompletion
-from app.models.gamification import UserAchievement, UserWallet
-from app.models.vocabulary import UserVocabulary
+from app.models.user import User, UserDevice, RefreshToken
+from app.models.progress import (
+    UserProgress, LessonAttempt, Streak, UserCourseProgress, LessonCompletion,
+    QuestionAttempt, UserVocabKnowledge, DailyReviewSession, DailyActivity,
+)
+from app.models.gamification import (
+    UserAchievement, UserWallet, WalletTransaction, LeaderboardEntry,
+    UserFollowing, ActivityFeed, UserInventory, ChallengeRewardClaim,
+)
+from app.models.vocabulary import UserVocabulary, VocabularyReview, VocabularyDeck
+from app.models.notification import Notification
+from app.models.proficiency import (
+    UserProficiencyProfile, UserSkillScore, UserLevelHistory,
+    ExerciseAttempt, LevelAssessmentTest,
+)
+from app.models.reminder import UserReminderPreference, ReminderDelivery
+from app.models.rbac import AuditLog
+from app.models.games import GameSession, XPTransaction
+from app.models.reward_grant import UserRewardGrant
 from app.schemas.user import UserResponse, UserUpdate
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
@@ -155,6 +170,68 @@ async def delete_current_user(
     return MessageResponse(
         message="Account deactivated successfully",
         detail="Your account has been deactivated. Contact support to reactivate."
+    )
+
+
+@router.delete("/me/permanent", response_model=MessageResponse)
+async def permanently_delete_current_user(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """GDPR hard delete — removes all user data permanently."""
+    uid = current_user.id
+
+    # Delete in dependency order (children before parents)
+    for model in (
+        ReminderDelivery,
+        UserReminderPreference,
+        Notification,
+        AuditLog,
+        ExerciseAttempt,
+        LevelAssessmentTest,
+        UserSkillScore,
+        UserLevelHistory,
+        UserProficiencyProfile,
+        ChallengeRewardClaim,
+        UserRewardGrant,
+        ActivityFeed,
+        UserInventory,
+        WalletTransaction,
+        LeaderboardEntry,
+        UserWallet,
+        UserAchievement,
+        XPTransaction,
+        GameSession,
+        VocabularyReview,
+        VocabularyDeck,
+        UserVocabulary,
+        DailyReviewSession,
+        UserVocabKnowledge,
+        QuestionAttempt,
+        DailyActivity,
+        LessonAttempt,
+        LessonCompletion,
+        UserCourseProgress,
+        UserProgress,
+        Streak,
+        RefreshToken,
+        UserDevice,
+    ):
+        await db.execute(sa_delete(model).where(model.user_id == uid))
+
+    # UserFollowing uses follower_id / following_id instead of user_id
+    await db.execute(
+        sa_delete(UserFollowing).where(
+            (UserFollowing.follower_id == uid) | (UserFollowing.following_id == uid)
+        )
+    )
+
+    await db.delete(current_user)
+    await db.commit()
+
+    return MessageResponse(
+        message="Account permanently deleted",
+        detail="All user data has been permanently removed.",
     )
 
 
