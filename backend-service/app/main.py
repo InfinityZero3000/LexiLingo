@@ -302,6 +302,33 @@ app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["R
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
+    import prometheus_fastapi_instrumentator.routing as _pfi_routing
+    from starlette.routing import Match, Mount
+
+    # Starlette 1.x adds _IncludedRouter objects to app.routes. These have
+    # a matches() method but no .path attribute, crashing the default route
+    # name resolver. Patch _get_route_name to guard against that.
+    def _safe_get_route_name(scope, routes, route_name=None):
+        for route in routes:
+            match, child_scope = route.matches(scope)
+            if match == Match.FULL:
+                if not hasattr(route, "path"):
+                    if hasattr(route, "routes"):
+                        child_scope = {**scope, **child_scope}
+                        return _safe_get_route_name(child_scope, route.routes, route_name)
+                    return route_name
+                route_name = route.path
+                child_scope = {**scope, **child_scope}
+                if isinstance(route, Mount) and route.routes:
+                    child_name = _safe_get_route_name(child_scope, route.routes, route_name)
+                    route_name = None if child_name is None else route_name + child_name
+                return route_name
+            elif match == Match.PARTIAL and route_name is None:
+                if hasattr(route, "path"):
+                    route_name = route.path
+        return None
+
+    _pfi_routing._get_route_name = _safe_get_route_name
 
     Instrumentator(
         should_group_status_codes=True,
