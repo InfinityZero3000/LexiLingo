@@ -1,0 +1,62 @@
+name: Security
+
+on:
+  push:
+    branches: [main, feature, "feature/**", develop, dev]
+  pull_request:
+    branches: [main, feature, "feature/**", develop, dev]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+
+jobs:
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout full repository history
+        uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0 # v6.0.3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pinned Gitleaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          release_url="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+
+          curl --fail --location --silent --show-error \
+            "${release_url}/${archive}" \
+            --output "${RUNNER_TEMP}/${archive}"
+          curl --fail --location --silent --show-error \
+            "${release_url}/gitleaks_${GITLEAKS_VERSION}_checksums.txt" \
+            --output "${RUNNER_TEMP}/gitleaks-checksums.txt"
+
+          (
+            cd "${RUNNER_TEMP}"
+            sha256sum --check --ignore-missing gitleaks-checksums.txt
+            tar -xzf "${archive}" gitleaks
+          )
+          mkdir -p "${RUNNER_TEMP}/bin"
+          install -m 0755 "${RUNNER_TEMP}/gitleaks" "${RUNNER_TEMP}/bin/gitleaks"
+          echo "${RUNNER_TEMP}/bin" >> "${GITHUB_PATH}"
+
+      - name: Scan current tree
+        run: gitleaks dir --config .gitleaks.toml --redact --verbose .
+
+      - name: Scan full Git history
+        run: gitleaks git --config .gitleaks.toml --redact --verbose --log-opts="--all" .

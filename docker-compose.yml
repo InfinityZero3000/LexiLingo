@@ -269,12 +269,70 @@ services:
     networks:
       - lexilingo-prod
 
+  # ============================================
+  # Prometheus — metrics scraper
+  # ============================================
+  prometheus:
+    image: prom/prometheus:v2.53.2
+    container_name: lexilingo-prometheus
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Grafana — metrics dashboard
+  # ============================================
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: lexilingo-grafana
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - lexilingo-network
+
 volumes:
   postgres_data:
   mongodb_data:
   mongodb_config:
   redis_data:
   ai_models:
+    driver: local
+  redis_ai_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
 
 networks:
   lexilingo-prod:

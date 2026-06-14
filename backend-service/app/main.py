@@ -11,6 +11,9 @@ Architecture: Clean Architecture
 """
 
 import logging
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,6 +65,7 @@ from app.routes.ai_audit import router as ai_audit_router
 from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
+from app.routes.referral import router as referral_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -70,6 +74,17 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Sentry — only active when DSN is configured
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        environment=settings.APP_ENV,
+        integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+        traces_sample_rate=0.2,
+        send_default_pii=False,
+    )
+    logger.info("Sentry error tracking enabled")
 
 
 @asynccontextmanager
@@ -282,6 +297,19 @@ app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP Syst
 app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Books"])
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
+app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
+
+# Prometheus metrics — exposed at /metrics, scraped by Prometheus server
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+
+    Instrumentator(
+        should_group_status_codes=True,
+        excluded_handlers=["/health", "/metrics"],
+    ).instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
+    logger.info("Prometheus metrics enabled at /metrics")
+except ImportError:
+    logger.warning("prometheus-fastapi-instrumentator not installed; /metrics disabled")
 
 # Serve uploaded/imported media files
 import os

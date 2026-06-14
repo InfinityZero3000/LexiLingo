@@ -1,13 +1,19 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/di/injection_container.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/pages/legal_page.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
 /// Settings page for user preferences
@@ -180,6 +186,34 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 12),
                 _buildAccountSection(context),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 5,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.people_outline_rounded,
+                    title: 'settings.referral'.tr(),
+                    subtitle: 'settings.referral_subtitle'.tr(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildReferralSection(context),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 6,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
+                    icon: Icons.info_outline,
+                    title: 'settings.about'.tr(),
+                    subtitle: 'settings.about_subtitle'.tr(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildAboutSection(context),
                 const SizedBox(height: 40),
               ],
             ),
@@ -726,9 +760,6 @@ class _SettingsPageState extends State<SettingsPage> {
           // Sign out button
           InkWell(
             onTap: () => _confirmSignOut(context),
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(16),
-            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
@@ -760,9 +791,347 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
+
+          Divider(height: 1, color: AppColors.grey200),
+
+          // Delete account button
+          InkWell(
+            onTap: () => _confirmDeleteAccount(context),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE4E4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: Color(0xFFB91C1C),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'settings.delete_account'.tr(),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFFB91C1C),
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Widget _buildReferralSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+        ),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.green.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.card_giftcard_rounded, color: Colors.green, size: 20),
+        ),
+        title: Text('settings.invite_friends'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text('settings.invite_friends_subtitle'.tr(),
+            style: const TextStyle(fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right, size: 20),
+        onTap: () => _showReferralSheet(context),
+      ),
+    );
+  }
+
+  Future<void> _showReferralSheet(BuildContext context) async {
+    final api = sl<ApiClient>();
+    String? code;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300], borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Icon(Icons.card_giftcard_rounded, size: 48, color: Colors.green),
+              const SizedBox(height: 12),
+              Text('settings.invite_title'.tr(),
+                  style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 8),
+              Text('settings.invite_desc'.tr(),
+                  style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                  textAlign: TextAlign.center),
+              const SizedBox(height: 24),
+              FutureBuilder<Map<String, dynamic>>(
+                future: () async {
+                  return await api.get('/api/v1/referral/my-code');
+                }(),
+                builder: (ctx, snap) {
+                  if (!snap.hasData) {
+                    return const CircularProgressIndicator();
+                  }
+                  code = snap.data!['referral_code'] as String? ?? '';
+                  final total = (snap.data!['total_referrals'] as num?)?.toInt() ?? 0;
+                  return Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(code ?? '',
+                                style: const TextStyle(
+                                  fontSize: 28, fontWeight: FontWeight.bold,
+                                  letterSpacing: 4, color: Colors.green,
+                                )),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              icon: const Icon(Icons.copy_rounded, color: Colors.green),
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: code ?? ''));
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                  SnackBar(content: Text('settings.code_copied'.tr())),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'settings.referral_count'.tr(namedArgs: {'count': total.toString()}),
+                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      ),
+                      const SizedBox(height: 20),
+                      FilledButton.icon(
+                        icon: const Icon(Icons.share_rounded),
+                        label: Text('settings.share_invite'.tr()),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                        onPressed: () {
+                          Share.share(
+                            '${'settings.invite_message'.tr()}\n\n'
+                            'https://lexilingo.app/referral/$code',
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAboutSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildAboutRow(
+            context,
+            icon: Icons.privacy_tip_outlined,
+            label: 'settings.privacy'.tr(),
+            isDark: isDark,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const LegalPage(type: LegalPageType.privacyPolicy),
+              ),
+            ),
+          ),
+          Divider(height: 1, color: AppColors.grey200),
+          _buildAboutRow(
+            context,
+            icon: Icons.description_outlined,
+            label: 'settings.terms'.tr(),
+            isDark: isDark,
+            isLast: true,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const LegalPage(type: LegalPageType.termsOfService),
+              ),
+            ),
+          ),
+          Divider(height: 1, color: AppColors.grey200),
+          FutureBuilder<PackageInfo>(
+            future: PackageInfo.fromPlatform(),
+            builder: (context, snapshot) {
+              final version = snapshot.data?.version ?? '—';
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColorRoles.primary(isDark).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.info_outline,
+                        color: AppColorRoles.primary(isDark),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'settings.version'.tr(namedArgs: {'version': version}),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: AppColorRoles.textMuted(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAboutRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    bool isLast = false,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: isLast
+          ? const BorderRadius.vertical(bottom: Radius.circular(16))
+          : BorderRadius.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColorRoles.primary(isDark).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: AppColorRoles.primary(isDark), size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+            const Spacer(),
+            Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('settings.delete_account'.tr()),
+        content: Text('settings.delete_account_confirm'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('common.cancel'.tr()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('settings.delete_account_confirm_btn'.tr()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await context.read<AuthProvider>().deleteAccount();
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('settings.delete_account_error'.tr())),
+        );
+      }
+    }
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {

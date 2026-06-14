@@ -123,6 +123,12 @@ class User(Base):
     def is_super_admin(self) -> bool:
         return self.role_level >= 2
     
+    # Referral
+    referral_code: Mapped[str] = mapped_column(String(12), unique=True, nullable=True, index=True)
+    referred_by: Mapped[uuid.UUID] = mapped_column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
