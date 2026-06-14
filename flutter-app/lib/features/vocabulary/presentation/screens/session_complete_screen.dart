@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/streak_milestone_overlay.dart';
 
 /// Session Complete Screen (Presentation Layer)
 /// Shows review session results with celebration animation
@@ -35,9 +36,19 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
       _confettiController.play();
     });
 
-    // Update streak after review session complete
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StreakProvider>().updateStreak();
+    // Update streak after review session complete, then show milestone if reached
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final streakProvider = context.read<StreakProvider>();
+      await streakProvider.updateStreak();
+      if (!mounted) return;
+      if (streakProvider.milestoneJustReached) {
+        await StreakMilestoneOverlay.show(
+          context,
+          streakDays: streakProvider.currentStreak,
+          onDismiss: streakProvider.clearMilestone,
+        );
+      }
     });
   }
 

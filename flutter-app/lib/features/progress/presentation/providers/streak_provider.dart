@@ -16,12 +16,14 @@ class StreakProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   StreakUpdateResult? _lastUpdateResult;
+  bool _milestoneJustReached = false;
 
   // Getters
   StreakEntity? get streak => _streak;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   StreakUpdateResult? get lastUpdateResult => _lastUpdateResult;
+  bool get milestoneJustReached => _milestoneJustReached;
 
   /// Current streak count (0 if not loaded)
   int get currentStreak => _streak?.currentStreak ?? 0;
@@ -100,6 +102,8 @@ class StreakProvider extends ChangeNotifier {
           canRestore: updateResult.canRestore,
           isDailyRewardAvailable: updateResult.isDailyRewardAvailable,
         );
+        _milestoneJustReached =
+            updateResult.streakIncreased && _streak!.isMilestone;
         success = true;
       },
     );
@@ -219,6 +223,11 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return successData;
+
+  /// Clear the milestone flag after the overlay has been shown.
+  void clearMilestone() {
+    _milestoneJustReached = false;
+    notifyListeners();
   }
 
   /// Clear error message
@@ -233,6 +242,7 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _lastUpdateResult = null;
+    _milestoneJustReached = false;
     notifyListeners();
   }
 }

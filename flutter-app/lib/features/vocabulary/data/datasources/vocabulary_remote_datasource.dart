@@ -58,6 +58,9 @@ abstract class VocabularyRemoteDataSource {
 
   /// Get vocabulary items in a deck
   Future<List<UserVocabularyModel>> getDeckItems(String deckId);
+
+  /// Get today's Word of the Day
+  Future<VocabularyItemModel> getWordOfDay();
 }
 
 /// Implementation of VocabularyRemoteDataSource
@@ -259,6 +262,19 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
       rethrow;
     } catch (e) {
       throw ServerException('Failed to fetch deck items: $e');
+    }
+  }
+
+  @override
+  Future<VocabularyItemModel> getWordOfDay() async {
+    try {
+      final response = await apiClient.get('/vocabulary/word-of-day');
+      final data = response['data'] ?? response;
+      return VocabularyItemModel.fromJson(data as Map<String, dynamic>);
+    } on ServerException {
+      rethrow;
+    } catch (e) {
+      throw ServerException('Failed to fetch word of the day: $e');
     }
   }
 }

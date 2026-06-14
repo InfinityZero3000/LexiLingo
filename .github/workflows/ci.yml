@@ -69,7 +69,11 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Install test dependencies
-        run: pip install pytest-cov
+        run: pip install pytest-cov ruff
+
+      - name: Ruff baseline
+        continue-on-error: true
+        run: ruff check app
 
       - name: Wait for PostgreSQL
         run: |
@@ -138,6 +142,124 @@ jobs:
           path: backend-service/coverage.xml
 
   # ──────────────────────────────────────────────
+  # AI service — focused lint, import, and STT tests
+  # ──────────────────────────────────────────────
+  ai:
+    name: AI Lint, Import & STT Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ai-service
+
+    env:
+      PYTHONPATH: .
+      APP_ENV: testing
+      DEBUG: "False"
+      DATABASE_URL: sqlite+aiosqlite:///./ci-ai.db
+      SECRET_KEY: ci-secret-key-not-for-production
+      GEMINI_API_KEY: ""
+      GROQ_API_KEY: ""
+      OPENAI_API_KEY: ""
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ai-service/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -c constraints-ai.txt -r requirements.txt ruff
+
+      - name: Ruff focused STT correctness checks
+        run: ruff check --select E9,F63,F7,F82 api/routes/stt.py api/services/stt tests/stt
+
+      - name: Check app import
+        run: python -c "from api.main import app; print(app.title)"
+
+      - name: Run focused STT tests
+        run: |
+          pytest \
+            tests/stt \
+            tests/test_dependency_constraints.py \
+            tests/test_lexi_session_management.py \
+            tests/trace_cag/test_edges_routing.py \
+            tests/trace_cag/test_pipeline_integration.py \
+            --tb=short -q
+
+  # ──────────────────────────────────────────────
+  # MCP server — import and startup protocol smoke
+  # ──────────────────────────────────────────────
+  mcp:
+    name: MCP Pytest & Startup Smoke
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: mcp-server
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: mcp-server/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check server import
+        run: python -c "from server import server; print(type(server).__name__)"
+
+      - name: Run MCP resource, security, and startup tests
+        run: |
+          pytest \
+            tests/test_resources.py \
+            tests/test_security_configuration.py \
+            tests/test_integration.py::test_mcp_server_startup \
+            tests/test_integration.py::test_list_resources \
+            --tb=short -q
+
+  # ──────────────────────────────────────────────
+  # Admin — reproducible install, build check, Vitest
+  # ──────────────────────────────────────────────
+  admin:
+    name: Admin Build & Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: admin-service
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: admin-service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and type check baseline
+        run: npm run build:check
+
+      - name: Run Vitest
+        run: npm test
+
+  # ──────────────────────────────────────────────
   # Flutter — analyze + test
   # ──────────────────────────────────────────────
   flutter:
@@ -190,8 +312,8 @@ jobs:
           name: flutter-analyze-output
           path: flutter-app/analyze-output.txt
 
-      - name: Run unit tests
-        run: flutter test --no-pub -r compact test/core test/features
+      - name: Run full test suite
+        run: flutter test --no-pub -r compact
 
       - name: Check formatting (non-blocking)
         run: dart format --output=none --set-exit-if-changed lib/

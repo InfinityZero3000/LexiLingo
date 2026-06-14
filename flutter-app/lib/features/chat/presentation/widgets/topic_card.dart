@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import '../../data/models/story_model.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -22,7 +23,7 @@ class TopicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _getDifficultyColor(story.difficultyLevel);
+    final cefrColor = CefrBadge.colorForLevel(story.difficultyLevel.shortName);
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -40,13 +41,13 @@ class TopicCard extends StatelessWidget {
                   flex: 2,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
+                      color: cefrColor.withValues(alpha: 0.1),
                     ),
                     child: Center(
                       child: Icon(
                         TopicIconResolver.forStory(story),
                         size: 40,
-                        color: color,
+                        color: cefrColor,
                       ),
                     ),
                   ),
@@ -64,23 +65,9 @@ class TopicCard extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                story.difficultyLevel.shortName,
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            CefrBadge(
+                              level: story.difficultyLevel.shortName,
+                              size: CefrBadgeSize.small,
                             ),
                             Text(
                               _capitalize(story.category),
@@ -112,7 +99,8 @@ class TopicCard extends StatelessWidget {
                             child: LinearProgressIndicator(
                               value: progress,
                               backgroundColor: Colors.grey[200],
-                              valueColor: AlwaysStoppedAnimation<Color>(color),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(cefrColor),
                               minHeight: 4,
                             ),
                           ),
@@ -141,7 +129,7 @@ class TopicCard extends StatelessWidget {
                                 '#${story.tags.first}',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: color.withValues(alpha: 0.7),
+                                  color: cefrColor.withValues(alpha: 0.7),
                                 ),
                               ),
                           ],
@@ -171,7 +159,7 @@ class TopicCard extends StatelessWidget {
                         'chat.preparing'.tr(),
                         style: TextStyle(
                           fontSize: 10,
-                          color: color,
+                          color: cefrColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -183,23 +171,6 @@ class TopicCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getDifficultyColor(DifficultyLevel level) {
-    switch (level) {
-      case DifficultyLevel.A1:
-        return AppColors.greenSuccessBright;
-      case DifficultyLevel.A2:
-        return Colors.blue;
-      case DifficultyLevel.B1:
-        return AppColors.orange;
-      case DifficultyLevel.B2:
-        return AppColors.deepOrange;
-      case DifficultyLevel.C1:
-        return AppColors.errorBright;
-      case DifficultyLevel.C2:
-        return AppColors.purple;
-    }
   }
 
   String _capitalize(String s) =>

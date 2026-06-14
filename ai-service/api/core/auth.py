@@ -48,12 +48,17 @@ def _decode_backend_jwt(token: str) -> Optional[dict[str, Any]]:
         return None
 
     try:
+        audience = os.getenv("AI_JWT_AUDIENCE", "lexilingo-services").strip()
+        issuer = os.getenv("AI_JWT_ISSUER", "lexilingo-backend").strip()
         payload = jwt.decode(
             token,
             secret,
             algorithms=[_jwt_algorithm()],
+            audience=audience,
+            issuer=issuer,
             options={
-                "verify_aud": False,
+                "verify_aud": True,
+                "verify_iss": True,
                 "leeway": _jwt_leeway_seconds(),
             },
         )
@@ -64,8 +69,7 @@ def _decode_backend_jwt(token: str) -> Optional[dict[str, Any]]:
     if not sub:
         return None
 
-    token_type = payload.get("type")
-    if token_type and token_type != "access":
+    if payload.get("type") != "access":
         return None
 
     return payload

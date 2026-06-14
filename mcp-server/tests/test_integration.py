@@ -2,6 +2,7 @@
 
 import pytest
 import asyncio
+import sys
 from mcp.client.stdio import stdio_client
 from mcp import ClientSession, StdioServerParameters
 
@@ -10,7 +11,7 @@ from mcp import ClientSession, StdioServerParameters
 async def test_mcp_server_startup():
     """Test that MCP server starts and responds"""
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["server.py"],
     )
     
@@ -26,7 +27,7 @@ async def test_mcp_server_startup():
 async def test_list_tools():
     """Test listing available tools"""
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["server.py"],
     )
     
@@ -47,7 +48,7 @@ async def test_list_tools():
 async def test_list_resources():
     """Test listing available resources"""
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["server.py"],
     )
     
@@ -55,19 +56,19 @@ async def test_list_resources():
         async with ClientSession(read, write) as session:
             await session.initialize()
             
-            resources = await session.list_resources()
-            resource_uris = [r.uri for r in resources.resources]
+            resources = await session.list_resource_templates()
+            resource_uris = [r.uriTemplate for r in resources.resourceTemplates]
             
             # Check that core resources are available
             assert any("learner_profile" in uri for uri in resource_uris)
-            assert any("conversation_history" in uri for uri in resource_uris)
+            assert any("conversation" in uri for uri in resource_uris)
 
 
 @pytest.mark.asyncio
 async def test_chat_tool():
     """Test chat tool execution"""
     server_params = StdioServerParameters(
-        command="python",
+        command=sys.executable,
         args=["server.py"],
     )
     

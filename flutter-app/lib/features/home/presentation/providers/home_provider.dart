@@ -7,6 +7,8 @@ import 'package:lexilingo_app/features/user/domain/entities/user.dart';
 import 'package:lexilingo_app/features/user/domain/entities/daily_goal.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_weekly_progress_usecase.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
 
 /// Home Provider
 /// Manages home screen state including featured courses and user dashboard data
@@ -17,11 +19,13 @@ class HomeProvider with ChangeNotifier {
   final GetCoursesUseCase getCoursesUseCase;
   final GetEnrolledCoursesUseCase getEnrolledCoursesUseCase;
   final GetWeeklyProgressUseCase? getWeeklyProgressUseCase;
+  final VocabularyRepository? vocabularyRepository;
 
   HomeProvider({
     required this.getCoursesUseCase,
     required this.getEnrolledCoursesUseCase,
     this.getWeeklyProgressUseCase,
+    this.vocabularyRepository,
   });
 
   // State: Featured Courses
@@ -43,6 +47,10 @@ class HomeProvider with ChangeNotifier {
   // State: Weekly Progress (Task 1.3)
   WeeklyProgressEntity _weeklyProgress = WeeklyProgressEntity.empty();
   bool _isLoadingWeekly = false;
+
+  // State: Word of the Day
+  VocabularyItemEntity? _wordOfDay;
+  bool _isLoadingWordOfDay = false;
 
   // Getters
   List<CourseEntity> get featuredCourses => _featuredCourses;
@@ -70,6 +78,8 @@ class HomeProvider with ChangeNotifier {
   bool get isLoadingWeekly => _isLoadingWeekly;
 
   DailyGoal? get todayGoal => _todayGoal;
+  VocabularyItemEntity? get wordOfDay => _wordOfDay;
+  bool get isLoadingWordOfDay => _isLoadingWordOfDay;
 
   // If a DailyGoal has been loaded, use its earnedXP.
   // Otherwise fall back to today's xpEarned from the weekly progress data
@@ -228,8 +238,22 @@ class HomeProvider with ChangeNotifier {
       loadFeaturedCourses(),
       loadEnrolledCourses(),
       loadWeeklyProgress(),
+      loadWordOfDay(),
       if (_currentUser != null) loadDashboard(_currentUser!),
     ]);
+  }
+
+  Future<void> loadWordOfDay() async {
+    if (vocabularyRepository == null) return;
+    _isLoadingWordOfDay = true;
+    notifyListeners();
+    final result = await vocabularyRepository!.getWordOfDay();
+    result.fold(
+      (_) {},
+      (word) => _wordOfDay = word,
+    );
+    _isLoadingWordOfDay = false;
+    notifyListeners();
   }
 
   /// Load home data (combines courses and dashboard)
@@ -238,6 +262,7 @@ class HomeProvider with ChangeNotifier {
       loadFeaturedCourses(),
       loadEnrolledCourses(),
       loadWeeklyProgress(),
+      loadWordOfDay(),
     ]);
   }
 

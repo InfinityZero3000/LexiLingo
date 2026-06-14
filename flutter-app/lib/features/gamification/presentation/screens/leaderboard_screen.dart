@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/gamification/presentation/providers/gamif
 import 'package:lexilingo_app/features/gamification/presentation/widgets/leaderboard_podium.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/league_card.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
+import 'package:lexilingo_app/features/gamification/presentation/screens/league_ceremony_screen.dart';
 
 /// Leaderboard Screen
 /// Displays weekly leaderboard rankings by league
@@ -68,6 +69,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     try {
       await provider.loadLeagueStatus();
       if (!mounted) return;
+
+      // Show league ceremony if the user was promoted/demoted since last session.
+      final from = provider.leagueChangedFrom;
+      final to = provider.leagueChangedTo;
+      if (from != null && to != null) {
+        final leagueOrder = LeagueStatusEntity.leagueOrder;
+        final fromIndex = leagueOrder.indexOf(from);
+        final toIndex = leagueOrder.indexOf(to);
+        final ceremonyType = toIndex > fromIndex
+            ? LeagueCeremonyType.promotion
+            : LeagueCeremonyType.demotion;
+        await LeagueCeremonyScreen.show(
+          context,
+          newLeague: to,
+          previousLeague: from,
+          type: ceremonyType,
+          onContinue: () {},
+        );
+        // Clear after the ceremony resolves regardless of how it was dismissed.
+        provider.clearLeagueChange();
+        if (!mounted) return;
+      }
 
       final currentLeague = provider.leagueStatus?.league.toLowerCase();
       final league = _leagues.contains(currentLeague)

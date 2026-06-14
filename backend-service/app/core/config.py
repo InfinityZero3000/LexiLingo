@@ -75,9 +75,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    # None => auto mode (disabled in production, enabled otherwise).
-    # Set explicit true/false to override auto mode.
+    # ENABLE_APP_CORS: explicit override (takes priority over GATEWAY_HANDLES_CORS).
+    # GATEWAY_HANDLES_CORS: set true only when an Nginx/Kong gateway sits in front
+    #   and emits CORS headers via proxy_hide_header + add_header. The gateway's
+    #   proxy_hide_header strips backend CORS headers, preventing duplicates.
+    #   Default false (safe for direct Render/PaaS deployments without a gateway).
     ENABLE_APP_CORS: bool | None = None
+    GATEWAY_HANDLES_CORS: bool = False
     ALLOWED_ORIGINS: str = "https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me"
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
@@ -254,10 +258,15 @@ class Settings(BaseSettings):
 
     @property
     def enable_app_cors(self) -> bool:
-        """Whether backend should emit CORS headers directly."""
+        """Whether backend should emit CORS headers directly.
+
+        Default: on (safe for direct PaaS deployments).
+        Set GATEWAY_HANDLES_CORS=true to disable when an Nginx/Kong gateway
+        handles CORS via proxy_hide_header, preventing duplicate headers.
+        """
         if self.ENABLE_APP_CORS is not None:
             return self.ENABLE_APP_CORS
-        return not self.is_production
+        return not self.GATEWAY_HANDLES_CORS
 
     @property
     def effective_password_reset_url_base(self) -> str:
