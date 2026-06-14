@@ -314,7 +314,7 @@ services:
       - "--storage.tsdb.retention.time=15d"
       - "--web.enable-lifecycle"
     networks:
-      - lexilingo-network
+      - lexilingo-prod
 
   # ============================================
   # Grafana — metrics dashboard
@@ -340,7 +340,7 @@ services:
     depends_on:
       - prometheus
     networks:
-      - lexilingo-network
+      - lexilingo-prod
 
 volumes:
   postgres_data:

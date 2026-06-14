@@ -304,6 +304,7 @@ app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["R
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
+<<<<<<< HEAD
     import prometheus_fastapi_instrumentator.routing as _pfi_routing
     from starlette.routing import Match, Mount
 
@@ -331,6 +332,8 @@ try:
         return None
 
     _pfi_routing._get_route_name = _safe_get_route_name
+=======
+>>>>>>> 5f0b2b6 (feat(production): Phase 0-2 production readiness — retention, growth, security)
 
     Instrumentator(
         should_group_status_codes=True,
