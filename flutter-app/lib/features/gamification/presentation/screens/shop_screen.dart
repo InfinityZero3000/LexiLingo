@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/gamification/presentation/widgets/shop_it
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/presentation/screens/wallet_screen.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/boost_purchase_animation.dart';
 
 /// Shop Screen
 /// Browse and purchase items with gems
@@ -95,6 +96,10 @@ class _ShopScreenState extends State<ShopScreen>
     setState(() => _purchasingItemId = null);
 
     if (success) {
+      if (item.category == ShopItemEntity.categoryBoosts) {
+        await BoostPurchaseAnimation.show(context, item: item, onComplete: () {});
+        if (!mounted) return;
+      }
       _showPurchaseSuccess(item);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

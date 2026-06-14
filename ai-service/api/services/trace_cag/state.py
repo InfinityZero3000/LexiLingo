@@ -107,7 +107,7 @@ class TraceCAGState(TypedDict, total=False):
     session_id: str
     user_id: Optional[str]
     input_type: str  # "text" or "voice"
-    audio_bytes: Optional[bytes]  # Raw audio if voice input
+    stt_final: Optional[Dict[str, Any]]
     benchmark_task: Optional[str]
     benchmark_context: Optional[str]
     benchmark_metadata: Optional[Dict[str, Any]]
@@ -205,6 +205,7 @@ def create_initial_state(
     user_id: Optional[str] = None,
     input_type: str = "text",
     learner_profile: Optional[Dict[str, Any]] = None,
+    stt_final: Optional[Dict[str, Any]] = None,
     *,
     cache_policy: str = "on",
     retrieval_policy: str = "full",
@@ -233,7 +234,7 @@ def create_initial_state(
         session_id=session_id,
         user_id=user_id,
         input_type=input_type,
-        audio_bytes=None,
+        stt_final=stt_final,
         benchmark_task=benchmark_task,
         benchmark_context=benchmark_context,
         benchmark_metadata=benchmark_metadata or {},

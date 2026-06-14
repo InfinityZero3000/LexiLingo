@@ -162,21 +162,26 @@ async def handle_call_tool(
 
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
+    return []
+
+
+@server.list_resource_templates()
+async def handle_list_resource_templates() -> list[types.ResourceTemplate]:
     return [
-        types.Resource(
-            uri="lexilingo://learner_profile/{user_id}",
+        types.ResourceTemplate(
+            uriTemplate="lexilingo://learner_profile/{user_id}",
             name="Learner Profile",
             description="User profile with CEFR level, weak areas, and progress",
             mimeType="application/json",
         ),
-        types.Resource(
-            uri="lexilingo://conversation/{session_id}",
+        types.ResourceTemplate(
+            uriTemplate="lexilingo://conversation/{session_id}",
             name="Conversation History",
             description="AI conversation history for a session",
             mimeType="application/json",
         ),
-        types.Resource(
-            uri="lexilingo://lesson_context/{lesson_id}",
+        types.ResourceTemplate(
+            uriTemplate="lexilingo://lesson_context/{lesson_id}",
             name="Lesson Context",
             description="Active lesson content and vocabulary",
             mimeType="application/json",

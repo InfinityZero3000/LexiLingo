@@ -19,7 +19,7 @@ if Celery is not None:
         "lexilingo",
         broker=settings.effective_celery_broker_url,
         backend=settings.effective_celery_result_backend,
-        include=["app.tasks.reminders", "app.tasks.streak_reminders"],
+        include=["app.tasks.reminders", "app.tasks.streak_reminders", "app.tasks.word_of_day"],
     )
     celery_app.conf.timezone = "UTC"
     celery_app.conf.enable_utc = True
@@ -33,6 +33,10 @@ if Celery is not None:
         "send-streak-alerts": {
             "task": "app.tasks.streak_reminders.send_streak_alerts",
             "schedule": crontab(hour=20, minute=0),
+        },
+        "send-word-of-day": {
+            "task": "app.tasks.word_of_day.send_word_of_day",
+            "schedule": crontab(hour=8, minute=0),
         },
     }
 else:
