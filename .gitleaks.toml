@@ -60,4 +60,7 @@ commits = [
 paths = [
   '''(^|/)mcp-server/start_production\.sh$''',
   '''(^|/)mcp-server/tests/test_full\.py$''',
+  '''(^|/)gateway/kong/kong\.yml$''',
+  '''(^|/)backend-service/test_firebase_api\.py$''',
+  '''(^|/)scripts/clean-git-history\.sh$''',
 ]

@@ -46,7 +46,7 @@ def _make_user(
 def _make_wallet(user_id: uuid.UUID, gems: int = 100) -> MagicMock:
     w = MagicMock()
     w.user_id = user_id
-    w.gems_balance = gems
+    w.gems = gems
     return w
 
 
@@ -183,9 +183,9 @@ class TestClaimCode:
         data = resp.json()
         assert data["gems_awarded"] == 50
         # Referrer wallet should have been updated
-        assert referrer_wallet.gems_balance == 100  # 50 + 50
+        assert referrer_wallet.gems == 100  # 50 + 50
         # Claimer wallet should have been updated
-        assert claimer_wallet.gems_balance == 50
+        assert claimer_wallet.gems == 50
         # referred_by should be set
         assert claimer.referred_by == referrer.id
         session.commit.assert_called_once()
