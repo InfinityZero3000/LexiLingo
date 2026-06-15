@@ -134,6 +134,11 @@ class Settings(BaseSettings):
             if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
                 raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
+        if self.CONTENT_AGENT_ENABLED and not self.CONTENT_AGENT_SERVICE_TOKEN.strip():
+            raise ValueError(
+                "CONTENT_AGENT_SERVICE_TOKEN is required when the content agent is enabled"
+            )
+
         return self
     
     # Logging
@@ -159,6 +164,10 @@ class Settings(BaseSettings):
     # AI Service (optional)
     AI_SERVICE_URL: str = "https://api.lexilingo.me/api/v1"
     AI_AUDIT_INGEST_SECRET: str = ""
+    CONTENT_AGENT_ENABLED: bool = False
+    CONTENT_AGENT_SERVICE_TOKEN: str = ""
+    CONTENT_AGENT_UPLOAD_TTL_DAYS: int = 7
+    CONTENT_AGENT_AI_TIMEOUT_SECONDS: float = 120.0
 
     # Google OAuth
     GOOGLE_CLIENT_ID: str | None = None
