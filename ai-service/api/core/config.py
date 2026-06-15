@@ -7,6 +7,8 @@ Similar to Flutter's environment configuration
 
 import os
 import json
+import re
+from datetime import date
 from typing import List, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AliasChoices, Field, field_validator, model_validator
@@ -61,6 +63,76 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "")
     REDIS_DB: int = int(os.getenv("REDIS_DB", "1"))
     REDIS_MAX_CONNECTIONS: int = 50
+
+    # ============================================================
+    # Internal CEFR Content Agent
+    # ============================================================
+    CONTENT_AGENT_SERVICE_TOKEN: str = os.getenv(
+        "CONTENT_AGENT_SERVICE_TOKEN",
+        "",
+    )
+    CONTENT_AGENT_TTL_SECONDS: int = int(
+        os.getenv("CONTENT_AGENT_TTL_SECONDS", "3600")
+    )
+    CONTENT_AGENT_MAX_RECORDS: int = int(
+        os.getenv("CONTENT_AGENT_MAX_RECORDS", "20000")
+    )
+    CONTENT_AGENT_MAX_BATCH_RECORDS: int = int(
+        os.getenv("CONTENT_AGENT_MAX_BATCH_RECORDS", "2000")
+    )
+    CONTENT_AGENT_ALLOW_LOCAL_STORE: bool = os.getenv(
+        "CONTENT_AGENT_ALLOW_LOCAL_STORE",
+        "false" if ENVIRONMENT == "production" else "true",
+    ).lower() == "true"
+
+    # ============================================================
+    # Licensed Content ETL
+    # ============================================================
+    CONTENT_ETL_ENABLED: bool = (
+        os.getenv("CONTENT_ETL_ENABLED", "false").lower() == "true"
+    )
+    CONTENT_ETL_STORAGE_ROOT: str = os.getenv(
+        "CONTENT_ETL_STORAGE_ROOT",
+        "/data/content-etl",
+    )
+    CONTENT_ETL_HTTP_TIMEOUT_SECONDS: int = int(
+        os.getenv("CONTENT_ETL_HTTP_TIMEOUT_SECONDS", "60")
+    )
+    CONTENT_ETL_MAX_DOWNLOAD_BYTES: int = int(
+        os.getenv("CONTENT_ETL_MAX_DOWNLOAD_BYTES", "1073741824")
+    )
+    CONTENT_ETL_MAX_QUARANTINE_RATIO: float = float(
+        os.getenv("CONTENT_ETL_MAX_QUARANTINE_RATIO", "0.02")
+    )
+    CONTENT_ETL_USER_AGENT: str = os.getenv(
+        "CONTENT_ETL_USER_AGENT",
+        "LexiLingo-ETL/1.0",
+    )
+    CONTENT_ETL_OEWN_VERSION: str = os.getenv(
+        "CONTENT_ETL_OEWN_VERSION",
+        "2025",
+    ).strip()
+    CONTENT_ETL_CMU_REF: str = os.getenv("CONTENT_ETL_CMU_REF", "").strip()
+    CONTENT_ETL_CEFR_J_REF: str = os.getenv(
+        "CONTENT_ETL_CEFR_J_REF",
+        "",
+    ).strip()
+    CONTENT_ETL_WIKIDATA_SNAPSHOT: str = os.getenv(
+        "CONTENT_ETL_WIKIDATA_SNAPSHOT",
+        "",
+    ).strip()
+    CONTENT_ETL_TATOEBA_RELEASE: str = os.getenv(
+        "CONTENT_ETL_TATOEBA_RELEASE",
+        "",
+    ).strip()
+    CONTENT_ETL_LIBRISPEECH_RELEASE: str = os.getenv(
+        "CONTENT_ETL_LIBRISPEECH_RELEASE",
+        "",
+    ).strip()
+    CONTENT_ETL_COMMON_VOICE_RELEASE: str = os.getenv(
+        "CONTENT_ETL_COMMON_VOICE_RELEASE",
+        "",
+    ).strip()
     
     # ============================================================
     # CORS Settings
@@ -128,7 +200,54 @@ class Settings(BaseSettings):
         if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
             raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
+        if self.CONTENT_ETL_ENABLED:
+            self._validate_production_etl_pins()
+
         return self
+
+    def _validate_production_etl_pins(self) -> None:
+        moving_refs = {"head", "latest", "main", "master", "stable", "trunk"}
+
+        def require_non_moving(name: str, value: str) -> None:
+            if not value or value.strip().lower() in moving_refs:
+                raise ValueError(f"{name} must use a pinned immutable version")
+
+        require_non_moving(
+            "CONTENT_ETL_OEWN_VERSION",
+            self.CONTENT_ETL_OEWN_VERSION,
+        )
+        for name, value in (
+            ("CONTENT_ETL_CMU_REF", self.CONTENT_ETL_CMU_REF),
+            ("CONTENT_ETL_CEFR_J_REF", self.CONTENT_ETL_CEFR_J_REF),
+        ):
+            require_non_moving(name, value)
+            if re.fullmatch(r"[a-fA-F0-9]{40}", value) is None:
+                raise ValueError(f"{name} must use a pinned 40-character commit SHA")
+
+        require_non_moving(
+            "CONTENT_ETL_WIKIDATA_SNAPSHOT",
+            self.CONTENT_ETL_WIKIDATA_SNAPSHOT,
+        )
+        try:
+            date.fromisoformat(self.CONTENT_ETL_WIKIDATA_SNAPSHOT)
+        except ValueError as exc:
+            raise ValueError(
+                "CONTENT_ETL_WIKIDATA_SNAPSHOT must use a pinned YYYY-MM-DD date"
+            ) from exc
+
+        for name, value in (
+            ("CONTENT_ETL_TATOEBA_RELEASE", self.CONTENT_ETL_TATOEBA_RELEASE),
+            (
+                "CONTENT_ETL_LIBRISPEECH_RELEASE",
+                self.CONTENT_ETL_LIBRISPEECH_RELEASE,
+            ),
+            (
+                "CONTENT_ETL_COMMON_VOICE_RELEASE",
+                self.CONTENT_ETL_COMMON_VOICE_RELEASE,
+            ),
+        ):
+            if value:
+                require_non_moving(name, value)
     
     # ============================================================
     # API Keys (for external services)

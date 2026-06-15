@@ -305,7 +305,18 @@ async def get_ollama_response(message: str) -> Optional[str]:
 
 
 # Include Routers
-from api.routes import chat, stt, tts, admin, ai, lexi_chat, topic_chat, ollama_router, pronunciation
+from api.routes import (
+    admin,
+    ai,
+    chat,
+    content_agent,
+    lexi_chat,
+    ollama_router,
+    pronunciation,
+    stt,
+    topic_chat,
+    tts,
+)
 
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(stt.router, prefix="/api/v1/stt", tags=["STT"])
@@ -316,6 +327,7 @@ app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analytics"])
 app.include_router(lexi_chat.router, tags=["Lexi Chat"])
 app.include_router(ollama_router.router, prefix="/api/v1", tags=["Ollama"])
+app.include_router(content_agent.router, tags=["Internal Content Agent"])
 
 # Static files (dev tools / visualizers)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
