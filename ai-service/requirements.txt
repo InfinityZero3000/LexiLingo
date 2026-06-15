@@ -50,10 +50,9 @@ sherpa-onnx>=1.13.2,<2
 piper-tts>=1.4.2
 gTTS>=2.5.4
 
-# HuBERT / Pronunciation Analysis
-# Transformers 5 requires a newer Torch release than macOS x86_64 provides.
-transformers>=4.41.0,<5.0.0
-accelerate>=0.25.0
+# HuBERT / Pronunciation Analysis (transformers will auto-install torch)
+transformers>=5.10.2,<6.0.0
+accelerate>=0.34.2
 # NOTE: torch>=2.4.0 has no wheels for macOS x86_64. Max available: 2.2.2.
 torch>=2.2.0,<=2.2.2
 peft>=0.8.0  # LoRA fine-tuning and adapter loading
