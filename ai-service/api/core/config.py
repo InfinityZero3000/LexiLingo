@@ -88,51 +88,19 @@ class Settings(BaseSettings):
     # ============================================================
     # Licensed Content ETL
     # ============================================================
-    CONTENT_ETL_ENABLED: bool = (
-        os.getenv("CONTENT_ETL_ENABLED", "false").lower() == "true"
-    )
-    CONTENT_ETL_STORAGE_ROOT: str = os.getenv(
-        "CONTENT_ETL_STORAGE_ROOT",
-        "/data/content-etl",
-    )
-    CONTENT_ETL_HTTP_TIMEOUT_SECONDS: int = int(
-        os.getenv("CONTENT_ETL_HTTP_TIMEOUT_SECONDS", "60")
-    )
-    CONTENT_ETL_MAX_DOWNLOAD_BYTES: int = int(
-        os.getenv("CONTENT_ETL_MAX_DOWNLOAD_BYTES", "1073741824")
-    )
-    CONTENT_ETL_MAX_QUARANTINE_RATIO: float = float(
-        os.getenv("CONTENT_ETL_MAX_QUARANTINE_RATIO", "0.02")
-    )
-    CONTENT_ETL_USER_AGENT: str = os.getenv(
-        "CONTENT_ETL_USER_AGENT",
-        "LexiLingo-ETL/1.0",
-    )
-    CONTENT_ETL_OEWN_VERSION: str = os.getenv(
-        "CONTENT_ETL_OEWN_VERSION",
-        "2025",
-    ).strip()
-    CONTENT_ETL_CMU_REF: str = os.getenv("CONTENT_ETL_CMU_REF", "").strip()
-    CONTENT_ETL_CEFR_J_REF: str = os.getenv(
-        "CONTENT_ETL_CEFR_J_REF",
-        "",
-    ).strip()
-    CONTENT_ETL_WIKIDATA_SNAPSHOT: str = os.getenv(
-        "CONTENT_ETL_WIKIDATA_SNAPSHOT",
-        "",
-    ).strip()
-    CONTENT_ETL_TATOEBA_RELEASE: str = os.getenv(
-        "CONTENT_ETL_TATOEBA_RELEASE",
-        "",
-    ).strip()
-    CONTENT_ETL_LIBRISPEECH_RELEASE: str = os.getenv(
-        "CONTENT_ETL_LIBRISPEECH_RELEASE",
-        "",
-    ).strip()
-    CONTENT_ETL_COMMON_VOICE_RELEASE: str = os.getenv(
-        "CONTENT_ETL_COMMON_VOICE_RELEASE",
-        "",
-    ).strip()
+    CONTENT_ETL_ENABLED: bool = Field(default=False)
+    CONTENT_ETL_STORAGE_ROOT: str = Field(default="/data/content-etl")
+    CONTENT_ETL_HTTP_TIMEOUT_SECONDS: int = Field(default=60, gt=0)
+    CONTENT_ETL_MAX_DOWNLOAD_BYTES: int = Field(default=1073741824, gt=0)
+    CONTENT_ETL_MAX_QUARANTINE_RATIO: float = Field(default=0.02, ge=0.0, le=1.0)
+    CONTENT_ETL_USER_AGENT: str = Field(default="LexiLingo-ETL/1.0", min_length=1)
+    CONTENT_ETL_OEWN_VERSION: str = Field(default="2025")
+    CONTENT_ETL_CMU_REF: str = Field(default="")
+    CONTENT_ETL_CEFR_J_REF: str = Field(default="")
+    CONTENT_ETL_WIKIDATA_SNAPSHOT: str = Field(default="")
+    CONTENT_ETL_TATOEBA_RELEASE: str = Field(default="")
+    CONTENT_ETL_LIBRISPEECH_RELEASE: str = Field(default="")
+    CONTENT_ETL_COMMON_VOICE_RELEASE: str = Field(default="")
     
     # ============================================================
     # CORS Settings

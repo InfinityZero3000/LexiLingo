@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hmac
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import (
     APIRouter,
@@ -15,6 +15,7 @@ from fastapi import (
     status,
 )
 from fastapi.security import APIKeyHeader
+from pydantic import BaseModel
 
 from api.core.config import get_settings
 from api.core.redis_client import RedisClient
@@ -34,6 +35,8 @@ from api.services.content_agent.store import (
     ContentAgentStore,
     RecordLimitExceeded,
 )
+from api.services.content_etl.registry import list_source_definitions
+from api.services.content_etl.storage import SnapshotStorage, StorageIntegrityError
 
 
 router = APIRouter(prefix="/api/v1/internal/content-agent")
@@ -173,3 +176,76 @@ async def delete_job_context(
             detail=str(exc),
         ) from exc
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class SourceCatalogEntry(BaseModel):
+    source_name: str
+    default_enabled: bool
+    allowed_licenses: list[str]
+    attribution_text: str
+    official_url: str
+
+
+class SnapshotActivationRequest(BaseModel):
+    source_version: str
+
+
+@router.get(
+    "/sources",
+    response_model=list[SourceCatalogEntry],
+)
+async def list_sources(
+    _token: str = Depends(verify_content_agent_token),
+) -> list[SourceCatalogEntry]:
+    """List registered ETL sources. Only active approved sources are production-ready."""
+    entries: list[SourceCatalogEntry] = []
+    for defn in list_source_definitions():
+        entries.append(
+            SourceCatalogEntry(
+                source_name=defn.source_name.value,
+                default_enabled=defn.default_enabled,
+                allowed_licenses=[lic.value for lic in defn.allowed_licenses],
+                attribution_text=defn.attribution_text,
+                official_url=defn.official_url,
+            )
+        )
+    return entries
+
+
+@router.post(
+    "/jobs/{job_id}/snapshots",
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def activate_snapshot(
+    job_id: JobId,
+    request: SnapshotActivationRequest,
+    _token: str = Depends(verify_content_agent_token),
+) -> dict[str, Any]:
+    """Activate an approved snapshot for a given source.
+
+    Only approved manifests can be activated. Returns the active pointer.
+    The job_id here identifies the source name (e.g. 'oewn').
+    """
+    settings = get_settings()
+    storage_root = getattr(settings, "CONTENT_ETL_STORAGE_ROOT", "/data/content-etl")
+    try:
+        storage = SnapshotStorage(storage_root)
+        active_path = storage.activate(job_id, request.source_version)
+        active_data = storage.read_active(job_id)
+        return {
+            "source_name": job_id,
+            "source_version": request.source_version,
+            "snapshot_id": active_data.get("snapshot_id"),
+            "active_path": str(active_path),
+            "status": "activated",
+        }
+    except StorageIntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc

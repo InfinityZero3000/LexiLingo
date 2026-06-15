@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "Q1345": {
+      "id": "Q1345",
+      "type": "item",
+      "labels": {
+        "en": { "language": "en", "value": "travel" },
+        "vi": { "language": "vi", "value": "du lịch" }
+      }
+    },
+    "Q3450": {
+      "id": "Q3450",
+      "type": "item",
+      "labels": {
+        "en": { "language": "en", "value": "science" }
+      }
+    },
+    "Q9999": {
+      "id": "Q9999",
+      "type": "item",
+      "labels": {
+        "vi": { "language": "vi", "value": "tiếng Việt" }
+      }
+    }
+  }
+}
