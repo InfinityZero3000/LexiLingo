@@ -1,6 +1,6 @@
 # CEFR Content Agent Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Build a compliance-first CEFR content agent that administrators can run from the web dashboard or CLI to preview and apply generated A1-C2 courses.
 
@@ -67,18 +67,18 @@
 - Create: `backend-service/alembic/versions/add_cefr_content_agent.py`
 - Test: `backend-service/tests/test_content_agent_models.py`
 
-- [ ] **Step 1: Write failing model tests**
+- [x] **Step 1: Write failing model tests**
 
 Test job status defaults, unique lesson-vocabulary membership, upload metadata,
 and job-to-created-ID persistence using the real test database.
 
-- [ ] **Step 2: Run the focused tests**
+- [x] **Step 2: Run the focused tests**
 
 Run: `cd backend-service && pytest tests/test_content_agent_models.py -q`
 
 Expected: FAIL because the content-agent models do not exist.
 
-- [ ] **Step 3: Implement focused models**
+- [x] **Step 3: Implement focused models**
 
 Add:
 
@@ -103,12 +103,12 @@ class ContentAgentJob(Base):
 Add `ContentAgentUpload`, `LessonVocabularyItem`, and `ContentProvenance` with
 the constraints described by the design.
 
-- [ ] **Step 4: Add the Alembic upgrade/downgrade**
+- [x] **Step 4: Add the Alembic upgrade/downgrade**
 
 Create all four tables with portable JSON/GUID types, indexes, foreign keys,
 and uniqueness constraints. Keep legacy vocabulary origin columns unchanged.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run: `cd backend-service && pytest tests/test_content_agent_models.py -q`
 
@@ -121,29 +121,29 @@ Expected: PASS.
 - Create: `backend-service/app/services/content_agent_uploads.py`
 - Test: `backend-service/tests/test_content_agent_uploads.py`
 
-- [ ] **Step 1: Write failing upload tests**
+- [x] **Step 1: Write failing upload tests**
 
 Cover valid CSV, valid JSON array/envelope, invalid UTF-8, unsupported
 extension, missing required fields, invalid CEFR/POS, 20,000-row cap, and
 sanitized row-number errors.
 
-- [ ] **Step 2: Run tests and confirm failure**
+- [x] **Step 2: Run tests and confirm failure**
 
 Run: `cd backend-service && pytest tests/test_content_agent_uploads.py -q`
 
-- [ ] **Step 3: Implement strict Pydantic contracts**
+- [x] **Step 3: Implement strict Pydantic contracts**
 
 Define CEFR enum/literals, source selection, generation configuration,
 normalized vocabulary record, course artifact, quality report, and job
 responses. Constrain words per lesson to 8-12 and selected levels to A1-C2.
 
-- [ ] **Step 4: Implement upload parser**
+- [x] **Step 4: Implement upload parser**
 
 Use `csv.DictReader` and `json.loads`, normalize field names, validate every row
 through Pydantic, calculate SHA-256, and return either validated records or a
 bounded list of row errors.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Run: `cd backend-service && pytest tests/test_content_agent_uploads.py -q`
 
@@ -157,14 +157,14 @@ Expected: PASS.
 - Test: `backend-service/tests/test_content_agent_jobs.py`
 - Test: `backend-service/tests/test_content_agent_apply.py`
 
-- [ ] **Step 1: Write failing service tests**
+- [x] **Step 1: Write failing service tests**
 
 Cover deterministic request hashes, duplicate active-job rejection, legal state
 transitions, preview-only semantics, idempotent apply, reuse of existing
 vocabulary, preservation of curated fields, lesson membership, and rollback on
 invalid artifacts.
 
-- [ ] **Step 2: Run focused tests**
+- [x] **Step 2: Run focused tests**
 
 Run:
 
@@ -173,18 +173,18 @@ cd backend-service
 pytest tests/test_content_agent_jobs.py tests/test_content_agent_apply.py -q
 ```
 
-- [ ] **Step 3: Implement job service**
+- [x] **Step 3: Implement job service**
 
 Provide create/get/list/update-stage/fail/cancel/retry helpers. State transition
 validation must reject stale or terminal writes.
 
-- [ ] **Step 4: Implement artifact apply service**
+- [x] **Step 4: Implement artifact apply service**
 
 Validate artifact independently, lock the job, create draft course trees,
 deduplicate vocabulary by normalized `(word, part_of_speech)`, create junction
 rows and provenance, update totals, and mark completed in one transaction.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Expected: PASS.
 
@@ -205,13 +205,13 @@ Expected: PASS.
 - Test: `backend-service/tests/test_content_agent_routes.py`
 - Test: `backend-service/tests/test_content_agent_task.py`
 
-- [ ] **Step 1: Write failing route/task tests**
+- [x] **Step 1: Write failing route/task tests**
 
 Cover admin authorization, upload, job create/list/detail/preview, apply,
 retry/cancel, AI-service failure, cancellation checkpoints, and sanitized
 errors.
 
-- [ ] **Step 2: Run focused tests**
+- [x] **Step 2: Run focused tests**
 
 Run:
 
@@ -220,23 +220,23 @@ cd backend-service
 pytest tests/test_content_agent_routes.py tests/test_content_agent_task.py -q
 ```
 
-- [ ] **Step 3: Implement authenticated AI client**
+- [x] **Step 3: Implement authenticated AI client**
 
 Use `settings.AI_SERVICE_URL`, `CONTENT_AGENT_SERVICE_TOKEN`, bounded timeout,
 and no logging of request records.
 
-- [ ] **Step 4: Implement Celery orchestration**
+- [x] **Step 4: Implement Celery orchestration**
 
 Load approved records, update durable stages, call AI ingestion/generation,
 persist preview artifacts, and clear AI temporary state. Retry transient HTTP
 failures with bounded backoff.
 
-- [ ] **Step 5: Implement admin router and CLI**
+- [x] **Step 5: Implement admin router and CLI**
 
 All routes depend on `require_admin`. The CLI calls the same application
 services and exposes generate/status/apply/retry.
 
-- [ ] **Step 6: Register worker task and configuration**
+- [x] **Step 6: Register worker task and configuration**
 
 Add task include and environment variables:
 
@@ -247,7 +247,7 @@ CONTENT_AGENT_UPLOAD_TTL_DAYS=7
 CONTENT_AGENT_AI_TIMEOUT_SECONDS=120
 ```
 
-- [ ] **Step 7: Run focused backend tests**
+- [x] **Step 7: Run focused backend tests**
 
 Expected: PASS.
 
@@ -263,13 +263,13 @@ Expected: PASS.
 - Test: `ai-service/tests/test_content_agent_policies.py`
 - Test: `ai-service/tests/test_content_agent_adapters.py`
 
-- [ ] **Step 1: Write failing policy/adapter tests**
+- [x] **Step 1: Write failing policy/adapter tests**
 
 Prove metadata-only adapters strip bodies/examples/audio, disabled adapters
 fail closed, existing CEFR records retain level attribution, and unsupported
 sources are rejected.
 
-- [ ] **Step 2: Run tests**
+- [x] **Step 2: Run tests**
 
 Run:
 
@@ -278,17 +278,17 @@ cd ai-service
 pytest tests/test_content_agent_policies.py tests/test_content_agent_adapters.py -q
 ```
 
-- [ ] **Step 3: Implement policy registry**
+- [x] **Step 3: Implement policy registry**
 
 Encode all approved sources, modes, allowed fields, rate limits, and review
 dates. Only `existing_cefr`, `admin_upload`, and verified VOA can carry content.
 
-- [ ] **Step 4: Implement adapters**
+- [x] **Step 4: Implement adapters**
 
 Provide pure normalization/filtering functions. Existing CEFR loading wraps the
 current crawler module without writing files during requests.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Expected: PASS.
 
@@ -301,30 +301,30 @@ Expected: PASS.
 - Test: `ai-service/tests/test_content_agent_planner.py`
 - Test: `ai-service/tests/test_content_agent_generator.py`
 
-- [ ] **Step 1: Write failing planner tests**
+- [x] **Step 1: Write failing planner tests**
 
 Cover one course per selected level, topic grouping, stable ordering, 8-12
 words per lesson, reuse without duplicate catalog entries, and low-confidence
 rejection.
 
-- [ ] **Step 2: Write failing exercise tests**
+- [x] **Step 2: Write failing exercise tests**
 
 Require exactly ten default exercises with two speaking and two listening
 items, supported option shapes, stable IDs, and no source-body leakage.
 
-- [ ] **Step 3: Implement planner**
+- [x] **Step 3: Implement planner**
 
 Use deterministic topic buckets and chunking. Generate original titles and
 descriptions from level/topic metadata.
 
-- [ ] **Step 4: Implement generator boundary**
+- [x] **Step 4: Implement generator boundary**
 
 Define a generator protocol. The initial implementation creates deterministic
 original definitions/examples/exercises so tests and local operation do not
 depend on Gemini; a model-backed implementation can replace it without
 changing artifact contracts.
 
-- [ ] **Step 5: Run focused tests**
+- [x] **Step 5: Run focused tests**
 
 Expected: PASS.
 
@@ -338,26 +338,26 @@ Expected: PASS.
 - Modify: `ai-service/.env.example`
 - Test: `ai-service/tests/test_content_agent_routes.py`
 
-- [ ] **Step 1: Write failing authorization and lifecycle tests**
+- [x] **Step 1: Write failing authorization and lifecycle tests**
 
 Cover missing/wrong service token, batch ingestion, generation, delete, expiry,
 and bounded record counts.
 
-- [ ] **Step 2: Implement in-memory/Redis-compatible TTL store**
+- [x] **Step 2: Implement in-memory/Redis-compatible TTL store**
 
 Use Redis when available and a process-local fallback for tests/development.
 Persist only policy-filtered normalized records.
 
-- [ ] **Step 3: Implement internal routes**
+- [x] **Step 3: Implement internal routes**
 
 Verify `X-Content-Agent-Token` with constant-time comparison and expose only the
 three internal operations in the spec.
 
-- [ ] **Step 4: Register configuration and route**
+- [x] **Step 4: Register configuration and route**
 
 Add `CONTENT_AGENT_SERVICE_TOKEN`, maximum records, and TTL settings.
 
-- [ ] **Step 5: Run focused AI tests**
+- [x] **Step 5: Run focused AI tests**
 
 Expected: PASS.
 
@@ -369,17 +369,17 @@ Expected: PASS.
 - Create: `admin-service/src/lib/contentAgentApi.ts`
 - Test: `admin-service/src/lib/contentAgentApi.test.ts`
 
-- [ ] **Step 1: Write failing API client tests**
+- [x] **Step 1: Write failing API client tests**
 
 Cover upload form data, job creation, list/detail/preview, apply, retry, and
 cancel URLs/methods.
 
-- [ ] **Step 2: Implement typed client**
+- [x] **Step 2: Implement typed client**
 
 Use the existing `apiFetch` JWT/refresh behavior and keep all response contracts
 in the focused module.
 
-- [ ] **Step 3: Run test**
+- [x] **Step 3: Run test**
 
 Run: `cd admin-service && pnpm test -- contentAgentApi.test.ts`
 
@@ -397,27 +397,27 @@ Expected: PASS.
 - Test: `admin-service/src/components/content-agent/ContentAgentModal.test.tsx`
 - Test: `admin-service/src/components/content-agent/ContentAgentDrawer.test.tsx`
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Cover CEFR/source selection, 8-12 validation, upload flow, preview-only label,
 progress rendering, blocking-error apply disablement, and successful apply.
 
-- [ ] **Step 2: Implement modal**
+- [x] **Step 2: Implement modal**
 
 Default to all CEFR levels, `existing_cefr`, ten vocabulary items, and ten
 exercises. Show compliance badges and upload validation feedback.
 
-- [ ] **Step 3: Implement drawer**
+- [x] **Step 3: Implement drawer**
 
 Poll active jobs, stop at terminal states, render preview tree/counters, and
 provide apply/retry/cancel actions.
 
-- [ ] **Step 4: Wire Courses page**
+- [x] **Step 4: Wire Courses page**
 
 Add `Generate with Agent`, preserve existing CRUD/import flows, and refresh the
 course list after apply.
 
-- [ ] **Step 5: Run focused admin tests**
+- [x] **Step 5: Run focused admin tests**
 
 Expected: PASS.
 
@@ -426,17 +426,17 @@ Expected: PASS.
 **Files:**
 - Review all changed files.
 
-- [ ] **Step 1: Spawn test-writer**
+- [x] **Step 1: Spawn test-writer**
 
 Ask the test-writer to inspect all new public functions/endpoints and add
 missing happy, edge, and error-path coverage without editing production files.
 
-- [ ] **Step 2: Spawn security-reviewer**
+- [x] **Step 2: Spawn security-reviewer**
 
 Review admin authorization, uploads, service token, SSRF controls, DB migration,
 environment variables, and error sanitization. Fix all critical/high findings.
 
-- [ ] **Step 3: Run complete scoped verification**
+- [x] **Step 3: Run complete scoped verification**
 
 ```bash
 cd ai-service && pytest tests/ -q
@@ -444,7 +444,7 @@ cd backend-service && pytest tests/ -q
 cd admin-service && pnpm test && pnpm build:check
 ```
 
-- [ ] **Step 4: Run migration checks**
+- [x] **Step 4: Run migration checks**
 
 ```bash
 cd backend-service
@@ -454,12 +454,12 @@ alembic upgrade head
 
 Expected: one valid head and successful upgrade.
 
-- [ ] **Step 5: Spawn code-reviewer**
+- [x] **Step 5: Spawn code-reviewer**
 
 Use code-review-graph change context, inspect impact and tests, then fix all
 critical/warn correctness findings.
 
-- [ ] **Step 6: Final smoke verification**
+- [x] **Step 6: Final smoke verification**
 
 Create an A1 preview from existing CEFR data in eager/test mode, assert a draft
 course artifact with speaking/listening exercises, apply it to a disposable
