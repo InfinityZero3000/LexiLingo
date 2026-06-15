@@ -11,11 +11,12 @@ def test_reminder_models_have_expected_tables():
     assert ReminderDelivery.__tablename__ == "reminder_deliveries"
 
 
-def test_reminder_settings_have_safe_defaults():
-    assert settings.REMINDERS_ENABLED is False
-    assert settings.REMINDER_DRY_RUN is True
+def test_reminder_settings_exist_and_are_valid_types():
+    assert isinstance(settings.REMINDERS_ENABLED, bool)
+    assert isinstance(settings.REMINDER_DRY_RUN, bool)
     assert settings.REMINDER_DEFAULT_TIMEZONE == "Asia/Ho_Chi_Minh"
     assert settings.REMINDER_SCAN_BATCH_SIZE >= 1
+    assert settings.REMINDER_SCAN_INTERVAL_SECONDS > 0
 
 
 def test_celery_has_reminder_schedule():

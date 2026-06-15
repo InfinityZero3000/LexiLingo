@@ -17,6 +17,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/course_detail
 import 'package:lexilingo_app/features/course/presentation/utils/course_thumbnail_resolver.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_reminder_banner.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/points_calendar_dialog.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
@@ -173,6 +174,7 @@ class _HomePageNewState extends State<HomePageNew> {
                       padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: DailyChallengesCard(),
                     ),
+                    const ReviewReminderBanner(),
                     const Padding(
                       padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: DailyReviewCard(),
