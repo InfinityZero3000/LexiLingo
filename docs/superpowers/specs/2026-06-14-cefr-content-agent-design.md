@@ -3,7 +3,8 @@
 ## Goal
 
 Add a compliance-first content agent that can build draft English courses from
-CEFR A1-C2 data, uploaded CSV/JSON files, and approved web-source adapters.
+CEFR A1-C2 data, uploaded CSV/JSON files, and versioned official datasets with
+explicit commercial-use rights.
 Administrators can start and monitor the agent from the Courses dashboard, while
 operators can run the same pipeline from a CLI with dry-run and resume support.
 
@@ -22,13 +23,15 @@ and applies the preview.
 
 ## Scope
 
-The first delivery is one vertical feature with three rollout stages:
+The feature is delivered in three rollout stages:
 
-1. Core pipeline, CLI, dashboard, existing CEFR files, and CSV/JSON uploads.
-2. VOA full-content ingestion where the item is confirmed as VOA-produced, plus
-   metadata-only adapters for the other named sources.
-3. Licensed API/full-content adapters enabled only after credentials and storage
-   rights are configured.
+1. Core pipeline, CLI, dashboard, existing validated records, and CSV/JSON
+   uploads.
+2. Official lexical datasets: Open English WordNet, CMUdict, CEFR-J through the
+   Open Language Profiles repository, and Wikidata topic metadata.
+3. Sentence and audio corpora: license-filtered Tatoeba, LibriSpeech, and
+   Common Voice datasets whose release metadata explicitly declares an allowed
+   license.
 
 The agent creates structured course content. It does not automatically publish a
 course, bypass an administrator's review, crawl arbitrary user-provided URLs, or
@@ -91,7 +94,8 @@ Course + Units + Lessons + Vocabulary + Provenance
 
 The backend calls the AI service through the configured gateway URL. The AI
 service never receives PostgreSQL credentials and never writes course data
-directly.
+directly. Dataset extraction runs in the AI service, but production database
+writes remain owned by the backend apply service.
 
 ## Job Lifecycle
 
@@ -144,13 +148,15 @@ restart/resume possible without permanent file storage.
 
 ### Existing CEFR data
 
-Reuse `ai-service/scripts/kg_pipeline/crawlers/cefr_lists.py` and its cached
-CEFR-J/Oxford-list inputs. The adapter converts the existing `{word: level}`
-mapping into normalized records and preserves source attribution.
+The legacy `existing_cefr` source remains as a temporary compatibility alias
+only while the new CEFR-J snapshot is imported. It must not read the current
+third-party Oxford list or the `leomauro/cefr-j` mirror.
 
-The Oxford-derived local list is treated only as a CEFR label source under its
-existing dataset terms. Dictionary definitions, examples, and audio are not
-copied from Oxford Learner's Dictionaries.
+The replacement adapter downloads CEFR-J from the Open Language Profiles
+repository, pins a commit SHA, stores the accompanying permission notice, and
+records the required citation. Only the files covered by CEFR-J's explicit
+research and commercial-use grant are accepted. The Octanove C1/C2 profile and
+other ShareAlike files in the repository are excluded.
 
 ### CSV/JSON upload
 
@@ -166,82 +172,125 @@ Accepted JSON is either an array of equivalent objects or:
 {
   "records": [],
   "source_name": "admin_upload",
-  "license_mode": "admin_owned"
+  "license_id": "LicenseRef-Admin-Owned",
+  "rights_confirmed": true
 }
 ```
 
 Uploads are limited to UTF-8 `.csv` and `.json`, five megabytes, and 20,000
 records. Parsing happens before a job is queued. Invalid rows are reported with
-row numbers and do not silently disappear.
+row numbers and do not silently disappear. The administrator must attest that
+the organization owns the upload or may use it commercially.
 
-### Web-source adapters
+### Official dataset adapters
 
-Adapters are allowlisted in code. The dashboard never accepts arbitrary crawl
-URLs.
+Production ETL is dataset-first. It downloads only official release artifacts,
+dumps, or documented APIs. It does not crawl HTML pages and the dashboard never
+accepts arbitrary URLs.
 
-| Source | Default mode | Allowed data |
-| --- | --- | --- |
-| VOA Learning English | `public_domain_verified` | RSS metadata and VOA-produced text/audio after per-item ownership checks |
-| BBC Learning English | `metadata_only` | title, URL, date, declared level/topic, structured page metadata |
-| British Council LearnEnglish | `metadata_only` | title, URL, declared CEFR/topic, page metadata |
-| Cambridge English | `metadata_only` | public resource metadata and declared CEFR labels |
-| Cambridge Dictionary | `disabled_pending_license` | no dictionary entry copying |
-| Oxford Learner's Dictionaries | `api_pending_license` | API integration only after storage/display rights are configured |
-| DOL English | `metadata_only` | title, URL, date, topic signals |
-| PREP | `metadata_only` | title, URL, date, topic signals |
-| The IELTS Workshop | `metadata_only` | title, URL, date, topic signals |
+| Source ID | Default state | License gate | Allowed data |
+| --- | --- | --- | --- |
+| `oewn` | enabled | CC BY 4.0 | lemma, part of speech, definitions, lexical relations |
+| `cmudict` | enabled | explicit unrestricted commercial use | ARPAbet pronunciation |
+| `cefr_j` | enabled | explicit commercial-use grant plus citation | CEFR labels only |
+| `wikidata` | enabled | CC0 | topic/category identifiers and labels |
+| `tatoeba` | opt-in | CC0 or CC BY rows only | example sentences and eligible audio metadata |
+| `librispeech` | opt-in | CC BY 4.0 | English audio and transcripts |
+| `common_voice` | opt-in | release metadata must be CC0-1.0 | English audio and transcripts |
+| `admin_upload` | enabled | administrator ownership attestation | validated CSV/JSON fields |
 
-Metadata-only records can influence topic coverage, search terms, and curriculum
-planning from titles, structured metadata, and declared labels only. Connectors
-must not fetch an article body merely to summarize it. Article bodies, examples,
-exercises, images, and audio cannot be stored in artifacts or prompts. Generated
-lessons must be original and contain source attribution only as planning
-provenance.
+Every adapter is pinned to a version, commit, or release identifier. Each run
+stores an immutable source manifest containing the official URL, retrieval
+timestamp, actual SHA-256, publisher/operator expected SHA-256 when available,
+license ID and URL, attribution text, adapter version, record counts, and
+validation report.
 
-The source policy registry records `license_mode`, allowed fields, robots/terms
-review date, rate limit, and whether content storage is permitted. A connector
-fails closed when its policy is missing or expired.
+The following sources are denied by the default registry and removed from the
+dashboard and crawler configuration:
 
-Relevant source policies reviewed for this design:
+- BBC Learning English, British Council LearnEnglish, Cambridge English,
+  Cambridge Dictionary, Oxford Learner's Dictionaries, VOA Learning English,
+  DOL English, PREP, The IELTS Workshop, IELTS Liz, EnglishClub, Grammar
+  Monster, and Perfect English Grammar;
+- third-party Oxford and CEFR mirrors;
+- Wiktionary/Kaikki and ConceptNet because their ShareAlike obligations are
+  outside the approved license policy;
+- EFLLex because its license prohibits commercial use.
 
-- VOA copyright statement:
-  <https://learningenglish.voanews.com/p/6021.html>
-- British Council terms:
-  <https://www.britishcouncil.org/terms>
-- Oxford Dictionaries API terms:
-  <https://developer.oxforddictionaries.com/api-terms-and-conditions>
-- PREP terms:
-  <https://prepedu.com/en/terms-and-conditions-of-transactions>
-- DOL terms:
-  <https://www.dolenglish.vn/dieu-khoan-su-dung>
+An excluded source can return only through a new design review and explicit
+legal approval. `robots.txt` permission alone is never considered a content
+license.
+
+Official references:
+
+- Open English WordNet: <https://github.com/globalwordnet/english-wordnet>
+- CMUdict: <https://github.com/cmusphinx/cmudict>
+- CEFR-J Open Language Profiles:
+  <https://github.com/openlanguageprofiles/olp-en-cefrj>
+- Tatoeba downloads: <https://tatoeba.org/en/downloads>
+- LibriSpeech: <https://www.openslr.org/12>
+- Common Voice datasets:
+  <https://datacollective.mozillafoundation.org/datasets>
+- Wikidata data access:
+  <https://www.wikidata.org/wiki/Wikidata:Data_access>
 
 ## Normalized Source Contract
 
-Every adapter produces:
+Every adapter produces normalized contract version 2:
 
 ```json
 {
-  "record_id": "source:stable-id",
-  "source_name": "voa",
-  "source_url": "https://...",
-  "license_mode": "public_domain_verified",
-  "content_usage": "full_text",
-  "title": "Optional title",
+  "schema_version": 2,
+  "record_id": "oewn:2025:stable-id",
+  "source_name": "oewn",
+  "source_version": "2025",
+  "source_record_id": "stable-id",
+  "source_url": "https://github.com/globalwordnet/english-wordnet",
+  "license_id": "CC-BY-4.0",
+  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+  "attribution_text": "Open English WordNet 2025",
+  "content_usage": "lexical",
+  "language": "en",
   "word": "example",
+  "lemma": "example",
   "part_of_speech": "noun",
-  "definition": "Optional owned or generated definition",
-  "translation_vi": "ví dụ",
-  "example": "Optional owned or generated example",
-  "declared_cefr": "A2",
-  "declared_topic": "daily_life",
-  "published_at": "2026-06-01T00:00:00Z",
-  "checksum": "sha256...",
-  "metadata": {}
+  "definition": "A representative form or pattern.",
+  "translation_vi": null,
+  "example": null,
+  "pronunciation": null,
+  "audio": null,
+  "declared_cefr": null,
+  "assigned_cefr": "A2",
+  "classification_confidence": 0.82,
+  "topic_ids": ["wikidata:Q..."],
+  "retrieved_at": "2026-06-15T00:00:00Z",
+  "raw_checksum": "sha256...",
+  "record_checksum": "sha256...",
+  "lineage": {
+    "adapter": "oewn",
+    "adapter_version": 1,
+    "raw_path": "raw/oewn/2025/english-wordnet-2025.xml.gz"
+  }
 }
 ```
 
-Restricted fields are removed before persistence and before LLM invocation.
-`content_usage` is one of `full_text`, `metadata_only`, or `label_only`.
+Unknown fields are forbidden. Strings are Unicode-normalized, bounded, and
+control characters are rejected. URLs must use HTTPS or an approved internal
+object-storage scheme. `license_id`, `source_version`, attribution, checksums,
+language, and lineage are required for dataset records.
+
+Records pass through `raw`, `normalized`, `quarantine`, and `approved` states.
+Invalid rows are quarantined with stable error codes and row/source locations;
+they never silently disappear. Restricted fields are removed before temporary
+persistence and before LLM invocation.
+
+The approved license IDs are `CC0-1.0`, `CC-BY-2.0-FR`, `CC-BY-4.0`,
+`LicenseRef-CMUdict`, the pinned CEFR-J commercial permission,
+`LicenseRef-Admin-Owned`, and `LicenseRef-Generated`. CC BY-SA, CC BY-NC,
+unknown, missing, or mismatched licenses fail closed.
+
+`content_usage` is one of `lexical`, `pronunciation`, `label`, `topic`,
+`example`, or `audio`. Each usage has its own required and forbidden fields.
 
 ## CEFR and Curriculum Rules
 
@@ -288,8 +337,8 @@ level:
 
 ```json
 {
-  "schema_version": 1,
-  "prompt_version": "cefr-course-v1",
+  "schema_version": 2,
+  "prompt_version": "cefr-course-v2",
   "generation_key": "sha256...",
   "source_manifest": [],
   "courses": [
@@ -335,6 +384,8 @@ never expose their operations to the admin browser.
 Internal AI endpoints:
 
 ```text
+GET    /api/v1/internal/content-agent/sources
+POST   /api/v1/internal/content-agent/jobs/{job_id}/snapshots
 POST   /api/v1/internal/content-agent/jobs/{job_id}/records
 POST   /api/v1/internal/content-agent/jobs/{job_id}/generate
 DELETE /api/v1/internal/content-agent/jobs/{job_id}
@@ -346,7 +397,8 @@ from its persisted upload/source artifact before retrying generation.
 ## Vocabulary Deduplication
 
 Canonical vocabulary identity remains `(normalized_word, part_of_speech)`,
-matching the existing unique constraint.
+matching the existing unique constraint. The normalized word is stored in
+`VocabularyItem.word`; display variants remain in provenance metadata.
 
 Normalization:
 
@@ -373,26 +425,56 @@ Existing `course_id` and `lesson_id` columns remain as legacy origin fields for
 API compatibility. New agent code reads lesson membership from the junction
 table.
 
+## Production Database Contract
+
+Only a backend-validated `ContentAgentArtifact` may enter production tables.
+The apply validator enforces the following mapping:
+
+| Target | Required properties and invariants |
+| --- | --- |
+| `courses` | non-empty title; `language="en"`; level in A1-C2; normalized tag object with unique string arrays; `is_published=false`; totals equal child records |
+| `units` | non-empty title; zero-based `order_index` unique within the course; `total_lessons` equals persisted lessons |
+| `lessons` | non-empty title; zero-based `order_index` unique within the unit; supported `lesson_type`; pass threshold 0-100; positive duration; totals equal exercise JSON |
+| `vocabulary_items` | canonical word; non-empty definition; allowed part-of-speech and CEFR enums; valid translation object; bounded pronunciation/audio URL; unique `(word, part_of_speech)` |
+| `lesson_vocabulary_items` | existing lesson and vocabulary IDs; unique pair; contiguous order; source job linkage |
+| `lessons.content` | object with `version`, `generated_by`, and non-empty `exercises`; exercise IDs unique within the lesson |
+| `content_provenance` | job/entity/source IDs, license ID, source version, checksums, attribution, lineage, and generated/derived flag |
+
+Exercise `type` must be one of `multiple_choice`, `true_false`, `fill_blank`,
+`translate`, `matching`, or `reorder`. `ui_type` must be in the admin/mobile
+registry. `dictation` and `listen_and_choose` require canonical listening text;
+`speaking_repeat` and `pronunciation_practice` require canonical speaking text.
+Choice exercises require well-formed options and exactly one answer. Matching
+and reorder exercises require type-specific option shapes.
+
+Warnings may pass to preview, but any missing required property, unsupported
+enum, invalid license, duplicate order/index/ID, checksum mismatch, malformed
+exercise, or cross-table total mismatch is a blocking error.
+
 ## Database Apply
 
 The apply operation runs in one PostgreSQL transaction:
 
 1. lock the job and confirm it is `preview_ready`;
-2. validate that it has not already been applied;
-3. create draft course, units, and lessons;
-4. upsert vocabulary by normalized word and part of speech;
-5. create lesson-vocabulary links;
-6. write lesson exercise JSON;
-7. calculate course/unit/lesson totals;
-8. write provenance records;
-9. mark the job `completed` with created entity IDs;
-10. commit.
+2. validate artifact schema version, source manifests, license IDs, checksums,
+   uniqueness, field lengths, enums, URLs, and exercise shapes;
+3. confirm it has not already been applied;
+4. create draft course, units, and lessons;
+5. upsert vocabulary by normalized word and part of speech;
+6. preserve curated fields and fill only missing values from approved sources;
+7. create lesson-vocabulary links;
+8. write versioned lesson exercise JSON;
+9. calculate and cross-check course/unit/lesson totals;
+10. write provenance records;
+11. mark the job `completed` with created entity IDs;
+12. commit.
 
 Any failure rolls back the complete course. Partial course trees are never
 visible.
 
-`content_provenance` records entity type/ID, job ID, source name/URL, license
-mode, source checksum, whether the entity is generated/derived, and timestamps.
+`content_provenance` records entity type/ID, job ID, source name/version/URL,
+license ID/URL, attribution, raw and record checksums, lineage, whether the
+entity is generated/derived, and timestamps.
 
 ## Backend API
 
@@ -433,7 +515,7 @@ The backend CLI calls the same job/application services:
 ```bash
 python -m app.cli.content_agent generate \
   --levels A1,A2 \
-  --sources existing_cefr,voa \
+  --sources cefr_j,oewn,cmudict \
   --words-per-lesson 10 \
   --dry-run
 
@@ -492,9 +574,11 @@ terminal state. Refreshing the page restores state from the backend.
   as public learner endpoints.
 - The admin browser never receives the AI service credential.
 - Uploads validate size, MIME type, extension, encoding, row count, and schema.
-- Web connectors use hard-coded hosts, HTTPS, response-size limits, timeouts,
-  redirect limits, and private-network/IP blocking to prevent SSRF.
-- Connector concurrency and per-host request rates are bounded.
+- Dataset downloaders use hard-coded official hosts, HTTPS, response-size
+  limits, timeouts, redirect limits, private-network/IP blocking, and expected
+  checksums where publishers provide them.
+- Downloads are written to temporary files, verified, then atomically promoted
+  into immutable version directories.
 - Source text and upload contents are not logged.
 - API keys remain in service environment variables and never enter job JSON.
 - Source policy is checked before extraction and again before artifact apply.
@@ -532,9 +616,12 @@ content. The existing monitoring/log pages can link to filtered job events.
 
 ### AI service
 
-- adapter contract tests for existing CEFR, upload fixtures, VOA, and
-  metadata-only sources;
-- source-policy tests proving restricted fields never reach prompts/artifacts;
+- adapter contract tests for OEWN, CMUdict, CEFR-J, Wikidata, Tatoeba,
+  LibriSpeech, Common Voice, and uploads;
+- source-policy tests proving unknown, ShareAlike, non-commercial, or
+  attribution-incomplete records never reach prompts/artifacts;
+- golden normalized-record fixtures and checksum/reproducibility tests;
+- quarantine tests with stable row-level error codes;
 - CEFR/topic classifier tests including low-confidence rejection;
 - deterministic planner tests for 8-12 vocabulary items per lesson;
 - exercise schema tests for speaking/listening quotas;
@@ -569,20 +656,25 @@ cd admin-service && pnpm test && pnpm build:check
 
 ## Rollout
 
-1. Ship migrations, core pipeline, existing CEFR adapter, upload adapter, CLI,
-   and dashboard behind `CONTENT_AGENT_ENABLED=false`.
-2. Enable in development with Celery eager/test mode and dry-run only.
-3. Enable the worker and preview/apply flow for administrators.
-4. Add VOA with ownership verification and conservative rate limits.
-5. Add metadata-only adapters one source at a time after policy fixtures pass.
-6. Enable Oxford/Cambridge full-data integrations only under explicit licensed
-   configuration.
+1. Remove legacy web/ShareAlike/non-commercial source definitions and disable
+   the old crawl pipeline.
+2. Ship the versioned ETL core, manifest registry, quarantine reports, OEWN,
+   CMUdict, CEFR-J, and Wikidata adapters behind `CONTENT_ETL_ENABLED=false`.
+3. Sync pinned development snapshots and run dry-run validation without
+   production database writes.
+4. Enable content-agent preview with approved snapshots.
+5. Enable transactional apply for administrators after migration and rollback
+   tests pass.
+6. Add Tatoeba, Mini LibriSpeech, LibriSpeech, and Common Voice independently
+   after capacity and per-record license-filter tests pass.
 
 ## Non-Goals
 
 - automatic publishing;
 - learner-triggered course generation;
 - arbitrary URL crawling;
+- HTML crawling for course source material;
+- mixing ShareAlike or non-commercial datasets into the proprietary database;
 - bypassing paywalls, authentication, robots restrictions, or anti-bot controls;
 - cloning third-party courses or dictionary entries;
 - replacing the existing course editors;
