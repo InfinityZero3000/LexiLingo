@@ -25,6 +25,7 @@ from app.schemas.content_agent import (
 from app.schemas.response import ApiResponse
 from app.services.content_agent_apply import ContentAgentApplyService
 from app.services.content_agent_jobs import ContentAgentJobService
+from app.services.content_agent_sources import SourceResolutionError
 from app.services.content_agent_uploads import MAX_UPLOAD_BYTES, parse_content_upload
 from app.tasks.content_agent import run_content_agent
 
@@ -80,6 +81,14 @@ def _enqueue(job) -> None:
 )
 async def upload_source_file(
     file: UploadFile = File(...),
+    rights_confirmed: bool = Query(
+        default=False,
+        description=(
+            "Must be true to attest that the uploader has rights to use "
+            "this content in LexiLingo. Uploads without attestation cannot "
+            "be used in content-agent jobs."
+        ),
+    ),
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(get_current_admin),
 ):
@@ -96,7 +105,11 @@ async def upload_source_file(
     content = await file.read(MAX_UPLOAD_BYTES + 1)
     await file.close()
     try:
-        parsed = parse_content_upload(file.filename or "upload", content)
+        parsed = parse_content_upload(
+            file.filename or "upload",
+            content,
+            rights_confirmed=rights_confirmed,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     if parsed.errors:
@@ -110,9 +123,13 @@ async def upload_source_file(
         filename=parsed.filename,
         checksum=parsed.checksum,
         row_count=len(parsed.records),
+        schema_version=parsed.schema_version,
         records=parsed.records,
         expires_at=datetime.now(UTC)
         + timedelta(days=settings.CONTENT_AGENT_UPLOAD_TTL_DAYS),
+        rights_confirmed=parsed.rights_confirmed,
+        rights_confirmed_at=parsed.rights_confirmed_at,
+        uploader_id=admin.id,
     )
     db.add(upload)
     await db.flush()
