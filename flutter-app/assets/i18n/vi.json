@@ -893,7 +893,15 @@
     "correctFeedback": "Đúng rồi!",
     "answerRevealLabel": "Đáp án là:",
     "nextWordButton": "Từ tiếp theo",
-    "seeResultsButton": "Xem kết quả"
+    "seeResultsButton": "Xem kết quả",
+    "audioError": "Không thể phát âm thanh. Kiểm tra kết nối của bạn.",
+    "retryAudio": "Thử lại",
+    "listenButtonLabel": "Nghe từ",
+    "noPlaysLeft": "Hết lượt nghe",
+    "abandonTitle": "Thoát game?",
+    "abandonBody": "XP sẽ được tính dựa trên số từ đã trả lời đúng.",
+    "keepPlaying": "Tiếp tục chơi",
+    "quit": "Thoát"
   },
   "wordScramble": {
     "wordProgress": "Từ {current} trong {total}",
