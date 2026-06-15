@@ -14,6 +14,7 @@ from app.models.content_agent import (
 from app.models.course import Course, Lesson, Unit
 from app.models.vocabulary import VocabularyItem
 from app.services.content_agent_apply import ContentAgentApplyService
+from app.services.vocabulary_catalog import normalize_word
 
 
 @pytest.fixture
@@ -65,7 +66,16 @@ def _artifact() -> dict:
         for index in range(4)
     ]
     return {
+        "schema_version": 2,
         "generation_key": "generation-key",
+        "source_manifest": [
+            {
+                "source_id": "admin_upload",
+                "snapshot_id": "admin_upload:v1:abc123",
+                "license_mode": "admin_owned",
+                "record_count": 8,
+            }
+        ],
         "courses": [
             {
                 "title": "English A1 Foundations",
@@ -157,12 +167,11 @@ async def test_apply_reuses_vocabulary_and_is_idempotent(content_agent_db):
 
 
 async def test_apply_deduplicates_unicode_normalized_vocabulary(content_agent_db):
+    raw_word = "Café’s—Menu"
     artifact = _artifact()
-    artifact["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0][
-        "word"
-    ] = "Café’s—Menu"
+    artifact["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]["word"] = raw_word
     existing = VocabularyItem(
-        word="Café’s—Menu",
+        word=normalize_word(raw_word),
         definition="Curated definition",
         part_of_speech="noun",
         difficulty_level="A1",
