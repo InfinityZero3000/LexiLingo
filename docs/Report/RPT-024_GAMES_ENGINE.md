@@ -1,6 +1,6 @@
 # RPT-024 — Hệ Thống Câu Hỏi và Mini-Game (Games Engine)
 
-> **Cập nhật:** 2026-04-24 | **Nguồn:** `backend-service/app/routes/games.py` (1351 dòng, 67KB)
+> **Cập nhật:** 2026-06-15 | **Nguồn:** `backend-service/app/routes/games.py`, `app/services/`, `flutter-app/lib/features/games/`
 
 ---
 
@@ -205,6 +205,31 @@ Game hoàn thành → score được tính
 **Query params chung:**
 - `level` — CEFR level (A1/A2/B1/B2/C1/C2)
 - `category` — Lọc theo chủ đề (animals/food/travel...)
+
+---
+
+---
+
+## Cập Nhật Stability 2026-06-15
+
+### Server-Authoritative XP
+
+Tất cả XP từ game đi qua `xp_service.py::award_xp_transaction()`. Client không thể submit `base_xp` tuỳ ý — server tính lại từ game type và CEFR level. `source_id` (game session ID) là khoá dedup để chống duplicate award.
+
+### Pronunciation Service (Flutter)
+
+`GamePronunciationService` ưu tiên `audio_url` từ payload, fallback TTS qua `VoiceRemoteDataSource`, emit `AudioError` state nếu cả hai đều fail.
+
+### Flutter Game Tests (104 tests)
+
+- `game_completion_test.dart` — 13 tests: tất cả 6 game types, XP earned/capped/failed
+- `game_load_state_test.dart` — 13 tests: loading spinner, error + retry
+- `game_accessibility_test.dart` — 14 tests: semantic labels, touch targets ≥40px, 375/390/768px
+- `game_pronunciation_service_test.dart` — 10 tests: audio_url prefer, TTS fallback, error
+
+### Acceptance Verification
+
+Xem `docs/qa/game-system-acceptance.md` để biết kết quả automated tests và checklist manual validation.
 
 ---
 
