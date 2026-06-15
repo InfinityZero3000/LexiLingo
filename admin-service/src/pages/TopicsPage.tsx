@@ -103,6 +103,7 @@ export const TopicsPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
     story_id: "",
     title_en: "",
@@ -146,6 +147,24 @@ export const TopicsPage = () => {
       suggested_prompts: "",
       tags: "",
     });
+    setIsEditing(false);
+  };
+
+  const handleEdit = (topic: TopicItem) => {
+    setForm({
+      story_id: topic.story_id,
+      title_en: topic.title.en,
+      title_vi: topic.title.vi,
+      difficulty_level: topic.difficulty_level,
+      category: topic.category,
+      estimated_minutes: topic.estimated_minutes,
+      icon_key: topic.icon_key || topic.category,
+      opening_prompt: "",
+      suggested_prompts: (topic.suggested_prompts || []).join(", "),
+      tags: (topic.tags || []).join(", "),
+    });
+    setIsEditing(true);
+    setShowForm(true);
   };
 
   const handleSave = async (event: React.FormEvent) => {
@@ -170,6 +189,7 @@ export const TopicsPage = () => {
       });
       resetForm();
       setShowForm(false);
+      setIsEditing(false);
       await loadTopics();
     } catch (err: any) {
       setError(err?.message || "Không tạo được topic");
@@ -200,13 +220,16 @@ export const TopicsPage = () => {
               setShowForm((value) => !value);
             }}
           >
-            Create Topic
+            {showForm && !isEditing ? "Ẩn form" : "Create Topic"}
           </button>
         </div>
       </div>
 
       {showForm && (
         <form className="panel" onSubmit={handleSave} style={{ padding: 16 }}>
+          <h4 style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 600 }}>
+            {isEditing ? `Sửa topic: ${form.title_en}` : "Tạo topic mới"}
+          </h4>
           <div className="form-grid">
             <label>
               English title
@@ -316,11 +339,11 @@ export const TopicsPage = () => {
           </div>
 
           <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>
+            <button className="ghost-button" type="button" onClick={() => { resetForm(); setShowForm(false); }}>
               Cancel
             </button>
             <button className="primary-button" type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Topic"}
+              {saving ? "Saving..." : isEditing ? "Cập nhật Topic" : "Save Topic"}
             </button>
           </div>
         </form>
@@ -360,6 +383,19 @@ export const TopicsPage = () => {
               { header: "Level", render: (row) => <StatusPill tone="warning" label={row.difficulty_level} />, align: "center" },
               { header: "Icon", render: (row) => <span className="table-meta">{row.icon_key || row.category}</span> },
               { header: "Minutes", render: (row) => <span className="table-meta">{row.estimated_minutes}</span>, align: "center" },
+              {
+                header: "",
+                render: (row) => (
+                  <button
+                    className="ghost-button small"
+                    onClick={() => handleEdit(row)}
+                    type="button"
+                  >
+                    Sửa
+                  </button>
+                ),
+                align: "right",
+              },
             ]}
             rows={topics}
           />

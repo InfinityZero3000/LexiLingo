@@ -59,7 +59,7 @@ export const VocabularyPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await listVocabulary(200, 0);
+      const res = await listVocabulary(100, 0);
       setItems(res.data || []);
     } catch (err: any) {
       setError(err?.message || t.vocabulary.loadFailed);

@@ -4,7 +4,7 @@ import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { apiFetch } from "../lib/api";
 import { ENV } from "../lib/env";
-import { Shield, UserPlus, Mail, Calendar, Activity } from "lucide-react";
+import { Shield, UserPlus, Mail, Calendar } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -21,17 +21,21 @@ export const AdminManagementPage = () => {
   const { t } = useI18n();
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState<"admin" | "super_admin">("admin");
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     fetchAdmins();
   }, []);
 
   const fetchAdmins = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      // Backend accepts role as integer: 1=admin, 2=super_admin
       const [res1, res2] = await Promise.all([
         apiFetch<{ data: { users: any[] } }>(`${ENV.backendUrl}/admin/users?role=1&page_size=100`),
         apiFetch<{ data: { users: any[] } }>(`${ENV.backendUrl}/admin/users?role=2&page_size=100`),
@@ -51,8 +55,8 @@ export const AdminManagementPage = () => {
         ...(res2.data?.users ?? []).map(mapUser),
       ];
       setAdmins(all);
-    } catch (error) {
-      console.error("Failed to fetch admins:", error);
+    } catch (err: any) {
+      setError(err?.message || "Không tải được danh sách admin");
     } finally {
       setLoading(false);
     }
@@ -60,8 +64,9 @@ export const AdminManagementPage = () => {
 
   const handleAddAdmin = async () => {
     if (!newEmail) return;
+    setAdding(true);
+    setModalError(null);
     try {
-      // Step 1: find user by email
       const searchRes = await apiFetch<{ data: { users: any[] } }>(
         `${ENV.backendUrl}/admin/users?search=${encodeURIComponent(newEmail)}&page_size=10`
       );
@@ -69,20 +74,21 @@ export const AdminManagementPage = () => {
         (u: any) => u.email.toLowerCase() === newEmail.toLowerCase()
       );
       if (!target) {
-        alert("User not found. Make sure they have registered first.");
+        setModalError("Không tìm thấy user. Đảm bảo họ đã đăng ký tài khoản trước.");
         return;
       }
-      // Step 2: promote to role (1=admin, 2=super_admin)
       await apiFetch(`${ENV.backendUrl}/admin/users/${target.id}/role`, {
         method: "PUT",
         body: JSON.stringify({ level: newRole === "super_admin" ? 2 : 1 }),
       });
       setShowAddModal(false);
       setNewEmail("");
-      fetchAdmins();
-    } catch (error: any) {
-      console.error("Failed to add admin:", error);
-      alert(error?.message || "Failed to promote user");
+      setModalError(null);
+      await fetchAdmins();
+    } catch (err: any) {
+      setModalError(err?.message || "Không thể cấp quyền admin");
+    } finally {
+      setAdding(false);
     }
   };
 
@@ -92,9 +98,9 @@ export const AdminManagementPage = () => {
         method: "PUT",
         body: JSON.stringify({ is_active: !currentStatus }),
       });
-      fetchAdmins();
-    } catch (error) {
-      console.error("Failed to toggle status:", error);
+      await fetchAdmins();
+    } catch (err: any) {
+      setError(err?.message || "Không thể thay đổi trạng thái user");
     }
   };
 
@@ -103,15 +109,17 @@ export const AdminManagementPage = () => {
   return (
     <div className="stack">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <SectionHeader 
-          title={t.adminManagement.title} 
-          description={t.adminManagement.description} 
+        <SectionHeader
+          title={t.adminManagement.title}
+          description={t.adminManagement.description}
         />
-        <button className="btn-primary" onClick={() => setShowAddModal(true)}>
+        <button className="btn-primary" onClick={() => { setShowAddModal(true); setModalError(null); }}>
           <UserPlus size={16} />
           {t.adminManagement.addAdmin}
         </button>
       </div>
+
+      {error && <div className="form-error">{error}</div>}
 
       {/* Admin List */}
       <div className="panel">
@@ -129,7 +137,13 @@ export const AdminManagementPage = () => {
               </tr>
             </thead>
             <tbody>
-              {admins.map((admin) => (
+              {admins.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--muted)" }}>
+                    Chưa có admin nào
+                  </td>
+                </tr>
+              ) : admins.map((admin) => (
                 <tr key={admin.id}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -140,11 +154,11 @@ export const AdminManagementPage = () => {
                   <td>{admin.display_name}</td>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Shield 
-                        size={14} 
-                        style={{ color: admin.role === "super_admin" ? "var(--accent)" : "var(--muted)" }} 
+                      <Shield
+                        size={14}
+                        style={{ color: admin.role === "super_admin" ? "var(--accent)" : "var(--muted)" }}
                       />
-                      <span style={{ 
+                      <span style={{
                         fontWeight: admin.role === "super_admin" ? 600 : 400,
                         color: admin.role === "super_admin" ? "var(--accent)" : "inherit"
                       }}>
@@ -154,8 +168,9 @@ export const AdminManagementPage = () => {
                   </td>
                   <td>
                     <span className="tag" style={{
-                      background: admin.provider.includes("google") ? "#EBF5FF" : "#F5F5F5",
-                      color: admin.provider.includes("google") ? "#1E40AF" : "#666"
+                      background: admin.provider.includes("google") ? "#EBF5FF" : "var(--panel-soft)",
+                      color: admin.provider.includes("google") ? "#1E40AF" : "var(--text)",
+                      borderColor: admin.provider.includes("google") ? "#BFDBFE" : "var(--line)",
                     }}>
                       {admin.provider.join(", ")}
                     </span>
@@ -171,7 +186,7 @@ export const AdminManagementPage = () => {
                       {admin.last_login_at ? (
                         <>
                           <Calendar size={14} />
-                          {new Date(admin.last_login_at).toLocaleDateString()}
+                          {new Date(admin.last_login_at).toLocaleDateString("vi-VN")}
                         </>
                       ) : (
                         <span>—</span>
@@ -179,7 +194,7 @@ export const AdminManagementPage = () => {
                     </div>
                   </td>
                   <td>
-                    <button 
+                    <button
                       className="btn-ghost btn-sm"
                       onClick={() => handleToggleStatus(admin.id, admin.is_active)}
                     >
@@ -197,11 +212,12 @@ export const AdminManagementPage = () => {
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <SectionHeader 
-              title={t.adminManagement.addAdmin} 
-              description={t.adminManagement.addAdminDesc} 
+            <SectionHeader
+              title={t.adminManagement.addAdmin}
+              description={t.adminManagement.addAdminDesc}
             />
             <div className="stack" style={{ gap: 16 }}>
+              {modalError && <div className="form-error">{modalError}</div>}
               <div className="form-field">
                 <label>{t.adminManagement.email}</label>
                 <input
@@ -210,13 +226,14 @@ export const AdminManagementPage = () => {
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="user@example.com"
                   className="input"
+                  onKeyDown={(e) => e.key === "Enter" && handleAddAdmin()}
                 />
                 <small>{t.adminManagement.emailHint}</small>
               </div>
               <div className="form-field">
                 <label>{t.adminManagement.role}</label>
-                <select 
-                  value={newRole} 
+                <select
+                  value={newRole}
                   onChange={(e) => setNewRole(e.target.value as "admin" | "super_admin")}
                   className="input"
                 >
@@ -225,11 +242,11 @@ export const AdminManagementPage = () => {
                 </select>
               </div>
               <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-                <button className="btn-secondary" onClick={() => setShowAddModal(false)}>
+                <button className="btn-secondary" onClick={() => setShowAddModal(false)} disabled={adding}>
                   {t.common.cancel}
                 </button>
-                <button className="btn-primary" onClick={handleAddAdmin}>
-                  {t.adminManagement.addAdmin}
+                <button className="btn-primary" onClick={handleAddAdmin} disabled={adding || !newEmail}>
+                  {adding ? t.common.saving : t.adminManagement.addAdmin}
                 </button>
               </div>
             </div>
