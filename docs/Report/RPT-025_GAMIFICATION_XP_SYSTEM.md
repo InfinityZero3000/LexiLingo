@@ -1,6 +1,6 @@
 # RPT-025 — Hệ Thống Gamification: XP, Streak, Wallet, Shop, Leaderboard
 
-> **Cập nhật:** 2026-04-24 | **Nguồn:** `backend-service/app/routes/gamification.py` (31KB), `xp.py` (16KB), `backend-service/app/models/gamification.py` (14KB)
+> **Cập nhật:** 2026-06-15 | **Nguồn:** `backend-service/app/routes/gamification.py`, `app/services/xp_service.py`, `app/models/gamification.py`
 
 ---
 
@@ -274,5 +274,26 @@ Daily Goal    ──► Streak Tracker ──► Wallet (streak rewards)
 ```
 
 ---
+
+---
+
+## Cập Nhật Security Model 2026-06-15
+
+### source_id Requirement
+
+Các `source_id` repeat-sensitive (`game`, `lesson`, `daily_challenge`) bắt buộc phải có `source_id` khi gọi `award_xp_transaction()`. Thiếu `source_id` → HTTP 422. Cơ chế này ngăn client tạo XP không có session server-issued.
+
+```python
+REPEAT_SENSITIVE_SOURCES = frozenset({"game", "lesson", "daily_challenge"})
+```
+
+### Test Coverage
+
+`tests/test_xp_service.py` — 70 tests bao gồm:
+- source_id validation cho tất cả 3 repeat-sensitive sources
+- Daily XP cap per source type
+- Streak multiplier calculation
+- Level progression thresholds
+- Achievement unlock triggers
 
 *Tham khảo: [RPT-024](RPT-024_GAMES_ENGINE.md) | [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md)*
