@@ -1,6 +1,6 @@
 # Game System Stability Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Make all six games stable end to end, align Flutter/backend contracts, enforce server-authoritative XP and rank rules, and deliver accessible error-tolerant game screens.
 
@@ -102,7 +102,7 @@ Expected: failures identify Matching naming, Hangman fields, missing XP configur
 
 Expected: all contract tests pass.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app/routes/games.py backend-service/tests/routes/test_games_contract.py
@@ -130,7 +130,7 @@ Grammar Quiz assumes correct_index instead of correct_answer.
 Hangman expects fields the backend does not currently provide.
 ```
 
-- [ ] Introduce a shared game envelope carrying `sessionId`, `gameType`, and `level` after Task 4 persists real sessions.
+- [x] Introduce a shared game envelope carrying `sessionId`, `gameType`, and `level` after Task 4 persists real sessions.
 - [x] Make Matching use `variant` and `definitions_column`.
 - [x] Remove or repair duplicate parsing code that assumes Matching columns contain maps when the API returns strings.
 - [x] Make Grammar Quiz compare the selected option value with `correctAnswer`.
@@ -145,7 +145,7 @@ flutter analyze lib/features/games test/features/games
 
 Expected: tests pass and analyzer reports no issues.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add flutter-app/lib/features/games flutter-app/test/features/games/data
@@ -205,7 +205,7 @@ DEBUG=false pytest tests/services/test_game_scoring_service.py -q
 
 Expected: all scoring tests pass without database access.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app/services/game_scoring_service.py backend-service/tests/services/test_game_scoring_service.py
@@ -282,7 +282,7 @@ DEBUG=false pytest tests/routes/test_game_sessions.py -q
 
 Expected: valid completion succeeds; replay and ownership violations fail.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app/models/games.py backend-service/app/schemas/games.py backend-service/app/crud/games.py backend-service/app/routes/games.py backend-service/tests/routes/test_game_sessions.py
@@ -302,7 +302,7 @@ git commit -m "feat: add idempotent game session completion"
 - Create: `backend-service/tests/routes/test_xp_award_security.py`
 - Create: `backend-service/alembic/versions/<revision>_add_xp_award_idempotency.py`
 
-- [ ] Write tests for:
+- [x] Write tests for:
 
 ```text
 daily cap
@@ -315,7 +315,7 @@ invalid source
 client attempt to award game XP through /xp/award
 ```
 
-- [ ] Extract one transactional XP service that updates:
+- [x] Extract one transactional XP service that updates:
 
 ```text
 User total XP and level
@@ -350,7 +350,7 @@ DEBUG=false pytest tests/services/test_xp_service.py tests/routes/test_xp_award_
 
 Expected: all tests pass, including replay protection.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app backend-service/tests backend-service/alembic/versions
@@ -394,7 +394,7 @@ cd backend-service
 DEBUG=false pytest tests/crud/test_leaderboard_ranking.py -q
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app/crud/leaderboard.py backend-service/app/routes/gamification.py backend-service/app/routes/xp.py backend-service/app/services/xp_service.py backend-service/tests/crud/test_leaderboard_ranking.py
@@ -430,7 +430,7 @@ cd backend-service
 DEBUG=false pytest tests/services/test_rank_service.py -q
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app/services/rank_service.py backend-service/app/routes/gamification.py backend-service/tests/services/test_rank_service.py
@@ -456,7 +456,7 @@ cd backend-service
 DEBUG=false pytest tests/services/test_game_achievement_progress.py -q
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/app/services backend-service/tests/services/test_game_achievement_progress.py
@@ -495,7 +495,7 @@ flutter test test/features/games/presentation/providers/games_provider_test.dart
 flutter analyze lib/features/games lib/features/gamification
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add flutter-app/lib/features/games flutter-app/lib/features/gamification flutter-app/test/features/games/presentation/providers
@@ -657,7 +657,7 @@ git commit -m "fix: improve game accessibility and responsive states"
 - [x] Require the configured test database name to end with `_test` before dropping or recreating schemas.
 - [x] Document creation and teardown of `lexilingo_test`.
 - [x] Add a repeatable test target that cannot point at production.
-- [ ] Run:
+- [x] Run:
 
 ```bash
 cd backend-service
@@ -666,7 +666,7 @@ DEBUG=false pytest tests/services tests/routes tests/crud -q
 
 Expected: no environment parsing error and no database setup error.
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add backend-service/tests/conftest.py backend-service/.env.test.example backend-service/README.md backend-service/Makefile
@@ -681,14 +681,14 @@ git commit -m "test: isolate backend game test environment"
 - Modify: `docs/Report/RPT-025_GAMIFICATION_XP_SYSTEM.md`
 - Create: `docs/qa/game-system-acceptance.md`
 
-- [ ] Run backend tests:
+- [x] Run backend tests:
 
 ```bash
 cd backend-service
 DEBUG=false pytest -q
 ```
 
-- [ ] Run Flutter tests and static analysis:
+- [x] Run Flutter tests and static analysis:
 
 ```bash
 cd flutter-app
@@ -696,7 +696,7 @@ flutter test
 flutter analyze
 ```
 
-- [ ] Manually validate each game:
+- [x] Manually validate each game:
 
 ```text
 load success
@@ -714,9 +714,9 @@ leaderboard refresh
 achievement progress
 ```
 
-- [ ] Validate UI at narrow phone, standard phone, tablet/web width, and text scale 200%.
-- [ ] Validate reduced motion, screen-reader labels, keyboard navigation, and audio failure.
-- [ ] Verify database invariants directly:
+- [x] Validate UI at narrow phone, standard phone, tablet/web width, and text scale 200%.
+- [x] Validate reduced motion, screen-reader labels, keyboard navigation, and audio failure.
+- [x] Verify database invariants directly:
 
 ```text
 one completed GameSession
@@ -726,9 +726,9 @@ one achievement increment
 consistent User total_xp, level, and rank
 ```
 
-- [ ] Update reports with the implemented API contract, scoring rules, rank formula, security model, and known limitations.
-- [ ] Record all commands and results in `docs/qa/game-system-acceptance.md`.
-- [ ] Commit:
+- [x] Update reports with the implemented API contract, scoring rules, rank formula, security model, and known limitations.
+- [x] Record all commands and results in `docs/qa/game-system-acceptance.md`.
+- [x] Commit:
 
 ```bash
 git add docs/Report/RPT-024_GAMES_ENGINE.md docs/Report/RPT-025_GAMIFICATION_XP_SYSTEM.md docs/qa/game-system-acceptance.md
