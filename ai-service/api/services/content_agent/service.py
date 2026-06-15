@@ -45,6 +45,17 @@ class ContentAgentService:
         job_id: str,
         batch: SourceRecordBatch,
     ) -> RecordBatchResponse:
+        # existing_cefr records may only be loaded from an approved ETL snapshot,
+        # never ingested directly through the batch API.
+        effective_source = batch.source_name or ""
+        if effective_source.strip().lower() == "existing_cefr" or any(
+            str(rec.get("source_name") or "").strip().lower() == "existing_cefr"
+            for rec in batch.records
+        ):
+            raise ValueError(
+                "existing_cefr records must be loaded from an approved snapshot; "
+                "direct ingestion is not permitted"
+            )
         normalized = normalize_source_records(
             batch.records,
             source_name=batch.source_name,
