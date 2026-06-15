@@ -48,6 +48,7 @@ from app.routes import (
 )
 from app.routes.learning import router as learning_router
 from app.routes.admin import router as admin_router
+from app.routes.content_agent import router as content_agent_router
 from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
@@ -276,6 +277,7 @@ app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabula
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
 app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
 app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])

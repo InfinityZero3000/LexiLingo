@@ -3,29 +3,32 @@ Vocabulary CRUD Operations
 Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
-import uuid
-import re
 import math
+import re
+import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List, TYPE_CHECKING
-from sqlalchemy import select, func, and_, or_
+from typing import TYPE_CHECKING, List, Optional
+
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.orm import joinedload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 
 if TYPE_CHECKING:
     from app.models.user import User
 
 
+from app.models.content_agent import LessonVocabularyItem
+from app.models.course import Lesson
 from app.models.vocabulary import (
-    VocabularyItem,
+    DifficultyLevel,
+    PartOfSpeech,
     UserVocabulary,
-    VocabularyReview,
     VocabularyDeck,
     VocabularyDeckItem,
+    VocabularyItem,
+    VocabularyReview,
     VocabularyStatus,
-    PartOfSpeech,
-    DifficultyLevel,
 )
 from app.services.vocabulary_catalog_policy import (
     VocabularyCandidate,
@@ -35,7 +38,6 @@ from app.services.vocabulary_catalog_policy import (
     normalize_all_tags,
     select_balanced_starter_vocabulary,
 )
-
 
 _PLACEHOLDER_DEFINITION_VALUES = (
     "",
@@ -99,9 +101,27 @@ class VocabularyCRUD:
         
         conditions = []
         if course_id:
-            conditions.append(VocabularyItem.course_id == course_id)
+            course_memberships = (
+                select(LessonVocabularyItem.vocabulary_id)
+                .join(Lesson, Lesson.id == LessonVocabularyItem.lesson_id)
+                .where(Lesson.course_id == course_id)
+            )
+            conditions.append(
+                or_(
+                    VocabularyItem.course_id == course_id,
+                    VocabularyItem.id.in_(course_memberships),
+                )
+            )
         if lesson_id:
-            conditions.append(VocabularyItem.lesson_id == lesson_id)
+            lesson_memberships = select(
+                LessonVocabularyItem.vocabulary_id
+            ).where(LessonVocabularyItem.lesson_id == lesson_id)
+            conditions.append(
+                or_(
+                    VocabularyItem.lesson_id == lesson_id,
+                    VocabularyItem.id.in_(lesson_memberships),
+                )
+            )
         if difficulty_level:
             conditions.append(VocabularyItem.difficulty_level == difficulty_level)
         conditions.extend(_valid_definition_conditions())
