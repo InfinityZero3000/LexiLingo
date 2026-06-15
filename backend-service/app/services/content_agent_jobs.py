@@ -16,6 +16,9 @@ from app.schemas.content_agent import ContentAgentJobCreate
 
 ACTIVE_STATUSES = {
     "queued",
+    "resolving_sources",
+    "loading_snapshots",
+    "normalizing_upload",
     "extracting",
     "normalizing",
     "classifying",
@@ -27,8 +30,12 @@ ACTIVE_STATUSES = {
 }
 TERMINAL_STATUSES = {"completed", "failed", "cancelled"}
 ALLOWED_TRANSITIONS = {
-    "queued": {"extracting", "cancelled", "failed"},
-    "extracting": {"normalizing", "cancelled", "failed"},
+    "queued": {"resolving_sources", "extracting", "cancelled", "failed"},
+    "resolving_sources": {"loading_snapshots", "cancelled", "failed"},
+    "loading_snapshots": {"normalizing_upload", "extracting", "cancelled", "failed"},
+    "normalizing_upload": {"classifying", "cancelled", "failed"},
+    # Legacy / direct path without source resolution
+    "extracting": {"normalizing", "classifying", "cancelled", "failed"},
     "normalizing": {"classifying", "cancelled", "failed"},
     "classifying": {"planning", "cancelled", "failed"},
     "planning": {"generating", "cancelled", "failed"},
