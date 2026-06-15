@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 
 class NotificationService {
   static const int _dailyReminderId = 0;
+  static const String _reviewRoute = '/vocabulary/review';
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -26,8 +28,31 @@ class NotificationService {
           iOS: initializationSettingsDarwin,
         );
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: _onNotificationTap,
+      onDidReceiveBackgroundNotificationResponse: _onNotificationTapBackground,
+    );
+
+    // Handle notification that launched the app from terminated state.
+    // Defer navigation until after the first frame so the navigator is ready.
+    final launchDetails = await flutterLocalNotificationsPlugin
+        .getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp == true &&
+        launchDetails!.notificationResponse != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _onNotificationTap(launchDetails.notificationResponse!);
+      });
+    }
+
     _isInitialized = true;
+  }
+
+  void _onNotificationTap(NotificationResponse response) {
+    final payload = response.payload ?? '';
+    if (payload == _reviewRoute || payload.isEmpty) {
+      AppNavigationService.openRoute(_reviewRoute);
+    }
   }
 
   Future<void> ensureInitialized() async {
@@ -79,22 +104,51 @@ class NotificationService {
     return granted;
   }
 
-  Future<void> scheduleDailyReminder(TimeOfDay time) async {
+  Future<void> scheduleDailyReminder(TimeOfDay time, {int dueCount = 0}) async {
     await ensureInitialized();
+    final body = dueCount > 0
+        ? 'Bạn có $dueCount từ cần ôn tập hôm nay!'
+        : 'Đã đến giờ ôn từ vựng – giữ vững streak của bạn!';
     await flutterLocalNotificationsPlugin.zonedSchedule(
       _dailyReminderId,
-      'Time to Learn English!',
-      'Keep up your streak!',
+      'Ôn tập từ vựng',
+      body,
       _nextInstanceOfTime(time.hour, time.minute),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder_channel',
-          'Daily Reminders',
-          channelDescription: 'Reminds you to study every day',
+          'Nhắc nhở hàng ngày',
+          channelDescription: 'Nhắc bạn ôn tập từ vựng mỗi ngày',
+          importance: Importance.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: 'vocabulary_review',
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
+      payload: _reviewRoute,
+    );
+  }
+
+  Future<void> showImmediateReviewReminder(int dueCount) async {
+    await ensureInitialized();
+    await flutterLocalNotificationsPlugin.show(
+      _dailyReminderId + 1,
+      'Ôn tập từ vựng',
+      'Bạn có $dueCount từ đến hạn ôn tập!',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'daily_reminder_channel',
+          'Nhắc nhở hàng ngày',
+          channelDescription: 'Nhắc bạn ôn tập từ vựng mỗi ngày',
+          importance: Importance.high,
+        ),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: 'vocabulary_review',
+        ),
+      ),
+      payload: _reviewRoute,
     );
   }
 
@@ -118,4 +172,9 @@ class NotificationService {
     }
     return scheduledDate;
   }
+}
+
+@pragma('vm:entry-point')
+void _onNotificationTapBackground(NotificationResponse response) {
+  // Background tap is handled on app resume via getNotificationAppLaunchDetails.
 }
