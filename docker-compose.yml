@@ -349,6 +349,7 @@ services:
       - ./ai-service/api:/app/api
       - ./ai-service/data:/app/data
       - ./ai-service/models:/app/models
+      - content_etl_data:/data/content-etl
     command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - lexilingo-network
@@ -418,6 +419,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  content_etl_data:
     driver: local
 
 networks:

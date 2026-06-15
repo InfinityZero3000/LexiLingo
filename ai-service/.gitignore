@@ -59,5 +59,8 @@ data/kg_output/topic_crawl_report.json
 data/kg_output/tracecag_topic_corpus_report.json
 data/sample_stories.expanded.json
 
+# Licensed Content ETL — downloaded datasets and immutable snapshots (never commit)
+data/content-etl/
+
 # Crawler cache
 .crawl4ai/

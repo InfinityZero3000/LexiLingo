@@ -331,6 +331,18 @@ const en: Translations = {
     cancelJob: "Cancel job",
     cancelling: "Cancelling...",
     cancelFailed: "Unable to cancel the content agent job.",
+    sourceCatalog: "Content Sources",
+    sourceLoading: "Loading sources...",
+    sourceError: "Failed to load sources",
+    sourceEmpty: "No approved sources available",
+    uploadAttestation: "I confirm I own or have commercial rights to this file",
+    uploadAttestationRequired: "You must confirm rights before uploading",
+    snapshotVersion: "Version",
+    snapshotLicense: "License",
+    snapshotRecords: "records",
+    snapshotLastSync: "Last synced",
+    snapshotNotApproved: "Snapshot not yet approved",
+    validationBlocking: "Cannot apply — validation errors",
   },
 
   // ============== Units ==============
