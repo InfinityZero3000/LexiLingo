@@ -21,6 +21,11 @@ from app.schemas.content_agent import ContentAgentArtifact
 from app.services.content_agent_apply import ContentAgentApplyService
 from app.services.content_agent_client import ContentAgentClient
 from app.services.content_agent_jobs import ContentAgentJobService
+from app.services.content_agent_sources import (
+    SourceResolutionError,
+    get_source_catalog,
+    resolve_snapshots,
+)
 
 logger = logging.getLogger(__name__)
 T = TypeVar("T")
@@ -75,6 +80,8 @@ def _public_error_message(exc: Exception) -> str:
         return "AI content service is temporarily unavailable"
     if isinstance(exc, httpx.HTTPStatusError):
         return f"AI content service request failed with status {exc.response.status_code}"
+    if isinstance(exc, SourceResolutionError):
+        return "Source resolution failed — check that all requested sources are approved and active"
     if isinstance(exc, ValueError):
         return "Content-agent input or generated content was invalid"
     return "Content-agent generation failed"
@@ -109,26 +116,74 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
         client: ContentAgentClient | None = None
         try:
             client = ContentAgentClient()
+
+            # -------------------------------------------------------------------
+            # Stage: resolving_sources — pin snapshot IDs at job creation time.
+            # On retry, reuse the snapshots already stored in config so results
+            # are deterministic even if the catalog changes between attempts.
+            # -------------------------------------------------------------------
             job = await _locked_active_job(db, job_id)
-            await ContentAgentJobService.transition(db, job, "extracting", percent=10)
+            await ContentAgentJobService.transition(
+                db, job, "resolving_sources", percent=5
+            )
             await db.commit()
 
+            sources: list[str] = job.config.get("sources", [])
+            pinned_snapshots: list[dict] = list(
+                job.config.get("pinned_snapshots", [])
+            )
+            if not pinned_snapshots:
+                catalog = await _with_transient_retry(
+                    lambda: get_source_catalog(client)
+                )
+                pinned_snapshots = resolve_snapshots(sources, catalog)
+                async with db.begin_nested():
+                    job = await _locked_active_job(db, job_id)
+                    config = dict(job.config)
+                    config["pinned_snapshots"] = pinned_snapshots
+                    job.config = config
+                    await db.flush()
+                await db.commit()
+
+            # -------------------------------------------------------------------
+            # Stage: loading_snapshots — signal AI service to load pinned data
+            # -------------------------------------------------------------------
+            job = await _locked_active_job(db, job_id)
+            await ContentAgentJobService.transition(
+                db, job, "loading_snapshots", percent=10
+            )
+            await db.commit()
+
+            # -------------------------------------------------------------------
+            # Stage: normalizing_upload — ingest admin upload if present
+            # -------------------------------------------------------------------
             records: list[dict] = []
-            if job.upload_id is not None and "admin_upload" in job.config.get(
-                "sources", []
-            ):
+            if job.upload_id is not None and "admin_upload" in sources:
                 upload = await db.get(ContentAgentUpload, job.upload_id)
                 if upload is None:
                     raise ValueError("Referenced upload no longer exists")
                 if upload.expires_at <= datetime.now(UTC):
                     raise ValueError("Referenced upload has expired")
+                if not upload.rights_confirmed:
+                    raise ValueError(
+                        "Upload rights attestation is required before use in a job"
+                    )
                 records = list(upload.records)
-                await db.commit()
+
+            job = await _locked_active_job(db, job_id)
+            await ContentAgentJobService.transition(
+                db, job, "normalizing_upload", percent=15
+            )
+            await db.commit()
+
+            if records:
                 await _ingest_batches(client, job.id, records)
 
+            # -------------------------------------------------------------------
+            # Stages: classifying → planning → generating
+            # -------------------------------------------------------------------
             stages = [
-                ("normalizing", 25),
-                ("classifying", 40),
+                ("classifying", 35),
                 ("planning", 55),
                 ("generating", 70),
             ]
@@ -154,6 +209,10 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
                 artifact_payload = await _with_transient_retry(
                     lambda: client.generate(job.id, dict(job.config))
                 )
+
+            # -------------------------------------------------------------------
+            # Stage: validating
+            # -------------------------------------------------------------------
             job = await _locked_active_job(db, job_id)
             await ContentAgentJobService.transition(db, job, "validating", percent=90)
             await db.commit()
@@ -170,6 +229,8 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
             )
             await db.commit()
 
+            # apply_on_success is honoured but preview blocking is the default;
+            # admin must explicitly call /apply unless this flag is set.
             if job.config.get("apply_on_success") and not job.blocking_errors:
                 await ContentAgentApplyService.apply(db, job.id)
                 await db.commit()

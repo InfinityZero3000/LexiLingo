@@ -62,6 +62,21 @@ class ContentAgentClient:
             return payload["data"]
         return payload
 
+    async def list_sources(self) -> list[dict[str, Any]]:
+        """Return the approved source catalog from the AI service."""
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            response = await client.get(
+                f"{self._base_url}/internal/content-agent/sources",
+                headers=self._headers,
+            )
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict):
+            return payload.get("data", payload.get("sources", []))
+        if isinstance(payload, list):
+            return payload
+        return []
+
     async def delete_context(self, job_id: uuid.UUID) -> None:
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             response = await client.delete(
