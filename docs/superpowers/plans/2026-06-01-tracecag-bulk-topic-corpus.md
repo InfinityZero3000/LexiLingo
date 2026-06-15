@@ -17,21 +17,21 @@
 **Files:**
 - Create: `ai-service/scripts/generate_tracecag_topic_corpus.py`
 
-- [ ] Define 60 topic blueprints across travel, work, health, food, shopping, housing, education, finance, technology, culture, media, services, emergency, environment, and leisure.
-- [ ] Generate valid story objects for each blueprint.
-- [ ] Generate dense TraceCAG quadruples and edges.
-- [ ] Write JSONL outputs and KG import JSON.
-- [ ] Add validation summary report.
+- [x] Define 60 topic blueprints across travel, work, health, food, shopping, housing, education, finance, technology, culture, media, services, emergency, environment, and leisure.
+- [x] Generate valid story objects for each blueprint.
+- [x] Generate dense TraceCAG quadruples and edges.
+- [x] Write JSONL outputs and KG import JSON.
+- [x] Add validation summary report.
 
 ### Task 2: Add Tests
 
 **Files:**
 - Create: `ai-service/tests/test_generate_tracecag_topic_corpus.py`
 
-- [ ] Assert generated story IDs are unique.
-- [ ] Assert generated stories parse through `Story`.
-- [ ] Assert generated quadruple/edge counts exceed target.
-- [ ] Assert generated KG edges are not dangling.
+- [x] Assert generated story IDs are unique.
+- [x] Assert generated stories parse through `Story`.
+- [x] Assert generated quadruple/edge counts exceed target.
+- [x] Assert generated KG edges are not dangling.
 
 ## Chunk 2: UI And Naming
 
@@ -44,8 +44,8 @@
 - Modify: `flutter-app/lib/features/chat/presentation/providers/story_provider.dart`
 - Modify: `flutter-app/lib/features/chat/data/models/topic_session_model.dart`
 
-- [ ] Raise default story fetch limit from 20 to at least 100.
-- [ ] Change topic preferred LLM default from `TRACECAG` to `tracecag`.
+- [x] Raise default story fetch limit from 20 to at least 100.
+- [x] Change topic preferred LLM default from `TRACECAG` to `tracecag`.
 
 ### Task 4: Category Icons
 
@@ -53,7 +53,7 @@
 - Modify: `flutter-app/lib/features/chat/presentation/pages/story_selection_page.dart`
 - Modify: `flutter-app/lib/features/chat/presentation/widgets/topic_card.dart`
 
-- [ ] Add icons for expanded topic categories.
+- [x] Add icons for expanded topic categories.
 
 ## Chunk 3: Generate And Verify Data
 
@@ -68,13 +68,13 @@
 - Create: `ai-service/data/kg_output/tracecag_knowledge_prefix.full.txt`
 - Create: `ai-service/data/kg_output/tracecag_topic_corpus_report.json`
 
-- [ ] Run generator with `--merge-stories`.
-- [ ] Confirm counts and validation results.
+- [x] Run generator with `--merge-stories`.
+- [x] Confirm counts and validation results.
 
 ### Task 6: Tests
 
 **Files:**
 - Test: `ai-service/tests/test_generate_tracecag_topic_corpus.py`
 
-- [ ] Run `PYTHONPATH=. pytest tests/test_generate_tracecag_topic_corpus.py tests/test_topic_prompt_builder.py -q`.
+- [x] Run `PYTHONPATH=. pytest tests/test_generate_tracecag_topic_corpus.py tests/test_topic_prompt_builder.py -q`.
 - [ ] Run `flutter analyze` if Flutter changes need validation.
