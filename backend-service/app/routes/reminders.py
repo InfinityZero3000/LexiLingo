@@ -51,6 +51,8 @@ async def _get_or_create_preferences(
 
     preference = UserReminderPreference(
         user_id=user.id,
+        enabled=True,
+        push_enabled=True,
         next_check_at=compute_next_check_at("09:00", settings.REMINDER_DEFAULT_TIMEZONE),
     )
     db.add(preference)
