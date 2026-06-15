@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LexicalResource xmlns="https://globalwordnet.github.io/schemas/WN-LMF-1.3.dtd">
+  <Lexicon id="oewn-en" label="Open English WordNet" language="en"
+           email="john@mccr.ae" license="https://creativecommons.org/licenses/by/4.0/"
+           version="2025">
+    <LexicalEntry id="oewn-journey-n">
+      <Lemma writtenForm="journey" partOfSpeech="n"/>
+      <Sense id="oewn-journey-n-sense-1" synset="odw-00012345-n"/>
+    </LexicalEntry>
+    <LexicalEntry id="oewn-travel-v">
+      <Lemma writtenForm="travel" partOfSpeech="v"/>
+      <Sense id="oewn-travel-v-sense-1" synset="odw-00012346-v">
+        <SenseExample>She travels a lot for work.</SenseExample>
+      </Sense>
+    </LexicalEntry>
+    <LexicalEntry id="oewn-quick-a">
+      <Lemma writtenForm="quick" partOfSpeech="a"/>
+      <Sense id="oewn-quick-a-sense-1" synset="odw-00012347-a"/>
+    </LexicalEntry>
+    <Synset id="odw-00012345-n" ili="i90001" partOfSpeech="n">
+      <Definition>An act of travelling from one place to another.</Definition>
+    </Synset>
+    <Synset id="odw-00012346-v" ili="i90002" partOfSpeech="v">
+      <Definition>To make a journey; go from one place to another.</Definition>
+    </Synset>
+    <Synset id="odw-00012347-a" ili="i90003" partOfSpeech="a">
+      <Definition>Moving fast or doing something in a short time.</Definition>
+    </Synset>
+  </Lexicon>
+</LexicalResource>

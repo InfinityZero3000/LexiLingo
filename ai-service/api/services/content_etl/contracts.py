@@ -18,6 +18,30 @@ from pydantic import (
 
 SHA256_PATTERN = r"^[a-f0-9]{64}$"
 
+# Allowed licenses per source — inlined to avoid circular imports with registry.
+_SOURCE_ALLOWED_LICENSES: dict[str, frozenset[str]] = {
+    "oewn": frozenset({"CC-BY-4.0"}),
+    "cmudict": frozenset({"LicenseRef-CMUdict"}),
+    "cefr_j": frozenset({"LicenseRef-CEFR-J-Commercial"}),
+    "wikidata": frozenset({"CC0-1.0"}),
+    "tatoeba": frozenset({"CC0-1.0", "CC-BY-2.0-FR"}),
+    "librispeech": frozenset({"CC-BY-4.0"}),
+    "common_voice": frozenset({"CC0-1.0"}),
+    "admin_upload": frozenset({"LicenseRef-Admin-Owned"}),
+}
+
+# Allowed URL hosts per source.
+_SOURCE_ALLOWED_HOSTS: dict[str, frozenset[str]] = {
+    "oewn": frozenset({"en-word.net", "github.com"}),
+    "cmudict": frozenset({"github.com", "raw.githubusercontent.com", "codeload.github.com"}),
+    "cefr_j": frozenset({"github.com", "raw.githubusercontent.com", "codeload.github.com"}),
+    "wikidata": frozenset({"www.wikidata.org"}),
+    "tatoeba": frozenset({"tatoeba.org", "downloads.tatoeba.org"}),
+    "librispeech": frozenset({"www.openslr.org", "openslr.org"}),
+    "common_voice": frozenset({"datacollective.mozillafoundation.org"}),
+    "admin_upload": frozenset(),
+}
+
 
 class SourceName(str, Enum):
     OEWN = "oewn"
@@ -50,7 +74,7 @@ class SourceCounts(BaseModel):
     duplicates: int = Field(ge=0)
 
     @model_validator(mode="after")
-    def validate_count_relationships(self):
+    def validate_count_relationships(self) -> "SourceCounts":
         if self.normalized > self.extracted:
             raise ValueError("normalized count cannot exceed extracted count")
         if self.approved > self.normalized:
@@ -86,6 +110,43 @@ class SourceManifest(BaseModel):
             raise ValueError("ETL manifest URLs must use HTTPS")
         return value
 
+    @field_validator("retrieved_at", mode="after")
+    @classmethod
+    def require_timezone_aware(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("retrieved_at must include timezone information")
+        return value
+
+    @model_validator(mode="after")
+    def validate_cross_fields(self) -> "SourceManifest":
+        source_key = self.source_name.value
+
+        # license must be approved for this source
+        allowed_licenses = _SOURCE_ALLOWED_LICENSES.get(source_key, frozenset())
+        if self.license_id.value not in allowed_licenses:
+            raise ValueError(
+                f"license {self.license_id.value!r} is not approved for source "
+                f"{source_key!r}"
+            )
+
+        # official_url host must be on the allowlist (not applicable for admin_upload)
+        if source_key != "admin_upload":
+            allowed_hosts = _SOURCE_ALLOWED_HOSTS.get(source_key, frozenset())
+            host = self.official_url.host
+            if host not in allowed_hosts:
+                raise ValueError(
+                    f"Host {host!r} is not approved for source {source_key!r}"
+                )
+
+        # snapshot_id = "{source_name}:{source_version}:{raw_sha256}"
+        expected_id = f"{source_key}:{self.source_version}:{self.raw_sha256}"
+        if self.snapshot_id != expected_id:
+            raise ValueError(
+                "snapshot_id must equal '{source_name}:{source_version}:{raw_sha256}'"
+            )
+
+        return self
+
 
 class QuarantineEntry(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
@@ -100,4 +161,3 @@ class QuarantineEntry(BaseModel):
     )
     message: str = Field(min_length=1, max_length=2000)
     raw_excerpt_hash: str = Field(pattern=SHA256_PATTERN)
-

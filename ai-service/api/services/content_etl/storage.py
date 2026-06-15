@@ -111,6 +111,54 @@ class SnapshotStorage:
                 )
             return path
 
+        # Integrity gates only apply to approved manifests.
+        if manifest.status == "approved":
+            # Gate: raw file must exist and its checksum must match.
+            raw_directory = (
+                self.root / "raw" / manifest.source_name.value / manifest.source_version
+            )
+            raw_files = list(raw_directory.glob("*")) if raw_directory.exists() else []
+            if not raw_files:
+                raise StorageIntegrityError(
+                    "Cannot write manifest: no raw snapshot file found"
+                )
+            actual_raw_sha256 = self._sha256_file(raw_files[0])
+            if actual_raw_sha256 != manifest.raw_sha256:
+                raise StorageIntegrityError(
+                    "Cannot write manifest: raw file checksum does not match"
+                )
+
+            # Gate: normalized record count must match counts.normalized.
+            normalized_path = (
+                self.root
+                / "normalized"
+                / manifest.source_name.value
+                / manifest.source_version
+                / "records.jsonl"
+            )
+            if normalized_path.exists():
+                line_count = sum(
+                    1 for line in normalized_path.read_bytes().splitlines() if line
+                )
+                if line_count != manifest.counts.normalized:
+                    raise StorageIntegrityError(
+                        "Cannot write manifest: normalized record count does not match"
+                    )
+
+            # Gate: quarantine file must exist when counts.quarantined > 0.
+            if manifest.counts.quarantined > 0:
+                quarantine_path = (
+                    self.root
+                    / "quarantine"
+                    / manifest.source_name.value
+                    / manifest.source_version
+                    / "errors.jsonl"
+                )
+                if not quarantine_path.exists():
+                    raise StorageIntegrityError(
+                        "Cannot write manifest: quarantine file is missing"
+                    )
+
         path.parent.mkdir(parents=True, exist_ok=True)
         if manifest.status == "approved":
             self._make_snapshot_read_only(
