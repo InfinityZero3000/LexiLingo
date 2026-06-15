@@ -131,15 +131,6 @@ services:
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
-      # Redis (use container hostname, not localhost)
-      REDIS_URL: redis://redis:6379/0
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      # Firebase
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
-      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -177,10 +168,6 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
-      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
-      DEBUG: ${DEBUG:-False}
-      REDIS_URL: redis://redis:6379/0
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
@@ -200,8 +187,6 @@ services:
         max-file: "5"
     networks:
       - lexilingo-prod
-    healthcheck:
-      disable: true
 
   backend-reminder-beat:
     build:
@@ -229,8 +214,6 @@ services:
         max-file: "5"
     networks:
       - lexilingo-prod
-    healthcheck:
-      disable: true
 
   ai-service:
     build:
@@ -260,17 +243,11 @@ services:
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      REDIS_PASSWORD: ""
-      REDIS_DB: 0
-      REDIS_URL: redis://redis-ai:6379/0
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
-      DEBUG: ${DEBUG:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
       CONTENT_AGENT_TTL_SECONDS: ${CONTENT_AGENT_TTL_SECONDS:-3600}
       CONTENT_AGENT_MAX_RECORDS: ${CONTENT_AGENT_MAX_RECORDS:-20000}
       CONTENT_AGENT_MAX_BATCH_RECORDS: ${CONTENT_AGENT_MAX_BATCH_RECORDS:-2000}
-      CONTENT_AGENT_ALLOW_LOCAL_STORE: ${CONTENT_AGENT_ALLOW_LOCAL_STORE:-true}
+      CONTENT_AGENT_ALLOW_LOCAL_STORE: "false"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -298,70 +275,12 @@ services:
     networks:
       - lexilingo-prod
 
-  # ============================================
-  # Prometheus — metrics scraper
-  # ============================================
-  prometheus:
-    image: prom/prometheus:v2.53.2
-    container_name: lexilingo-prometheus
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./monitoring/rules:/etc/prometheus/rules:ro
-      - prometheus_data:/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=15d"
-      - "--web.enable-lifecycle"
-    networks:
-      - lexilingo-network
-
-  # ============================================
-  # Grafana — metrics dashboard
-  # ============================================
-  grafana:
-    image: grafana/grafana:11.2.0
-    container_name: lexilingo-grafana
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    ports:
-      - "3001:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD in .env}
-      GF_USERS_ALLOW_SIGN_UP: "false"
-      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-    depends_on:
-      - prometheus
-    networks:
-      - lexilingo-network
-
 volumes:
   postgres_data:
   mongodb_data:
   mongodb_config:
   redis_data:
   ai_models:
-    driver: local
-  redis_ai_data:
-    driver: local
-  prometheus_data:
-    driver: local
-  grafana_data:
-    driver: local
 
 networks:
   lexilingo-prod:
