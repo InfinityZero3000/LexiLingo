@@ -208,3 +208,55 @@ def test_expired_job_context_returns_not_found(monkeypatch):
         headers=headers,
     )
     assert response.status_code == 404
+
+
+def test_sources_endpoint_returns_all_registered_sources(monkeypatch):
+    client = _client(monkeypatch)
+    headers = {"X-Content-Agent-Token": TOKEN}
+
+    response = client.get(
+        "/api/v1/internal/content-agent/sources",
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    entries = response.json()
+    assert isinstance(entries, list)
+    assert len(entries) > 0
+    source_names = {e["source_name"] for e in entries}
+    assert "oewn" in source_names
+    assert "cmudict" in source_names
+    assert "admin_upload" in source_names
+    # Denied sources must not appear.
+    assert "voa" not in source_names
+    assert "bbc" not in source_names
+
+
+def test_sources_endpoint_requires_token(monkeypatch):
+    client = _client(monkeypatch)
+
+    response = client.get("/api/v1/internal/content-agent/sources")
+    assert response.status_code == 403
+
+
+def test_snapshots_endpoint_requires_approved_manifest(monkeypatch, tmp_path):
+    from api.routes import content_agent as routes_module
+
+    client = _client(monkeypatch)
+    headers = {"X-Content-Agent-Token": TOKEN}
+
+    # Patch settings to use a temp storage root with no manifests.
+    fake_settings = SimpleNamespace(
+        CONTENT_AGENT_SERVICE_TOKEN=TOKEN,
+        CONTENT_AGENT_MAX_BATCH_RECORDS=10,
+        CONTENT_ETL_STORAGE_ROOT=str(tmp_path),
+    )
+    monkeypatch.setattr(routes_module, "get_settings", lambda: fake_settings)
+
+    response = client.post(
+        "/api/v1/internal/content-agent/jobs/oewn/snapshots",
+        json={"source_version": "2025"},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
