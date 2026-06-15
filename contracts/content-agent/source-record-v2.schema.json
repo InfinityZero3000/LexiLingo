@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lexilingo.me/contracts/content-agent/source-record-v2.schema.json",
+  "title": "LexiLingo Normalized Source Record v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "record_id",
+    "source_name",
+    "source_version",
+    "source_record_id",
+    "source_url",
+    "license_id",
+    "license_url",
+    "attribution_text",
+    "content_usage",
+    "language",
+    "retrieved_at",
+    "raw_checksum",
+    "record_checksum",
+    "lineage"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "record_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "source_name": {
+      "type": "string",
+      "enum": [
+        "oewn",
+        "cmudict",
+        "cefr_j",
+        "wikidata",
+        "tatoeba",
+        "librispeech",
+        "common_voice",
+        "admin_upload"
+      ]
+    },
+    "source_version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "source_record_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 1000
+    },
+    "license_id": {
+      "$ref": "#/$defs/licenseId"
+    },
+    "license_url": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 1000
+    },
+    "attribution_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "content_usage": {
+      "type": "string",
+      "enum": [
+        "lexical",
+        "pronunciation",
+        "label",
+        "topic",
+        "example",
+        "audio"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z]{2})?$"
+    },
+    "word": {
+      "type": ["string", "null"],
+      "maxLength": 255
+    },
+    "lemma": {
+      "type": ["string", "null"],
+      "maxLength": 255
+    },
+    "part_of_speech": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/partOfSpeech"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "definition": {
+      "type": ["string", "null"],
+      "maxLength": 10000
+    },
+    "translation_vi": {
+      "type": ["string", "null"],
+      "maxLength": 5000
+    },
+    "example": {
+      "type": ["string", "null"],
+      "maxLength": 10000
+    },
+    "pronunciation": {
+      "type": ["string", "null"],
+      "maxLength": 500
+    },
+    "audio": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/audio"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "declared_cefr": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/cefrLevel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "assigned_cefr": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/cefrLevel"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "classification_confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "topic_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 100,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 255
+      }
+    },
+    "retrieved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "raw_checksum": {
+      "$ref": "#/$defs/sha256"
+    },
+    "record_checksum": {
+      "$ref": "#/$defs/sha256"
+    },
+    "lineage": {
+      "$ref": "#/$defs/lineage"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "cefrLevel": {
+      "type": "string",
+      "enum": ["A1", "A2", "B1", "B2", "C1", "C2"]
+    },
+    "partOfSpeech": {
+      "type": "string",
+      "enum": [
+        "noun",
+        "verb",
+        "adjective",
+        "adverb",
+        "pronoun",
+        "preposition",
+        "conjunction",
+        "interjection",
+        "phrase"
+      ]
+    },
+    "licenseId": {
+      "type": "string",
+      "enum": [
+        "CC0-1.0",
+        "CC-BY-2.0-FR",
+        "CC-BY-4.0",
+        "LicenseRef-CMUdict",
+        "LicenseRef-CEFR-J-Commercial",
+        "LicenseRef-Admin-Owned",
+        "LicenseRef-Generated"
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "mime_type"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 1000
+        },
+        "mime_type": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "duration_seconds": {
+          "type": ["number", "null"],
+          "minimum": 0
+        },
+        "speaker_attribution": {
+          "type": ["string", "null"],
+          "maxLength": 1000
+        }
+      }
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adapter", "adapter_version", "raw_path"],
+      "properties": {
+        "adapter": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "adapter_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "raw_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "source_location": {
+          "type": ["string", "null"],
+          "maxLength": 1000
+        }
+      }
+    }
+  }
+}

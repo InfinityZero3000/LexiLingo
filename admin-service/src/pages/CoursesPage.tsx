@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
 import { StatusPill } from "../components/StatusPill";
 import { TableSkeleton } from "../components/Skeleton";
+import { ContentAgentModal } from "../components/content-agent/ContentAgentModal";
+import {
+  ContentAgentDrawer,
+  isContentAgentJobActive,
+} from "../components/content-agent/ContentAgentDrawer";
 import {
   listCoursesAdmin,
   createCourse,
@@ -14,6 +20,10 @@ import {
 } from "../lib/adminApi";
 import { CourseImportModal } from "../components/CourseImportModal";
 import { useI18n } from "../lib/i18n";
+import {
+  listContentAgentJobs,
+  type ContentAgentJob,
+} from "../lib/contentAgentApi";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -26,6 +36,10 @@ export const CoursesPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [showContentAgent, setShowContentAgent] = useState(false);
+  const [showContentAgentDrawer, setShowContentAgentDrawer] = useState(false);
+  const [contentAgentJob, setContentAgentJob] =
+    useState<ContentAgentJob | null>(null);
   const [search, setSearch] = useState("");
   const [filterLevel, setFilterLevel] = useState("");
   const [filterPublished, setFilterPublished] = useState<string>("");
@@ -73,6 +87,29 @@ export const CoursesPage = () => {
   };
 
   useEffect(() => { void loadCourses(); }, [page, filterLevel, filterPublished]);
+
+  useEffect(() => {
+    let disposed = false;
+    void listContentAgentJobs()
+      .then(({ jobs }) => {
+        if (disposed) return;
+        const resumableJob = jobs.find(
+          (job) =>
+            isContentAgentJobActive(job.status) ||
+            job.status === "preview_ready",
+        );
+        if (resumableJob) {
+          setContentAgentJob(resumableJob);
+          setShowContentAgentDrawer(true);
+        }
+      })
+      .catch(() => {
+        // Course management remains available when the optional agent API is disabled.
+      });
+    return () => {
+      disposed = true;
+    };
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,6 +200,25 @@ export const CoursesPage = () => {
             onClick={() => setShowImport(true)}
           >
             {t.courses.importData}
+          </button>
+          <button
+            className="ghost-button content-agent-launch-button"
+            onClick={() => {
+              if (
+                contentAgentJob &&
+                (isContentAgentJobActive(contentAgentJob.status) ||
+                  contentAgentJob.status === "preview_ready" ||
+                  contentAgentJob.status === "failed" ||
+                  contentAgentJob.status === "cancelled")
+              ) {
+                setShowContentAgentDrawer(true);
+              } else {
+                setShowContentAgent(true);
+              }
+            }}
+          >
+            <Sparkles aria-hidden="true" size={16} />
+            {t.contentAgent.generateWithAgent}
           </button>
           <button
             className="primary-button"
@@ -313,6 +369,29 @@ export const CoursesPage = () => {
         <CourseImportModal
           onClose={() => setShowImport(false)}
           onImported={() => { void loadCourses(); }}
+        />
+      )}
+
+      {showContentAgent && (
+        <ContentAgentModal
+          onClose={() => setShowContentAgent(false)}
+          onJobCreated={(job) => {
+            setContentAgentJob(job);
+            setShowContentAgent(false);
+            setShowContentAgentDrawer(true);
+          }}
+        />
+      )}
+
+      {showContentAgentDrawer && contentAgentJob && (
+        <ContentAgentDrawer
+          initialJob={contentAgentJob}
+          jobId={contentAgentJob.id}
+          onApplied={(job) => {
+            setContentAgentJob(job);
+            void loadCourses();
+          }}
+          onClose={() => setShowContentAgentDrawer(false)}
         />
       )}
     </div>
