@@ -263,8 +263,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                 </div>
                 <div className="panel-inner" style={{ textAlign: 'center' }}>
                   <div className="stat-label">Streak</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-2)' }}>0 days</div>
-                  <div className="table-sub" style={{ fontSize: 10 }}>Coming soon</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-2)' }}>—</div>
                 </div>
                 <div className="panel-inner" style={{ textAlign: 'center' }}>
                   <div className="stat-label">Khóa học</div>

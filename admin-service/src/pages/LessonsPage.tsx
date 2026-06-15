@@ -150,12 +150,8 @@ export const LessonsPage = () => {
   const handleEditExercises = (lesson: LessonItem) => {
     const cId = paramCourseId || unitCourseMap.get(lesson.unit_id) || "";
     const uId = paramUnitId || lesson.unit_id;
-    if (cId && uId) {
-      navigate(`/admin/courses/${cId}/units/${uId}/lessons/${lesson.id}/exercises`);
-    } else {
-      // Fallback if we don't have enough context
-      navigate(`/admin/courses/_/units/${uId}/lessons/${lesson.id}/exercises`);
-    }
+    // Use "_" as placeholder courseId when not available; LessonExercisesPage handles it
+    navigate(`/admin/courses/${cId || "_"}/units/${uId}/lessons/${lesson.id}/exercises`);
   };
 
   const handleSave = async (e: React.FormEvent) => {
