@@ -19,6 +19,10 @@ BACKEND_SERVICE_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_SERVICE_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_SERVICE_ROOT))
 
+# Force DEBUG=False before app settings are imported so that production-only
+# guards do not activate in tests and settings validation always uses safe defaults.
+os.environ["DEBUG"] = "false"
+
 # Keep tests isolated from local/prod env-switch state.
 # Using APP_ENV=testing ensures production-only middleware (e.g., TrustedHost)
 # does not break ASGI test client requests to http://test.
@@ -50,6 +54,17 @@ TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
     "postgresql+asyncpg://lexilingo:lexilingo_pass@localhost:5432/lexilingo_test"
 )
+
+# Safety guard: refuse to wipe a database whose name does not end with _test.
+# This prevents an accidental misconfigured TEST_DATABASE_URL from destroying
+# a production or development database.
+_db_name = TEST_DATABASE_URL.rstrip("/").rsplit("/", 1)[-1]
+if not _db_name.endswith("_test"):
+    raise RuntimeError(
+        f"TEST_DATABASE_URL database name '{_db_name}' does not end with '_test'. "
+        "Refusing to drop/recreate schema to protect non-test databases. "
+        "Set TEST_DATABASE_URL to a database whose name ends with '_test'."
+    )
 
 
 async def _reset_public_schema(engine) -> None:
