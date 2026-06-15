@@ -515,7 +515,7 @@ git commit -m "feat: complete game sessions from Flutter"
 - Modify: `flutter-app/lib/features/games/presentation/screens/game_result_screen.dart`
 - Create: `flutter-app/test/features/games/presentation/screens/game_completion_test.dart`
 
-- [ ] Add widget tests that finish every game and verify the submitted answer payload.
+- [x] Add widget tests that finish every game and verify the submitted answer payload.
 - [x] Remove client-computed XP as a displayed fallback.
 - [x] Result behavior:
 
@@ -527,14 +527,14 @@ Already awarded: show the original server result without resubmitting.
 
 - [x] For delayed transitions, retain and cancel `Timer` instances in `dispose`, or guard callbacks with `mounted`.
 - [x] Prevent navigation or setState calls after disposal.
-- [ ] Run:
+- [x] Run:
 
 ```bash
 cd flutter-app
 flutter test test/features/games/presentation/screens/game_completion_test.dart
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add flutter-app/lib/features/games/presentation/screens flutter-app/test/features/games/presentation/screens/game_completion_test.dart
@@ -551,12 +551,12 @@ git commit -m "fix: submit truthful results for every game"
 - Reuse: `flutter-app/lib/features/voice/data/datasources/voice_remote_datasource.dart`
 - Create: `flutter-app/test/features/games/data/game_pronunciation_service_test.dart`
 
-- [ ] Add tests for backend audio URL, AI TTS fallback, synthesis failure, and play-count handling.
-- [ ] Prefer a supplied game `audio_url`.
-- [ ] If absent, synthesize through the existing voice datasource and AI API client.
+- [x] Add tests for backend audio URL, AI TTS fallback, synthesis failure, and play-count handling.
+- [x] Prefer a supplied game `audio_url`.
+- [x] If absent, synthesize through the existing voice datasource and AI API client.
 - [x] Decrement remaining plays only after audio begins successfully.
-- [ ] Expose a retryable audio error without blocking the rest of the game.
-- [ ] Run:
+- [x] Expose a retryable audio error without blocking the rest of the game.
+- [x] Run:
 
 ```bash
 cd flutter-app
@@ -564,7 +564,7 @@ flutter test test/features/games/data/game_pronunciation_service_test.dart
 flutter analyze lib/features/games
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add flutter-app/lib/features/games flutter-app/test/features/games/data/game_pronunciation_service_test.dart
@@ -582,7 +582,7 @@ git commit -m "feat: add reliable spelling bee pronunciation"
 - Reuse: `flutter-app/lib/core/widgets/error_widget.dart`
 - Create: `flutter-app/test/features/games/presentation/screens/game_load_state_test.dart`
 
-- [ ] Add widget tests for loading, loaded, empty payload, network error, malformed payload, and retry.
+- [x] Add widget tests for loading, loaded, empty payload, network error, malformed payload, and retry.
 - [x] Stop using `_gameLoaded == false` as a permanent spinner condition after a failed request.
 - [x] Render:
 
@@ -593,15 +593,15 @@ empty -> localized empty state and retry/back action
 ready -> game content
 ```
 
-- [ ] Keep one load operation state per active screen so stale provider errors do not leak between games.
-- [ ] Run:
+- [x] Keep one load operation state per active screen so stale provider errors do not leak between games.
+- [x] Run:
 
 ```bash
 cd flutter-app
 flutter test test/features/games/presentation/screens/game_load_state_test.dart
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add flutter-app/lib/features/games/presentation flutter-app/test/features/games/presentation/screens/game_load_state_test.dart
@@ -618,16 +618,16 @@ git commit -m "fix: add retryable game loading states"
 - Modify: `flutter-app/assets/i18n/vi.json`
 - Create: `flutter-app/test/features/games/presentation/screens/game_accessibility_test.dart`
 
-- [ ] Replace tap-only `GestureDetector` controls with semantic buttons, `InkWell`, or `Semantics(button: true)`.
-- [ ] Give controls labels, selected/disabled state, and adequate touch targets.
-- [ ] Add keyboard focus/activation for web and desktop where applicable.
-- [ ] Respect `MediaQuery.disableAnimations` and accessible navigation settings for confetti and animated transitions.
-- [ ] Ensure narrow screens do not overflow and wide screens do not stretch game content excessively.
-- [ ] Use visible focus and sufficient contrast for correct, incorrect, selected, and disabled states.
-- [ ] Localize every new status, error, retry, and award message in English and Vietnamese.
-- [ ] Remove or hide the hardcoded daily challenge until it has a real persisted backend source; do not present demo state as user progress.
-- [ ] Add semantics tests and layout tests at representative widths.
-- [ ] Run:
+- [x] Replace tap-only `GestureDetector` controls with semantic buttons, `InkWell`, or `Semantics(button: true)`.
+- [x] Give controls labels, selected/disabled state, and adequate touch targets.
+- [x] Add keyboard focus/activation for web and desktop where applicable.
+- [x] Respect `MediaQuery.disableAnimations` and accessible navigation settings for confetti and animated transitions.
+- [x] Ensure narrow screens do not overflow and wide screens do not stretch game content excessively.
+- [x] Use visible focus and sufficient contrast for correct, incorrect, selected, and disabled states.
+- [x] Localize every new status, error, retry, and award message in English and Vietnamese.
+- [x] Remove or hide the hardcoded daily challenge until it has a real persisted backend source; do not present demo state as user progress.
+- [x] Add semantics tests and layout tests at representative widths.
+- [x] Run:
 
 ```bash
 cd flutter-app
@@ -635,7 +635,7 @@ flutter test test/features/games/presentation/screens/game_accessibility_test.da
 flutter analyze lib/features/games
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```bash
 git add flutter-app/lib/features/games flutter-app/assets/i18n flutter-app/test/features/games/presentation/screens/game_accessibility_test.dart
