@@ -704,7 +704,7 @@ Expected: PASS.
 - Modify: `admin-service/src/components/content-agent/ContentAgentModal.test.tsx`
 - Modify: `admin-service/src/components/content-agent/ContentAgentDrawer.test.tsx`
 
-- [ ] **Step 1: Write failing UI tests**
+- [x] **Step 1: Write failing UI tests**
 
 Cover loading/error/empty catalog states, approved source selection, disabled
 inactive snapshots, license/version/count badges, upload attestation, and apply
@@ -721,13 +721,13 @@ GET /api/v1/admin/content-agent/sources
 The backend authenticates admin users and returns sanitized AI catalog data.
 Source sync remains an operator CLI action in this release.
 
-- [ ] **Step 3: Replace hard-coded source options**
+- [x] **Step 3: Replace hard-coded source options**
 
 The modal loads the catalog, preselects enabled core lexical snapshots, and
 submits source IDs. Display source version, license, record count, last sync,
 and status.
 
-- [ ] **Step 4: Add upload attestation**
+- [x] **Step 4: Add upload attestation**
 
 Require a checkbox confirming the administrator owns the upload or has rights
 to use it commercially.
@@ -752,12 +752,12 @@ Expected: PASS.
 - Modify: `ai-service/.gitignore`
 - Create: `docs/runbooks/licensed-content-etl.md`
 
-- [ ] **Step 1: Add persistent volume**
+- [x] **Step 1: Add persistent volume**
 
 Mount `content_etl_data:/data/content-etl` into the AI service in development
 and production Compose. Do not mount this path into backend/admin containers.
 
-- [ ] **Step 2: Document installation**
+- [x] **Step 2: Document installation**
 
 ```bash
 cd ai-service
@@ -776,7 +776,7 @@ pnpm install --frozen-lockfile
 pnpm build:check
 ```
 
-- [ ] **Step 3: Document production activation**
+- [x] **Step 3: Document production activation**
 
 1. Pin all enabled source refs.
 2. Back up PostgreSQL and `/data/content-etl`.
@@ -787,7 +787,7 @@ pnpm build:check
 7. Apply only after preview validation has zero blocking errors.
 8. Keep large audio sources disabled until storage and attribution review pass.
 
-- [ ] **Step 4: Add rollback instructions**
+- [x] **Step 4: Add rollback instructions**
 
 Deactivate a bad snapshot by repointing `active/<source>.json` to the previous
 approved version. Existing jobs retain their pinned snapshot. Database apply
