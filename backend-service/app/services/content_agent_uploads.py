@@ -6,7 +6,8 @@ import csv
 import hashlib
 import io
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 
 from pydantic import ValidationError
@@ -24,6 +25,9 @@ class ParsedContentUpload:
     checksum: str
     records: list[dict]
     errors: list[str]
+    schema_version: int = 1
+    rights_confirmed: bool = False
+    rights_confirmed_at: datetime | None = None
 
 
 def _normalized_payload(row: dict, row_number: int) -> dict:
@@ -56,7 +60,25 @@ def _normalized_payload(row: dict, row_number: int) -> dict:
     }
 
 
-def parse_content_upload(filename: str, content: bytes) -> ParsedContentUpload:
+def parse_content_upload(
+    filename: str,
+    content: bytes,
+    *,
+    rights_confirmed: bool = False,
+) -> ParsedContentUpload:
+    """Parse and validate an admin content upload.
+
+    Parameters
+    ----------
+    filename:
+        Original filename (used to detect format from extension).
+    content:
+        Raw file bytes (max 5 MB).
+    rights_confirmed:
+        Must be ``True`` for uploads that will be used in ETL jobs.
+        When ``False`` the parsed result has ``rights_confirmed=False``
+        which will cause the route to reject the upload with HTTP 422.
+    """
     if len(content) > MAX_UPLOAD_BYTES:
         raise ValueError("Upload exceeds the 5 MB limit")
 
@@ -107,9 +129,13 @@ def parse_content_upload(filename: str, content: bytes) -> ParsedContentUpload:
             errors.append("Additional validation errors were omitted")
             break
 
+    confirmed_at = datetime.now(UTC) if rights_confirmed else None
     return ParsedContentUpload(
         filename=Path(filename).name,
         checksum=checksum,
         records=records,
         errors=errors,
+        schema_version=1,
+        rights_confirmed=rights_confirmed,
+        rights_confirmed_at=confirmed_at,
     )

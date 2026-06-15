@@ -59,6 +59,8 @@ class ExerciseMix(BaseModel):
 class ContentAgentJobCreate(BaseModel):
     levels: list[CEFRLevel] = Field(min_length=1, max_length=6)
     sources: list[str] = Field(default_factory=lambda: ["existing_cefr"], min_length=1)
+    # source_ids: resolved snapshot IDs pinned at job creation (populated by backend)
+    source_ids: list[str] = Field(default_factory=list)
     upload_id: uuid.UUID | None = None
     title_focus: str | None = Field(default=None, max_length=255)
     topic_focus: list[str] = Field(default_factory=list, max_length=20)

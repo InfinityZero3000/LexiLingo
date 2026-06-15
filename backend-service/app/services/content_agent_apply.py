@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-import unicodedata
 import uuid
 from datetime import UTC, datetime
 
@@ -16,23 +14,14 @@ from app.models.content_agent import (
     LessonVocabularyItem,
 )
 from app.models.course import Course, Lesson, Unit
-from app.models.vocabulary import VocabularyItem
 from app.schemas.content_agent import ContentAgentArtifact, VocabularyArtifact
 from app.services.content_agent_jobs import ContentAgentJobService
+from app.services.content_agent_validation import validate_artifact
+from app.services.vocabulary_catalog import normalize_word, upsert_vocabulary_batch
 
-
-def normalize_vocabulary_word(word: str) -> str:
-    normalized = unicodedata.normalize("NFKC", word)
-    normalized = (
-        normalized.casefold()
-        .replace("’", "'")
-        .replace("‘", "'")
-        .replace("–", "-")
-        .replace("—", "-")
-        .replace("‑", "-")
-    )
-    normalized = re.sub(r"\s+", " ", normalized).strip()
-    return normalized
+_STORABLE_LICENSE_MODES = frozenset(
+    {"generated", "approved_dataset", "admin_owned", "public_domain_verified"}
+)
 
 
 def _translation_payload(vocabulary: VocabularyArtifact) -> dict | None:
@@ -44,22 +33,13 @@ def _translation_payload(vocabulary: VocabularyArtifact) -> dict | None:
     return payload or None
 
 
-def _validate_source_policy(artifact: ContentAgentArtifact) -> None:
-    allowed_modes = {
-        "generated",
-        "approved_dataset",
-        "admin_owned",
-        "public_domain_verified",
+def _course_tags(course_level: str, source_topics: list[str]) -> dict:
+    topics = list(dict.fromkeys(t for t in source_topics if t))
+    return {
+        "categories": ["cefr", course_level],
+        "source": ["content-agent"],
+        "topics": topics or ["general"],
     }
-    for course in artifact.courses:
-        for unit in course.units:
-            for lesson in unit.lessons:
-                for vocabulary in lesson.vocabulary:
-                    if vocabulary.license_mode not in allowed_modes:
-                        raise ValueError(
-                            "Artifact contains vocabulary from a non-storable "
-                            f"source mode: {vocabulary.license_mode}"
-                        )
 
 
 class ContentAgentApplyService:
@@ -82,29 +62,62 @@ class ContentAgentApplyService:
         if not job.artifact:
             raise ValueError("Job has no preview artifact")
 
+        # --- Pure artifact validation gate -----------------------------------
+        report = validate_artifact(job.artifact)
+        if report.is_blocking:
+            codes = ", ".join(e.code for e in report.blocking_errors)
+            raise ValueError(f"Artifact failed validation gates: {codes}")
+
         artifact = ContentAgentArtifact.model_validate(job.artifact)
         if artifact.quality.blocking_errors:
             raise ValueError("Artifact has blocking validation errors")
-        _validate_source_policy(artifact)
+
+        # --- Gather all vocab items for batch upsert -------------------------
+        all_vocab_items: list[dict] = []
+        for course_data in artifact.courses:
+            for unit_data in course_data.units:
+                for lesson_data in unit_data.lessons:
+                    for vocab_data in lesson_data.vocabulary:
+                        if vocab_data.license_mode not in _STORABLE_LICENSE_MODES:
+                            raise ValueError(
+                                "Artifact contains vocabulary from a non-storable "
+                                f"source mode: {vocab_data.license_mode}"
+                            )
+                        all_vocab_items.append(
+                            {
+                                "word": vocab_data.word,
+                                "part_of_speech": vocab_data.part_of_speech,
+                                "definition": vocab_data.definition,
+                                "translation": _translation_payload(vocab_data),
+                                "pronunciation": vocab_data.pronunciation,
+                                "audio_url": vocab_data.audio_url,
+                                "difficulty_level": vocab_data.difficulty_level,
+                                "topic": vocab_data.topic,
+                                "source_name": vocab_data.source_name,
+                            }
+                        )
 
         await ContentAgentJobService.transition(db, job, "applying", percent=100)
-        created_course_ids: list[uuid.UUID] = []
-        existing_vocabulary = await db.scalars(select(VocabularyItem))
-        vocabulary_index = {
-            (
-                normalize_vocabulary_word(vocabulary.word),
-                str(vocabulary.part_of_speech),
-            ): vocabulary
-            for vocabulary in existing_vocabulary
-        }
 
+        # Batch upsert all vocabulary, get stable word→id map
+        vocab_identity = await upsert_vocabulary_batch(db, all_vocab_items)
+
+        created_course_ids: list[uuid.UUID] = []
         for course_data in artifact.courses:
+            # Collect unique topics across all lessons in the course
+            course_topics: list[str] = []
+            for unit_data in course_data.units:
+                for lesson_data in unit_data.lessons:
+                    for vocab_data in lesson_data.vocabulary:
+                        if vocab_data.topic not in course_topics:
+                            course_topics.append(vocab_data.topic)
+
             course = Course(
                 title=course_data.title,
                 description=course_data.description,
                 language=course_data.language,
                 level=course_data.level,
-                tags=list(dict.fromkeys([*course_data.tags, "generated", "content-agent"])),
+                tags=_course_tags(course_data.level, course_topics),
                 is_published=False,
                 total_lessons=sum(len(unit.lessons) for unit in course_data.units),
                 total_xp=sum(
@@ -161,88 +174,50 @@ class ContentAgentApplyService:
                         xp_reward=lesson_data.xp_reward,
                         total_exercises=len(exercises),
                         content={
-                            "exercises": exercises,
-                            "version": 1,
+                            "version": 2,
                             "generated_by": "cefr-content-agent",
+                            "source_job_id": str(job.id),
+                            "exercises": exercises,
                         },
                     )
                     db.add(lesson)
                     await db.flush()
 
-                    for vocabulary_order, vocabulary_data in enumerate(
-                        lesson_data.vocabulary
-                    ):
-                        normalized = normalize_vocabulary_word(vocabulary_data.word)
-                        vocabulary_key = (
-                            normalized,
-                            vocabulary_data.part_of_speech,
+                    for vocab_order, vocab_data in enumerate(lesson_data.vocabulary):
+                        key = (
+                            normalize_word(vocab_data.word),
+                            vocab_data.part_of_speech,
                         )
-                        vocabulary = vocabulary_index.get(vocabulary_key)
-                        if vocabulary is None:
-                            vocabulary = VocabularyItem(
-                                word=normalized,
-                                definition=vocabulary_data.definition,
-                                translation=_translation_payload(vocabulary_data),
-                                pronunciation=vocabulary_data.pronunciation,
-                                audio_url=vocabulary_data.audio_url,
-                                part_of_speech=vocabulary_data.part_of_speech,
-                                difficulty_level=vocabulary_data.difficulty_level,
-                                course_id=course.id,
-                                lesson_id=lesson.id,
-                                tags={
-                                    "source": [
-                                        "content-agent",
-                                        vocabulary_data.source_name,
-                                    ],
-                                    "topic": [vocabulary_data.topic],
-                                },
-                            )
-                            db.add(vocabulary)
-                            await db.flush()
-                            vocabulary_index[vocabulary_key] = vocabulary
-                        else:
-                            if not vocabulary.definition.strip():
-                                vocabulary.definition = vocabulary_data.definition
-                            if vocabulary.translation is None:
-                                vocabulary.translation = _translation_payload(
-                                    vocabulary_data
-                                )
-                            if not vocabulary.pronunciation:
-                                vocabulary.pronunciation = (
-                                    vocabulary_data.pronunciation
-                                )
-                            if not vocabulary.audio_url:
-                                vocabulary.audio_url = vocabulary_data.audio_url
+                        vocab_id = vocab_identity[key]
 
                         membership_exists = await db.scalar(
                             select(LessonVocabularyItem.id).where(
                                 LessonVocabularyItem.lesson_id == lesson.id,
-                                LessonVocabularyItem.vocabulary_id == vocabulary.id,
+                                LessonVocabularyItem.vocabulary_id == vocab_id,
                             )
                         )
                         if membership_exists is None:
                             db.add(
                                 LessonVocabularyItem(
                                     lesson_id=lesson.id,
-                                    vocabulary_id=vocabulary.id,
+                                    vocabulary_id=vocab_id,
                                     source_job_id=job.id,
-                                    order_index=vocabulary_order,
+                                    order_index=vocab_order,
                                 )
                             )
                         db.add(
                             ContentProvenance(
                                 job_id=job.id,
                                 entity_type="vocabulary",
-                                entity_id=vocabulary.id,
-                                source_name=vocabulary_data.source_name,
-                                source_url=vocabulary_data.source_url,
-                                license_mode=vocabulary_data.license_mode,
-                                source_checksum=vocabulary_data.source_checksum,
-                                is_generated=vocabulary_data.license_mode
-                                == "generated",
+                                entity_id=vocab_id,
+                                source_name=vocab_data.source_name,
+                                source_url=vocab_data.source_url,
+                                license_mode=vocab_data.license_mode,
+                                source_checksum=vocab_data.source_checksum,
+                                is_generated=vocab_data.license_mode == "generated",
                                 metadata_json={
                                     "lesson_id": str(lesson.id),
-                                    "topic": vocabulary_data.topic,
+                                    "topic": vocab_data.topic,
                                 },
                             )
                         )

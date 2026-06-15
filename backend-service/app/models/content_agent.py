@@ -30,6 +30,10 @@ class ContentAgentUpload(Base):
     records: Mapped[list] = mapped_column(PortableJSON, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=_utcnow, nullable=False)
+    # v2 ownership fields
+    rights_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    rights_confirmed_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
+    uploader_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
 
     def __repr__(self) -> str:
         return f"<ContentAgentUpload {self.filename} rows={self.row_count}>"
@@ -136,6 +140,7 @@ class ContentProvenance(Base):
     entity_id: Mapped[uuid.UUID] = mapped_column(GUID(), nullable=False, index=True)
     source_name: Mapped[str] = mapped_column(String(100), nullable=False)
     source_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    # v1 backward-compatible fields (kept for existing rows)
     license_mode: Mapped[str] = mapped_column(String(64), nullable=False)
     source_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_generated: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -143,6 +148,17 @@ class ContentProvenance(Base):
         "metadata", PortableJSON, default=dict, nullable=False
     )
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=_utcnow, nullable=False)
+    # v2 provenance fields (nullable — existing rows remain valid)
+    source_version: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    license_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    license_url: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    attribution_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    record_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    lineage: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
+    content_usage: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    rights_confirmed_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
+    rights_statement_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
 
     def __repr__(self) -> str:
         return f"<ContentProvenance {self.entity_type}/{self.entity_id}>"
