@@ -4,74 +4,23 @@ import { ShieldCheck, Sparkles, Upload, X } from "lucide-react";
 import {
   CEFR_LEVELS,
   createContentAgentJob,
+  getSourceCatalog,
   uploadContentAgentFile,
   type CefrLevel,
   type ContentAgentJob,
   type ContentAgentJobCreate,
-  type ContentAgentLicenseMode,
   type ContentAgentSource,
+  type SourceSnapshot,
 } from "../../lib/contentAgentApi";
 import { useI18n } from "../../lib/i18n";
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
-type SelectableSource = Exclude<ContentAgentSource, "admin_upload">;
-
-type SourceOption = {
-  id: SelectableSource;
-  label: string;
-  mode: ContentAgentLicenseMode;
-  disabled?: boolean;
-};
-
-export const CONTENT_AGENT_SOURCE_OPTIONS: SourceOption[] = [
-  {
-    id: "oewn",
-    label: "Open English WordNet",
-    mode: "approved_dataset",
-    disabled: true,
-  },
-  {
-    id: "cmudict",
-    label: "CMU Pronouncing Dictionary",
-    mode: "approved_dataset",
-    disabled: true,
-  },
-  {
-    id: "cefr_j",
-    label: "CEFR-J Open Language Profile",
-    mode: "label_only",
-    disabled: true,
-  },
-  {
-    id: "wikidata",
-    label: "Wikidata Topics",
-    mode: "approved_dataset",
-    disabled: true,
-  },
-  {
-    id: "tatoeba",
-    label: "Tatoeba Sentences",
-    mode: "approved_dataset",
-    disabled: true,
-  },
-  {
-    id: "librispeech",
-    label: "LibriSpeech",
-    mode: "approved_dataset",
-    disabled: true,
-  },
-  {
-    id: "common_voice",
-    label: "Mozilla Common Voice",
-    mode: "approved_dataset",
-    disabled: true,
-  },
-];
+const CORE_LEXICAL_SOURCES: readonly string[] = ["oewn", "cmudict", "cefr_j", "wikidata"];
 
 export type ContentAgentFormState = {
   levels: CefrLevel[];
-  sources: SelectableSource[];
+  sources: string[];
   courseTitle: string;
   topicFocus: string;
   unitsPerCourse: number;
@@ -84,6 +33,7 @@ export type ContentAgentFormState = {
   previewOnly: true;
   acknowledgedDraft: boolean;
   revision: boolean;
+  uploadAttestation: boolean;
 };
 
 export const createDefaultContentAgentForm = (): ContentAgentFormState => ({
@@ -101,6 +51,7 @@ export const createDefaultContentAgentForm = (): ContentAgentFormState => ({
   previewOnly: true,
   acknowledgedDraft: false,
   revision: false,
+  uploadAttestation: false,
 });
 
 export const validateContentAgentUpload = (file: File): string | null => {
@@ -124,6 +75,9 @@ export const validateContentAgentForm = (
   if (form.levels.length === 0) return "Select at least one CEFR level.";
   if (form.sources.length === 0 && !hasUpload) {
     return "Select at least one approved source or upload a file.";
+  }
+  if (hasUpload && !form.uploadAttestation) {
+    return "You must confirm rights before uploading";
   }
   if (
     form.vocabularyPerLesson < 8 ||
@@ -158,28 +112,6 @@ export const validateContentAgentForm = (
   return null;
 };
 
-const sourceModeLabel = (
-  mode: ContentAgentLicenseMode,
-  labels: {
-    verified: string;
-    metadataOnly: string;
-    labelOnly: string;
-    pendingLicense: string;
-  },
-) => {
-  switch (mode) {
-    case "approved_dataset":
-    case "public_domain_verified":
-      return labels.verified;
-    case "metadata_only":
-      return labels.metadataOnly;
-    case "label_only":
-      return labels.labelOnly;
-    default:
-      return labels.pendingLicense;
-  }
-};
-
 type ContentAgentModalProps = {
   onClose: () => void;
   onJobCreated: (job: ContentAgentJob) => void;
@@ -198,6 +130,45 @@ export function ContentAgentModal({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [catalog, setCatalog] = useState<SourceSnapshot[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let disposed = false;
+    setCatalogLoading(true);
+    setCatalogError(null);
+
+    getSourceCatalog()
+      .then((snapshots) => {
+        if (disposed) return;
+        setCatalog(snapshots);
+        const preselected = snapshots
+          .filter(
+            (s) =>
+              s.status === "approved" &&
+              s.enabled &&
+              CORE_LEXICAL_SOURCES.includes(s.source_id),
+          )
+          .map((s) => s.source_id);
+        setForm((current) => ({ ...current, sources: preselected }));
+      })
+      .catch((err) => {
+        if (!disposed) {
+          setCatalogError(
+            err instanceof Error ? err.message : t.contentAgent.sourceError,
+          );
+        }
+      })
+      .finally(() => {
+        if (!disposed) setCatalogLoading(false);
+      });
+
+    return () => {
+      disposed = true;
+    };
+  }, [t.contentAgent.sourceError]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !submitting) onClose();
@@ -215,12 +186,12 @@ export function ContentAgentModal({
     }));
   };
 
-  const toggleSource = (source: SelectableSource) => {
+  const toggleSource = (sourceId: string) => {
     setForm((current) => ({
       ...current,
-      sources: current.sources.includes(source)
-        ? current.sources.filter((item) => item !== source)
-        : [...current.sources, source],
+      sources: current.sources.includes(sourceId)
+        ? current.sources.filter((item) => item !== sourceId)
+        : [...current.sources, sourceId],
     }));
   };
 
@@ -244,7 +215,7 @@ export function ContentAgentModal({
     setError(null);
     try {
       const uploaded = upload ? await uploadContentAgentFile(upload) : null;
-      const sources: ContentAgentSource[] = [...form.sources];
+      const sources: ContentAgentSource[] = form.sources as ContentAgentSource[];
       if (uploaded && !sources.includes("admin_upload")) {
         sources.push("admin_upload");
       }
@@ -286,11 +257,13 @@ export function ContentAgentModal({
     }
   };
 
-  const modeLabels = {
-    verified: t.contentAgent.verified,
-    metadataOnly: t.contentAgent.metadataOnly,
-    labelOnly: t.contentAgent.labelOnly,
-    pendingLicense: t.contentAgent.pendingLicense,
+  const formatLastSync = (lastSyncAt: string | null): string => {
+    if (!lastSyncAt) return t.common.never;
+    try {
+      return new Date(lastSyncAt).toLocaleDateString();
+    } catch {
+      return lastSyncAt;
+    }
   };
 
   return (
@@ -361,39 +334,70 @@ export function ContentAgentModal({
           <section className="content-agent-form__section">
             <div className="content-agent-section-heading">
               <div>
-                <h4>{t.contentAgent.sources}</h4>
+                <h4>{t.contentAgent.sourceCatalog}</h4>
                 <p>{t.contentAgent.sourcesHelp}</p>
               </div>
               <ShieldCheck aria-hidden="true" size={18} />
             </div>
             <div className="content-agent-sources">
-              {CONTENT_AGENT_SOURCE_OPTIONS.map((source) => {
-                const checked = form.sources.includes(source.id);
-                return (
-                  <label
-                    className={`content-agent-source ${
-                      checked ? "selected" : ""
-                    } ${source.disabled ? "disabled" : ""}`}
-                    key={source.id}
-                  >
-                    <input
-                      checked={checked}
-                      disabled={source.disabled}
-                      onChange={() => toggleSource(source.id)}
-                      type="checkbox"
-                    />
-                    <span className="content-agent-source__copy">
-                      <strong>{source.label}</strong>
-                      <small>{sourceModeLabel(source.mode, modeLabels)}</small>
-                    </span>
-                    <span
-                      className={`content-agent-policy-badge ${source.mode}`}
+              {catalogLoading && (
+                <div className="content-agent-source-status">
+                  <span className="spinner" aria-hidden="true" />
+                  {t.contentAgent.sourceLoading}
+                </div>
+              )}
+              {!catalogLoading && catalogError && (
+                <div className="form-error">{catalogError}</div>
+              )}
+              {!catalogLoading && !catalogError && catalog.length === 0 && (
+                <div className="content-agent-source-status">
+                  {t.contentAgent.sourceEmpty}
+                </div>
+              )}
+              {!catalogLoading &&
+                !catalogError &&
+                catalog.map((snapshot) => {
+                  const selectable =
+                    snapshot.status === "approved" && snapshot.enabled;
+                  const checked = form.sources.includes(snapshot.source_id);
+                  return (
+                    <label
+                      className={`content-agent-source ${checked ? "selected" : ""} ${!selectable ? "disabled" : ""}`}
+                      key={snapshot.source_id}
+                      title={
+                        !selectable
+                          ? t.contentAgent.snapshotNotApproved
+                          : undefined
+                      }
                     >
-                      {sourceModeLabel(source.mode, modeLabels)}
-                    </span>
-                  </label>
-                );
-              })}
+                      <input
+                        checked={checked}
+                        disabled={!selectable}
+                        onChange={() => toggleSource(snapshot.source_id)}
+                        type="checkbox"
+                      />
+                      <span className="content-agent-source__copy">
+                        <strong>{snapshot.source_name}</strong>
+                        <small>
+                          {t.contentAgent.snapshotVersion} {snapshot.version}
+                          {" · "}
+                          {t.contentAgent.snapshotLicense}: {snapshot.license_id}
+                          {" · "}
+                          {snapshot.record_count.toLocaleString()}{" "}
+                          {t.contentAgent.snapshotRecords}
+                          {" · "}
+                          {t.contentAgent.snapshotLastSync}:{" "}
+                          {formatLastSync(snapshot.last_sync_at)}
+                        </small>
+                      </span>
+                      <span
+                        className={`content-agent-policy-badge ${snapshot.status}`}
+                      >
+                        {snapshot.status}
+                      </span>
+                    </label>
+                  );
+                })}
             </div>
           </section>
 
@@ -425,6 +429,21 @@ export function ContentAgentModal({
               />
             </label>
             {uploadError && <div className="form-error">{uploadError}</div>}
+            {upload && (
+              <label className="content-agent-acknowledgement">
+                <input
+                  checked={form.uploadAttestation}
+                  onChange={(event) =>
+                    setForm((current) => ({
+                      ...current,
+                      uploadAttestation: event.target.checked,
+                    }))
+                  }
+                  type="checkbox"
+                />
+                <span>{t.contentAgent.uploadAttestation}</span>
+              </label>
+            )}
           </section>
 
           <section className="content-agent-form__section">
