@@ -328,7 +328,7 @@ achievement progress
 
 - [x] Make `/games/sessions/{id}/complete` call this service with the server-computed base XP.
 - [x] Make generic `/xp/award` reject `source == "game"` and validate all allowed non-game sources.
-- [ ] Require `source_id` for all repeat-sensitive sources.
+- [x] Require `source_id` for all repeat-sensitive sources.
 - [x] Add a PostgreSQL partial unique index for non-null `(user_id, source, source_id)`.
 - [x] Before writing the migration, run:
 
@@ -653,10 +653,10 @@ git commit -m "fix: improve game accessibility and responsive states"
 - Modify: `backend-service/README.md`
 - Modify: `backend-service/Makefile` if present
 
-- [ ] Set `DEBUG=false` before application settings are imported in tests.
-- [ ] Require the configured test database name to end with `_test` before dropping or recreating schemas.
-- [ ] Document creation and teardown of `lexilingo_test`.
-- [ ] Add a repeatable test target that cannot point at production.
+- [x] Set `DEBUG=false` before application settings are imported in tests.
+- [x] Require the configured test database name to end with `_test` before dropping or recreating schemas.
+- [x] Document creation and teardown of `lexilingo_test`.
+- [x] Add a repeatable test target that cannot point at production.
 - [ ] Run:
 
 ```bash

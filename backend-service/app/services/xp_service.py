@@ -33,6 +33,9 @@ XP_SOURCE_CAPS = {
     "lesson": 50,
     "daily_challenge": 50,
 }
+# Sources where the same activity must never be awarded twice.
+# source_id is required for these to enforce idempotency via the DB partial unique index.
+REPEAT_SENSITIVE_SOURCES: frozenset[str] = frozenset({"game", "lesson", "daily_challenge"})
 
 
 @dataclass(frozen=True)
@@ -113,6 +116,11 @@ async def award_xp_transaction(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported XP source: {source}",
+        )
+    if source in REPEAT_SENSITIVE_SOURCES and not source_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"source_id is required for source '{source}' to prevent duplicate awards.",
         )
     if base_xp < 0 or base_xp > MAX_SINGLE_AWARD:
         raise HTTPException(
