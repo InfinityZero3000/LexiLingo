@@ -1,5 +1,6 @@
 import { apiFetch } from "./api";
 import { ENV } from "./env";
+import exerciseTypesContract from "../../../contracts/content-agent/exercise-types-v1.json";
 
 export type AdminResponse<T> = {
   success: boolean;
@@ -440,29 +441,11 @@ export const deleteUnit = async (id: string) =>
 // Exercise Types
 // ============================================================================
 
-export const UI_TYPES = [
-  "multiple_choice",
-  "true_or_false",
-  "fill_in_the_blank",
-  "arrange_the_sentence",
-  "translation_choice",
-  "dialogue_completion",
-  "collocation_choice",
-  "dictation",
-  "grammar_correction",
-  "image_based_choice",
-  "listen_and_choose",
-  "match_word_to_meaning",
-  "vocabulary_flashcard",
-  "pronunciation_practice",
-  "reading_comprehension",
-  "short_writing_answer",
-  "speaking_repeat",
-  "categorization",
-  "cognitive_fluidity",
-] as const;
+export type UiType = keyof typeof exerciseTypesContract.ui_type_to_type;
 
-export type UiType = typeof UI_TYPES[number];
+export const UI_TYPES = Object.keys(
+  exerciseTypesContract.ui_type_to_type,
+) as UiType[];
 
 export const UI_TYPE_LABELS: Record<UiType, string> = {
   multiple_choice: "Multiple Choice",
@@ -486,27 +469,10 @@ export const UI_TYPE_LABELS: Record<UiType, string> = {
   cognitive_fluidity: "Cognitive Fluidity",
 };
 
-export const UI_TYPE_TO_TYPE: Record<UiType, string> = {
-  multiple_choice: "multiple_choice",
-  collocation_choice: "multiple_choice",
-  image_based_choice: "multiple_choice",
-  listen_and_choose: "multiple_choice",
-  reading_comprehension: "multiple_choice",
-  vocabulary_flashcard: "multiple_choice",
-  true_or_false: "true_false",
-  fill_in_the_blank: "fill_blank",
-  dictation: "fill_blank",
-  short_writing_answer: "fill_blank",
-  dialogue_completion: "fill_blank",
-  grammar_correction: "fill_blank",
-  arrange_the_sentence: "reorder",
-  translation_choice: "translate",
-  speaking_repeat: "translate",
-  pronunciation_practice: "translate",
-  match_word_to_meaning: "matching",
-  cognitive_fluidity: "matching",
-  categorization: "matching",
-};
+export const UI_TYPE_TO_TYPE = exerciseTypesContract.ui_type_to_type as Record<
+  UiType,
+  string
+>;
 
 export type ExerciseOption = {
   id: string;

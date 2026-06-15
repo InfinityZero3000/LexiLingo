@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { DataTable } from "../components/DataTable";
 import {
-  GrammarItem,
-  QuestionItem,
-  TestExam,
+  type GrammarItem,
+  type QuestionItem,
+  type TestExam,
   createGrammar,
   createQuestion,
   createTestExam,
@@ -192,7 +192,10 @@ export const ContentLabPage = () => {
                 {
                   header: "Action",
                   render: (row) => (
-                    <button className="ghost-button small danger" onClick={() => deleteGrammar(row.id).then(loadAll)}>
+                    <button className="ghost-button small danger" onClick={() => {
+                      if (!confirm("Xóa grammar rule này?")) return;
+                      deleteGrammar(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                    }}>
                       Xóa
                     </button>
                   ),
@@ -251,7 +254,7 @@ export const ContentLabPage = () => {
                   header: "Prompt",
                   render: (row) => (
                     <div>
-                      <div className="table-title">{row.prompt.slice(0, 60)}...</div>
+                      <div className="table-title">{(row.prompt || "").length > 60 ? `${row.prompt.slice(0, 60)}…` : (row.prompt || "—")}</div>
                       <div className="table-sub">{row.question_type}</div>
                     </div>
                   )
@@ -264,7 +267,10 @@ export const ContentLabPage = () => {
                 {
                   header: "Action",
                   render: (row) => (
-                    <button className="ghost-button small danger" onClick={() => deleteQuestion(row.id).then(loadAll)}>
+                    <button className="ghost-button small danger" onClick={() => {
+                      if (!confirm("Xóa câu hỏi này?")) return;
+                      deleteQuestion(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                    }}>
                       Xóa
                     </button>
                   ),
@@ -344,7 +350,10 @@ export const ContentLabPage = () => {
                 {
                   header: "Action",
                   render: (row) => (
-                    <button className="ghost-button small danger" onClick={() => deleteTestExam(row.id).then(loadAll)}>
+                    <button className="ghost-button small danger" onClick={() => {
+                      if (!confirm("Xóa bài test này?")) return;
+                      deleteTestExam(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                    }}>
                       Xóa
                     </button>
                   ),
