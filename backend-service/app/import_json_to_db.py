@@ -13,17 +13,19 @@ from sqlalchemy.orm import sessionmaker
 from app.models.vocabulary import VocabularyItem, PartOfSpeech, DifficultyLevel
 from app.core.config import settings
 
-INPUT_FILE = "/tmp/vocabulary_import.json"
+INPUT_FILE = "/app/data/vocabulary_import.json"
 
 def guess_pos(word, defn):
     # Basic guessing from Anki info
-    if " v." in defn or " verb" in defn or word.startswith("to "):
+    # Remove Vietnamese "v.v." / "v. v." to prevent false verb matching on " v."
+    clean_defn = defn.replace("v.v.", "").replace("v. v.", "")
+    if " v." in clean_defn or " verb" in clean_defn or word.startswith("to "):
         return PartOfSpeech.VERB
-    if " adj." in defn or " adj " in defn:
+    if " adj." in clean_defn or " adj " in clean_defn:
         return PartOfSpeech.ADJECTIVE
-    if " adv." in defn or " adv " in defn:
+    if " adv." in clean_defn or " adv " in clean_defn:
         return PartOfSpeech.ADVERB
-    if " phrase" in defn or " idiom" in defn or " " in word:
+    if " phrase" in clean_defn or " idiom" in clean_defn or " " in word:
         return PartOfSpeech.PHRASE
     return PartOfSpeech.NOUN
 
@@ -56,8 +58,14 @@ async def main():
                 # Parse additional info
                 audios = item.get('audios', {})
                 images = item.get('images', '')
+                trans_dict = item.get('translation', {})
+                if not isinstance(trans_dict, dict):
+                    trans_dict = {}
+                if "vi" not in trans_dict or not trans_dict["vi"]:
+                    trans_dict["vi"] = defn
+
                 translation = {
-                    "vi": defn,
+                    **trans_dict,
                     "examples": [example] if example else [],
                     "images": images if images else [],
                     "audios": audios if audios else {}
@@ -71,6 +79,20 @@ async def main():
                 elif isinstance(audios, list) and audios:
                     audio_url = f"/media/{audios[0]}"
                 
+                # Get difficulty level from JSON or fall back to A1
+                level_str = item.get('difficulty_level', 'A1')
+                try:
+                    difficulty_level = DifficultyLevel(level_str)
+                except ValueError:
+                    difficulty_level = DifficultyLevel.A1
+
+                # Parse tags
+                tags_raw = item.get('tags', "general")
+                if isinstance(tags_raw, str):
+                    tags = [t.strip() for t in tags_raw.split(',') if t.strip()]
+                else:
+                    tags = tags_raw if isinstance(tags_raw, list) else ["general"]
+
                 db_item = dict(
                     id=uuid.uuid4(),
                     word=word,
@@ -79,16 +101,26 @@ async def main():
                     pronunciation=phonetic[:100] if phonetic else None,
                     audio_url=audio_url,
                     part_of_speech=guess_pos(word, defn),
-                    difficulty_level=DifficultyLevel.A1, # default placeholder
-                    tags=item.get('tags', ["general"])
+                    difficulty_level=difficulty_level,
+                    tags=tags
                 )
                 items.append(db_item)
             
             from sqlalchemy.dialects.postgresql import insert
             if items:
                 stmt = insert(VocabularyItem).values(items)
-                # Ignore duplicates based on word + part_of_speech
-                stmt = stmt.on_conflict_do_nothing(index_elements=['word', 'part_of_speech'])
+                # Update existing items with refined definitions, translations, levels, tags, etc.
+                stmt = stmt.on_conflict_do_update(
+                    index_elements=['word', 'part_of_speech'],
+                    set_={
+                        'definition': stmt.excluded.definition,
+                        'translation': stmt.excluded.translation,
+                        'pronunciation': stmt.excluded.pronunciation,
+                        'audio_url': stmt.excluded.audio_url,
+                        'difficulty_level': stmt.excluded.difficulty_level,
+                        'tags': stmt.excluded.tags
+                    }
+                )
                 await session.execute(stmt)
                 await session.commit()
             

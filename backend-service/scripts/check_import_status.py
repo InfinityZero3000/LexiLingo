@@ -12,10 +12,10 @@ from app.core.config import settings
 
 async def main():
     try:
-        with open("/app/vocabulary_import.json", "r", encoding="utf-8") as f:
+        with open("/app/data/vocabulary_import.json", "r", encoding="utf-8") as f:
             data = json.load(f)
     except FileNotFoundError:
-        print("Error: /app/vocabulary_import.json not found in the container.")
+        print("Error: /app/data/vocabulary_import.json not found in the container.")
         return
     except Exception as e:
         print(f"Error reading JSON: {e}")

@@ -244,6 +244,7 @@ services:
       - ./backend-service/app:/app/app
       - ./backend-service/alembic:/app/alembic
       - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+      - ./backend-service/data:/app/data
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips="*"
     networks:
       - lexilingo-network
