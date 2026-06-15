@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/games/data/services/game_pronunciation_service.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
@@ -24,7 +24,7 @@ class SpellingBeeScreen extends StatefulWidget {
 
 class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
   final TextEditingController _inputController = TextEditingController();
-  late AudioPlayer _audioPlayer;
+  late GamePronunciationService _pronunciationService;
 
   int _wordIndex = 0;
   int _playsLeft = 3;
@@ -32,14 +32,14 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
   bool _gameLoaded = false;
   bool _answered = false;
   bool _isCorrect = false;
-  bool _isPlaying = false;
   bool _isFinishing = false;
+  String? _audioErrorMessage;
   final Map<String, String> _submittedAnswers = {};
 
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
+    _pronunciationService = sl<GamePronunciationService>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<GamesProvider>().loadSpellingBee().then((_) {
         if (mounted) _initWord();
@@ -49,7 +49,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
+    _pronunciationService.dispose();
     _inputController.dispose();
     super.dispose();
   }
@@ -62,38 +62,32 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
       _playsLeft = game.words[_wordIndex].maxReplays;
       _answered = false;
       _isCorrect = false;
+      _audioErrorMessage = null;
       _inputController.clear();
     });
   }
 
   Future<void> _playAudio() async {
-    if (_playsLeft <= 0 || _isPlaying) return;
-    final game = context.read<GamesProvider>().spellingBee!;
+    if (_playsLeft <= 0 || _pronunciationService.isPlaying) return;
+    final game = context.read<GamesProvider>().spellingBee;
+    if (game == null) return;
     final word = game.words[_wordIndex];
-    final audioUrl = word.audioUrl;
-    setState(() => _isPlaying = true);
-    if (audioUrl == null || audioUrl.isEmpty) {
-      if (mounted) setState(() => _isPlaying = false);
-      return;
-    }
-    try {
-      await _audioPlayer.setUrl(audioUrl);
-      final playback = _audioPlayer.play();
-      await _audioPlayer.playerStateStream
-          .firstWhere((state) => state.playing)
-          .timeout(const Duration(seconds: 3));
-      if (mounted) setState(() => _playsLeft--);
-      await playback;
-    } catch (_) {
-      // Fallback: open with url_launcher if just_audio fails
-      final uri = Uri.tryParse(audioUrl);
-      if (uri != null && await canLaunchUrl(uri)) {
-        final launched = await launchUrl(uri);
-        if (launched && mounted) setState(() => _playsLeft--);
-      }
-    } finally {
-      if (mounted) setState(() => _isPlaying = false);
-    }
+
+    final newPlaysLeft = await _pronunciationService.play(
+      text: word.word,
+      playsLeft: _playsLeft,
+      audioUrl: word.audioUrl,
+      onPlayingChanged: () {
+        if (mounted) setState(() {});
+      },
+    );
+
+    if (!mounted) return;
+    final error = _pronunciationService.lastError;
+    setState(() {
+      _playsLeft = newPlaysLeft;
+      _audioErrorMessage = error?.retryable == true ? error?.message : null;
+    });
   }
 
   void _submitAnswer() {
@@ -130,16 +124,16 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Thoát game?'),
-        content: const Text('XP sẽ được tính dựa trên số từ đã nghe-gõ đúng.'),
+        title: Text('spellingBee.abandonTitle'.tr()),
+        content: Text('spellingBee.abandonBody'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Tiếp tục chơi'),
+            child: Text('spellingBee.keepPlaying'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Thoát'),
+            child: Text('spellingBee.quit'.tr()),
           ),
         ],
       ),
@@ -217,273 +211,333 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             );
           }
           final game = provider.spellingBee;
-        if (provider.error != null) {
-          return GameLoadState(
-            message: 'games.loadFailed'.tr(),
-            onRetry: () async {
-              await provider.loadSpellingBee();
-              if (mounted) _initWord();
-            },
-          );
-        }
-        if (game == null || game.words.isEmpty) {
-          return GameLoadState(
-            message: 'games.emptyGame'.tr(),
-            onRetry: () async {
-              await provider.loadSpellingBee();
-              if (mounted) _initWord();
-            },
-          );
-        }
-        if (!_gameLoaded) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final word = game.words[_wordIndex];
+          if (provider.error != null) {
+            return GameLoadState(
+              message: 'games.loadFailed'.tr(),
+              onRetry: () async {
+                await provider.loadSpellingBee();
+                if (mounted) _initWord();
+              },
+            );
+          }
+          if (game == null || game.words.isEmpty) {
+            return GameLoadState(
+              message: 'games.emptyGame'.tr(),
+              onRetry: () async {
+                await provider.loadSpellingBee();
+                if (mounted) _initWord();
+              },
+            );
+          }
+          if (!_gameLoaded) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final word = game.words[_wordIndex];
+          final isPlaying = _pronunciationService.isPlaying;
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            title: Text(
-              'spellingBee.wordProgress'.tr(
-                namedArgs: {
-                  'current': '${_wordIndex + 1}',
-                  'total': '${game.words.length}',
-                },
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 0,
+              title: Text(
+                'spellingBee.wordProgress'.tr(
+                  namedArgs: {
+                    'current': '${_wordIndex + 1}',
+                    'total': '${game.words.length}',
+                  },
+                ),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
-          ),
-          body: Column(
-            children: [
-              LinearProgressIndicator(
-                value: _wordIndex / game.words.length,
-                backgroundColor: AppColors.grey200,
-                color: AppColors.primary,
-                minHeight: 4,
-              ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
-                      // Big listen button
-                      GestureDetector(
-                        onTap: _playsLeft > 0 && !_isPlaying
-                            ? _playAudio
-                            : null,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: _playsLeft > 0
-                                  ? [AppColors.primary, const Color(0xFF38B2FF)]
-                                  : [AppColors.grey300, AppColors.grey200],
+            body: Column(
+              children: [
+                LinearProgressIndicator(
+                  value: _wordIndex / game.words.length,
+                  backgroundColor: AppColors.grey200,
+                  color: AppColors.primary,
+                  minHeight: 4,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 20),
+                        // Audio error banner
+                        if (_audioErrorMessage != null)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .errorContainer,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            boxShadow: _playsLeft > 0
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 16,
-                                      offset: const Offset(0, 6),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.volume_off_rounded,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'spellingBee.audioError'.tr(),
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer,
+                                      fontSize: 13,
                                     ),
-                                  ]
-                                : [],
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    _pronunciationService.clearError();
+                                    setState(() => _audioErrorMessage = null);
+                                    _playAudio();
+                                  },
+                                  child: Text('spellingBee.retryAudio'.tr()),
+                                ),
+                              ],
+                            ),
                           ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            _isPlaying
-                                ? Icons.volume_up
-                                : Icons.play_arrow_rounded,
-                            color: Theme.of(context).colorScheme.surface,
-                            size: 52,
+                        // Big listen button
+                        Semantics(
+                          button: true,
+                          label: _playsLeft > 0
+                              ? 'spellingBee.listenButtonLabel'.tr()
+                              : 'spellingBee.noPlaysLeft'.tr(),
+                          child: GestureDetector(
+                            onTap: _playsLeft > 0 && !isPlaying
+                                ? _playAudio
+                                : null,
+                            child: AnimatedContainer(
+                              duration: MediaQuery.of(context).disableAnimations
+                                  ? Duration.zero
+                                  : const Duration(milliseconds: 200),
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  colors: _playsLeft > 0
+                                      ? [
+                                          AppColors.primary,
+                                          const Color(0xFF38B2FF),
+                                        ]
+                                      : [AppColors.grey300, AppColors.grey200],
+                                ),
+                                boxShadow: _playsLeft > 0
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                isPlaying
+                                    ? Icons.volume_up
+                                    : Icons.play_arrow_rounded,
+                                color: Theme.of(context).colorScheme.surface,
+                                size: 52,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'spellingBee.playsLeftLabel'.tr(
-                          namedArgs: {
-                            'plays': '$_playsLeft',
-                            'max': '${word.maxReplays}',
-                          },
-                        ),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      // Input field
-                      TextField(
-                        controller: _inputController,
-                        enabled: !_answered,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'spellingBee.inputHint'.tr(),
-                          hintStyle: TextStyle(
+                        const SizedBox(height: 12),
+                        Text(
+                          'spellingBee.playsLeftLabel'.tr(
+                            namedArgs: {
+                              'plays': '$_playsLeft',
+                              'max': '${word.maxReplays}',
+                            },
+                          ),
+                          style: TextStyle(
                             color: Theme.of(
                               context,
                             ).colorScheme.onSurfaceVariant,
-                          ),
-                          filled: true,
-                          fillColor: Theme.of(context).colorScheme.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.grey300,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors.primary,
-                              width: 2,
-                            ),
+                            fontSize: 13,
                           ),
                         ),
-                        onSubmitted: (_) => _answered ? null : _submitAnswer(),
-                      ),
-                      const SizedBox(height: 16),
-                      if (!_answered) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _submitAnswer,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 32),
+                        // Input field
+                        TextField(
+                          controller: _inputController,
+                          enabled: !_answered,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'spellingBee.inputHint'.tr(),
+                            hintStyle: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.grey300,
                               ),
                             ),
-                            child: Text(
-                              'spellingBee.submitButton'.tr(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: AppColors.primary,
+                                width: 2,
                               ),
                             ),
                           ),
-                        ),
-                      ] else ...[
-                        // Answer revealed
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: _isCorrect
-                                ? AppColors.greenSuccess.withValues(alpha: 0.1)
-                                : Colors.red.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: _isCorrect
-                                  ? AppColors.greenSuccess
-                                  : AppColors.errorBright,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                _isCorrect
-                                    ? 'spellingBee.correctFeedback'.tr()
-                                    : 'spellingBee.answerRevealLabel'.tr(),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: _isCorrect
-                                      ? AppColors.greenSuccess
-                                      : AppColors.errorBright,
-                                ),
-                              ),
-                              if (!_isCorrect) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  word.word,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
-                                ),
-                              ],
-                              if (word.ipaPronunciation?.isNotEmpty ??
-                                  false) ...[
-                                const SizedBox(height: 4),
-                                Text(
-                                  word.ipaPronunciation!,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ],
-                              if (word.definition.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  word.definition,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                    height: 1.4,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ],
-                          ),
+                          onSubmitted: (_) => _answered ? null : _submitAnswer(),
                         ),
                         const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: _nextWord,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        if (!_answered) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _submitAnswer,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                            ),
-                            child: Text(
-                              _wordIndex + 1 < game.words.length
-                                  ? 'spellingBee.nextWordButton'.tr()
-                                  : 'spellingBee.seeResultsButton'.tr(),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                              child: Text(
+                                'spellingBee.submitButton'.tr(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ] else ...[
+                          // Answer revealed
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: _isCorrect
+                                  ? AppColors.greenSuccess.withValues(alpha: 0.1)
+                                  : Colors.red.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isCorrect
+                                    ? AppColors.greenSuccess
+                                    : AppColors.errorBright,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  _isCorrect
+                                      ? 'spellingBee.correctFeedback'.tr()
+                                      : 'spellingBee.answerRevealLabel'.tr(),
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _isCorrect
+                                        ? AppColors.greenSuccess
+                                        : AppColors.errorBright,
+                                  ),
+                                ),
+                                if (!_isCorrect) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    word.word,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                                if (word.ipaPronunciation?.isNotEmpty ??
+                                    false) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    word.ipaPronunciation!,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
+                                if (word.definition.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    word.definition,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                      height: 1.4,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _nextWord,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Text(
+                                _wordIndex + 1 < game.words.length
+                                    ? 'spellingBee.nextWordButton'.tr()
+                                    : 'spellingBee.seeResultsButton'.tr(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
+              ],
+            ),
+          );
         },
       ),
     );

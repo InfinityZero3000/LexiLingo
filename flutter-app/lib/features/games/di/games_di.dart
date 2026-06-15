@@ -1,6 +1,8 @@
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/features/games/data/repositories/games_repository.dart';
+import 'package:lexilingo_app/features/games/data/services/game_pronunciation_service.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
+import 'package:lexilingo_app/features/voice/data/datasources/voice_remote_datasource.dart';
 
 /// Register Games feature dependencies.
 ///
@@ -9,6 +11,13 @@ void registerGamesModule() {
   // Repository
   sl.registerLazySingleton<GamesRepository>(
     () => GamesRepository(apiClient: sl()),
+  );
+
+  // Pronunciation service (Spelling Bee TTS/audio)
+  sl.registerFactory<GamePronunciationService>(
+    () => GamePronunciationService(
+      voiceDataSource: sl<VoiceRemoteDataSource>(),
+    ),
   );
 
   // Provider
