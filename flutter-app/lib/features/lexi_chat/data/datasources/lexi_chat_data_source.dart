@@ -555,6 +555,7 @@ class LexiChatDataSource {
                 yield LexiStreamDone(
                   messageId: json['message_id'] as String? ?? '',
                   sessionId: json['session_id'] as String? ?? sessionId,
+                  fullText: json['lexi_response'] as String?,
                   corrections: corrections,
                   linkedConcepts: linkedConcepts,
                   vietnameseHint: json['vietnamese_hint'] as String?,
@@ -612,6 +613,9 @@ class LexiStreamChunk extends LexiStreamEvent {
 class LexiStreamDone extends LexiStreamEvent {
   final String messageId;
   final String sessionId;
+  /// Full response text from the server — used as fallback when chunk
+  /// accumulation is empty (e.g. LLM stream failed but TTS still ran).
+  final String? fullText;
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
   final String? vietnameseHint;
@@ -623,6 +627,7 @@ class LexiStreamDone extends LexiStreamEvent {
   const LexiStreamDone({
     required this.messageId,
     required this.sessionId,
+    this.fullText,
     required this.corrections,
     required this.linkedConcepts,
     this.vietnameseHint,

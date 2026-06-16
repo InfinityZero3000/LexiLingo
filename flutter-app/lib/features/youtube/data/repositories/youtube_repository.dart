@@ -116,14 +116,16 @@ class YouTubeRepository {
 
   // ──── Word Translation / Dictionary Lookup ────
 
-  /// Look up an English word: phonetic + definition + Vietnamese translation.
+  /// Look up an English word: phonetic + definition + contextual Vietnamese translation.
   ///
-  /// Uses SQLite local cache (30-day TTL via 'dictionary' type) so repeated
-  /// lookups are instant. Backend caches in Redis for 30 days too.
+  /// [context] is the caption sentence the word appears in — passed to the LLM
+  /// so it can pick the right meaning (e.g. "run a company" → "điều hành" not "chạy").
+  /// Cache key is word+lang only (not context) to maximise the 30-day hit rate.
   /// Never throws — returns a WordTranslation with empty fields on failure.
   Future<WordTranslation> translateWord(
     String word, {
     String lang = 'vi',
+    String context = '',
   }) async {
     final cleanWord = word.toLowerCase().trim();
     final cacheKey = 'youtube:translate:$cleanWord:$lang';
@@ -133,9 +135,12 @@ class YouTubeRepository {
         key: cacheKey,
         type: 'dictionary', // 30-day TTL in local SQLite
         fetchFn: () async {
-          final uri = Uri.parse(
-            '$_baseUrl/translate',
-          ).replace(queryParameters: {'word': cleanWord, 'lang': lang});
+          final params = <String, String>{
+            'word': cleanWord,
+            'lang': lang,
+            if (context.isNotEmpty) 'context': context,
+          };
+          final uri = Uri.parse('$_baseUrl/translate').replace(queryParameters: params);
           final response = await _client.get(uri);
           if (response.statusCode >= 400) {
             return {

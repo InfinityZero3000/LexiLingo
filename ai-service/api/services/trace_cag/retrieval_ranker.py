@@ -9,34 +9,12 @@ itself from explicit or weak supervision labels.
 from __future__ import annotations
 
 import math
-import os
 import threading
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 
-def _env_float(name: str, default: float) -> float:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    try:
-        return float(raw)
-    except ValueError:
-        return default
-
-
-def _env_int(name: str, default: int) -> int:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    try:
-        return int(raw)
-    except ValueError:
-        return default
-
-
-def _clip01(value: float) -> float:
-    return max(0.0, min(1.0, value))
+from api.services.trace_cag.env_helpers import _clip01, _env_float, _env_int
 
 
 def _sigmoid(value: float) -> float:

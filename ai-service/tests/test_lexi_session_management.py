@@ -232,11 +232,10 @@ async def test_lexi_stream_starts_before_session_store_finishes(
 ):
     session_gate = asyncio.Event()
 
-    async def _slow_has_session(_session_id):
+    async def _slow_set_session(*_args, **_kwargs):
         await session_gate.wait()
-        return False
 
-    mock_store.has_session.side_effect = _slow_has_session
+    mock_store.set_session.side_effect = _slow_set_session
     monkeypatch.setattr(
         lexi_route,
         "enforce_user_quota",
@@ -262,7 +261,6 @@ async def test_lexi_stream_starts_before_session_store_finishes(
         request_context=request_context,
         request=lexi_route.LexiChatRequest(
             user_id="u1",
-            session_id="s1",
             message="hello",
             enable_tts=False,
         ),
@@ -276,7 +274,7 @@ async def test_lexi_stream_starts_before_session_store_finishes(
     )
 
     assert first_chunk == "event: thinking\ndata: {}\n\n"
-    mock_store.has_session.assert_not_awaited()
+    mock_store.set_session.assert_not_awaited()
     session_gate.set()
     await response.body_iterator.aclose()
 

@@ -15,8 +15,6 @@ and knowledge graph expansion to make conversations contextually rich.
 import asyncio
 import logging
 import os
-import re
-import io
 import json
 import uuid
 import time
@@ -24,7 +22,7 @@ import base64
 import hashlib
 from contextlib import suppress
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import AsyncGenerator, Optional, List, Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Header, Request
@@ -37,187 +35,27 @@ from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_use
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.core.database import get_database
+from api.utils.cursor import (
+    build_pagination,
+    decode_cursor_str,
+    encode_cursor,
+    load_full_cursor,
+    to_iso_timestamp,
+)
+from api.services.lexi_session_store import LexiSessionStore, get_lexi_store
+from api.services.lexi_idempotency_store import LexiIdempotencyStore, get_lexi_idempotency_store
+from api.services.lexi_pipeline_helpers import (
+    sanitize_lexi_response as _sanitize_lexi_response,
+    synthesize_tts as _synthesize_tts,
+    transcribe_audio as _transcribe_audio,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/lexi", tags=["lexi-chat"])
 
-
-# ─── Redis-backed session store with in-memory fallback ──────────────────────
-class _LexiStore:
-    """
-    Persists Lexi sessions & messages in Redis.
-    Falls back to in-memory dicts when Redis is unavailable so the
-    chat endpoint still works during local dev without Redis.
-    """
-
-    _SESSION_PREFIX = "lexi:session:"
-    _MSG_PREFIX = "lexi:msgs:"
-    _TTL = timedelta(hours=24)
-
-    def __init__(self):
-        self._mem_sessions: Dict[str, Dict[str, Any]] = {}
-        self._mem_messages: Dict[str, List[Dict[str, Any]]] = {}
-
-    # ── helpers ──────────────────────────────────────────────────────────
-    async def _redis(self):
-        """Get Redis client, return None on failure."""
-        try:
-            from api.core.redis_client import get_redis
-            return await get_redis()
-        except Exception:
-            return None
-
-    # ── sessions ─────────────────────────────────────────────────────────
-    async def get_session(self, sid: str) -> Optional[Dict[str, Any]]:
-        r = await self._redis()
-        if r:
-            raw = await r.get(f"{self._SESSION_PREFIX}{sid}")
-            if raw:
-                return json.loads(raw)
-            return None
-        return self._mem_sessions.get(sid)
-
-    async def set_session(self, sid: str, data: Dict[str, Any]):
-        r = await self._redis()
-        if r:
-            await r.set(
-                f"{self._SESSION_PREFIX}{sid}",
-                json.dumps(data),
-                ex=self._TTL,
-            )
-        else:
-            self._mem_sessions[sid] = data
-
-    async def has_session(self, sid: str) -> bool:
-        return (await self.get_session(sid)) is not None
-
-    # ── messages ─────────────────────────────────────────────────────────
-    async def get_messages(self, sid: str) -> List[Dict[str, Any]]:
-        r = await self._redis()
-        if r:
-            raw_list = await r.lrange(f"{self._MSG_PREFIX}{sid}", 0, -1)
-            return [json.loads(m) for m in raw_list] if raw_list else []
-        return self._mem_messages.get(sid, [])
-
-    async def append_message(self, sid: str, msg: Dict[str, Any]):
-        r = await self._redis()
-        if r:
-            key = f"{self._MSG_PREFIX}{sid}"
-            await r.rpush(key, json.dumps(msg))
-            await r.expire(key, self._TTL)
-        else:
-            self._mem_messages.setdefault(sid, []).append(msg)
-
-    async def init_messages(self, sid: str):
-        """Ensure the message list exists (no-op for Redis, inits list for mem)."""
-        r = await self._redis()
-        if not r:
-            if sid not in self._mem_messages:
-                self._mem_messages[sid] = []
-
-    async def delete_session(self, sid: str):
-        r = await self._redis()
-        if r:
-            await r.delete(f"{self._SESSION_PREFIX}{sid}")
-        self._mem_sessions.pop(sid, None)
-
-    async def delete_messages(self, sid: str):
-        r = await self._redis()
-        if r:
-            await r.delete(f"{self._MSG_PREFIX}{sid}")
-        self._mem_messages.pop(sid, None)
-
-
-_store = _LexiStore()
-
-
-class _LexiIdempotencyStore:
-    _PREFIX = "lexi:idempotency:"
-    _TTL = timedelta(hours=24)
-
-    def __init__(self):
-        self._mem: Dict[str, Dict[str, Any]] = {}
-
-    async def _redis(self):
-        try:
-            from api.core.redis_client import get_redis
-
-            return await get_redis()
-        except Exception:
-            return None
-
-    def _key(self, user_id: str, session_id: str, idempotency_key: str) -> str:
-        return f"{self._PREFIX}{user_id}:{session_id}:{idempotency_key}"
-
-    def _cleanup_mem(self):
-        now = datetime.now(timezone.utc)
-        stale = [
-            k
-            for k, v in self._mem.items()
-            if isinstance(v.get("expires_at"), datetime)
-            and v.get("expires_at") <= now
-        ]
-        for k in stale:
-            self._mem.pop(k, None)
-
-    async def get(
-        self,
-        *,
-        user_id: str,
-        session_id: str,
-        idempotency_key: str,
-        request_hash: str,
-    ) -> Optional[Dict[str, Any]]:
-        key = self._key(user_id, session_id, idempotency_key)
-        r = await self._redis()
-        if r:
-            raw = await r.get(key)
-            if not raw:
-                return None
-            data = json.loads(raw)
-            if data.get("request_hash") != request_hash:
-                raise HTTPException(
-                    status_code=409,
-                    detail="Idempotency key reused with different payload",
-                )
-            return data.get("response")
-
-        self._cleanup_mem()
-        data = self._mem.get(key)
-        if not data:
-            return None
-        if data.get("request_hash") != request_hash:
-            raise HTTPException(
-                status_code=409,
-                detail="Idempotency key reused with different payload",
-            )
-        return data.get("response")
-
-    async def set(
-        self,
-        *,
-        user_id: str,
-        session_id: str,
-        idempotency_key: str,
-        request_hash: str,
-        response: Dict[str, Any],
-    ) -> None:
-        key = self._key(user_id, session_id, idempotency_key)
-        payload = {"request_hash": request_hash, "response": response}
-        r = await self._redis()
-        if r:
-            await r.set(key, json.dumps(payload), ex=self._TTL)
-            return
-
-        self._cleanup_mem()
-        self._mem[key] = {
-            **payload,
-            "expires_at": datetime.now(timezone.utc) + self._TTL,
-        }
-
-
-_idempotency_store = _LexiIdempotencyStore()
+_store: LexiSessionStore = get_lexi_store()
+_idempotency_store: LexiIdempotencyStore = get_lexi_idempotency_store()
 
 SAFE_FIXED_RESPONSE = (
     "Squawk! I'm temporarily unavailable right now. "
@@ -227,6 +65,16 @@ SAFE_FIXED_RESPONSE = (
 # SSE stream settings
 _STREAM_PIPELINE_TIMEOUT_S = 50   # cancel and error if pipeline exceeds this
 _HEARTBEAT_INTERVAL_S = 2.5       # how often to send ": ping" keep-alive comments
+
+
+def _env_float(name: str, default: float, minimum: float = 0.0) -> float:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return max(minimum, float(raw))
+    except ValueError:
+        return default
 
 
 def _idempotency_request_hash(request: "LexiChatRequest") -> str:
@@ -244,74 +92,13 @@ def _idempotency_request_hash(request: "LexiChatRequest") -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-async def _load_full_cursor(cursor, batch_size: int = 500) -> List[Dict[str, Any]]:
-    """Read all documents from a Mongo cursor in bounded batches."""
-    rows: List[Dict[str, Any]] = []
-    while True:
-        batch = await cursor.to_list(length=batch_size)
-        if not batch:
-            break
-        rows.extend(batch)
-        if len(batch) < batch_size:
-            break
-    return rows
-
-
-def _to_iso_timestamp(value: Any) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value.isoformat()
-    return str(value)
-
-
 def _serialize_lexi_message(doc: Dict[str, Any]) -> Dict[str, Any]:
     return {
         "id": doc.get("id") or doc.get("message_id") or str(doc.get("_id", "")),
         "session_id": doc.get("session_id", ""),
         "role": doc.get("role", "user"),
         "content": doc.get("content", ""),
-        "timestamp": _to_iso_timestamp(doc.get("timestamp")),
-    }
-
-
-def _encode_cursor(doc: Dict[str, Any]) -> str:
-    ts = _to_iso_timestamp(doc.get("timestamp"))
-    oid = str(doc.get("_id", ""))
-    payload = json.dumps({"ts": ts, "oid": oid}, separators=(",", ":")).encode("utf-8")
-    return base64.urlsafe_b64encode(payload).decode("utf-8")
-
-
-def _decode_cursor(cursor: str) -> tuple[str, ObjectId]:
-    try:
-        padding = "=" * (-len(cursor) % 4)
-        raw = base64.urlsafe_b64decode(f"{cursor}{padding}".encode("utf-8"))
-        data = json.loads(raw.decode("utf-8"))
-        ts = str(data["ts"])
-        oid = ObjectId(str(data["oid"]))
-        return ts, oid
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
-
-
-def _build_pagination(
-    *,
-    total_count: int,
-    returned: int,
-    has_more: bool,
-    next_cursor: str | None,
-    prev_cursor: str | None,
-    window_start_ts: str | None,
-    window_end_ts: str | None,
-) -> Dict[str, Any]:
-    return {
-        "total_count": total_count,
-        "returned": returned,
-        "has_more": has_more,
-        "next_cursor": next_cursor,
-        "prev_cursor": prev_cursor,
-        "window_start_ts": window_start_ts,
-        "window_end_ts": window_end_ts,
+        "timestamp": to_iso_timestamp(doc.get("timestamp")),
     }
 
 
@@ -330,91 +117,122 @@ async def _ensure_session_owner(
     return session_doc
 
 
-def _normalize_markdown_for_lexi(text: str) -> str:
-    """Normalize malformed markdown emphasis markers produced by model output."""
-    if "**" not in text:
-        return text
-
-    out: List[str] = []
-    in_bold = False
-    open_idx: Optional[int] = None
-    i = 0
-    n = len(text)
-
-    while i < n:
-        is_double_star = text[i:i + 2] == "**"
-        is_exact_pair = (
-            is_double_star
-            and (i == 0 or text[i - 1] != "*")
-            and (i + 2 >= n or text[i + 2] != "*")
-        )
-
-        if not is_exact_pair:
-            out.append(text[i])
-            i += 1
-            continue
-
-        prev_ch = text[i - 1] if i > 0 else ""
-        next_ch = text[i + 2] if i + 2 < n else ""
-        can_open = bool(next_ch) and not next_ch.isspace()
-        can_close = bool(prev_ch) and not prev_ch.isspace()
-
-        if not in_bold:
-            if can_open:
-                open_idx = len(out)
-                out.append("**")
-                in_bold = True
-        else:
-            if can_close:
-                out.append("**")
-                in_bold = False
-                open_idx = None
-
-        i += 2
-
-    if in_bold and open_idx is not None:
-        out.pop(open_idx)
-
-    return "".join(out)
+def _assert_cached_session_owner(
+    cached_session: Dict[str, Any] | None,
+    current_user: AuthenticatedUser,
+) -> None:
+    if not cached_session:
+        return
+    owner_user_id = str(cached_session.get("user_id") or "")
+    if owner_user_id and owner_user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
 
 
-def _sanitize_lexi_response(text: str) -> str:
-    """Remove internal TraceCAG debug payloads from user-facing Lexi output."""
-    cleaned = str(text or "")
-    if not cleaned:
-        return ""
+async def _get_cached_session_with_messages(
+    session_id: str,
+) -> tuple[Dict[str, Any] | None, List[Dict[str, Any]]]:
+    if callable(getattr(type(_store), "get_session_with_messages", None)):
+        return await _store.get_session_with_messages(session_id)
 
-    # Strip accidental reasoning/debug sections.
-    cleaned = re.sub(r"<think\b[^>]*>[\s\S]*?</think>", "", cleaned, flags=re.IGNORECASE)
+    cached_session, cached_messages = await asyncio.gather(
+        _store.get_session(session_id),
+        _store.get_messages(session_id),
+    )
+    return cached_session, cached_messages
 
-    # Remove JIT graph marker and trailing JSON payload if leaked.
-    cleaned = re.sub(
-        r"\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*",
-        "",
-        cleaned,
-        flags=re.IGNORECASE,
+
+async def _prepare_existing_lexi_session(
+    session_id: str,
+    current_user: AuthenticatedUser,
+    db: AsyncIOMotorDatabase,
+) -> List[Dict[str, Any]]:
+    cached_session, cached_messages = await _get_cached_session_with_messages(session_id)
+    cached_owner = str((cached_session or {}).get("user_id") or "")
+    if cached_session and cached_owner:
+        _assert_cached_session_owner(cached_session, current_user)
+        return cached_messages
+
+    try:
+        await _ensure_session_owner(session_id, current_user, db)
+    except HTTPException as exc:
+        if exc.status_code != 404:
+            raise
+        _assert_cached_session_owner(cached_session, current_user)
+        if not cached_session:
+            raise
+        return cached_messages
+
+    _assert_cached_session_owner(cached_session, current_user)
+    if cached_session:
+        return cached_messages
+
+    docs = await (
+        db["lexi_messages"]
+        .find({"session_id": session_id})
+        .sort("timestamp", -1)
+        .limit(10)
+        .to_list(length=10)
+    )
+    docs.reverse()
+    return [
+        {
+            "id": doc.get("id") or doc.get("message_id") or str(doc.get("_id", "")),
+            "role": doc.get("role", "user"),
+            "content": doc.get("content", ""),
+            "timestamp": to_iso_timestamp(doc.get("timestamp")),
+        }
+        for doc in docs
+    ]
+
+
+async def _create_lexi_session_for_user(
+    session_id: str,
+    user_id: str,
+    story_context: Optional[str],
+    db: AsyncIOMotorDatabase,
+) -> None:
+    now_iso = datetime.now(timezone.utc).isoformat()
+    await asyncio.gather(
+        _store.set_session(session_id, {
+            "session_id": session_id,
+            "user_id": user_id,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+            "title": "Lexi Chat",
+            "message_count": 0,
+            "persona": "lexi",
+            "story_context": story_context,
+        }),
+        _store.init_messages(session_id),
+        db["lexi_sessions"].update_one(
+            {"session_id": session_id},
+            {
+                "$set": {
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "title": "Lexi Chat",
+                    "created_at": now_iso,
+                    "updated_at": now_iso,
+                    "message_count": 0,
+                    "persona": "lexi",
+                }
+            },
+            upsert=True,
+        ),
     )
 
-    # Remove standalone graph-json lines (with optional escaped quotes).
-    cleaned = re.sub(
-        r"^\s*\{(?:\\?\"v\\?\"|\"v\")[\s\S]*?(?:\\?\"e\\?\"|\"e\")[\s\S]*?\}\s*$",
-        "",
-        cleaned,
-        flags=re.IGNORECASE | re.MULTILINE,
+
+async def _append_lexi_messages(
+    session_id: str,
+    messages: List[Dict[str, Any]],
+) -> None:
+    if callable(getattr(type(_store), "append_messages", None)):
+        await _store.append_messages(session_id, messages)
+        return
+
+    await asyncio.gather(
+        *(_store.append_message(session_id, message) for message in messages)
     )
-
-    # Normalize escaped markdown punctuation before balancing emphasis markers.
-    cleaned = cleaned.replace("\\*", "*")
-    cleaned = cleaned.replace("\\_", "_")
-
-    cleaned = _normalize_markdown_for_lexi(cleaned)
-
-    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
-
-    if not cleaned:
-        return "Squawk! I lost my words for a second. Could you ask that again?"
-
-    return cleaned
 
 
 # ─── Lexi Persona System Prompt ─────────────────────────────────────────────
@@ -509,48 +327,6 @@ class LexiSessionSummary(BaseModel):
 class LexiSessionListResponse(BaseModel):
     success: bool = True
     sessions: List[LexiSessionSummary] = []
-
-
-# ─── Helper: TTS synthesis ──────────────────────────────────────────────────
-async def _synthesize_tts(text: str) -> Optional[str]:
-    """Generate TTS audio and return base64-encoded MP3."""
-    try:
-        from gtts import gTTS
-        
-        # Clean text for TTS (remove markdown, emojis)
-        clean = re.sub(r'[*_~`#]', '', text)
-        clean = re.sub(r'[\U00010000-\U0010ffff]', '', clean, flags=re.UNICODE)
-        clean = clean.strip()
-        
-        if not clean:
-            return None
-        
-        tts = gTTS(text=clean, lang='en', slow=False)
-        buf = io.BytesIO()
-        tts.write_to_fp(buf)
-        buf.seek(0)
-        audio_b64 = base64.b64encode(buf.read()).decode('utf-8')
-        logger.info(f" Lexi TTS: {len(audio_b64)} bytes base64")
-        return audio_b64
-    except Exception as e:
-        logger.warning(f"TTS failed: {e}")
-        return None
-
-
-# ─── Helper: STT transcription ──────────────────────────────────────────────
-async def _transcribe_audio(audio_base64: str) -> Optional[str]:
-    """Compatibility path for short clips while clients migrate to WebSocket STT."""
-    try:
-        from api.services.handlers.whisper_handler import get_whisper_handler
-
-        audio_bytes = base64.b64decode(audio_base64, validate=True)
-        result = await get_whisper_handler().transcribe(audio=audio_bytes, language="en")
-        text = result.get("text", "")
-        logger.info(f" Lexi STT: '{text[:50]}...'")
-        return text if text else None
-    except Exception as e:
-        logger.warning(f"STT failed: {e}")
-        return None
 
 
 # ─── Pipeline result ─────────────────────────────────────────────────────────
@@ -676,8 +452,9 @@ async def _run_lexi_pipeline(
     # ── Guards ──
     story_ctx = request.story_context
     if not story_ctx:
-        sess_data = await _store.get_session(session_id)
-        story_ctx = (sess_data or {}).get("story_context")
+        _pre_sess = await _store.get_session(session_id)
+        if _pre_sess:
+            story_ctx = _pre_sess.get("story_context")
 
     if not lexi_response:
         lexi_response = SAFE_FIXED_RESPONSE
@@ -690,43 +467,46 @@ async def _run_lexi_pipeline(
     # ── TTS ──
     audio_b64: Optional[str] = None
     if request.enable_tts and not skip_tts:
-        audio_b64 = await _synthesize_tts(lexi_response)
-        metadata["pipeline_steps"].append("tts_complete" if audio_b64 else "tts_skipped")
+        tts_timeout_s = _env_float("LEXI_TTS_TIMEOUT_SECONDS", 8.0, minimum=0.5)
+        try:
+            audio_b64 = await asyncio.wait_for(
+                _synthesize_tts(lexi_response),
+                timeout=tts_timeout_s,
+            )
+            metadata["pipeline_steps"].append("tts_complete" if audio_b64 else "tts_skipped")
+        except asyncio.TimeoutError:
+            logger.warning("Lexi TTS timed out after %.1fs", tts_timeout_s)
+            metadata["pipeline_steps"].append("tts_timeout")
 
     # ── Persist messages ──
     message_id = str(uuid.uuid4())
     timestamp = datetime.now(timezone.utc).isoformat()
+    user_message = {
+        "id": str(uuid.uuid4()),
+        "role": "user",
+        "content": user_text,
+        "timestamp": timestamp,
+    }
+    assistant_message = {
+        "id": message_id,
+        "role": "assistant",
+        "content": lexi_response,
+        "timestamp": timestamp,
+    }
 
-    # Fire all independent writes concurrently: Redis appends + MongoDB writes
+    # Fire all independent writes concurrently: cache append + MongoDB writes.
     await asyncio.gather(
-        _store.append_message(session_id, {
-            "id": str(uuid.uuid4()),
-            "role": "user",
-            "content": user_text,
-            "timestamp": timestamp,
-        }),
-        _store.append_message(session_id, {
-            "id": message_id,
-            "role": "assistant",
-            "content": lexi_response,
-            "timestamp": timestamp,
-        }),
+        _append_lexi_messages(session_id, [user_message, assistant_message]),
         db["lexi_messages"].insert_many([
             {
-                "id": str(uuid.uuid4()),
+                **user_message,
                 "session_id": session_id,
                 "user_id": request.user_id,
-                "role": "user",
-                "content": user_text,
-                "timestamp": timestamp,
             },
             {
-                "id": message_id,
+                **assistant_message,
                 "session_id": session_id,
                 "user_id": request.user_id,
-                "role": "assistant",
-                "content": lexi_response,
-                "timestamp": timestamp,
             },
         ]),
         db["lexi_sessions"].update_one(
@@ -749,6 +529,8 @@ async def _run_lexi_pipeline(
 
     # Read session (needed for message_count), then fire session update + conv cache concurrently
     cached_session = await _store.get_session(session_id) or {}
+    if not story_ctx:
+        story_ctx = cached_session.get("story_context")
     cached_count = int(cached_session.get("message_count") or 0)
 
     async def _write_conv_cache():
@@ -897,41 +679,17 @@ async def lexi_chat(
     )
 
     # ── 1. Session management ──
-    session_id = request.session_id or str(uuid.uuid4())
-    # Fire has_session and get_messages concurrently — both are read-only
-    _session_exists, history = await asyncio.gather(
-        _store.has_session(session_id),
-        _store.get_messages(session_id),
-    )
-    if not _session_exists:
-        now_iso = datetime.now(timezone.utc).isoformat()
-        await asyncio.gather(
-            _store.set_session(session_id, {
-                "session_id": session_id,
-                "user_id": request.user_id,
-                "created_at": now_iso,
-                "updated_at": now_iso,
-                "title": "Lexi Chat",
-                "message_count": 0,
-                "persona": "lexi",
-                "story_context": request.story_context,
-            }),
-            _store.init_messages(session_id),
-            db["lexi_sessions"].update_one(
-                {"session_id": session_id},
-                {
-                    "$set": {
-                        "session_id": session_id,
-                        "user_id": request.user_id,
-                        "title": "Lexi Chat",
-                        "created_at": now_iso,
-                        "updated_at": now_iso,
-                        "message_count": 0,
-                        "persona": "lexi",
-                    }
-                },
-                upsert=True,
-            ),
+    if request.session_id:
+        session_id = request.session_id
+        history = await _prepare_existing_lexi_session(session_id, current_user, db)
+    else:
+        session_id = str(uuid.uuid4())
+        history = []
+        await _create_lexi_session_for_user(
+            session_id=session_id,
+            user_id=request.user_id,
+            story_context=request.story_context,
+            db=db,
         )
 
     request_hash = _idempotency_request_hash(request)
@@ -1025,10 +783,7 @@ async def lexi_stream_chat(
     auth_user_id = enforce_user_scope(current_user, request.user_id)
     request = request.model_copy(update={"user_id": auth_user_id})
 
-    quota_timeout_s = max(
-        0.5,
-        float(os.getenv("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", "5")),
-    )
+    quota_timeout_s = _env_float("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", 5.0, minimum=0.5)
     try:
         quota = await asyncio.wait_for(
             enforce_user_quota(
@@ -1053,6 +808,27 @@ async def lexi_stream_chat(
         ) from exc
 
     session_id = request.session_id or str(uuid.uuid4())
+    prechecked_history: Optional[List[Dict[str, Any]]] = None
+    if request.session_id:
+        session_timeout_s = _env_float(
+            "LEXI_STREAM_SESSION_TIMEOUT_SECONDS",
+            15.0,
+            minimum=_HEARTBEAT_INTERVAL_S,
+        )
+        try:
+            prechecked_history = await asyncio.wait_for(
+                _prepare_existing_lexi_session(session_id, current_user, db),
+                timeout=session_timeout_s,
+            )
+        except asyncio.TimeoutError as exc:
+            logger.error(
+                "Lexi /stream session ownership check timed out after %.1fs",
+                session_timeout_s,
+            )
+            raise HTTPException(
+                status_code=503,
+                detail="Chat session service is temporarily unavailable",
+            ) from exc
 
     async def _sse_generator() -> AsyncGenerator[str, None]:
         from api.services.orchestrator import get_orchestrator
@@ -1068,81 +844,59 @@ async def lexi_stream_chat(
 
         # 2. Session management. Keep sending data events while Redis/Mongo is
         # slow so Cloudflare and nginx do not treat the stream as idle.
-        async def _prepare_session() -> List[Dict[str, Any]]:
-            sess_exists, session_history = await asyncio.gather(
-                _store.has_session(session_id),
-                _store.get_messages(session_id),
-            )
-            if not sess_exists:
-                now_iso = datetime.now(timezone.utc).isoformat()
-                await asyncio.gather(
-                    _store.set_session(session_id, {
-                        "session_id": session_id,
-                        "user_id": request.user_id,
-                        "created_at": now_iso,
-                        "updated_at": now_iso,
-                        "title": "Lexi Chat",
-                        "message_count": 0,
-                        "persona": "lexi",
-                        "story_context": request.story_context,
-                    }),
-                    _store.init_messages(session_id),
-                    db["lexi_sessions"].update_one(
-                        {"session_id": session_id},
-                        {"$set": {
-                            "session_id": session_id,
-                            "user_id": request.user_id,
-                            "title": "Lexi Chat",
-                            "created_at": now_iso,
-                            "updated_at": now_iso,
-                            "message_count": 0,
-                            "persona": "lexi",
-                        }},
-                        upsert=True,
-                    ),
+        if prechecked_history is not None:
+            history = prechecked_history
+        else:
+            async def _prepare_session() -> List[Dict[str, Any]]:
+                await _create_lexi_session_for_user(
+                    session_id=session_id,
+                    user_id=request.user_id,
+                    story_context=request.story_context,
+                    db=db,
                 )
-            return session_history
+                return []
 
-        session_task = asyncio.create_task(_prepare_session())
-        loop = asyncio.get_running_loop()
-        session_timeout_s = max(
-            _HEARTBEAT_INTERVAL_S,
-            float(os.getenv("LEXI_STREAM_SESSION_TIMEOUT_SECONDS", "15")),
-        )
-        session_deadline = loop.time() + session_timeout_s
-        while not session_task.done():
-            if loop.time() >= session_deadline:
-                session_task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await session_task
-                logger.error(
-                    "Lexi /stream session preparation timed out after %.1fs",
-                    session_timeout_s,
-                )
+            session_task = asyncio.create_task(_prepare_session())
+            loop = asyncio.get_running_loop()
+            session_timeout_s = _env_float(
+                "LEXI_STREAM_SESSION_TIMEOUT_SECONDS",
+                15.0,
+                minimum=_HEARTBEAT_INTERVAL_S,
+            )
+            session_deadline = loop.time() + session_timeout_s
+            while not session_task.done():
+                if loop.time() >= session_deadline:
+                    session_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await session_task
+                    logger.error(
+                        "Lexi /stream session preparation timed out after %.1fs",
+                        session_timeout_s,
+                    )
+                    yield (
+                        f"event: error\ndata: "
+                        f"{json.dumps({'error': 'Chat session service is temporarily unavailable.'})}\n\n"
+                    )
+                    return
+                try:
+                    await asyncio.wait_for(
+                        asyncio.shield(session_task),
+                        timeout=_HEARTBEAT_INTERVAL_S,
+                    )
+                except asyncio.TimeoutError:
+                    yield "event: heartbeat\ndata: {}\n\n"
+                except Exception:
+                    break
+
+            try:
+                history = await session_task
+            except Exception as exc:
+                logger.error("Lexi /stream session preparation error: %s", exc)
                 yield (
                     f"event: error\ndata: "
                     f"{json.dumps({'error': 'Chat session service is temporarily unavailable.'})}\n\n"
                 )
                 return
-            try:
-                await asyncio.wait_for(
-                    asyncio.shield(session_task),
-                    timeout=_HEARTBEAT_INTERVAL_S,
-                )
-            except asyncio.TimeoutError:
-                yield "event: heartbeat\ndata: {}\n\n"
-            except Exception:
-                break
-
-        try:
-            history = await session_task
-        except Exception as exc:
-            logger.error("Lexi /stream session preparation error: %s", exc)
-            yield (
-                f"event: error\ndata: "
-                f"{json.dumps({'error': 'Chat session service is temporarily unavailable.'})}\n\n"
-            )
-            return
 
         # 3. Context preparation — KG + diagnose + retrieve, NO LLM generation.
         #    Heartbeat pings keep the SSE connection alive while this runs.
@@ -1275,24 +1029,25 @@ async def lexi_stream_chat(
         # 5. Persist messages (parallelised)
         message_id = str(uuid.uuid4())
         timestamp = datetime.now(timezone.utc).isoformat()
+        user_message = {
+            "id": str(uuid.uuid4()),
+            "role": "user",
+            "content": user_text,
+            "timestamp": timestamp,
+        }
+        assistant_message = {
+            "id": message_id,
+            "role": "assistant",
+            "content": lexi_response,
+            "timestamp": timestamp,
+        }
 
         async def _stream_persist():
             await asyncio.gather(
-                _store.append_message(session_id, {
-                    "id": str(uuid.uuid4()), "role": "user",
-                    "content": user_text, "timestamp": timestamp,
-                }),
-                _store.append_message(session_id, {
-                    "id": message_id, "role": "assistant",
-                    "content": lexi_response, "timestamp": timestamp,
-                }),
+                _append_lexi_messages(session_id, [user_message, assistant_message]),
                 db["lexi_messages"].insert_many([
-                    {"id": str(uuid.uuid4()), "session_id": session_id,
-                     "user_id": request.user_id, "role": "user",
-                     "content": user_text, "timestamp": timestamp},
-                    {"id": message_id, "session_id": session_id,
-                     "user_id": request.user_id, "role": "assistant",
-                     "content": lexi_response, "timestamp": timestamp},
+                    {**user_message, "session_id": session_id, "user_id": request.user_id},
+                    {**assistant_message, "session_id": session_id, "user_id": request.user_id},
                 ]),
                 db["lexi_sessions"].update_one(
                     {"session_id": session_id},
@@ -1340,6 +1095,7 @@ async def lexi_stream_chat(
         done_payload = json.dumps({
             "message_id": message_id,
             "session_id": session_id,
+            "lexi_response": lexi_response,
             "corrections": [
                 {
                     "error_span": c.error_span,
@@ -1454,7 +1210,7 @@ async def get_lexi_messages(
         raise HTTPException(status_code=404, detail="Session not found")
 
     cursor = db["lexi_messages"].find({"session_id": session_id}).sort("timestamp", 1)
-    messages = await _load_full_cursor(cursor)
+    messages = await load_full_cursor(cursor)
     payload = [
         {
             "id": m.get("id", str(uuid.uuid4())),
@@ -1505,7 +1261,7 @@ async def get_lexi_messages_paged(
     query: Dict[str, Any] = dict(base_query)
 
     if cursor:
-        cursor_ts, cursor_oid = _decode_cursor(cursor)
+        cursor_ts, cursor_oid = decode_cursor_str(cursor)
         query = {
             "session_id": session_id,
             "$or": [
@@ -1528,16 +1284,16 @@ async def get_lexi_messages_paged(
     messages = [_serialize_lexi_message(doc) for doc in docs]
 
     total_count = await db["lexi_messages"].count_documents(base_query)
-    next_cursor = _encode_cursor(docs[0]) if has_more and docs else None
-    prev_cursor = _encode_cursor(docs[-1]) if docs else None
-    window_start_ts = _to_iso_timestamp(docs[0].get("timestamp")) if docs else None
-    window_end_ts = _to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
+    next_cursor = encode_cursor(docs[0]) if has_more and docs else None
+    prev_cursor = encode_cursor(docs[-1]) if docs else None
+    window_start_ts = to_iso_timestamp(docs[0].get("timestamp")) if docs else None
+    window_end_ts = to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
 
     return {
         "success": True,
         "session_id": session_id,
         "messages": messages,
-        "pagination": _build_pagination(
+        "pagination": build_pagination(
             total_count=total_count,
             returned=len(messages),
             has_more=has_more,
@@ -1596,10 +1352,10 @@ async def get_lexi_messages_metadata(
 
     latest = latest_docs[0]
     oldest = oldest_docs[0]
-    latest_cursor = _encode_cursor(latest)
-    oldest_cursor = _encode_cursor(oldest)
-    latest_ts = _to_iso_timestamp(latest.get("timestamp"))
-    oldest_ts = _to_iso_timestamp(oldest.get("timestamp"))
+    latest_cursor = encode_cursor(latest)
+    oldest_cursor = encode_cursor(oldest)
+    latest_ts = to_iso_timestamp(latest.get("timestamp"))
+    oldest_ts = to_iso_timestamp(oldest.get("timestamp"))
 
     return {
         "success": True,
