@@ -231,6 +231,70 @@ class StreakProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restore a broken streak
+  Future<bool> restoreStreak() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _repository.restoreStreak();
+
+    bool success = false;
+    result.fold(
+      (failure) {
+        _errorMessage = failure.message;
+      },
+      (streakData) {
+        _streak = streakData;
+        success = true;
+      },
+    );
+
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+
+  /// Claim daily login reward
+  Future<Map<String, dynamic>?> claimDailyReward() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _repository.claimDailyReward();
+
+    Map<String, dynamic>? successData;
+    result.fold(
+      (failure) {
+        _errorMessage = failure.message;
+      },
+      (data) {
+        successData = data;
+        if (_streak != null) {
+          _streak = StreakEntity(
+            currentStreak: _streak!.currentStreak,
+            longestStreak: _streak!.longestStreak,
+            totalDaysActive: _streak!.totalDaysActive,
+            lastActivityDate: _streak!.lastActivityDate,
+            freezeCount: _streak!.freezeCount,
+            isActiveToday: _streak!.isActiveToday,
+            streakAtRisk: _streak!.streakAtRisk,
+            weeklyActivity: _streak!.weeklyActivity,
+            previousStreak: _streak!.previousStreak,
+            restoresUsedThisMonth: _streak!.restoresUsedThisMonth,
+            restoresRemaining: _streak!.restoresRemaining,
+            canRestore: _streak!.canRestore,
+            isDailyRewardAvailable: false,
+          );
+        }
+      },
+    );
+
+    _isLoading = false;
+    notifyListeners();
+    return successData;
+  }
+
   /// Clear error message
   void clearError() {
     _errorMessage = null;
