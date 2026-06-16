@@ -549,11 +549,15 @@ class LexiChatProvider extends ChangeNotifier {
             receivedDone = true;
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {
-              final accumulated = _messages[idx].content;
-              // Fall back to server-provided text when chunks were lost (e.g. LLM stream error).
-              final finalContent = accumulated.isNotEmpty
-                  ? accumulated
-                  : (fullText?.trim() ?? '');
+              final accumulated = _messages[idx].content.trim();
+              final serverText = fullText?.trim() ?? '';
+              // Prefer server-sanitized text (strips <think> blocks, properly formatted).
+              // Fall back to raw accumulated chunks only when server text is absent.
+              final finalContent = serverText.isNotEmpty
+                  ? serverText
+                  : (accumulated.isNotEmpty
+                      ? accumulated
+                      : 'Squawk! 🦜 Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',

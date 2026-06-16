@@ -466,9 +466,10 @@ Be encouraging and focus on the most important errors first."""
                 try:
                     import httpx
 
+                    _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""
                     messages = [
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
-                        {"role": "user", "content": diagnosis_prompt},
+                        {"role": "user", "content": f"{_no_think}{diagnosis_prompt}"},
                     ]
                     resp = await _throttled_post_json(
                         provider="groq",
@@ -1245,6 +1246,15 @@ async def stream_llm_tokens(
         if not groq_key or _provider_is_disabled("groq"):
             return
 
+        # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
+        groq_messages = messages
+        if "qwen" in groq_model.lower():
+            groq_messages = list(messages)
+            for i, msg in enumerate(groq_messages):
+                if msg.get("role") == "user":
+                    groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
+                    break
+
         client = _get_httpx_client("groq")
         tokens_yielded = 0
         try:
@@ -1257,7 +1267,7 @@ async def stream_llm_tokens(
                 },
                 json={
                     "model": groq_model,
-                    "messages": messages,
+                    "messages": groq_messages,
                     "max_tokens": 512,
                     "temperature": 0.7,
                     "stream": True,
@@ -1527,6 +1537,14 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
+            # Disable Qwen3 thinking to keep token budget for actual response.
+            _groq_messages = list(messages)
+            if "qwen" in groq_model.lower():
+                for i, msg in enumerate(_groq_messages):
+                    if msg.get("role") == "user":
+                        _groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
+                        break
+
             async def _try_groq():
                 if not groq_key:
                     return None, None
@@ -1535,7 +1553,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 512, "temperature": 0.7},
+                        payload={"model": groq_model, "messages": _groq_messages, "max_tokens": 512, "temperature": 0.7},
                         httpx_module=httpx,
                         timeout=20.0,
                     )
