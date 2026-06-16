@@ -7,6 +7,7 @@
 | Code Reviewer | `.claude/agents/code-reviewer.md` | After any non-trivial change |
 | Test Writer | `.claude/agents/test-writer.md` | New feature or bug fix |
 | Security Reviewer | `.claude/agents/security-reviewer.md` | Auth, API, DB schema changes |
+| Kaiser | `.claude/agents/kaiser.md` | Technical debt audits, pre-sprint cleanup, when a service feels "heavy" |
 
 ## Ownership Map
 
@@ -18,6 +19,7 @@
 | `ai-service/` | main Claude | AI pipeline, STT |
 | Tests | test-writer | Never let main agent skip tests |
 | Security surface | security-reviewer | Routes, auth middleware, env vars |
+| Technical debt | kaiser | Debt register, architecture violations, dead code, complexity hotspots |
 
 ## Coordination Protocol
 
@@ -26,6 +28,7 @@
 3. **Spawn test-writer** after every feature implementation.
 4. **Spawn security-reviewer** when touching: auth routes, JWT handling, DB migrations, env/config files.
 5. **Spawn code-reviewer** before any PR — use `/code-review` skill.
+6. **Spawn kaiser** for quarterly debt audits, before major refactors, or when a module starts accumulating complexity.
 
 ## Task Decomposition (Large Tasks)
 

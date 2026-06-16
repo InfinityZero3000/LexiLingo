@@ -104,8 +104,11 @@ class _LoginPageState extends State<LoginPage> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final canPop = Navigator.of(context).canPop();
+    // Subscribe this route to locale changes so String.tr() labels refresh immediately.
+    final localeCode = context.locale.languageCode;
 
     return Scaffold(
+      key: ValueKey<String>('login-page-$localeCode'),
       backgroundColor: isDark
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,

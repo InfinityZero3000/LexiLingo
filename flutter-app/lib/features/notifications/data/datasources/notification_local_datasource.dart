@@ -164,6 +164,7 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
   @override
   Future<void> addNotification(NotificationEntity notification) async {
     final notifications = await getNotifications();
+    notifications.removeWhere((n) => n.id == notification.id);
     notifications.insert(0, notification);
     await saveNotifications(notifications);
   }

@@ -117,7 +117,7 @@ async def synthesize_text(
         )
 
         # 1. Try local audio fallback first
-        local_audio = find_local_audio(text)
+        local_audio = await run_in_threadpool(find_local_audio, text)
         if local_audio is not None:
             audio_bytes, media_type = local_audio
             await emit_ai_audit_event(

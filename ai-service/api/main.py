@@ -17,7 +17,6 @@ import os
 import httpx
 from datetime import datetime, timezone
 from typing import Optional
-from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING
 from pymongo.errors import OperationFailure
 
@@ -53,9 +52,6 @@ GEMINI_API_KEY = settings.GEMINI_API_KEY
 USE_GATEWAY = os.getenv("USE_GATEWAY", "true").lower() == "true"
 MONGODB_URI = settings.MONGODB_URI
 MONGODB_DATABASE = settings.MONGODB_DATABASE
-GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-OLLAMA_BASE_URL = settings.OLLAMA_BASE_URL
-OLLAMA_MODEL = settings.OLLAMA_MODEL
 
 # Global clients
 _gateway_initialized = False
@@ -169,7 +165,8 @@ async def lifespan(app: FastAPI):
         await _ensure_mongo_indexes()
         logger.info(" MongoDB connected")
     except Exception as e:
-        logger.warning(f"MongoDB connection failed: {e}")
+        logger.error(f"MongoDB connection failed (critical): {e}")
+        raise
 
     try:
         redis_conn = await get_redis()
@@ -180,7 +177,8 @@ async def lifespan(app: FastAPI):
             logger.warning("No Groq API keys configured")
         logger.info(" Redis & Rate Limiter initialized")
     except Exception as e:
-        logger.warning(f"Redis initialization failed: {e}")
+        _groq_pool = None
+        logger.warning(f"Redis initialization failed; continuing without cache/rate pool: {e}")
 
     _http_client = httpx.AsyncClient(timeout=30.0)
     
@@ -253,57 +251,6 @@ app.add_middleware(
 )
 
 
-# Helper Functions for Providers (re-exported for routers)
-async def get_groq_response(message: str, db: AsyncIOMotorDatabase) -> Optional[str]:
-    global _http_client, _groq_pool
-    if not _http_client or not _groq_pool:
-        return None
-    slot = await _groq_pool.get_available()
-    if not slot:
-        return None
-    api_key, limiter = slot
-    try:
-        url = "https://api.groq.com/openai/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {api_key}"}
-        payload = {
-            "model": GROQ_MODEL,
-            "messages": [{"role": "user", "content": message}],
-            "max_tokens": 512,
-        }
-        response = await _http_client.post(url, json=payload, headers=headers)
-        if response.status_code == 200:
-            data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            await limiter.record(data.get("usage", {}).get("total_tokens", 500))
-            return content
-    except Exception as e:
-        logger.error(f"Groq error: {e}")
-    return None
-
-async def get_gemini_response(message: str, db: AsyncIOMotorDatabase) -> Optional[str]:
-    if not GEMINI_API_KEY or not _http_client:
-        return None
-    try:
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-        headers = {"x-goog-api-key": GEMINI_API_KEY}
-        payload = {"contents": [{"parts": [{"text": message}]}]}
-        response = await _http_client.post(url, json=payload, headers=headers)
-        if response.status_code == 200:
-            return response.json()["candidates"][0]["content"]["parts"][0]["text"]
-    except Exception as e:
-        logger.error(f"Gemini error: {e}")
-    return None
-
-async def get_ollama_response(message: str) -> Optional[str]:
-    try:
-        from api.services.ollama_service import OllamaService
-        async with OllamaService(base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL) as ollama:
-            result = await ollama.chat(messages=[{"role": "user", "content": message}])
-            return result.get("message", {}).get("content") if isinstance(result, dict) else result
-    except Exception:
-        return None
-
-
 # Include Routers
 from api.routes import (
     admin,
@@ -317,6 +264,7 @@ from api.routes import (
     ranking_agent as ranking_agent_router,
     stt,
     topic_chat,
+    translate,
     tts,
 )
 
@@ -327,6 +275,7 @@ app.include_router(tts.router, prefix="/api/v1/tts", tags=["TTS"])
 app.include_router(topic_chat.router, prefix="/api/v1/topics", tags=["Topic Chat"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analytics"])
+app.include_router(translate.router, prefix="/api/v1/ai", tags=["Translate"])
 app.include_router(lexi_chat.router, tags=["Lexi Chat"])
 app.include_router(ollama_router.router, prefix="/api/v1", tags=["Ollama"])
 app.include_router(content_agent.router, tags=["Internal Content Agent"])

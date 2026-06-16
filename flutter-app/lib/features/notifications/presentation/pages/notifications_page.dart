@@ -23,7 +23,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
     super.initState();
     // Load notifications when page is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationProvider>().loadNotifications();
+      context.read<NotificationProvider>().loadNotifications(
+        syncReviewReminder: true,
+      );
     });
   }
 

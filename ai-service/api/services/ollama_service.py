@@ -320,7 +320,7 @@ def get_ollama_service() -> OllamaService:
     if _ollama_service is None:
         from api.core.config import settings
         _ollama_service = OllamaService(
-            base_url=getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434'),
+            base_url=settings.OLLAMA_BASE_URL,
             model=getattr(settings, 'OLLAMA_MODEL', 'lexilingo-qwen3-1.7b'),
         )
     return _ollama_service

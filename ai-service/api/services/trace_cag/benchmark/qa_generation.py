@@ -418,7 +418,8 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                         logger.warning("[_generate_benchmark_qa_response] Gemini failed: %s", e)
 
                 elif provider == "ollama":
-                    ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+                    from api.core.config import settings
+                    ollama_url = settings.OLLAMA_BASE_URL
                     ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
                     try:
                         resp = await _throttled_post_json(
