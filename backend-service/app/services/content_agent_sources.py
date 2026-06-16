@@ -42,9 +42,9 @@ def resolve_snapshots(
     * Every matched snapshot must have ``status == "active"``.
     * Every matched snapshot must carry a non-empty ``snapshot_id``.
 
-    Returns the list of pinned descriptor dicts (same order as *sources*).
-    Virtual sources (``admin_upload``, ``existing_cefr``) are returned with a
-    synthetic descriptor and are never looked up in the catalog.
+    Returns the list of pinned descriptor dicts for non-virtual sources only.
+    Virtual sources (``admin_upload``, ``existing_cefr``) are skipped — they
+    are handled separately by the caller and never looked up in the catalog.
 
     Raises :class:`SourceResolutionError` with a collected message when any
     source cannot be resolved.
