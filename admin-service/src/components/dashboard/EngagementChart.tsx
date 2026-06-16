@@ -37,7 +37,7 @@ export const EngagementChart: React.FC<Props> = ({ data, loading }) => {
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis dataKey="week" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(value) => [Number(value ?? 0).toLocaleString(), ""]} />
+          <Tooltip formatter={(value: any) => [value?.toLocaleString() || "", ""]} />
           <Legend />
           <Bar dataKey="dau" fill="#3b82f6" name="DAU (Daily)" radius={[8, 8, 0, 0]} />
           <Bar dataKey="wau" fill="#10b981" name="WAU (Weekly)" radius={[8, 8, 0, 0]} />
