@@ -62,6 +62,28 @@ class ContentAgentClient:
             return payload["data"]
         return payload
 
+    async def attach_snapshots(
+        self,
+        job_id: uuid.UUID,
+        snapshots: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        references = [
+            {
+                "source_id": snapshot["source_id"],
+                "source_version": snapshot["source_version"],
+                "snapshot_id": snapshot["snapshot_id"],
+            }
+            for snapshot in snapshots
+        ]
+        async with httpx.AsyncClient(timeout=self._timeout) as client:
+            response = await client.post(
+                f"{self._base_url}/internal/content-agent/jobs/{job_id}/snapshots",
+                headers=self._headers,
+                json={"snapshots": references},
+            )
+        response.raise_for_status()
+        return response.json()
+
     async def list_sources(self) -> list[dict[str, Any]]:
         """Return the approved source catalog from the AI service."""
         async with httpx.AsyncClient(timeout=self._timeout) as client:

@@ -46,7 +46,7 @@
     "source_version": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 255
+      "maxLength": 64
     },
     "source_record_id": {
       "type": "string",

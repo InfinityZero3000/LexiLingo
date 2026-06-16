@@ -6,7 +6,7 @@ import csv
 import hashlib
 import io
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -28,6 +28,25 @@ class ParsedContentUpload:
     schema_version: int = 1
     rights_confirmed: bool = False
     rights_confirmed_at: datetime | None = None
+
+
+def detect_upload_format(filename: str, content: bytes) -> str:
+    suffix = Path(filename).suffix.lower()
+    if suffix not in {".csv", ".json"}:
+        raise ValueError("Only UTF-8 CSV and JSON uploads are supported")
+    try:
+        text = content.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError("Upload must be valid UTF-8") from exc
+    stripped = text.lstrip()
+    if suffix == ".json":
+        if not stripped.startswith(("{", "[")):
+            raise ValueError("JSON uploads must start with an object or array")
+        return "json"
+    sample = text[:4096]
+    if not sample.strip() or "," not in sample.splitlines()[0]:
+        raise ValueError("CSV uploads must include a comma-separated header row")
+    return "csv"
 
 
 def _normalized_payload(row: dict, row_number: int) -> dict:
@@ -82,17 +101,14 @@ def parse_content_upload(
     if len(content) > MAX_UPLOAD_BYTES:
         raise ValueError("Upload exceeds the 5 MB limit")
 
-    suffix = Path(filename).suffix.lower()
-    if suffix not in {".csv", ".json"}:
-        raise ValueError("Only UTF-8 CSV and JSON uploads are supported")
-
+    upload_format = detect_upload_format(filename, content)
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("Upload must be valid UTF-8") from exc
 
     checksum = hashlib.sha256(content).hexdigest()
-    if suffix == ".csv":
+    if upload_format == "csv":
         rows = list(csv.DictReader(io.StringIO(text)))
     else:
         try:
@@ -113,7 +129,7 @@ def parse_content_upload(
 
     records: list[dict] = []
     errors: list[str] = []
-    for index, row in enumerate(rows, start=2 if suffix == ".csv" else 1):
+    for index, row in enumerate(rows, start=2 if upload_format == "csv" else 1):
         if not isinstance(row, dict):
             errors.append(f"Row {index}: expected an object")
             continue

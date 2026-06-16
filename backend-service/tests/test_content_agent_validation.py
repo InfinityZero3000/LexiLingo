@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import copy
 
-import pytest
-
 from app.services.content_agent_validation import validate_artifact
 
 
@@ -14,8 +12,25 @@ def _base_artifact() -> dict:
     return {
         "schema_version": 2,
         "prompt_version": "cefr-course-v2",
-        "generation_key": "test-gen-key",
-        "source_manifest": [{"source_id": "existing_cefr", "snapshot_id": "existing_cefr"}],
+        "generation_key": "a" * 64,
+        "source_manifest": [
+            {
+                "snapshot_id": f"cefr_j:1.0:{'b' * 64}",
+                "source_name": "cefr_j",
+                "source_version": "1.0",
+                "official_url": "https://github.com/openlanguageprofiles/olp-en-cefrj",
+                "license_id": "LicenseRef-CEFR-J-Commercial",
+                "license_url": "https://lexilingo.me/licenses/cefr-j",
+                "attribution_text": "CEFR-J licensed dataset",
+                "retrieved_at": "2026-06-15T00:00:00Z",
+                "raw_checksum": "b" * 64,
+                "normalized_sha256": "c" * 64,
+                "normalized_bytes": 128,
+                "record_checksum_root": "d" * 64,
+                "adapter_version": 1,
+                "record_count": 1,
+            }
+        ],
         "courses": [
             {
                 "title": "Test Course A1",
@@ -47,7 +62,7 @@ def _base_artifact() -> dict:
                                     {
                                         "id": "ex-001",
                                         "type": "multiple_choice",
-                                        "ui_type": "card_choice",
+                                        "ui_type": "multiple_choice",
                                         "question": "What does 'hello' mean?",
                                         "options": ["A greeting", "Goodbye", "Thank you"],
                                         "correct_answer": "A greeting",
@@ -65,8 +80,13 @@ def _base_artifact() -> dict:
     }
 
 
+def _pins(artifact: dict) -> list[dict]:
+    return [dict(artifact["source_manifest"][0])]
+
+
 def test_valid_artifact_passes_all_gates() -> None:
-    report = validate_artifact(_base_artifact())
+    artifact = _base_artifact()
+    report = validate_artifact(artifact, pinned_snapshots=_pins(artifact))
     assert not report.is_blocking
     assert report.metrics["course_count"] == 1
     assert report.metrics["lesson_count"] == 1
@@ -110,6 +130,25 @@ def test_manifest_non_object_entry_is_blocking() -> None:
     assert "MANIFEST_ENTRY_TYPE" in codes
 
 
+def test_manifest_missing_integrity_fields_is_blocking() -> None:
+    art = _base_artifact()
+    del art["source_manifest"][0]["raw_checksum"]
+    report = validate_artifact(art)
+    assert "MANIFEST_FIELDS_MISSING" in {
+        error.code for error in report.blocking_errors
+    }
+
+
+def test_pinned_snapshot_mismatch_is_blocking() -> None:
+    art = _base_artifact()
+    pin = dict(art["source_manifest"][0])
+    pin["raw_checksum"] = "c" * 64
+    report = validate_artifact(art, pinned_snapshots=[pin])
+    assert "PINNED_SNAPSHOT_MISMATCH" in {
+        error.code for error in report.blocking_errors
+    }
+
+
 # --- course level gate ---
 
 
@@ -130,6 +169,64 @@ def test_unstorable_license_mode_is_blocking() -> None:
     report = validate_artifact(art)
     codes = {e.code for e in report.blocking_errors}
     assert "INVALID_LICENSE_MODE" in codes
+
+
+def test_generated_vocab_cannot_claim_imported_license_mode() -> None:
+    art = _base_artifact()
+    vocab = art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    vocab["license_mode"] = "approved_dataset"
+    report = validate_artifact(art, pinned_snapshots=_pins(art))
+    assert "GENERATED_LICENSE_MODE_INVALID" in {
+        error.code for error in report.blocking_errors
+    }
+
+
+def test_admin_upload_manifest_must_match_attested_upload() -> None:
+    art = _base_artifact()
+    manifest = {
+        "snapshot_id": f"admin_upload:job:test:{'d' * 64}",
+        "source_name": "admin_upload",
+        "source_version": "job-upload-v1",
+        "official_url": "https://lexilingo.me/admin/content-agent/uploads",
+        "license_id": "LicenseRef-Admin-Owned",
+        "license_url": "https://lexilingo.me/legal/content-upload-rights",
+        "attribution_text": "Administrator-owned or licensed upload",
+        "retrieved_at": "2026-06-15T00:00:00Z",
+        "raw_checksum": "b" * 64,
+        "normalized_sha256": "c" * 64,
+        "normalized_bytes": 128,
+        "record_checksum_root": "d" * 64,
+        "adapter_version": 1,
+        "record_count": 1,
+    }
+    art["source_manifest"] = [manifest]
+    vocab = art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    vocab.update(
+        {
+            "source_name": "admin_upload",
+            "license_mode": "admin_owned",
+            "source_version": "job-upload-v1",
+            "source_record_id": "admin_upload:1:hello",
+            "license_id": "LicenseRef-Admin-Owned",
+            "license_url": "https://lexilingo.me/legal/content-upload-rights",
+            "attribution_text": "Administrator-owned or licensed upload",
+            "raw_checksum": "b" * 64,
+            "record_checksum": "1" * 64,
+            "lineage": {
+                "adapter": "admin_upload",
+                "adapter_version": 1,
+                "raw_path": "content-agent-upload/test",
+            },
+            "content_usage": "full_text",
+        }
+    )
+    report = validate_artifact(
+        art,
+        admin_upload={"checksum": "e" * 64, "row_count": 1},
+    )
+    assert "ADMIN_UPLOAD_CHECKSUM_MISMATCH" in {
+        error.code for error in report.blocking_errors
+    }
 
 
 # --- unique lesson orders gate ---
@@ -248,6 +345,17 @@ def test_missing_ui_type_is_blocking() -> None:
     assert "MISSING_UI_TYPE" in codes
 
 
+def test_ui_type_must_match_base_exercise_type() -> None:
+    art = _base_artifact()
+    art["courses"][0]["units"][0]["lessons"][0]["exercises"][0][
+        "ui_type"
+    ] = "dictation"
+    report = validate_artifact(art)
+    assert "EXERCISE_UI_TYPE_MISMATCH" in {
+        error.code for error in report.blocking_errors
+    }
+
+
 # --- options gate ---
 
 
@@ -297,7 +405,7 @@ def test_lesson_with_no_exercises_is_blocking() -> None:
 def test_empty_translation_vi_is_warning_not_blocking() -> None:
     art = _base_artifact()
     art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]["translation_vi"] = ""
-    report = validate_artifact(art)
+    report = validate_artifact(art, pinned_snapshots=_pins(art))
     warn_codes = {w.code for w in report.warnings}
     assert "EMPTY_TRANSLATION_VI" in warn_codes
     assert not report.is_blocking
@@ -308,7 +416,7 @@ def test_empty_translation_vi_is_warning_not_blocking() -> None:
 
 def test_metrics_counts_are_accurate() -> None:
     art = _base_artifact()
-    report = validate_artifact(art)
+    report = validate_artifact(art, pinned_snapshots=_pins(art))
     assert report.metrics["vocabulary_count"] == 1
     assert report.metrics["exercise_count"] == 1
     assert report.metrics["unit_count"] == 1

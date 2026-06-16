@@ -113,6 +113,17 @@ class ContentAgentJobService:
         return await db.scalar(query)
 
     @staticmethod
+    async def count_active_by_requester(
+        db: AsyncSession, requester_id: uuid.UUID
+    ) -> int:
+        return await db.scalar(
+            select(func.count(ContentAgentJob.id)).where(
+                ContentAgentJob.requested_by_id == requester_id,
+                ContentAgentJob.status.in_(ACTIVE_STATUSES),
+            )
+        ) or 0
+
+    @staticmethod
     async def list(
         db: AsyncSession, *, limit: int = 50, offset: int = 0
     ) -> list[ContentAgentJob]:

@@ -1,3 +1,6 @@
+import uuid
+from datetime import UTC, datetime, timedelta
+
 import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -52,6 +55,21 @@ def _artifact() -> dict:
             "topic": "daily_life",
             "source_name": "admin_upload",
             "license_mode": "admin_owned",
+            "source_version": "job-upload-v1",
+            "source_record_id": f"admin_upload:{index}",
+            "license_id": "LicenseRef-Admin-Owned",
+            "license_url": "https://lexilingo.me/legal/content-upload-rights",
+            "attribution_text": "Administrator-owned or licensed upload",
+            "raw_checksum": "b" * 64,
+            "record_checksum": f"{index:064x}",
+            "source_checksum": f"{index:064x}",
+            "lineage": {
+                "adapter": "admin_upload",
+                "adapter_version": 1,
+                "raw_path": "content-agent-upload/test",
+                "source_location": f"row:{index}",
+            },
+            "content_usage": "full_text",
         }
         for index in range(8)
     ]
@@ -67,12 +85,23 @@ def _artifact() -> dict:
     ]
     return {
         "schema_version": 2,
-        "generation_key": "generation-key",
+        "prompt_version": "cefr-course-v2",
+        "generation_key": "a" * 64,
         "source_manifest": [
             {
-                "source_id": "admin_upload",
-                "snapshot_id": "admin_upload:v1:abc123",
-                "license_mode": "admin_owned",
+                "snapshot_id": f"admin_upload:job-upload-v1:{'b' * 64}",
+                "source_name": "admin_upload",
+                "source_version": "job-upload-v1",
+                "official_url": "https://lexilingo.me/admin/content-agent/uploads",
+                "license_id": "LicenseRef-Admin-Owned",
+                "license_url": "https://lexilingo.me/legal/content-upload-rights",
+                "attribution_text": "Administrator-owned or licensed upload",
+                "retrieved_at": "2026-06-15T00:00:00Z",
+                "raw_checksum": "b" * 64,
+                "normalized_sha256": "c" * 64,
+                "normalized_bytes": 128,
+                "record_checksum_root": "d" * 64,
+                "adapter_version": 1,
                 "record_count": 8,
             }
         ],
@@ -99,6 +128,22 @@ def _artifact() -> dict:
     }
 
 
+def _upload() -> ContentAgentUpload:
+    return ContentAgentUpload(
+        id=uuid.uuid4(),
+        uploaded_by_id=uuid.uuid4(),
+        filename="admin.csv",
+        checksum="b" * 64,
+        row_count=8,
+        schema_version=1,
+        records=[],
+        expires_at=datetime.now(UTC) + timedelta(days=1),
+        rights_confirmed=True,
+        rights_confirmed_at=datetime.now(UTC),
+        uploader_id=uuid.uuid4(),
+    )
+
+
 async def test_apply_reuses_vocabulary_and_is_idempotent(content_agent_db):
     existing = VocabularyItem(
         word="hello",
@@ -106,8 +151,10 @@ async def test_apply_reuses_vocabulary_and_is_idempotent(content_agent_db):
         part_of_speech="noun",
         difficulty_level="A1",
     )
+    upload = _upload()
     job = ContentAgentJob(
         requested_by_id=None,
+        upload_id=upload.id,
         status="preview_ready",
         request_hash="a" * 64,
         revision=1,
@@ -115,7 +162,7 @@ async def test_apply_reuses_vocabulary_and_is_idempotent(content_agent_db):
         progress={"stage": "preview_ready", "percent": 100},
         artifact=_artifact(),
     )
-    content_agent_db.add_all([existing, job])
+    content_agent_db.add_all([existing, upload, job])
     await content_agent_db.commit()
 
     applied_job, course_ids = await ContentAgentApplyService.apply(
@@ -154,6 +201,17 @@ async def test_apply_reuses_vocabulary_and_is_idempotent(content_agent_db):
     )
     assert len(lesson_items) == 8
     assert existing in lesson_items
+    provenance = await content_agent_db.scalar(
+        select(ContentProvenance).where(
+            ContentProvenance.entity_type == "vocabulary",
+            ContentProvenance.entity_id == existing.id,
+        )
+    )
+    assert provenance is not None
+    assert provenance.source_version == "job-upload-v1"
+    assert provenance.license_id == "LicenseRef-Admin-Owned"
+    assert provenance.raw_checksum == "b" * 64
+    assert provenance.lineage["adapter"] == "admin_upload"
 
     repeated_job, repeated_ids = await ContentAgentApplyService.apply(
         content_agent_db, job.id
@@ -176,8 +234,10 @@ async def test_apply_deduplicates_unicode_normalized_vocabulary(content_agent_db
         part_of_speech="noun",
         difficulty_level="A1",
     )
+    upload = _upload()
     job = ContentAgentJob(
         requested_by_id=None,
+        upload_id=upload.id,
         status="preview_ready",
         request_hash="b" * 64,
         revision=1,
@@ -185,7 +245,7 @@ async def test_apply_deduplicates_unicode_normalized_vocabulary(content_agent_db
         progress={"stage": "preview_ready", "percent": 100},
         artifact=artifact,
     )
-    content_agent_db.add_all([existing, job])
+    content_agent_db.add_all([existing, upload, job])
     await content_agent_db.commit()
 
     await ContentAgentApplyService.apply(content_agent_db, job.id)

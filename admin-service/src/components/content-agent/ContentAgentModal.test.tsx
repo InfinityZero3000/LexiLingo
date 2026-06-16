@@ -15,6 +15,29 @@ vi.mock("../../lib/contentAgentApi", async (importOriginal) => {
   };
 });
 
+const sourceSnapshot = (
+  overrides: Partial<SourceSnapshot> = {},
+): SourceSnapshot => ({
+  source_id: "oewn",
+  source_name: "Open English WordNet",
+  source_version: "2025",
+  snapshot_id: `oewn:2025:${"a".repeat(64)}`,
+  official_url: "https://en-word.net/",
+  license_id: "CC-BY-4.0",
+  license_url: "https://creativecommons.org/licenses/by/4.0/",
+  attribution_text: "Open English WordNet contributors",
+  retrieved_at: "2026-06-01T00:00:00Z",
+  raw_checksum: "a".repeat(64),
+  normalized_sha256: "b".repeat(64),
+  normalized_bytes: 2048,
+  record_checksum_root: "c".repeat(64),
+  adapter_version: 1,
+  record_count: 150000,
+  status: "active",
+  enabled: true,
+  ...overrides,
+});
+
 describe("ContentAgentModal configuration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -126,35 +149,24 @@ describe("ContentAgentModal source catalog logic", () => {
   it("getSourceCatalog resolves approved snapshots", async () => {
     const { getSourceCatalog } = await import("../../lib/contentAgentApi");
     vi.mocked(getSourceCatalog).mockResolvedValueOnce([
-      {
-        source_id: "oewn",
-        source_name: "Open English WordNet",
-        version: "2025",
-        license_id: "CC-BY-4.0",
-        license_url: "https://creativecommons.org/licenses/by/4.0/",
-        attribution_text: "Princeton WordNet",
-        record_count: 150000,
-        last_sync_at: "2026-06-01T00:00:00Z",
-        status: "approved",
-        enabled: true,
-      },
+      sourceSnapshot(),
     ]);
 
     const result = await getSourceCatalog();
     expect(result).toHaveLength(1);
     expect(result[0].source_id).toBe("oewn");
-    expect(result[0].status).toBe("approved");
+    expect(result[0].status).toBe("active");
     expect(result[0].enabled).toBe(true);
   });
 
   it("only approved+enabled snapshots are selectable", () => {
     const snapshots = [
-      { source_id: "oewn", status: "approved" as const, enabled: true, source_name: "OEWN", version: "2025", license_id: "CC-BY-4.0", license_url: "", attribution_text: "", record_count: 0, last_sync_at: null },
-      { source_id: "tatoeba", status: "pending" as const, enabled: false, source_name: "Tatoeba", version: "2025", license_id: "CC0", license_url: "", attribution_text: "", record_count: 0, last_sync_at: null },
-      { source_id: "cmudict", status: "rejected" as const, enabled: false, source_name: "CMUdict", version: "1.0", license_id: "BSD", license_url: "", attribution_text: "", record_count: 0, last_sync_at: null },
+      sourceSnapshot(),
+      sourceSnapshot({ source_id: "tatoeba", enabled: false }),
+      sourceSnapshot({ source_id: "cmudict", enabled: false }),
     ];
 
-    const selectable = snapshots.filter((s) => s.status === "approved" && s.enabled);
+    const selectable = snapshots.filter((s) => s.status === "active" && s.enabled);
     expect(selectable).toHaveLength(1);
     expect(selectable[0].source_id).toBe("oewn");
   });
@@ -162,13 +174,13 @@ describe("ContentAgentModal source catalog logic", () => {
   it("core lexical sources are preselected when available and approved", () => {
     const coreSourceIds = ["oewn", "cmudict", "cefr_j", "wikidata"];
     const approvedSnapshots = [
-      { source_id: "oewn", status: "approved" as const, enabled: true },
-      { source_id: "tatoeba", status: "approved" as const, enabled: true },
-      { source_id: "cefr_j", status: "pending" as const, enabled: false },
+      sourceSnapshot(),
+      sourceSnapshot({ source_id: "tatoeba" }),
+      sourceSnapshot({ source_id: "cefr_j", enabled: false }),
     ];
 
     const preselected = approvedSnapshots
-      .filter((s) => s.status === "approved" && s.enabled && coreSourceIds.includes(s.source_id))
+      .filter((s) => s.status === "active" && s.enabled && coreSourceIds.includes(s.source_id))
       .map((s) => s.source_id);
 
     expect(preselected).toEqual(["oewn"]);
@@ -177,20 +189,16 @@ describe("ContentAgentModal source catalog logic", () => {
   });
 
   it("inactive snapshot is disabled (not approved+enabled)", () => {
-    const snapshot: SourceSnapshot = {
+    const snapshot = sourceSnapshot({
       source_id: "cmudict",
-      status: "pending",
       enabled: false,
       source_name: "CMUdict",
-      version: "1.0",
+      source_version: "1.0",
       license_id: "BSD",
-      license_url: "",
-      attribution_text: "",
       record_count: 0,
-      last_sync_at: null,
-    };
+    });
 
-    const selectable = snapshot.status === "approved" && snapshot.enabled;
+    const selectable = snapshot.status === "active" && snapshot.enabled;
     expect(selectable).toBe(false);
   });
 });

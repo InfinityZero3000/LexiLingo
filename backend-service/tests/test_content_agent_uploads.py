@@ -4,6 +4,7 @@ import pytest
 
 from app.services.content_agent_uploads import (
     MAX_UPLOAD_BYTES,
+    detect_upload_format,
     parse_content_upload,
 )
 
@@ -88,3 +89,8 @@ def test_invalid_encoding_and_malformed_json_fail_closed():
         parse_content_upload("words.csv", b"\xff\xfe")
     with pytest.raises(ValueError, match="Invalid JSON at line 1"):
         parse_content_upload("words.json", b'{"records": [}')
+
+
+def test_upload_format_sniff_rejects_extension_content_mismatch():
+    with pytest.raises(ValueError, match="CSV uploads"):
+        detect_upload_format("words.csv", b'{"records":[]}')

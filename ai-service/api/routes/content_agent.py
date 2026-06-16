@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import hmac
-from typing import Annotated, Any
+import logging
+from typing import Annotated
 
 from fastapi import (
     APIRouter,
@@ -15,14 +16,15 @@ from fastapi import (
     status,
 )
 from fastapi.security import APIKeyHeader
-from pydantic import BaseModel
-
 from api.core.config import get_settings
 from api.core.redis_client import RedisClient
 from api.models.content_agent import (
     ContentAgentArtifact,
     GenerationRequest,
     RecordBatchResponse,
+    SnapshotAttachmentRequest,
+    SnapshotAttachmentResponse,
+    SourceSnapshotDescriptor,
     SourceRecordBatch,
 )
 from api.services.content_agent.planner import InsufficientVocabularyError
@@ -35,11 +37,15 @@ from api.services.content_agent.store import (
     ContentAgentStore,
     RecordLimitExceeded,
 )
-from api.services.content_etl.registry import list_source_definitions
+from api.services.content_etl.registry import get_source_definition
 from api.services.content_etl.storage import SnapshotStorage, StorageIntegrityError
 
 
 router = APIRouter(prefix="/api/v1/internal/content-agent")
+logger = logging.getLogger(__name__)
+# auto_error=False: verify_content_agent_token returns a consistent 403 message
+# for both absent and wrong tokens, preventing information leakage about which
+# condition triggered the rejection.
 _service_token_header = APIKeyHeader(
     name="X-Content-Agent-Token",
     auto_error=False,
@@ -178,35 +184,44 @@ async def delete_job_context(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-class SourceCatalogEntry(BaseModel):
-    source_name: str
-    default_enabled: bool
-    allowed_licenses: list[str]
-    attribution_text: str
-    official_url: str
-
-
-class SnapshotActivationRequest(BaseModel):
-    source_version: str
-
-
 @router.get(
     "/sources",
-    response_model=list[SourceCatalogEntry],
+    response_model=list[SourceSnapshotDescriptor],
 )
 async def list_sources(
     _token: str = Depends(verify_content_agent_token),
-) -> list[SourceCatalogEntry]:
-    """List registered ETL sources. Only active approved sources are production-ready."""
-    entries: list[SourceCatalogEntry] = []
-    for defn in list_source_definitions():
+) -> list[SourceSnapshotDescriptor]:
+    """List only active, integrity-verified ETL snapshots."""
+    settings = get_settings()
+    storage = SnapshotStorage(
+        getattr(settings, "CONTENT_ETL_STORAGE_ROOT", "/data/content-etl")
+    )
+    entries: list[SourceSnapshotDescriptor] = []
+    for pointer in sorted((storage.root / "active").glob("*.json")):
+        try:
+            manifest = storage.read_active_manifest(pointer.stem)
+            definition = get_source_definition(manifest.source_name)
+        except (StorageIntegrityError, ValueError):
+            logger.exception("Ignoring invalid active ETL pointer %s", pointer.name)
+            continue
         entries.append(
-            SourceCatalogEntry(
-                source_name=defn.source_name.value,
-                default_enabled=defn.default_enabled,
-                allowed_licenses=[lic.value for lic in defn.allowed_licenses],
-                attribution_text=defn.attribution_text,
-                official_url=defn.official_url,
+            SourceSnapshotDescriptor(
+                source_id=manifest.source_name.value,
+                source_name=manifest.source_name.value,
+                source_version=manifest.source_version,
+                snapshot_id=manifest.snapshot_id,
+                official_url=str(manifest.official_url),
+                license_id=manifest.license_id.value,
+                license_url=str(manifest.license_url),
+                attribution_text=manifest.attribution_text,
+                retrieved_at=manifest.retrieved_at,
+                raw_checksum=manifest.raw_sha256,
+                normalized_sha256=manifest.normalized_sha256,
+                normalized_bytes=manifest.normalized_bytes,
+                record_checksum_root=manifest.record_checksum_root,
+                adapter_version=manifest.adapter_version,
+                record_count=manifest.counts.approved,
+                enabled=definition.default_enabled,
             )
         )
     return entries
@@ -214,38 +229,38 @@ async def list_sources(
 
 @router.post(
     "/jobs/{job_id}/snapshots",
+    response_model=SnapshotAttachmentResponse,
     status_code=status.HTTP_202_ACCEPTED,
 )
-async def activate_snapshot(
+async def attach_snapshots(
     job_id: JobId,
-    request: SnapshotActivationRequest,
+    request: SnapshotAttachmentRequest,
     _token: str = Depends(verify_content_agent_token),
-) -> dict[str, Any]:
-    """Activate an approved snapshot for a given source.
-
-    Only approved manifests can be activated. Returns the active pointer.
-    The job_id here identifies the source name (e.g. 'oewn').
-    """
+    service: ContentAgentService = Depends(get_content_agent_service),
+) -> SnapshotAttachmentResponse:
+    """Attach exact approved snapshot records to a job context."""
     settings = get_settings()
     storage_root = getattr(settings, "CONTENT_ETL_STORAGE_ROOT", "/data/content-etl")
     try:
         storage = SnapshotStorage(storage_root)
-        active_path = storage.activate(job_id, request.source_version)
-        active_data = storage.read_active(job_id)
-        return {
-            "source_name": job_id,
-            "source_version": request.source_version,
-            "snapshot_id": active_data.get("snapshot_id"),
-            "active_path": str(active_path),
-            "status": "activated",
-        }
-    except StorageIntegrityError as exc:
+        return await service.attach_snapshots(
+            job_id,
+            request.snapshots,
+            storage=storage,
+        )
+    except RecordLimitExceeded as exc:
+        raise HTTPException(
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            detail=str(exc),
+        ) from exc
+    except (StorageIntegrityError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
     except Exception as exc:
+        logger.exception("Unexpected error attaching snapshots for job %s", job_id)
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
+            detail="Snapshot attachment failed",
         ) from exc

@@ -24,6 +24,9 @@ const job = (overrides: Partial<ContentAgentJob> = {}): ContentAgentJob => ({
 
 describe("ContentAgentDrawer state", () => {
   it("polls only non-terminal pipeline stages", () => {
+    expect(isContentAgentJobActive("resolving_sources")).toBe(true);
+    expect(isContentAgentJobActive("loading_snapshots")).toBe(true);
+    expect(isContentAgentJobActive("normalizing_upload")).toBe(true);
     expect(isContentAgentJobActive("generating")).toBe(true);
     expect(isContentAgentJobActive("applying")).toBe(true);
     expect(isContentAgentJobActive("preview_ready")).toBe(false);

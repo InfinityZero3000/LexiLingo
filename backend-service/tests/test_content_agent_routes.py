@@ -34,7 +34,7 @@ async def test_cancel_locks_job_commits_and_revokes_worker(monkeypatch):
         status="generating",
         celery_task_id="celery-task-1",
     )
-    admin = SimpleNamespace(id=uuid.uuid4())
+    admin = SimpleNamespace(id=uuid.uuid4(), role_level=2)
     calls = {"locked": False, "commits": 0, "revoked": None}
 
     class FakeSession:
@@ -84,3 +84,40 @@ async def test_cancel_locks_job_commits_and_revokes_worker(monkeypatch):
         "commits": 1,
         "revoked": ("celery-task-1", False),
     }
+
+
+async def test_source_catalog_route_returns_validated_active_snapshots(monkeypatch):
+    monkeypatch.setattr(content_agent_routes, "_require_enabled", lambda: None)
+    monkeypatch.setattr(content_agent_routes, "ContentAgentClient", lambda: object())
+
+    async def fake_catalog(_client):
+        return [
+            {
+                "source_id": "oewn",
+                "source_name": "oewn",
+                "source_version": "2025",
+                "snapshot_id": "oewn:2025:" + ("a" * 64),
+                "official_url": "https://en-word.net/static/english-wordnet-2025.xml.gz",
+                "license_id": "CC-BY-4.0",
+                "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                "attribution_text": "Open English WordNet 2025",
+                "retrieved_at": "2026-06-15T00:00:00Z",
+                "raw_checksum": "a" * 64,
+                "normalized_sha256": "b" * 64,
+                "normalized_bytes": 100,
+                "record_checksum_root": "c" * 64,
+                "adapter_version": 1,
+                "record_count": 100,
+                "status": "active",
+                "enabled": True,
+            }
+        ]
+
+    monkeypatch.setattr(content_agent_routes, "get_source_catalog", fake_catalog)
+
+    response = await content_agent_routes.list_sources(
+        _=SimpleNamespace(id=uuid.uuid4())
+    )
+
+    assert response.data[0].source_id == "oewn"
+    assert response.data[0].status == "active"
