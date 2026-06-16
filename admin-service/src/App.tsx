@@ -10,7 +10,7 @@ import {
   LayoutDashboard, Users, BookOpen, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
-  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare
+  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell
 } from "lucide-react";
 
 // Lazy-loaded components
@@ -37,6 +37,8 @@ const ContentAnalyticsPage = lazy(() => import("./pages/ContentAnalyticsPage").t
 const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
 const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage").then(m => ({ default: m.AdminManagementPage })));
 const AiChatSettingsPage = lazy(() => import("./pages/AiChatSettingsPage").then(m => ({ default: m.AiChatSettingsPage })));
+const RankingAgentPage = lazy(() => import("./pages/RankingAgentPage").then(m => ({ default: m.RankingAgentPage })));
+const NotificationCampaignPage = lazy(() => import("./pages/NotificationCampaignPage").then(m => ({ default: m.NotificationCampaignPage })));
 const NoAccessPage = lazy(() => import("./pages/NoAccessPage").then(m => ({ default: m.NoAccessPage })));
 const NotFoundPage = lazy(() => import("./pages/NotFoundPage").then(m => ({ default: m.NotFoundPage })));
 
@@ -62,6 +64,8 @@ const AppRoutes = () => {
     { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} /> },
     { to: "/admin/achievements", label: t.nav.achievements, icon: <Trophy size={18} /> },
     { to: "/admin/shop", label: t.nav.shop, icon: <ShoppingBag size={18} /> },
+    { to: "/admin/ranking-agent", label: t.nav.rankingAgent, icon: <Swords size={18} /> },
+    { to: "/admin/notification-campaign", label: t.nav.notificationCampaign, icon: <Bell size={18} /> },
     { to: "/admin/ads", label: t.nav.bannerAds, icon: <Megaphone size={18} /> },
     { to: "/admin/logs", label: t.nav.logs, icon: <ScrollText size={18} /> },
     { to: "/admin/monitoring", label: t.nav.monitoring, icon: <Activity size={18} /> },
@@ -104,6 +108,8 @@ const AppRoutes = () => {
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
               <Route path="/admin/achievements" element={<AchievementsPage />} />
               <Route path="/admin/shop" element={<ShopPage />} />
+              <Route path="/admin/ranking-agent" element={<RankingAgentPage />} />
+              <Route path="/admin/notification-campaign" element={<NotificationCampaignPage />} />
               <Route path="/admin/ads" element={<AdsPage />} />
               <Route path="/admin/logs" element={<LogsPage />} />
               <Route path="/admin/monitoring" element={<MonitoringPage />} />
