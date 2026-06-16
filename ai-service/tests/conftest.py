@@ -198,3 +198,49 @@ def run_async():
         return asyncio.get_event_loop().run_until_complete(coro)
 
     return _run
+
+
+@pytest.fixture(autouse=True)
+def mock_redis_client_global(monkeypatch):
+    """Globally mock RedisClient to prevent connection blocks during tests."""
+    from unittest.mock import AsyncMock
+    mock_inst = AsyncMock()
+    mock_inst.get = AsyncMock(return_value=None)
+    monkeypatch.setattr("api.core.redis_client.RedisClient.get_instance", AsyncMock(return_value=mock_inst))
+    monkeypatch.setattr("api.core.redis_client.RedisClient.reconnect", AsyncMock(return_value=mock_inst))
+    monkeypatch.setattr("api.core.redis_client.get_redis", AsyncMock(return_value=mock_inst))
+
+
+@pytest.fixture(autouse=True)
+def mock_kg_service_global(monkeypatch):
+    """Globally mock get_kg_service to prevent KuzuDB file locks and hangs during tests."""
+    from unittest.mock import AsyncMock, MagicMock
+    mock_kg = MagicMock()
+    mock_kg.get_concepts = MagicMock(return_value={})
+    mock_kg.get_seed_concepts_fast = MagicMock(return_value=[])
+    mock_kg.semantic_seed_concepts = MagicMock(return_value=[])
+    
+    class MockKGHits:
+        def __init__(self, seed_nodes=None, expanded_nodes=None, paths=None):
+            self.seed_nodes = seed_nodes or []
+            self.expanded_nodes = expanded_nodes or []
+            self.paths = paths or []
+
+    mock_kg.expand = AsyncMock(return_value=MockKGHits())
+    mock_kg.expand_best_first = AsyncMock(return_value=MockKGHits())
+    mock_kg.get_concept_count = MagicMock(return_value=0)
+    mock_kg.record_interaction = AsyncMock()
+    mock_kg.get_user_mastery = AsyncMock(return_value={})
+
+    for path in [
+        "api.services.kg_service_v3.get_kg_service",
+        "api.services.subgraph_hot_cache.get_kg_service",
+        "api.services.trace_cag.nodes_v2.get_kg_service",
+        "api.services.orchestrator.get_kg_service",
+    ]:
+        try:
+            monkeypatch.setattr(path, lambda: mock_kg)
+        except Exception:
+            pass
+
+

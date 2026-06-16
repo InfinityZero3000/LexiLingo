@@ -134,7 +134,7 @@ def run(nodes_csv: Path = NODES_CSV, edges_csv: Path = EDGES_CSV) -> dict:
     import kuzu  # type: ignore
 
     logger.info("Opening KuzuDB at %s …", KUZU_DB_PATH)
-    KUZU_DB_PATH.mkdir(parents=True, exist_ok=True)
+    KUZU_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     db = kuzu.Database(str(KUZU_DB_PATH))
     conn = kuzu.Connection(db)
 

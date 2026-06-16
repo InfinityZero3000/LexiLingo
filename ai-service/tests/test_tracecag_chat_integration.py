@@ -72,7 +72,17 @@ def mock_lexi_store(monkeypatch):
     store.delete_session = AsyncMock()
     store.init_messages = AsyncMock()
     monkeypatch.setattr(lexi_route, "_store", store)
-    monkeypatch.setattr("api.routes.lexi_chat.enforce_user_quota", AsyncMock(return_value=MagicMock()))
+    quota_mock = MagicMock()
+    quota_mock.rpm_used = 1
+    quota_mock.rpm_limit = 100
+    quota_mock.rpd_used = 5
+    quota_mock.rpd_limit = 1000
+    quota_mock.tpm_used = 100
+    quota_mock.tpm_limit = 50000
+    quota_mock.tpd_used = 1000
+    quota_mock.tpd_limit = 1000000
+    monkeypatch.setattr("api.routes.lexi_chat.enforce_user_quota", AsyncMock(return_value=quota_mock))
+    monkeypatch.setattr("api.core.redis_client.RedisClient.get_instance", AsyncMock())
     return store
 
 

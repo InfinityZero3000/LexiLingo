@@ -104,13 +104,8 @@ def build_groq_key_pool(redis_client: redis.Redis) -> Optional[GroqKeyPool]:
     Returns None if no keys are configured.
     """
     global _pool_instance
-    raw = os.getenv("GROQ_API_KEYS", "").strip()
+    raw = os.getenv("GROQ_API_KEYS", "").strip() or os.getenv("GROQ_API_KEY", "").strip()
     keys = [k.strip() for k in raw.split(",") if k.strip()] if raw else []
-
-    if not keys:
-        single = os.getenv("GROQ_API_KEY", "").strip()
-        if single:
-            keys = [single]
 
     if not keys:
         return None
