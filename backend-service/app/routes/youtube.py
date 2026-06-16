@@ -16,6 +16,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clients.ai_service_client import AIServiceClient
 from app.core.config import settings
 from app.core.database import get_db
 from app.services.api_cache_service import (
@@ -502,14 +503,15 @@ async def get_channel_videos(
 async def translate_word(
     word: str = Query(..., min_length=1, max_length=100),
     lang: str = Query("vi", description="Target language code (e.g. vi, fr, ja)"),
+    context: str = Query("", max_length=500, description="Caption sentence the word appears in"),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Look up an English word: phonetic + definition + translation.
+    Look up an English word: phonetic + definition + contextual translation.
 
-    Sources (no API keys needed):
-    - https://api.dictionaryapi.dev  — English definition, IPA, examples
-    - https://api.mymemory.translated.net — free translation (5 000 chars/day)
+    Sources:
+    - https://api.dictionaryapi.dev  — English definition, IPA, examples (always free)
+    - ai-service /ai/translate       — LLM contextual translation (Groq → Ollama fallback)
 
     Cache: 30-day Redis, 90-day DB (word meanings rarely change).
     Returns gracefully on lookup failure (empty fields, never 4xx/5xx).
@@ -522,7 +524,7 @@ async def translate_word(
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
             api_name="youtube",
-            fetch_fn=lambda: _fetch_word_data(clean_word, lang),
+            fetch_fn=lambda: _fetch_word_data(clean_word, lang, context),
             priority=Priority.MEDIUM,
             redis_ttl=2592000,   # 30 days
             db_ttl=7776000,      # 90 days
@@ -544,24 +546,31 @@ def _empty_word_result(word: str) -> dict:
     }
 
 
-async def _fetch_word_data(word: str, lang: str = "vi") -> dict:
-    """Fetch definition (Free Dictionary API) + translation (MyMemory) concurrently."""
+async def _fetch_word_data(word: str, lang: str = "vi", context: str = "") -> dict:
+    """
+    Fetch word data from two sources in parallel:
+    - Free Dictionary API  → phonetic (IPA), definition, examples  [always free]
+    - ai-service /translate → LLM contextual translation            [Groq → Ollama]
+    """
     dict_url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
-    trans_url = "https://api.mymemory.translated.net/get"
 
+    # Run both IO-bound calls concurrently
     async with httpx.AsyncClient(timeout=10.0) as client:
-        dict_resp, trans_resp = await asyncio.gather(
-            client.get(dict_url),
-            client.get(trans_url, params={"q": word, "langpair": f"en|{lang}"}),
+        dict_resp_coro = client.get(dict_url)
+        ai_coro = AIServiceClient().translate_word(word=word, lang=lang, context=context)
+        dict_resp, ai_result = await asyncio.gather(
+            dict_resp_coro,
+            ai_coro,
             return_exceptions=True,
         )
 
+    # ── Free Dictionary: phonetic, definition, examples ──────────────────────
     phonetic = ""
     part_of_speech = ""
     definition = ""
     examples: list[str] = []
 
-    if isinstance(dict_resp, httpx.Response) and dict_resp.status_code == 200:
+    if not isinstance(dict_resp, Exception) and getattr(dict_resp, "status_code", None) == 200:
         try:
             entries = dict_resp.json()
             if entries and isinstance(entries, list):
@@ -586,13 +595,16 @@ async def _fetch_word_data(word: str, lang: str = "vi") -> dict:
         except Exception:
             pass
 
-    translation = ""
-    if isinstance(trans_resp, httpx.Response) and trans_resp.status_code == 200:
-        try:
-            trans_data = trans_resp.json()
-            translation = trans_data.get("responseData", {}).get("translatedText", "")
-        except Exception:
-            pass
+    # ── LLM translation (ai-service) ─────────────────────────────────────────
+    if not isinstance(ai_result, dict):
+        ai_result = {}
+
+    translation = ai_result.get("translation", "")
+    # Use LLM phonetic/pos only if Free Dictionary didn't supply them
+    if not phonetic:
+        phonetic = ai_result.get("phonetic", "")
+    if not part_of_speech:
+        part_of_speech = ai_result.get("part_of_speech", "")
 
     return {
         "word": word,

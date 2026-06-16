@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Optional
 
+from api.core.config import settings
 from api.services.model_gateway import ModelGateway, ModelPriority, get_gateway
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ async def _register_qwen(gateway: ModelGateway) -> None:
     async def loader():
         nonlocal handler
         config = OllamaQwenConfig(
-            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            base_url=settings.OLLAMA_BASE_URL,
             model=os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b"),
             timeout=float(os.getenv("OLLAMA_TIMEOUT", "120")),
             context_length=int(os.getenv("OLLAMA_CONTEXT_LENGTH", "2048")),

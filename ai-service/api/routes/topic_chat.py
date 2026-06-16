@@ -9,15 +9,20 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from bson import ObjectId
-import base64
-import json
 from datetime import datetime, timezone
+import json
 import uuid
 import time
 import logging
-import os
 import re
+
+from api.utils.cursor import (
+    build_pagination,
+    decode_cursor_dt,
+    encode_cursor,
+    load_full_cursor,
+    to_iso_timestamp,
+)
 
 from api.core.database import get_database
 from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
@@ -44,6 +49,11 @@ from api.core.redis_client import get_redis
 from api.services.educational_hints_parser import (
     EducationalHintsParser,
 )
+from api.services.topic_chat_service import (
+    call_tracecag_with_retry,
+    persist_topic_turn,
+    resolve_kg_seeds,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -53,24 +63,10 @@ SAFE_FIXED_RESPONSE = (
     "Please try again shortly."
 )
 
-def _env_float(name: str, default: float) -> float:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    try:
-        return float(raw)
-    except ValueError:
-        return default
+from api.services.trace_cag.env_helpers import _env_float  # noqa: PLC2701
 
-
-TOPIC_TRACECAG_TIMEOUT_SEC = _env_float(
-    "TOPIC_TRACECAG_TIMEOUT_SEC",
-    _env_float("TOPIC_TRACECAG_TIMEOUT_SEC", 12.0),
-)
-TOPIC_TRACECAG_RETRY_TIMEOUT_SEC = _env_float(
-    "TOPIC_TRACECAG_RETRY_TIMEOUT_SEC",
-    _env_float("TOPIC_TRACECAG_RETRY_TIMEOUT_SEC", 6.0),
-)
+TOPIC_TRACECAG_TIMEOUT_SEC = _env_float("TOPIC_TRACECAG_TIMEOUT_SEC", 12.0)
+TOPIC_TRACECAG_RETRY_TIMEOUT_SEC = _env_float("TOPIC_TRACECAG_RETRY_TIMEOUT_SEC", 6.0)
 
 
 def _normalize_preferred_llm(value: str | None) -> str:
@@ -101,27 +97,6 @@ def _story_list_item_payload(story: StoryListItem | dict) -> dict:
     return payload
 
 
-async def _load_full_cursor(cursor, batch_size: int = 500) -> list[dict]:
-    """Read all documents from a Mongo cursor in bounded batches."""
-    rows: list[dict] = []
-    while True:
-        batch = await cursor.to_list(length=batch_size)
-        if not batch:
-            break
-        rows.extend(batch)
-        if len(batch) < batch_size:
-            break
-    return rows
-
-
-def _to_iso_timestamp(value: object) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value.isoformat()
-    return str(value)
-
-
 def _serialize_topic_message(doc: dict) -> dict:
     return {
         "id": doc.get("message_id") or str(doc.get("_id", "")),
@@ -129,50 +104,7 @@ def _serialize_topic_message(doc: dict) -> dict:
         "session_id": doc.get("session_id", ""),
         "content": doc.get("content", ""),
         "role": doc.get("role", "user"),
-        "timestamp": _to_iso_timestamp(doc.get("timestamp")),
-    }
-
-
-def _encode_cursor(doc: dict) -> str:
-    ts = _to_iso_timestamp(doc.get("timestamp"))
-    oid = str(doc.get("_id", ""))
-    payload = json.dumps({"ts": ts, "oid": oid}, separators=(",", ":")).encode("utf-8")
-    return base64.urlsafe_b64encode(payload).decode("utf-8")
-
-
-def _decode_cursor(cursor: str) -> tuple[datetime, ObjectId]:
-    try:
-        padding = "=" * (-len(cursor) % 4)
-        raw = base64.urlsafe_b64decode(f"{cursor}{padding}".encode("utf-8"))
-        data = json.loads(raw.decode("utf-8"))
-        ts_raw = str(data["ts"])
-        ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00"))
-        if ts.tzinfo is not None:
-            ts = ts.astimezone().replace(tzinfo=None)
-        oid = ObjectId(str(data["oid"]))
-        return ts, oid
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
-
-
-def _build_pagination(
-    *,
-    total_count: int,
-    returned: int,
-    has_more: bool,
-    next_cursor: str | None,
-    prev_cursor: str | None,
-    window_start_ts: str | None,
-    window_end_ts: str | None,
-) -> dict:
-    return {
-        "total_count": total_count,
-        "returned": returned,
-        "has_more": has_more,
-        "next_cursor": next_cursor,
-        "prev_cursor": prev_cursor,
-        "window_start_ts": window_start_ts,
-        "window_end_ts": window_end_ts,
+        "timestamp": to_iso_timestamp(doc.get("timestamp")),
     }
 
 
@@ -378,16 +310,15 @@ async def start_topic_session(
             # We still need the story object for metadata in the response
             # but we can try to skip full construction if we have enough info
         
-        if not system_prompt or not story:
-            # Fetch from DB if cache miss or need more data
-            story_service = StoryService(db)
-            story = await story_service.get_story_by_id(request.story_id)
-            
-            if not story:
-                raise HTTPException(status_code=404, detail="Story not found")
-            
-            if not system_prompt:
-                system_prompt = TopicPromptBuilder.build_master_prompt(story)
+        # Always fetch story — needed for session metadata and to check freshness.
+        story_service = StoryService(db)
+        story = await story_service.get_story_by_id(request.story_id)
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+
+        # Use cached system_prompt if available; build from fresh story otherwise.
+        if not system_prompt:
+            system_prompt = TopicPromptBuilder.build_master_prompt(story)
         
         # Create session
         session_id = str(uuid.uuid4())
@@ -551,139 +482,35 @@ async def send_topic_message(
         
         preferred_llm = _normalize_preferred_llm(session.get("preferred_llm"))
 
-        # Load KG seeds from session (populated by warm_subgraph in start_topic_session).
-        # Fall back to a quick in-process subgraph lookup if missing (cache miss race).
-        _kg_seeds: list = list(session.get("kg_seed_concepts") or [])
-        if not _kg_seeds:
-            try:
-                _sg = await get_subgraph(session.get("story_id", ""), redis_client)
-                if _sg:
-                    _kg_seeds = _sg.get("seed_concepts", [])
-            except Exception as _exc:
-                logger.debug("[topic_chat] ignored: %s", _exc)
-                pass
+        kg_seeds = await resolve_kg_seeds(session, redis_client)
 
-        # Always run TraceCAG first for topic sessions.
-        # preferred_llm is retained for backward compatibility/telemetry only.
-        ai_response = None
-        llm_metadata = None
-        
-        # Format conversation history for TraceCAG.
         conversation_history = [
             {"role": msg.get("role", "user"), "content": msg.get("content", "")}
             for msg in history
         ]
 
-        try:
-            from api.services.orchestrator import get_orchestrator
+        tracecag_result = await call_tracecag_with_retry(
+            message=request.message,
+            session_id=session_id,
+            user_id=request.user_id,
+            difficulty_level=session.get("difficulty_level", "B1"),
+            conversation_history=conversation_history,
+            kg_seeds=kg_seeds,
+            preferred_llm=preferred_llm,
+        )
 
-            graph_start = time.time()
-            orchestrator = await get_orchestrator()
-            graph_result = await asyncio.wait_for(
-                orchestrator.process(
-                    user_input=request.message,
-                    session_id=session_id,
-                    user_id=request.user_id,
-                    learner_profile={"level": session.get("difficulty_level", "B1")},
-                    conversation_history=conversation_history[-6:],
-                    retrieval_policy="rapid",
-                    diagnosis_policy="rules",
-                    generation_policy="auto",
-                    kg_seed_concepts=_kg_seeds or None,
-                ),
-                timeout=TOPIC_TRACECAG_TIMEOUT_SEC,
-            )
-
-            ai_response = str(graph_result.get("tutor_response") or "").strip()
-            graph_metadata = graph_result.get("metadata", {}) or {}
-            if not ai_response:
-                raise RuntimeError("TraceCAG returned empty tutor_response")
-
-            llm_metadata = {
-                "provider": "trace-cag",
-                "model": ", ".join(graph_metadata.get("models_used") or ["trace-cag_pipeline"]),
-                "latency_ms": int((time.time() - graph_start) * 1000),
-                "fallback_used": preferred_llm != "trace-cag",
-            }
-            logger.info("Topic chat response via TraceCAG")
-        except Exception as graph_err:
-            logger.error("TraceCAG failed for topic chat (primary): %s", graph_err)
-            try:
-                from api.services.orchestrator import get_orchestrator
-
-                retry_start = time.time()
-                orchestrator = await get_orchestrator()
-                retry_result = await asyncio.wait_for(
-                    orchestrator.process(
-                        user_input=request.message,
-                        session_id=session_id,
-                        user_id=request.user_id,
-                        learner_profile={"level": session.get("difficulty_level", "B1")},
-                        conversation_history=[],
-                        cache_policy="off",
-                        retrieval_policy="rapid",
-                        diagnosis_policy="rules",
-                        generation_policy="auto",
-                    ),
-                    timeout=TOPIC_TRACECAG_RETRY_TIMEOUT_SEC,
-                )
-                ai_response = str(retry_result.get("tutor_response") or "").strip()
-                retry_meta = retry_result.get("metadata", {}) or {}
-                if not ai_response:
-                    raise RuntimeError("TraceCAG degraded retry returned empty tutor_response")
-                llm_metadata = {
-                    "provider": "trace-cag",
-                    "model": ", ".join(retry_meta.get("models_used") or ["trace-cag_retry"]),
-                    "latency_ms": int((time.time() - retry_start) * 1000),
-                    "fallback_used": True,
-                    "retry_mode": "trace-cag_degraded",
-                }
-            except Exception as retry_err:
-                logger.error("TraceCAG failed for topic chat (degraded retry): %s", retry_err)
-                ai_response = SAFE_FIXED_RESPONSE
-                llm_metadata = {
-                    "provider": "trace-cag_safe_response",
-                    "model": "safe_fixed_response",
-                    "latency_ms": 0,
-                    "fallback_used": True,
-                }
-        
-        if not ai_response:
+        if not tracecag_result.ai_response:
             raise HTTPException(status_code=500, detail="No response from AI")
-        
-        # Save user message
-        user_message = {
-            "message_id": str(uuid.uuid4()),
-            "session_id": session_id,
-            "user_id": request.user_id,
-            "content": request.message,
-            "role": "user",
-            "timestamp": datetime.now(timezone.utc)
-        }
-        await db["chat_messages"].insert_one(user_message)
-        
-        # Parse educational hints and sanitize response before persisting/displaying
-        clean_response, parsed_hints = EducationalHintsParser.parse(ai_response)
-        display_response = _sanitize_topic_response(clean_response or ai_response)
 
-        # Save AI message
-        ai_message_id = str(uuid.uuid4())
-        ai_message_doc = {
-            "message_id": ai_message_id,
-            "session_id": session_id,
-            "content": display_response,
-            "role": "assistant",
-            "timestamp": datetime.now(timezone.utc)
-        }
-        await db["chat_messages"].insert_one(ai_message_doc)
-        
-        # Update session
-        await db["chat_sessions"].update_one(
-            {"session_id": session_id},
-            {
-                "$set": {"last_activity": datetime.now(timezone.utc)},
-                "$inc": {"message_count": 2}
-            }
+        clean_response, parsed_hints = EducationalHintsParser.parse(tracecag_result.ai_response)
+        display_response = _sanitize_topic_response(clean_response or tracecag_result.ai_response)
+
+        ai_message_id = await persist_topic_turn(
+            session_id=session_id,
+            user_id=request.user_id,
+            message=request.message,
+            ai_response=display_response,
+            db=db,
         )
         
         processing_time = int((time.time() - start_time) * 1000)
@@ -720,7 +547,7 @@ async def send_topic_message(
             clean_response=display_response,
             educational_hints=educational_hints_dict,
             processing_time_ms=processing_time,
-            llm_metadata=llm_metadata,
+            llm_metadata=tracecag_result.llm_metadata,
         )
         
     except HTTPException:
@@ -780,7 +607,7 @@ async def get_topic_messages(
         cursor = cursor.limit(limit)
         messages = await cursor.to_list(length=limit)
     else:
-        messages = await _load_full_cursor(cursor)
+        messages = await load_full_cursor(cursor)
     
     # Clean up for response
     for msg in messages:
@@ -812,7 +639,7 @@ async def get_topic_messages_paged(
     query: dict = dict(base_query)
 
     if cursor:
-        cursor_ts, cursor_oid = _decode_cursor(cursor)
+        cursor_ts, cursor_oid = decode_cursor_dt(cursor)
         query = {
             "session_id": session_id,
             "$or": [
@@ -835,14 +662,14 @@ async def get_topic_messages_paged(
     messages = [_serialize_topic_message(doc) for doc in docs]
 
     total_count = await db["chat_messages"].count_documents(base_query)
-    next_cursor = _encode_cursor(docs[0]) if has_more and docs else None
-    prev_cursor = _encode_cursor(docs[-1]) if docs else None
-    window_start_ts = _to_iso_timestamp(docs[0].get("timestamp")) if docs else None
-    window_end_ts = _to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
+    next_cursor = encode_cursor(docs[0]) if has_more and docs else None
+    prev_cursor = encode_cursor(docs[-1]) if docs else None
+    window_start_ts = to_iso_timestamp(docs[0].get("timestamp")) if docs else None
+    window_end_ts = to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
 
     return {
         "messages": messages,
-        "pagination": _build_pagination(
+        "pagination": build_pagination(
             total_count=total_count,
             returned=len(messages),
             has_more=has_more,
@@ -902,10 +729,10 @@ async def get_topic_messages_metadata(
 
     latest = latest_docs[0]
     oldest = oldest_docs[0]
-    latest_cursor = _encode_cursor(latest)
-    oldest_cursor = _encode_cursor(oldest)
-    latest_ts = _to_iso_timestamp(latest.get("timestamp"))
-    oldest_ts = _to_iso_timestamp(oldest.get("timestamp"))
+    latest_cursor = encode_cursor(latest)
+    oldest_cursor = encode_cursor(oldest)
+    latest_ts = to_iso_timestamp(latest.get("timestamp"))
+    oldest_ts = to_iso_timestamp(oldest.get("timestamp"))
 
     return {
         "metadata": {

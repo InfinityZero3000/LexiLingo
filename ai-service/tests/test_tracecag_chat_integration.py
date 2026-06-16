@@ -292,3 +292,48 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     assert "tts_complete" in response.metadata["pipeline_steps"]
     assert response.metadata["trace-cag_metadata"]["fallback_used"] is True
     assert response.metadata["trace-cag_metadata"]["retry_mode"] == "trace-cag_degraded"
+
+
+@pytest.mark.asyncio
+async def test_lexi_chat_tts_timeout_returns_text_without_audio(
+    monkeypatch,
+    mock_lexi_db,
+    mock_lexi_store,
+):
+    async def _stalled_tts(_text):
+        import asyncio
+
+        await asyncio.Event().wait()
+
+    monkeypatch.setenv("LEXI_TTS_TIMEOUT_SECONDS", "0.01")
+    monkeypatch.setattr(lexi_route, "_synthesize_tts", _stalled_tts)
+
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock(
+        return_value={
+            "tutor_response": "Text should still return quickly",
+            "metadata": {"models_used": ["groq/qwen3-32b"]},
+        }
+    )
+
+    async def _fake_get_orchestrator():
+        return orchestrator
+
+    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+
+    response = await lexi_route.lexi_chat(
+        request_context=MagicMock(),
+        request=lexi_route.LexiChatRequest(
+            user_id="u1",
+            message="text input",
+            input_type="text",
+            enable_tts=True,
+            learner_level="B1",
+        ),
+        db=mock_lexi_db,
+        current_user=MagicMock(user_id="u1"),
+    )
+
+    assert response.lexi_response == "Text should still return quickly"
+    assert response.audio_base64 is None
+    assert "tts_timeout" in response.metadata["pipeline_steps"]

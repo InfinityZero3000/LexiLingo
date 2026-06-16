@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -178,6 +179,13 @@ class LanguageSwitcherButton extends StatelessWidget {
 
   static Future<void> _applyLanguage(BuildContext context, String code) async {
     // Prefer SettingsProvider when the user is authenticated (it syncs to backend).
+    AuthProvider? authProvider;
+    try {
+      authProvider = Provider.of<AuthProvider>(context, listen: false);
+    } catch (_) {
+      authProvider = null;
+    }
+
     SettingsProvider? settingsProvider;
     try {
       settingsProvider = Provider.of<SettingsProvider>(context, listen: false);
@@ -185,7 +193,10 @@ class LanguageSwitcherButton extends StatelessWidget {
       settingsProvider = null;
     }
 
-    if (settingsProvider != null && settingsProvider.settings != null) {
+    final isAuthenticated = authProvider?.isAuthenticated ?? false;
+    if (isAuthenticated &&
+        settingsProvider != null &&
+        settingsProvider.settings != null) {
       if (!context.mounted) return;
       await settingsProvider.updateLanguage(code, context);
     } else {
