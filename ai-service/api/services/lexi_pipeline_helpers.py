@@ -60,9 +60,9 @@ def _normalize_markdown_for_lexi(text: str) -> str:
 
 def sanitize_lexi_response(text: str) -> str:
     """Remove internal TraceCAG debug payloads from user-facing Lexi output."""
-    cleaned = str(text or "")
+    cleaned = str(text or "").strip()
     if not cleaned:
-        return ""
+        return "Squawk! I lost my words for a second. Could you ask that again?"
 
     cleaned = re.sub(r"<think\b[^>]*>[\s\S]*?</think>", "", cleaned, flags=re.IGNORECASE)
 
