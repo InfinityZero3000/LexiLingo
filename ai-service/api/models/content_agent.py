@@ -75,6 +75,14 @@ class NormalizedSourceRecord(BaseModel):
     declared_topic: str = Field(default="general", min_length=1, max_length=100)
     published_at: datetime | None = None
     checksum: str | None = Field(default=None, max_length=64)
+    source_version: str | None = Field(default=None, max_length=64)
+    source_record_id: str | None = Field(default=None, max_length=500)
+    license_id: str | None = Field(default=None, max_length=128)
+    license_url: str | None = Field(default=None, max_length=1000)
+    attribution_text: str | None = Field(default=None, max_length=2000)
+    raw_checksum: str | None = Field(default=None, max_length=64)
+    lineage: dict[str, Any] | None = None
+    source_content_usage: str | None = Field(default=None, max_length=32)
     metadata: dict[str, Any] = Field(default_factory=dict)
     classification_confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
@@ -88,6 +96,47 @@ class SourceRecordBatch(BaseModel):
 
 class RecordBatchResponse(BaseModel):
     accepted_records: int
+    stored_records: int
+
+
+class SourceSnapshotDescriptor(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    source_id: str = Field(min_length=1, max_length=100)
+    source_name: str = Field(min_length=1, max_length=100)
+    source_version: str = Field(min_length=1, max_length=64)
+    snapshot_id: str = Field(min_length=1, max_length=500)
+    official_url: str = Field(min_length=1, max_length=1000)
+    license_id: str = Field(min_length=1, max_length=128)
+    license_url: str = Field(min_length=1, max_length=1000)
+    attribution_text: str = Field(min_length=1, max_length=2000)
+    retrieved_at: datetime
+    raw_checksum: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_bytes: int = Field(gt=0)
+    record_checksum_root: str = Field(pattern=r"^[a-f0-9]{64}$")
+    adapter_version: int = Field(ge=1)
+    record_count: int = Field(gt=0)
+    status: Literal["active"] = "active"
+    enabled: bool
+
+
+class SnapshotReference(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    source_id: str = Field(min_length=1, max_length=100)
+    source_version: str = Field(min_length=1, max_length=64)
+    snapshot_id: str = Field(min_length=1, max_length=500)
+
+
+class SnapshotAttachmentRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    snapshots: list[SnapshotReference] = Field(min_length=1, max_length=20)
+
+
+class SnapshotAttachmentResponse(BaseModel):
+    attached_snapshots: int
     stored_records: int
 
 
@@ -199,6 +248,15 @@ class VocabularyArtifact(BaseModel):
     source_url: str | None = None
     license_mode: str = "generated"
     source_checksum: str | None = None
+    source_version: str | None = Field(default=None, max_length=64)
+    source_record_id: str | None = Field(default=None, max_length=500)
+    license_id: str | None = Field(default=None, max_length=128)
+    license_url: str | None = Field(default=None, max_length=1000)
+    attribution_text: str | None = Field(default=None, max_length=2000)
+    raw_checksum: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    record_checksum: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    lineage: dict[str, Any] | None = None
+    content_usage: str | None = Field(default=None, max_length=32)
 
 
 class LessonArtifact(BaseModel):
@@ -241,12 +299,31 @@ class QualityArtifact(BaseModel):
     metrics: dict[str, Any] = Field(default_factory=dict)
 
 
+class ArtifactSourceManifest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    snapshot_id: str = Field(min_length=1, max_length=500)
+    source_name: str = Field(min_length=1, max_length=100)
+    source_version: str = Field(min_length=1, max_length=64)
+    official_url: str = Field(min_length=1, max_length=1000)
+    license_id: str = Field(min_length=1, max_length=128)
+    license_url: str = Field(min_length=1, max_length=1000)
+    attribution_text: str = Field(min_length=1, max_length=2000)
+    retrieved_at: datetime
+    raw_checksum: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_bytes: int = Field(gt=0)
+    record_checksum_root: str = Field(pattern=r"^[a-f0-9]{64}$")
+    adapter_version: int = Field(ge=1)
+    record_count: int = Field(gt=0)
+
+
 class ContentAgentArtifact(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: Literal[2] = 2
     prompt_version: Literal["cefr-course-v2"] = "cefr-course-v2"
-    generation_key: str
-    source_manifest: list[dict[str, Any]] = Field(default_factory=list)
+    generation_key: str = Field(pattern=r"^[a-f0-9]{64}$")
+    source_manifest: list[ArtifactSourceManifest] = Field(min_length=1)
     courses: list[CourseArtifact] = Field(min_length=1)
     quality: QualityArtifact = Field(default_factory=QualityArtifact)

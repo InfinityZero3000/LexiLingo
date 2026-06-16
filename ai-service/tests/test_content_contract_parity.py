@@ -58,6 +58,16 @@ def test_shared_course_artifact_contract_matches_ai_version():
         == "cefr-course-v2"
     )
     assert ContentAgentArtifact.model_config["extra"] == "forbid"
+    manifest = contract["properties"]["source_manifest"]
+    assert manifest["minItems"] == 1
+    assert manifest["items"]["$ref"] == "#/$defs/sourceManifest"
+    assert contract["$defs"]["sourceManifest"]["additionalProperties"] is False
+    assert {
+        "raw_checksum",
+        "normalized_sha256",
+        "normalized_bytes",
+        "record_checksum_root",
+    }.issubset(contract["$defs"]["sourceManifest"]["required"])
 
 
 def test_shared_exercise_mapping_uses_only_supported_base_types():

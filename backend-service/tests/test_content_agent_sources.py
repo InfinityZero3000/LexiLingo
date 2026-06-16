@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.content_agent_sources import SourceResolutionError, resolve_snapshots
+from app.services.content_agent_sources import (
+    SourceResolutionError,
+    canonicalize_sources,
+    resolve_snapshots,
+)
 
 
 def _catalog(*entries: dict) -> list[dict]:
@@ -20,15 +24,26 @@ def _source(
     license_url: str = "https://creativecommons.org/licenses/by/4.0/",
     attribution_text: str = "Test attribution",
     content_usage: str = "full_text",
+    enabled: bool = True,
 ) -> dict:
     return {
         "source_id": source_id,
+        "source_name": source_id,
+        "source_version": "2025",
         "snapshot_id": snapshot_id or f"{source_id}-snap-001",
+        "official_url": "https://example.com/source",
         "status": status,
         "license_id": license_id,
         "license_url": license_url,
         "attribution_text": attribution_text,
-        "content_usage": content_usage,
+        "retrieved_at": "2026-06-15T00:00:00Z",
+        "raw_checksum": "a" * 64,
+        "normalized_sha256": "b" * 64,
+        "normalized_bytes": 100,
+        "record_checksum_root": "c" * 64,
+        "adapter_version": 1,
+        "record_count": 10,
+        "enabled": enabled,
     }
 
 
@@ -37,12 +52,27 @@ def _source(
 # ---------------------------------------------------------------------------
 
 
-def test_virtual_sources_are_resolved_without_catalog() -> None:
-    resolved = resolve_snapshots(["admin_upload", "existing_cefr"], catalog=[])
-    assert len(resolved) == 2
-    assert all(r["virtual"] is True for r in resolved)
-    assert resolved[0]["source_id"] == "admin_upload"
-    assert resolved[1]["source_id"] == "existing_cefr"
+def test_admin_upload_is_the_only_virtual_source() -> None:
+    assert resolve_snapshots(["admin_upload"], catalog=[]) == []
+    with pytest.raises(SourceResolutionError, match="cefr_j"):
+        resolve_snapshots(["existing_cefr"], catalog=[])
+
+
+def test_existing_cefr_alias_resolves_to_canonical_cefr_j_snapshot() -> None:
+    catalog = _catalog(
+        _source(
+            "cefr_j",
+            snapshot_id="cefr-j-snap",
+            license_id="LicenseRef-CEFR-J-Commercial",
+        )
+    )
+    resolved = resolve_snapshots(["existing_cefr"], catalog)
+
+    assert resolved[0]["source_id"] == "cefr_j"
+    assert canonicalize_sources(["existing_cefr", "admin_upload"]) == [
+        "cefr_j",
+        "admin_upload",
+    ]
 
 
 def test_exact_snapshot_pinning_captures_descriptor_fields() -> None:
@@ -52,15 +82,21 @@ def test_exact_snapshot_pinning_captures_descriptor_fields() -> None:
     r = resolved[0]
     assert r["snapshot_id"] == "oewn-20240601"
     assert r["license_id"] == "CC-BY-4.0"
-    assert r["virtual"] is False
 
 
 def test_mixed_virtual_and_real_sources_resolved_in_order() -> None:
-    catalog = _catalog(_source("oewn"), _source("tatoeba"))
+    catalog = _catalog(
+        _source(
+            "cefr_j",
+            license_id="LicenseRef-CEFR-J-Commercial",
+        ),
+        _source("oewn"),
+        _source("tatoeba"),
+    )
     resolved = resolve_snapshots(
         ["existing_cefr", "oewn", "tatoeba"], catalog=catalog
     )
-    assert [r["source_id"] for r in resolved] == ["existing_cefr", "oewn", "tatoeba"]
+    assert [r["source_id"] for r in resolved] == ["cefr_j", "oewn", "tatoeba"]
 
 
 # ---------------------------------------------------------------------------
@@ -85,13 +121,19 @@ def test_pending_snapshot_also_rejected() -> None:
         resolve_snapshots(["cmudict"], catalog=catalog)
 
 
+def test_disabled_active_snapshot_is_rejected() -> None:
+    catalog = _catalog(_source("oewn", enabled=False))
+    with pytest.raises(SourceResolutionError, match="enabled false"):
+        resolve_snapshots(["oewn"], catalog=catalog)
+
+
 def test_missing_snapshot_id_raises_resolution_error() -> None:
     entry = {
         "source_id": "cefr_j",
         "snapshot_id": "",
         "status": "active",
     }
-    with pytest.raises(SourceResolutionError, match="no snapshot_id"):
+    with pytest.raises(SourceResolutionError, match="snapshot_id"):
         resolve_snapshots(["cefr_j"], catalog=[entry])
 
 
@@ -143,11 +185,11 @@ def test_catalog_with_none_values_does_not_crash() -> None:
             "attribution_text": None,
         }
     ]
-    resolved = resolve_snapshots(["oewn"], catalog=catalog)
-    assert resolved[0]["license_id"] is None
+    with pytest.raises(SourceResolutionError, match="oewn"):
+        resolve_snapshots(["oewn"], catalog=catalog)
 
 
 def test_virtual_sources_not_blocked_by_empty_catalog() -> None:
     # Even when AI service is unavailable, virtual sources should resolve
     resolved = resolve_snapshots(["admin_upload"], catalog=[])
-    assert resolved[0]["virtual"] is True
+    assert resolved == []

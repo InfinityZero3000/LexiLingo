@@ -101,6 +101,18 @@ async def _ingest_batches(
         )
 
 
+async def _attach_pinned_snapshots(
+    client: ContentAgentClient,
+    job_id: uuid.UUID,
+    pinned_snapshots: list[dict],
+) -> None:
+    if not pinned_snapshots:
+        return
+    await _with_transient_retry(
+        lambda: client.attach_snapshots(job_id, pinned_snapshots)
+    )
+
+
 async def _run_content_agent(job_id: uuid.UUID) -> dict:
     async with AsyncSessionLocal() as db:
         job = await ContentAgentJobService.get(db, job_id, lock=True)
@@ -154,6 +166,12 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
             )
             await db.commit()
 
+            await _attach_pinned_snapshots(
+                client,
+                job.id,
+                pinned_snapshots,
+            )
+
             # -------------------------------------------------------------------
             # Stage: normalizing_upload — ingest admin upload if present
             # -------------------------------------------------------------------
@@ -168,7 +186,26 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
                     raise ValueError(
                         "Upload rights attestation is required before use in a job"
                     )
-                records = list(upload.records)
+                records = [
+                    {
+                        **record,
+                        "raw_checksum": upload.checksum,
+                        "source_version": record.get(
+                            "source_version",
+                            "job-upload-v1",
+                        ),
+                        "source_record_id": record.get("source_record_id")
+                        or record.get("record_id"),
+                        "license_id": "LicenseRef-Admin-Owned",
+                        "license_url": (
+                            "https://lexilingo.me/legal/content-upload-rights"
+                        ),
+                        "attribution_text": (
+                            "Administrator-owned or licensed upload"
+                        ),
+                    }
+                    for record in upload.records
+                ]
 
             job = await _locked_active_job(db, job_id)
             await ContentAgentJobService.transition(
@@ -223,7 +260,10 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
                 db,
                 job,
                 artifact=artifact.model_dump(mode="json"),
-                source_manifest=artifact.source_manifest,
+                source_manifest=[
+                    item.model_dump(mode="json")
+                    for item in artifact.source_manifest
+                ],
                 warnings=artifact.quality.warnings,
                 blocking_errors=artifact.quality.blocking_errors,
             )

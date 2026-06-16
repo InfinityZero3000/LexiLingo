@@ -24,6 +24,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY api ./api
 
+# Fail the image build if direct ETL runtime imports are missing.
+RUN python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
+
 # Create models directory if not exists
 RUN mkdir -p /app/models
 

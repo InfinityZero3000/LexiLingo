@@ -6,7 +6,14 @@ import uuid
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    AnyHttpUrl,
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_validator,
+)
 
 CEFRLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
 PartOfSpeech = Literal[
@@ -56,11 +63,34 @@ class ExerciseMix(BaseModel):
     listening: int = Field(default=2, ge=0, le=20)
 
 
+class SourceSnapshotDescriptor(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    source_id: str = Field(min_length=1, max_length=100)
+    source_name: str = Field(min_length=1, max_length=100)
+    source_version: str = Field(min_length=1, max_length=64)
+    snapshot_id: str = Field(min_length=1, max_length=500)
+    official_url: AnyHttpUrl
+    license_id: str = Field(min_length=1, max_length=128)
+    license_url: AnyHttpUrl
+    attribution_text: str = Field(min_length=1, max_length=2000)
+    retrieved_at: datetime
+    raw_checksum: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_bytes: int = Field(gt=0)
+    record_checksum_root: str = Field(pattern=r"^[a-f0-9]{64}$")
+    adapter_version: int = Field(ge=1)
+    record_count: int = Field(gt=0)
+    status: Literal["active"] = "active"
+    enabled: bool
+
+
 class ContentAgentJobCreate(BaseModel):
     levels: list[CEFRLevel] = Field(min_length=1, max_length=6)
-    sources: list[str] = Field(default_factory=lambda: ["existing_cefr"], min_length=1)
+    sources: list[str] = Field(default_factory=lambda: ["cefr_j"], min_length=1)
     # source_ids: resolved snapshot IDs pinned at job creation (populated by backend)
     source_ids: list[str] = Field(default_factory=list)
+    pinned_snapshots: list[SourceSnapshotDescriptor] = Field(default_factory=list)
     upload_id: uuid.UUID | None = None
     title_focus: str | None = Field(default=None, max_length=255)
     topic_focus: list[str] = Field(default_factory=list, max_length=20)
@@ -149,6 +179,15 @@ class VocabularyArtifact(BaseModel):
     source_url: str | None = None
     license_mode: str = "generated"
     source_checksum: str | None = None
+    source_version: str | None = Field(default=None, max_length=64)
+    source_record_id: str | None = Field(default=None, max_length=500)
+    license_id: str | None = Field(default=None, max_length=128)
+    license_url: str | None = Field(default=None, max_length=1000)
+    attribution_text: str | None = Field(default=None, max_length=2000)
+    raw_checksum: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    record_checksum: str | None = Field(default=None, pattern=r"^[a-f0-9]{64}$")
+    lineage: dict[str, Any] | None = None
+    content_usage: str | None = Field(default=None, max_length=32)
 
 
 class LessonArtifact(BaseModel):
@@ -191,13 +230,32 @@ class QualityArtifact(BaseModel):
     metrics: dict[str, Any] = Field(default_factory=dict)
 
 
+class ArtifactSourceManifest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    snapshot_id: str = Field(min_length=1, max_length=500)
+    source_name: str = Field(min_length=1, max_length=100)
+    source_version: str = Field(min_length=1, max_length=64)
+    official_url: AnyHttpUrl
+    license_id: str = Field(min_length=1, max_length=128)
+    license_url: AnyHttpUrl
+    attribution_text: str = Field(min_length=1, max_length=2000)
+    retrieved_at: datetime
+    raw_checksum: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_sha256: str = Field(pattern=r"^[a-f0-9]{64}$")
+    normalized_bytes: int = Field(gt=0)
+    record_checksum_root: str = Field(pattern=r"^[a-f0-9]{64}$")
+    adapter_version: int = Field(ge=1)
+    record_count: int = Field(gt=0)
+
+
 class ContentAgentArtifact(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     schema_version: Literal[2] = 2
     prompt_version: Literal["cefr-course-v2"] = "cefr-course-v2"
-    generation_key: str
-    source_manifest: list[dict[str, Any]] = Field(default_factory=list)
+    generation_key: str = Field(pattern=r"^[a-f0-9]{64}$")
+    source_manifest: list[ArtifactSourceManifest] = Field(min_length=1)
     courses: list[CourseArtifact] = Field(min_length=1)
     quality: QualityArtifact = Field(default_factory=QualityArtifact)
 

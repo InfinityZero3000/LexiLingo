@@ -1,8 +1,12 @@
+import hashlib
+import json
 from types import SimpleNamespace
 
 from api.routes import content_agent as content_agent_routes
 from api.services.content_agent.service import ContentAgentService
 from api.services.content_agent.store import ContentAgentStore
+from api.services.content_etl.pipeline import ETLPipeline
+from api.services.content_etl.storage import SnapshotStorage
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -33,6 +37,7 @@ def _client(
     max_records=20,
     max_batch=10,
     token=TOKEN,
+    storage_root="/private/tmp/lexilingo-content-agent-test-storage",
 ):
     store = ContentAgentStore(
         ttl_seconds=ttl_seconds,
@@ -43,6 +48,7 @@ def _client(
     settings = SimpleNamespace(
         CONTENT_AGENT_SERVICE_TOKEN=token,
         CONTENT_AGENT_MAX_BATCH_RECORDS=max_batch,
+        CONTENT_ETL_STORAGE_ROOT=str(storage_root),
     )
     monkeypatch.setattr(content_agent_routes, "get_settings", lambda: settings)
 
@@ -50,6 +56,46 @@ def _client(
     app.include_router(content_agent_routes.router)
     app.dependency_overrides[content_agent_routes.get_content_agent_service] = lambda: service
     return TestClient(app)
+
+
+def _stage_oewn_snapshot(tmp_path, *, count=8):
+    storage = SnapshotStorage(tmp_path)
+    records = [
+        {
+            "record_id": f"oewn:2025:{index}",
+            "source_record_id": f"oewn-entry-{index}",
+            "word": f"word{index:02d}",
+            "part_of_speech": "noun",
+            "definition": f"A complete lexical definition for word {index}.",
+            "declared_cefr": "A1",
+        }
+        for index in range(count)
+    ]
+    raw = json.dumps(records, sort_keys=True).encode("utf-8")
+    digest = hashlib.sha256(raw).hexdigest()
+    temp = storage.create_temp_file()
+    temp.write_bytes(raw)
+    storage.promote_raw(
+        temp,
+        source_name="oewn",
+        version="2025",
+        filename="english-wordnet-2025.xml.gz",
+        sha256=digest,
+    )
+    report = ETLPipeline(storage=storage).run(
+        source_name="oewn",
+        source_version="2025",
+        adapter_name="oewn",
+        adapter_version=1,
+        license_id="CC-BY-4.0",
+        license_url="https://creativecommons.org/licenses/by/4.0/",
+        attribution_text="Open English WordNet 2025",
+        raw_records=records,
+        raw_bytes=raw,
+        official_url="https://en-word.net/static/english-wordnet-2025.xml.gz",
+    )
+    assert report.status == "approved"
+    return storage.read_active_manifest("oewn")
 
 
 def test_internal_routes_require_correct_service_token(monkeypatch):
@@ -151,18 +197,29 @@ def test_direct_existing_cefr_ingest_is_rejected(monkeypatch):
     assert "snapshot" in response.json()["detail"].lower()
 
 
-def test_generation_ignores_ingested_sources_not_selected_by_request(monkeypatch):
-    client = _client(monkeypatch)
+def test_generation_ignores_attached_sources_not_selected_by_request(
+    monkeypatch,
+    tmp_path,
+):
+    manifest = _stage_oewn_snapshot(tmp_path)
+    client = _client(monkeypatch, storage_root=tmp_path)
     headers = {"X-Content-Agent-Token": TOKEN}
     base = "/api/v1/internal/content-agent/jobs/source-filter"
     assert client.post(f"{base}/records", json=_payload(), headers=headers).status_code == 202
-    oewn_payload = _payload()
-    oewn_payload["source_name"] = "oewn"
-    assert client.post(
-        f"{base}/records",
-        json=oewn_payload,
+    attached = client.post(
+        f"{base}/snapshots",
+        json={
+            "snapshots": [
+                {
+                    "source_id": "oewn",
+                    "source_version": "2025",
+                    "snapshot_id": manifest.snapshot_id,
+                }
+            ]
+        },
         headers=headers,
-    ).status_code == 202
+    )
+    assert attached.status_code == 202, attached.text
 
     response = client.post(
         f"{base}/generate",
@@ -210,8 +267,9 @@ def test_expired_job_context_returns_not_found(monkeypatch):
     assert response.status_code == 404
 
 
-def test_sources_endpoint_returns_all_registered_sources(monkeypatch):
-    client = _client(monkeypatch)
+def test_sources_endpoint_returns_only_active_verified_sources(monkeypatch, tmp_path):
+    manifest = _stage_oewn_snapshot(tmp_path)
+    client = _client(monkeypatch, storage_root=tmp_path)
     headers = {"X-Content-Agent-Token": TOKEN}
 
     response = client.get(
@@ -222,11 +280,12 @@ def test_sources_endpoint_returns_all_registered_sources(monkeypatch):
     assert response.status_code == 200
     entries = response.json()
     assert isinstance(entries, list)
-    assert len(entries) > 0
+    assert len(entries) == 1
     source_names = {e["source_name"] for e in entries}
-    assert "oewn" in source_names
-    assert "cmudict" in source_names
-    assert "admin_upload" in source_names
+    assert source_names == {"oewn"}
+    assert entries[0]["snapshot_id"] == manifest.snapshot_id
+    assert entries[0]["status"] == "active"
+    assert entries[0]["record_count"] == 8
     # Denied sources must not appear.
     assert "voa" not in source_names
     assert "bbc" not in source_names
@@ -254,9 +313,60 @@ def test_snapshots_endpoint_requires_approved_manifest(monkeypatch, tmp_path):
     monkeypatch.setattr(routes_module, "get_settings", lambda: fake_settings)
 
     response = client.post(
-        "/api/v1/internal/content-agent/jobs/oewn/snapshots",
-        json={"source_version": "2025"},
+        "/api/v1/internal/content-agent/jobs/job-attach/snapshots",
+        json={
+            "snapshots": [
+                {
+                    "source_id": "oewn",
+                    "source_version": "2025",
+                    "snapshot_id": "oewn:2025:" + ("a" * 64),
+                }
+            ]
+        },
         headers=headers,
     )
 
     assert response.status_code == 422
+
+
+def test_snapshot_attachment_loads_exact_records_for_generation(monkeypatch, tmp_path):
+    manifest = _stage_oewn_snapshot(tmp_path)
+    client = _client(monkeypatch, storage_root=tmp_path)
+    headers = {"X-Content-Agent-Token": TOKEN}
+    base = "/api/v1/internal/content-agent/jobs/snapshot-job"
+
+    attached = client.post(
+        f"{base}/snapshots",
+        json={
+            "snapshots": [
+                {
+                    "source_id": "oewn",
+                    "source_version": manifest.source_version,
+                    "snapshot_id": manifest.snapshot_id,
+                }
+            ]
+        },
+        headers=headers,
+    )
+    assert attached.status_code == 202, attached.text
+    assert attached.json() == {
+        "attached_snapshots": 1,
+        "stored_records": 8,
+    }
+
+    generated = client.post(
+        f"{base}/generate",
+        json={
+            "levels": ["A1"],
+            "sources": ["oewn"],
+            "units_per_course": 1,
+            "lessons_per_unit": 1,
+            "words_per_lesson": 8,
+        },
+        headers=headers,
+    )
+    assert generated.status_code == 200
+    source_manifest = generated.json()["source_manifest"]
+    assert len(source_manifest) == 1
+    assert source_manifest[0]["snapshot_id"] == manifest.snapshot_id
+    assert source_manifest[0]["raw_checksum"] == manifest.raw_sha256

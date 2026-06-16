@@ -12,7 +12,8 @@ from api.services.content_etl.downloader import (
 from api.services.content_etl.storage import SnapshotStorage
 
 
-PUBLIC_IPS = lambda _host: ["93.184.216.34"]
+def PUBLIC_IPS(_host):
+    return ["93.184.216.34"]
 
 
 class _UnknownLengthStream(httpx.AsyncByteStream):
@@ -84,7 +85,7 @@ async def test_download_follows_an_approved_redirect(tmp_path):
     body = b"redirected dataset"
 
     def handler(request: httpx.Request) -> httpx.Response:
-        if request.url.path == "/start":
+        if request.url.path == "/static/start.xml.gz":
             return httpx.Response(
                 302,
                 headers={"location": "/static/final.xml.gz"},
@@ -94,7 +95,7 @@ async def test_download_follows_an_approved_redirect(tmp_path):
     result = await _downloader(tmp_path, handler).download(
         source_name="oewn",
         version="redirect",
-        url="https://en-word.net/start",
+        url="https://en-word.net/static/start.xml.gz",
     )
 
     assert result.path.name == "final.xml.gz"

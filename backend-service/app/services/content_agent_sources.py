@@ -5,12 +5,16 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from pydantic import ValidationError
+
+from app.schemas.content_agent import SourceSnapshotDescriptor
 from app.services.content_agent_client import ContentAgentClient
 
 logger = logging.getLogger(__name__)
 
-# Virtual sources that never need AI-service pinning.
-_VIRTUAL_SOURCES: frozenset[str] = frozenset({"admin_upload", "existing_cefr"})
+# Admin uploads are job-local and never need AI-service snapshot pinning.
+_VIRTUAL_SOURCES: frozenset[str] = frozenset({"admin_upload"})
+_SOURCE_ALIASES: dict[str, str] = {"existing_cefr": "cefr_j"}
 
 
 class SourceResolutionError(ValueError):
@@ -45,65 +49,55 @@ def resolve_snapshots(
     Raises :class:`SourceResolutionError` with a collected message when any
     source cannot be resolved.
     """
-    by_id: dict[str, dict[str, Any]] = {}
+    by_id: dict[str, SourceSnapshotDescriptor] = {}
+    invalid_by_id: dict[str, str] = {}
     for entry in catalog:
-        sid = str(entry.get("source_id") or entry.get("id") or "")
-        if sid:
-            by_id[sid] = entry
+        source_id = str(entry.get("source_id") or "")
+        entry_status = str(entry.get("status") or "")
+        if source_id and entry_status != "active":
+            invalid_by_id[source_id] = (
+                f"status {entry_status!r}, expected 'active'"
+            )
+            continue
+        try:
+            descriptor = SourceSnapshotDescriptor.model_validate(entry)
+        except ValidationError as exc:
+            if source_id:
+                invalid_by_id[source_id] = "; ".join(
+                    ".".join(str(part) for part in error["loc"])
+                    for error in exc.errors()
+                )
+            logger.warning("Ignoring malformed content-agent source descriptor")
+            continue
+        if not descriptor.enabled:
+            invalid_by_id[descriptor.source_id] = "enabled false, expected true"
+            continue
+        by_id[descriptor.source_id] = descriptor
 
     errors: list[str] = []
     resolved: list[dict[str, Any]] = []
 
     for source in sources:
+        canonical_source = _SOURCE_ALIASES.get(source, source)
         if source in _VIRTUAL_SOURCES:
-            resolved.append(
-                {
-                    "source_id": source,
-                    "snapshot_id": source,
-                    "status": "active",
-                    "virtual": True,
-                }
-            )
             continue
 
-        descriptor = by_id.get(source)
+        descriptor = by_id.get(canonical_source)
         if descriptor is None:
-            errors.append(
-                f"source '{source}' not found in catalog — "
-                "it may be unlicensed or not yet approved"
-            )
+            invalid_reason = invalid_by_id.get(canonical_source)
+            if invalid_reason:
+                errors.append(
+                    f"source '{canonical_source}' has an invalid catalog "
+                    f"descriptor: {invalid_reason}"
+                )
+            else:
+                errors.append(
+                    f"source '{canonical_source}' not found in catalog — "
+                    "it may be unlicensed or not yet approved"
+                )
             continue
 
-        status = str(descriptor.get("status", ""))
-        if status != "active":
-            errors.append(
-                f"source '{source}' snapshot is '{status}', not active — "
-                "choose an active snapshot or wait for approval"
-            )
-            continue
-
-        snapshot_id = str(
-            descriptor.get("snapshot_id") or descriptor.get("id") or ""
-        )
-        if not snapshot_id:
-            errors.append(
-                f"source '{source}' catalog entry has no snapshot_id — "
-                "the AI service returned an incomplete descriptor"
-            )
-            continue
-
-        resolved.append(
-            {
-                "source_id": source,
-                "snapshot_id": snapshot_id,
-                "status": "active",
-                "virtual": False,
-                "license_id": descriptor.get("license_id"),
-                "license_url": descriptor.get("license_url"),
-                "attribution_text": descriptor.get("attribution_text"),
-                "content_usage": descriptor.get("content_usage", "full_text"),
-            }
-        )
+        resolved.append(descriptor.model_dump(mode="json"))
 
     if errors:
         raise SourceResolutionError(
@@ -111,3 +105,12 @@ def resolve_snapshots(
         )
 
     return resolved
+
+
+def canonicalize_sources(sources: list[str]) -> list[str]:
+    return list(
+        dict.fromkeys(
+            _SOURCE_ALIASES.get(source, source)
+            for source in sources
+        )
+    )
