@@ -38,6 +38,7 @@ from app.services.game_scoring_service import GameScoringError, score_game
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
 from app.services import check_achievements_for_user
+from app.services.streak_service import update_user_streak
 
 logger = logging.getLogger(__name__)
 
@@ -1612,6 +1613,10 @@ async def complete_game_session(
             "base_xp": score.final_base_xp,
         },
     }
+    try:
+        await update_user_streak(db, current_user.id)
+    except Exception as e:
+        logger.error("Error updating streak on game completion: %s", e, exc_info=True)
     await db.commit()
     await invalidate_cache("leaderboard")
 

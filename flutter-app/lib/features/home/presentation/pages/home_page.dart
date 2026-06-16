@@ -20,6 +20,8 @@ import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_rev
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/points_calendar_dialog.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/daily_reward_dialog.dart';
+import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_up_dialog.dart';
@@ -37,6 +39,8 @@ class HomePageNew extends StatefulWidget {
 
 class _HomePageNewState extends State<HomePageNew> {
   LevelProvider? _levelProvider;
+  StreakProvider? _streakProvider;
+  bool _isDailyRewardDialogShowing = false;
 
   @override
   void initState() {
@@ -55,16 +59,40 @@ class _HomePageNewState extends State<HomePageNew> {
       });
       // Listen for level-up events triggered by fetchLevelFull
       _levelProvider?.addListener(_onLevelProviderChange);
+      
+      // Setup streak provider listener
+      _streakProvider = context.read<StreakProvider>();
+      _streakProvider?.addListener(_onStreakProviderChange);
+      
       // Load streak data here (after auth token is ready) instead of relying
       // on the race-prone call in main.dart that fires before authentication.
-      context.read<StreakProvider>().loadStreak();
+      _streakProvider?.loadStreak();
     });
   }
 
   @override
   void dispose() {
     _levelProvider?.removeListener(_onLevelProviderChange);
+    _streakProvider?.removeListener(_onStreakProviderChange);
     super.dispose();
+  }
+
+  void _onStreakProviderChange() {
+    final streakProvider = _streakProvider;
+    if (streakProvider == null || !mounted) {
+      return;
+    }
+
+    final streak = streakProvider.streak;
+    if (streak != null && streak.isDailyRewardAvailable && !_isDailyRewardDialogShowing) {
+      _isDailyRewardDialogShowing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDailyRewardDialog(context, streakProvider).then((_) {
+          _isDailyRewardDialogShowing = false;
+        });
+      });
+    }
   }
 
   /// Shows the Level-Up or Rank-Up celebration dialog when the provider signals it.

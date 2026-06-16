@@ -15,6 +15,7 @@ from uuid import UUID
 from app.core.database import get_db
 from app.core.cache import build_cache_key, delete_cached
 from app.core.dependencies import get_current_user
+from app.services.streak_service import update_user_streak
 from app.models.user import User
 from app.models.course import Course, Unit, Lesson
 from app.models.progress import (
@@ -940,7 +941,7 @@ async def complete_lesson(
             db.add(daily_activity)
             
     # Update streak
-    await _update_streak(db, current_user.id)
+    await update_user_streak(db, current_user.id)
     
     # Check achievements after lesson completion
     unlocked_achievements = []

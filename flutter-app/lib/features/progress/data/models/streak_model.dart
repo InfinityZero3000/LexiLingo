@@ -13,6 +13,11 @@ class StreakModel extends StreakEntity {
     required super.isActiveToday,
     required super.streakAtRisk,
     super.weeklyActivity,
+    super.previousStreak,
+    super.restoresUsedThisMonth,
+    super.restoresRemaining,
+    super.canRestore,
+    super.isDailyRewardAvailable,
   });
 
   /// Factory constructor from JSON (API response)
@@ -89,6 +94,12 @@ class StreakModel extends StreakEntity {
       );
     }
 
+    final previousStreak = readInt(['previous_streak', 'previousStreak']);
+    final restoresUsedThisMonth = readInt(['restores_used_this_month', 'restoresUsedThisMonth']);
+    final restoresRemaining = readInt(['restores_remaining', 'restoresRemaining'], defaultValue: 3);
+    final canRestore = readBool(['can_restore', 'canRestore']);
+    final isDailyRewardAvailable = readBool(['is_daily_reward_available', 'isDailyRewardAvailable']);
+
     return StreakModel(
       currentStreak: currentStreak,
       longestStreak: longestStreak,
@@ -102,6 +113,11 @@ class StreakModel extends StreakEntity {
       ]),
       streakAtRisk: readBool(['streak_at_risk', 'streakAtRisk']),
       weeklyActivity: weeklyActivity,
+      previousStreak: previousStreak,
+      restoresUsedThisMonth: restoresUsedThisMonth,
+      restoresRemaining: restoresRemaining,
+      canRestore: canRestore,
+      isDailyRewardAvailable: isDailyRewardAvailable,
     );
   }
 
@@ -116,6 +132,11 @@ class StreakModel extends StreakEntity {
       'is_active_today': isActiveToday,
       'streak_at_risk': streakAtRisk,
       'weekly_activity': weeklyActivity,
+      'previous_streak': previousStreak,
+      'restores_used_this_month': restoresUsedThisMonth,
+      'restores_remaining': restoresRemaining,
+      'can_restore': canRestore,
+      'is_daily_reward_available': isDailyRewardAvailable,
     };
   }
 
@@ -130,6 +151,11 @@ class StreakModel extends StreakEntity {
       isActiveToday: isActiveToday,
       streakAtRisk: streakAtRisk,
       weeklyActivity: weeklyActivity,
+      previousStreak: previousStreak,
+      restoresUsedThisMonth: restoresUsedThisMonth,
+      restoresRemaining: restoresRemaining,
+      canRestore: canRestore,
+      isDailyRewardAvailable: isDailyRewardAvailable,
     );
   }
 }
@@ -144,6 +170,11 @@ class StreakUpdateResultModel extends StreakUpdateResult {
     required super.freezeCount,
     required super.streakIncreased,
     required super.streakSaved,
+    super.previousStreak,
+    super.restoresUsedThisMonth,
+    super.restoresRemaining,
+    super.canRestore,
+    super.isDailyRewardAvailable,
   });
 
   /// Factory constructor from JSON
@@ -195,6 +226,12 @@ class StreakUpdateResultModel extends StreakUpdateResult {
     if (longestStreak < currentStreak) longestStreak = currentStreak;
     if (totalDaysActive < currentStreak) totalDaysActive = currentStreak;
 
+    final previousStreak = readInt(['previous_streak', 'previousStreak']);
+    final restoresUsedThisMonth = readInt(['restores_used_this_month', 'restoresUsedThisMonth']);
+    final restoresRemaining = readInt(['restores_remaining', 'restoresRemaining'], defaultValue: 3);
+    final canRestore = readBool(['can_restore', 'canRestore']);
+    final isDailyRewardAvailable = readBool(['is_daily_reward_available', 'isDailyRewardAvailable']);
+
     return StreakUpdateResultModel(
       currentStreak: currentStreak,
       longestStreak: longestStreak,
@@ -208,6 +245,11 @@ class StreakUpdateResultModel extends StreakUpdateResult {
       ]),
       streakIncreased: readBool(['streak_increased', 'streakIncreased']),
       streakSaved: readBool(['streak_saved', 'streakSaved']),
+      previousStreak: previousStreak,
+      restoresUsedThisMonth: restoresUsedThisMonth,
+      restoresRemaining: restoresRemaining,
+      canRestore: canRestore,
+      isDailyRewardAvailable: isDailyRewardAvailable,
     );
   }
 
@@ -220,6 +262,11 @@ class StreakUpdateResultModel extends StreakUpdateResult {
       freezeCount: freezeCount,
       streakIncreased: streakIncreased,
       streakSaved: streakSaved,
+      previousStreak: previousStreak,
+      restoresUsedThisMonth: restoresUsedThisMonth,
+      restoresRemaining: restoresRemaining,
+      canRestore: canRestore,
+      isDailyRewardAvailable: isDailyRewardAvailable,
     );
   }
 }

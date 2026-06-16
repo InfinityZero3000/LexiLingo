@@ -45,6 +45,8 @@ from app.services.rank_service import (
     calculate_rank as calc_rank,
     check_rank_up,
 )
+from app.services.streak_service import update_user_streak
+from app.crud.gamification import WalletCRUD
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 logger = logging.getLogger(__name__)
@@ -563,7 +565,8 @@ async def get_my_streak(
     cache_key = build_cache_key("progress_streak", user_id=uid)
     cached = await get_cached(cache_key)
     if cached is not None:
-        return ApiResponse(success=True, message="Streak retrieved successfully", data=cached)
+        if all(k in cached for k in ['previous_streak', 'restores_used_this_month', 'restores_remaining', 'can_restore', 'is_daily_reward_available']):
+            return ApiResponse(success=True, message="Streak retrieved successfully", data=cached)
 
     result = await db.execute(
         select(Streak).where(Streak.user_id == current_user.id)
@@ -580,7 +583,9 @@ async def get_my_streak(
                 current_streak=0,
                 longest_streak=0,
                 total_days_active=0,
-                freeze_count=0
+                freeze_count=0,
+                previous_streak=0,
+                restores_used_this_month=0
             )
             db.add(streak)
             await db.commit()
@@ -594,6 +599,12 @@ async def get_my_streak(
             streak = result.scalar_one_or_none()
             if not streak:
                 raise
+    else:
+        # Check monthly reset for restores
+        if streak.last_restore_date and (today.year != streak.last_restore_date.year or today.month != streak.last_restore_date.month):
+            streak.restores_used_this_month = 0
+            await db.commit()
+            await db.refresh(streak)
     
     # Determine if active today and if streak is at risk
     is_active_today = streak.last_activity_date == today if streak.last_activity_date else False
@@ -639,6 +650,11 @@ async def get_my_streak(
         'is_active_today': is_active_today,
         'streak_at_risk': streak_at_risk and streak.current_streak > 0,
         'weekly_activity': weekly_activity,
+        'previous_streak': streak.previous_streak if isinstance(streak.previous_streak, int) else 0,
+        'restores_used_this_month': streak.restores_used_this_month if isinstance(streak.restores_used_this_month, int) else 0,
+        'restores_remaining': max(0, 3 - (streak.restores_used_this_month if isinstance(streak.restores_used_this_month, int) else 0)),
+        'can_restore': (streak.previous_streak if isinstance(streak.previous_streak, int) else 0) > 0 and (streak.restores_used_this_month if isinstance(streak.restores_used_this_month, int) else 0) < 3,
+        'is_daily_reward_available': is_active_today and (streak.last_reward_claim_date != today or streak.last_reward_claim_date is None),
     }
 
     await set_cached(cache_key, response_data, ttl=30)
@@ -671,105 +687,9 @@ async def update_streak(
     - streak_increased: Whether streak went up
     - streak_saved: Whether freeze was used
     """
-    result = await db.execute(
-        select(Streak).where(Streak.user_id == current_user.id)
-    )
-    streak = result.scalar_one_or_none()
-    
-    today = date.today()
-    streak_increased = False
-    streak_saved = False
-    
-    if not streak:
-        # Create new streak
-        streak = Streak(
-            user_id=current_user.id,
-            current_streak=1,
-            longest_streak=1,
-            last_activity_date=today,
-            total_days_active=1,
-            freeze_count=0
-        )
-        db.add(streak)
-        streak_increased = True
-    else:
-        last_date = streak.last_activity_date
-        
-        if last_date == today:
-            # Already active today, no change
-            pass
-        elif last_date == today - timedelta(days=1):
-            # Consecutive day - increment streak
-            streak.current_streak += 1
-            streak.total_days_active += 1
-            streak.last_activity_date = today
-            streak_increased = True
-            
-            if streak.current_streak > streak.longest_streak:
-                streak.longest_streak = streak.current_streak
-        elif last_date and last_date < today - timedelta(days=1):
-            # Gap in activity
-            days_missed = (today - last_date).days - 1
-            
-            if streak.freeze_count > 0 and days_missed == 1:
-                # Use freeze to save streak
-                streak.freeze_count -= 1
-                streak.current_streak += 1
-                streak.total_days_active += 1
-                streak.last_activity_date = today
-                streak_saved = True
-                streak_increased = True
-                
-                if streak.current_streak > streak.longest_streak:
-                    streak.longest_streak = streak.current_streak
-            else:
-                # Reset streak
-                streak.current_streak = 1
-                streak.total_days_active += 1
-                streak.last_activity_date = today
-                streak_increased = True
-        else:
-            # First activity ever
-            streak.current_streak = 1
-            streak.total_days_active = 1
-            streak.last_activity_date = today
-            streak_increased = True
-            
-            if streak.current_streak > streak.longest_streak:
-                streak.longest_streak = streak.current_streak
-    
-    # Ensure a DailyActivity record exists for today so weekly_activity is accurate
-    daily_result = await db.execute(
-        select(DailyActivity).where(
-            and_(
-                DailyActivity.user_id == current_user.id,
-                DailyActivity.activity_date == today,
-            )
-        )
-    )
-    daily_activity = daily_result.scalar_one_or_none()
-    if not daily_activity:
-        daily_activity = DailyActivity(
-            user_id=current_user.id,
-            activity_date=today,
-            xp_earned=0,
-            lessons_completed=0,
-            study_time_minutes=0,
-            vocabulary_reviewed=0,
-        )
-        db.add(daily_activity)
-
+    streak, streak_increased, streak_saved, unlocked_achievements = await update_user_streak(db, current_user.id)
     await db.commit()
     await db.refresh(streak)
-    
-    # Check streak-based achievements
-    unlocked_achievements = []
-    try:
-        unlocked_achievements = await check_achievements_for_user(
-            db, current_user.id, "streak_update"
-        )
-    except Exception as e:
-        logger.error("Achievement check error: %s", e, exc_info=True)
     
     message = "Streak updated"
     if streak_saved:
@@ -785,12 +705,12 @@ async def update_streak(
         'streak_increased': streak_increased,
         'streak_saved': streak_saved,
         'achievements_unlocked': unlocked_achievements,
+        'previous_streak': streak.previous_streak if isinstance(streak.previous_streak, int) else 0,
+        'restores_used_this_month': streak.restores_used_this_month if isinstance(streak.restores_used_this_month, int) else 0,
+        'restores_remaining': max(0, 3 - (streak.restores_used_this_month if isinstance(streak.restores_used_this_month, int) else 0)),
+        'can_restore': (streak.previous_streak if isinstance(streak.previous_streak, int) else 0) > 0 and (streak.restores_used_this_month if isinstance(streak.restores_used_this_month, int) else 0) < 3,
+        'is_daily_reward_available': streak.last_activity_date == date.today() and (streak.last_reward_claim_date != date.today() or streak.last_reward_claim_date is None),
     }
-
-    # Invalidate the streak cache so the next GET reflects the new value
-    uid = str(current_user.id)
-    await delete_cached(build_cache_key("progress_streak", user_id=uid))
-    await delete_cached(build_cache_key("progress_me", user_id=uid))
 
     return ApiResponse(
         success=True,
@@ -857,4 +777,150 @@ async def use_streak_freeze(
             'freeze_count': streak.freeze_count,
             'freeze_used': True
         }
+    )
+
+
+@router.post("/streak/restore", response_model=ApiResponse[dict])
+async def restore_streak(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Restore a broken streak using one of the 3 monthly restores
+    """
+    result = await db.execute(
+        select(Streak).where(Streak.user_id == current_user.id)
+    )
+    streak = result.scalar_one_or_none()
+    
+    if not streak:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No streak record found to restore"
+        )
+        
+    today = date.today()
+    
+    # Check monthly reset
+    if streak.last_restore_date and (today.year != streak.last_restore_date.year or today.month != streak.last_restore_date.month):
+        streak.restores_used_this_month = 0
+        
+    if streak.restores_used_this_month >= 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already used your 3 streak restores for this month"
+        )
+        
+    if streak.previous_streak <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No previous streak is available to restore"
+        )
+        
+    # Restore the streak: current_streak = previous_streak + 1
+    old_streak = streak.previous_streak
+    streak.current_streak = old_streak + 1
+    streak.previous_streak = 0
+    streak.last_restore_date = today
+    streak.restores_used_this_month += 1
+    
+    if streak.current_streak > streak.longest_streak:
+        streak.longest_streak = streak.current_streak
+        
+    await db.commit()
+    await db.refresh(streak)
+    
+    # Invalidate cache
+    uid = str(current_user.id)
+    await delete_cached(build_cache_key("progress_streak", user_id=uid))
+    await delete_cached(build_cache_key("progress_me", user_id=uid))
+    
+    response_data = {
+        'current_streak': streak.current_streak,
+        'longest_streak': streak.longest_streak,
+        'total_days_active': streak.total_days_active,
+        'freeze_count': streak.freeze_count,
+        'previous_streak': streak.previous_streak,
+        'restores_used_this_month': streak.restores_used_this_month,
+        'restores_remaining': max(0, 3 - streak.restores_used_this_month),
+        'can_restore': False,
+        'is_daily_reward_available': streak.last_activity_date == today and (streak.last_reward_claim_date != today or streak.last_reward_claim_date is None),
+    }
+    
+    return ApiResponse(
+        success=True,
+        message=f"Streak restored to {streak.current_streak} days!",
+        data=response_data
+    )
+
+
+@router.post("/streak/claim-daily-reward", response_model=ApiResponse[dict])
+async def claim_daily_reward(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Claim the daily login reward based on current streak cycle (1-7 days)
+    """
+    result = await db.execute(
+        select(Streak).where(Streak.user_id == current_user.id)
+    )
+    streak = result.scalar_one_or_none()
+    
+    if not streak:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No streak record found"
+        )
+        
+    today = date.today()
+    
+    if streak.last_activity_date != today:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You must complete a learning activity today before claiming your reward"
+        )
+        
+    if streak.last_reward_claim_date == today:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already claimed today's reward"
+        )
+        
+    # Calculate gems based on streak cycle:
+    # 7-day cycle: 5, 10, 15, 20, 25, 30, 50 gems
+    rewards_cycle = [5, 10, 15, 20, 25, 30, 50]
+    day_index = (streak.current_streak - 1) % 7
+    reward_gems = rewards_cycle[day_index]
+    
+    # Award gems
+    wallet, transaction = await WalletCRUD.add_gems(
+        db=db,
+        user_id=current_user.id,
+        amount=reward_gems,
+        source="daily_streak_reward",
+        description=f"Claimed {reward_gems} gems for day {day_index + 1} of streak",
+        commit=False
+    )
+    
+    streak.last_reward_claim_date = today
+    await db.commit()
+    await db.refresh(streak)
+    
+    # Invalidate cache
+    uid = str(current_user.id)
+    await delete_cached(build_cache_key("progress_streak", user_id=uid))
+    await delete_cached(build_cache_key("progress_me", user_id=uid))
+    
+    response_data = {
+        'gems_awarded': reward_gems,
+        'total_gems': wallet.gems,
+        'current_streak': streak.current_streak,
+        'is_daily_reward_available': False,
+    }
+    
+    return ApiResponse(
+        success=True,
+        message=f"Successfully claimed {reward_gems} gems!",
+        data=response_data
     )

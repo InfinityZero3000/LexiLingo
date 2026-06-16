@@ -608,6 +608,11 @@
     "earnTipStreakBonus": "Daily streak bonus",
     "earnTipAchievements": "Unlock achievements",
     "earnTipChallenges": "Weekly challenges",
+    "dailyStreakRewardAvailable": "Daily Streak Reward!",
+    "dailyStreakRewardSubtitle": "You've kept your streak alive! Claim your daily reward now.",
+    "claimDailyRewardButton": "Claim Daily Reward",
+    "dailyRewardClaimed": "Daily Reward Claimed!",
+    "gemsReceived": "You received {gems} gems!",
     "starterReward": {
       "title": "Welcome gift!",
       "description": "Use Gems to unlock special items in the shop.",

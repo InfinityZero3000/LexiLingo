@@ -25,6 +25,7 @@ from app.core.cache import build_cache_key, get_cached, set_cached, delete_cache
 from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
+from app.services.streak_service import update_user_streak
 from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
@@ -611,6 +612,13 @@ async def submit_review(
             daily_goal_met=daily_goal_met
         ))
         
+    # Update user streak on vocab review
+    try:
+        await update_user_streak(db, current_user.id)
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).error(f"Error updating streak on vocabulary review: {e}", exc_info=True)
+
     # Invalidate user's progress caches
     _uid = str(user_id)
     await delete_cached(build_cache_key("progress_me", user_id=_uid))

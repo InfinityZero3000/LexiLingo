@@ -577,3 +577,133 @@ class TestCompleteLesson:
         assert "lesson_id" in data
         assert "xp_earned" in data
         assert "is_passed" in data
+
+
+# ============================================================================
+# POST /api/v1/progress/streak/restore — Restore a broken streak
+# ============================================================================
+
+class TestRestoreStreak:
+    """Tests for POST /api/v1/progress/streak/restore."""
+
+    @pytest.mark.asyncio
+    async def test_requires_auth(self, no_auth_client: AsyncClient):
+        response = await no_auth_client.post(f"{BASE}/streak/restore")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_restore_no_streak_record(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_result.scalar_one_or_none.return_value = None
+        response = await client.post(f"{BASE}/streak/restore")
+        assert response.status_code == 400
+        assert "No streak record found to restore" in response.json()["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_restore_no_previous_streak(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_streak = MagicMock()
+        mock_streak.previous_streak = 0
+        mock_streak.restores_used_this_month = 0
+        mock_streak.last_restore_date = None
+        mock_result.scalar_one_or_none.return_value = mock_streak
+        
+        response = await client.post(f"{BASE}/streak/restore")
+        assert response.status_code == 400
+        assert "No previous streak is available to restore" in response.json()["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_restore_limit_reached(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_streak = MagicMock()
+        mock_streak.previous_streak = 5
+        mock_streak.restores_used_this_month = 3
+        mock_streak.last_restore_date = date.today()
+        mock_result.scalar_one_or_none.return_value = mock_streak
+        
+        response = await client.post(f"{BASE}/streak/restore")
+        assert response.status_code == 400
+        assert "already used your 3 streak restores" in response.json()["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_restore_success(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_streak = MagicMock()
+        mock_streak.previous_streak = 10
+        mock_streak.restores_used_this_month = 1
+        mock_streak.longest_streak = 8
+        mock_streak.last_restore_date = date.today()
+        mock_streak.current_streak = 1
+        mock_streak.total_days_active = 5
+        mock_streak.freeze_count = 0
+        mock_streak.last_activity_date = date.today()
+        mock_streak.last_reward_claim_date = None
+        mock_result.scalar_one_or_none.return_value = mock_streak
+        
+        response = await client.post(f"{BASE}/streak/restore")
+        assert response.status_code == 200
+        data = response.json()["data"]
+        assert data["current_streak"] == 11
+        assert data["longest_streak"] == 11
+        assert data["previous_streak"] == 0
+        assert data["restores_used_this_month"] == 2
+        assert data["restores_remaining"] == 1
+
+
+# ============================================================================
+# POST /api/v1/progress/streak/claim-daily-reward — Claim daily login reward
+# ============================================================================
+
+class TestClaimDailyReward:
+    """Tests for POST /api/v1/progress/streak/claim-daily-reward."""
+
+    @pytest.mark.asyncio
+    async def test_requires_auth(self, no_auth_client: AsyncClient):
+        response = await no_auth_client.post(f"{BASE}/streak/claim-daily-reward")
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_claim_no_activity_today(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_streak = MagicMock()
+        mock_streak.last_activity_date = date.today() - timedelta(days=1)
+        mock_result.scalar_one_or_none.return_value = mock_streak
+        
+        response = await client.post(f"{BASE}/streak/claim-daily-reward")
+        assert response.status_code == 400
+        assert "complete a learning activity today" in response.json()["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_claim_already_claimed_today(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_streak = MagicMock()
+        mock_streak.last_activity_date = date.today()
+        mock_streak.last_reward_claim_date = date.today()
+        mock_result.scalar_one_or_none.return_value = mock_streak
+        
+        response = await client.post(f"{BASE}/streak/claim-daily-reward")
+        assert response.status_code == 400
+        assert "already claimed today's reward" in response.json()["error"]["message"]
+
+    @pytest.mark.asyncio
+    async def test_claim_success(self, auth_client):
+        client, mock_session, mock_result, _ = auth_client
+        mock_streak = MagicMock()
+        mock_streak.current_streak = 5 # Day 5 reward should be 25 gems (cycle index 4: 5, 10, 15, 20, 25, 30, 50)
+        mock_streak.last_activity_date = date.today()
+        mock_streak.last_reward_claim_date = None
+        mock_result.scalar_one_or_none.return_value = mock_streak
+        
+        mock_wallet = MagicMock()
+        mock_wallet.gems = 100
+        mock_transaction = MagicMock()
+        
+        with patch("app.crud.gamification.WalletCRUD.add_gems", new=AsyncMock(return_value=(mock_wallet, mock_transaction))):
+            response = await client.post(f"{BASE}/streak/claim-daily-reward")
+            
+        assert response.status_code == 200
+        data = response.json()["data"]
+        assert data["gems_awarded"] == 25
+        assert data["total_gems"] == 100
+        assert data["current_streak"] == 5
+        assert data["is_daily_reward_available"] is False

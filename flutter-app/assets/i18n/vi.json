@@ -608,6 +608,11 @@
     "earnTipStreakBonus": "Thưởng chuỗi ngày liên tiếp",
     "earnTipAchievements": "Mở khóa thành tích",
     "earnTipChallenges": "Thử thách hàng tuần",
+    "dailyStreakRewardAvailable": "Quà Hàng Ngày!",
+    "dailyStreakRewardSubtitle": "Bạn đã giữ vững chuỗi học tập! Hãy nhận phần quà hàng ngày ngay nhé.",
+    "claimDailyRewardButton": "Nhận Đá Quý",
+    "dailyRewardClaimed": "Nhận Quà Thành Công!",
+    "gemsReceived": "Bạn đã nhận {gems} đá quý!",
     "starterReward": {
       "title": "Quà chào mừng!",
       "description": "Dùng Gem để mở khóa vật phẩm đặc biệt trong cửa hàng.",
