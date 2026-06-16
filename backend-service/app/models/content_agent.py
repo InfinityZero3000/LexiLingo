@@ -33,7 +33,9 @@ class ContentAgentUpload(Base):
     # v2 ownership fields
     rights_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     rights_confirmed_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
-    uploader_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True)
+    uploader_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     def __repr__(self) -> str:
         return f"<ContentAgentUpload {self.filename} rows={self.row_count}>"

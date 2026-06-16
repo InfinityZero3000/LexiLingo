@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re as _re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -317,10 +318,11 @@ class ETLPipeline:
             if not normalized_path.exists():
                 raise PipelineError("No normalized output found for resume")
 
+            normalized_payload = normalized_path.read_bytes()
             normalized_records: list[dict[str, Any]] = []
             record_checksums: list[str] = []
             for line_number, raw_line in enumerate(
-                normalized_path.read_text(encoding="utf-8").splitlines(),
+                normalized_payload.decode("utf-8").splitlines(),
                 start=1,
             ):
                 if not raw_line.strip():
@@ -338,7 +340,6 @@ class ETLPipeline:
                 raise PipelineError("Normalized output must contain approved records")
             report.normalized = len(normalized_records)
             report.approved = report.normalized
-            normalized_payload = normalized_path.read_bytes()
             normalized_sha256 = _sha256_bytes(normalized_payload)
             record_checksum_root = compute_record_checksum_root(tuple(record_checksums))
 
@@ -469,6 +470,5 @@ def _normalize_language(value: Any) -> str:
 
 def _error_code(exc: Exception) -> str:
     name = type(exc).__name__.lower()
-    import re as _re
     code = _re.sub(r"[^a-z0-9]+", "_", name).strip("_")
     return code[:100] or "unknown_error"
