@@ -539,6 +539,7 @@ class LexiChatProvider extends ChangeNotifier {
 
           case LexiStreamDone(
             :final messageId,
+            :final fullText,
             :final corrections,
             :final linkedConcepts,
             :final vietnameseHint,
@@ -548,7 +549,11 @@ class LexiChatProvider extends ChangeNotifier {
             receivedDone = true;
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {
-              final finalContent = _messages[idx].content;
+              final accumulated = _messages[idx].content;
+              // Fall back to server-provided text when chunks were lost (e.g. LLM stream error).
+              final finalContent = accumulated.isNotEmpty
+                  ? accumulated
+                  : (fullText?.trim() ?? '');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',

@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:dartz/dartz.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/theme_preference_store.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -60,6 +62,15 @@ class _FakeSettingsRepository implements SettingsRepository {
     String time,
   ) async {
     return const Right(null);
+  }
+}
+
+class _TestLocalizationLoader extends AssetLoader {
+  const _TestLocalizationLoader();
+
+  @override
+  Future<Map<String, dynamic>?> load(String path, Locale locale) async {
+    return {'languageCode': locale.languageCode};
   }
 }
 
@@ -167,6 +178,71 @@ void main() {
     expect(provider.theme, 'dark');
     expect(provider.themeMode, ThemeMode.dark);
     expect(provider.error, 'write failed');
+  });
+
+  testWidgets('updates locale before language persistence completes', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await EasyLocalization.ensureInitialized();
+    final preferences = await SharedPreferences.getInstance();
+    final repository = _FakeSettingsRepository(
+      loadedSettings: const Settings(
+        id: 1,
+        userId: 'user-1',
+        language: 'vi',
+      ),
+    );
+    repository.updateCompleter = Completer<Either<Failure, void>>();
+    final provider = SettingsProvider(
+      repository: repository,
+      notificationService: _FakeNotificationService(),
+      themePreferenceStore: ThemePreferenceStore(preferences),
+    );
+    await provider.loadSettings('user-1');
+
+    late BuildContext localeContext;
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [
+          Locale('vi'),
+          Locale('en'),
+          Locale('fr'),
+        ],
+        path: 'assets/i18n',
+        fallbackLocale: const Locale('en'),
+        startLocale: const Locale('vi'),
+        useOnlyLangCode: true,
+        assetLoader: const _TestLocalizationLoader(),
+        child: Builder(
+          builder: (context) {
+            return MaterialApp(
+              locale: context.locale,
+              supportedLocales: context.supportedLocales,
+              localizationsDelegates: context.localizationDelegates,
+              home: Builder(
+                builder: (context) {
+                  localeContext = context;
+                  return const SizedBox.shrink();
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final update = provider.updateLanguage('fr', localeContext);
+    await tester.pumpAndSettle();
+
+    expect(provider.language, 'fr');
+    expect(await LocaleService.getSavedLocale(), 'fr');
+    expect(preferences.getString('lexi_app_locale'), 'fr');
+    expect(repository.lastUpdatedSettings?.language, 'fr');
+
+    repository.updateCompleter!.complete(const Right(null));
+    await update;
   });
 
   test('serializes rapid theme persistence in selection order', () async {

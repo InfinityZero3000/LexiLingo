@@ -6,15 +6,20 @@ Endpoints for chat functionality with TraceCAG-first orchestration.
 
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from bson import ObjectId
 from pymongo.errors import OperationFailure
-import base64
-import json
 import uuid
 import time
 import logging
 from datetime import datetime, timezone
 from typing import List, Dict, Any
+
+from api.utils.cursor import (
+    build_pagination,
+    decode_cursor_dt,
+    encode_cursor,
+    load_full_cursor,
+    to_iso_timestamp,
+)
 
 from api.core.database import get_database
 from api.models.schemas import (
@@ -57,27 +62,6 @@ def _build_conversation_history(messages: List[Dict[str, Any]]) -> List[Dict[str
     return history
 
 
-async def _load_full_cursor(cursor, batch_size: int = 500) -> List[Dict[str, Any]]:
-    """Read all documents from a Mongo cursor in bounded batches."""
-    rows: List[Dict[str, Any]] = []
-    while True:
-        batch = await cursor.to_list(length=batch_size)
-        if not batch:
-            break
-        rows.extend(batch)
-        if len(batch) < batch_size:
-            break
-    return rows
-
-
-def _to_iso_timestamp(value: Any) -> str | None:
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value.isoformat()
-    return str(value)
-
-
 def _serialize_chat_message(doc: Dict[str, Any]) -> Dict[str, Any]:
     role_value = doc.get("role", "user")
     if isinstance(role_value, MessageRole):
@@ -90,50 +74,7 @@ def _serialize_chat_message(doc: Dict[str, Any]) -> Dict[str, Any]:
         "session_id": doc.get("session_id", ""),
         "content": doc.get("content", ""),
         "role": role,
-        "timestamp": _to_iso_timestamp(doc.get("timestamp")),
-    }
-
-
-def _encode_cursor(doc: Dict[str, Any]) -> str:
-    ts = _to_iso_timestamp(doc.get("timestamp"))
-    oid = str(doc.get("_id", ""))
-    payload = json.dumps({"ts": ts, "oid": oid}, separators=(",", ":")).encode("utf-8")
-    return base64.urlsafe_b64encode(payload).decode("utf-8")
-
-
-def _decode_cursor(cursor: str) -> tuple[datetime, ObjectId]:
-    try:
-        padding = "=" * (-len(cursor) % 4)
-        raw = base64.urlsafe_b64decode(f"{cursor}{padding}".encode("utf-8"))
-        data = json.loads(raw.decode("utf-8"))
-        ts_raw = str(data["ts"])
-        ts = datetime.fromisoformat(ts_raw.replace("Z", "+00:00"))
-        if ts.tzinfo is not None:
-            ts = ts.astimezone().replace(tzinfo=None)
-        oid = ObjectId(str(data["oid"]))
-        return ts, oid
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail="Invalid cursor") from exc
-
-
-def _build_pagination(
-    *,
-    total_count: int,
-    returned: int,
-    has_more: bool,
-    next_cursor: str | None,
-    prev_cursor: str | None,
-    window_start_ts: str | None,
-    window_end_ts: str | None,
-) -> Dict[str, Any]:
-    return {
-        "total_count": total_count,
-        "returned": returned,
-        "has_more": has_more,
-        "next_cursor": next_cursor,
-        "prev_cursor": prev_cursor,
-        "window_start_ts": window_start_ts,
-        "window_end_ts": window_end_ts,
+        "timestamp": to_iso_timestamp(doc.get("timestamp")),
     }
 
 
@@ -372,7 +313,7 @@ async def get_session_messages(
                 cursor = cursor.limit(limit)
                 messages = await cursor.to_list(length=limit)
             else:
-                messages = await _load_full_cursor(cursor)
+                messages = await load_full_cursor(cursor)
         except Exception as exc:
             if not _is_cosmos_order_by_index_error(exc):
                 raise
@@ -381,7 +322,7 @@ async def get_session_messages(
                 fallback_cursor = fallback_cursor.limit(limit)
                 messages = await fallback_cursor.to_list(length=limit)
             else:
-                messages = await _load_full_cursor(fallback_cursor)
+                messages = await load_full_cursor(fallback_cursor)
             messages.sort(key=lambda row: row.get("timestamp") or datetime.min)
         
         return [
@@ -417,7 +358,7 @@ async def get_session_messages_paged(
     query: Dict[str, Any] = dict(base_query)
 
     if cursor:
-        cursor_ts, cursor_oid = _decode_cursor(cursor)
+        cursor_ts, cursor_oid = decode_cursor_dt(cursor)
         query = {
             "session_id": session_id,
             "$or": [
@@ -441,16 +382,16 @@ async def get_session_messages_paged(
     messages = [_serialize_chat_message(doc) for doc in docs]
     total_count = await db["chat_messages"].count_documents(base_query)
 
-    next_cursor = _encode_cursor(docs[0]) if has_more and docs else None
-    prev_cursor = _encode_cursor(docs[-1]) if docs else None
-    window_start_ts = _to_iso_timestamp(docs[0].get("timestamp")) if docs else None
-    window_end_ts = _to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
+    next_cursor = encode_cursor(docs[0]) if has_more and docs else None
+    prev_cursor = encode_cursor(docs[-1]) if docs else None
+    window_start_ts = to_iso_timestamp(docs[0].get("timestamp")) if docs else None
+    window_end_ts = to_iso_timestamp(docs[-1].get("timestamp")) if docs else None
 
     return {
         "success": True,
         "session_id": session_id,
         "messages": messages,
-        "pagination": _build_pagination(
+        "pagination": build_pagination(
             total_count=total_count,
             returned=len(messages),
             has_more=has_more,
@@ -510,10 +451,10 @@ async def get_session_messages_metadata(
     latest = latest_docs[0]
     oldest = oldest_docs[0]
 
-    latest_cursor = _encode_cursor(latest)
-    oldest_cursor = _encode_cursor(oldest)
-    latest_ts = _to_iso_timestamp(latest.get("timestamp"))
-    oldest_ts = _to_iso_timestamp(oldest.get("timestamp"))
+    latest_cursor = encode_cursor(latest)
+    oldest_cursor = encode_cursor(oldest)
+    latest_ts = to_iso_timestamp(latest.get("timestamp"))
+    oldest_ts = to_iso_timestamp(oldest.get("timestamp"))
 
     return {
         "success": True,

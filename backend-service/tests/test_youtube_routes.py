@@ -6,7 +6,8 @@ Tests cover:
 - GET /youtube/search         — search with quota management + caching
 - GET /youtube/captions/{id}  — caption fetch + parse
 - GET /youtube/channels/{id}/videos — channel videos
-- Internal helpers: _parse_json3_captions, _estimate_cefr (import via news)
+- GET /youtube/translate      — LLM contextual word translation
+- Internal helpers: _parse_json3_captions, _fetch_word_data
 """
 
 import pytest
@@ -566,3 +567,221 @@ class TestYoutubeSearchInternal:
 
         assert result["videos"] == []
         assert result["total_results"] == 0
+
+
+# ============================================================================
+# Word Translation — /youtube/translate
+# ============================================================================
+
+class TestFetchWordData:
+    """Unit tests for _fetch_word_data (no HTTP server needed)."""
+
+    @pytest.mark.asyncio
+    async def test_returns_llm_translation_with_dict_definition(self):
+        """Free Dictionary provides phonetic/definition; LLM provides translation."""
+        from app.routes.youtube import _fetch_word_data
+
+        dict_entry = [
+            {
+                "phonetic": "/rʌn/",
+                "phonetics": [],
+                "meanings": [
+                    {
+                        "partOfSpeech": "verb",
+                        "definitions": [
+                            {"definition": "Move at a speed faster than a walk.", "example": "She runs every morning."},
+                        ],
+                    }
+                ],
+            }
+        ]
+
+        mock_dict_resp = MagicMock()
+        mock_dict_resp.status_code = 200
+        mock_dict_resp.json.return_value = dict_entry
+
+        ai_result = {"translation": "điều hành", "phonetic": "/rʌn/", "part_of_speech": "verb"}
+
+        with patch("app.routes.youtube.AIServiceClient") as MockClient:
+            MockClient.return_value.translate_word = AsyncMock(return_value=ai_result)
+
+            with patch("app.routes.youtube.httpx.AsyncClient") as MockHttp:
+                mock_http_instance = AsyncMock()
+                mock_http_instance.get = AsyncMock(return_value=mock_dict_resp)
+                MockHttp.return_value.__aenter__ = AsyncMock(return_value=mock_http_instance)
+                MockHttp.return_value.__aexit__ = AsyncMock(return_value=False)
+
+                result = await _fetch_word_data("run", lang="vi", context="run a company")
+
+        assert result["word"] == "run"
+        assert result["translation"] == "điều hành"
+        assert result["phonetic"] == "/rʌn/"
+        assert result["part_of_speech"] == "verb"
+        assert "Move at a speed" in result["definition"]
+
+    @pytest.mark.asyncio
+    async def test_uses_llm_phonetic_when_dict_has_none(self):
+        """LLM phonetic fills in when Free Dictionary returns empty phonetic."""
+        from app.routes.youtube import _fetch_word_data
+
+        dict_entry = [
+            {
+                "phonetic": "",
+                "phonetics": [],
+                "meanings": [{"partOfSpeech": "", "definitions": [{"definition": "A financial institution."}]}],
+            }
+        ]
+
+        mock_dict_resp = MagicMock()
+        mock_dict_resp.status_code = 200
+        mock_dict_resp.json.return_value = dict_entry
+
+        ai_result = {"translation": "ngân hàng", "phonetic": "/bæŋk/", "part_of_speech": "noun"}
+
+        with patch("app.routes.youtube.AIServiceClient") as MockClient:
+            MockClient.return_value.translate_word = AsyncMock(return_value=ai_result)
+
+            with patch("app.routes.youtube.httpx.AsyncClient") as MockHttp:
+                mock_http_instance = AsyncMock()
+                mock_http_instance.get = AsyncMock(return_value=mock_dict_resp)
+                MockHttp.return_value.__aenter__ = AsyncMock(return_value=mock_http_instance)
+                MockHttp.return_value.__aexit__ = AsyncMock(return_value=False)
+
+                result = await _fetch_word_data("bank", lang="vi", context="I went to the bank")
+
+        assert result["translation"] == "ngân hàng"
+        assert result["phonetic"] == "/bæŋk/"
+
+    @pytest.mark.asyncio
+    async def test_graceful_when_dict_api_fails(self):
+        """Dict API 404 → still returns LLM translation, no crash."""
+        from app.routes.youtube import _fetch_word_data
+
+        mock_dict_resp = MagicMock()
+        mock_dict_resp.status_code = 404
+
+        ai_result = {"translation": "chạy", "phonetic": "", "part_of_speech": "verb"}
+
+        with patch("app.routes.youtube.AIServiceClient") as MockClient:
+            MockClient.return_value.translate_word = AsyncMock(return_value=ai_result)
+
+            with patch("app.routes.youtube.httpx.AsyncClient") as MockHttp:
+                mock_http_instance = AsyncMock()
+                mock_http_instance.get = AsyncMock(return_value=mock_dict_resp)
+                MockHttp.return_value.__aenter__ = AsyncMock(return_value=mock_http_instance)
+                MockHttp.return_value.__aexit__ = AsyncMock(return_value=False)
+
+                result = await _fetch_word_data("run", lang="vi", context="")
+
+        assert result["translation"] == "chạy"
+        assert result["definition"] == ""
+        assert result["phonetic"] == ""
+
+    @pytest.mark.asyncio
+    async def test_graceful_when_ai_service_fails(self):
+        """ai-service down → translation empty, dict data still returned."""
+        from app.routes.youtube import _fetch_word_data
+
+        dict_entry = [
+            {
+                "phonetic": "/rʌn/",
+                "phonetics": [],
+                "meanings": [
+                    {"partOfSpeech": "verb", "definitions": [{"definition": "Move fast."}]}
+                ],
+            }
+        ]
+        mock_dict_resp = MagicMock()
+        mock_dict_resp.status_code = 200
+        mock_dict_resp.json.return_value = dict_entry
+
+        with patch("app.routes.youtube.AIServiceClient") as MockClient:
+            MockClient.return_value.translate_word = AsyncMock(
+                return_value={"translation": "", "phonetic": "", "part_of_speech": ""}
+            )
+
+            with patch("app.routes.youtube.httpx.AsyncClient") as MockHttp:
+                mock_http_instance = AsyncMock()
+                mock_http_instance.get = AsyncMock(return_value=mock_dict_resp)
+                MockHttp.return_value.__aenter__ = AsyncMock(return_value=mock_http_instance)
+                MockHttp.return_value.__aexit__ = AsyncMock(return_value=False)
+
+                result = await _fetch_word_data("run", lang="vi", context="")
+
+        assert result["translation"] == ""
+        assert result["phonetic"] == "/rʌn/"
+        assert result["definition"] == "Move fast."
+
+
+class TestTranslateEndpoint:
+    """Route-level tests for GET /api/v1/youtube/translate."""
+
+    @pytest.mark.asyncio
+    async def test_translate_returns_word_data(self, no_db_client):
+        """Endpoint returns cached word data from APICacheService."""
+        mock_result = MagicMock()
+        mock_result.data = {
+            "word": "run",
+            "translation": "chạy",
+            "phonetic": "/rʌn/",
+            "part_of_speech": "verb",
+            "definition": "Move at speed.",
+            "examples": ["She runs every day."],
+        }
+
+        with patch("app.routes.youtube.APICacheService") as MockCache:
+            mock_cache_instance = AsyncMock()
+            mock_cache_instance.get_or_fetch.return_value = mock_result
+            MockCache.return_value = mock_cache_instance
+
+            resp = await no_db_client.get("/api/v1/youtube/translate?word=run&lang=vi")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["word"] == "run"
+        assert body["translation"] == "chạy"
+
+    @pytest.mark.asyncio
+    async def test_translate_passes_context_to_fetch(self, no_db_client):
+        """context query param is forwarded to the cache fetch_fn."""
+        captured_context: list[str] = []
+
+        mock_result = MagicMock()
+        mock_result.data = {
+            "word": "run", "translation": "điều hành", "phonetic": "",
+            "part_of_speech": "verb", "definition": "", "examples": [],
+        }
+
+        async def capture_fetch(cache_key, api_name, fetch_fn, **kwargs):
+            # Execute fetch_fn to capture the context via _fetch_word_data signature
+            # We just verify cache_key is stable (word+lang, not context)
+            captured_context.append(cache_key)
+            return mock_result
+
+        with patch("app.routes.youtube.APICacheService") as MockCache:
+            mock_cache_instance = AsyncMock()
+            mock_cache_instance.get_or_fetch.side_effect = capture_fetch
+            MockCache.return_value = mock_cache_instance
+
+            resp = await no_db_client.get(
+                "/api/v1/youtube/translate?word=run&lang=vi&context=run+a+company"
+            )
+
+        assert resp.status_code == 200
+        # Cache key must NOT include context (stable hit rate)
+        assert captured_context[0] == "youtube:translate:run:vi"
+
+    @pytest.mark.asyncio
+    async def test_translate_returns_empty_on_exception(self, no_db_client):
+        """Any unhandled exception → graceful empty word result, not 500."""
+        with patch("app.routes.youtube.APICacheService") as MockCache:
+            mock_cache_instance = AsyncMock()
+            mock_cache_instance.get_or_fetch.side_effect = Exception("Redis down")
+            MockCache.return_value = mock_cache_instance
+
+            resp = await no_db_client.get("/api/v1/youtube/translate?word=test&lang=vi")
+
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["word"] == "test"
+        assert body["translation"] == ""

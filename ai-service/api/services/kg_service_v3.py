@@ -10,6 +10,7 @@ Singleton pattern ensures the database is created once and reused.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 import os
@@ -50,6 +51,7 @@ class KnowledgeGraphServiceV3:
         )
         self._db_path = os.path.abspath(db_path)
         self._recovery_attempted = False
+        self._lock = asyncio.Lock()
 
         # ── In-memory caches (Phase 1) ─────────────────────────────────────
         # _concepts_cache: None = cold (not yet built); Dict = warm
@@ -430,6 +432,11 @@ class KnowledgeGraphServiceV3:
 
 
 
+    async def _execute(self, stmt: str, params: dict | None = None):
+        """Run a KuzuDB query off the event loop, serialised via lock (KuzuDB is not thread-safe)."""
+        async with self._lock:
+            return await asyncio.to_thread(self._conn.execute, stmt, params or {})
+
     async def expand(self, seed_nodes: List[str], hops: int = 1) -> KGHits:
         expanded_nodes: List[KGExpandedNode] = []
         paths: List[KGPath] = []
@@ -439,7 +446,7 @@ class KnowledgeGraphServiceV3:
 
         try:
             for seed in seed_nodes:
-                result = self._conn.execute(
+                result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
                     "WHERE a.id = $seed RETURN b.id, e.relation, b.level",
                     {"seed": seed},
@@ -542,7 +549,7 @@ class KnowledgeGraphServiceV3:
                     continue
 
                 # Expand neighbors
-                result = self._conn.execute(
+                result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
                     "WHERE a.id = $cid RETURN b.id, e.relation, b.level",
                     {"cid": cid},
@@ -602,10 +609,7 @@ class KnowledgeGraphServiceV3:
 
         # Ensure user node exists
         try:
-            self._conn.execute(
-                "MERGE (u:User {id: $id})",
-                {"id": user_id},
-            )
+            await self._execute("MERGE (u:User {id: $id})", {"id": user_id})
         except Exception:
             return None
 
@@ -613,7 +617,7 @@ class KnowledgeGraphServiceV3:
             # Simple mastery update: decrease on errors, increase otherwise
             delta = -0.05 if error_types else 0.03
             try:
-                self._conn.execute(
+                await self._execute(
                     "MATCH (u:User), (c:Concept) "
                     "WHERE u.id = $uid AND c.id = $cid "
                     "MERGE (u)-[m:Mastery]->(c) "
@@ -640,7 +644,7 @@ class KnowledgeGraphServiceV3:
             return mastery
         
         try:
-            result = self._conn.execute(
+            result = await self._execute(
                 "MATCH (u:User)-[m:Mastery]->(c:Concept) "
                 "WHERE u.id = $uid RETURN c.id, m.score",
                 {"uid": user_id},
@@ -651,7 +655,7 @@ class KnowledgeGraphServiceV3:
         except Exception as _exc:
             logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
-        
+
         return mastery
 
     async def get_recommended_concepts(
@@ -723,7 +727,7 @@ class KnowledgeGraphServiceV3:
         prerequisites: List[str] = []
         
         try:
-            result = self._conn.execute(
+            result = await self._execute(
                 "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
                 "WHERE b.id = $cid AND e.relation = 'prerequisite_of' "
                 "RETURN a.id",
@@ -735,7 +739,7 @@ class KnowledgeGraphServiceV3:
         except Exception as _exc:
             logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
-        
+
         return prerequisites
 
     async def get_next_concepts(self, concept_id: str) -> List[str]:
@@ -748,7 +752,7 @@ class KnowledgeGraphServiceV3:
         next_concepts: List[str] = []
         
         try:
-            result = self._conn.execute(
+            result = await self._execute(
                 "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
                 "WHERE a.id = $cid AND e.relation = 'prerequisite_of' "
                 "RETURN b.id",
@@ -760,7 +764,7 @@ class KnowledgeGraphServiceV3:
         except Exception as _exc:
             logger.debug("[kg_service_v3] ignored: %s", _exc)
             pass
-        
+
         return next_concepts
 
     def get_concept_count(self) -> int:

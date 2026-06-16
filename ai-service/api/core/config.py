@@ -276,16 +276,9 @@ class Settings(BaseSettings):
     # ============================================================
     # AI Model Configuration (for DL-Model-Support integration)
     # ============================================================
-    AI_MODEL_API_URL: str = os.getenv(
-        "AI_MODEL_API_URL",
-        "http://localhost:8001"  # DL-Model-Support API
-    )
+    AI_MODEL_API_URL: str = os.getenv("AI_MODEL_API_URL", "")
     AI_MODEL_API_KEY: Optional[str] = os.getenv("AI_MODEL_API_KEY")
-    AI_MODEL_TIMEOUT: int = 30  # seconds
-    
-    # DL Model Service (alias for backward compatibility)
-    DL_MODEL_API_URL: str = AI_MODEL_API_URL
-    DL_MODEL_API_KEY: Optional[str] = AI_MODEL_API_KEY
+    AI_MODEL_TIMEOUT: int = 30
 
     # ============================================================
     # Model Names (default = use base model on server)

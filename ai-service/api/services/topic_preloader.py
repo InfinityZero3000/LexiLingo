@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os
 from typing import Callable, Dict, Any, Optional
 import redis.asyncio as redis
 from fastapi import Depends
@@ -15,15 +14,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 logger = logging.getLogger(__name__)
 
 
-def _env_float(name: str, default: float) -> float:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    try:
-        return float(raw)
-    except ValueError:
-        return default
-
+from api.services.trace_cag.env_helpers import _env_float
 
 TOPIC_KG_WARM_TIMEOUT_SEC = _env_float("TOPIC_KG_WARM_TIMEOUT_SEC", 8.0)
 
