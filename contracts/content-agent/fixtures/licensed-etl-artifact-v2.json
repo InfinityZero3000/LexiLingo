@@ -1,0 +1,307 @@
+{
+  "schema_version": 2,
+  "prompt_version": "cefr-course-v2",
+  "generation_key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "source_manifest": [
+    {
+      "snapshot_id": "oewn:2025:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "source_name": "oewn",
+      "source_version": "2025",
+      "official_url": "https://en-word.net/static/english-wordnet-2025.xml.gz",
+      "license_id": "CC-BY-4.0",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution_text": "Open English WordNet 2025",
+      "retrieved_at": "2026-06-15T00:00:00Z",
+      "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "normalized_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "normalized_bytes": 2048,
+      "record_checksum_root": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "adapter_version": 1,
+      "record_count": 8
+    }
+  ],
+  "courses": [
+    {
+      "title": "English A1 Licensed Foundations",
+      "description": "A draft course generated from a pinned licensed snapshot.",
+      "language": "en",
+      "level": "A1",
+      "tags": ["licensed", "a1"],
+      "units": [
+        {
+          "title": "Daily Life",
+          "description": "Licensed daily-life vocabulary.",
+          "order_index": 0,
+          "lessons": [
+            {
+              "title": "Daily Words",
+              "description": "Practice licensed A1 vocabulary.",
+              "order_index": 0,
+              "vocabulary": [
+                {
+                  "word": "word00",
+                  "definition": "A licensed lexical definition for word 0.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word00",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-0",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000000",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-0"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word01",
+                  "definition": "A licensed lexical definition for word 1.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word01",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000001",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-1",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000001",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-1"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word02",
+                  "definition": "A licensed lexical definition for word 2.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word02",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000002",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-2",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000002",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-2"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word03",
+                  "definition": "A licensed lexical definition for word 3.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word03",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000003",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-3",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000003",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-3"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word04",
+                  "definition": "A licensed lexical definition for word 4.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word04",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000004",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-4",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000004",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-4"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word05",
+                  "definition": "A licensed lexical definition for word 5.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word05",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000005",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-5",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000005",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-5"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word06",
+                  "definition": "A licensed lexical definition for word 6.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word06",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000006",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-6",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000006",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-6"
+                  },
+                  "content_usage": "lexical"
+                },
+                {
+                  "word": "word07",
+                  "definition": "A licensed lexical definition for word 7.",
+                  "translation_vi": null,
+                  "example": null,
+                  "pronunciation": null,
+                  "audio_url": null,
+                  "part_of_speech": "noun",
+                  "difficulty_level": "A1",
+                  "topic": "daily_life",
+                  "source_name": "oewn",
+                  "source_url": "https://en-word.net/lemma/word07",
+                  "license_mode": "approved_dataset",
+                  "source_checksum": "0000000000000000000000000000000000000000000000000000000000000007",
+                  "source_version": "2025",
+                  "source_record_id": "oewn-entry-7",
+                  "license_id": "CC-BY-4.0",
+                  "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                  "attribution_text": "Open English WordNet 2025",
+                  "raw_checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                  "record_checksum": "0000000000000000000000000000000000000000000000000000000000000007",
+                  "lineage": {
+                    "adapter": "oewn",
+                    "adapter_version": 1,
+                    "raw_path": "english-wordnet-2025.xml",
+                    "source_location": "oewn-entry-7"
+                  },
+                  "content_usage": "lexical"
+                }
+              ],
+              "exercises": [
+                {
+                  "id": "licensed-speaking-1",
+                  "type": "translate",
+                  "ui_type": "speaking_repeat",
+                  "question": "Repeat the target word.",
+                  "options": null,
+                  "correct_answer": "word00",
+                  "explanation": null,
+                  "hint": null,
+                  "audio_url": null,
+                  "image_url": null,
+                  "difficulty": 1,
+                  "points": 10
+                }
+              ],
+              "estimated_minutes": 10,
+              "xp_reward": 20
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quality": {
+    "blocking_errors": [],
+    "warnings": [],
+    "metrics": {
+      "input_records": 8,
+      "courses": 1,
+      "lessons": 1
+    }
+  }
+}
