@@ -69,6 +69,8 @@ const vi = {
     vocabulary: "Từ vựng",
     achievements: "Thành tựu",
     shop: "Cửa hàng",
+    rankingAgent: "Ranking Agent",
+    notificationCampaign: "Thông báo",
     bannerAds: "Banner & Quảng cáo",
     logs: "Nhật ký",
     monitoring: "Giám sát",

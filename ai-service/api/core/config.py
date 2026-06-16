@@ -95,8 +95,14 @@ class Settings(BaseSettings):
     CONTENT_ETL_MAX_QUARANTINE_RATIO: float = Field(default=0.02, ge=0.0, le=1.0)
     CONTENT_ETL_USER_AGENT: str = Field(default="LexiLingo-ETL/1.0", min_length=1)
     CONTENT_ETL_OEWN_VERSION: str = Field(default="2025")
+    CONTENT_ETL_OEWN_SHA256: str = Field(default="")
     CONTENT_ETL_CMU_REF: str = Field(default="")
+    CONTENT_ETL_CMU_SHA256: str = Field(default="")
     CONTENT_ETL_CEFR_J_REF: str = Field(default="")
+    CONTENT_ETL_CEFR_J_PATH: str = Field(
+        default="cefrj-vocabulary-profile-1.5.csv"
+    )
+    CONTENT_ETL_CEFR_J_SHA256: str = Field(default="")
     CONTENT_ETL_WIKIDATA_SNAPSHOT: str = Field(default="")
     CONTENT_ETL_TATOEBA_RELEASE: str = Field(default="")
     CONTENT_ETL_LIBRISPEECH_RELEASE: str = Field(default="")
@@ -152,6 +158,15 @@ class Settings(BaseSettings):
         if self.DEBUG:
             raise ValueError("DEBUG must be false when ENVIRONMENT=production")
 
+        if (
+            not self.SECRET_KEY
+            or self.SECRET_KEY.lower().startswith("your_")
+            or len(self.SECRET_KEY) < 32
+        ):
+            raise ValueError(
+                "SECRET_KEY must be a random string of at least 32 characters in production"
+            )
+
         if self.MONGODB_TLS_ALLOW_INVALID_CERTIFICATES:
             raise ValueError("MongoDB invalid TLS certificates are not allowed in production")
 
@@ -192,16 +207,25 @@ class Settings(BaseSettings):
             if re.fullmatch(r"[a-fA-F0-9]{40}", value) is None:
                 raise ValueError(f"{name} must use a pinned 40-character commit SHA")
 
-        require_non_moving(
-            "CONTENT_ETL_WIKIDATA_SNAPSHOT",
-            self.CONTENT_ETL_WIKIDATA_SNAPSHOT,
-        )
-        try:
-            date.fromisoformat(self.CONTENT_ETL_WIKIDATA_SNAPSHOT)
-        except ValueError as exc:
-            raise ValueError(
-                "CONTENT_ETL_WIKIDATA_SNAPSHOT must use a pinned YYYY-MM-DD date"
-            ) from exc
+        for name, value in (
+            ("CONTENT_ETL_OEWN_SHA256", self.CONTENT_ETL_OEWN_SHA256),
+            ("CONTENT_ETL_CMU_SHA256", self.CONTENT_ETL_CMU_SHA256),
+            ("CONTENT_ETL_CEFR_J_SHA256", self.CONTENT_ETL_CEFR_J_SHA256),
+        ):
+            if re.fullmatch(r"[a-f0-9]{64}", value) is None:
+                raise ValueError(f"{name} must use a lowercase SHA-256 checksum")
+
+        if self.CONTENT_ETL_WIKIDATA_SNAPSHOT:
+            require_non_moving(
+                "CONTENT_ETL_WIKIDATA_SNAPSHOT",
+                self.CONTENT_ETL_WIKIDATA_SNAPSHOT,
+            )
+            try:
+                date.fromisoformat(self.CONTENT_ETL_WIKIDATA_SNAPSHOT)
+            except ValueError as exc:
+                raise ValueError(
+                    "CONTENT_ETL_WIKIDATA_SNAPSHOT must use a pinned YYYY-MM-DD date"
+                ) from exc
 
         for name, value in (
             ("CONTENT_ETL_TATOEBA_RELEASE", self.CONTENT_ETL_TATOEBA_RELEASE),
@@ -217,6 +241,11 @@ class Settings(BaseSettings):
             if value:
                 require_non_moving(name, value)
     
+    # ============================================================
+    # JWT shared secret (must match backend-service SECRET_KEY)
+    # ============================================================
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+
     # ============================================================
     # API Keys (for external services)
     # ============================================================

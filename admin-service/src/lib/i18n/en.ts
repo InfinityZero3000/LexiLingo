@@ -71,6 +71,8 @@ const en: Translations = {
     vocabulary: "Vocabulary",
     achievements: "Achievements",
     shop: "Shop",
+    rankingAgent: "Ranking Agent",
+    notificationCampaign: "Notifications",
     bannerAds: "Banner & Ads",
     logs: "Logs",
     monitoring: "Monitoring",

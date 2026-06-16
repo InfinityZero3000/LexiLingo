@@ -2291,6 +2291,11 @@ textarea:focus {
   white-space: nowrap;
 }
 
+.content-agent-policy-badge.active {
+  color: #16605c;
+  background: rgba(42, 167, 161, 0.14);
+}
+
 .content-agent-policy-badge.public_domain_verified,
 .content-agent-policy-badge.label_only {
   color: #16605c;
