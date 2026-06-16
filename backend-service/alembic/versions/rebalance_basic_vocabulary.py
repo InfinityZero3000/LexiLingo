@@ -239,7 +239,14 @@ def _seed_existing_users(connection, selected_ids: set) -> None:
 def upgrade() -> None:
     connection = op.get_bind()
     catalog = _load_catalog(connection)
-    old_basic_ids, selected_ids = _retag_catalog(connection, catalog)
+    if not catalog:
+        # No vocabulary data yet — skip rebalance; seed scripts will tag correctly.
+        return
+    try:
+        old_basic_ids, selected_ids = _retag_catalog(connection, catalog)
+    except ValueError:
+        # Insufficient vocabulary items for a topic — skip gracefully.
+        return
     _remove_unreviewed_obsolete_rows(
         connection,
         catalog,
