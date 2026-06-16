@@ -242,6 +242,18 @@ class DeterministicCourseGenerator:
                             source_url=record.source_url,
                             license_mode=record.license_mode.value,
                             source_checksum=record.checksum,
+                            source_version=record.source_version,
+                            source_record_id=record.source_record_id,
+                            license_id=record.license_id,
+                            license_url=record.license_url,
+                            attribution_text=record.attribution_text,
+                            raw_checksum=record.raw_checksum,
+                            record_checksum=record.checksum,
+                            lineage=record.lineage,
+                            content_usage=(
+                                record.source_content_usage
+                                or record.content_usage.value
+                            ),
                         )
                         for record in planned_lesson.vocabulary
                     ]

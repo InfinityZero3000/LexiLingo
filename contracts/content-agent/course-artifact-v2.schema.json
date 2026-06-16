@@ -24,8 +24,9 @@
     },
     "source_manifest": {
       "type": "array",
+      "minItems": 1,
       "items": {
-        "type": "object"
+        "$ref": "#/$defs/sourceManifest"
       }
     },
     "courses": {
@@ -61,6 +62,96 @@
         "interjection",
         "phrase"
       ]
+    },
+    "sourceManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_id",
+        "source_name",
+        "source_version",
+        "official_url",
+        "license_id",
+        "license_url",
+        "attribution_text",
+        "retrieved_at",
+        "raw_checksum",
+        "normalized_sha256",
+        "normalized_bytes",
+        "record_checksum_root",
+        "adapter_version",
+        "record_count"
+      ],
+      "properties": {
+        "snapshot_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "source_name": {
+          "type": "string",
+          "enum": [
+            "oewn",
+            "cmudict",
+            "cefr_j",
+            "wikidata",
+            "tatoeba",
+            "librispeech",
+            "common_voice",
+            "admin_upload"
+          ]
+        },
+        "source_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "official_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 1000
+        },
+        "license_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "license_url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 1000
+        },
+        "attribution_text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "raw_checksum": {
+          "$ref": "#/$defs/sha256"
+        },
+        "normalized_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "normalized_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "record_checksum_root": {
+          "$ref": "#/$defs/sha256"
+        },
+        "adapter_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "record_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
     },
     "exercise": {
       "type": "object",
@@ -209,6 +300,53 @@
               "type": "null"
             }
           ]
+        },
+        "source_version": {
+          "type": ["string", "null"],
+          "maxLength": 64
+        },
+        "source_record_id": {
+          "type": ["string", "null"],
+          "maxLength": 500
+        },
+        "license_id": {
+          "type": ["string", "null"],
+          "maxLength": 128
+        },
+        "license_url": {
+          "type": ["string", "null"],
+          "maxLength": 1000
+        },
+        "attribution_text": {
+          "type": ["string", "null"],
+          "maxLength": 2000
+        },
+        "raw_checksum": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "record_checksum": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/sha256"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lineage": {
+          "type": ["object", "null"]
+        },
+        "content_usage": {
+          "type": ["string", "null"],
+          "maxLength": 32
         }
       }
     },

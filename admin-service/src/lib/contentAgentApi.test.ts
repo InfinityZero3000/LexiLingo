@@ -36,12 +36,12 @@ describe("contentAgentApi", () => {
       type: "text/csv",
     });
 
-    await uploadContentAgentFile(file);
+    await uploadContentAgentFile(file, true);
 
     expect(apiFetchMock).toHaveBeenCalledOnce();
     const [url, options] = apiFetchMock.mock.calls[0];
     expect(url).toBe(
-      "https://backend.example/api/v1/admin/content-agent/uploads",
+      "https://backend.example/api/v1/admin/content-agent/uploads?rights_confirmed=true",
     );
     expect(options.method).toBe("POST");
     expect(options.body).toBeInstanceOf(FormData);

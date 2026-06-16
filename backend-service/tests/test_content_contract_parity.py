@@ -9,7 +9,6 @@ from app.schemas.content_agent import (
     PartOfSpeech,
 )
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_ROOT = REPO_ROOT / "contracts" / "content-agent"
 
@@ -57,6 +56,16 @@ def test_shared_course_artifact_contract_matches_backend_version():
         == "cefr-course-v2"
     )
     assert ContentAgentArtifact.model_config["extra"] == "forbid"
+    manifest = contract["properties"]["source_manifest"]
+    assert manifest["minItems"] == 1
+    assert manifest["items"]["$ref"] == "#/$defs/sourceManifest"
+    assert contract["$defs"]["sourceManifest"]["additionalProperties"] is False
+    assert {
+        "raw_checksum",
+        "normalized_sha256",
+        "normalized_bytes",
+        "record_checksum_root",
+    }.issubset(contract["$defs"]["sourceManifest"]["required"])
 
 
 def test_shared_exercise_mapping_contains_every_supported_base_type():

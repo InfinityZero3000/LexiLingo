@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.content_agent import (
     ContentAgentJob,
+    ContentAgentUpload,
     ContentProvenance,
     LessonVocabularyItem,
 )
@@ -62,8 +63,36 @@ class ContentAgentApplyService:
         if not job.artifact:
             raise ValueError("Job has no preview artifact")
 
+        manifest_sources = {
+            str(entry.get("source_name") or "")
+            for entry in (job.artifact.get("source_manifest") or [])
+            if isinstance(entry, dict)
+        }
+        upload = (
+            await db.get(ContentAgentUpload, job.upload_id)
+            if job.upload_id is not None
+            else None
+        )
+        admin_upload_context = None
+        if "admin_upload" in manifest_sources:
+            if upload is None:
+                raise ValueError("Admin upload content requires a surviving upload")
+            if upload.expires_at <= datetime.now(UTC):
+                raise ValueError("Referenced upload has expired")
+            if not upload.rights_confirmed:
+                raise ValueError("Upload rights attestation is required")
+            admin_upload_context = {
+                "checksum": upload.checksum,
+                "row_count": upload.row_count,
+            }
+
         # --- Pure artifact validation gate -----------------------------------
-        report = validate_artifact(job.artifact)
+        pinned_snapshots = list((job.config or {}).get("pinned_snapshots") or [])
+        report = validate_artifact(
+            job.artifact,
+            pinned_snapshots=pinned_snapshots,
+            admin_upload=admin_upload_context,
+        )
         if report.is_blocking:
             codes = ", ".join(e.code for e in report.blocking_errors)
             raise ValueError(f"Artifact failed validation gates: {codes}")
@@ -71,7 +100,6 @@ class ContentAgentApplyService:
         artifact = ContentAgentArtifact.model_validate(job.artifact)
         if artifact.quality.blocking_errors:
             raise ValueError("Artifact has blocking validation errors")
-
         # --- Gather all vocab items for batch upsert -------------------------
         all_vocab_items: list[dict] = []
         for course_data in artifact.courses:
@@ -215,9 +243,35 @@ class ContentAgentApplyService:
                                 license_mode=vocab_data.license_mode,
                                 source_checksum=vocab_data.source_checksum,
                                 is_generated=vocab_data.license_mode == "generated",
+                                source_version=vocab_data.source_version,
+                                license_id=vocab_data.license_id,
+                                license_url=vocab_data.license_url,
+                                attribution_text=vocab_data.attribution_text,
+                                raw_checksum=vocab_data.raw_checksum,
+                                record_checksum=(
+                                    vocab_data.record_checksum
+                                    or vocab_data.source_checksum
+                                ),
+                                lineage=vocab_data.lineage,
+                                content_usage=vocab_data.content_usage,
+                                rights_confirmed_at=(
+                                    upload.rights_confirmed_at
+                                    if upload is not None
+                                    and vocab_data.source_name == "admin_upload"
+                                    else None
+                                ),
+                                rights_statement_version=(
+                                    "admin-upload-v1"
+                                    if upload is not None
+                                    and vocab_data.source_name == "admin_upload"
+                                    else None
+                                ),
                                 metadata_json={
                                     "lesson_id": str(lesson.id),
                                     "topic": vocab_data.topic,
+                                    "source_record_id": (
+                                        vocab_data.source_record_id
+                                    ),
                                 },
                             )
                         )

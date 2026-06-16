@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.database import Base
 from app.models.content_agent import ContentAgentJob, ContentAgentUpload
 from app.schemas.content_agent import ContentAgentJobCreate
-from app.services.content_agent_jobs import ContentAgentJobService
+from app.services.content_agent_jobs import ContentAgentJobService, request_hash
 
 
 @pytest.fixture
@@ -68,3 +68,34 @@ async def test_job_state_machine_rejects_skipped_stages(content_agent_db):
         await ContentAgentJobService.transition(
             content_agent_db, job, "generating"
         )
+
+
+def test_request_hash_changes_when_snapshot_pin_changes():
+    def config(snapshot_id: str) -> ContentAgentJobCreate:
+        return ContentAgentJobCreate(
+            levels=["A1"],
+            sources=["oewn"],
+            pinned_snapshots=[
+                {
+                    "source_id": "oewn",
+                    "source_name": "oewn",
+                    "source_version": "2025",
+                    "snapshot_id": snapshot_id,
+                    "official_url": "https://en-word.net/static/english-wordnet-2025.xml.gz",
+                    "license_id": "CC-BY-4.0",
+                    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+                    "attribution_text": "Open English WordNet 2025",
+                    "retrieved_at": "2026-06-15T00:00:00Z",
+                    "raw_checksum": "a" * 64,
+                    "normalized_sha256": "b" * 64,
+                    "normalized_bytes": 100,
+                    "record_checksum_root": "c" * 64,
+                    "adapter_version": 1,
+                    "record_count": 100,
+                    "status": "active",
+                    "enabled": True,
+                }
+            ],
+        )
+
+    assert request_hash(config("snapshot-a")) != request_hash(config("snapshot-b"))

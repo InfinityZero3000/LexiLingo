@@ -13,6 +13,7 @@ from api.models.content_agent import (
     NormalizedSourceRecord,
     PartOfSpeech,
 )
+from api.services.content_etl.contracts import SourceRecordV2
 from api.services.content_agent.policies import apply_source_policy
 
 
@@ -101,12 +102,12 @@ def _prepare_record(
         prepared.get("declared_topic")
         or prepared.get("topic")
     )
-    prepared["classification_confidence"] = float(
-        prepared.get(
-            "classification_confidence",
-            prepared.get("confidence", _default_confidence(source_name)),
-        )
-    )
+    confidence = prepared.get("classification_confidence")
+    if confidence is None:
+        confidence = prepared.get("confidence")
+    if confidence is None:
+        confidence = _default_confidence(source_name)
+    prepared["classification_confidence"] = float(confidence)
     prepared["checksum"] = prepared.get("checksum") or _checksum(raw_record)
     if not prepared.get("record_id"):
         identity = {
@@ -168,3 +169,29 @@ def normalize_existing_cefr_records(
     ]
     records = normalize_source_records(raw_records, source_name="existing_cefr")
     return sorted(records, key=lambda record: (record.word or "", record.record_id))
+
+
+def normalize_etl_records(
+    records: Sequence[SourceRecordV2],
+) -> list[NormalizedSourceRecord]:
+    normalized: list[NormalizedSourceRecord] = []
+    for record in records:
+        payload = record.model_dump(mode="json")
+        payload.update(
+            {
+                "checksum": record.record_checksum,
+                "source_content_usage": record.content_usage.value,
+                "declared_topic": (
+                    record.topic_ids[0].casefold()
+                    if record.topic_ids
+                    else "general"
+                ),
+            }
+        )
+        normalized.extend(
+            normalize_source_records(
+                [payload],
+                source_name=record.source_name.value,
+            )
+        )
+    return normalized
