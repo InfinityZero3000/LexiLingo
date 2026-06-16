@@ -293,10 +293,10 @@ echo ""
 if command -v docker &>/dev/null; then
     if ! check_service 5432 || ! check_service 27017 || ! check_service 6379; then
         echo -e "${BLUE}[START] Starting Database containers (PostgreSQL, MongoDB, Redis)...${NC}"
-        docker compose -f "$PROJECT_ROOT/docker-compose.yml" up -d postgres pgadmin mongodb mongo-express redis redisinsight >> "$LOG_DIR/databases.log" 2>&1
+        docker compose -f "$PROJECT_ROOT/docker-compose.dev.yml" up -d postgres pgadmin mongodb mongo-express redis redisinsight >> "$LOG_DIR/databases.log" 2>&1
         # Wait up to 15s for postgres to be ready
         for i in $(seq 1 15); do
-            docker compose -f "$PROJECT_ROOT/docker-compose.yml" exec -T postgres pg_isready -U lexilingo >/dev/null 2>&1 && break
+            docker compose -f "$PROJECT_ROOT/docker-compose.dev.yml" exec -T postgres pg_isready -U lexilingo >/dev/null 2>&1 && break
             sleep 1
         done
     else

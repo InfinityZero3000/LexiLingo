@@ -20,6 +20,9 @@ export interface UserListItem {
   role_level: number; // 0, 1, 2
   created_at: string;
   last_login: string | null;
+  avatar_url?: string | null;
+  total_xp?: number;
+  streak_days?: number;
 }
 
 export interface UserDetail extends UserListItem {
@@ -30,6 +33,9 @@ export interface UserDetail extends UserListItem {
   courses_completed: number;
   lessons_completed: number;
   daily_activities: number;
+  bio?: string | null;
+  language_preference?: string | null;
+  notification_enabled?: boolean;
 }
 
 export interface PaginatedUsers {
@@ -60,6 +66,7 @@ export interface UserFilters {
 export interface UserUpdateData {
   display_name?: string;
   is_active?: boolean;
+  bio?: string;
 }
 
 export interface RoleUpdateData {

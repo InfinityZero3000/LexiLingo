@@ -48,8 +48,8 @@ export const CompletionFunnelChart: React.FC<Props> = ({ data, loading }) => {
             width={90}
           />
           <Tooltip 
-            formatter={(value: number, name, props: any) => [
-              `${value.toLocaleString()} (${props.payload.percentage.toFixed(1)}%)`,
+            formatter={(value: any, name: any, props: any) => [
+              `${value?.toLocaleString() || ""}${(props?.payload?.percentage !== undefined) ? ` (${props.payload.percentage.toFixed(1)}%)` : ""}`,
               ""
             ]}
           />

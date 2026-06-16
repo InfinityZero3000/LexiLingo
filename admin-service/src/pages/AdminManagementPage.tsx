@@ -154,15 +154,15 @@ export const AdminManagementPage = () => {
                   </td>
                   <td>
                     <span className="tag" style={{
-                      background: admin.provider === "google" ? "#EBF5FF" : "#F5F5F5",
-                      color: admin.provider === "google" ? "#1E40AF" : "#666"
+                      background: admin.provider.includes("google") ? "#EBF5FF" : "#F5F5F5",
+                      color: admin.provider.includes("google") ? "#1E40AF" : "#666"
                     }}>
-                      {admin.provider}
+                      {admin.provider.join(", ")}
                     </span>
                   </td>
                   <td>
                     <StatusPill 
-                      tone={admin.is_active ? "success" : "muted"} 
+                      tone={admin.is_active ? "success" : "neutral"} 
                       label={admin.is_active ? t.common.active : t.common.inactive} 
                     />
                   </td>

@@ -2,12 +2,12 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.production.yml"
+COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.yml"
 ENV_FILE="${PROJECT_ROOT}/.env.production"
 SECRET_ENV_FILE="${PROJECT_ROOT}/.env.production.secrets"
 SMOKE_SCRIPT="${PROJECT_ROOT}/scripts/smoke-prod.sh"
 DEPLOY_DIR="${PROJECT_ROOT}/.deploy"
-DOCKER_COMPOSE_CMD="sudo docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.production.yml"
+DOCKER_COMPOSE_CMD="sudo docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml"
 
 SKIP_GIT_PULL=false
 SKIP_IMAGE_PULL=false

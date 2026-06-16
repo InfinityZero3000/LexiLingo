@@ -32,6 +32,10 @@ temp/
 data/kuzu_db
 data/kuzu_db/
 data/kuzu_db.wal
+data/kuzu
+data/kuzu/
+data/kuzu.wal
+data/kuzu_synced_files.json
 api/data/
 data/backups/
 
