@@ -85,15 +85,21 @@ async def verify_content_agent_token(
 async def get_content_agent_service() -> ContentAgentService:
     global _store
     settings = get_settings()
+    redis = RedisClient._instance
+    if redis is None and not settings.CONTENT_AGENT_ALLOW_LOCAL_STORE:
+        logger.warning(
+            "Redis not yet connected and local fallback is disabled — "
+            "content-agent store calls will fail until Redis is available"
+        )
     if _store is None:
         _store = ContentAgentStore(
             ttl_seconds=settings.CONTENT_AGENT_TTL_SECONDS,
             max_records=settings.CONTENT_AGENT_MAX_RECORDS,
-            redis_client=RedisClient._instance,
+            redis_client=redis,
             allow_local_fallback=settings.CONTENT_AGENT_ALLOW_LOCAL_STORE,
         )
     else:
-        _store.set_redis_client(RedisClient._instance)
+        _store.set_redis_client(redis)
     return ContentAgentService(store=_store)
 
 

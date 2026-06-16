@@ -282,7 +282,7 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
             return {"job_id": str(job_id), "status": "cancelled"}
         except Exception as exc:
             await db.rollback()
-            job = await ContentAgentJobService.get(db, job_id)
+            job = await ContentAgentJobService.get(db, job_id, lock=True)
             if job is not None and job.status != "cancelled":
                 await ContentAgentJobService.fail(
                     db, job, _public_error_message(exc)
