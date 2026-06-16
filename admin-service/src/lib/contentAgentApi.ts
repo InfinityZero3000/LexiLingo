@@ -28,6 +28,9 @@ export type ContentAgentLicenseMode =
 
 export const CONTENT_AGENT_ACTIVE_STATUSES = [
   "queued",
+  "resolving_sources",
+  "loading_snapshots",
+  "normalizing_upload",
   "extracting",
   "normalizing",
   "classifying",
@@ -208,13 +211,20 @@ type ApiEnvelope<T> = {
 export interface SourceSnapshot {
   source_id: string;
   source_name: string;
-  version: string;
+  source_version: string;
+  snapshot_id: string;
+  official_url: string;
   license_id: string;
   license_url: string;
   attribution_text: string;
+  retrieved_at: string;
+  raw_checksum: string;
+  normalized_sha256: string;
+  normalized_bytes: number;
+  record_checksum_root: string;
+  adapter_version: number;
   record_count: number;
-  last_sync_at: string | null;
-  status: 'approved' | 'rejected' | 'pending';
+  status: "active";
   enabled: boolean;
 }
 
@@ -238,12 +248,13 @@ const jobUrl = (jobId: string, action?: string) =>
 
 export const uploadContentAgentFile = async (
   file: File,
+  rightsConfirmed = false,
 ): Promise<ContentAgentUpload> => {
   const formData = new FormData();
   formData.append("file", file);
   const payload = await apiFetch<
     ContentAgentUpload | ApiEnvelope<ContentAgentUpload>
-  >(`${baseUrl}/uploads`, {
+  >(`${baseUrl}/uploads?rights_confirmed=${rightsConfirmed ? "true" : "false"}`, {
     method: "POST",
     body: formData,
   });

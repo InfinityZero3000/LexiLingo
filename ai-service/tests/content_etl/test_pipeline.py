@@ -5,13 +5,13 @@ from __future__ import annotations
 import hashlib
 import json
 
-import pytest
-
+from api.services.content_etl.contracts import (
+    SourceRecordV2,
+    compute_source_record_checksum,
+)
 from api.services.content_etl.pipeline import (
     ETLPipeline,
-    PipelineError,
     PipelineReport,
-    QuarantineRatioExceeded,
 )
 from api.services.content_etl.storage import SnapshotStorage
 
@@ -205,7 +205,31 @@ def test_resume_from_normalized_output(tmp_path):
     # Manually write normalized output as if a previous run completed normalize stage.
     normalized_dir = tmp_path / "normalized" / "oewn" / version
     normalized_dir.mkdir(parents=True)
-    record = _make_record("oewn:resume:1")
+    record_payload = {
+        "schema_version": 2,
+        "record_id": "oewn:resume:1",
+        "source_name": "oewn",
+        "source_version": version,
+        "source_record_id": "oewn:resume:1",
+        "source_url": _OEWN_OFFICIAL_URL,
+        "license_id": "CC-BY-4.0",
+        "license_url": _OEWN_LICENSE_URL,
+        "attribution_text": "Open English WordNet 2025",
+        "content_usage": "label",
+        "language": "en",
+        "word": "resume",
+        "declared_cefr": "A1",
+        "retrieved_at": "2026-06-15T00:00:00Z",
+        "raw_checksum": _sha256(b"fake raw dataset"),
+        "lineage": {
+            "adapter": "oewn",
+            "adapter_version": 1,
+            "raw_path": "dataset.xml.gz",
+            "source_location": "oewn:resume:1",
+        },
+    }
+    record_payload["record_checksum"] = compute_source_record_checksum(record_payload)
+    record = SourceRecordV2.model_validate(record_payload).model_dump(mode="json")
     (normalized_dir / "records.jsonl").write_bytes(
         json.dumps(record, ensure_ascii=False, sort_keys=True).encode() + b"\n"
     )

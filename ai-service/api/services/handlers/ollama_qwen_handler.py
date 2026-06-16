@@ -116,6 +116,24 @@ class OllamaQwenHandler:
         self._loaded = False
         logger.info("[OllamaQwenHandler] Handler unloaded")
     
+    @staticmethod
+    def _estimate_groq_tokens(messages: List[Dict[str, str]], max_tokens: int) -> int:
+        """Rough token estimate: input chars/4 + output budget, capped at 3000."""
+        input_chars = sum(len(m.get("content", "")) for m in messages)
+        return min(max(input_chars // 4, 80) + max_tokens, 3000)
+
+    @staticmethod
+    def _apply_no_think(messages: List[Dict[str, str]], model: str) -> List[Dict[str, str]]:
+        """Prepend /no_think to the first user message for Qwen3 to disable thinking mode."""
+        if "qwen3" not in model.lower():
+            return messages
+        result = list(messages)
+        for i, msg in enumerate(result):
+            if msg.get("role") == "user":
+                result[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
+                break
+        return result
+
     async def _invoke_cloud(
         self,
         messages_list: List[Dict[str, str]],
@@ -125,24 +143,29 @@ class OllamaQwenHandler:
     ) -> Optional[str]:
         """Attempt to call Groq or Gemini API directly, returning the response or None on failure."""
         from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-        
-        # 1. Try Groq first
-        groq_key = await get_available_groq_key(estimated_tokens=max_tokens)
+
         groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+
+        # Build message list up front so we can estimate tokens accurately
+        full_messages: List[Dict[str, str]] = []
+        if system_prompt:
+            full_messages.append({"role": "system", "content": system_prompt})
+        full_messages.extend(messages_list)
+        full_messages = self._apply_no_think(full_messages, groq_model)
+
+        estimated = self._estimate_groq_tokens(full_messages, max_tokens)
+
+        # 1. Try Groq first
+        groq_key = await get_available_groq_key(estimated_tokens=estimated)
         if groq_key:
             try:
-                full_messages = []
-                if system_prompt:
-                    full_messages.append({"role": "system", "content": system_prompt})
-                full_messages.extend(messages_list)
-
                 payload = {
                     "model": groq_model,
                     "messages": full_messages,
                     "max_tokens": max_tokens,
                     "temperature": temperature if temperature is not None else self.config.temperature,
                 }
-                
+
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
                         "https://api.groq.com/openai/v1/chat/completions",
@@ -155,7 +178,7 @@ class OllamaQwenHandler:
                     )
                     if response.status_code == 200:
                         data = response.json()
-                        tokens = data.get("usage", {}).get("total_tokens", 500)
+                        tokens = data.get("usage", {}).get("total_tokens", estimated)
                         await record_groq_key_usage(groq_key, tokens)
                         return data["choices"][0]["message"]["content"]
                     else:
@@ -234,23 +257,26 @@ class OllamaQwenHandler:
         if not await self.load():
             logger.info("[OllamaQwenHandler] Ollama is offline, falling back to Groq...")
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-            groq_key = await get_available_groq_key(estimated_tokens=max_tokens)
+
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+            fallback_messages: List[Dict[str, str]] = []
+            if system_prompt:
+                fallback_messages.append({"role": "system", "content": system_prompt})
+            fallback_messages.extend(messages_list)
+            fallback_messages = self._apply_no_think(fallback_messages, groq_model)
+
+            estimated = self._estimate_groq_tokens(fallback_messages, max_tokens)
+            groq_key = await get_available_groq_key(estimated_tokens=estimated)
             if not groq_key:
                 raise RuntimeError("Ollama is offline and no Groq API key is available in the pool")
-            
-            full_messages = []
-            if system_prompt:
-                full_messages.append({"role": "system", "content": system_prompt})
-            full_messages.extend(messages_list)
 
             payload = {
                 "model": groq_model,
-                "messages": full_messages,
+                "messages": fallback_messages,
                 "max_tokens": max_tokens,
                 "temperature": temperature if temperature is not None else self.config.temperature,
             }
-            
+
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     "https://api.groq.com/openai/v1/chat/completions",
@@ -263,7 +289,7 @@ class OllamaQwenHandler:
                 )
                 response.raise_for_status()
                 data = response.json()
-                tokens = data.get("usage", {}).get("total_tokens", 500)
+                tokens = data.get("usage", {}).get("total_tokens", estimated)
                 await record_groq_key_usage(groq_key, tokens)
                 return data["choices"][0]["message"]["content"]
 

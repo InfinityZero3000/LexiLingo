@@ -9,8 +9,8 @@ Usage:
 
 from __future__ import annotations
 
+import asyncio
 import sys
-from pathlib import Path
 from typing import Optional
 
 try:
@@ -19,11 +19,16 @@ except ImportError:
     print("typer is required: pip install typer", file=sys.stderr)
     sys.exit(1)
 
-from api.services.content_etl.contracts import SourceName
 from api.services.content_etl.registry import (
     SourceRegistryError,
     get_source_definition,
     list_source_definitions,
+)
+from api.services.content_etl.downloader import SecureDownloader
+from api.services.content_etl.sources import (
+    SourceSyncConfigurationError,
+    build_source_sync_spec,
+    sync_source,
 )
 from api.services.content_etl.storage import SnapshotStorage, StorageIntegrityError
 
@@ -42,6 +47,18 @@ def _get_storage() -> SnapshotStorage:
     except Exception:
         root = "/data/content-etl"
     return SnapshotStorage(root)
+
+
+def build_downloader(storage: SnapshotStorage) -> SecureDownloader:
+    from api.core.config import get_settings
+
+    settings = get_settings()
+    return SecureDownloader(
+        storage=storage,
+        timeout_seconds=settings.CONTENT_ETL_HTTP_TIMEOUT_SECONDS,
+        max_download_bytes=settings.CONTENT_ETL_MAX_DOWNLOAD_BYTES,
+        user_agent=settings.CONTENT_ETL_USER_AGENT,
+    )
 
 
 @app.command("list")
@@ -84,24 +101,43 @@ def sync(
     if dry_run:
         typer.echo("[dry-run] No files will be written.")
 
+    storage = SnapshotStorage(storage_root) if storage_root else _get_storage()
+    downloader = build_downloader(storage)
+    failed = False
     for source_id in source_ids:
         try:
             defn = get_source_definition(source_id)
-        except SourceRegistryError as exc:
+            spec = build_source_sync_spec(defn.source_name)
+        except (SourceRegistryError, SourceSyncConfigurationError) as exc:
             typer.echo(f"ERROR: {exc}", err=True)
-            raise typer.Exit(1) from exc
+            failed = True
+            continue
 
         typer.echo(
             f"[{'dry-run' if dry_run else 'sync'}] {defn.source_name.value}: "
-            f"{defn.official_url or '(admin_upload)'}"
+            f"{spec.download_url}"
         )
+        report = asyncio.run(
+            sync_source(
+                spec,
+                downloader=downloader,
+                storage=storage,
+                dry_run=dry_run,
+            )
+        )
+        typer.echo(
+            f"  status={report.status} version={report.source_version} "
+            f"approved={report.approved} quarantined={report.quarantined} "
+            f"activated={'yes' if report.activated else 'no'}"
+        )
+        for error in report.errors:
+            typer.echo(f"  ERROR: {error}", err=True)
+        failed = failed or report.status == "failed"
 
+    if failed:
+        raise typer.Exit(1)
     if dry_run:
         typer.echo("Dry-run complete. Pass --write to persist.")
-    else:
-        typer.echo(
-            "Sync requested. Connect a real adapter and pass raw_bytes to ETLPipeline.run()."
-        )
 
 
 @app.command("validate")

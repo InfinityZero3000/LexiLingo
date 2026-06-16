@@ -12,8 +12,10 @@ Content Agent.
 
 ```bash
 cd ai-service
-source venv/bin/activate
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
 ```
 
 ### 1.2 Configure environment
@@ -33,33 +35,66 @@ CONTENT_ETL_HTTP_TIMEOUT_SECONDS=60
 CONTENT_ETL_MAX_DOWNLOAD_BYTES=1073741824   # 1 GB max per source
 CONTENT_ETL_MAX_QUARANTINE_RATIO=0.02       # Abort if >2% rows quarantined
 CONTENT_ETL_USER_AGENT=LexiLingo-ETL/1.0
-CONTENT_ETL_OEWN_VERSION=2025      # Pin before enabling
-CONTENT_ETL_CMU_REF=               # Pinned commit SHA
-CONTENT_ETL_CEFR_J_REF=            # Pinned commit SHA
-CONTENT_ETL_WIKIDATA_SNAPSHOT=     # Pinned date (YYYY-MM-DD)
+CONTENT_ETL_OEWN_VERSION=2025
+CONTENT_ETL_OEWN_SHA256=<expected-lowercase-sha256>
+CONTENT_ETL_CMU_REF=<40-character-commit-sha>
+CONTENT_ETL_CMU_SHA256=<expected-lowercase-sha256>
+CONTENT_ETL_CEFR_J_REF=<40-character-commit-sha>
+CONTENT_ETL_CEFR_J_PATH=cefrj-vocabulary-profile-1.5.csv
+CONTENT_ETL_CEFR_J_SHA256=<expected-lowercase-sha256>
+CONTENT_ETL_WIKIDATA_SNAPSHOT=     # Reserved; no automated adapter yet
 CONTENT_ETL_TATOEBA_RELEASE=       # Optional; leave empty to disable
 CONTENT_ETL_LIBRISPEECH_RELEASE=   # Optional; leave empty to disable
 CONTENT_ETL_COMMON_VOICE_RELEASE=  # Optional; leave empty to disable
 ```
 
+Obtain checksums through an audited operator process from the exact pinned
+artifact. Never copy a checksum from a failed ETL run and treat that as
+approval.
+
 ### 1.3 Sync core lexical sources
 
+Run the configuration-only dry run first:
+
 ```bash
-CONTENT_ETL_ENABLED=true \
 python -m api.services.content_etl.cli sync \
-  --sources oewn,cmudict,cefr_j,wikidata \
+  --sources oewn,cmudict,cefr_j
+```
+
+Then write the immutable snapshots:
+
+```bash
+python -m api.services.content_etl.cli sync \
+  --sources oewn,cmudict,cefr_j \
   --write
 ```
 
-Omit `--write` to perform a dry-run inspection first.
+A successful write downloads the exact artifact, verifies its configured
+checksum, validates every normalized record, publishes the manifest, and
+atomically activates that version.
 
-### 1.4 List available snapshots
+Wikidata, Tatoeba, LibriSpeech, and Common Voice are not accepted by the
+automated sync command until a pinned adapter and license filter are
+implemented. Do not replace this with generic web crawling.
+
+### 1.4 List registered source policies
 
 ```bash
 python -m api.services.content_etl.cli list
 ```
 
-Each row shows: source, version, status, record count, quarantine count, and last approval time.
+This lists registered source IDs, default enablement, and approved license IDs.
+It does not prove that a snapshot is active.
+
+To inspect an exact active snapshot, read the pointer and validate its manifest:
+
+```bash
+cat /data/content-etl/active/oewn.json
+python -m api.services.content_etl.cli validate --source oewn --version 2025
+```
+
+The admin source catalog should expose the same `snapshot_id`,
+`source_version`, `raw_checksum`, license, attribution, and record count.
 
 ### 1.5 Run database migration
 
@@ -84,11 +119,10 @@ pnpm build:check
 Complete every step in order. Do not set `CONTENT_AGENT_ENABLED=true` until
 all gates pass.
 
-1. **Pin all enabled source refs** — Set `CONTENT_ETL_OEWN_VERSION`,
-   `CONTENT_ETL_CMU_REF`, `CONTENT_ETL_CEFR_J_REF`, and
-   `CONTENT_ETL_WIKIDATA_SNAPSHOT` to exact immutable values (version number,
-   commit SHA, or snapshot date). Production validation rejects empty refs and
-   moving labels (`main`, `master`, `latest`).
+1. **Pin all enabled source refs and checksums** — Set the OEWN version, CMU
+   and CEFR-J commit SHAs, and all three expected SHA-256 values. Production
+   validation rejects empty checksums and moving labels (`main`, `master`,
+   `latest`).
 
 2. **Back up PostgreSQL and the ETL storage root** — Take a point-in-time
    PostgreSQL snapshot and back up `/data/content-etl` before any new sync:
@@ -109,21 +143,24 @@ all gates pass.
    ```
    Fix the root cause or adjust thresholds before proceeding.
 
-5. **Activate core snapshots** — Atomically repoint `active/<source>.json`:
+5. **Confirm active core snapshots** — A successful sync already activates
+   the approved version. Use `activate` only for an explicit promotion or
+   rollback:
    ```bash
    python -m api.services.content_etl.cli activate --source oewn --version 2025
    python -m api.services.content_etl.cli activate --source cmudict --version <ref>
    python -m api.services.content_etl.cli activate --source cefr_j --version <ref>
-   python -m api.services.content_etl.cli activate --source wikidata --version <snapshot>
    ```
-   `activate` refuses a snapshot with `status: rejected`.
+   `activate` rechecks the raw checksum, normalized count, manifest status,
+   and refuses empty or rejected snapshots.
 
 6. **Enable the content agent** — Set `CONTENT_AGENT_ENABLED=true` in the
    backend service environment and redeploy.
 
 7. **Create a preview-only A1 smoke job** — In the admin dashboard, launch
-   a Content Agent job with only the A1 CEFR level selected and all core lexical
-   sources enabled. Wait for `preview_ready`.
+   a Content Agent job with only A1 and active sources selected. The dashboard
+   must show snapshot version, license, record count, and retrieval date.
+   Wait for `preview_ready`.
 
 8. **Verify the preview has zero blocking errors** — Inspect the validation
    report in the drawer. Apply only after the preview shows:
@@ -155,14 +192,15 @@ reading their pinned version.
 
 ### 3.2 Revert a sync that wrote bad normalized data
 
-If normalized records are corrupt, the raw download is still intact under
-`/data/content-etl/raw/<source>/<version>/`. Re-run the normalize stage:
+If normalized records are corrupt, do not edit or overwrite the snapshot.
+Validation should fail:
 
 ```bash
 python -m api.services.content_etl.cli validate --source oewn --version 2025
 ```
 
-The pipeline will re-normalize from raw bytes without re-downloading.
+Pin a new source version or commit, obtain its expected checksum, and run a
+new sync. Immutable source/version paths are never repaired in place.
 
 ### 3.3 Database apply rollback
 
@@ -204,8 +242,8 @@ Prints the manifest, quarantine ratio, and a sample of quarantined rows.
 
 ### Re-sync after upstream release
 
-1. Pin the new ref in `.env`.
-2. Run sync with `--write`.
+1. Pin the new ref and expected checksum in `.env`.
+2. Run the dry run, then sync with `--write`.
 3. Inspect the manifest and quarantine report.
 4. Run the activation checklist from step 5 onward.
 
@@ -217,3 +255,16 @@ du -sh /data/content-etl/*/
 
 The `tmp/` subdirectory should be empty outside of active syncs. Partial
 downloads are cleaned up automatically on failure.
+
+### Incident response
+
+- **Checksum mismatch:** stop the sync. Verify the official release identity
+  and checksum through the audited source process. Never update the configured
+  checksum merely to match unexpected bytes.
+- **License mismatch or expired review:** keep the source disabled, preserve
+  the failed report, and require a new legal/license review before retrying.
+- **Provenance or pin mismatch:** do not apply the preview. Cancel the job,
+  verify the active pointer and manifest, then create a new job so it pins the
+  intended snapshot.
+- **Quarantine threshold exceeded:** inspect only hashes/error metadata in
+  `quarantine/`; fix the adapter or source pin and publish a new version.

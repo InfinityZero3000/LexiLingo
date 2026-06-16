@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from urllib.parse import unquote
 
 from pydantic import AnyHttpUrl, TypeAdapter, ValidationError
 
@@ -14,10 +16,16 @@ class SourceRegistryError(ValueError):
 
 
 @dataclass(frozen=True)
+class SourceUrlRule:
+    host: str
+    path_pattern: re.Pattern[str]
+
+
+@dataclass(frozen=True)
 class SourceDefinition:
     source_name: SourceName
     official_url: str
-    allowed_hosts: tuple[str, ...]
+    url_rules: tuple[SourceUrlRule, ...]
     allowed_licenses: tuple[AllowedLicenseId, ...]
     attribution_text: str
     default_enabled: bool
@@ -28,7 +36,12 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.OEWN: SourceDefinition(
         source_name=SourceName.OEWN,
         official_url="https://en-word.net/static/english-wordnet-2025.xml.gz",
-        allowed_hosts=("en-word.net", "github.com"),
+        url_rules=(
+            SourceUrlRule(
+                "en-word.net",
+                re.compile(r"^/static/[A-Za-z0-9._-]+(?:\.xml)?\.gz$"),
+            ),
+        ),
         allowed_licenses=(AllowedLicenseId.CC_BY_4_0,),
         attribution_text="Open English WordNet 2025",
         default_enabled=True,
@@ -36,10 +49,21 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.CMUDICT: SourceDefinition(
         source_name=SourceName.CMUDICT,
         official_url="https://github.com/cmusphinx/cmudict",
-        allowed_hosts=(
-            "github.com",
-            "raw.githubusercontent.com",
-            "codeload.github.com",
+        url_rules=(
+            SourceUrlRule(
+                "github.com",
+                re.compile(
+                    r"^/cmusphinx/cmudict(?:/archive/[a-f0-9]{40}\.(?:zip|tar\.gz))?$"
+                ),
+            ),
+            SourceUrlRule(
+                "raw.githubusercontent.com",
+                re.compile(r"^/cmusphinx/cmudict/[a-f0-9]{40}/[^/]+$"),
+            ),
+            SourceUrlRule(
+                "codeload.github.com",
+                re.compile(r"^/cmusphinx/cmudict/(?:zip|tar\.gz)/[a-f0-9]{40}$"),
+            ),
         ),
         allowed_licenses=(AllowedLicenseId.CMUDICT,),
         attribution_text="Carnegie Mellon Pronouncing Dictionary",
@@ -48,10 +72,27 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.CEFR_J: SourceDefinition(
         source_name=SourceName.CEFR_J,
         official_url="https://github.com/openlanguageprofiles/olp-en-cefrj",
-        allowed_hosts=(
-            "github.com",
-            "raw.githubusercontent.com",
-            "codeload.github.com",
+        url_rules=(
+            SourceUrlRule(
+                "github.com",
+                re.compile(
+                    r"^/openlanguageprofiles/olp-en-cefrj"
+                    r"(?:/archive/[a-f0-9]{40}\.(?:zip|tar\.gz))?$"
+                ),
+            ),
+            SourceUrlRule(
+                "raw.githubusercontent.com",
+                re.compile(
+                    r"^/openlanguageprofiles/olp-en-cefrj/[a-f0-9]{40}/[^/]+$"
+                ),
+            ),
+            SourceUrlRule(
+                "codeload.github.com",
+                re.compile(
+                    r"^/openlanguageprofiles/olp-en-cefrj/"
+                    r"(?:zip|tar\.gz)/[a-f0-9]{40}$"
+                ),
+            ),
         ),
         allowed_licenses=(AllowedLicenseId.CEFR_J_COMMERCIAL,),
         attribution_text=(
@@ -64,7 +105,12 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.WIKIDATA: SourceDefinition(
         source_name=SourceName.WIKIDATA,
         official_url="https://www.wikidata.org/wiki/Special:EntityData",
-        allowed_hosts=("www.wikidata.org",),
+        url_rules=(
+            SourceUrlRule(
+                "www.wikidata.org",
+                re.compile(r"^/wiki/Special:EntityData(?:/Q[1-9][0-9]*\.json)?$"),
+            ),
+        ),
         allowed_licenses=(AllowedLicenseId.CC0_1_0,),
         attribution_text="Wikidata contributors",
         default_enabled=True,
@@ -72,7 +118,13 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.TATOEBA: SourceDefinition(
         source_name=SourceName.TATOEBA,
         official_url="https://tatoeba.org/en/downloads",
-        allowed_hosts=("tatoeba.org", "downloads.tatoeba.org"),
+        url_rules=(
+            SourceUrlRule("tatoeba.org", re.compile(r"^/en/downloads/?$")),
+            SourceUrlRule(
+                "downloads.tatoeba.org",
+                re.compile(r"^/exports/[A-Za-z0-9._/-]+$"),
+            ),
+        ),
         allowed_licenses=(
             AllowedLicenseId.CC0_1_0,
             AllowedLicenseId.CC_BY_2_0_FR,
@@ -83,7 +135,16 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.LIBRISPEECH: SourceDefinition(
         source_name=SourceName.LIBRISPEECH,
         official_url="https://www.openslr.org/12",
-        allowed_hosts=("www.openslr.org", "openslr.org"),
+        url_rules=(
+            SourceUrlRule(
+                "www.openslr.org",
+                re.compile(r"^(?:/12/?|/resources/12/[A-Za-z0-9._-]+)$"),
+            ),
+            SourceUrlRule(
+                "openslr.org",
+                re.compile(r"^(?:/12/?|/resources/12/[A-Za-z0-9._-]+)$"),
+            ),
+        ),
         allowed_licenses=(AllowedLicenseId.CC_BY_4_0,),
         attribution_text="LibriSpeech ASR corpus",
         default_enabled=False,
@@ -94,7 +155,15 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
             "https://datacollective.mozillafoundation.org/organization/"
             "cmfh0j9o10006ns07jq45h7xk"
         ),
-        allowed_hosts=("datacollective.mozillafoundation.org",),
+        url_rules=(
+            SourceUrlRule(
+                "datacollective.mozillafoundation.org",
+                re.compile(
+                    r"^/organization/cmfh0j9o10006ns07jq45h7xk"
+                    r"(?:/[A-Za-z0-9._/-]+)?$"
+                ),
+            ),
+        ),
         allowed_licenses=(AllowedLicenseId.CC0_1_0,),
         attribution_text="Mozilla Common Voice contributors",
         default_enabled=False,
@@ -102,7 +171,7 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
     SourceName.ADMIN_UPLOAD: SourceDefinition(
         source_name=SourceName.ADMIN_UPLOAD,
         official_url="",
-        allowed_hosts=(),
+        url_rules=(),
         allowed_licenses=(AllowedLicenseId.ADMIN_OWNED,),
         attribution_text="Administrator-owned or commercially licensed upload",
         default_enabled=True,
@@ -164,12 +233,34 @@ def validate_source_url(
         raise SourceRegistryError(
             "Source URL must not contain a query string or fragment"
         )
-    if parsed.host not in definition.allowed_hosts:
+    normalized_host = (parsed.host or "").lower().rstrip(".")
+    normalized_path = parsed.path
+    for _ in range(3):
+        decoded = unquote(normalized_path)
+        if decoded == normalized_path:
+            break
+        normalized_path = decoded
+    if "\\" in normalized_path or any(
+        segment in {".", ".."} for segment in normalized_path.split("/")
+    ):
+        raise SourceRegistryError("Source URL path is not canonical")
+
+    matching_rule = next(
+        (
+            rule
+            for rule in definition.url_rules
+            if normalized_host == rule.host
+            and rule.path_pattern.fullmatch(normalized_path)
+        ),
+        None,
+    )
+    if matching_rule is None:
         raise SourceRegistryError(
-            f"Host {parsed.host!r} is not approved for {definition.source_name.value}"
+            "Source URL is not approved for the canonical identity of "
+            f"{definition.source_name.value}"
         )
 
-    lowered_path = parsed.path.lower()
+    lowered_path = normalized_path.lower()
     for marker in definition.forbidden_path_markers:
         if marker in lowered_path:
             label = "Octanove" if marker == "octanove" else marker

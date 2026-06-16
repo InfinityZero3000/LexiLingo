@@ -38,6 +38,8 @@ COPY --from=builder /opt/venv /opt/venv
 COPY api ./api
 COPY data ./data
 
+RUN python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
+
 RUN mkdir -p /app/models /app/logs /tmp/lexilingo-stt && \
     chown -R appuser:appuser /app /tmp/lexilingo-stt
 

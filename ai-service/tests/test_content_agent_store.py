@@ -1,6 +1,7 @@
 import pytest
 
 from api.services.content_agent.adapters import normalize_source_records
+from api.models.content_agent import SourceSnapshotDescriptor
 from api.services.content_agent.store import ContentAgentStore
 
 
@@ -14,6 +15,40 @@ def _record():
             }
         ],
         source_name="admin_upload",
+    )[0]
+
+
+def _snapshot(snapshot_id: str = "oewn:2025:" + "a" * 64) -> SourceSnapshotDescriptor:
+    return SourceSnapshotDescriptor(
+        source_id="oewn",
+        source_name="oewn",
+        source_version="2025",
+        snapshot_id=snapshot_id,
+        official_url="https://en-word.net/static/english-wordnet-2025.xml.gz",
+        license_id="CC-BY-4.0",
+        license_url="https://creativecommons.org/licenses/by/4.0/",
+        attribution_text="Open English WordNet 2025",
+        retrieved_at="2026-06-15T00:00:00Z",
+        raw_checksum="a" * 64,
+        normalized_sha256="b" * 64,
+        normalized_bytes=100,
+        record_checksum_root="c" * 64,
+        adapter_version=1,
+        record_count=1,
+        enabled=True,
+    )
+
+
+def _oewn_record():
+    return normalize_source_records(
+        [
+            {
+                "record_id": "oewn:1",
+                "word": "journey",
+                "definition": "A complete definition.",
+            }
+        ],
+        source_name="oewn",
     )[0]
 
 
@@ -70,6 +105,37 @@ async def test_store_falls_back_locally_when_redis_is_unavailable():
     assert await store.get("job-1") == [_record()]
     await store.delete("job-1")
     assert await store.get("job-1") is None
+
+
+@pytest.mark.asyncio
+async def test_attach_snapshot_records_is_idempotent_for_same_snapshot_set():
+    store = ContentAgentStore(ttl_seconds=45, max_records=10)
+
+    assert await store.attach_snapshot_records("job-1", [_oewn_record()], [_snapshot()]) == 1
+    assert await store.attach_snapshot_records("job-1", [_oewn_record()], [_snapshot()]) == 1
+    assert len(await store.get("job-1") or []) == 1
+    with pytest.raises(ValueError, match="different set"):
+        await store.attach_snapshot_records(
+            "job-1",
+            [_oewn_record()],
+            [_snapshot("oewn:2025:" + "d" * 64)],
+        )
+
+
+@pytest.mark.asyncio
+async def test_attach_snapshot_records_preserves_other_sources():
+    store = ContentAgentStore(ttl_seconds=45, max_records=10)
+    await store.append("job-1", [_record()])
+
+    attached_count = await store.attach_snapshot_records(
+        "job-1",
+        [_oewn_record()],
+        [_snapshot()],
+    )
+
+    records = await store.get("job-1") or []
+    assert attached_count == 2
+    assert {record.source_name for record in records} == {"admin_upload", "oewn"}
 
 
 @pytest.mark.asyncio

@@ -42,7 +42,7 @@ def test_registry_requires_attribution_and_uses_https_official_urls():
         assert definition.attribution_text.strip()
         if definition.source_name != SourceName.ADMIN_UPLOAD:
             assert definition.official_url.startswith("https://")
-            assert definition.allowed_hosts
+            assert definition.url_rules
 
 
 def test_large_and_per_record_corpora_are_disabled_by_default():
@@ -117,3 +117,33 @@ def test_cefr_j_rejects_sharealike_octanove_paths():
             "olp-en-cefrj/0123456789abcdef0123456789abcdef01234567/"
             "octanove-vocabulary-profile.csv",
         )
+
+
+@pytest.mark.parametrize(
+    ("source_name", "url"),
+    [
+        (
+            SourceName.CMUDICT,
+            "https://github.com/attacker/cmudict/archive/"
+            "0123456789abcdef0123456789abcdef01234567.tar.gz",
+        ),
+        (
+            SourceName.CEFR_J,
+            "https://raw.githubusercontent.com/attacker/olp-en-cefrj/"
+            "0123456789abcdef0123456789abcdef01234567/wordlist.csv",
+        ),
+        (
+            SourceName.OEWN,
+            "https://github.com/globalwordnet/other-project/releases/download/"
+            "2025/file.xml.gz",
+        ),
+        (
+            SourceName.WIKIDATA,
+            "https://www.wikidata.org/wiki/Special:EntityData/%252e%252e/"
+            "unexpected.json",
+        ),
+    ],
+)
+def test_source_url_rejects_same_host_source_substitution(source_name, url):
+    with pytest.raises(SourceRegistryError):
+        validate_source_url(source_name, url)

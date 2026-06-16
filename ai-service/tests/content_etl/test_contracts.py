@@ -9,9 +9,11 @@ from api.core.config import Settings
 from api.services.content_etl.contracts import (
     AllowedLicenseId,
     QuarantineEntry,
+    SourceRecordV2,
     SourceCounts,
     SourceManifest,
     SourceName,
+    compute_source_record_checksum,
 )
 
 
@@ -26,6 +28,9 @@ def _manifest_payload() -> dict:
         "attribution_text": "Open English WordNet 2025",
         "retrieved_at": datetime(2026, 6, 15, tzinfo=UTC),
         "raw_sha256": "a" * 64,
+        "normalized_sha256": "c" * 64,
+        "normalized_bytes": 1234,
+        "record_checksum_root": "d" * 64,
         "adapter_version": 1,
         "status": "approved",
         "counts": {
@@ -36,6 +41,101 @@ def _manifest_payload() -> dict:
             "duplicates": 1,
         },
     }
+
+
+def _record_payload() -> dict:
+    payload = {
+        "schema_version": 2,
+        "record_id": "oewn:lemma-bank-n-1",
+        "source_name": "oewn",
+        "source_version": "2025",
+        "source_record_id": "oewn-bank-n-1",
+        "source_url": "https://en-word.net/lemma/bank",
+        "license_id": "CC-BY-4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution_text": "Open English WordNet 2025",
+        "content_usage": "lexical",
+        "language": "en",
+        "word": "bank",
+        "part_of_speech": "noun",
+        "definition": "A financial institution.",
+        "retrieved_at": datetime(2026, 6, 15, tzinfo=UTC),
+        "raw_checksum": "a" * 64,
+        "lineage": {
+            "adapter": "oewn",
+            "adapter_version": 1,
+            "raw_path": "english-wordnet-2025.xml",
+            "source_location": "oewn-bank-n-1",
+        },
+    }
+    payload["record_checksum"] = compute_source_record_checksum(payload)
+    return payload
+
+
+def test_source_record_v2_requires_complete_licensed_lineage():
+    record = SourceRecordV2.model_validate(_record_payload())
+
+    assert record.schema_version == 2
+    assert record.source_name == SourceName.OEWN
+    assert record.license_id == AllowedLicenseId.CC_BY_4_0
+
+    for required_field in (
+        "source_version",
+        "source_record_id",
+        "license_id",
+        "retrieved_at",
+        "raw_checksum",
+        "record_checksum",
+        "lineage",
+    ):
+        payload = _record_payload()
+        payload.pop(required_field)
+        with pytest.raises(ValidationError):
+            SourceRecordV2.model_validate(payload)
+
+    with pytest.raises(ValidationError):
+        SourceRecordV2.model_validate({**_record_payload(), "unexpected": True})
+    with pytest.raises(ValidationError, match="license"):
+        SourceRecordV2.model_validate(
+            {**_record_payload(), "license_id": "CC0-1.0"}
+        )
+    with pytest.raises(ValidationError, match="control"):
+        SourceRecordV2.model_validate(
+            {**_record_payload(), "definition": "unsafe\u0000text"}
+        )
+
+
+@pytest.mark.parametrize(
+    ("content_usage", "missing_field"),
+    [
+        ("lexical", "definition"),
+        ("pronunciation", "pronunciation"),
+        ("label", "declared_cefr"),
+        ("topic", "topic_ids"),
+        ("example", "example"),
+        ("audio", "audio"),
+    ],
+)
+def test_source_record_v2_requires_payload_for_content_usage(
+    content_usage,
+    missing_field,
+):
+    payload = {
+        **_record_payload(),
+        "content_usage": content_usage,
+        "pronunciation": "B AE NG K",
+        "declared_cefr": "B1",
+        "topic_ids": ["Q1"],
+        "example": "The bank closes at five.",
+        "audio": {
+            "url": "https://example.com/bank.mp3",
+            "mime_type": "audio/mpeg",
+        },
+    }
+    payload.pop(missing_field, None)
+
+    with pytest.raises(ValidationError, match=missing_field):
+        SourceRecordV2.model_validate(payload)
 
 
 def test_source_manifest_is_strict_and_validates_integrity_fields():
@@ -144,9 +244,13 @@ def test_production_etl_rejects_empty_or_moving_pins(moving_ref):
         "_env_file": None,
         "ENVIRONMENT": "production",
         "DEBUG": False,
+        "SECRET_KEY": "x" * 32,
         "CONTENT_ETL_ENABLED": True,
         "CONTENT_ETL_CMU_REF": "1" * 40,
         "CONTENT_ETL_CEFR_J_REF": "2" * 40,
+        "CONTENT_ETL_OEWN_SHA256": "a" * 64,
+        "CONTENT_ETL_CMU_SHA256": "b" * 64,
+        "CONTENT_ETL_CEFR_J_SHA256": "c" * 64,
         "CONTENT_ETL_WIKIDATA_SNAPSHOT": "2026-06-15",
     }
 
@@ -163,11 +267,32 @@ def test_production_etl_accepts_immutable_core_pins():
         _env_file=None,
         ENVIRONMENT="production",
         DEBUG=False,
+        SECRET_KEY="x" * 32,
         CONTENT_ETL_ENABLED=True,
         CONTENT_ETL_OEWN_VERSION="2025",
         CONTENT_ETL_CMU_REF="1" * 40,
         CONTENT_ETL_CEFR_J_REF="2" * 40,
+        CONTENT_ETL_OEWN_SHA256="a" * 64,
+        CONTENT_ETL_CMU_SHA256="b" * 64,
+        CONTENT_ETL_CEFR_J_SHA256="c" * 64,
         CONTENT_ETL_WIKIDATA_SNAPSHOT="2026-06-15",
     )
 
     assert settings.CONTENT_ETL_ENABLED is True
+
+
+def test_production_etl_rejects_missing_dataset_checksum():
+    with pytest.raises(ValidationError, match="SHA-256"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DEBUG=False,
+            SECRET_KEY="x" * 32,
+            CONTENT_ETL_ENABLED=True,
+            CONTENT_ETL_OEWN_VERSION="2025",
+            CONTENT_ETL_CMU_REF="1" * 40,
+            CONTENT_ETL_CEFR_J_REF="2" * 40,
+            CONTENT_ETL_OEWN_SHA256="",
+            CONTENT_ETL_CMU_SHA256="b" * 64,
+            CONTENT_ETL_CEFR_J_SHA256="c" * 64,
+        )

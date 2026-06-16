@@ -146,7 +146,7 @@ export function ContentAgentModal({
         const preselected = snapshots
           .filter(
             (s) =>
-              s.status === "approved" &&
+              s.status === "active" &&
               s.enabled &&
               CORE_LEXICAL_SOURCES.includes(s.source_id),
           )
@@ -214,7 +214,9 @@ export function ContentAgentModal({
     setSubmitting(true);
     setError(null);
     try {
-      const uploaded = upload ? await uploadContentAgentFile(upload) : null;
+      const uploaded = upload
+        ? await uploadContentAgentFile(upload, form.uploadAttestation)
+        : null;
       const sources: ContentAgentSource[] = form.sources as ContentAgentSource[];
       if (uploaded && !sources.includes("admin_upload")) {
         sources.push("admin_upload");
@@ -358,7 +360,7 @@ export function ContentAgentModal({
                 !catalogError &&
                 catalog.map((snapshot) => {
                   const selectable =
-                    snapshot.status === "approved" && snapshot.enabled;
+                    snapshot.status === "active" && snapshot.enabled;
                   const checked = form.sources.includes(snapshot.source_id);
                   return (
                     <label
@@ -379,7 +381,8 @@ export function ContentAgentModal({
                       <span className="content-agent-source__copy">
                         <strong>{snapshot.source_name}</strong>
                         <small>
-                          {t.contentAgent.snapshotVersion} {snapshot.version}
+                          {t.contentAgent.snapshotVersion}{" "}
+                          {snapshot.source_version}
                           {" · "}
                           {t.contentAgent.snapshotLicense}: {snapshot.license_id}
                           {" · "}
@@ -387,7 +390,7 @@ export function ContentAgentModal({
                           {t.contentAgent.snapshotRecords}
                           {" · "}
                           {t.contentAgent.snapshotLastSync}:{" "}
-                          {formatLastSync(snapshot.last_sync_at)}
+                          {formatLastSync(snapshot.retrieved_at)}
                         </small>
                       </span>
                       <span
