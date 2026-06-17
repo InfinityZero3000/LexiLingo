@@ -70,10 +70,10 @@ class _KpiCountCardState extends State<KpiCountCard>
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         ),
         child: Column(
@@ -82,29 +82,29 @@ class _KpiCountCardState extends State<KpiCountCard>
             Row(
               children: [
                 Container(
-                  width: 36,
-                  height: 36,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: iconBg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(widget.icon, color: iconColor, size: 18),
+                  child: Icon(widget.icon, color: iconColor, size: 16),
                 ),
                 const Spacer(),
                 if (widget.change != null)
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     decoration: BoxDecoration(
                       color: widget.changePositive
                           ? AppColors.successContainer
                           : AppColors.errorContainer,
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
                       widget.change!,
                       style: GoogleFonts.spaceGrotesk(
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.w700,
                         color: widget.changePositive
                             ? AppColors.success
@@ -114,17 +114,17 @@ class _KpiCountCardState extends State<KpiCountCard>
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               widget.label.toUpperCase(),
               style: GoogleFonts.spaceGrotesk(
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.08,
+                letterSpacing: 0.06,
                 color: AppColors.onSurfaceMuted,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             AnimatedBuilder(
               animation: _anim,
               builder: (_, __) {
@@ -132,10 +132,10 @@ class _KpiCountCardState extends State<KpiCountCard>
                 return Text(
                   _format(current) + widget.suffix,
                   style: GoogleFonts.spaceGrotesk(
-                    fontSize: 28,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: AppColors.onSurface,
-                    letterSpacing: -0.03,
+                    letterSpacing: -0.02,
                   ),
                 );
               },
