@@ -357,7 +357,10 @@
     "playbackSpeedDescription": "Điều chỉnh tốc độ phát âm thanh",
     "selectPlaybackSpeed": "Chọn tốc độ phát",
     "confidence": "Độ tin cậy: {percent}%",
-    "playError": "Không thể phát: {error}"
+    "playError": "Không thể phát: {error}",
+    "tapToRecord": "Nhấn để ghi âm",
+    "tapToStop": "Nhấn để dừng",
+    "assessmentFailed": "Phân tích phát âm thất bại. Vui lòng thử lại."
   },
   "chat": {
     "placeholder": "Nhập tin nhắn...",

@@ -65,6 +65,13 @@ class LottieLoadingWidget extends StatelessWidget {
             'animation/Sandy Loading.json',
             fit: BoxFit.contain,
             repeat: true,
+            errorBuilder: (context, error, stackTrace) => Center(
+              child: SizedBox(
+                width: effectiveSize * 0.6,
+                height: effectiveSize * 0.6,
+                child: const CircularProgressIndicator(strokeWidth: 3),
+              ),
+            ),
           ),
         );
       },
