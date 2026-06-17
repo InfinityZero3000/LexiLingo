@@ -173,6 +173,8 @@ flutter:
     - assets/ranking/
     - assets/i18n/
     - assets/sounds/
+    - assets/logo/
+    - assets/out-app/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
