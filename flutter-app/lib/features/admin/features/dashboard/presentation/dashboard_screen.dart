@@ -176,7 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
               sliver: SliverList(
                 delegate: SliverChildListDelegate(
                   _buildBody(context),
@@ -198,15 +198,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 1.1,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.45,
           children: List.generate(4, (_) => const StatCardSkeleton()),
         ),
-        const SizedBox(height: 20),
-        const SectionCardSkeleton(contentHeight: 160),
-        const SizedBox(height: 16),
-        const SectionCardSkeleton(contentHeight: 100),
+        const SizedBox(height: 14),
+        const SectionCardSkeleton(contentHeight: 140),
+        const SizedBox(height: 12),
+        const SectionCardSkeleton(contentHeight: 88),
       ];
     }
 
@@ -216,7 +216,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 12),
       ],
       _buildQuickActions(context),
-      const SizedBox(height: 24),
+      const SizedBox(height: 16),
 
       // ── KPI Grid ────────────────────────────────────────────────────────
       Text(
@@ -228,14 +228,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: AppColors.onSurfaceMuted,
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       GridView.count(
         crossAxisCount: 2,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.1,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.45,
         children: [
           StaggeredEntrance(
             index: 0,
@@ -278,7 +278,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      const SizedBox(height: 20),
+      const SizedBox(height: 12),
 
       // ── DAU Line Chart ───────────────────────────────────────────────────
       StaggeredEntrance(
@@ -288,7 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'Engagement over 10 weeks',
           trailing: _Chip(label: '10 Weeks'),
           child: SizedBox(
-            height: 160,
+            height: 130,
             child: _DauLineChart(
               values: _dauSeries.isNotEmpty
                   ? _dauSeries
@@ -297,7 +297,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 12),
 
       // ── Recent Activity Feed ─────────────────────────────────────────────
       StaggeredEntrance(
@@ -320,7 +320,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 12),
 
       // ── Language Distribution ────────────────────────────────────────────
       StaggeredEntrance(
@@ -335,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final l = entry.value;
                     return Column(
                       children: [
-                        if (i > 0) const SizedBox(height: 10),
+                        if (i > 0) const SizedBox(height: 8),
                         _LanguageBar(
                           lang: l['lang'] as String,
                           pct: (l['pct'] as double).clamp(0.0, 1.0),
@@ -345,15 +345,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   }).toList()
                 : [
                     _LanguageBar(lang: 'English', pct: 0.42),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     _LanguageBar(lang: 'French', pct: 0.28),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     _LanguageBar(lang: 'Japanese', pct: 0.15),
                   ],
           ),
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 12),
 
       // ── Quick Actions ── (secondary row) ───────────────────────────────
       StaggeredEntrance(
@@ -368,7 +368,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: 'All services healthy',
                 subtitle: 'Backend + AI service responding normally.',
               ),
-              const Divider(height: 16),
+              const Divider(height: 12),
               _AlertRow(
                 icon: Icons.warning_amber_outlined,
                 color: AppColors.warning,
@@ -379,16 +379,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: 12),
 
       // ── Growth Target card (dark) ───────────────────────────────────────
       StaggeredEntrance(
         index: 8,
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: AppColors.navy,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,27 +396,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text(
                 'Growth Target',
                 style: GoogleFonts.spaceGrotesk(
-                  fontSize: 18,
+                  fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 '85% of quarterly acquisition goal reached.',
                 style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: Colors.white60,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'PROGRESS',
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: 10,
+                      fontSize: 9,
                       letterSpacing: 0.08,
                       fontWeight: FontWeight.w700,
                       color: Colors.white38,
@@ -425,14 +425,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     '850K / 1M',
                     style: GoogleFonts.spaceGrotesk(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Colors.white60,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
@@ -441,34 +441,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   valueColor: const AlwaysStoppedAnimation(
                     AppColors.primaryBright,
                   ),
-                  minHeight: 6,
+                  minHeight: 5,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white38),
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      textStyle: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     onPressed: () => context.push('/analytics'),
-                    child: const Text('View Analytics'),
+                    child: const Text('Analytics'),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.white38),
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      textStyle: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     onPressed: () {},
-                    icon: const Icon(Icons.download_outlined, size: 16),
+                    icon: const Icon(Icons.download_outlined, size: 14),
                     label: const Text('Export CSV'),
                   ),
                 ],
@@ -487,12 +491,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Text(
           'Quick Actions',
           style: GoogleFonts.spaceGrotesk(
-            fontSize: 18,
+            fontSize: 14,
             fontWeight: FontWeight.w700,
             color: AppColors.onSurface,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -757,10 +761,10 @@ class _SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -776,7 +780,7 @@ class _SectionCard extends StatelessWidget {
                     Text(
                       title,
                       style: GoogleFonts.spaceGrotesk(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: AppColors.onSurface,
                       ),
@@ -785,7 +789,7 @@ class _SectionCard extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: AppColors.onSurfaceMuted,
                         ),
                       ),
@@ -795,7 +799,7 @@ class _SectionCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           child,
         ],
       ),
@@ -890,19 +894,19 @@ class _ActivityRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: color, size: 18),
+            child: Icon(icon, color: color, size: 15),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -910,7 +914,7 @@ class _ActivityRow extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.spaceGrotesk(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.onSurface,
                   ),
@@ -918,7 +922,7 @@ class _ActivityRow extends StatelessWidget {
                 Text(
                   subtitle,
                   style: GoogleFonts.spaceGrotesk(
-                    fontSize: 11,
+                    fontSize: 10,
                     color: AppColors.onSurfaceMuted,
                   ),
                 ),
@@ -928,7 +932,7 @@ class _ActivityRow extends StatelessWidget {
           Text(
             time,
             style: GoogleFonts.spaceGrotesk(
-              fontSize: 11,
+              fontSize: 10,
               color: AppColors.onSurfaceMuted,
             ),
           ),
@@ -955,8 +959,8 @@ class _AlertRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 12),
+        Icon(icon, color: color, size: 17),
+        const SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -964,7 +968,7 @@ class _AlertRow extends StatelessWidget {
               Text(
                 title,
                 style: GoogleFonts.spaceGrotesk(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.onSurface,
                 ),
@@ -972,7 +976,7 @@ class _AlertRow extends StatelessWidget {
               Text(
                 subtitle,
                 style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12,
+                  fontSize: 11,
                   color: AppColors.onSurfaceMuted,
                 ),
               ),
