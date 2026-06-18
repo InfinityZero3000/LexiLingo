@@ -50,8 +50,9 @@ youtube-transcript-api>=0.6.3
 redis>=7.4.1,<8.0.0
 
 
-# Background jobs
-celery[redis]>=5.6.3,<6
+# Background jobs — pin kombu<5.6 to avoid kombu 5.6.x redis<6.5 constraint conflicting with redis>=7
+kombu[redis]>=5.5.0,<5.6
+celery>=5.5.3,<5.6
 
 # System metrics (used by admin monitoring endpoints)
 psutil>=6.1.1
