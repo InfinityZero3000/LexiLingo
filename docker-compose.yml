@@ -129,6 +129,12 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
+      CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
+      CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -166,6 +172,11 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      AI_SERVICE_URL: http://ai-service:8001/api/v1
+      CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
+      CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
       REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
       REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
     depends_on:
@@ -242,6 +253,14 @@ services:
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      DEBUG: ${DEBUG:-false}
+      CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
+      CONTENT_AGENT_TTL_SECONDS: ${CONTENT_AGENT_TTL_SECONDS:-3600}
+      CONTENT_AGENT_MAX_RECORDS: ${CONTENT_AGENT_MAX_RECORDS:-20000}
+      CONTENT_AGENT_MAX_BATCH_RECORDS: ${CONTENT_AGENT_MAX_BATCH_RECORDS:-2000}
+      CONTENT_AGENT_ALLOW_LOCAL_STORE: ${CONTENT_AGENT_ALLOW_LOCAL_STORE:-true}
     depends_on:
       mongodb:
         condition: service_healthy
