@@ -4,8 +4,6 @@ import 'dart:ui';
 import 'package:lexilingo_app/features/admin/admin_app.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
@@ -70,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage>
     // Fetch authoritative level data from backend.
     // Falls back to local formula if network is unavailable.
     if (authProvider.currentUser != null) {
-      await levelProvider.fetchLevelFull(sl<ApiClient>());
+      await levelProvider.fetchLevelFull();
     }
 
     // Load progress stats

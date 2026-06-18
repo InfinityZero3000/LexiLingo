@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
-import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/data/repositories/vocab_repository_impl.dart';
@@ -137,7 +138,7 @@ void main() {
         ],
       );
 
-      final provider = LexiChatProvider(repository: fakeRepo);
+      final provider = LexiChatProvider(repository: fakeRepo, aiClient: AiApiClient());
       final summary = LexiSessionSummary(
         sessionId: 's-1',
         userId: 'smoke-user-1',

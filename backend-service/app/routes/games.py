@@ -1,17 +1,13 @@
 """
-Games API Routes — English Learning Games
-Phase 3: English Games + XP System
+Games API Routes — DEPRECATED
 
-6 interactive games:
-1. Word Scramble        GET /api/games/word-scramble
-2. Matching             GET /api/games/matching
-3. Spelling Bee         GET /api/games/spelling-bee
-4. Hangman              GET /api/games/hangman
-5. Fill in the Blank    GET /api/games/fill-blank
-6. Grammar Quiz         GET /api/games/grammar-quiz
+This module has been split into:
+  app/routes/game_data.py      — constants and seed helper
+  app/routes/game_content.py   — 6 GET game endpoints + /categories
+  app/routes/game_scoring.py   — POST /sessions/{id}/complete
 
-All endpoints return game-ready data (words shuffled, options randomized, etc).
-Seed data is auto-loaded from GAME_WORDS_SEED on first request if DB is empty.
+main.py now registers game_content_router and game_scoring_router directly.
+This file is kept only as a reference and is no longer imported.
 """
 
 import asyncio

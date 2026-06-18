@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/sound_service.dart';
@@ -7,11 +8,11 @@ import 'package:lexilingo_app/core/services/theme_preference_store.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
-/// Provider for managing user settings
 class SettingsProvider extends ChangeNotifier {
   final SettingsRepository _repository;
   final NotificationService _notificationService;
   final ThemePreferenceStore _themePreferenceStore;
+  final ApiClient _apiClient;
 
   Settings? _settings;
   String? _activeUserId;
@@ -25,10 +26,16 @@ class SettingsProvider extends ChangeNotifier {
     required SettingsRepository repository,
     required NotificationService notificationService,
     required ThemePreferenceStore themePreferenceStore,
+    required ApiClient apiClient,
   }) : _repository = repository,
        _notificationService = notificationService,
-       _themePreferenceStore = themePreferenceStore {
+       _themePreferenceStore = themePreferenceStore,
+       _apiClient = apiClient {
     _theme = _themePreferenceStore.readTheme();
+  }
+
+  Future<Map<String, dynamic>> getReferralCode() {
+    return _apiClient.get('/api/v1/referral/my-code');
   }
 
   Settings? get settings => _settings;

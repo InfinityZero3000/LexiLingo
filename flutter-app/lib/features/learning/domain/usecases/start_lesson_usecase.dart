@@ -1,20 +1,17 @@
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
-import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
 import 'package:lexilingo_app/features/learning/domain/repositories/learning_repository.dart';
 
-/// Start Lesson Use Case
-/// Starts or resumes a lesson and returns attempt data
-class StartLessonUseCase
-    implements UseCase<LessonAttemptModel, StartLessonParams> {
+class StartLessonUseCase implements UseCase<LessonAttempt, StartLessonParams> {
   final LearningRepository _repository;
 
   StartLessonUseCase({required LearningRepository repository})
     : _repository = repository;
 
   @override
-  Future<Either<Failure, LessonAttemptModel>> call(StartLessonParams params) {
+  Future<Either<Failure, LessonAttempt>> call(StartLessonParams params) {
     return _repository.startLesson(params.lessonId);
   }
 }

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/services/rating_service.dart';
-import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
-import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model.dart';
-import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
-import 'package:lexilingo_app/features/learning/data/models/lesson_complete_model.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/answer_response.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_complete.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/domain/services/speaking_answer_matcher.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/start_lesson_usecase.dart';
@@ -35,11 +35,11 @@ class LearningProvider with ChangeNotifier {
        _getLessonContentUseCase = getLessonContentUseCase;
 
   // ROADMAP STATE
-  CourseRoadmapModel? _courseRoadmap;
+  CourseRoadmap? _courseRoadmap;
   bool _isLoadingRoadmap = false;
   String? _roadmapError;
 
-  CourseRoadmapModel? get courseRoadmap => _courseRoadmap;
+  CourseRoadmap? get courseRoadmap => _courseRoadmap;
   bool get isLoadingRoadmap => _isLoadingRoadmap;
   String? get roadmapError => _roadmapError;
 
@@ -67,22 +67,22 @@ class LearningProvider with ChangeNotifier {
 
   // LESSON SESSION STATE
   LessonEntity? _currentLesson;
-  LessonAttemptModel? _currentAttempt;
+  LessonAttempt? _currentAttempt;
   int _currentExerciseIndex = 0;
   Map<int, String> _userAnswers = {};
   Map<int, String> _draftAnswers = {};
   Map<int, bool> _answerResults = {};
-  Map<int, AnswerResponseModel> _answerResponses = {};
+  Map<int, AnswerResponse> _answerResponses = {};
   bool _isLoading = false;
   String? _error;
   int _xpEarned = 0;
   int _livesRemaining = 3;
   int _hintsRemaining = 3;
   DateTime? _exerciseStartTime;
-  LessonCompleteModel? _lessonResult;
+  LessonComplete? _lessonResult;
 
   LessonEntity? get currentLesson => _currentLesson;
-  LessonAttemptModel? get currentAttempt => _currentAttempt;
+  LessonAttempt? get currentAttempt => _currentAttempt;
   int get currentExerciseIndex => _currentExerciseIndex;
   int get totalExercises => _currentLesson?.exercises.length ?? 0;
   bool get isLoading => _isLoading;
@@ -90,7 +90,7 @@ class LearningProvider with ChangeNotifier {
   int get xpEarned => _xpEarned;
   int get livesRemaining => _livesRemaining;
   int get hintsRemaining => _hintsRemaining;
-  LessonCompleteModel? get lessonResult => _lessonResult;
+  LessonComplete? get lessonResult => _lessonResult;
 
   Exercise? get currentExercise {
     if (_currentLesson == null || _currentExerciseIndex >= totalExercises) {
@@ -105,7 +105,7 @@ class LearningProvider with ChangeNotifier {
   bool get hasCurrentDraftAnswer =>
       currentDraftAnswer?.trim().isNotEmpty ?? false;
   bool? get isCurrentCorrect => _answerResults[_currentExerciseIndex];
-  AnswerResponseModel? get currentAnswerResponse =>
+  AnswerResponse? get currentAnswerResponse =>
       _answerResponses[_currentExerciseIndex];
   bool get isCompleted =>
       _currentLesson != null && _currentExerciseIndex >= totalExercises;

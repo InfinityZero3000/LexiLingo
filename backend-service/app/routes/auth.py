@@ -9,15 +9,30 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.security import verify_password_async, get_password_hash_async, get_password_hash, create_access_token, create_refresh_token
-from app.models.user import User, RefreshToken
-from app.models.rbac import Role
-from app.services.email_service import EmailService
+from app.core.security import (
+    get_password_hash,
+    get_password_hash_async,
+    create_access_token,
+    create_refresh_token,
+    verify_password_async,
+)
 from app.services.starter_reward_service import StarterRewardService
+from app.models.user import User, RefreshToken
+from app.services.email_service import EmailService
+from app.services.auth_service import (
+    register_user,
+    authenticate_user,
+    save_refresh_token,
+    revoke_refresh_token,
+    get_role_id as _get_role_id,
+    ensure_unique_username as _ensure_unique_username,
+    issue_token_pair,
+)
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
     ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, ForgotPasswordRequest,
@@ -62,7 +77,7 @@ def _build_user_response(user: User) -> UserResponse:
         numeric_level=int(getattr(user, "numeric_level", 1) or 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
         role_id=getattr(user, "role_id", None),
-        role_slug=getattr(user, "role_slug", None),
+        role_slug=_safe_str(getattr(user, "role_slug", None), "user"),
         role_level=int(getattr(user, "role_level", 0) or 0),
         is_admin=bool(getattr(user, "is_admin", False)),
         is_super_admin=bool(getattr(user, "is_super_admin", False)),
@@ -73,114 +88,35 @@ def _build_user_response(user: User) -> UserResponse:
 # exists or not, preventing user enumeration via timing side-channels.
 _DUMMY_HASH: str = get_password_hash("_lexilingo_timing_normalization_placeholder_")
 
-async def _save_refresh_token(db: AsyncSession, user_id: uuid.UUID, token: str):
-    """Save refresh token to database for revocation/rotation support."""
-    from app.core.config import settings
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    
-    db_token = RefreshToken(
-        user_id=user_id,
-        token=token,
-        expires_at=expires_at
-    )
-    db.add(db_token)
-    await db.commit()
-
-# ... rest of code ...
-
-
-async def _get_role_id(db: AsyncSession, role_slug: str) -> uuid.UUID | None:
-    """Load a role id from its slug."""
-    result = await db.execute(select(Role).where(Role.slug == role_slug))
-    role = result.scalar_one_or_none()
-    return role.id if role else None
-
-
-async def _ensure_unique_username(db: AsyncSession, base_username: str) -> str:
-    """Keep usernames unique for Google-first accounts."""
-    username = base_username
-    counter = 1
-
-    while True:
-        result = await db.execute(select(User).where(User.username == username))
-        if not result.scalar_one_or_none():
-            return username
-        username = f"{base_username}{counter}"
-        counter += 1
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    """
-    Register a new user.
-    
-    - **email**: Valid email address
-    - **username**: Unique username (3-50 chars)
-    - **password**: Password (min 8 chars)
-    """
-    # Check if email exists
-    result = await db.execute(
-        select(User).where(User.email == request.email)
-    )
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-    
-    # Check if username exists
-    result = await db.execute(
-        select(User).where(User.username == request.username)
-    )
-    if result.scalar_one_or_none():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken"
-        )
-    
-    # Create new user
-    role_id = None
-    result = await db.execute(select(Role).where(Role.slug == "user"))
-    role = result.scalar_one_or_none()
-    if role:
-        role_id = role.id
+    if (await db.execute(select(User).where(User.email == request.email))).scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+    if (await db.execute(select(User).where(User.username == request.username))).scalar_one_or_none():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
 
-    user = User(
-        email=request.email,
-        username=request.username,
-        hashed_password=await get_password_hash_async(request.password),
-        display_name=request.display_name or request.username,
-        role_id=role_id,
-        provider=["local"],  # self-registration is always local — never "google"
-        is_onboarding_completed=False,
-    )
-    
-    db.add(user)
-    await db.flush()
-    await StarterRewardService.grant_new_user_reward(db, user.id)
-    await db.commit()
-    await db.refresh(user)
+    try:
+        user = await register_user(db, request)
+    except IntegrityError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or username already registered")
 
-    # Send verification email (non-blocking — registration succeeds even if email fails)
     try:
         from app.core.security import create_verification_token
-        from app.services.email_service import EmailService
         token = create_verification_token(
             {"sub": str(user.id), "email": user.email, "type": "email_verification"},
-            expires_minutes=1440,  # 24 hours
+            expires_minutes=1440,
         )
         await EmailService.send_verification_email(
-            to_email=user.email,
-            token=token,
-            display_name=user.display_name,
+            to_email=user.email, token=token, display_name=user.display_name,
         )
     except Exception as exc:
         logger.warning("Could not send verification email to %s: %s", user.email, exc)
 
-    # Return normalized payload to avoid ResponseValidationError on optional/computed fields.
     return _build_user_response(user)
 
 
@@ -213,56 +149,32 @@ async def resend_verification_email(
 @router.post("/login", response_model=LoginResponse)
 async def login(
     request: LoginRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    """
-    Login with email and password.
-    
-    Returns JWT access token and refresh token.
-    """
-    # Find user by email
-    result = await db.execute(
-        select(User).where(User.email == request.email)
-    )
-    user = result.scalar_one_or_none()
-    
-    # Always run bcrypt — skipping it when user is None would create a ~100 ms timing
-    # delta that reveals whether an email is registered (user enumeration via timing).
-    hash_to_check = user.hashed_password if (user and user.hashed_password) else _DUMMY_HASH
-    password_ok = await verify_password_async(request.password, hash_to_check)
-    if not user or not password_ok:
+    user = await authenticate_user(db, request.email, request.password, _DUMMY_HASH)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
-        )
-    
-    # Cache user fields before the commit so they survive a rollback
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+
     user_id = str(user.id)
     username = user.username
     email = user.email
-    role = user.role_slug if hasattr(user, 'role_slug') else "user"
+    role = user.role_slug if hasattr(user, "role_slug") else "user"
 
-    # Update last login — best-effort, don't fail the login if DB is locked under load
     try:
         user.last_login = datetime.now(timezone.utc)
         await db.commit()
     except Exception:
         await db.rollback()
-    
-    # Create tokens
-    access_token = create_access_token({"sub": user_id})
-    refresh_token = create_refresh_token({"sub": user_id})
-    
-    # FIX: Save refresh token for revocation support
-    await _save_refresh_token(db, uuid.UUID(user_id), refresh_token)
-    
+
+    access_token, refresh_token = issue_token_pair(user_id)
+    await save_refresh_token(db, uuid.UUID(user_id), refresh_token)
+
     return LoginResponse(
         access_token=access_token,
         refresh_token=refresh_token,
@@ -353,7 +265,7 @@ async def refresh_token(
     new_refresh_token = create_refresh_token({"sub": str(user.id)})
     
     # Save new refresh token
-    await _save_refresh_token(db, user.id, new_refresh_token)
+    await save_refresh_token(db,user.id, new_refresh_token)
     
     return TokenResponse(
         access_token=access_token,
@@ -562,7 +474,7 @@ async def google_login(
     refresh_token = create_refresh_token({"sub": str(user.id)})
     
     # FIX: Save refresh token for revocation support
-    await _save_refresh_token(db, user.id, refresh_token)
+    await save_refresh_token(db,user.id, refresh_token)
     
     return LoginResponse(
         access_token=access_token,
@@ -650,7 +562,7 @@ async def facebook_login(
     refresh_token = create_refresh_token({"sub": str(user.id)})
     
     # Save refresh token for revocation support
-    await _save_refresh_token(db, user.id, refresh_token)
+    await save_refresh_token(db,user.id, refresh_token)
     
     return LoginResponse(
         access_token=access_token,
@@ -884,7 +796,7 @@ async def admin_login(
 
     access_token = create_access_token({"sub": user_id})
     refresh_token_val = create_refresh_token({"sub": user_id})
-    await _save_refresh_token(db, user.id, refresh_token_val)
+    await save_refresh_token(db,user.id, refresh_token_val)
 
     user_data = _build_user_response(user)
 
@@ -992,7 +904,7 @@ async def admin_verify_otp(
 
     access_token = create_access_token({"sub": user_id})
     refresh_token_val = create_refresh_token({"sub": user_id})
-    await _save_refresh_token(db, user.id, refresh_token_val)
+    await save_refresh_token(db,user.id, refresh_token_val)
 
     user_data = _build_user_response(user)
 

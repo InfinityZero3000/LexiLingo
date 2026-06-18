@@ -1,12 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Roadmap Header Widget
 /// Displays course info, progress stats, and streak at the top of roadmap
 class RoadmapHeaderWidget extends StatelessWidget {
-  final CourseRoadmapModel roadmap;
+  final CourseRoadmap roadmap;
   final VoidCallback onBack;
 
   const RoadmapHeaderWidget({

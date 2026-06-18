@@ -19,6 +19,9 @@ void registerLexiChatModule() {
 
   // Provider (factory → one per widget)
   sl.registerFactory<LexiChatProvider>(
-    () => LexiChatProvider(repository: sl<LexiChatRepository>()),
+    () => LexiChatProvider(
+      repository: sl<LexiChatRepository>(),
+      aiClient: sl<AiApiClient>(),
+    ),
   );
 }
