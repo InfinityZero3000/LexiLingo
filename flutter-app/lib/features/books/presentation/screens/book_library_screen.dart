@@ -489,11 +489,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
+                    child: LottieLoadingWidget.tiny(),
                   ),
                 );
               }

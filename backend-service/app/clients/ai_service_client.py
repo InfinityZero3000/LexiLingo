@@ -48,6 +48,34 @@ class AIServiceClient:
 
         return AIChatResponse(**data)
 
+    async def translate_word(
+        self,
+        *,
+        word: str,
+        lang: str = "vi",
+        context: str = "",
+        timeout_seconds: float = 8.0,
+    ) -> dict:
+        """Call ai-service for LLM-powered contextual word translation.
+
+        Never raises — returns empty fields on any failure so the caller
+        can still display phonetic/definition from the Free Dictionary.
+        """
+        url = f"{self._base_url}/ai/translate"
+        params: dict = {"word": word, "lang": lang}
+        if context:
+            params["context"] = context
+
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_seconds)) as client:
+                resp = await client.get(url, params=params)
+            if resp.status_code == 200:
+                return resp.json()
+        except Exception:
+            pass
+
+        return {"translation": "", "phonetic": "", "part_of_speech": ""}
+
     async def assess_pronunciation(
         self,
         *,

@@ -376,6 +376,12 @@ class Streak(Base):
     # Streak freeze (gamification)
     freeze_count: Mapped[int] = mapped_column(Integer, default=0)
     
+    # Streak restore & daily rewards
+    previous_streak: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    restores_used_this_month: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_restore_date: Mapped[date] = mapped_column(Date, nullable=True)
+    last_reward_claim_date: Mapped[date] = mapped_column(Date, nullable=True)
+    
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         TZDateTime,

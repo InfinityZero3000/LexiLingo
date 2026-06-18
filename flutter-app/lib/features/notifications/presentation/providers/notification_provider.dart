@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/repositories/notification_repository.dart';
+import '../../domain/services/review_reminder_notification_sync_service.dart';
 
 /// Notification Provider
 /// Manages notification state and integrates with Firebase Cloud Messaging
@@ -24,8 +25,16 @@ class NotificationProvider with ChangeNotifier {
   StreamSubscription<int>? _unreadCountSubscription;
   StreamSubscription<RemoteMessage>? _fcmSubscription;
 
-  NotificationProvider({required NotificationRepository repository})
-    : _repository = repository {
+  final ReviewReminderNotificationSyncService? _reviewReminderSyncService;
+  final bool _listenToForegroundFcm;
+
+  NotificationProvider({
+    required NotificationRepository repository,
+    ReviewReminderNotificationSyncService? reviewReminderSyncService,
+    bool? listenToForegroundFcm,
+  }) : _repository = repository,
+       _reviewReminderSyncService = reviewReminderSyncService,
+       _listenToForegroundFcm = listenToForegroundFcm ?? !kIsWeb {
     _init();
   }
 
@@ -65,12 +74,12 @@ class NotificationProvider with ChangeNotifier {
     );
 
     // Listen to FCM messages (if not on web)
-    if (!kIsWeb) {
+    if (_listenToForegroundFcm) {
       _setupFcmListener();
     }
 
     // Load initial data
-    loadNotifications();
+    unawaited(loadNotifications(syncReviewReminder: true));
   }
 
   /// Setup Firebase Cloud Messaging listener
@@ -106,12 +115,15 @@ class NotificationProvider with ChangeNotifier {
   }
 
   /// Load all notifications
-  Future<void> loadNotifications() async {
+  Future<void> loadNotifications({bool syncReviewReminder = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
+      if (syncReviewReminder) {
+        await _syncReviewReminderNotification();
+      }
       _groupedNotifications = await _repository.getGroupedNotifications();
       _notifications = await _repository.getNotifications();
       _unreadCount = await _repository.getUnreadCount();
@@ -127,7 +139,18 @@ class NotificationProvider with ChangeNotifier {
 
   /// Refresh notifications
   Future<void> refreshNotifications() async {
-    await loadNotifications();
+    await loadNotifications(syncReviewReminder: true);
+  }
+
+  Future<void> _syncReviewReminderNotification() async {
+    final syncService = _reviewReminderSyncService;
+    if (syncService == null) return;
+
+    try {
+      await syncService.sync();
+    } catch (e) {
+      debugPrint('Review reminder notification sync failed: $e');
+    }
   }
 
   /// Mark a notification as read

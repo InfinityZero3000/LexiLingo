@@ -49,6 +49,7 @@ import 'package:lexilingo_app/features/social/presentation/providers/social_prov
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/word_of_day_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
     as vocab_di;
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -249,6 +250,12 @@ class LexiLingoApp extends StatefulWidget {
 class _LexiLingoAppState extends State<LexiLingoApp>
     with WidgetsBindingObserver {
   SyncQueueLifecycleRunner? _syncQueueRunner;
+  // Tracks the last language code that was synced to EasyLocalization.
+  // Guards against running locale sync on every Consumer2 rebuild (e.g. theme
+  // changes), which on Flutter web causes a race condition that prevents the
+  // theme from visually applying until an unrelated AuthProvider notification
+  // triggers another Consumer2 rebuild.
+  String? _lastSyncedLanguage;
 
   @override
   void initState() {
@@ -366,24 +373,37 @@ class _LexiLingoAppState extends State<LexiLingoApp>
       ],
       child: Consumer2<SettingsProvider, AuthProvider>(
         builder: (context, settings, auth, child) {
-          final safeContext = context;
-          // Sync locale from settings on startup (after auth wrapper initializes)
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (auth.currentUser != null && settings.settings != null) {
-              // Sync app locale with saved settings
-              final savedLocale = await LocaleService.getSavedLocale();
-              if (!safeContext.mounted) return;
-              final settingsLanguage = settings.language;
+          // Reset sync state on logout so the next login re-syncs the locale.
+          if (auth.currentUser == null) {
+            _lastSyncedLanguage = null;
+          }
 
-              // If settings has a different language than saved locale, update it
-              if (savedLocale != settingsLanguage) {
-                await LocaleService.saveLocale(settingsLanguage);
-                if (!safeContext.mounted) return;
-                await safeContext.setLocale(Locale(settingsLanguage));
-                debugPrint('Locale synced from settings: $settingsLanguage');
+          // Sync locale from settings only when the language value actually
+          // changes (initial load or explicit language switch). Running this on
+          // every Consumer2 rebuild (e.g. theme changes) caused a Flutter web
+          // race condition where the async setLocale() call interfered with the
+          // pending theme repaint, leaving the UI in the old theme until an
+          // unrelated AuthProvider notification triggered another rebuild.
+          final currentLanguage =
+              (auth.currentUser != null && settings.settings != null)
+              ? settings.language
+              : null;
+          if (currentLanguage != null &&
+              currentLanguage != _lastSyncedLanguage) {
+            _lastSyncedLanguage = currentLanguage;
+            final langToSync = currentLanguage;
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              if (!mounted) return;
+              final savedLocale = await LocaleService.getSavedLocale();
+              if (!mounted || !context.mounted) return;
+              if (savedLocale != langToSync) {
+                await LocaleService.saveLocale(langToSync);
+                if (!mounted || !context.mounted) return;
+                await context.setLocale(Locale(langToSync));
+                debugPrint('Locale synced from settings: $langToSync');
               }
-            }
-          });
+            });
+          }
 
           return MaterialApp(
             title: 'LexiLingo',
@@ -430,6 +450,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 create: (_) => vocab_di.getIt<FlashcardProvider>(),
                 child: const FlashcardReviewScreen(),
               ),
+              '/vocabulary/word-of-day': (context) => const WordOfDayScreen(),
               // Phase 4: Podcast
               '/podcast': (context) => const PodcastExploreScreen(),
               '/podcast/detail': (context) {

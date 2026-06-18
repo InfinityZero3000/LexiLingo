@@ -1,0 +1,3 @@
+client_id	path	sentence	up_votes	down_votes	age	gender	accents	locale	segment
+abc123	cv-abc123.mp3	The journey took three days.	2	0	twenties	female	us	en
+def456	cv-def456.mp3	She travels for work.	1	0	thirties	male	us	en

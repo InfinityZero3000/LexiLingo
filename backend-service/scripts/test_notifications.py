@@ -305,7 +305,10 @@ async def main(args: argparse.Namespace) -> None:
     email_ok = push_ok = True
 
     if not args.push_only and not args.reminder_only:
-        to = args.to_email or settings.EMAIL_FROM or "thefirestar312@gmail.com"
+        to = args.to_email or settings.EMAIL_FROM
+        if not to:
+            print("Error: provide --to-email or set EMAIL_FROM in config")
+            return
         email_ok = await test_email(to)
 
     if not args.email_only and not args.reminder_only:

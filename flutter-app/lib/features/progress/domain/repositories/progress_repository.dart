@@ -51,6 +51,12 @@ abstract class ProgressRepository {
   /// Use a streak freeze to protect current streak
   Future<Either<Failure, Map<String, dynamic>>> useStreakFreeze();
 
+  /// Restore a broken streak using one of the monthly restores
+  Future<Either<Failure, StreakEntity>> restoreStreak();
+
+  /// Claim daily login reward
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyReward();
+
   // ============================================================================
   // Daily Challenges Operations
   // ============================================================================

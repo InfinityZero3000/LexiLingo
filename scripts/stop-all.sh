@@ -27,8 +27,8 @@ if command -v docker &> /dev/null; then
     cd "$PROJECT_ROOT"
     
     # Stop compose services without removing containers/networks/volumes.
-    if [ -f "docker-compose.yml" ]; then
-      docker compose stop 2>/dev/null || docker-compose stop 2>/dev/null || true
+    if [ -f "docker-compose.dev.yml" ]; then
+      docker compose -f docker-compose.dev.yml stop 2>/dev/null || true
     fi
     
     # Stop known LexiLingo containers if they are still running.

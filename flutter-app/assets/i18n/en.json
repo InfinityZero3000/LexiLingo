@@ -357,7 +357,10 @@
     "playbackSpeedDescription": "Adjust the speed of text-to-speech audio playback",
     "selectPlaybackSpeed": "Select Playback Speed",
     "confidence": "Confidence: {percent}%",
-    "playError": "Failed to play: {error}"
+    "playError": "Failed to play: {error}",
+    "tapToRecord": "Tap to record",
+    "tapToStop": "Tap to stop",
+    "assessmentFailed": "Pronunciation assessment failed. Please try again."
   },
   "chat": {
     "placeholder": "Type a message...",
@@ -624,6 +627,11 @@
     "earnTipStreakBonus": "Daily streak bonus",
     "earnTipAchievements": "Unlock achievements",
     "earnTipChallenges": "Weekly challenges",
+    "dailyStreakRewardAvailable": "Daily Streak Reward!",
+    "dailyStreakRewardSubtitle": "You've kept your streak alive! Claim your daily reward now.",
+    "claimDailyRewardButton": "Claim Daily Reward",
+    "dailyRewardClaimed": "Daily Reward Claimed!",
+    "gemsReceived": "You received {gems} gems!",
     "starterReward": {
       "title": "Welcome gift!",
       "description": "Use Gems to unlock special items in the shop.",
@@ -893,7 +901,15 @@
     "correctFeedback": "Correct!",
     "answerRevealLabel": "The answer was:",
     "nextWordButton": "Next Word",
-    "seeResultsButton": "See Results"
+    "seeResultsButton": "See Results",
+    "audioError": "Could not play audio. Check your connection.",
+    "retryAudio": "Retry",
+    "listenButtonLabel": "Listen to the word",
+    "noPlaysLeft": "No plays remaining",
+    "abandonTitle": "Quit game?",
+    "abandonBody": "XP will be based on words answered correctly so far.",
+    "keepPlaying": "Keep playing",
+    "quit": "Quit"
   },
   "wordScramble": {
     "wordProgress": "Word {current} of {total}",

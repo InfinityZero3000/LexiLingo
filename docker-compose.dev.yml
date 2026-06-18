@@ -1,0 +1,361 @@
+services:
+  # ============================================
+  # PostgreSQL Database (Backend Service)
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: lexilingo-postgres
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    mem_limit: 512m
+    memswap_limit: 512m
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lexilingo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-lexilingo}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lexilingo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # pgAdmin (PostgreSQL Web Management UI)
+  # ============================================
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: lexilingo-pgadmin
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
+    mem_limit: 768m
+    memswap_limit: 768m
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@lexilingo.me}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
+      PGADMIN_CONFIG_LOGIN_BANNER: "'LexiLingo Database Management'"
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # MongoDB Database (AI Service)
+  # ============================================
+  mongodb:
+    image: mongo:7.0
+    container_name: lexilingo-mongodb
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    mem_limit: 1g
+    memswap_limit: 1g
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: lexilingo
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+      - ./ai-service/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Mongo Express (MongoDB Web Management UI)
+  # ============================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: lexilingo-mongo-express
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    mem_limit: 256m
+    memswap_limit: 256m
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_PORT: 27017
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGODB_AUTH_DATABASE: admin
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:?Set MONGO_EXPRESS_PASSWORD in .env}
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Redis Cache (Backend)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: lexilingo-redis
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    mem_limit: 256m
+    memswap_limit: 256m
+    command: redis-server --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Redis Cache (AI Dedicated)
+  # ============================================
+  redis-ai:
+    image: redis:7-alpine
+    container_name: lexilingo-redis-ai
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 256M
+    mem_limit: 768m
+    memswap_limit: 768m
+    command: redis-server --appendonly yes --maxmemory 600mb --maxmemory-policy allkeys-lfu
+    volumes:
+      - redis_ai_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # RedisInsight (Redis Web Management UI)
+  # ============================================
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: lexilingo-redisinsight
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    mem_limit: 512m
+    memswap_limit: 512m
+    ports:
+      - "8282:5540"
+    depends_on:
+      redis:
+        condition: service_healthy
+      redis-ai:
+        condition: service_healthy
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # Backend Service (FastAPI + PostgreSQL)
+  # ============================================
+  backend-service:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-backend-service
+    restart: unless-stopped
+    env_file:
+      - ./backend-service/.env
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    mem_limit: 1g
+    memswap_limit: 1g
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      AI_SERVICE_URL: http://ai-service:8001/api/v1
+      # Redis (use container hostname, not localhost)
+      REDIS_URL: redis://redis:6379/0
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Firebase
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/app:/app/app
+      - ./backend-service/alembic:/app/alembic
+      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+      - ./backend-service/data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips="*"
+    networks:
+      - lexilingo-network
+
+  backend-reminder-worker:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-reminder-worker
+    restart: unless-stopped
+    command: celery -A app.core.celery_app:celery_app worker --loglevel=INFO --concurrency=1
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      REDIS_URL: redis://redis:6379/0
+      REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
+      REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/app:/app/app
+      - ./backend-service/alembic:/app/alembic
+      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+    networks:
+      - lexilingo-network
+
+  backend-reminder-beat:
+    build:
+      context: ./backend-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-reminder-beat
+    restart: unless-stopped
+    command: celery -A app.core.celery_app:celery_app beat --loglevel=INFO
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEBUG: ${DEBUG:-False}
+      REDIS_URL: redis://redis:6379/0
+      REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
+      REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend-service/app:/app/app
+    networks:
+      - lexilingo-network
+
+  # ============================================
+  # AI Service (FastAPI + MongoDB)
+  # ============================================
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: lexilingo-ai-service
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 2G
+    mem_limit: 6g
+    memswap_limit: 6g
+    ports:
+      - "8001:8001"
+    environment:
+      ENVIRONMENT: development
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DB_NAME: lexilingo
+      REDIS_HOST: redis-ai
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      REDIS_URL: redis://redis-ai:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      DEBUG: ${DEBUG:-false}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis-ai:
+        condition: service_healthy
+    volumes:
+      - ./ai-service/api:/app/api
+      - ./ai-service/data:/app/data
+      - ./ai-service/models:/app/models
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+    networks:
+      - lexilingo-network
+
+volumes:
+  postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local
+  redis_data:
+    driver: local
+  redis_ai_data:
+    driver: local
+
+networks:
+  lexilingo-network:
+    driver: bridge

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "base_types": [
+    "multiple_choice",
+    "true_false",
+    "fill_blank",
+    "translate",
+    "matching",
+    "reorder"
+  ],
+  "ui_type_to_type": {
+    "multiple_choice": "multiple_choice",
+    "true_or_false": "true_false",
+    "fill_in_the_blank": "fill_blank",
+    "arrange_the_sentence": "reorder",
+    "translation_choice": "translate",
+    "dialogue_completion": "fill_blank",
+    "collocation_choice": "multiple_choice",
+    "dictation": "fill_blank",
+    "grammar_correction": "fill_blank",
+    "image_based_choice": "multiple_choice",
+    "listen_and_choose": "multiple_choice",
+    "match_word_to_meaning": "matching",
+    "vocabulary_flashcard": "multiple_choice",
+    "pronunciation_practice": "translate",
+    "reading_comprehension": "multiple_choice",
+    "short_writing_answer": "fill_blank",
+    "speaking_repeat": "translate",
+    "categorization": "matching",
+    "cognitive_fluidity": "matching"
+  }
+}

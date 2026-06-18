@@ -90,6 +90,20 @@ from app.models.games import (
     XPTransaction,
 )
 
+# CEFR content-agent models
+from app.models.content_agent import (
+    ContentAgentJob,
+    ContentAgentUpload,
+    ContentProvenance,
+    LessonVocabularyItem,
+)
+
+# Ranking/Gamification Agent models
+from app.models.ranking_agent import RankingAgentJob
+
+# Notification Campaign Agent models
+from app.models.notification_campaign import NotificationCampaignJob
+
 __all__ = [
     # User (Phase 1)
     "User",
@@ -156,4 +170,13 @@ __all__ = [
     "GameWord",
     "GameSession",
     "XPTransaction",
+    # CEFR content agent
+    "ContentAgentJob",
+    "ContentAgentUpload",
+    "ContentProvenance",
+    "LessonVocabularyItem",
+    # Ranking/Gamification Agent
+    "RankingAgentJob",
+    # Notification Campaign Agent
+    "NotificationCampaignJob",
 ]

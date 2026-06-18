@@ -25,6 +25,8 @@ abstract class ProgressRemoteDataSource {
   Future<StreakModel> getMyStreak();
   Future<StreakUpdateResultModel> updateStreak();
   Future<Map<String, dynamic>> useStreakFreeze();
+  Future<StreakModel> restoreStreak();
+  Future<Map<String, dynamic>> claimDailyReward();
 
   // Daily Challenges methods
   Future<DailyChallengesResponseModel> getDailyChallenges();
@@ -132,6 +134,32 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
     try {
       final response = await apiClient.post(
         '/progress/streak/freeze',
+        body: {},
+      );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<StreakModel> restoreStreak() async {
+    try {
+      final response = await apiClient.post(
+        '/progress/streak/restore',
+        body: {},
+      );
+      return StreakModel.fromJson(response);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> claimDailyReward() async {
+    try {
+      final response = await apiClient.post(
+        '/progress/streak/claim-daily-reward',
         body: {},
       );
       return response;

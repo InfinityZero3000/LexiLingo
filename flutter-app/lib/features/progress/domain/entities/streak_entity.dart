@@ -28,6 +28,21 @@ class StreakEntity extends Equatable {
   /// Activity flags for each day of the current week (Mon=0 … Sun=6)
   final List<bool> weeklyActivity;
 
+  /// The previous streak value saved when the streak broke
+  final int previousStreak;
+
+  /// Number of streak restores used this month
+  final int restoresUsedThisMonth;
+
+  /// Remaining restores for this month
+  final int restoresRemaining;
+
+  /// Whether the streak can currently be restored
+  final bool canRestore;
+
+  /// Whether the daily streak reward is available to claim
+  final bool isDailyRewardAvailable;
+
   const StreakEntity({
     required this.currentStreak,
     required this.longestStreak,
@@ -37,6 +52,11 @@ class StreakEntity extends Equatable {
     required this.isActiveToday,
     required this.streakAtRisk,
     List<bool>? weeklyActivity,
+    this.previousStreak = 0,
+    this.restoresUsedThisMonth = 0,
+    this.restoresRemaining = 3,
+    this.canRestore = false,
+    this.isDailyRewardAvailable = false,
   }) : weeklyActivity =
            weeklyActivity ??
            const [false, false, false, false, false, false, false];
@@ -52,6 +72,11 @@ class StreakEntity extends Equatable {
       isActiveToday: false,
       streakAtRisk: false,
       weeklyActivity: [false, false, false, false, false, false, false],
+      previousStreak: 0,
+      restoresUsedThisMonth: 0,
+      restoresRemaining: 3,
+      canRestore: false,
+      isDailyRewardAvailable: false,
     );
   }
 
@@ -95,6 +120,11 @@ class StreakEntity extends Equatable {
     isActiveToday,
     streakAtRisk,
     weeklyActivity,
+    previousStreak,
+    restoresUsedThisMonth,
+    restoresRemaining,
+    canRestore,
+    isDailyRewardAvailable,
   ];
 }
 
@@ -107,6 +137,11 @@ class StreakUpdateResult extends Equatable {
   final int freezeCount;
   final bool streakIncreased;
   final bool streakSaved;
+  final int previousStreak;
+  final int restoresUsedThisMonth;
+  final int restoresRemaining;
+  final bool canRestore;
+  final bool isDailyRewardAvailable;
 
   const StreakUpdateResult({
     required this.currentStreak,
@@ -115,6 +150,11 @@ class StreakUpdateResult extends Equatable {
     required this.freezeCount,
     required this.streakIncreased,
     required this.streakSaved,
+    this.previousStreak = 0,
+    this.restoresUsedThisMonth = 0,
+    this.restoresRemaining = 3,
+    this.canRestore = false,
+    this.isDailyRewardAvailable = false,
   });
 
   @override
@@ -125,5 +165,10 @@ class StreakUpdateResult extends Equatable {
     freezeCount,
     streakIncreased,
     streakSaved,
+    previousStreak,
+    restoresUsedThisMonth,
+    restoresRemaining,
+    canRestore,
+    isDailyRewardAvailable,
   ];
 }

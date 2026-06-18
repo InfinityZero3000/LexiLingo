@@ -141,12 +141,42 @@ class LottieAnimationWidget extends StatelessWidget {
       onLoaded: onLoaded,
       frameRate: FrameRate.max,
       errorBuilder: (context, error, stackTrace) {
-        // Fallback when lottie decode fails
-        return SizedBox(
-          width: width ?? 80,
-          height: height ?? 80,
-          child: const Icon(Icons.hourglass_top_rounded),
-        );
+        final sz = Size(width ?? 80, height ?? 80);
+        Widget fallback;
+        switch (animation) {
+          case LottieAnimation.pulseLoader:
+          case LottieAnimation.spinningDots:
+          case LottieAnimation.sandyLoading:
+            fallback = Center(
+              child: SizedBox(
+                width: sz.shortestSide * 0.6,
+                height: sz.shortestSide * 0.6,
+                child: const CircularProgressIndicator(strokeWidth: 3),
+              ),
+            );
+          case LottieAnimation.successCheck:
+            fallback = Icon(
+              Icons.check_circle_rounded,
+              size: sz.shortestSide,
+              color: Colors.green,
+            );
+          case LottieAnimation.heartbeat:
+            fallback = Icon(
+              Icons.favorite_rounded,
+              size: sz.shortestSide,
+              color: Colors.red,
+            );
+          case LottieAnimation.starBurst:
+          case LottieAnimation.levelUpOrbit:
+            fallback = Icon(
+              Icons.star_rounded,
+              size: sz.shortestSide,
+              color: Colors.amber,
+            );
+          default:
+            fallback = const SizedBox.shrink();
+        }
+        return SizedBox(width: sz.width, height: sz.height, child: fallback);
       },
     );
   }

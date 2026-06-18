@@ -161,6 +161,38 @@ class ProgressRepositoryImpl implements ProgressRepository {
     }
   }
 
+  @override
+  Future<Either<Failure, StreakEntity>> restoreStreak() async {
+    try {
+      final result = await remoteDataSource.restoreStreak();
+      return Right(result.toEntity());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyReward() async {
+    try {
+      final result = await remoteDataSource.claimDailyReward();
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
   // ============================================================================
   // Daily Challenges Operations
   // ============================================================================

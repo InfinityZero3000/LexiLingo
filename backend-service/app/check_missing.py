@@ -9,16 +9,18 @@ sys.path.append("/app")
 from app.models.vocabulary import VocabularyItem, PartOfSpeech
 from app.core.config import settings
 
-INPUT_FILE = "/tmp/vocabulary_import.json"
+INPUT_FILE = "/app/data/vocabulary_import.json"
 
 def guess_pos(word, defn):
-    if " v." in defn or " verb" in defn or word.startswith("to "):
+    # Remove Vietnamese "v.v." / "v. v." to prevent false verb matching on " v."
+    clean_defn = defn.replace("v.v.", "").replace("v. v.", "")
+    if " v." in clean_defn or " verb" in clean_defn or word.startswith("to "):
         return PartOfSpeech.VERB
-    if " adj." in defn or " adj " in defn:
+    if " adj." in clean_defn or " adj " in clean_defn:
         return PartOfSpeech.ADJECTIVE
-    if " adv." in defn or " adv " in defn:
+    if " adv." in clean_defn or " adv " in clean_defn:
         return PartOfSpeech.ADVERB
-    if " phrase" in defn or " idiom" in defn or " " in word:
+    if " phrase" in clean_defn or " idiom" in clean_defn or " " in word:
         return PartOfSpeech.PHRASE
     return PartOfSpeech.NOUN
 

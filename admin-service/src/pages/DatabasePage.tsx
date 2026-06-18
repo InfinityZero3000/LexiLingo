@@ -4,7 +4,7 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { DataTable } from "../components/DataTable";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
-import { ENV } from "../lib/env";
+import { checkBackendHealth, checkAiHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status: string; message?: string; version?: string };
@@ -28,12 +28,11 @@ export const DatabasePage = () => {
 
   useEffect(() => {
     setLoading(true);
-    const healthHeaders = ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : undefined;
 
     Promise.allSettled([
       getSystemInfo(),
-      fetch(ENV.backendHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
-      fetch(ENV.aiHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
+      checkBackendHealth().then((r) => r.json()),
+      checkAiHealth().then((r) => r.json()),
     ])
       .then(([sysRes, beRes, aiRes]) => {
         if (sysRes.status === "fulfilled") setInfo(sysRes.value.data || null);

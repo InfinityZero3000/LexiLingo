@@ -180,6 +180,7 @@ class TestAwardXP:
                 f"{BASE}/award",
                 json={
                     "source": "lesson",
+                    "source_id": "test-lesson-001",
                     "base_xp": 20,
                     "source_detail": "word_scramble",
                     "duration_seconds": 30,
@@ -278,7 +279,7 @@ class TestAwardXP:
 
             response = await auth_client.post(
                 f"{BASE}/award",
-                json={"source": "lesson", "base_xp": 20, "duration_seconds": 30},
+                json={"source": "lesson", "source_id": "test-lesson-002", "base_xp": 20, "duration_seconds": 30},
             )
 
         assert response.status_code == 200
@@ -297,7 +298,7 @@ class TestAwardXP:
 
             response = await auth_client.post(
                 f"{BASE}/award",
-                json={"source": "lesson", "base_xp": 20, "duration_seconds": 30},
+                json={"source": "lesson", "source_id": "test-lesson-003", "base_xp": 20, "duration_seconds": 30},
             )
 
         assert response.status_code == 200
@@ -326,7 +327,7 @@ class TestAwardXP:
 
             response = await auth_client.post(
                 f"{BASE}/award",
-                json={"source": "lesson", "base_xp": 50, "duration_seconds": 60},
+                json={"source": "lesson", "source_id": "test-lesson-004", "base_xp": 50, "duration_seconds": 60},
             )
 
         assert response.status_code == 200

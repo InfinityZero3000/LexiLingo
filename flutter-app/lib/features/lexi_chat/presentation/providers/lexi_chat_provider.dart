@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/services/encrypted_local_cache_service.dart';
 import 'package:lexilingo_app/core/services/background_sync_queue_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
-import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
+import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
 
@@ -25,6 +26,7 @@ const _tag = 'LexiChatProvider';
 ///  - Typing animation state
 class LexiChatProvider extends ChangeNotifier {
   final LexiChatRepository repository;
+  final AiApiClient _aiClient;
   static const String _savedSessionsKey = 'lexi_saved_sessions';
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   static const int _messagesPageSize = 50;
@@ -35,9 +37,21 @@ class LexiChatProvider extends ChangeNotifier {
       BackgroundSyncQueueService.instance;
   StreamSubscription<SyncQueueItem>? _syncQueueSub;
 
-  LexiChatProvider({required this.repository}) {
+  LexiChatProvider({required this.repository, required AiApiClient aiClient})
+    : _aiClient = aiClient {
     _loadSavedSessions();
     _syncQueueSub = _syncQueue.onItemProcessed.listen(_onQueueItemProcessed);
+  }
+
+  Future<String> transcribeAudio(Uint8List bytes) async {
+    final result = await _aiClient.postMultipart(
+      '/stt/transcribe',
+      fileField: 'audio',
+      fileBytes: bytes,
+      filename: 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+      timeout: AppConstants.aiOperationTimeout,
+    );
+    return (result['text'] as String? ?? '').trim();
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -539,6 +553,7 @@ class LexiChatProvider extends ChangeNotifier {
 
           case LexiStreamDone(
             :final messageId,
+            :final fullText,
             :final corrections,
             :final linkedConcepts,
             :final vietnameseHint,
@@ -548,7 +563,15 @@ class LexiChatProvider extends ChangeNotifier {
             receivedDone = true;
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {
-              final finalContent = _messages[idx].content;
+              final accumulated = _messages[idx].content.trim();
+              final serverText = fullText?.trim() ?? '';
+              // Prefer server-sanitized text (strips <think> blocks, properly formatted).
+              // Fall back to raw accumulated chunks only when server text is absent.
+              final finalContent = serverText.isNotEmpty
+                  ? serverText
+                  : (accumulated.isNotEmpty
+                      ? accumulated
+                      : 'Squawk! 🦜 Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',

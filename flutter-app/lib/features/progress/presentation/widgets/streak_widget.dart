@@ -364,12 +364,18 @@ class StreakDetailsSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Big streak display
-          Icon(
-            _getStreakIcon(streak.streakIcon),
-            color: AppColors.orange,
-            size: 64,
-          ),
-          const SizedBox(height: 8),
+          if (streak.currentStreak >= 7)
+            LargeStreakFireWidget(
+              icon: _getStreakIcon(streak.streakIcon),
+              size: 64,
+            )
+          else
+            Icon(
+              _getStreakIcon(streak.streakIcon),
+              color: AppColors.orange,
+              size: 64,
+            ),
+          const SizedBox(height: 12),
           Text(
             'home.dayStreakCount'.tr(
               namedArgs: {'count': '${streak.currentStreak}'},
@@ -386,7 +392,13 @@ class StreakDetailsSheet extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
+          // Restores remaining count display
+          Text(
+            'Lượt khôi phục chuỗi còn lại trong tháng: ${streak.restoresRemaining}',
+            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+          ),
+          const SizedBox(height: 16),
 
           // Stats row
           Row(
@@ -506,6 +518,66 @@ class StreakDetailsSheet extends StatelessWidget {
               },
             ),
 
+          // Restore streak section
+          if (streak.canRestore) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.blue.shade800),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Bạn có thể khôi phục lại chuỗi ${streak.previousStreak} ngày cũ! Bạn còn ${streak.restoresRemaining} lượt khôi phục trong tháng này.',
+                      style: TextStyle(color: Colors.blue.shade800, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Consumer<StreakProvider>(
+              builder: (context, provider, child) {
+                return SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: provider.isLoading
+                        ? null
+                        : () async {
+                            final success = await provider.restoreStreak();
+                            if (success && context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Đã khôi phục chuỗi thành công!',
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          },
+                    icon: const Icon(Icons.healing, color: Colors.white),
+                    label: Text('Khôi phục chuỗi (${streak.previousStreak} ngày)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+
           const SizedBox(height: 16),
         ],
       ),
@@ -534,6 +606,113 @@ class StreakDetailsSheet extends StatelessWidget {
           style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
         ),
       ],
+    );
+  }
+}
+
+class LargeStreakFireWidget extends StatefulWidget {
+  final IconData icon;
+  final double size;
+
+  const LargeStreakFireWidget({
+    super.key,
+    required this.icon,
+    this.size = 64,
+  });
+
+  @override
+  State<LargeStreakFireWidget> createState() => _LargeStreakFireWidgetState();
+}
+
+class _LargeStreakFireWidgetState extends State<LargeStreakFireWidget>
+    with TickerProviderStateMixin {
+  late final AnimationController _rotateController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _rotation;
+  late final Animation<double> _scale;
+  late final Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+    
+    _rotation = Tween<double>(begin: -0.04, end: 0.04).animate(
+      CurvedAnimation(parent: _rotateController, curve: Curves.easeInOut),
+    );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _scale = Tween<double>(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    
+    _glow = Tween<double>(begin: 4.0, end: 16.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rotateController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_rotateController, _pulseController]),
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scale.value,
+          child: RotationTransition(
+            turns: _rotation,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withValues(alpha: 0.4),
+                    blurRadius: _glow.value * 2,
+                    spreadRadius: _glow.value / 2,
+                  ),
+                  BoxShadow(
+                    color: Colors.red.withValues(alpha: 0.2),
+                    blurRadius: _glow.value * 3,
+                    spreadRadius: _glow.value,
+                  ),
+                ],
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+                child: ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Colors.orange, Colors.redAccent],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ).createShader(bounds),
+                  child: Icon(
+                    widget.icon,
+                    color: Colors.white,
+                    size: widget.size,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

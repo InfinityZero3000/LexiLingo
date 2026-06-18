@@ -19,7 +19,13 @@ if Celery is not None:
         "lexilingo",
         broker=settings.effective_celery_broker_url,
         backend=settings.effective_celery_result_backend,
-        include=["app.tasks.reminders", "app.tasks.streak_reminders"],
+        include=[
+            "app.tasks.content_agent",
+            "app.tasks.ranking_agent",
+            "app.tasks.reminders",
+            "app.tasks.streak_reminders",
+            "app.tasks.word_of_day",
+        ],
     )
     celery_app.conf.timezone = "UTC"
     celery_app.conf.enable_utc = True
@@ -33,6 +39,18 @@ if Celery is not None:
         "send-streak-alerts": {
             "task": "app.tasks.streak_reminders.send_streak_alerts",
             "schedule": crontab(hour=20, minute=0),
+        },
+        "send-word-of-day": {
+            "task": "app.tasks.word_of_day.send_word_of_day",
+            "schedule": crontab(hour=8, minute=0),
+        },
+        "cleanup-expired-content-agent-uploads": {
+            "task": "app.tasks.content_agent.cleanup_expired_content_agent_uploads",
+            "schedule": crontab(hour=3, minute=15),
+        },
+        "auto-league-reset": {
+            "task": "app.tasks.ranking_agent.auto_league_reset",
+            "schedule": crontab(hour=0, minute=5, day_of_week=1),
         },
     }
 else:
@@ -53,6 +71,17 @@ else:
                     "send-streak-alerts": {
                         "task": "app.tasks.streak_reminders.send_streak_alerts",
                         "schedule": 86400,  # fallback: 24h when Celery is not installed
+                    },
+                    "cleanup-expired-content-agent-uploads": {
+                        "task": (
+                            "app.tasks.content_agent."
+                            "cleanup_expired_content_agent_uploads"
+                        ),
+                        "schedule": 86400,
+                    },
+                    "auto-league-reset": {
+                        "task": "app.tasks.ranking_agent.auto_league_reset",
+                        "schedule": 604800,  # weekly fallback
                     },
                 },
             )

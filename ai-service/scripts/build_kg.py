@@ -198,7 +198,7 @@ def run(force: bool = False, dry_run: bool = False) -> int:
         logger.info("Force mode: renaming existing DB to %s", backup)
         os.rename(db_path, backup)
 
-    os.makedirs(db_path, exist_ok=True)
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
     import kuzu
 
     db = kuzu.Database(db_path)

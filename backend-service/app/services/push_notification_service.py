@@ -139,3 +139,40 @@ class PushNotificationService:
         except Exception as exc:  # pragma: no cover - external IO
             logger.exception("Failed to send streak alert push: %s", exc)
             return False
+
+    async def send_word_of_day(
+        self,
+        *,
+        tokens: list[str],
+        word: str,
+        definition: str,
+    ) -> bool:
+        """Send the daily Word of the Day push notification."""
+        clean_tokens = [t for t in tokens if t]
+        if not clean_tokens:
+            return False
+
+        try:
+            _init_firebase_app()
+        except Exception as exc:
+            logger.warning("Firebase not configured; skipping word-of-day push: %s", exc)
+            return False
+
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(
+                title=f"Word of the Day: {word}",
+                body=definition[:100],
+            ),
+            data={
+                "type": "word_of_day",
+                "route": "/vocabulary/word-of-day",
+                "word": word,
+            },
+            tokens=clean_tokens,
+        )
+        try:
+            response = await run_in_threadpool(messaging.send_each_for_multicast, message)
+            return int(getattr(response, "success_count", 0) or 0) > 0
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception("Failed to send word-of-day push: %s", exc)
+            return False

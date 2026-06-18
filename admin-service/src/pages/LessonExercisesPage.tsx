@@ -413,7 +413,7 @@ export const LessonExercisesPage = () => {
   };
 
   const goBack = () => {
-    if (courseId && unitId) {
+    if (courseId && unitId && courseId !== "_") {
       navigate(`/admin/courses/${courseId}/units/${unitId}/lessons`);
     } else {
       navigate("/admin/lessons");

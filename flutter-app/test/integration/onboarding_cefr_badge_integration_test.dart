@@ -36,8 +36,7 @@ void main() {
     testWidgets(
       'renders CEFR badge value immediately after onboarding completion refresh',
       (tester) async {
-        final levelProvider = LevelProvider();
-        final apiClient = _FakeApiClient();
+        final levelProvider = LevelProvider(apiClient: _FakeApiClient());
         var onboardingCompleted = false;
 
         await tester.pumpWidget(
@@ -53,7 +52,7 @@ void main() {
                       onPressed: () async {
                         // Simulates AuthWrapper's post-onboarding callback path.
                         onboardingCompleted = true;
-                        await levelProvider.fetchLevelFull(apiClient);
+                        await levelProvider.fetchLevelFull();
                       },
                       child: const Text('Complete Onboarding'),
                     ),

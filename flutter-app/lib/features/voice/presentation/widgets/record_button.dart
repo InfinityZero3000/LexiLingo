@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -128,8 +129,10 @@ class _RecordButtonState extends State<RecordButton>
         const SizedBox(height: 12),
         Text(
           widget.isProcessing
-              ? 'Processing...'
-              : (widget.isRecording ? 'Tap to stop' : 'Tap to record'),
+              ? 'voice.processing'.tr()
+              : (widget.isRecording
+                    ? 'voice.tapToStop'.tr()
+                    : 'voice.tapToRecord'.tr()),
           style: Theme.of(
             context,
           ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),

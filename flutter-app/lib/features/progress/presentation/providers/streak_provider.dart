@@ -16,12 +16,14 @@ class StreakProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   StreakUpdateResult? _lastUpdateResult;
+  bool _milestoneJustReached = false;
 
   // Getters
   StreakEntity? get streak => _streak;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   StreakUpdateResult? get lastUpdateResult => _lastUpdateResult;
+  bool get milestoneJustReached => _milestoneJustReached;
 
   /// Current streak count (0 if not loaded)
   int get currentStreak => _streak?.currentStreak ?? 0;
@@ -94,7 +96,14 @@ class StreakProvider extends ChangeNotifier {
           isActiveToday: true,
           streakAtRisk: false,
           weeklyActivity: updatedWeekly,
+          previousStreak: updateResult.previousStreak,
+          restoresUsedThisMonth: updateResult.restoresUsedThisMonth,
+          restoresRemaining: updateResult.restoresRemaining,
+          canRestore: updateResult.canRestore,
+          isDailyRewardAvailable: updateResult.isDailyRewardAvailable,
         );
+        _milestoneJustReached =
+            updateResult.streakIncreased && _streak!.isMilestone;
         success = true;
       },
     );
@@ -134,6 +143,12 @@ class StreakProvider extends ChangeNotifier {
             freezeCount: data['freeze_count'] ?? (_streak!.freezeCount - 1),
             isActiveToday: true,
             streakAtRisk: false,
+            weeklyActivity: _streak!.weeklyActivity,
+            previousStreak: _streak!.previousStreak,
+            restoresUsedThisMonth: _streak!.restoresUsedThisMonth,
+            restoresRemaining: _streak!.restoresRemaining,
+            canRestore: _streak!.canRestore,
+            isDailyRewardAvailable: _streak!.isDailyRewardAvailable,
           );
         }
         success = true;
@@ -143,6 +158,77 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return success;
+  }
+
+  /// Restore a broken streak
+  Future<bool> restoreStreak() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _repository.restoreStreak();
+
+    bool success = false;
+    result.fold(
+      (failure) {
+        _errorMessage = failure.message;
+      },
+      (streakData) {
+        _streak = streakData;
+        success = true;
+      },
+    );
+
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+
+  /// Claim daily login reward
+  Future<Map<String, dynamic>?> claimDailyReward() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    final result = await _repository.claimDailyReward();
+
+    Map<String, dynamic>? successData;
+    result.fold(
+      (failure) {
+        _errorMessage = failure.message;
+      },
+      (data) {
+        successData = data;
+        // Update local streak isDailyRewardAvailable flag
+        if (_streak != null) {
+          _streak = StreakEntity(
+            currentStreak: _streak!.currentStreak,
+            longestStreak: _streak!.longestStreak,
+            totalDaysActive: _streak!.totalDaysActive,
+            lastActivityDate: _streak!.lastActivityDate,
+            freezeCount: _streak!.freezeCount,
+            isActiveToday: _streak!.isActiveToday,
+            streakAtRisk: _streak!.streakAtRisk,
+            weeklyActivity: _streak!.weeklyActivity,
+            previousStreak: _streak!.previousStreak,
+            restoresUsedThisMonth: _streak!.restoresUsedThisMonth,
+            restoresRemaining: _streak!.restoresRemaining,
+            canRestore: _streak!.canRestore,
+            isDailyRewardAvailable: false,
+          );
+        }
+      },
+    );
+
+    _isLoading = false;
+    notifyListeners();
+    return successData;
+  }
+
+  /// Clear the milestone flag after the overlay has been shown.
+  void clearMilestone() {
+    _milestoneJustReached = false;
+    notifyListeners();
   }
 
   /// Clear error message
@@ -157,6 +243,7 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _lastUpdateResult = null;
+    _milestoneJustReached = false;
     notifyListeners();
   }
 }

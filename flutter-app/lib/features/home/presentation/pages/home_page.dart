@@ -6,8 +6,6 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -20,6 +18,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_rev
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/points_calendar_dialog.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/daily_reward_dialog.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_up_dialog.dart';
@@ -27,6 +26,8 @@ import 'package:lexilingo_app/features/notifications/presentation/providers/noti
 import 'package:lexilingo_app/features/notifications/presentation/pages/notifications_page.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/word_of_day_card.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/active_boosts_bar.dart';
 
 class HomePageNew extends StatefulWidget {
   const HomePageNew({super.key});
@@ -37,6 +38,8 @@ class HomePageNew extends StatefulWidget {
 
 class _HomePageNewState extends State<HomePageNew> {
   LevelProvider? _levelProvider;
+  StreakProvider? _streakProvider;
+  bool _isDailyRewardDialogShowing = false;
 
   @override
   void initState() {
@@ -51,20 +54,44 @@ class _HomePageNewState extends State<HomePageNew> {
       homeProvider.loadHomeData().then((_) {
         // Fetch authoritative level data from backend.
         // Falls back to local formula if network is unavailable.
-        if (mounted) _levelProvider?.fetchLevelFull(sl<ApiClient>());
+        if (mounted) _levelProvider?.fetchLevelFull();
       });
       // Listen for level-up events triggered by fetchLevelFull
       _levelProvider?.addListener(_onLevelProviderChange);
+      
+      // Setup streak provider listener
+      _streakProvider = context.read<StreakProvider>();
+      _streakProvider?.addListener(_onStreakProviderChange);
+      
       // Load streak data here (after auth token is ready) instead of relying
       // on the race-prone call in main.dart that fires before authentication.
-      context.read<StreakProvider>().loadStreak();
+      _streakProvider?.loadStreak();
     });
   }
 
   @override
   void dispose() {
     _levelProvider?.removeListener(_onLevelProviderChange);
+    _streakProvider?.removeListener(_onStreakProviderChange);
     super.dispose();
+  }
+
+  void _onStreakProviderChange() {
+    final streakProvider = _streakProvider;
+    if (streakProvider == null || !mounted) {
+      return;
+    }
+
+    final streak = streakProvider.streak;
+    if (streak != null && streak.isDailyRewardAvailable && !_isDailyRewardDialogShowing) {
+      _isDailyRewardDialogShowing = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDailyRewardDialog(context, streakProvider).then((_) {
+          _isDailyRewardDialogShowing = false;
+        });
+      });
+    }
   }
 
   /// Shows the Level-Up or Rank-Up celebration dialog when the provider signals it.
@@ -126,44 +153,82 @@ class _HomePageNewState extends State<HomePageNew> {
                 homeProvider.refreshData(),
                 context.read<StreakProvider>().loadStreak(),
               ]),
-              child: ListView(
+              child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 24.0),
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _buildHeader(context, homeProvider, authProvider),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildStreakCard(context, homeProvider),
-                  const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'home.quickActions'.tr()),
-                  const SizedBox(height: 8),
-                  _buildQuickActionsHorizontal(context),
-                  const SizedBox(height: 12),
-                  _buildLevelAndDailyGoalRow(context, homeProvider),
-                  const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DailyChallengesCard(),
-                  ),
-                  const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: DailyReviewCard(),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSectionTitle(
-                    context,
-                    'home.continueLearningSection'.tr(),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildEnrolledCoursesSection(context, homeProvider),
-                  const SizedBox(height: 12),
-                  _buildSectionTitle(context, 'home.featuredCourses'.tr()),
-                  const SizedBox(height: 8),
-                  _buildFeaturedCourses(context, homeProvider),
-                ],
+                child: StaggeredList(
+                  itemDelay: const Duration(milliseconds: 55),
+                  itemDuration: const Duration(milliseconds: 460),
+                  slideOffset: 22,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: _buildHeader(context, homeProvider, authProvider),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _buildStreakCard(context, homeProvider),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(context, 'home.quickActions'.tr()),
+                          const SizedBox(height: 8),
+                          _buildQuickActionsHorizontal(context),
+                        ],
+                      ),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: ActiveBoostsBar(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12),
+                      child: WordOfDayCard(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _buildLevelAndDailyGoalRow(context, homeProvider),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: DailyChallengesCard(),
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: DailyReviewCard(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(
+                            context,
+                            'home.continueLearningSection'.tr(),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildEnrolledCoursesSection(context, homeProvider),
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSectionTitle(
+                            context,
+                            'home.featuredCourses'.tr(),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildFeaturedCourses(context, homeProvider),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -1615,13 +1680,18 @@ class _HomePageNewState extends State<HomePageNew> {
       },
     ];
 
-    return SizedBox(
-      height: 124,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.05,
+        ),
         itemCount: quickActions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final action = quickActions[index];
           return _buildQuickActionChip(
@@ -1659,8 +1729,7 @@ class _HomePageNewState extends State<HomePageNew> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 84,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),

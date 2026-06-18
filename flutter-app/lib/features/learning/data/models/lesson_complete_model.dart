@@ -1,34 +1,22 @@
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_complete.dart';
+
 /// Lesson Complete Model
 /// Represents response from POST /learning/attempts/{id}/complete
-class LessonCompleteModel {
-  final String attemptId;
-  final bool passed;
-  final double finalScore;
-  final int totalXpEarned;
-  final int timeSpentSeconds;
-  final double accuracy;
-  final int starsEarned;
-  final String? nextLessonUnlocked;
-  final List<String> achievementsUnlocked;
-  final int totalQuestions;
-  final int correctAnswers;
-  final int wrongAnswers;
-  final int hintsUsed;
-
-  LessonCompleteModel({
-    required this.attemptId,
-    required this.passed,
-    required this.finalScore,
-    required this.totalXpEarned,
-    required this.timeSpentSeconds,
-    required this.accuracy,
-    required this.starsEarned,
-    this.nextLessonUnlocked,
-    required this.achievementsUnlocked,
-    required this.totalQuestions,
-    required this.correctAnswers,
-    required this.wrongAnswers,
-    required this.hintsUsed,
+class LessonCompleteModel extends LessonComplete {
+  const LessonCompleteModel({
+    required super.attemptId,
+    required super.passed,
+    required super.finalScore,
+    required super.totalXpEarned,
+    required super.timeSpentSeconds,
+    required super.accuracy,
+    required super.starsEarned,
+    super.nextLessonUnlocked,
+    required super.achievementsUnlocked,
+    required super.totalQuestions,
+    required super.correctAnswers,
+    required super.wrongAnswers,
+    required super.hintsUsed,
   });
 
   factory LessonCompleteModel.fromJson(Map<String, dynamic> json) {

@@ -3,6 +3,7 @@
 library;
 
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
 
 class AchievementModel extends AchievementEntity {
   const AchievementModel({
@@ -80,27 +81,17 @@ class UserAchievementModel extends UserAchievementEntity {
 }
 
 /// Represents a newly unlocked achievement (from API response)
-class UnlockedAchievementModel {
-  final String id;
-  final String name;
-  final String description;
-  final String? badgeIcon;
-  final String? badgeColor;
-  final String category;
-  final String rarity;
-  final int xpReward;
-  final int gemsReward;
-
+class UnlockedAchievementModel extends UnlockedAchievement {
   const UnlockedAchievementModel({
-    required this.id,
-    required this.name,
-    required this.description,
-    this.badgeIcon,
-    this.badgeColor,
-    required this.category,
-    required this.rarity,
-    required this.xpReward,
-    required this.gemsReward,
+    required super.id,
+    required super.name,
+    required super.description,
+    super.badgeIcon,
+    super.badgeColor,
+    required super.category,
+    required super.rarity,
+    required super.xpReward,
+    required super.gemsReward,
   });
 
   factory UnlockedAchievementModel.fromJson(Map<String, dynamic> json) {

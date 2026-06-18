@@ -48,6 +48,9 @@ from app.routes import (
 )
 from app.routes.learning import router as learning_router
 from app.routes.admin import router as admin_router
+from app.routes.content_agent import router as content_agent_router
+from app.routes.notification_campaign import router as notification_campaign_router
+from app.routes.ranking_agent import router as ranking_agent_router
 from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
@@ -276,6 +279,9 @@ app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabula
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
 app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
 app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
@@ -302,6 +308,33 @@ app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["R
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
+    import prometheus_fastapi_instrumentator.routing as _pfi_routing
+    from starlette.routing import Match, Mount
+
+    # Starlette 1.x adds _IncludedRouter objects to app.routes. These have
+    # a matches() method but no .path attribute, crashing the default route
+    # name resolver. Patch _get_route_name to guard against that.
+    def _safe_get_route_name(scope, routes, route_name=None):
+        for route in routes:
+            match, child_scope = route.matches(scope)
+            if match == Match.FULL:
+                if not hasattr(route, "path"):
+                    if hasattr(route, "routes"):
+                        child_scope = {**scope, **child_scope}
+                        return _safe_get_route_name(child_scope, route.routes, route_name)
+                    return route_name
+                route_name = route.path
+                child_scope = {**scope, **child_scope}
+                if isinstance(route, Mount) and route.routes:
+                    child_name = _safe_get_route_name(child_scope, route.routes, route_name)
+                    route_name = None if child_name is None else route_name + child_name
+                return route_name
+            elif match == Match.PARTIAL and route_name is None:
+                if hasattr(route, "path"):
+                    route_name = route.path
+        return None
+
+    _pfi_routing._get_route_name = _safe_get_route_name
 
     Instrumentator(
         should_group_status_codes=True,

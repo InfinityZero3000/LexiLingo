@@ -4,7 +4,7 @@ import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
 import { getMonitoringDashboard, MonitoringDashboard } from "../lib/aiApi";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
-import { ENV } from "../lib/env";
+import { checkBackendHealth, checkAiHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status?: string; message?: string; version?: string; services?: Record<string, string> };
@@ -19,13 +19,12 @@ export const SuperAdminDashboard = () => {
 
   useEffect(() => {
     setLoading(true);
-    const healthHeaders = ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : undefined;
 
     Promise.allSettled([
       getMonitoringDashboard(),
       getSystemInfo(),
-      fetch(ENV.backendHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
-      fetch(ENV.aiHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
+      checkBackendHealth().then((r) => r.json()),
+      checkAiHealth().then((r) => r.json()),
     ])
       .then(([monRes, sysRes, beRes, aiRes]) => {
         if (monRes.status === "fulfilled") setMonitor(monRes.value);

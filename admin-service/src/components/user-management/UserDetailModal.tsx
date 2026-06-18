@@ -10,11 +10,21 @@ import {
   updateUserRole,
   getUserActivity,
   getRoleLabel,
-  type UserUpdateData,
+  type UserUpdateData as ApiUserUpdateData,
   giftToUser,
   type GiftRequest,
 } from '../../lib/userManagementApi';
 import { listCoursesAdmin, listShopItems } from '../../lib/adminApi';
+
+type UserUpdateData = ApiUserUpdateData & {
+  bio?: string;
+};
+
+type UserDetailView = Awaited<ReturnType<typeof getUserDetail>> & {
+  bio?: string | null;
+  language_preference?: string | null;
+  notification_enabled?: boolean;
+};
 
 interface UserDetailModalProps {
   userId: string;
@@ -38,9 +48,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Queries
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading } = useQuery<UserDetailView>({
     queryKey: ['user-detail', userId],
-    queryFn: () => getUserDetail(userId),
+    queryFn: () => getUserDetail(userId) as Promise<UserDetailView>,
   });
   
   const { data: activities } = useQuery({
@@ -253,8 +263,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                 </div>
                 <div className="panel-inner" style={{ textAlign: 'center' }}>
                   <div className="stat-label">Streak</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-2)' }}>0 days</div>
-                  <div className="table-sub" style={{ fontSize: 10 }}>Coming soon</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--accent-2)' }}>—</div>
                 </div>
                 <div className="panel-inner" style={{ textAlign: 'center' }}>
                   <div className="stat-label">Khóa học</div>
@@ -567,4 +576,3 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     </div>
   );
 }
-

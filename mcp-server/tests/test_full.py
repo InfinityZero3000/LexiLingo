@@ -15,11 +15,6 @@ from pathlib import Path
 MCP_ROOT = Path(__file__).parent.parent
 REPO_ROOT = MCP_ROOT.parent
 sys.path.insert(0, str(MCP_ROOT))
-os.environ.setdefault(
-    "TAVILY_API_KEY",
-    "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",
-)
-
 PASS = "✅ PASS"
 FAIL = "❌ FAIL"
 WARN = "⚠️  WARN"
@@ -409,7 +404,6 @@ print('EDGES_OK')
     script4 = f"""
 import sys, os
 sys.path.insert(0, '.')
-os.environ['TAVILY_API_KEY'] = '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'
 # Only check the Tavily config, not the embedding service
 import inspect
 import ast, pathlib
@@ -492,7 +486,6 @@ def test_mcp_langgraph_integration():
     script = f"""
 import sys, os, asyncio
 sys.path.insert(0, '{str(MCP_ROOT)}')
-os.environ['TAVILY_API_KEY'] = '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'
 
 # Simulate calling the MCP web_search tool function directly
 # (same as how a LangChain tool wrapper would call it)
@@ -541,7 +534,6 @@ print(f'INTEGRATION_OK results={{count}} answer_preview={{answer}}')
     script2 = f"""
 import sys, os, asyncio
 sys.path.insert(0, '{str(MCP_ROOT)}')
-os.environ['TAVILY_API_KEY'] = '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'
 from langgraph.graph import StateGraph, END
 from typing import TypedDict, List
 from tools.web_search import search_web

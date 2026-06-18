@@ -8,7 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/core/network/badge_image_cache.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
-import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -477,7 +477,7 @@ class AchievementCard extends StatelessWidget {
 
 /// Achievement unlock popup with confetti
 class AchievementUnlockPopup extends StatefulWidget {
-  final UnlockedAchievementModel achievement;
+  final UnlockedAchievement achievement;
   final VoidCallback? onDismiss;
 
   const AchievementUnlockPopup({

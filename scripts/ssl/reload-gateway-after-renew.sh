@@ -6,7 +6,7 @@ set -euo pipefail
 #   sudo COMPOSE_PROJECT_ROOT=/opt/lexilingo bash scripts/ssl/reload-gateway-after-renew.sh
 
 COMPOSE_PROJECT_ROOT="${COMPOSE_PROJECT_ROOT:-/opt/lexilingo}"
-COMPOSE_FILE="${COMPOSE_PROJECT_ROOT}/docker-compose.production.yml"
+COMPOSE_FILE="${COMPOSE_PROJECT_ROOT}/docker-compose.yml"
 ENV_FILE="${COMPOSE_PROJECT_ROOT}/.env.production"
 
 if [[ ! -f "${COMPOSE_FILE}" ]]; then

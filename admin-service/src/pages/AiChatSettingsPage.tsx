@@ -4,8 +4,8 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
-import { ENV } from "../lib/env";
-import { Bot, MessageSquare, Zap, Key, Database, Settings } from "lucide-react";
+import { getAiConfig, updateAiConfig } from "../lib/healthApi";
+import { Bot, Zap, Key } from "lucide-react";
 
 interface AiChatConfig {
   gemini_api_key?: string;
@@ -27,23 +27,16 @@ export const AiChatSettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     fetchConfig();
   }, []);
 
-  const buildAdminHeaders = (includeContentType = false): Record<string, string> => ({
-    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
-    ...(authStore.accessToken ? { Authorization: `Bearer ${authStore.accessToken}` } : {}),
-    ...(ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : {}),
-    ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
-  });
-
   const fetchConfig = async () => {
     try {
-      const response = await fetch(`${ENV.aiAdminUrl}/config`, {
-        headers: buildAdminHeaders(),
-      });
+      const response = await getAiConfig(authStore.accessToken ?? undefined);
       const data = await response.json();
       // Backend returns flat AiConfig object; remap model_name → gemini_model
       if (data && data.model_name) {
@@ -79,22 +72,19 @@ export const AiChatSettingsPage = () => {
   const handleSave = async () => {
     if (!config) return;
     setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
     try {
-      // Remap gemini_model → model_name for backend compatibility
       const payload = { ...config, model_name: config.gemini_model };
-      const response = await fetch(`${ENV.aiAdminUrl}/config`, {
-        method: "PUT",
-        headers: buildAdminHeaders(true),
-        body: JSON.stringify(payload),
-      });
+      const response = await updateAiConfig(payload, authStore.accessToken ?? undefined);
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.detail || response.statusText);
       }
-      alert(t.common.success);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
     } catch (error: any) {
-      console.error("Failed to save config:", error);
-      alert(error.message || t.common.saveFailed);
+      setSaveError(error.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -124,6 +114,13 @@ export const AiChatSettingsPage = () => {
         </button>
       </div>
 
+      {saveError && <div className="form-error">{saveError}</div>}
+      {saveSuccess && (
+        <div style={{ padding: "12px 16px", borderRadius: 10, background: "#d1fae5", border: "1px solid #10b981", color: "#065f46", fontSize: 14, fontWeight: 500 }}>
+          ✓ {t.common.success}
+        </div>
+      )}
+
       {/* Quick Stats */}
       <div className="card-grid">
         <StatCard
@@ -148,7 +145,7 @@ export const AiChatSettingsPage = () => {
           label={t.aiChat.features}
           value={`${[config.enable_voice, config.enable_grammar, config.enable_topic].filter(Boolean).length}/3`}
           note={t.aiChat.modulesEnabled}
-          accent="purple"
+          accent="ink"
         />
       </div>
 

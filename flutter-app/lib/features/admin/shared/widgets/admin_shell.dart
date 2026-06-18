@@ -104,12 +104,12 @@ class _AdminDrawer extends StatelessWidget {
         : 'A';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.primary, width: 2),
@@ -121,23 +121,23 @@ class _AdminDrawer extends StatelessWidget {
                   : _initialsAvatar(initials),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(user?.displayName ?? 'Admin',
                     style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.onSurface),
+                        fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.onSurface),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
                 Text(user?.email ?? '',
-                    style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted),
+                    style: GoogleFonts.spaceGrotesk(fontSize: 10, color: AppColors.onSurfaceMuted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
                     color: auth.isSuperAdmin ? AppColors.primary : AppColors.primaryContainer,
                     borderRadius: BorderRadius.circular(4),
@@ -145,7 +145,7 @@ class _AdminDrawer extends StatelessWidget {
                   child: Text(
                     auth.isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN',
                     style: GoogleFonts.spaceGrotesk(
-                        fontSize: 9,
+                        fontSize: 8,
                         fontWeight: FontWeight.w700,
                         color: auth.isSuperAdmin ? Colors.white : AppColors.primary,
                         letterSpacing: 0.5),
@@ -164,14 +164,14 @@ class _AdminDrawer extends StatelessWidget {
         alignment: Alignment.center,
         child: Text(initials,
             style: GoogleFonts.spaceGrotesk(
-                color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 16)),
+                color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 14)),
       );
 
   Widget _section(String label) => Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
         child: Text(label,
             style: GoogleFonts.spaceGrotesk(
-                fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.onSurfaceMuted, letterSpacing: 0.8)),
+                fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.onSurfaceMuted, letterSpacing: 0.8)),
       );
 
   Widget _item(BuildContext context,
@@ -181,23 +181,23 @@ class _AdminDrawer extends StatelessWidget {
       required String route}) {
     final active = _isActive(route);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
       child: Material(
         color: active ? const Color(0x1AFF4D00) : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: () => _navigate(context, route),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             child: Row(
               children: [
-                Icon(active ? activeIcon : icon, size: 20,
+                Icon(active ? activeIcon : icon, size: 18,
                     color: active ? AppColors.primaryBright : AppColors.onSurfaceMuted),
-                const SizedBox(width: 14),
+                const SizedBox(width: 10),
                 Text(label,
                     style: GoogleFonts.spaceGrotesk(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                         color: active ? AppColors.primaryBright : AppColors.onSurface)),
               ],
@@ -209,26 +209,26 @@ class _AdminDrawer extends StatelessWidget {
   }
 
   Widget _buildLogout(BuildContext context) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           child: InkWell(
             onTap: () async {
               Navigator.of(context).pop();
               await auth.logout();
               if (context.mounted) context.go('/login');
             },
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
               child: Row(
                 children: [
-                  const Icon(Icons.logout_rounded, size: 20, color: AppColors.error),
-                  const SizedBox(width: 14),
+                  const Icon(Icons.logout_rounded, size: 17, color: AppColors.error),
+                  const SizedBox(width: 10),
                   Text('Logout',
                       style: GoogleFonts.spaceGrotesk(
-                          fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.error)),
+                          fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.error)),
                 ],
               ),
             ),

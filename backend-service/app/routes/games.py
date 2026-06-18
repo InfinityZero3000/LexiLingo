@@ -1,17 +1,13 @@
 """
-Games API Routes — English Learning Games
-Phase 3: English Games + XP System
+Games API Routes — DEPRECATED
 
-6 interactive games:
-1. Word Scramble        GET /api/games/word-scramble
-2. Matching             GET /api/games/matching
-3. Spelling Bee         GET /api/games/spelling-bee
-4. Hangman              GET /api/games/hangman
-5. Fill in the Blank    GET /api/games/fill-blank
-6. Grammar Quiz         GET /api/games/grammar-quiz
+This module has been split into:
+  app/routes/game_data.py      — constants and seed helper
+  app/routes/game_content.py   — 6 GET game endpoints + /categories
+  app/routes/game_scoring.py   — POST /sessions/{id}/complete
 
-All endpoints return game-ready data (words shuffled, options randomized, etc).
-Seed data is auto-loaded from GAME_WORDS_SEED on first request if DB is empty.
+main.py now registers game_content_router and game_scoring_router directly.
+This file is kept only as a reference and is no longer imported.
 """
 
 import asyncio
@@ -38,6 +34,7 @@ from app.services.game_scoring_service import GameScoringError, score_game
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
 from app.services import check_achievements_for_user
+from app.services.streak_service import update_user_streak
 
 logger = logging.getLogger(__name__)
 
@@ -1612,6 +1609,10 @@ async def complete_game_session(
             "base_xp": score.final_base_xp,
         },
     }
+    try:
+        await update_user_streak(db, current_user.id)
+    except Exception as e:
+        logger.error("Error updating streak on game completion: %s", e, exc_info=True)
     await db.commit()
     await invalidate_cache("leaderboard")
 

@@ -85,14 +85,11 @@ class _WelcomePageState extends State<WelcomePage>
                           ),
                         ),
                         Expanded(
-                          child: Text(
-                            'LexiLingo',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.surfaceDarkInput,
+                          child: Center(
+                            child: Image.asset(
+                              'assets/out-app/lexilingo-logo.png',
+                              height: 28,
+                              fit: BoxFit.contain,
                             ),
                           ),
                         ),
@@ -105,21 +102,11 @@ class _WelcomePageState extends State<WelcomePage>
                       padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
                       child: Column(
                         children: [
-                          SizedBox(
-                            width: double.infinity,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: AspectRatio(
-                                aspectRatio: 1,
-                                child: Image.network(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuAc_TfHt87FYCBniWnGN3kl94DydU2vFtKzeOxV_6Ez_Tw0GYGw3a0ysilRFZpcKAMGx5hnBZRLpgVuMraqepi7LHYSzidFKfdbY1T0_DaMkXd3mhDMqg91zRb-kAIYymk344jIEdsKDKuWk2eIlNjqJnxqDvzl-nOE6GtcUx6YQ5944ntfVUXySAPcjcAU1F2c4y7LL5dXZWYXvELyv11z0CPqYkWgPKVkc6KqRsAXRQI0TRj2UULR93RCsVECPwvJ-7xUQo-ma38',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, _, __) => const Icon(
-                                    Icons.school_rounded,
-                                    size: 92,
-                                  ),
-                                ),
-                              ),
+                          AspectRatio(
+                            aspectRatio: 1,
+                            child: Image.asset(
+                              'assets/out-app/banner-start.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(height: 20),

@@ -93,6 +93,11 @@ class AppColors {
   /// Dark surface for skeleton / input in dark themes
   static const Color grey900 = Color(0xFF212121);
 
+  // ── CEFR level colors (shared across badges, topic cards, flashcards) ──────
+  static const Color cefrA = Color(0xFF16A34A);
+  static const Color cefrB = Color(0xFF137FEC);
+  static const Color cefrC = Color(0xFF7C3AED);
+
   // ── Status: Success / Green ───────────────────────────────────────────────
   static const Color greenSuccess = Color(0xFF078838);
   static const Color greenSuccessBright = Color(0xFF4CAF50);

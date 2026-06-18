@@ -75,9 +75,13 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    # None => auto mode (disabled in production, enabled otherwise).
-    # Set explicit true/false to override auto mode.
+    # ENABLE_APP_CORS: explicit override (takes priority over GATEWAY_HANDLES_CORS).
+    # GATEWAY_HANDLES_CORS: set true only when an Nginx/Kong gateway sits in front
+    #   and emits CORS headers via proxy_hide_header + add_header. The gateway's
+    #   proxy_hide_header strips backend CORS headers, preventing duplicates.
+    #   Default false (safe for direct Render/PaaS deployments without a gateway).
     ENABLE_APP_CORS: bool | None = None
+    GATEWAY_HANDLES_CORS: bool = False
     ALLOWED_ORIGINS: str = "https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me"
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
@@ -130,6 +134,11 @@ class Settings(BaseSettings):
             if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
                 raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
+        if self.CONTENT_AGENT_ENABLED and not self.CONTENT_AGENT_SERVICE_TOKEN.strip():
+            raise ValueError(
+                "CONTENT_AGENT_SERVICE_TOKEN is required when the content agent is enabled"
+            )
+
         return self
     
     # Logging
@@ -155,6 +164,23 @@ class Settings(BaseSettings):
     # AI Service (optional)
     AI_SERVICE_URL: str = "https://api.lexilingo.me/api/v1"
     AI_AUDIT_INGEST_SECRET: str = ""
+    CONTENT_AGENT_ENABLED: bool = False
+    CONTENT_AGENT_SERVICE_TOKEN: str = ""
+    CONTENT_AGENT_UPLOAD_TTL_DAYS: int = 7
+    CONTENT_AGENT_AI_TIMEOUT_SECONDS: float = 120.0
+    CONTENT_AGENT_MAX_ACTIVE_JOBS_PER_ADMIN: int = 5
+
+    # Ranking / Gamification Agent
+    RANKING_AGENT_ENABLED: bool = True
+    RANKING_AGENT_MAX_ACTIVE_JOBS_PER_ADMIN: int = 3
+    RANKING_AGENT_AI_INSIGHTS_TIMEOUT_SECONDS: float = 30.0
+    LEAGUE_RESET_PROMOTION_THRESHOLD: float = 0.10
+    LEAGUE_RESET_DEMOTION_THRESHOLD: float = 0.10
+
+    # Notification Campaign Agent
+    NOTIFICATION_CAMPAIGN_ENABLED: bool = True
+    NOTIFICATION_CAMPAIGN_MAX_ACTIVE_JOBS_PER_ADMIN: int = 3
+    NOTIFICATION_CAMPAIGN_AI_TIMEOUT_SECONDS: float = 30.0
 
     # Google OAuth
     GOOGLE_CLIENT_ID: str | None = None
@@ -216,6 +242,13 @@ class Settings(BaseSettings):
     REMINDER_REVIEW_ROUTE: str = "/vocabulary/review"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
 
+    # Deep-link / Universal Links
+    # SHA-256 fingerprint of the Android signing certificate (colon-separated hex).
+    # Debug key is pre-filled; replace with release key in production .env.
+    ANDROID_SHA256_FINGERPRINT: str = "A4:B6:A1:51:F6:7E:AA:A0:61:0C:BC:51:55:43:E6:AA:45:4B:58:9D:73:77:CF:02:75:F2:25:F7:99:1B:B1:89"
+    IOS_TEAM_ID: str = "LN798L6Y6X"
+    IOS_BUNDLE_ID: str = "com.nhthang.lexilingoApp"
+
     # Celery. Falls back to REDIS_URL when unset.
     CELERY_BROKER_URL: str | None = None
     CELERY_RESULT_BACKEND: str | None = None
@@ -254,10 +287,15 @@ class Settings(BaseSettings):
 
     @property
     def enable_app_cors(self) -> bool:
-        """Whether backend should emit CORS headers directly."""
+        """Whether backend should emit CORS headers directly.
+
+        Default: on (safe for direct PaaS deployments).
+        Set GATEWAY_HANDLES_CORS=true to disable when an Nginx/Kong gateway
+        handles CORS via proxy_hide_header, preventing duplicate headers.
+        """
         if self.ENABLE_APP_CORS is not None:
             return self.ENABLE_APP_CORS
-        return not self.is_production
+        return not self.GATEWAY_HANDLES_CORS
 
     @property
     def effective_password_reset_url_base(self) -> str:

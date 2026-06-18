@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/sound_service.dart';
@@ -7,11 +8,11 @@ import 'package:lexilingo_app/core/services/theme_preference_store.dart';
 import 'package:lexilingo_app/features/user/domain/entities/settings.dart';
 import 'package:lexilingo_app/features/user/domain/repositories/settings_repository.dart';
 
-/// Provider for managing user settings
 class SettingsProvider extends ChangeNotifier {
   final SettingsRepository _repository;
   final NotificationService _notificationService;
   final ThemePreferenceStore _themePreferenceStore;
+  final ApiClient _apiClient;
 
   Settings? _settings;
   String? _activeUserId;
@@ -25,10 +26,16 @@ class SettingsProvider extends ChangeNotifier {
     required SettingsRepository repository,
     required NotificationService notificationService,
     required ThemePreferenceStore themePreferenceStore,
+    required ApiClient apiClient,
   }) : _repository = repository,
        _notificationService = notificationService,
-       _themePreferenceStore = themePreferenceStore {
+       _themePreferenceStore = themePreferenceStore,
+       _apiClient = apiClient {
     _theme = _themePreferenceStore.readTheme();
+  }
+
+  Future<Map<String, dynamic>> getReferralCode() {
+    return _apiClient.get('/api/v1/referral/my-code');
   }
 
   Settings? get settings => _settings;
@@ -172,33 +179,51 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> updateLanguage(String languageCode, BuildContext context) async {
     if (_settings == null) return;
 
-    final oldLanguage = _settings!.language;
+    final oldLanguage = LocaleService.normalizeLanguageCode(
+      _settings!.language,
+    );
+    final newLanguage = LocaleService.normalizeLanguageCode(languageCode);
 
-    // Update settings in memory first
-    _settings = _settings!.copyWith(language: languageCode);
+    _settings = _settings!.copyWith(language: newLanguage);
+    _error = null;
     notifyListeners();
 
+    if (context.mounted) {
+      await LocaleService.updateAppLocale(context, newLanguage);
+    } else {
+      await LocaleService.saveLocale(newLanguage);
+    }
+
+    final settingsToPersist = _settings!;
+
+    Future<void> rollbackLanguage(Object error) async {
+      final shouldRollbackActiveLanguage = _settings?.language == newLanguage;
+      if (shouldRollbackActiveLanguage) {
+        _settings = _settings!.copyWith(language: oldLanguage);
+      }
+      _error = error.toString();
+      notifyListeners();
+
+      if (shouldRollbackActiveLanguage) {
+        if (context.mounted) {
+          await LocaleService.updateAppLocale(context, oldLanguage);
+        } else {
+          await LocaleService.saveLocale(oldLanguage);
+        }
+      }
+    }
+
     try {
-      // Update database
-      final result = await _repository.updateSettings(_settings!);
-      result.fold(
-        (failure) {
-          // Revert on failure
-          _settings = _settings!.copyWith(language: oldLanguage);
-          _error = failure.message;
-          notifyListeners();
-        },
+      final result = await _repository.updateSettings(settingsToPersist);
+      await result.fold<Future<void>>(
+        (failure) => rollbackLanguage(failure.message),
         (_) async {
           _error = null;
-          // Update app locale via EasyLocalization and persist
-          await LocaleService.updateAppLocale(context, languageCode);
-          debugPrint('Language updated to: $languageCode');
+          debugPrint('Language updated to: $newLanguage');
         },
       );
     } catch (e) {
-      _settings = _settings!.copyWith(language: oldLanguage);
-      _error = e.toString();
-      notifyListeners();
+      await rollbackLanguage(e);
     }
   }
 

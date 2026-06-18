@@ -5,7 +5,55 @@ Tests the full pipeline flow from input to output.
 """
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+
+@pytest.fixture(autouse=True)
+def isolate_pipeline_dependencies(monkeypatch, mock_kg_service):
+    """Integration tests must not contact Redis or Kuzu configured locally."""
+    from api.core.redis_client import RedisClient
+    from api.services import kg_service_v3 as kg_module
+    from api.services.trace_cag import graph as graph_module
+    from api.services.trace_cag import nodes_v2
+
+    fake_redis = AsyncMock()
+    fake_redis.get.return_value = None
+    fake_redis.set.return_value = True
+    fake_redis.lrange.return_value = []
+    fake_redis.rpush.return_value = 1
+    fake_redis.expire.return_value = True
+    fake_redis.delete.return_value = 0
+    fake_redis.ping.return_value = True
+
+    async def get_instance():
+        return fake_redis
+
+    async def execute_with_reconnect(operation):
+        return await operation(fake_redis)
+
+    monkeypatch.setattr(RedisClient, "get_instance", get_instance)
+    monkeypatch.setattr(
+        RedisClient,
+        "execute_with_reconnect",
+        execute_with_reconnect,
+    )
+    monkeypatch.setattr(
+        nodes_v2,
+        "_throttled_post_json",
+        AsyncMock(return_value=None),
+    )
+    mock_kg_service.get_seed_concepts_fast.return_value = []
+    mock_kg_service.semantic_seed_concepts.return_value = []
+    mock_kg_service.expand_best_first = AsyncMock(
+        return_value=SimpleNamespace(expanded_nodes=[], paths=[])
+    )
+    monkeypatch.setattr(kg_module, "get_kg_service", lambda: mock_kg_service)
+    kg_module._kg_instance = None
+    graph_module._trace_cag_instance = None
+    yield
+    kg_module._kg_instance = None
+    graph_module._trace_cag_instance = None
 
 
 class TestTraceCAGPipeline:
@@ -37,7 +85,7 @@ class TestTraceCAGPipeline:
                 "data": {"text": "Good effort! Use 'went' instead of 'go'."},
             },
         ]
-        
+
         return {
             "gateway": mock_model_gateway,
             "kg": mock_kg_service,
@@ -59,7 +107,7 @@ class TestTraceCAGPipeline:
             from api.services.trace_cag import get_trace_cag
 
             pipeline = await get_trace_cag()
-            
+
             result = await pipeline.analyze(
                 user_input="I go to school yesterday.",
                 session_id="test_session",
@@ -86,7 +134,7 @@ class TestTraceCAGPipeline:
             from api.services.trace_cag import get_trace_cag
 
             pipeline = await get_trace_cag()
-            
+
             result = await pipeline.analyze(
                 user_input="Hello",
                 session_id="test",
@@ -116,7 +164,7 @@ class TestTraceCAGPipeline:
             from api.services.trace_cag import get_trace_cag
 
             pipeline = await get_trace_cag()
-            
+
             result = await pipeline.analyze(
                 user_input="Test input",
                 session_id="test",
@@ -141,7 +189,7 @@ class TestTraceCAGPipeline:
             from api.services.trace_cag import get_trace_cag
 
             pipeline = await get_trace_cag()
-            
+
             result = await pipeline.analyze(
                 user_input="Test",
                 session_id="test",
@@ -165,7 +213,7 @@ class TestTraceCAGPipeline:
             from api.services.trace_cag import get_trace_cag
 
             pipeline = await get_trace_cag()
-            
+
             result = await pipeline.analyze(
                 user_input="Test",
                 session_id="test",
@@ -187,13 +235,13 @@ class TestTraceCAGPipeline:
             from api.services.trace_cag import get_trace_cag
 
             pipeline = await get_trace_cag()
-            
+
             learner_profile = {
                 "user_id": "test_user",
                 "level": "A2",
                 "common_errors": ["articles", "verb_tense"],
             }
-            
+
             result = await pipeline.analyze(
                 user_input="I go yesterday",
                 session_id="test",
