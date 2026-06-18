@@ -45,7 +45,7 @@ export const CoursePopularityChart: React.FC<Props> = ({ data, loading }) => {
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+            label={({ name, percent }) => `${name}: ${percent !== undefined ? (percent * 100).toFixed(0) : "0"}%`}
             outerRadius={80}
             fill="#8884d8"
             dataKey="value"
@@ -54,7 +54,7 @@ export const CoursePopularityChart: React.FC<Props> = ({ data, loading }) => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={(value) => [Number(value ?? 0).toLocaleString() + " đăng ký", ""]} />
+          <Tooltip formatter={(value: any) => [value?.toLocaleString() + " đăng ký", ""]} />
           <Legend />
         </PieChart>
       </ResponsiveContainer>
