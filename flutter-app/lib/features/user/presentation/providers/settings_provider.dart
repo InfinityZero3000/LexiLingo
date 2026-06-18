@@ -172,33 +172,51 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> updateLanguage(String languageCode, BuildContext context) async {
     if (_settings == null) return;
 
-    final oldLanguage = _settings!.language;
+    final oldLanguage = LocaleService.normalizeLanguageCode(
+      _settings!.language,
+    );
+    final newLanguage = LocaleService.normalizeLanguageCode(languageCode);
 
-    // Update settings in memory first
-    _settings = _settings!.copyWith(language: languageCode);
+    _settings = _settings!.copyWith(language: newLanguage);
+    _error = null;
     notifyListeners();
 
+    if (context.mounted) {
+      await LocaleService.updateAppLocale(context, newLanguage);
+    } else {
+      await LocaleService.saveLocale(newLanguage);
+    }
+
+    final settingsToPersist = _settings!;
+
+    Future<void> rollbackLanguage(Object error) async {
+      final shouldRollbackActiveLanguage = _settings?.language == newLanguage;
+      if (shouldRollbackActiveLanguage) {
+        _settings = _settings!.copyWith(language: oldLanguage);
+      }
+      _error = error.toString();
+      notifyListeners();
+
+      if (shouldRollbackActiveLanguage) {
+        if (context.mounted) {
+          await LocaleService.updateAppLocale(context, oldLanguage);
+        } else {
+          await LocaleService.saveLocale(oldLanguage);
+        }
+      }
+    }
+
     try {
-      // Update database
-      final result = await _repository.updateSettings(_settings!);
-      result.fold(
-        (failure) {
-          // Revert on failure
-          _settings = _settings!.copyWith(language: oldLanguage);
-          _error = failure.message;
-          notifyListeners();
-        },
+      final result = await _repository.updateSettings(settingsToPersist);
+      await result.fold<Future<void>>(
+        (failure) => rollbackLanguage(failure.message),
         (_) async {
           _error = null;
-          // Update app locale via EasyLocalization and persist
-          await LocaleService.updateAppLocale(context, languageCode);
-          debugPrint('Language updated to: $languageCode');
+          debugPrint('Language updated to: $newLanguage');
         },
       );
     } catch (e) {
-      _settings = _settings!.copyWith(language: oldLanguage);
-      _error = e.toString();
-      notifyListeners();
+      await rollbackLanguage(e);
     }
   }
 

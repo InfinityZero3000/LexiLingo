@@ -7,6 +7,8 @@ Similar to Flutter's environment configuration
 
 import os
 import json
+import re
+from datetime import date
 from typing import List, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AliasChoices, Field, field_validator, model_validator
@@ -61,6 +63,50 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "")
     REDIS_DB: int = int(os.getenv("REDIS_DB", "1"))
     REDIS_MAX_CONNECTIONS: int = 50
+
+    # ============================================================
+    # Internal CEFR Content Agent
+    # ============================================================
+    CONTENT_AGENT_SERVICE_TOKEN: str = os.getenv(
+        "CONTENT_AGENT_SERVICE_TOKEN",
+        "",
+    )
+    CONTENT_AGENT_TTL_SECONDS: int = int(
+        os.getenv("CONTENT_AGENT_TTL_SECONDS", "3600")
+    )
+    CONTENT_AGENT_MAX_RECORDS: int = int(
+        os.getenv("CONTENT_AGENT_MAX_RECORDS", "20000")
+    )
+    CONTENT_AGENT_MAX_BATCH_RECORDS: int = int(
+        os.getenv("CONTENT_AGENT_MAX_BATCH_RECORDS", "2000")
+    )
+    CONTENT_AGENT_ALLOW_LOCAL_STORE: bool = os.getenv(
+        "CONTENT_AGENT_ALLOW_LOCAL_STORE",
+        "false" if ENVIRONMENT == "production" else "true",
+    ).lower() == "true"
+
+    # ============================================================
+    # Licensed Content ETL
+    # ============================================================
+    CONTENT_ETL_ENABLED: bool = Field(default=False)
+    CONTENT_ETL_STORAGE_ROOT: str = Field(default="/data/content-etl")
+    CONTENT_ETL_HTTP_TIMEOUT_SECONDS: int = Field(default=60, gt=0)
+    CONTENT_ETL_MAX_DOWNLOAD_BYTES: int = Field(default=1073741824, gt=0)
+    CONTENT_ETL_MAX_QUARANTINE_RATIO: float = Field(default=0.02, ge=0.0, le=1.0)
+    CONTENT_ETL_USER_AGENT: str = Field(default="LexiLingo-ETL/1.0", min_length=1)
+    CONTENT_ETL_OEWN_VERSION: str = Field(default="2025")
+    CONTENT_ETL_OEWN_SHA256: str = Field(default="")
+    CONTENT_ETL_CMU_REF: str = Field(default="")
+    CONTENT_ETL_CMU_SHA256: str = Field(default="")
+    CONTENT_ETL_CEFR_J_REF: str = Field(default="")
+    CONTENT_ETL_CEFR_J_PATH: str = Field(
+        default="cefrj-vocabulary-profile-1.5.csv"
+    )
+    CONTENT_ETL_CEFR_J_SHA256: str = Field(default="")
+    CONTENT_ETL_WIKIDATA_SNAPSHOT: str = Field(default="")
+    CONTENT_ETL_TATOEBA_RELEASE: str = Field(default="")
+    CONTENT_ETL_LIBRISPEECH_RELEASE: str = Field(default="")
+    CONTENT_ETL_COMMON_VOICE_RELEASE: str = Field(default="")
     
     # ============================================================
     # CORS Settings
@@ -112,6 +158,15 @@ class Settings(BaseSettings):
         if self.DEBUG:
             raise ValueError("DEBUG must be false when ENVIRONMENT=production")
 
+        if (
+            not self.SECRET_KEY
+            or self.SECRET_KEY.lower().startswith("your_")
+            or len(self.SECRET_KEY) < 32
+        ):
+            raise ValueError(
+                "SECRET_KEY must be a random string of at least 32 characters in production"
+            )
+
         if self.MONGODB_TLS_ALLOW_INVALID_CERTIFICATES:
             raise ValueError("MongoDB invalid TLS certificates are not allowed in production")
 
@@ -128,8 +183,69 @@ class Settings(BaseSettings):
         if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
             raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
+        if self.CONTENT_ETL_ENABLED:
+            self._validate_production_etl_pins()
+
         return self
+
+    def _validate_production_etl_pins(self) -> None:
+        moving_refs = {"head", "latest", "main", "master", "stable", "trunk"}
+
+        def require_non_moving(name: str, value: str) -> None:
+            if not value or value.strip().lower() in moving_refs:
+                raise ValueError(f"{name} must use a pinned immutable version")
+
+        require_non_moving(
+            "CONTENT_ETL_OEWN_VERSION",
+            self.CONTENT_ETL_OEWN_VERSION,
+        )
+        for name, value in (
+            ("CONTENT_ETL_CMU_REF", self.CONTENT_ETL_CMU_REF),
+            ("CONTENT_ETL_CEFR_J_REF", self.CONTENT_ETL_CEFR_J_REF),
+        ):
+            require_non_moving(name, value)
+            if re.fullmatch(r"[a-fA-F0-9]{40}", value) is None:
+                raise ValueError(f"{name} must use a pinned 40-character commit SHA")
+
+        for name, value in (
+            ("CONTENT_ETL_OEWN_SHA256", self.CONTENT_ETL_OEWN_SHA256),
+            ("CONTENT_ETL_CMU_SHA256", self.CONTENT_ETL_CMU_SHA256),
+            ("CONTENT_ETL_CEFR_J_SHA256", self.CONTENT_ETL_CEFR_J_SHA256),
+        ):
+            if re.fullmatch(r"[a-f0-9]{64}", value) is None:
+                raise ValueError(f"{name} must use a lowercase SHA-256 checksum")
+
+        if self.CONTENT_ETL_WIKIDATA_SNAPSHOT:
+            require_non_moving(
+                "CONTENT_ETL_WIKIDATA_SNAPSHOT",
+                self.CONTENT_ETL_WIKIDATA_SNAPSHOT,
+            )
+            try:
+                date.fromisoformat(self.CONTENT_ETL_WIKIDATA_SNAPSHOT)
+            except ValueError as exc:
+                raise ValueError(
+                    "CONTENT_ETL_WIKIDATA_SNAPSHOT must use a pinned YYYY-MM-DD date"
+                ) from exc
+
+        for name, value in (
+            ("CONTENT_ETL_TATOEBA_RELEASE", self.CONTENT_ETL_TATOEBA_RELEASE),
+            (
+                "CONTENT_ETL_LIBRISPEECH_RELEASE",
+                self.CONTENT_ETL_LIBRISPEECH_RELEASE,
+            ),
+            (
+                "CONTENT_ETL_COMMON_VOICE_RELEASE",
+                self.CONTENT_ETL_COMMON_VOICE_RELEASE,
+            ),
+        ):
+            if value:
+                require_non_moving(name, value)
     
+    # ============================================================
+    # JWT shared secret (must match backend-service SECRET_KEY)
+    # ============================================================
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
+
     # ============================================================
     # API Keys (for external services)
     # ============================================================
@@ -153,22 +269,16 @@ class Settings(BaseSettings):
     # Logging Configuration
     # ============================================================
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    SENTRY_DSN: str = os.getenv("SENTRY_DSN", "")
     LOG_AI_INTERACTIONS: bool = True
     LOG_PERFORMANCE_METRICS: bool = True
     
     # ============================================================
     # AI Model Configuration (for DL-Model-Support integration)
     # ============================================================
-    AI_MODEL_API_URL: str = os.getenv(
-        "AI_MODEL_API_URL",
-        "http://localhost:8001"  # DL-Model-Support API
-    )
+    AI_MODEL_API_URL: str = os.getenv("AI_MODEL_API_URL", "")
     AI_MODEL_API_KEY: Optional[str] = os.getenv("AI_MODEL_API_KEY")
-    AI_MODEL_TIMEOUT: int = 30  # seconds
-    
-    # DL Model Service (alias for backward compatibility)
-    DL_MODEL_API_URL: str = AI_MODEL_API_URL
-    DL_MODEL_API_KEY: Optional[str] = AI_MODEL_API_KEY
+    AI_MODEL_TIMEOUT: int = 30
 
     # ============================================================
     # Model Names (default = use base model on server)
@@ -186,11 +296,12 @@ class Settings(BaseSettings):
     # ============================================================
     # STT / TTS Configuration
     # ============================================================
-    # Faster-Whisper v3 - Speech-to-Text
-    STT_MODEL_NAME: str = os.getenv("STT_MODEL_NAME", "large-v3")
+    # Legacy short-clip STT compatibility. Realtime settings live in
+    # api.services.stt.config.STTConfig.
+    STT_MODEL_NAME: str = os.getenv("STT_VERIFY_MODEL", "base.en")
     STT_DEVICE: str = os.getenv("STT_DEVICE", "cpu")
     STT_COMPUTE_TYPE: str = os.getenv("STT_COMPUTE_TYPE", "int8")
-    STT_BEAM_SIZE: int = int(os.getenv("STT_BEAM_SIZE", "5"))
+    STT_BEAM_SIZE: int = int(os.getenv("STT_BEAM_SIZE", "1"))
     STT_VAD: bool = os.getenv("STT_VAD", "true").lower() == "true"
     STT_LANGUAGE: str = os.getenv("STT_LANGUAGE", "en")
     

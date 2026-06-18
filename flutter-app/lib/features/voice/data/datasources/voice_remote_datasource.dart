@@ -55,8 +55,14 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
         request.fields['language'] = language;
       }
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw ServerException('STT request timed out after 30s'),
+      );
+      final response = await http.Response.fromStream(streamedResponse).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw ServerException('STT response timed out after 30s'),
+      );
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
@@ -87,6 +93,9 @@ class VoiceRemoteDataSourceImpl implements VoiceRemoteDataSource {
           ...authHeaders,
         },
         body: json.encode({'text': text}),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw ServerException('TTS request timed out after 30s'),
       );
 
       if (response.statusCode == 200) {

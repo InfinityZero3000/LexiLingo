@@ -679,12 +679,12 @@ class _LargeStreakFireWidgetState extends State<LargeStreakFireWidget>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withOpacity(0.4),
+                    color: Colors.orange.withValues(alpha: 0.4),
                     blurRadius: _glow.value * 2,
                     spreadRadius: _glow.value / 2,
                   ),
                   BoxShadow(
-                    color: Colors.red.withOpacity(0.2),
+                    color: Colors.red.withValues(alpha: 0.2),
                     blurRadius: _glow.value * 3,
                     spreadRadius: _glow.value,
                   ),

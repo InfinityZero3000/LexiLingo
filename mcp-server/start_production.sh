@@ -12,7 +12,8 @@ echo ""
 export OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
 export OLLAMA_KEEP_ALIVE="${OLLAMA_KEEP_ALIVE:-24h}"
 export OLLAMA_NUM_PARALLEL="${OLLAMA_NUM_PARALLEL:-4}"
-export GEMINI_API_KEY="${GEMINI_API_KEY:-AIzaSyAdneokZf4BO1wEEfarOIHlFCN0TJJdlbM}"
+: "${GEMINI_API_KEY:?GEMINI_API_KEY must be set before starting the MCP server}"
+export GEMINI_API_KEY
 
 # Navigate to script directory
 cd "$(dirname "$0")"
@@ -21,7 +22,7 @@ echo "📋 Configuration:"
 echo "   - Ollama URL: $OLLAMA_URL"
 echo "   - Keep Alive: $OLLAMA_KEEP_ALIVE"
 echo "   - Parallel Models: $OLLAMA_NUM_PARALLEL"
-echo "   - Gemini API: ${GEMINI_API_KEY:0:20}..."
+echo "   - Gemini API: configured"
 echo ""
 
 # Step 1: Check/Start Ollama

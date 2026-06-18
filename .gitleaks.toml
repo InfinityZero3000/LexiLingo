@@ -1,0 +1,76 @@
+title = "LexiLingo Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "google-gemini-api-key"
+description = "Google Gemini API key"
+regex = '''(?i)(?:GEMINI_API_KEY|GOOGLE_API_KEY)[^\n]{0,80}?(AIza[0-9A-Za-z_-]{35})'''
+secretGroup = 1
+keywords = ["AIza", "GEMINI_API_KEY", "GOOGLE_API_KEY"]
+
+# Firebase client API keys identify the project but are not authorization
+# secrets. Access remains controlled by Firebase Security Rules and API
+# restrictions.
+[[allowlists]]
+description = "Public Firebase client configuration"
+targetRules = ["gcp-api-key", "generic-api-key"]
+paths = [
+  '''(^|/)\.github/workflows/cd\.yml$''',
+  '''(^|/)flutter-app/lib/firebase_options\.dart$''',
+  '''(^|/)flutter-app/web/firebase-messaging-sw\.js$''',
+  '''(^|/)lexilingo_app/ios/Runner/GoogleService-Info\.plist$''',
+  '''(^|/)lexilingo_app/lib/firebase_options\.dart$''',
+]
+
+# Fake API keys used as test fixtures — not real credentials.
+[[allowlists]]
+description = "Test fixture placeholder API keys"
+targetRules = ["generic-api-key", "google-gemini-api-key", "gcp-api-key"]
+paths = [
+  '''(^|/)ai-service/tests/test_admin_routes\.py$''',
+]
+
+# These examples intentionally use non-secret placeholders.
+[[allowlists]]
+description = "Documentation and local gateway placeholders"
+condition = "AND"
+regexTarget = "line"
+regexes = [
+  '''Bearer YOUR_ACCESS_TOKEN''',
+  '''X-Api-Key: replace-mobile-key''',
+  '''key: replace-admin-key''',
+]
+paths = [
+  '''(^|/)backend-service/QUICKSTART\.md$''',
+  '''(^|/)docs/gateway/API_GATEWAY_FULL_POLICY_SETUP\.md$''',
+  '''(^|/)gateway/kong/kong\.yml$''',
+]
+
+# Phase 1 starts enforcing new findings without making CI permanently fail on
+# removed credentials already present in immutable history. Those credentials
+# must remain revoked; rewriting shared history is intentionally out of scope.
+[[allowlists]]
+description = "Legacy findings predating Phase 1"
+condition = "AND"
+commits = [
+  "c3cc2eee255a820a30543ce70a37175ac1954c87",
+  "ffdca45197a7d247fa017690f905c1cdd039cad4",
+  "71d0a4d8f834c372973117558cff71240776123f",
+  "4e1296a5ec7d2050f2cf91a46a2646baaed214d8",
+  "8f98d140b551ffde037a7e3fa6c363e02417f39d",
+  "89e1b0238381aadb30ced293dd65ca33f165c80c",
+  "98dc1d63e85c0d01d14f13fd676f2849aba9b28a",
+  "3d24c444fa29321445a2f06e9480c31ef00b5244",
+  "9f5590bc9fdb50b5074d472bbccb862751a1c2c9",
+]
+paths = [
+  '''(^|/)mcp-server/start_production\.sh$''',
+  '''(^|/)mcp-server/tests/test_full\.py$''',
+  '''(^|/)gateway/kong/kong\.yml$''',
+  '''(^|/)backend-service/test_firebase_api\.py$''',
+  '''(^|/)scripts/clean-git-history\.sh$''',
+  '''(^|/)scripts/start-all\.sh$''',
+  '''(^|/)flutter-app/build/web/main\.dart\.js$''',
+]

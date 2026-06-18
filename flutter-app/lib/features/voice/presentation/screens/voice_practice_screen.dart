@@ -168,15 +168,19 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   ) async {
     setState(() => _isProcessing = true);
 
-    final provider = context.read<VoiceProvider>();
-    await provider.assessPronunciation(
-      audioData: audioData,
-      filename: filename,
-      targetText: _phraseController.text.trim(),
-      language: widget.language,
-    );
-
-    setState(() => _isProcessing = false);
+    try {
+      final provider = context.read<VoiceProvider>();
+      await provider.assessPronunciation(
+        audioData: audioData,
+        filename: filename,
+        targetText: _phraseController.text.trim(),
+        language: widget.language,
+      );
+    } catch (e) {
+      if (mounted) _showError('voice.assessmentFailed'.tr());
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   Future<void> _playExample() async {

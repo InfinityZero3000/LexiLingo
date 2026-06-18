@@ -466,9 +466,10 @@ Be encouraging and focus on the most important errors first."""
                 try:
                     import httpx
 
+                    _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""
                     messages = [
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
-                        {"role": "user", "content": diagnosis_prompt},
+                        {"role": "user", "content": f"{_no_think}{diagnosis_prompt}"},
                     ]
                     resp = await _throttled_post_json(
                         provider="groq",
@@ -1245,6 +1246,15 @@ async def stream_llm_tokens(
         if not groq_key or _provider_is_disabled("groq"):
             return
 
+        # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
+        groq_messages = messages
+        if "qwen" in groq_model.lower():
+            groq_messages = list(messages)
+            for i, msg in enumerate(groq_messages):
+                if msg.get("role") == "user":
+                    groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
+                    break
+
         client = _get_httpx_client("groq")
         tokens_yielded = 0
         try:
@@ -1257,7 +1267,7 @@ async def stream_llm_tokens(
                 },
                 json={
                     "model": groq_model,
-                    "messages": messages,
+                    "messages": groq_messages,
                     "max_tokens": 512,
                     "temperature": 0.7,
                     "stream": True,
@@ -1527,6 +1537,14 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
+            # Disable Qwen3 thinking to keep token budget for actual response.
+            _groq_messages = list(messages)
+            if "qwen" in groq_model.lower():
+                for i, msg in enumerate(_groq_messages):
+                    if msg.get("role") == "user":
+                        _groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
+                        break
+
             async def _try_groq():
                 if not groq_key:
                     return None, None
@@ -1535,7 +1553,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 512, "temperature": 0.7},
+                        payload={"model": groq_model, "messages": _groq_messages, "max_tokens": 512, "temperature": 0.7},
                         httpx_module=httpx,
                         timeout=20.0,
                     )
@@ -1607,7 +1625,8 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
 
             # Ollama — last resort, tight 15s timeout.
             if not response:
-                ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+                from api.core.config import settings
+                ollama_url = settings.OLLAMA_BASE_URL
                 ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
                 try:
                     resp = await _throttled_post_json(
@@ -1994,117 +2013,3 @@ Keep it short and friendly (1-2 sentences)."""
             "path": "fast",
             "models_used": ["rule_fallback"],
         }
-
-
-# ============================================================
-# NODE 9: PRONUNCIATION ANALYSIS (Optional, Heavy Model)
-# ============================================================
-
-async def pronunciation_node(state: TraceCAGState) -> Dict[str, Any]:
-    """
-    Analyze pronunciation from audio input.
-    
-    Uses ModelGateway to:
-    - Load HuBERT only when audio analysis is requested
-    - Perform phoneme-level analysis
-    - Auto-unload quickly (LOW priority) to save RAM
-    
-    Only called when:
-    - Input type is "voice"
-    - User explicitly asks for pronunciation feedback
-    """
-    logger.info("[pronunciation_node] Analyzing pronunciation...")
-    start_time = time.time()
-    
-    audio_bytes = state.get("audio_bytes")
-    reference_text = state.get("user_input", "")
-    
-    if not audio_bytes:
-        return {"pronunciation_score": None, "phoneme_errors": []}
-    
-    try:
-        gateway = await get_gateway()
-        
-        # Call HuBERT via ModelGateway (lazy loads, auto-unloads quickly)
-        result = await gateway.execute_task(
-            "pronunciation",
-            {
-                "audio_bytes": audio_bytes,
-                "reference_text": reference_text,
-                "return_phonemes": True,
-            }
-        )
-        
-        if result.get("success") and result.get("data"):
-            pron_data = result["data"]
-            
-            latency_ms = int((time.time() - start_time) * 1000)
-            logger.info(f"[pronunciation_node] Analysis completed in {latency_ms}ms")
-
-            return {
-                "pronunciation_score": pron_data.get("overall_score", 0.0),
-                "phoneme_errors": pron_data.get("errors", []),
-                "pronunciation_tip": pron_data.get("tip", ""),
-                "models_used": ["hubert_pronunciation"],
-            }
-        else:
-            return {"pronunciation_score": None, "phoneme_errors": []}
-        
-    except Exception as e:
-        logger.warning(f"[pronunciation_node] Error: {e}")
-        return {
-            "pronunciation_score": None,
-            "phoneme_errors": [],
-        }
-
-
-# ============================================================
-# NODE 10: STT NODE (Speech-to-Text for Voice Input)
-# ============================================================
-
-async def stt_node(state: TraceCAGState) -> Dict[str, Any]:
-    """
-    Convert speech to text for voice input.
-    
-    Uses ModelGateway to:
-    - Load Whisper on-demand
-    - Transcribe audio with word timestamps
-    - Support pronunciation analysis pipeline
-    """
-    logger.info("[stt_node] Transcribing audio...")
-
-    audio_bytes = state.get("audio_bytes")
-    
-    if not audio_bytes:
-        return {"transcribed_text": None}
-    
-    try:
-        gateway = await get_gateway()
-        
-        # Call Whisper via ModelGateway
-        result = await gateway.execute_task(
-            "stt",
-            {
-                "audio_bytes": audio_bytes,
-                "language": "en",
-                "return_timestamps": True,
-            }
-        )
-        
-        if result.get("success") and result.get("data"):
-            stt_data = result["data"]
-            transcribed = stt_data.get("text", "")
-
-            return {
-                "user_input": transcribed if transcribed else state.get("user_input", ""),
-                "transcribed_text": transcribed,
-                "word_timestamps": stt_data.get("segments", []),
-                "stt_confidence": stt_data.get("confidence", 0.0),
-                "models_used": ["whisper_stt"],
-            }
-        else:
-            return {"transcribed_text": None}
-        
-    except Exception as e:
-        logger.warning(f"[stt_node] Error: {e}")
-        return {"transcribed_text": None}

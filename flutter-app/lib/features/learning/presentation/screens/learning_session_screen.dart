@@ -11,6 +11,7 @@ import '../widgets/lesson_content_widget.dart';
 import '../widgets/premium_exercise_widgets.dart';
 import '../../../voice/presentation/widgets/tts_speed_selector.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
+import '../../../progress/presentation/widgets/streak_milestone_overlay.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Learning Session Screen
@@ -499,10 +500,18 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final total = provider.totalExercises;
     final percentage = (score / total * 100).toInt();
 
-    // Update streak when lesson is completed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<StreakProvider>().updateStreak();
+    // Update streak when lesson is completed, then show milestone if reached
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!context.mounted) return;
+      final streakProvider = context.read<StreakProvider>();
+      await streakProvider.updateStreak();
+      if (!context.mounted) return;
+      if (streakProvider.milestoneJustReached) {
+        await StreakMilestoneOverlay.show(
+          context,
+          streakDays: streakProvider.currentStreak,
+          onDismiss: streakProvider.clearMilestone,
+        );
       }
     });
 

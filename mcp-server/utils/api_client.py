@@ -9,14 +9,30 @@ Instead of loading heavy ML models locally, it proxies to:
 """
 
 import logging
+import os
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-AI_SERVICE_URL = "http://localhost:8001"
-BACKEND_SERVICE_URL = "http://localhost:8000"
+AI_SERVICE_URL = os.getenv("AI_SERVICE_URL", "http://localhost:8001").rstrip("/")
+BACKEND_SERVICE_URL = os.getenv(
+    "BACKEND_SERVICE_URL", "http://localhost:8000"
+).rstrip("/")
 
 _client = None
+
+
+class UpstreamServiceError(RuntimeError):
+    def __init__(self, service: str, status_code: int | None, retryable: bool):
+        super().__init__(f"{service} request failed")
+        self.service = service
+        self.status_code = status_code
+        self.retryable = retryable
+
+
+def _auth_headers() -> Dict[str, str]:
+    token = os.getenv("LEXILINGO_ACCESS_TOKEN", "").strip()
+    return {"Authorization": f"Bearer {token}"} if token else {}
 
 
 async def get_client():
@@ -66,19 +82,19 @@ async def call_ai_service(
 
     try:
         response = await client.request(
-            method, url, json=json, data=data, files=files
+            method, url, json=json, data=data, files=files, headers=_auth_headers()
         )
         response.raise_for_status()
         return response.json()
     except httpx.ConnectError:
         logger.warning(f"ai-service not available at {AI_SERVICE_URL}")
-        raise ConnectionError(
-            f"ai-service not available at {AI_SERVICE_URL}. "
-            "Start it with: python -m uvicorn api.main:app --port 8001"
-        )
+        raise UpstreamServiceError("ai-service", None, True)
     except httpx.HTTPStatusError as e:
-        logger.error(f"ai-service returned {e.response.status_code}: {e.response.text[:200]}")
-        raise
+        status_code = e.response.status_code
+        logger.error("ai-service returned status %s", status_code)
+        raise UpstreamServiceError(
+            "ai-service", status_code, status_code >= 500 or status_code == 429
+        ) from e
     except Exception as e:
         logger.error(f"ai-service call failed: {e}")
         raise
@@ -100,14 +116,12 @@ async def call_ai_service_raw(
 
     try:
         response = await client.request(
-            method, url, json=json, files=files
+            method, url, json=json, files=files, headers=_auth_headers()
         )
         response.raise_for_status()
         return response.content
     except httpx.ConnectError:
-        raise ConnectionError(
-            f"ai-service not available at {AI_SERVICE_URL}"
-        )
+        raise UpstreamServiceError("ai-service", None, True)
     except Exception as e:
         logger.error(f"ai-service raw call failed: {e}")
         raise
@@ -127,14 +141,22 @@ async def call_backend_service(
     url = f"{BACKEND_SERVICE_URL}{path}"
 
     try:
-        response = await client.request(method, url, json=json)
+        response = await client.request(
+            method, url, json=json, headers=_auth_headers()
+        )
         response.raise_for_status()
         return response.json()
     except httpx.ConnectError:
         logger.warning(f"backend-service not available at {BACKEND_SERVICE_URL}")
-        raise ConnectionError(
-            f"backend-service not available at {BACKEND_SERVICE_URL}"
-        )
+        raise UpstreamServiceError("backend-service", None, True)
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
+        logger.error("backend-service returned status %s", status_code)
+        raise UpstreamServiceError(
+            "backend-service",
+            status_code,
+            status_code >= 500 or status_code == 429,
+        ) from e
     except Exception as e:
         logger.error(f"backend-service call failed: {e}")
         raise

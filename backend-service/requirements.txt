@@ -30,8 +30,9 @@ google-auth-oauthlib>=1.4.0
 # Environment
 python-dotenv>=1.2.2
 
-# Logging
+# Logging and Error Tracking
 loguru>=0.7.3
+sentry-sdk[fastapi,sqlalchemy,loguru]>=2.20.0
 
 # HTTP Client (optional - for calling AI service)
 httpx>=0.28.1
@@ -49,11 +50,15 @@ youtube-transcript-api>=0.6.3
 redis>=7.4.1,<8.0.0
 
 
-# Background jobs
-celery[redis]>=5.6.3,<6
+# Background jobs — install without redis extras; redis-py is a direct dep and satisfies the transport at runtime
+kombu>=5.5.0,<5.6
+celery>=5.5.3,<5.6
 
 # System metrics (used by admin monitoring endpoints)
 psutil>=6.1.1
+
+# Prometheus metrics
+prometheus-fastapi-instrumentator>=7.1.0
 
 # Testing
 pytest>=9.1.0

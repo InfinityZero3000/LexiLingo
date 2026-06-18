@@ -357,7 +357,10 @@
     "playbackSpeedDescription": "Adjust the speed of text-to-speech audio playback",
     "selectPlaybackSpeed": "Select Playback Speed",
     "confidence": "Confidence: {percent}%",
-    "playError": "Failed to play: {error}"
+    "playError": "Failed to play: {error}",
+    "tapToRecord": "Tap to record",
+    "tapToStop": "Tap to stop",
+    "assessmentFailed": "Pronunciation assessment failed. Please try again."
   },
   "chat": {
     "placeholder": "Type a message...",
@@ -406,7 +409,8 @@
     "categorySocial": "Social & Community",
     "categoryMilestone": "Achievement Milestones",
     "unlockedCount": "{unlocked} / {total} Achievements",
-    "awesome": "Awesome!"
+    "awesome": "Awesome!",
+    "share": "Share Achievement"
   },
   "profile": {
     "title": "Profile",
@@ -555,7 +559,22 @@
     "goal_insane_label": "Insane",
     "goal_insane_description": "1 hour/day",
     "goal_progress": "Current progress {percent}%",
-    "goal_updated": "Daily goal updated to {xp} XP."
+    "goal_updated": "Daily goal updated to {xp} XP.",
+    "delete_account": "Delete Account",
+    "delete_account_confirm": "This action is permanent and cannot be undone. All your progress, streaks, and data will be deleted immediately.",
+    "delete_account_confirm_btn": "Delete My Account",
+    "delete_account_error": "Failed to delete account. Please try again.",
+    "about_subtitle": "Legal & app info",
+    "referral": "Invite & Earn",
+    "referral_subtitle": "Invite friends and earn gems together",
+    "invite_friends": "Invite Friends",
+    "invite_friends_subtitle": "Get 50 gems for each friend who joins",
+    "invite_title": "Invite Friends, Earn Gems!",
+    "invite_desc": "Share your code. Both you and your friend get 50 gems when they join.",
+    "invite_message": "🎓 Join me on LexiLingo and learn English together! Use my referral code for 50 free gems.",
+    "share_invite": "Share Invite Link",
+    "code_copied": "Code copied!",
+    "referral_count": "{count} friend(s) joined via your code"
   },
   "notifications": {
     "pageTitle": "Notifications",
@@ -728,18 +747,19 @@
     "testCompleted": "Test completed"
   },
   "premium": {
-    "title": "LexiLingo Premium",
-    "upgrade": "Upgrade to Premium",
-    "proFeatures": "Unlock Pro features",
-    "subscriptionPlan": "Subscription plan",
-    "monthly": "Monthly",
-    "yearly": "Yearly",
-    "lifetime": "Lifetime",
-    "restorePurchases": "Restore purchases",
-    "manageSubscription": "Manage subscription",
-    "cancelSubscription": "Cancel subscription",
-    "noAds": "Ad-free experience",
-    "unlimitedHearts": "Unlimited hearts"
+    "title": "Go Premium",
+    "subtitle": "Unlock the full LexiLingo experience",
+    "feature_unlimited": "Unlimited lessons & exercises",
+    "feature_ai": "AI tutor with no daily limits",
+    "feature_offline": "Download lessons for offline learning",
+    "feature_ads": "Remove all ads",
+    "monthly": "Monthly — {price}/month",
+    "annual": "Annual — {price}/year",
+    "restore": "Restore Purchases",
+    "success": "Premium unlocked! Enjoy LexiLingo Pro.",
+    "restored": "Purchases restored successfully!",
+    "no_purchases": "No previous purchases found.",
+    "unavailable": "Subscription not available in your region."
   },
   "support": {
     "faq": "FAQ",
@@ -881,7 +901,15 @@
     "correctFeedback": "Correct!",
     "answerRevealLabel": "The answer was:",
     "nextWordButton": "Next Word",
-    "seeResultsButton": "See Results"
+    "seeResultsButton": "See Results",
+    "audioError": "Could not play audio. Check your connection.",
+    "retryAudio": "Retry",
+    "listenButtonLabel": "Listen to the word",
+    "noPlaysLeft": "No plays remaining",
+    "abandonTitle": "Quit game?",
+    "abandonBody": "XP will be based on words answered correctly so far.",
+    "keepPlaying": "Keep playing",
+    "quit": "Quit"
   },
   "wordScramble": {
     "wordProgress": "Word {current} of {total}",
@@ -1159,5 +1187,10 @@
     "topicTechnology": "Technology",
     "topicTechnologySubtitle": "Software & Digital Age",
     "noDefinitionYet": "No definition available yet"
+  },
+  "legal": {
+    "privacy_title": "Privacy Policy",
+    "terms_title": "Terms of Service",
+    "last_updated": "Last updated: {date}"
   }
 }

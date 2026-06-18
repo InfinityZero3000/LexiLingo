@@ -12,9 +12,15 @@ import {
   getRoleLabel,
   getRoleColor,
   type UserFilters,
-  type UserListItem,
+  type UserListItem as ApiUserListItem,
 } from '../lib/userManagementApi';
 import UserDetailModal from '../components/user-management/UserDetailModal';import { SectionHeader } from "../components/SectionHeader";import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+
+type UserListItem = ApiUserListItem & {
+  avatar_url: string | null;
+  total_xp: number;
+  streak_days: number;
+};
 
 export default function UserManagementPage() {
   const queryClient = useQueryClient();
@@ -119,10 +125,11 @@ export default function UserManagementPage() {
   }
   
   // Calculate stats
-  const activeUsers = data?.users.filter(u => u.is_active).length || 0;
-  const inactiveUsers = data?.users.filter(u => !u.is_active).length || 0;
-  const totalXP = data?.users.reduce((sum, u) => sum + (u.total_xp || 0), 0) || 0;
-  const avgXP = data?.users.length ? Math.round(totalXP / data.users.length) : 0;
+  const users = (data?.users ?? []) as UserListItem[];
+  const activeUsers = users.filter(u => u.is_active).length;
+  const inactiveUsers = users.filter(u => !u.is_active).length;
+  const totalXP = users.reduce((sum, u) => sum + (u.total_xp || 0), 0);
+  const avgXP = users.length ? Math.round(totalXP / users.length) : 0;
 
   return (
     <div className="stack">
@@ -247,7 +254,7 @@ export default function UserManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {data?.users.map((user) => (
+                {users.map((user) => (
                   <tr key={user.id} style={{ borderBottom: '1px solid var(--line)', transition: 'background 0.15s', cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--panel-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: '16px', width: 40 }}>
                       <input

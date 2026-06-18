@@ -4,7 +4,9 @@ import 'package:lexilingo_app/features/notifications/data/datasources/notificati
 import 'package:lexilingo_app/features/notifications/data/datasources/notification_remote_datasource.dart';
 import 'package:lexilingo_app/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:lexilingo_app/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:lexilingo_app/features/notifications/domain/services/review_reminder_notification_sync_service.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
 
 /// Registers all notification-related dependencies
 void registerNotificationModule() {
@@ -23,9 +25,18 @@ void registerNotificationModule() {
       remoteDataSource: sl<NotificationRemoteDataSource>(),
     ),
   );
+  sl.registerLazySingleton<ReviewReminderNotificationSyncService>(
+    () => ReviewReminderNotificationSyncService(
+      notificationRepository: sl<NotificationRepository>(),
+      vocabularyRepository: sl<VocabularyRepository>(),
+    ),
+  );
 
   // Provider - Factory for fresh instances
   sl.registerFactory<NotificationProvider>(
-    () => NotificationProvider(repository: sl<NotificationRepository>()),
+    () => NotificationProvider(
+      repository: sl<NotificationRepository>(),
+      reviewReminderSyncService: sl<ReviewReminderNotificationSyncService>(),
+    ),
   );
 }

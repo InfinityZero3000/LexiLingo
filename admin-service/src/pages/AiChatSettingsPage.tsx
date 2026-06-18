@@ -5,7 +5,7 @@ import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
 import { ENV } from "../lib/env";
-import { Bot, MessageSquare, Zap, Key, Database, Settings } from "lucide-react";
+import { Bot, Zap, Key } from "lucide-react";
 
 interface AiChatConfig {
   gemini_api_key?: string;
@@ -27,6 +27,8 @@ export const AiChatSettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
     fetchConfig();
@@ -79,8 +81,9 @@ export const AiChatSettingsPage = () => {
   const handleSave = async () => {
     if (!config) return;
     setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
     try {
-      // Remap gemini_model → model_name for backend compatibility
       const payload = { ...config, model_name: config.gemini_model };
       const response = await fetch(`${ENV.aiAdminUrl}/config`, {
         method: "PUT",
@@ -91,10 +94,10 @@ export const AiChatSettingsPage = () => {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.detail || response.statusText);
       }
-      alert(t.common.success);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 4000);
     } catch (error: any) {
-      console.error("Failed to save config:", error);
-      alert(error.message || t.common.saveFailed);
+      setSaveError(error.message || t.common.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -123,6 +126,13 @@ export const AiChatSettingsPage = () => {
           {saving ? t.common.saving : t.common.save}
         </button>
       </div>
+
+      {saveError && <div className="form-error">{saveError}</div>}
+      {saveSuccess && (
+        <div style={{ padding: "12px 16px", borderRadius: 10, background: "#d1fae5", border: "1px solid #10b981", color: "#065f46", fontSize: 14, fontWeight: 500 }}>
+          ✓ {t.common.success}
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="card-grid">

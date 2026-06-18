@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -382,9 +383,6 @@ class _TopicListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final difficultyColor = _getDifficultyColor(story.difficultyLevel);
-    final difficultyLabel = _getDifficultyLabel(story.difficultyLevel);
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -449,24 +447,7 @@ class _TopicListItem extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: difficultyColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                          child: Text(
-                            difficultyLabel,
-                            style: TextStyle(
-                              color: difficultyColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                        CefrBadge(level: story.difficultyLevel.shortName),
                         const SizedBox(width: 8),
                         Icon(
                           Icons.timer_outlined,
@@ -505,34 +486,6 @@ class _TopicListItem extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  Color _getDifficultyColor(DifficultyLevel level) {
-    switch (level) {
-      case DifficultyLevel.A1:
-      case DifficultyLevel.A2:
-        return AppColors.greenSuccessBright;
-      case DifficultyLevel.B1:
-      case DifficultyLevel.B2:
-        return isDark ? AppColors.primaryDarkMode : AppColors.primary;
-      case DifficultyLevel.C1:
-      case DifficultyLevel.C2:
-        return Colors.amber[700]!;
-    }
-  }
-
-  String _getDifficultyLabel(DifficultyLevel level) {
-    switch (level) {
-      case DifficultyLevel.A1:
-      case DifficultyLevel.A2:
-        return 'Beginner';
-      case DifficultyLevel.B1:
-      case DifficultyLevel.B2:
-        return 'Intermediate';
-      case DifficultyLevel.C1:
-      case DifficultyLevel.C2:
-        return 'Advanced';
-    }
   }
 
 }

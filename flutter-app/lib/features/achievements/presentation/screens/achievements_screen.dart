@@ -4,11 +4,13 @@ library;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_widgets.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/achievements/presentation/widgets/achievement_unlock_overlay.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -29,7 +31,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Future<void> _loadData() async {
     final provider = context.read<AchievementProvider>();
     await provider.loadAll();
-    await provider.loadMyAchievements();
+    final newlyUnlocked = await provider.checkAchievements();
+    if (newlyUnlocked.isNotEmpty && mounted) {
+      await AchievementUnlockOverlay.show(
+        context,
+        achievements: newlyUnlocked,
+        onDismiss: provider.clearRecentlyUnlocked,
+      );
+    }
   }
 
   @override
@@ -400,7 +409,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ),
                 ],
               )
-            else
+            else ...[
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -415,11 +424,27 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                icon: const Icon(Icons.share_rounded, size: 18),
+                label: Text('achievements.share'.tr()),
+                onPressed: () => _shareAchievement(achievement),
+              ),
+            ],
             const SizedBox(height: 16),
           ],
         ),
       ),
     );
+  }
+
+  void _shareAchievement(AchievementEntity achievement) {
+    final text =
+        '🏆 I just unlocked "${achievement.name}" on LexiLingo!\n'
+        '${achievement.description}\n\n'
+        'Join me and start learning English today! 🌟\n'
+        '#LexiLingo #LanguageLearning';
+    Share.share(text);
   }
 
   Widget _buildRewardBadge(IconData icon, String text, Color color) {

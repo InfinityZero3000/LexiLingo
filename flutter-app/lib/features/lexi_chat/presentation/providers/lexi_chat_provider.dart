@@ -539,6 +539,7 @@ class LexiChatProvider extends ChangeNotifier {
 
           case LexiStreamDone(
             :final messageId,
+            :final fullText,
             :final corrections,
             :final linkedConcepts,
             :final vietnameseHint,
@@ -548,7 +549,15 @@ class LexiChatProvider extends ChangeNotifier {
             receivedDone = true;
             final idx = _messages.indexWhere((m) => m.id == placeholderId);
             if (idx != -1) {
-              final finalContent = _messages[idx].content;
+              final accumulated = _messages[idx].content.trim();
+              final serverText = fullText?.trim() ?? '';
+              // Prefer server-sanitized text (strips <think> blocks, properly formatted).
+              // Fall back to raw accumulated chunks only when server text is absent.
+              final finalContent = serverText.isNotEmpty
+                  ? serverText
+                  : (accumulated.isNotEmpty
+                      ? accumulated
+                      : 'Squawk! 🦜 Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',

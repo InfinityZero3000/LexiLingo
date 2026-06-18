@@ -289,7 +289,11 @@ class YouTubeProvider extends ChangeNotifier {
     if (_translationMemCache.containsKey(memKey)) {
       result = _translationMemCache[memKey]!;
     } else {
-      result = await _repository.translateWord(word, lang: lang);
+      result = await _repository.translateWord(
+        word,
+        lang: lang,
+        context: contextSentence ?? '',
+      );
       _translationMemCache[memKey] = result;
     }
 

@@ -14,7 +14,12 @@ async def test_get_current_user_accepts_valid_access_token(monkeypatch):
     monkeypatch.setenv("ALGORITHM", "HS256")
 
     token = jwt.encode(
-        {"sub": "user-123", "type": "access"},
+        {
+            "sub": "user-123",
+            "type": "access",
+            "iss": "lexilingo-backend",
+            "aud": "lexilingo-services",
+        },
         os.environ["SECRET_KEY"],
         algorithm=os.environ["ALGORITHM"],
     )
@@ -49,7 +54,12 @@ def test_decode_backend_jwt_requires_access_token_type(monkeypatch):
     monkeypatch.setenv("ALGORITHM", "HS256")
 
     refresh_token = jwt.encode(
-        {"sub": "user-123", "type": "refresh"},
+        {
+            "sub": "user-123",
+            "type": "refresh",
+            "iss": "lexilingo-backend",
+            "aud": "lexilingo-services",
+        },
         os.environ["SECRET_KEY"],
         algorithm=os.environ["ALGORITHM"],
     )

@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Optional
 
+from api.core.config import settings
 from api.services.model_gateway import ModelGateway, ModelPriority, get_gateway
 
 logger = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ async def _register_qwen(gateway: ModelGateway) -> None:
     async def loader():
         nonlocal handler
         config = OllamaQwenConfig(
-            base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            base_url=settings.OLLAMA_BASE_URL,
             model=os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b"),
             timeout=float(os.getenv("OLLAMA_TIMEOUT", "120")),
             context_length=int(os.getenv("OLLAMA_CONTEXT_LENGTH", "2048")),
@@ -96,18 +97,11 @@ async def _register_qwen(gateway: ModelGateway) -> None:
 
 
 async def _register_whisper(gateway: ModelGateway) -> None:
-    """Register Whisper model for STT."""
-    from api.services.handlers.whisper_handler import WhisperHandler, WhisperConfig
+    """Register a compatibility façade over the unified STT runtime."""
+    from api.services.handlers.whisper_handler import WhisperHandler
     
     async def loader():
-        config = WhisperConfig(
-            model_size=os.getenv("WHISPER_MODEL_SIZE", "base"),
-            model_path=os.getenv("WHISPER_MODEL_PATH"),
-            device=os.getenv("MODEL_DEVICE", "auto"),
-        )
-        handler = WhisperHandler(config)
-        await handler.load()
-        return handler
+        return WhisperHandler()
     
     async def unloader(instance):
         if instance:
@@ -119,10 +113,10 @@ async def _register_whisper(gateway: ModelGateway) -> None:
         loader_fn=loader,
         unloader_fn=unloader,
         description="Faster-Whisper for speech-to-text",
-        estimated_memory_mb=500,
+        estimated_memory_mb=0,
         priority=ModelPriority.NORMAL,
         idle_timeout_seconds=300,  # 5 minutes
-        preload=False,  # Lazy-load to save 500MB RAM at startup on low-memory VPS
+        preload=False,
     )
     
     logger.info("Registered: whisper (stt)")
