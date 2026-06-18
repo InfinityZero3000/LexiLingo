@@ -21,7 +21,6 @@ import 'package:lexilingo_app/features/progress/presentation/providers/streak_pr
 import 'package:lexilingo_app/features/progress/presentation/widgets/points_calendar_dialog.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_reward_dialog.dart';
-import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_up_dialog.dart';
