@@ -38,8 +38,8 @@ aiohttp>=3.14.1
 kuzu>=0.11.3
 
 # Embeddings
-sentence-transformers>=5.5.1,<6.0.0
-numpy>=2.4.6,<3.0.0
+sentence-transformers>=4.1.0,<5.0.0
+numpy>=1.26.4,<2.0.0
 
 # STT / TTS
 faster-whisper>=1.2.1
@@ -51,8 +51,8 @@ piper-tts>=1.4.2
 gTTS>=2.5.4
 
 # HuBERT / Pronunciation Analysis (transformers will auto-install torch)
-transformers>=5.10.2,<6.0.0
-accelerate>=0.34.2
+transformers>=4.41.0,<5.0.0
+accelerate>=0.25.0
 # NOTE: torch>=2.4.0 has no wheels for macOS x86_64. Max available: 2.2.2.
 torch>=2.2.0,<=2.2.2
 peft>=0.8.0  # LoRA fine-tuning and adapter loading
