@@ -223,6 +223,7 @@ class StreakProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
     return successData;
+  }
 
   /// Clear the milestone flag after the overlay has been shown.
   void clearMilestone() {
