@@ -7,7 +7,7 @@ import 'package:lexilingo_app/features/level/presentation/providers/proficiency_
 /// Registers all level-related dependencies
 void registerLevelModule() {
   // Provider - Factory for fresh instances
-  sl.registerFactory<LevelProvider>(() => LevelProvider());
+  sl.registerFactory<LevelProvider>(() => LevelProvider(apiClient: sl<ApiClient>()));
 
   // Proficiency data source (singleton — stateless HTTP wrapper)
   sl.registerLazySingleton<ProficiencyDataSource>(

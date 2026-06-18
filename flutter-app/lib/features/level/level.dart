@@ -14,8 +14,8 @@ library;
 export 'domain/entities/level_entity.dart';
 export 'domain/entities/proficiency_entity.dart';
 
-// Services
-export 'services/level_calculator.dart';
+// Domain services
+export 'domain/services/level_calculator.dart';
 
 // Providers
 export 'presentation/providers/level_provider.dart';

@@ -1,5 +1,5 @@
 import 'dart:math' as math;
-import '../domain/entities/level_entity.dart';
+import '../entities/level_entity.dart';
 
 /// Level Calculator Service
 /// Provides algorithms for calculating user level based on XP
