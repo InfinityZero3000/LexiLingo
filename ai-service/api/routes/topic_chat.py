@@ -26,6 +26,7 @@ from api.utils.cursor import (
 
 from api.core.database import get_database
 from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.repositories.topic_chat_repository import TopicChatRepository
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.config import settings
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
@@ -129,12 +130,11 @@ def _sanitize_topic_response(text: str) -> str:
 async def _ensure_topic_session_owner(
     session_id: str,
     current_user: AuthenticatedUser,
-    db: AsyncIOMotorDatabase,
+    repo: TopicChatRepository,
 ) -> dict:
-    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    session = await repo.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-
     owner_user_id = str(session.get("user_id") or "")
     if owner_user_id and owner_user_id != current_user.user_id:
         raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
@@ -323,7 +323,8 @@ async def start_topic_session(
         # Create session
         session_id = str(uuid.uuid4())
         created_at = datetime.now(timezone.utc)
-        
+        repo = TopicChatRepository(db)
+
         session = {
             "session_id": session_id,
             "user_id": request.user_id,
@@ -335,11 +336,11 @@ async def start_topic_session(
             "difficulty_level": story.difficulty_level.value,
             "created_at": created_at,
             "last_activity": created_at,
-            "message_count": 0
+            "message_count": 0,
         }
-        
-        await db["chat_sessions"].insert_one(session)
-        
+
+        await repo.create_session(session)
+
         # Warm KG subgraph for this topic in the background.
         # Seeds are stored in MongoDB session doc for use in send_topic_message.
         async def _warm_and_update_session():
@@ -353,31 +354,24 @@ async def start_topic_session(
                 )
                 kg_seeds = subgraph.get("seed_concepts", [])
                 if kg_seeds:
-                    await db["chat_sessions"].update_one(
-                        {"session_id": session_id},
-                        {"$set": {
-                            "kg_seed_concepts": kg_seeds,
-                            "kg_topic_fingerprint": subgraph.get("topic_fingerprint", ""),
-                        }}
+                    await repo.update_session_kg(
+                        session_id, kg_seeds, subgraph.get("topic_fingerprint", "")
                     )
             except Exception as exc:
                 logger.warning("Background KG warm failed for session %s: %s", session_id, exc)
 
         asyncio.create_task(_warm_and_update_session())
-        
-        # Get opening message from story
+
         opening_message = story.conversation_flow.opening_prompt
-        
-        # Store opening message as AI message
-        ai_message = {
+
+        await repo.insert_message({
             "message_id": str(uuid.uuid4()),
             "session_id": session_id,
             "content": opening_message,
             "role": "assistant",
             "timestamp": created_at,
-            "is_opening": True
-        }
-        await db["chat_messages"].insert_one(ai_message)
+            "is_opening": True,
+        })
         
         # Build response
         story_list_item = StoryListItem(
@@ -464,21 +458,13 @@ async def send_topic_message(
             fail_closed=True,
         )
         
-        # Get session
-        session = await _ensure_topic_session_owner(session_id, current_user, db)
-        
+        repo = TopicChatRepository(db)
+        session = await _ensure_topic_session_owner(session_id, current_user, repo)
+
         if session.get("session_type") != "topic_based":
-            raise HTTPException(
-                status_code=400, 
-                detail="This endpoint is only for topic-based sessions"
-            )
-        
-        # Get conversation history
-        history_cursor = db["chat_messages"].find(
-            {"session_id": session_id}
-        ).sort("timestamp", -1).limit(10)
-        history = await history_cursor.to_list(length=10)
-        history.reverse()
+            raise HTTPException(status_code=400, detail="This endpoint is only for topic-based sessions")
+
+        history = await repo.get_history(session_id, limit=10)
         
         preferred_llm = _normalize_preferred_llm(session.get("preferred_llm"))
 
@@ -510,7 +496,7 @@ async def send_topic_message(
             user_id=request.user_id,
             message=request.message,
             ai_response=display_response,
-            db=db,
+            repo=repo,
         )
         
         processing_time = int((time.time() - start_time) * 1000)
@@ -570,15 +556,12 @@ async def get_topic_session(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """Get details of a specific topic session."""
-    session = await _ensure_topic_session_owner(session_id, current_user, db)
-    
-    # Remove MongoDB _id field
+    repo = TopicChatRepository(db)
+    session = await _ensure_topic_session_owner(session_id, current_user, repo)
     session.pop("_id", None)
-    # Convert datetime fields to ISO strings
     for key in ("created_at", "last_activity"):
         if key in session and isinstance(session[key], datetime):
             session[key] = session[key].isoformat()
-    
     return session
 
 
@@ -593,28 +576,17 @@ async def get_topic_messages(
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     """Get all messages in a topic session."""
-    # Verify session exists
-    await _ensure_topic_session_owner(session_id, current_user, db)
-    
+    repo = TopicChatRepository(db)
+    await _ensure_topic_session_owner(session_id, current_user, repo)
+
     if limit < 0:
         raise HTTPException(status_code=400, detail="limit must be >= 0")
 
-    cursor = db["chat_messages"].find(
-        {"session_id": session_id}
-    ).sort("timestamp", 1)
-
-    if limit > 0:
-        cursor = cursor.limit(limit)
-        messages = await cursor.to_list(length=limit)
-    else:
-        messages = await load_full_cursor(cursor)
-    
-    # Clean up for response
+    messages = await repo.get_messages(session_id, limit=limit)
     for msg in messages:
         msg.pop("_id", None)
         if "timestamp" in msg and isinstance(msg["timestamp"], datetime):
             msg["timestamp"] = msg["timestamp"].isoformat()
-    
     return {"messages": messages}
 
 
@@ -629,39 +601,15 @@ async def get_topic_messages_paged(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    await _ensure_topic_session_owner(session_id, current_user, db)
+    repo = TopicChatRepository(db)
+    await _ensure_topic_session_owner(session_id, current_user, repo)
 
     if limit < 1:
         raise HTTPException(status_code=400, detail="limit must be >= 1")
 
-    safe_limit = min(limit, 200)
-    base_query: dict = {"session_id": session_id}
-    query: dict = dict(base_query)
-
-    if cursor:
-        cursor_ts, cursor_oid = decode_cursor_dt(cursor)
-        query = {
-            "session_id": session_id,
-            "$or": [
-                {"timestamp": {"$lt": cursor_ts}},
-                {"timestamp": cursor_ts, "_id": {"$lt": cursor_oid}},
-            ],
-        }
-
-    docs_desc = await (
-        db["chat_messages"]
-        .find(query)
-        .sort([("timestamp", -1), ("_id", -1)])
-        .limit(safe_limit + 1)
-        .to_list(length=safe_limit + 1)
-    )
-
-    has_more = len(docs_desc) > safe_limit
-    docs_desc = docs_desc[:safe_limit]
-    docs = list(reversed(docs_desc))
+    docs, has_more = await repo.get_messages_paged(session_id, limit=limit, cursor=cursor)
     messages = [_serialize_topic_message(doc) for doc in docs]
-
-    total_count = await db["chat_messages"].count_documents(base_query)
+    total_count = await repo.count_messages(session_id)
     next_cursor = encode_cursor(docs[0]) if has_more and docs else None
     prev_cursor = encode_cursor(docs[-1]) if docs else None
     window_start_ts = to_iso_timestamp(docs[0].get("timestamp")) if docs else None
@@ -690,10 +638,10 @@ async def get_topic_messages_metadata(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
-    await _ensure_topic_session_owner(session_id, current_user, db)
+    repo = TopicChatRepository(db)
+    await _ensure_topic_session_owner(session_id, current_user, repo)
 
-    base_query: dict = {"session_id": session_id}
-    total_count = await db["chat_messages"].count_documents(base_query)
+    total_count = await repo.count_messages(session_id)
 
     if total_count == 0:
         return {
@@ -712,23 +660,8 @@ async def get_topic_messages_metadata(
             }
         }
 
-    latest_docs = await (
-        db["chat_messages"]
-        .find(base_query)
-        .sort([("timestamp", -1), ("_id", -1)])
-        .limit(1)
-        .to_list(length=1)
-    )
-    oldest_docs = await (
-        db["chat_messages"]
-        .find(base_query)
-        .sort([("timestamp", 1), ("_id", 1)])
-        .limit(1)
-        .to_list(length=1)
-    )
-
-    latest = latest_docs[0]
-    oldest = oldest_docs[0]
+    latest = await repo.get_latest_message(session_id)
+    oldest = await repo.get_oldest_message(session_id)
     latest_cursor = encode_cursor(latest)
     oldest_cursor = encode_cursor(oldest)
     latest_ts = to_iso_timestamp(latest.get("timestamp"))

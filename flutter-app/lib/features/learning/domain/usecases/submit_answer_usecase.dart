@@ -1,20 +1,18 @@
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
-import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/answer_response.dart';
 import 'package:lexilingo_app/features/learning/domain/repositories/learning_repository.dart';
 
-/// Submit Answer Use Case
-/// Submits an answer for a question in the current lesson attempt
 class SubmitAnswerUseCase
-    implements UseCase<AnswerResponseModel, SubmitAnswerParams> {
+    implements UseCase<AnswerResponse, SubmitAnswerParams> {
   final LearningRepository _repository;
 
   SubmitAnswerUseCase({required LearningRepository repository})
     : _repository = repository;
 
   @override
-  Future<Either<Failure, AnswerResponseModel>> call(SubmitAnswerParams params) {
+  Future<Either<Failure, AnswerResponse>> call(SubmitAnswerParams params) {
     return _repository.submitAnswer(
       attemptId: params.attemptId,
       questionId: params.questionId,

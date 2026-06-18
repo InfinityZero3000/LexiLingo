@@ -6,8 +6,6 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -56,7 +54,7 @@ class _HomePageNewState extends State<HomePageNew> {
       homeProvider.loadHomeData().then((_) {
         // Fetch authoritative level data from backend.
         // Falls back to local formula if network is unavailable.
-        if (mounted) _levelProvider?.fetchLevelFull(sl<ApiClient>());
+        if (mounted) _levelProvider?.fetchLevelFull();
       });
       // Listen for level-up events triggered by fetchLevelFull
       _levelProvider?.addListener(_onLevelProviderChange);
@@ -1682,13 +1680,18 @@ class _HomePageNewState extends State<HomePageNew> {
       },
     ];
 
-    return SizedBox(
-      height: 124,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.05,
+        ),
         itemCount: quickActions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final action = quickActions[index];
           return _buildQuickActionChip(
@@ -1726,8 +1729,7 @@ class _HomePageNewState extends State<HomePageNew> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 84,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(16),

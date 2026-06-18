@@ -1,7 +1,13 @@
 """
-Admin API Routes
-Admin-only endpoints for content management (Courses, Units, Lessons, Vocabulary).
-Requires admin or super_admin role via RBAC system.
+Admin API Routes — DEPRECATED
+
+This module has been split into:
+  app/routes/admin_courses.py      — courses, units, lessons, vocab, grammar, questions, test-exams
+  app/routes/admin_gamification.py — achievements, shop
+  app/routes/admin_system.py       — seed endpoint, system-info, quota
+
+main.py now registers admin_courses_router, admin_gamification_router, admin_system_router directly.
+This file is kept only as a reference and is no longer imported.
 """
 
 from typing import Optional, List

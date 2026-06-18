@@ -2,10 +2,10 @@ import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/features/learning/data/datasources/learning_remote_datasource.dart';
-import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model.dart';
-import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
-import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
-import 'package:lexilingo_app/features/learning/data/models/lesson_complete_model.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/answer_response.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_complete.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/domain/repositories/learning_repository.dart';
 
@@ -17,7 +17,7 @@ class LearningRepositoryImpl implements LearningRepository {
     : _remoteDataSource = remoteDataSource;
 
   @override
-  Future<Either<Failure, LessonAttemptModel>> startLesson(
+  Future<Either<Failure, LessonAttempt>> startLesson(
     String lessonId,
   ) async {
     try {
@@ -33,7 +33,7 @@ class LearningRepositoryImpl implements LearningRepository {
   }
 
   @override
-  Future<Either<Failure, AnswerResponseModel>> submitAnswer({
+  Future<Either<Failure, AnswerResponse>> submitAnswer({
     required String attemptId,
     required String questionId,
     required String questionType,
@@ -63,7 +63,7 @@ class LearningRepositoryImpl implements LearningRepository {
   }
 
   @override
-  Future<Either<Failure, LessonCompleteModel>> completeLesson(
+  Future<Either<Failure, LessonComplete>> completeLesson(
     String attemptId,
   ) async {
     try {
@@ -79,7 +79,7 @@ class LearningRepositoryImpl implements LearningRepository {
   }
 
   @override
-  Future<Either<Failure, CourseRoadmapModel>> getCourseRoadmap(
+  Future<Either<Failure, CourseRoadmap>> getCourseRoadmap(
     String courseId,
   ) async {
     try {

@@ -3,7 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
-import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
 import 'package:lexilingo_app/features/learning/presentation/painters/roadmap_path_painter.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
@@ -30,8 +30,8 @@ const List<double> _kXCycle = [0.14, 0.32, 0.50, 0.68, 0.86, 0.68, 0.50, 0.32];
 // ─────────────────────────────────────────────────────────────
 class _NodeLayout {
   final Offset center;
-  final LessonProgressModel lesson;
-  final UnitRoadmapModel unit;
+  final LessonProgress lesson;
+  final UnitRoadmap unit;
   final int globalIndex;
 
   _NodeLayout({
@@ -67,7 +67,7 @@ class _NodeLayout {
 
 class _BannerLayout {
   final double top;
-  final UnitRoadmapModel unit;
+  final UnitRoadmap unit;
   _BannerLayout({required this.top, required this.unit});
 }
 
@@ -105,7 +105,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
 
   // ── Layout computation ─────────────────────────────────────
 
-  double _totalH(CourseRoadmapModel roadmap) {
+  double _totalH(CourseRoadmap roadmap) {
     double h = _kTopPad;
     for (final unit in roadmap.units) {
       h += _kBannerTopMargin + _kBannerH + 48.0;
@@ -115,7 +115,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   }
 
   ({List<_NodeLayout> nodes, List<_BannerLayout> banners}) _buildLayouts(
-    CourseRoadmapModel roadmap,
+    CourseRoadmap roadmap,
     double width,
   ) {
     final nodes = <_NodeLayout>[];
@@ -201,10 +201,10 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
 // ─────────────────────────────────────────────────────────────
 
 class _ZigzagRoadmap extends StatelessWidget {
-  final CourseRoadmapModel roadmap;
+  final CourseRoadmap roadmap;
   final String courseId;
-  final Function(CourseRoadmapModel, double) buildLayouts;
-  final Function(CourseRoadmapModel) totalH;
+  final Function(CourseRoadmap, double) buildLayouts;
+  final Function(CourseRoadmap) totalH;
 
   const _ZigzagRoadmap({
     required this.roadmap,
@@ -442,7 +442,7 @@ class _LessonNodeState extends State<_LessonNode>
     );
   }
 
-  Widget _nodeIcon(LessonProgressModel lesson) {
+  Widget _nodeIcon(LessonProgress lesson) {
     if (lesson.isLocked) {
       return Icon(Icons.lock_rounded, size: 26, color: AppColors.grey500);
     }
@@ -534,7 +534,7 @@ class _StarsBadge extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────
 
 class _CurrentLessonLabel extends StatelessWidget {
-  final LessonProgressModel lesson;
+  final LessonProgress lesson;
   final Color color;
   const _CurrentLessonLabel({required this.lesson, required this.color});
 
@@ -600,7 +600,7 @@ class _TriangleClipper extends CustomClipper<Path> {
 // ─────────────────────────────────────────────────────────────
 
 class _UnitBanner extends StatelessWidget {
-  final UnitRoadmapModel unit;
+  final UnitRoadmap unit;
   const _UnitBanner({required this.unit});
 
   @override
@@ -702,7 +702,7 @@ class _UnitBanner extends StatelessWidget {
 }
 
 class _UnitProgressRing extends StatelessWidget {
-  final UnitRoadmapModel unit;
+  final UnitRoadmap unit;
   const _UnitProgressRing({required this.unit});
 
   @override

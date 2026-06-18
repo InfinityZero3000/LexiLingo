@@ -1,20 +1,15 @@
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
+
 /// Lesson Attempt Model
 /// Represents response from POST /learning/lessons/{id}/start
-class LessonAttemptModel {
-  final String attemptId;
-  final String lessonId;
-  final DateTime startedAt;
-  final int totalQuestions;
-  final int livesRemaining;
-  final int hintsAvailable;
-
-  LessonAttemptModel({
-    required this.attemptId,
-    required this.lessonId,
-    required this.startedAt,
-    required this.totalQuestions,
-    required this.livesRemaining,
-    required this.hintsAvailable,
+class LessonAttemptModel extends LessonAttempt {
+  const LessonAttemptModel({
+    required super.attemptId,
+    required super.lessonId,
+    required super.startedAt,
+    required super.totalQuestions,
+    required super.livesRemaining,
+    required super.hintsAvailable,
   });
 
   factory LessonAttemptModel.fromJson(Map<String, dynamic> json) {

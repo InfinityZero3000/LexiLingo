@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_entity.dart';
-import 'package:lexilingo_app/features/level/services/level_calculator.dart';
+import 'package:lexilingo_app/features/level/domain/services/level_calculator.dart';
 
 /// Icon for a CEFR level code (A1–C2)
 IconData _cefrIcon(String cefrCode) {

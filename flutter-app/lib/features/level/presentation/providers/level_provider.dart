@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../domain/entities/level_entity.dart';
-import '../../services/level_calculator.dart';
+import '../../domain/services/level_calculator.dart';
 
-/// Level Provider
-/// Manages user level state and provides level-related functionality.
-/// Supports both local calculation and remote /me/level-full API.
 class LevelProvider with ChangeNotifier {
+  final ApiClient _apiClient;
+
+  LevelProvider({required ApiClient apiClient}) : _apiClient = apiClient;
+
   LevelStatus _levelStatus = LevelStatus.empty();
   bool _isLoading = false;
   String? _errorMessage;
@@ -234,13 +235,13 @@ class LevelProvider with ChangeNotifier {
   ///
   /// Requires an [ApiClient] instance (passed in to keep provider loosely
   /// coupled from DI container).
-  Future<void> fetchLevelFull(ApiClient apiClient) async {
+  Future<void> fetchLevelFull() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final data = await apiClient.get('/users/me/level-full');
+      final data = await _apiClient.get('/users/me/level-full');
       final bool isFirstLoad = _rawLevelFull.isEmpty;
 
       _rawLevelFull = data;

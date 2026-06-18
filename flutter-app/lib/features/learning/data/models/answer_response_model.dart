@@ -1,24 +1,17 @@
+import 'package:lexilingo_app/features/learning/domain/entities/answer_response.dart';
+
 /// Answer Response Model
 /// Represents response from POST /learning/attempts/{id}/answer
-class AnswerResponseModel {
-  final String questionAttemptId;
-  final bool isCorrect;
-  final String? correctAnswer;
-  final String? explanation;
-  final int xpEarned;
-  final int livesRemaining;
-  final int hintsRemaining;
-  final double currentScore;
-
-  AnswerResponseModel({
-    required this.questionAttemptId,
-    required this.isCorrect,
-    this.correctAnswer,
-    this.explanation,
-    required this.xpEarned,
-    required this.livesRemaining,
-    required this.hintsRemaining,
-    required this.currentScore,
+class AnswerResponseModel extends AnswerResponse {
+  const AnswerResponseModel({
+    required super.questionAttemptId,
+    required super.isCorrect,
+    super.correctAnswer,
+    super.explanation,
+    required super.xpEarned,
+    required super.livesRemaining,
+    required super.hintsRemaining,
+    required super.currentScore,
   });
 
   factory AnswerResponseModel.fromJson(Map<String, dynamic> json) {

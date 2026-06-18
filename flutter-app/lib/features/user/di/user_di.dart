@@ -151,6 +151,7 @@ void registerUserModule({required bool skipDatabase}) {
       repository: sl<SettingsRepository>(),
       notificationService: sl(),
       themePreferenceStore: sl<ThemePreferenceStore>(),
+      apiClient: sl<ApiClient>(),
     ),
   );
 

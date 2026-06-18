@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
-import 'package:lexilingo_app/core/di/injection_container.dart' as di;
-import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
@@ -183,7 +181,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Refresh authoritative CEFR + numeric level snapshot immediately.
     if (mounted) {
       try {
-        await context.read<LevelProvider>().fetchLevelFull(di.sl<ApiClient>());
+        await context.read<LevelProvider>().fetchLevelFull();
       } catch (_) {
         // Keep onboarding non-blocking if level refresh fails.
       }

@@ -186,9 +186,10 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               // Session Header (Progress, Stats)
               SessionHeader(session: session),
 
-              // Flashcard
+              // Flashcard — fixed position, never shifts when buttons appear
               Expanded(
-                child: Center(
+                child: Align(
+                  alignment: const Alignment(0, -0.15),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: SlideTransition(
@@ -205,12 +206,21 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                 ),
               ),
 
-              // Review Quality Buttons (Show after flip)
-              if (provider.isCardFlipped)
-                ReviewQualityButtons(
-                  onQualitySelected: _handleReview,
-                  isLoading: provider.isLoading,
+              // Review Quality Buttons — always occupies space to keep card fixed
+              Visibility(
+                visible: provider.isCardFlipped,
+                maintainSize: true,
+                maintainAnimation: true,
+                maintainState: true,
+                child: AnimatedOpacity(
+                  opacity: provider.isCardFlipped ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 250),
+                  child: ReviewQualityButtons(
+                    onQualitySelected: _handleReview,
+                    isLoading: provider.isLoading,
+                  ),
                 ),
+              ),
 
               const SizedBox(height: 32),
             ],
