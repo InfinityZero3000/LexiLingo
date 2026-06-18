@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_entity.dart';
-import 'package:lexilingo_app/features/level/services/level_calculator.dart';
+import 'package:lexilingo_app/features/level/domain/services/level_calculator.dart';
 
 void main() {
   group('LevelTiers', () {

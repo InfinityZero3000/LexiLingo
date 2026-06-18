@@ -6,8 +6,6 @@ import '../../domain/entities/daily_challenge_entity.dart';
 import '../providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
 
 /// Daily Challenges Card for Home Screen
 /// Shows today's challenges with progress
@@ -461,7 +459,7 @@ class DailyChallengesSheet extends StatelessWidget {
         ),
       );
       // Sync with server in background to apply any XP-boost multipliers.
-      levelProvider.fetchLevelFull(sl<ApiClient>());
+      levelProvider.fetchLevelFull();
     }
   }
 }
