@@ -205,6 +205,19 @@ type ApiEnvelope<T> = {
   error?: string;
 };
 
+export interface SourceSnapshot {
+  source_id: string;
+  source_name: string;
+  version: string;
+  license_id: string;
+  license_url: string;
+  attribution_text: string;
+  record_count: number;
+  last_sync_at: string | null;
+  status: 'approved' | 'rejected' | 'pending';
+  enabled: boolean;
+}
+
 const baseUrl = `${ENV.backendUrl}/admin/content-agent`;
 
 const unwrap = <T>(payload: T | ApiEnvelope<T>): T => {
@@ -355,3 +368,11 @@ export const retryContentAgentJob = (jobId: string) =>
 
 export const cancelContentAgentJob = (jobId: string) =>
   postJobAction(jobId, "cancel");
+
+export const getSourceCatalog = async (): Promise<SourceSnapshot[]> => {
+  const payload = await apiFetch<
+    SourceSnapshot[] | ApiEnvelope<SourceSnapshot[]>
+  >(`${baseUrl}/sources`);
+  const result = unwrap(payload);
+  return Array.isArray(result) ? result : [];
+};

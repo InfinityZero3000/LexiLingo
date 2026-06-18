@@ -437,6 +437,9 @@ export function ContentAgentDrawer({
                         <div>
                           <strong>{source.source_name}</strong>
                           <span>
+                            {typeof source.policy_version === "string" && source.policy_version
+                              ? `${t.contentAgent.snapshotVersion} ${source.policy_version} · `
+                              : ""}
                             {Array.isArray(source.content_usage)
                               ? source.content_usage.join(", ")
                               : source.content_usage ||
@@ -445,7 +448,7 @@ export function ContentAgentDrawer({
                           </span>
                         </div>
                         {typeof source.record_count === "number" && (
-                          <span>{source.record_count}</span>
+                          <span>{source.record_count} {t.contentAgent.snapshotRecords}</span>
                         )}
                       </div>
                     ))}
@@ -605,23 +608,30 @@ export function ContentAgentDrawer({
                 </button>
               )}
             {job.status === "preview_ready" && (
-              <button
-                className="primary-button content-agent-apply-button"
-                disabled={
-                  busyAction !== null ||
-                  !canApplyContentAgentJob({
-                    ...job,
-                    blocking_errors: blockingErrors,
-                  })
-                }
-                onClick={() => void handleApply()}
-                type="button"
-              >
-                <Database size={16} />
-                {busyAction === "apply"
-                  ? t.contentAgent.applying
-                  : t.contentAgent.applyDraft}
-              </button>
+              <>
+                {blockingErrors.length > 0 && (
+                  <span className="content-agent-apply-blocked">
+                    {t.contentAgent.validationBlocking}
+                  </span>
+                )}
+                <button
+                  className="primary-button content-agent-apply-button"
+                  disabled={
+                    busyAction !== null ||
+                    !canApplyContentAgentJob({
+                      ...job,
+                      blocking_errors: blockingErrors,
+                    })
+                  }
+                  onClick={() => void handleApply()}
+                  type="button"
+                >
+                  <Database size={16} />
+                  {busyAction === "apply"
+                    ? t.contentAgent.applying
+                    : t.contentAgent.applyDraft}
+                </button>
+              </>
             )}
           </footer>
         )}

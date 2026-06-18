@@ -118,4 +118,33 @@ describe("ContentAgentDrawer state", () => {
     expect(onApplied).toHaveBeenCalledWith(result);
     expect(result.created_entity_ids.course_ids).toEqual(["course-1"]);
   });
+
+  it("blocking errors from job and preview both prevent apply", () => {
+    expect(
+      canApplyContentAgentJob(
+        job({ blocking_errors: ["Missing required field: definition"] }),
+      ),
+    ).toBe(false);
+
+    expect(
+      canApplyContentAgentJob(
+        job({ blocking_errors: ["Invalid POS enum: VERB", "Missing license"] }),
+      ),
+    ).toBe(false);
+  });
+
+  it("canApply is true only when status is preview_ready and no blocking errors", () => {
+    expect(canApplyContentAgentJob(job({ status: "preview_ready", blocking_errors: [] }))).toBe(true);
+    expect(canApplyContentAgentJob(job({ status: "completed", blocking_errors: [] }))).toBe(false);
+    expect(canApplyContentAgentJob(job({ status: "failed", blocking_errors: [] }))).toBe(false);
+    expect(canApplyContentAgentJob(job({ status: "preview_ready", blocking_errors: ["err"] }))).toBe(false);
+  });
+
+  it("validation report shows error count through blocking_errors array", () => {
+    const jobWithErrors = job({
+      blocking_errors: ["Error 1", "Error 2", "Error 3"],
+    });
+    expect(jobWithErrors.blocking_errors).toHaveLength(3);
+    expect(canApplyContentAgentJob(jobWithErrors)).toBe(false);
+  });
 });

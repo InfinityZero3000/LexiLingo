@@ -329,6 +329,18 @@ const vi = {
     cancelJob: "Hủy job",
     cancelling: "Đang hủy...",
     cancelFailed: "Không thể hủy job content agent.",
+    sourceCatalog: "Nguồn nội dung",
+    sourceLoading: "Đang tải nguồn...",
+    sourceError: "Không tải được danh sách nguồn",
+    sourceEmpty: "Không có nguồn nào được phê duyệt",
+    uploadAttestation: "Tôi xác nhận tôi sở hữu hoặc có quyền thương mại đối với tệp này",
+    uploadAttestationRequired: "Bạn phải xác nhận quyền trước khi tải lên",
+    snapshotVersion: "Phiên bản",
+    snapshotLicense: "Giấy phép",
+    snapshotRecords: "bản ghi",
+    snapshotLastSync: "Đồng bộ lần cuối",
+    snapshotNotApproved: "Snapshot chưa được phê duyệt",
+    validationBlocking: "Không thể áp dụng — có lỗi kiểm tra",
   },
 
   // ============== Units ==============
