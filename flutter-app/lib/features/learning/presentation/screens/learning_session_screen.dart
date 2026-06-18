@@ -502,10 +502,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
     // Update streak when lesson is completed, then show milestone if reached
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!mounted) return;
+      if (!context.mounted) return;
       final streakProvider = context.read<StreakProvider>();
       await streakProvider.updateStreak();
-      if (!mounted) return;
+      if (!context.mounted) return;
       if (streakProvider.milestoneJustReached) {
         await StreakMilestoneOverlay.show(
           context,

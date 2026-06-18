@@ -165,11 +165,11 @@ class VocabProvider extends ChangeNotifier {
   /// Strips auto-generated seeded/placeholder definitions that were inserted
   /// by data-import scripts and should not be surfaced to the user.
   static String _cleanDefinition(String raw) {
-    const _seededPrefixes = [
+    const seededPrefixes = [
       'Seeded from crawled',
       '#N/A',
     ];
-    for (final prefix in _seededPrefixes) {
+    for (final prefix in seededPrefixes) {
       if (raw.startsWith(prefix)) return '';
     }
     return raw;
