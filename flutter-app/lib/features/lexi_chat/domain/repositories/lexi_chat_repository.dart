@@ -1,7 +1,7 @@
-import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
 
 /// Abstract repository for Lexi chat operations.
 abstract class LexiChatRepository {

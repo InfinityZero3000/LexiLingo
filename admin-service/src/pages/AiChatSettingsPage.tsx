@@ -4,7 +4,7 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
-import { ENV } from "../lib/env";
+import { getAiConfig, updateAiConfig } from "../lib/healthApi";
 import { Bot, Zap, Key } from "lucide-react";
 
 interface AiChatConfig {
@@ -34,18 +34,9 @@ export const AiChatSettingsPage = () => {
     fetchConfig();
   }, []);
 
-  const buildAdminHeaders = (includeContentType = false): Record<string, string> => ({
-    ...(includeContentType ? { "Content-Type": "application/json" } : {}),
-    ...(authStore.accessToken ? { Authorization: `Bearer ${authStore.accessToken}` } : {}),
-    ...(ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : {}),
-    ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
-  });
-
   const fetchConfig = async () => {
     try {
-      const response = await fetch(`${ENV.aiAdminUrl}/config`, {
-        headers: buildAdminHeaders(),
-      });
+      const response = await getAiConfig(authStore.accessToken ?? undefined);
       const data = await response.json();
       // Backend returns flat AiConfig object; remap model_name → gemini_model
       if (data && data.model_name) {
@@ -85,11 +76,7 @@ export const AiChatSettingsPage = () => {
     setSaveSuccess(false);
     try {
       const payload = { ...config, model_name: config.gemini_model };
-      const response = await fetch(`${ENV.aiAdminUrl}/config`, {
-        method: "PUT",
-        headers: buildAdminHeaders(true),
-        body: JSON.stringify(payload),
-      });
+      const response = await updateAiConfig(payload, authStore.accessToken ?? undefined);
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
         throw new Error(err.detail || response.statusText);

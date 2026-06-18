@@ -2,9 +2,10 @@
 library;
 
 import 'package:flutter/foundation.dart';
-import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
-import 'package:lexilingo_app/features/achievements/domain/repositories/achievement_repository.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
+import 'package:lexilingo_app/features/achievements/domain/repositories/achievement_repository.dart';
 import 'package:lexilingo_app/features/achievements/data/sample_achievements.dart';
 
 class AchievementProvider with ChangeNotifier {
@@ -15,7 +16,7 @@ class AchievementProvider with ChangeNotifier {
   // State
   List<AchievementEntity> _allAchievements = [];
   List<UserAchievementEntity> _myAchievements = [];
-  List<UnlockedAchievementModel> _recentlyUnlocked = [];
+  List<UnlockedAchievement> _recentlyUnlocked = [];
   bool _isLoading = false;
   String? _error;
   bool _usingSampleData = false;
@@ -23,7 +24,7 @@ class AchievementProvider with ChangeNotifier {
   // Getters
   List<AchievementEntity> get allAchievements => _allAchievements;
   List<UserAchievementEntity> get myAchievements => _myAchievements;
-  List<UnlockedAchievementModel> get recentlyUnlocked => _recentlyUnlocked;
+  List<UnlockedAchievement> get recentlyUnlocked => _recentlyUnlocked;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get usingSampleData => _usingSampleData;
@@ -166,7 +167,7 @@ class AchievementProvider with ChangeNotifier {
   }
 
   /// Force check all achievements and get newly unlocked
-  Future<List<UnlockedAchievementModel>> checkAchievements() async {
+  Future<List<UnlockedAchievement>> checkAchievements() async {
     try {
       final unlocked = await repository.checkAllAchievements();
       if (unlocked.isNotEmpty) {

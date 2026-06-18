@@ -2,8 +2,8 @@
 library;
 
 import 'package:lexilingo_app/features/achievements/data/datasources/achievement_remote_datasource.dart';
-import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
+import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
 import 'package:lexilingo_app/features/achievements/domain/repositories/achievement_repository.dart';
 
 class AchievementRepositoryImpl implements AchievementRepository {
@@ -27,7 +27,7 @@ class AchievementRepositoryImpl implements AchievementRepository {
   }
 
   @override
-  Future<List<UnlockedAchievementModel>> checkAllAchievements() async {
+  Future<List<UnlockedAchievement>> checkAllAchievements() async {
     return await remoteDataSource.checkAllAchievements();
   }
 }

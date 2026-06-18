@@ -1,30 +1,20 @@
+import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
+
 /// Course Roadmap Model
 /// Represents response from GET /learning/courses/{id}/roadmap
-class CourseRoadmapModel {
-  final String courseId;
-  final String courseTitle;
-  final String level;
-  final int totalUnits;
-  final int completedUnits;
-  final int totalLessons;
-  final int completedLessons;
-  final double completionPercentage;
-  final int totalXpEarned;
-  final int currentStreak;
-  final List<UnitRoadmapModel> units;
-
-  CourseRoadmapModel({
-    required this.courseId,
-    required this.courseTitle,
-    required this.level,
-    required this.totalUnits,
-    required this.completedUnits,
-    required this.totalLessons,
-    required this.completedLessons,
-    required this.completionPercentage,
-    required this.totalXpEarned,
-    required this.currentStreak,
-    required this.units,
+class CourseRoadmapModel extends CourseRoadmap {
+  const CourseRoadmapModel({
+    required super.courseId,
+    required super.courseTitle,
+    required super.level,
+    required super.totalUnits,
+    required super.completedUnits,
+    required super.totalLessons,
+    required super.completedLessons,
+    required super.completionPercentage,
+    required super.totalXpEarned,
+    required super.currentStreak,
+    required super.units,
   });
 
   factory CourseRoadmapModel.fromJson(Map<String, dynamic> json) {
@@ -60,37 +50,26 @@ class CourseRoadmapModel {
       'completion_percentage': completionPercentage,
       'total_xp_earned': totalXpEarned,
       'current_streak': currentStreak,
-      'units': units.map((e) => e.toJson()).toList(),
+      // invariant: units is always List<UnitRoadmapModel> when built via fromJson
+      'units': units.map((e) => (e as UnitRoadmapModel).toJson()).toList(),
     };
   }
 }
 
 /// Unit Roadmap Model
-class UnitRoadmapModel {
-  final String unitId;
-  final int unitNumber;
-  final String title;
-  final String? description;
-  final int totalLessons;
-  final int completedLessons;
-  final double completionPercentage;
-  final bool isCurrent;
-  final List<LessonProgressModel> lessons;
-  final String? iconUrl;
-  final String backgroundColor;
-
-  UnitRoadmapModel({
-    required this.unitId,
-    required this.unitNumber,
-    required this.title,
-    this.description,
-    required this.totalLessons,
-    required this.completedLessons,
-    required this.completionPercentage,
-    required this.isCurrent,
-    required this.lessons,
-    this.iconUrl,
-    required this.backgroundColor,
+class UnitRoadmapModel extends UnitRoadmap {
+  const UnitRoadmapModel({
+    required super.unitId,
+    required super.unitNumber,
+    required super.title,
+    super.description,
+    required super.totalLessons,
+    required super.completedLessons,
+    required super.completionPercentage,
+    required super.isCurrent,
+    required super.lessons,
+    super.iconUrl,
+    required super.backgroundColor,
   });
 
   factory UnitRoadmapModel.fromJson(Map<String, dynamic> json) {
@@ -126,7 +105,8 @@ class UnitRoadmapModel {
       'completed_lessons': completedLessons,
       'completion_percentage': completionPercentage,
       'is_current': isCurrent,
-      'lessons': lessons.map((e) => e.toJson()).toList(),
+      // invariant: lessons is always List<LessonProgressModel> when built via fromJson
+      'lessons': lessons.map((e) => (e as LessonProgressModel).toJson()).toList(),
       'icon_url': iconUrl,
       'background_color': backgroundColor,
     };
@@ -134,35 +114,21 @@ class UnitRoadmapModel {
 }
 
 /// Lesson Progress Model (for roadmap display)
-class LessonProgressModel {
-  final String lessonId;
-  final int lessonNumber;
-  final String title;
-  final String? description;
-  final bool isLocked;
-  final bool isCurrent;
-  final bool isCompleted;
-  final double? bestScore;
-  final int starsEarned;
-  final int attemptsCount;
-  final double completionPercentage;
-  final String? iconUrl;
-  final String backgroundColor;
-
-  LessonProgressModel({
-    required this.lessonId,
-    required this.lessonNumber,
-    required this.title,
-    this.description,
-    required this.isLocked,
-    required this.isCurrent,
-    required this.isCompleted,
-    this.bestScore,
-    required this.starsEarned,
-    required this.attemptsCount,
-    required this.completionPercentage,
-    this.iconUrl,
-    required this.backgroundColor,
+class LessonProgressModel extends LessonProgress {
+  const LessonProgressModel({
+    required super.lessonId,
+    required super.lessonNumber,
+    required super.title,
+    super.description,
+    required super.isLocked,
+    required super.isCurrent,
+    required super.isCompleted,
+    super.bestScore,
+    required super.starsEarned,
+    required super.attemptsCount,
+    required super.completionPercentage,
+    super.iconUrl,
+    required super.backgroundColor,
   });
 
   factory LessonProgressModel.fromJson(Map<String, dynamic> json) {

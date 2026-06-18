@@ -4,7 +4,7 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { DataTable } from "../components/DataTable";
 import { getMonitoringDashboard, type MonitoringDashboard } from "../lib/aiApi";
-import { ENV } from "../lib/env";
+import { checkAiHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
 
 type AiHealth = {
@@ -35,11 +35,10 @@ export const AiModelsPage = () => {
 
   useEffect(() => {
     setLoading(true);
-    const healthHeaders = ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : undefined;
 
     Promise.allSettled([
       getMonitoringDashboard(),
-      fetch(ENV.aiHealthUrl, { headers: healthHeaders }).then((r) => r.json()),
+      checkAiHealth().then((r) => r.json()),
     ])
       .then(([monRes, healthRes]) => {
         if (monRes.status === "fulfilled") setMonitor(monRes.value);

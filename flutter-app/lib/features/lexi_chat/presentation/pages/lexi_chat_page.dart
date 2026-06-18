@@ -7,8 +7,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
-import 'package:lexilingo_app/core/di/core_di.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
@@ -251,17 +249,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         setState(() => _isTranscribing = false);
         return;
       }
-
-      final aiClient = sl<AiApiClient>();
-      final result = await aiClient.postMultipart(
-        '/stt/transcribe',
-        fileField: 'audio',
-        fileBytes: bytes,
-        filename: 'voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
-        timeout: AppConstants.aiOperationTimeout,
-      );
-
-      final transcript = (result['text'] as String? ?? '').trim();
+      final chatProvider = context.read<LexiChatProvider>();
+      final transcript = await chatProvider.transcribeAudio(bytes);
+      if (!mounted) return;
       setState(() => _isTranscribing = false);
 
       if (transcript.isEmpty) {
@@ -277,6 +267,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       if (!mounted) return;
       await _sendMessage();
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isRecording = false;
         _isTranscribing = false;

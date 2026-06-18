@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lexilingo_app/features/lexi_chat/data/datasources/lexi_chat_data_source.dart';
+import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
@@ -111,7 +112,7 @@ void main() {
   group('LexiChatProvider', () {
     test('builds web-safe request ids without crypto random', () async {
       final repo = _FakeLexiChatRepository();
-      final provider = LexiChatProvider(repository: repo);
+      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
       addTearDown(provider.dispose);
 
       await provider.sendMessage('hello', userId: 'user@example.com');
@@ -131,7 +132,7 @@ void main() {
     test('falls back to non-streaming send when SSE closes empty', () async {
       final repo = _FakeLexiChatRepository()
         ..streamFactory = () => const Stream<LexiStreamEvent>.empty();
-      final provider = LexiChatProvider(repository: repo);
+      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
       addTearDown(provider.dispose);
 
       await provider.sendMessageStreaming('hello', userId: 'user-1');
@@ -152,7 +153,7 @@ void main() {
           const LexiStreamChunk('Hi'),
           const LexiStreamChunk(' there'),
         ]);
-      final provider = LexiChatProvider(repository: repo);
+      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
       addTearDown(provider.dispose);
 
       await provider.sendMessageStreaming('hello', userId: 'user-1');
