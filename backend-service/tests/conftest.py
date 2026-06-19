@@ -26,7 +26,7 @@ os.environ["DEBUG"] = "false"
 # Keep tests isolated from local/prod env-switch state.
 # Using APP_ENV=testing ensures production-only middleware (e.g., TrustedHost)
 # does not break ASGI test client requests to http://test.
-os.environ.setdefault("APP_ENV", "testing")
+os.environ["APP_ENV"] = "testing"
 
 from app.main import app
 from app.core.database import Base, get_db
