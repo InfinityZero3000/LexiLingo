@@ -8,6 +8,7 @@ import {
   getUsers,
   updateUserStatus,
   bulkUserAction,
+  permanentlyDeleteUser,
   getUserDetail,
   getRoleLabel,
   getRoleColor,
@@ -15,6 +16,7 @@ import {
   type UserListItem as ApiUserListItem,
 } from '../lib/userManagementApi';
 import UserDetailModal from '../components/user-management/UserDetailModal';import { SectionHeader } from "../components/SectionHeader";import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+import { useAuth } from '../components/AuthProvider';
 
 type UserListItem = ApiUserListItem & {
   avatar_url: string | null;
@@ -24,7 +26,8 @@ type UserListItem = ApiUserListItem & {
 
 export default function UserManagementPage() {
   const queryClient = useQueryClient();
-  
+  const { user: currentAdmin, role } = useAuth();
+
   // State
   const [filters, setFilters] = useState<UserFilters>({
     page: 1,
@@ -59,7 +62,14 @@ export default function UserManagementPage() {
       setSelectedUsers(new Set());
     },
   });
-  
+
+  const deleteMutation = useMutation({
+    mutationFn: permanentlyDeleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
   // Handlers
   const handleFilterChange = (newFilters: Partial<UserFilters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
@@ -110,6 +120,12 @@ export default function UserManagementPage() {
   
   const handleViewDetail = (userId: string) => {
     setDetailModalUserId(userId);
+  };
+
+  const handlePermanentDelete = (userId: string, email: string) => {
+    if (confirm(`Xóa vĩnh viễn tài khoản "${email}"? Toàn bộ dữ liệu của người dùng sẽ bị xóa và KHÔNG THỂ hoàn tác.`)) {
+      deleteMutation.mutate(userId);
+    }
   };
   
   // Render
@@ -349,6 +365,22 @@ export default function UserManagementPage() {
                             </svg>
                           )}
                         </button>
+                        {role === 'super_admin' && user.id !== currentAdmin?.id && user.role_level < 2 && (
+                          <button
+                            onClick={() => handlePermanentDelete(user.id, user.email)}
+                            disabled={deleteMutation.isPending}
+                            className="icon-button"
+                            title="Xóa vĩnh viễn"
+                            style={{ width: 32, height: 32, color: '#dc2626', opacity: deleteMutation.isPending ? 0.5 : 1 }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/>
+                              <line x1="10" y1="11" x2="10" y2="17"/>
+                              <line x1="14" y1="11" x2="14" y2="17"/>
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

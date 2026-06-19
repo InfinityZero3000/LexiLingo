@@ -1680,36 +1680,54 @@ class _HomePageNewState extends State<HomePageNew> {
       },
     ];
 
+    const crossAxisCount = 3;
+    const spacing = 12.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.05,
-        ),
-        itemCount: quickActions.length,
-        itemBuilder: (context, index) {
-          final action = quickActions[index];
-          return _buildQuickActionChip(
-            context,
-            icon: action['icon'] as IconData,
-            label: (action['label'] as String).tr(),
-            color: action['color'] as Color,
-            bgColor: action['bgColor'] as Color,
-            onTap: () {
-              final route = action['route'] as String;
-              if (route == '/vocab') {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const VocabLibraryPage()),
-                );
-              } else {
-                Navigator.pushNamed(context, route);
-              }
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tileWidth =
+              (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
+                  crossAxisCount;
+          // Scale the icon (and tile height) with tile width instead of a
+          // fixed aspect ratio, so narrow screens don't overflow vertically.
+          final iconSize = (tileWidth * 0.42).clamp(34.0, 44.0);
+          final tileHeight = iconSize + 56;
+
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              mainAxisExtent: tileHeight,
+            ),
+            itemCount: quickActions.length,
+            itemBuilder: (context, index) {
+              final action = quickActions[index];
+              return _buildQuickActionChip(
+                context,
+                icon: action['icon'] as IconData,
+                label: (action['label'] as String).tr(),
+                color: action['color'] as Color,
+                bgColor: action['bgColor'] as Color,
+                iconSize: iconSize,
+                onTap: () {
+                  final route = action['route'] as String;
+                  if (route == '/vocab') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const VocabLibraryPage(),
+                      ),
+                    );
+                  } else {
+                    Navigator.pushNamed(context, route);
+                  }
+                },
+              );
             },
           );
         },
@@ -1724,8 +1742,10 @@ class _HomePageNewState extends State<HomePageNew> {
     required Color color,
     required Color bgColor,
     required VoidCallback onTap,
+    double iconSize = 44,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fontSize = iconSize <= 38 ? 9.0 : 10.0;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1741,8 +1761,8 @@ class _HomePageNewState extends State<HomePageNew> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: iconSize,
+              height: iconSize,
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(12),
@@ -1757,14 +1777,14 @@ class _HomePageNewState extends State<HomePageNew> {
               child: Icon(
                 icon,
                 color: Theme.of(context).colorScheme.surface,
-                size: 22,
+                size: iconSize * 0.5,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               label,
               style: TextStyle(
-                fontSize: 10,
+                fontSize: fontSize,
                 height: 1.1,
                 fontWeight: FontWeight.w600,
                 color: color,

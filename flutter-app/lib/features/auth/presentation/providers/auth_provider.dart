@@ -425,30 +425,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // Permanently delete current user account (GDPR hard delete)
-  Future<void> deleteAccount() async {
-    try {
-      _isLoading = true;
-      _errorMessage = null;
-      notifyListeners();
-
-      final apiClient = sl<ApiClient>();
-      await apiClient.delete('/users/me/permanent');
-
-      await googleSignInService.signOut();
-      await signOutUseCase(NoParams());
-      await FirebaseMessagingService.instance.clearRegisteredToken();
-      _user = null;
-    } catch (e) {
-      debugPrint("Delete account error: $e");
-      _errorMessage = _parseErrorMessage(e.toString());
-      rethrow;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
   // Register new user
   Future<void> register({
     required String email,
