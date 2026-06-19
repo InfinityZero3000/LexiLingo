@@ -10,7 +10,7 @@ import os
 from typing import AsyncGenerator
 from pathlib import Path
 from httpx import AsyncClient
-from sqlalchemy import text
+from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 from uuid import uuid4
@@ -157,30 +157,41 @@ def auth_headers(test_user: User) -> dict:
 @pytest.fixture
 async def admin_user(db_session: AsyncSession) -> User:
     """Create a test admin user with admin role for testing admin endpoints."""
-    admin_role = Role(
-        name="Admin", slug="admin", level=1,
-        description="Admin role", is_system=True, is_active=True
-    )
-    db_session.add(admin_role)
-    await db_session.commit()
-    await db_session.refresh(admin_role)
+    # Check if Admin role already exists to avoid unique constraint violations
+    res = await db_session.execute(select(Role).where(Role.name == "Admin"))
+    admin_role = res.scalar_one_or_none()
+    
+    if not admin_role:
+        admin_role = Role(
+            name="Admin", slug="admin", level=1,
+            description="Admin role", is_system=True, is_active=True
+        )
+        db_session.add(admin_role)
+        await db_session.commit()
+        await db_session.refresh(admin_role)
 
-    user = User(
-        email="admin@example.com",
-        username="adminuser",
-        hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
-        display_name="Admin User",
-        is_active=True,
-        is_verified=True,
-        native_language="vi",
-        target_language="en",
-        level="beginner",
-        role_id=admin_role.id,
-    )
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
+    # Check if admin user already exists to avoid unique constraint violations
+    res_user = await db_session.execute(select(User).where(User.email == "admin@example.com"))
+    user = res_user.scalar_one_or_none()
+    
+    if not user:
+        user = User(
+            email="admin@example.com",
+            username="adminuser",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            display_name="Admin User",
+            is_active=True,
+            is_verified=True,
+            native_language="vi",
+            target_language="en",
+            level="beginner",
+            role_id=admin_role.id,
+        )
+        db_session.add(user)
+        await db_session.commit()
+        await db_session.refresh(user)
     return user
+
 
 
 @pytest.fixture

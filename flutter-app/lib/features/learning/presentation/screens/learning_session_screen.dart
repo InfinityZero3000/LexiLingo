@@ -228,8 +228,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           return CategorizationWidget(
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
-            userAnswer: provider.currentUserAnswer,
+            userAnswer:
+                provider.currentUserAnswer ?? provider.currentDraftAnswer,
             isCorrect: provider.isCurrentCorrect,
           );
         case 'cognitive_fluidity':

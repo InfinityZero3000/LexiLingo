@@ -108,7 +108,7 @@ async def register(
     try:
         from app.core.security import create_verification_token
         token = create_verification_token(
-            {"sub": str(user.id), "email": user.email, "type": "email_verification"},
+            {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
             expires_minutes=1440,
         )
         await EmailService.send_verification_email(
@@ -133,7 +133,7 @@ async def resend_verification_email(
         try:
             from app.core.security import create_verification_token
             token = create_verification_token(
-                {"sub": str(user.id), "email": user.email, "type": "email_verification"},
+                {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
                 expires_minutes=1440,
             )
             await EmailService.send_verification_email(

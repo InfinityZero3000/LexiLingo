@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import smtplib
+import html
 from email.message import EmailMessage
 from pathlib import Path
 from urllib.parse import quote
@@ -75,15 +76,21 @@ class EmailService:
             )
             return False
 
-        context = {
+        html_context = {
+            "display_name": html.escape(display_name or "Learner"),
+            "reset_link": html.escape(reset_link),
+            "expiry_minutes": "60",
+            "support_email": html.escape(settings.EMAIL_FROM),
+        }
+        text_context = {
             "display_name": display_name or "Learner",
             "reset_link": reset_link,
             "expiry_minutes": "60",
             "support_email": settings.EMAIL_FROM,
         }
 
-        html_body = cls._render_template("password_reset_email.html", context)
-        text_body = cls._render_template("password_reset_email.txt", context)
+        html_body = cls._render_template("password_reset_email.html", html_context)
+        text_body = cls._render_template("password_reset_email.txt", text_context)
 
         message = EmailMessage()
         message["Subject"] = "LexiLingo - Reset your password"
@@ -124,15 +131,21 @@ class EmailService:
             )
             return False
 
-        context = {
+        html_context = {
+            "display_name": html.escape(display_name or "Learner"),
+            "verify_link": html.escape(verify_link),
+            "expiry_hours": "24",
+            "support_email": html.escape(settings.EMAIL_FROM),
+        }
+        text_context = {
             "display_name": display_name or "Learner",
             "verify_link": verify_link,
             "expiry_hours": "24",
             "support_email": settings.EMAIL_FROM,
         }
 
-        html_body = cls._render_template("verification_email.html", context)
-        text_body = cls._render_template("verification_email.txt", context)
+        html_body = cls._render_template("verification_email.html", html_context)
+        text_body = cls._render_template("verification_email.txt", text_context)
 
         message = EmailMessage()
         message["Subject"] = "LexiLingo - Verify your email address"
@@ -170,7 +183,14 @@ class EmailService:
             )
             return False
 
-        context = {
+        html_context = {
+            "display_name": html.escape(display_name or "Learner"),
+            "due_count": str(max(0, due_count)),
+            "review_link": html.escape(review_link),
+            "settings_link": html.escape(settings_link),
+            "support_email": html.escape(settings.EMAIL_FROM),
+        }
+        text_context = {
             "display_name": display_name or "Learner",
             "due_count": str(max(0, due_count)),
             "review_link": review_link,
@@ -178,8 +198,8 @@ class EmailService:
             "support_email": settings.EMAIL_FROM,
         }
 
-        html_body = cls._render_template("vocabulary_review_reminder.html", context)
-        text_body = cls._render_template("vocabulary_review_reminder.txt", context)
+        html_body = cls._render_template("vocabulary_review_reminder.html", html_context)
+        text_body = cls._render_template("vocabulary_review_reminder.txt", text_context)
 
         message = EmailMessage()
         message["Subject"] = "LexiLingo - Time to review your vocabulary"
@@ -216,11 +236,12 @@ class EmailService:
             f"If you didn't request this, ignore this email.\n\n"
             f"— LexiLingo Team"
         )
-        html = f"""
+        safe_display_name = html.escape(display_name)
+        html_body = f"""
 <html><body style="font-family:sans-serif;background:#f8f9ff;padding:32px">
   <div style="max-width:480px;margin:auto;background:#fff;border-radius:16px;padding:32px">
     <h2 style="color:#AD3200;margin:0 0 8px">LingoAdmin Login</h2>
-    <p>Hi <strong>{display_name}</strong>,</p>
+    <p>Hi <strong>{safe_display_name}</strong>,</p>
     <p>Your one-time passcode is:</p>
     <div style="background:#FFF3EE;border-radius:12px;padding:24px;text-align:center;margin:24px 0">
       <span style="font-size:36px;font-weight:700;letter-spacing:8px;color:#AD3200">{otp}</span>
@@ -229,5 +250,5 @@ class EmailService:
   </div>
 </body></html>"""
         msg.set_content(text)
-        msg.add_alternative(html, subtype="html")
+        msg.add_alternative(html_body, subtype="html")
         return msg

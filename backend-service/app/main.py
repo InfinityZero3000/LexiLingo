@@ -29,6 +29,7 @@ from app.core.middleware import (
     RequestLoggingMiddleware,
     RequestIDMiddleware,
     PrivateNetworkAccessMiddleware,
+    SecurityHeadersMiddleware,
 )
 from app.core.exceptions import (
     http_exception_handler,
@@ -239,6 +240,9 @@ else:
 
 # 6. Private Network Access - Chrome CORS-RFC1918 (outermost)
 app.add_middleware(PrivateNetworkAccessMiddleware)
+
+# 7. Security Headers Middleware (outermost for security fallback)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # ===== EXCEPTION HANDLERS =====
 app.add_exception_handler(HTTPException, http_exception_handler)

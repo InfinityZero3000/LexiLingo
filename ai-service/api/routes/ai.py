@@ -19,6 +19,7 @@ from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
 from api.services.trace_cag import get_trace_cag
 from api.services.v3_pipeline import get_v3_pipeline
+from api.routes.admin import verify_admin_api_key
 
 router = APIRouter()
 
@@ -281,7 +282,9 @@ async def get_community_concepts(community_id: int):
     summary="Performance monitoring dashboard",
     description="Comprehensive performance metrics and system statistics"
 )
-async def get_monitoring_dashboard():
+async def get_monitoring_dashboard(
+    _key: str = Depends(verify_admin_api_key),
+):
     """
     Get comprehensive monitoring data for dashboard.
     
@@ -320,7 +323,10 @@ async def get_monitoring_dashboard():
     "/monitoring/metrics/{metric_name}",
     summary="Get specific metric statistics"
 )
-async def get_metric_stats(metric_name: str):
+async def get_metric_stats(
+    metric_name: str,
+    _key: str = Depends(verify_admin_api_key),
+):
     """Get detailed statistics for a specific metric."""
     try:
         from api.services.telemetry import get_telemetry
@@ -356,7 +362,9 @@ async def get_metric_stats(metric_name: str):
     "/monitoring/system",
     summary="System resource statistics"
 )
-async def get_system_stats():
+async def get_system_stats(
+    _key: str = Depends(verify_admin_api_key),
+):
     """Get current system resource usage."""
     try:
         from api.services.performance_monitor import get_performance_monitor
@@ -376,7 +384,9 @@ async def get_system_stats():
     "/monitoring/health",
     summary="System health check"
 )
-async def check_system_health():
+async def check_system_health(
+    _key: str = Depends(verify_admin_api_key),
+):
     """Check system resource health with warnings."""
     try:
         from api.services.performance_monitor import get_performance_monitor

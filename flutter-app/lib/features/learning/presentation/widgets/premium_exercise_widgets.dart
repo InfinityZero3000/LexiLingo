@@ -2992,6 +2992,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
 class CategorizationWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -3000,6 +3001,7 @@ class CategorizationWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -3012,6 +3014,45 @@ class CategorizationWidget extends StatefulWidget {
 class _CategorizationWidgetState extends State<CategorizationWidget> {
   String? _selectedWord;
   final Map<String, String> _assignments = {}; // word → category
+
+  @override
+  void initState() {
+    super.initState();
+    _parseUserAnswer();
+  }
+
+  @override
+  void didUpdateWidget(CategorizationWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.userAnswer != oldWidget.userAnswer) {
+      _parseUserAnswer();
+    }
+  }
+
+  void _parseUserAnswer() {
+    _assignments.clear();
+    final ans = widget.userAnswer;
+    if (ans != null && ans.isNotEmpty) {
+      final pairs = ans.split(',');
+      for (final pair in pairs) {
+        final parts = pair.split(':');
+        if (parts.length == 2) {
+          _assignments[parts[0].trim()] = parts[1].trim();
+        }
+      }
+    }
+  }
+
+  void _updateAnswer() {
+    final ans = _assignments.entries
+        .map((e) => '${e.key}:${e.value}')
+        .join(', ');
+    if (widget.onInputChanged != null) {
+      widget.onInputChanged!(ans);
+    } else {
+      widget.onAnswer(ans);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3055,104 +3096,118 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                 .toList();
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: GestureDetector(
-                onTap: widget.isAnswered || _selectedWord == null
-                    ? null
-                    : () {
-                        setState(() {
-                          _assignments[_selectedWord!] = cat;
-                          _selectedWord = null;
-                        });
-                        final ans = _assignments.entries
-                            .map((e) => '${e.key}:${e.value}')
-                            .join(', ');
-                        widget.onAnswer(ans);
-                      },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.all(14),
-                  constraints: const BoxConstraints(minHeight: 72),
-                  decoration: BoxDecoration(
-                    color: _selectedWord != null && !widget.isAnswered
-                        ? colors.primary.withValues(alpha: 0.06)
-                        : colors.card,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _selectedWord != null && !widget.isAnswered
-                          ? colors.primary
-                          : colors.border,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            ci == 0
-                                ? Icons.category_outlined
-                                : Icons.bolt_outlined,
-                            size: 18,
-                            color: ci == 0
-                                ? colors.primary
-                                : const Color(0xFF00A86B),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            cat.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: ci == 0
-                                  ? colors.primary
-                                  : const Color(0xFF00A86B),
-                              letterSpacing: 1.1,
-                            ),
-                          ),
-                        ],
+              child: DragTarget<String>(
+                onWillAcceptWithDetails: (details) => !widget.isAnswered,
+                onAcceptWithDetails: (details) {
+                  final word = details.data;
+                  setState(() {
+                    _assignments[word] = cat;
+                    if (_selectedWord == word) {
+                      _selectedWord = null;
+                    }
+                  });
+                  _updateAnswer();
+                },
+                builder: (context, candidateData, rejectedData) {
+                  final isHovered = candidateData.isNotEmpty;
+                  return GestureDetector(
+                    onTap: widget.isAnswered || _selectedWord == null
+                        ? null
+                        : () {
+                            setState(() {
+                              _assignments[_selectedWord!] = cat;
+                              _selectedWord = null;
+                            });
+                            _updateAnswer();
+                          },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(14),
+                      constraints: const BoxConstraints(minHeight: 72),
+                      decoration: BoxDecoration(
+                        color: (_selectedWord != null || isHovered) && !widget.isAnswered
+                            ? colors.primary.withValues(alpha: 0.06)
+                            : colors.card,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: (_selectedWord != null || isHovered) && !widget.isAnswered
+                              ? colors.primary
+                              : colors.border,
+                          width: 1.5,
+                        ),
                       ),
-                      if (assigned.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: assigned
-                              .map(
-                                (w) => GestureDetector(
-                                  onTap: widget.isAnswered
-                                      ? null
-                                      : () {
-                                          setState(
-                                            () => _assignments.remove(w),
-                                          );
-                                        },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 7,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: colors.surface,
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      w,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: colors.primary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                ci == 0
+                                    ? Icons.category_outlined
+                                    : Icons.bolt_outlined,
+                                size: 18,
+                                color: ci == 0
+                                    ? colors.primary
+                                    : const Color(0xFF00A86B),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                cat.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: ci == 0
+                                      ? colors.primary
+                                      : const Color(0xFF00A86B),
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (assigned.isNotEmpty) ...[
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: assigned
+                                  .map(
+                                    (w) => GestureDetector(
+                                      onTap: widget.isAnswered
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                _assignments.remove(w);
+                                              });
+                                              _updateAnswer();
+                                            },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: colors.surface,
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          w,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            color: colors.primary,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                                  )
+                                  .toList(),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             );
           }),
@@ -3170,51 +3225,73 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                 runSpacing: 10,
                 children: unassigned.map((w) {
                   final sel = _selectedWord == w;
-                  return GestureDetector(
+                  final cardChild = AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: sel ? colors.primary : colors.card,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: sel ? colors.primary : colors.border,
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.shadow,
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.drag_indicator,
+                          size: 14,
+                          color: sel ? Colors.white : colors.textMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          w,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: sel ? Colors.white : colors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  final cardWidget = GestureDetector(
                     onTap: widget.isAnswered
                         ? null
                         : () => setState(() => _selectedWord = sel ? null : w),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: sel ? colors.primary : colors.card,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: sel ? colors.primary : colors.border,
-                          width: 1.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.shadow,
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.drag_indicator,
-                            size: 14,
-                            color: sel ? Colors.white : colors.textMuted,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            w,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: sel ? Colors.white : colors.textPrimary,
-                            ),
-                          ),
-                        ],
+                    child: cardChild,
+                  );
+
+                  if (widget.isAnswered) {
+                    return cardWidget;
+                  }
+
+                  return Draggable<String>(
+                    data: w,
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Opacity(
+                        opacity: 0.85,
+                        child: cardChild,
                       ),
                     ),
+                    childWhenDragging: Opacity(
+                      opacity: 0.3,
+                      child: cardChild,
+                    ),
+                    child: cardWidget,
                   );
                 }).toList(),
               ),

@@ -225,8 +225,9 @@ async def calculate_challenge_progress(
 ) -> int:
     """Calculate current progress for a challenge."""
     
-    today_start = datetime.combine(today, datetime.min.time())
-    today_end = datetime.combine(today + timedelta(days=1), datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
+    today_end = datetime.combine(today + timedelta(days=1), datetime.min.time()).replace(tzinfo=local_tz)
     
     if challenge["category"] == "lesson":
         if challenge["id"] == "complete_lessons":
@@ -382,7 +383,8 @@ async def get_daily_challenges(
     challenges = get_challenges_for_user(current_user.id, today)
     
     # Get claimed challenges for today
-    today_start = datetime.combine(today, datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
     claims_result = await db.execute(
         select(ChallengeRewardClaim.challenge_id).where(
             and_(
@@ -458,7 +460,8 @@ async def claim_daily_bonus(
     from app.services.item_effects_service import ItemEffectsService
 
     today = date.today()
-    today_start = datetime.combine(today, datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
     challenges = get_challenges_for_user(current_user.id, today)
 
     # Check if bonus already claimed
@@ -556,7 +559,8 @@ async def claim_challenge_reward(
     from app.services.item_effects_service import ItemEffectsService
     
     today = date.today()
-    today_start = datetime.combine(today, datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
     challenges = get_challenges_for_user(current_user.id, today)
     
     # Find the challenge

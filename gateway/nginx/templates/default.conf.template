@@ -304,6 +304,11 @@ server {
         return 429 '{"detail":"too_many_requests","retry_after_seconds":60}';
     }
 
+    # Block Prometheus metrics from public access
+    location /metrics {
+        return 403;
+    }
+
     # -----------------------------------------------------------------------
     # Scanner / exploit path blocking
     # Return 444 (no response) instead of 403 to deny scanners any feedback.

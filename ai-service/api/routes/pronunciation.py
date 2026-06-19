@@ -72,7 +72,13 @@ async def assess_pronunciation(
             fail_closed=True,
         )
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{audio.filename or 'recording.wav'}") as tmp:
+        requested_suffix = os.path.splitext(audio.filename or "")[1].lower()
+        suffix = (
+            requested_suffix
+            if requested_suffix in {".wav", ".mp3", ".m4a", ".ogg", ".webm", ".flac"}
+            else ".wav"
+        )
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             content = await audio.read()
             if not content:
                 raise HTTPException(status_code=400, detail="Audio file is empty")
