@@ -146,14 +146,12 @@ class _LoginPageState extends State<LoginPage> {
                               )
                             : const SizedBox(width: 48),
                         Expanded(
-                          child: Text(
-                            'LexiLingo',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? Colors.white
-                                  : AppColors.surfaceDarkInput,
+                          child: Center(
+                            child: Image.asset(
+                              'assets/out-app/LexiLingo-logo.png',
+                              height: 28,
+                              fit: BoxFit.contain,
+                              color: isDark ? Colors.white : null,
                             ),
                           ),
                         ),
