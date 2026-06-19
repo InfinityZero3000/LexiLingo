@@ -120,22 +120,29 @@ gzip_types
     font/woff2
     image/svg+xml;
 
+# ---------------------------------------------------------------------------
+# DNS Resolver — critical for dynamic upstream resolution in Docker networks
+# ---------------------------------------------------------------------------
+resolver 127.0.0.11 ipv6=off valid=5s;
+
 upstream backend_upstream {
     least_conn;
+    zone backend_zone 64k;
     # Primary backend instance.
     # Scale horizontally with: docker-compose up --scale backend-service=N
     # Docker's internal DNS round-robins across all replicas of the same
     # service name, so no additional entries are needed here.
     # Remove `container_name` from the backend-service in docker-compose to
     # allow >1 replica.
-    server backend-service:8000 max_fails=3 fail_timeout=10s;
+    server backend-service:8000 max_fails=3 fail_timeout=10s resolve;
     keepalive 64;
 }
 
 upstream ai_upstream {
     least_conn;
+    zone ai_zone 64k;
     # Scale horizontally with: docker-compose up --scale ai-service=N
-    server ai-service:8001 max_fails=3 fail_timeout=10s;
+    server ai-service:8001 max_fails=3 fail_timeout=10s resolve;
     keepalive 64;
 }
 
