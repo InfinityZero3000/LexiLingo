@@ -1870,7 +1870,7 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
 def _get_predefined_vietnamese(errors: list) -> str:
     """Fallback predefined Vietnamese explanations"""
     if not errors:
-        return "Câu của bạn rất tốt! Tiếp tục cố gắng nhé! 🌟"
+        return "Câu của bạn rất tốt! Tiếp tục cố gắng nhé! "
     
     error_type = errors[0].get("type", "").lower()
     explanations = {

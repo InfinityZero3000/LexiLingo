@@ -144,7 +144,7 @@ class LexiChatProvider extends ChangeNotifier {
           id: 'greeting',
           role: 'assistant',
           content:
-              "Squawk! 🦜 Hey there, adventurer! I'm Lexi, your English buddy. "
+              "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. "
               "Let's go on a learning adventure together!\n\n"
               "You can type or speak — I'll help you practice English. "
               "What would you like to talk about?",
@@ -262,7 +262,7 @@ class LexiChatProvider extends ChangeNotifier {
             id: 'greeting',
             role: 'assistant',
             content:
-                "Squawk! 🦜 Hey there, adventurer! I'm Lexi, your English buddy. "
+                "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. "
                 "Let's go on a learning adventure together!\n\n"
                 "You can type or speak — I'll help you practice English. "
                 "What would you like to talk about?",
@@ -571,7 +571,7 @@ class LexiChatProvider extends ChangeNotifier {
                   ? serverText
                   : (accumulated.isNotEmpty
                       ? accumulated
-                      : 'Squawk! 🦜 Something went quiet. Can you ask that again?');
+                      : 'Squawk! Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',
@@ -721,7 +721,7 @@ class LexiChatProvider extends ChangeNotifier {
       LexiMessage(
         id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
         role: 'user',
-        content: '🎤 Voice message...',
+        content: 'Voice message...',
         timestamp: DateTime.now(),
       ),
     );

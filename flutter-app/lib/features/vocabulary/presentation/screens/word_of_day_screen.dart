@@ -304,7 +304,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
   }
 
   void _share(VocabularyItemEntity word) {
-    final text = '📖 Word of the Day: "${word.word}"\n'
+    final text = 'Word of the Day: "${word.word}"\n'
         '${word.pronunciation != null ? '${word.pronunciation}\n' : ''}'
         '${word.definition}\n\n'
         'Learn English with LexiLingo!';

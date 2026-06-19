@@ -59,12 +59,12 @@ class FirebaseMessagingService {
             const Duration(seconds: 5),
           );
           if (kDebugMode) {
-            debugPrint(' FCM Token: ${_maskToken(_fcmToken)}');
+            debugPrint('FCM Token: ${_maskToken(_fcmToken)}');
           }
         }
       } catch (e) {
         debugPrint(
-          '️ Could not get FCM token (expected if APNS/FCM not fully setup): $e',
+          'Could not get FCM token (expected if APNS/FCM not fully setup): $e',
         );
       }
 
@@ -159,7 +159,7 @@ class FirebaseMessagingService {
       final prefs = await SharedPreferences.getInstance();
       final last = prefs.getString(_kRegisteredTokenKey);
       if (last == token) {
-        debugPrint(' FCM token already registered – skipping.');
+        debugPrint('FCM token already registered – skipping.');
         return;
       }
     }
@@ -180,9 +180,9 @@ class FirebaseMessagingService {
       // Persist the successfully registered token to skip future duplicates.
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kRegisteredTokenKey, token);
-      debugPrint(' FCM token registered with backend ($deviceType)');
+      debugPrint('FCM token registered with backend ($deviceType)');
     } catch (e) {
-      debugPrint('️ FCM token registration failed: $e');
+      debugPrint('FCM token registration failed: $e');
     }
   }
 
