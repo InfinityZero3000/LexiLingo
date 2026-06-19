@@ -1194,34 +1194,6 @@ async def get_course_roadmap(
     )
 
 
-async def _update_streak(db: AsyncSession, user_id: UUID):
-    """Update streak"""
-    result = await db.execute(select(Streak).where(Streak.user_id == user_id))
-    streak = result.scalar_one_or_none()
-    
-    today = datetime.now(timezone.utc).date()
-    
-    if not streak:
-        streak = Streak(
-            user_id=user_id,
-            current_streak=1,
-            longest_streak=1,
-            last_activity_date=today
-        )
-        db.add(streak)
-    else:
-        last = streak.last_activity_date
-        if last == today:
-            pass
-        elif last == today - timedelta(days=1):
-            streak.current_streak += 1
-            streak.longest_streak = max(streak.longest_streak, streak.current_streak)
-            streak.last_activity_date = today
-        else:
-            streak.current_streak = 1
-            streak.last_activity_date = today
-
-
 def _calc_stars(score: float) -> int:
     """Calculate stars"""
     if score >= 90:

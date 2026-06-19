@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
@@ -33,6 +34,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   Timer? _positionTimer;
   int _activeCaptionIndex = -1;
   double _playbackSpeed = 1.0;
+  bool _streakUpdated = false;
 
   static const _kSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
@@ -85,6 +87,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       final seconds = await _ytController.currentTime;
       final posMs = (seconds * 1000).round();
       if (!mounted || posMs == _currentPositionMs) return;
+
+      // Update streak once per session after 30 seconds of watching
+      if (!_streakUpdated && posMs >= 30000) {
+        _streakUpdated = true;
+        context.read<StreakProvider>().updateStreak();
+      }
 
       final provider = context.read<YouTubeProvider>();
       int newIndex = -1;

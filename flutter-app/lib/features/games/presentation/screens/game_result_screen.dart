@@ -5,6 +5,8 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/streak_milestone_overlay.dart';
 import 'package:provider/provider.dart';
 
 /// Shows the result after completing any game session.
@@ -81,6 +83,22 @@ class _GameResultScreenState extends State<GameResultScreen>
         }
       });
     }
+
+    // Sync streak state — backend already updated it via the game scoring route,
+    // but Flutter's StreakProvider needs a refresh to reflect the new value in the UI.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final streakProvider = context.read<StreakProvider>();
+      await streakProvider.updateStreak();
+      if (!mounted) return;
+      if (streakProvider.milestoneJustReached) {
+        await StreakMilestoneOverlay.show(
+          context,
+          streakDays: streakProvider.currentStreak,
+          onDismiss: streakProvider.clearMilestone,
+        );
+      }
+    });
   }
 
   @override
