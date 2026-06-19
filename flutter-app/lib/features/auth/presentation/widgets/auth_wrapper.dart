@@ -242,6 +242,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _flowResolvedForUserId = null;
       _preAuthFlowResolved = false;
       _showPreAuthWelcome = false;
+      _showPreAuthQuestions = false;
       _isShowingRegister = false;
     }
 
@@ -289,6 +290,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
           onBack: () => setState(() {
             _showPreAuthQuestions = false;
             _showPreAuthWelcome = true;
+          }),
+          onLogin: () => setState(() {
+            _showPreAuthQuestions = false;
+            _isShowingRegister = false;
+            _preAuthFlowResolved = true;
           }),
         );
       } else {

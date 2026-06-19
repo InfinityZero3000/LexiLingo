@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +22,10 @@ class _LoginPageState extends State<LoginPage> {
   static const String _rememberPasswordKey = 'remember_password';
   static const String _savedEmailKey = 'saved_email';
   static const String _savedPasswordKey = 'saved_password';
+
+  static const _secureStorage = FlutterSecureStorage(
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
+  );
 
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -58,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!remember) return;
 
     final savedEmail = prefs.getString(_savedEmailKey) ?? '';
-    final savedPassword = prefs.getString(_savedPasswordKey) ?? '';
+    final savedPassword = await _secureStorage.read(key: _savedPasswordKey) ?? '';
 
     if (!mounted) return;
     setState(() {
@@ -75,14 +80,17 @@ class _LoginPageState extends State<LoginPage> {
     if (_rememberPassword) {
       await Future.wait([
         prefs.setString(_savedEmailKey, _emailController.text.trim()),
-        prefs.setString(_savedPasswordKey, _passwordController.text),
+        _secureStorage.write(
+          key: _savedPasswordKey,
+          value: _passwordController.text,
+        ),
       ]);
       return;
     }
 
     await Future.wait([
       prefs.remove(_savedEmailKey),
-      prefs.remove(_savedPasswordKey),
+      _secureStorage.delete(key: _savedPasswordKey),
     ]);
   }
 
@@ -235,7 +243,7 @@ class _LoginPageState extends State<LoginPage> {
                         if (value == null || value.isEmpty) {
                           return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!value.contains('@')) {
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
                           return 'auth.invalidEmail'.tr();
                         }
                         return null;
@@ -296,9 +304,6 @@ class _LoginPageState extends State<LoginPage> {
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'auth.pleaseEnterYourPassword'.tr();
-                        }
-                        if (value.length < 6) {
-                          return 'auth.passwordTooShort'.tr();
                         }
                         return null;
                       },

@@ -636,11 +636,12 @@ async def forgot_password(
             detail="Check your email inbox."
         )
     
-    # Only local accounts can reset password
+    # Only local accounts can reset password — return neutral response to avoid
+    # leaking whether the account uses OAuth (account enumeration protection)
     if not user.has_local_auth:
         return MessageResponse(
-            message="This email is registered with Google. Please use Google login.",
-            detail="Password reset is not available for OAuth accounts."
+            message="If the email exists, a password reset link has been sent.",
+            detail="Check your email inbox."
         )
     
     # Create reset token (1 hour expiry)

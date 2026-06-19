@@ -292,6 +292,12 @@ class _LexiLingoAppState extends State<LexiLingoApp>
   }
 
   String? _extractResetTokenFromDeepLink() {
+    final pending = DeepLinkService.instance.pendingResetToken;
+    if (pending != null && pending.isNotEmpty) {
+      DeepLinkService.instance.pendingResetToken = null;
+      return pending;
+    }
+
     final queryToken = Uri.base.queryParameters['token'];
     if (queryToken != null && queryToken.isNotEmpty) {
       return queryToken;

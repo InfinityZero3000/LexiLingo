@@ -26,11 +26,13 @@ class PreAuthAnswers {
 class PreAuthQuestionsPage extends StatefulWidget {
   final void Function(PreAuthAnswers answers) onComplete;
   final VoidCallback onBack;
+  final VoidCallback? onLogin;
 
   const PreAuthQuestionsPage({
     super.key,
     required this.onComplete,
     required this.onBack,
+    this.onLogin,
   });
 
   @override
@@ -228,12 +230,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                     width: double.infinity,
                     height: 48,
                     child: TextButton(
-                      onPressed: () => widget.onComplete(
-                        PreAuthAnswers(
-                          name: _nameController.text.trim(),
-                          nativeLanguage: _selectedLanguage,
-                        ),
-                      ),
+                      onPressed: widget.onLogin,
                       child: Text(
                         'auth.alreadyHaveAccount'.tr(),
                         style: TextStyle(

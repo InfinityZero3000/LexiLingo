@@ -104,9 +104,12 @@ class _WelcomePageState extends State<WelcomePage>
                         children: [
                           AspectRatio(
                             aspectRatio: 1,
-                            child: Image.asset(
-                              'assets/out-app/banner-start.png',
-                              fit: BoxFit.contain,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Image.asset(
+                                'assets/out-app/banner-start.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),

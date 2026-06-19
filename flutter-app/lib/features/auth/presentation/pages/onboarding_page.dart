@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -83,7 +84,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               Row(
                 children: [
                   Text(
-                    'Personalize your learning',
+                    'onboarding.personalizeTitle'.tr(),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -122,9 +123,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   children: [
                     _buildGoalGridStep(
                       context: context,
-                      title: 'What is your goal?',
-                      subtitle:
-                          'We\'ll tailor your learning experience based on your choice.',
+                      title: 'onboarding.goalQuestion'.tr(),
+                      subtitle: 'onboarding.goalSubtitle'.tr(),
                       value: _selectedGoal,
                       onSelected: (value) {
                         setState(() => _selectedGoal = value);
@@ -132,34 +132,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                     _buildChoiceStep(
                       context: context,
-                      title: 'What is your current level?',
-                      subtitle:
-                          'This helps us set content difficulty from the start.',
+                      title: 'onboarding.levelQuestion'.tr(),
+                      subtitle: 'onboarding.levelSubtitle'.tr(),
                       value: _selectedLevel,
-                      options: const [
+                      options: [
                         _OnboardingOption(
                           'A1',
-                          'A1 - Beginner',
+                          'onboarding.levelA1'.tr(),
                           Icons.child_care_rounded,
                         ),
                         _OnboardingOption(
                           'A2',
-                          'A2 - Elementary',
+                          'onboarding.levelA2'.tr(),
                           Icons.directions_walk_rounded,
                         ),
                         _OnboardingOption(
                           'B1',
-                          'B1 - Intermediate',
+                          'onboarding.levelB1'.tr(),
                           Icons.directions_run_rounded,
                         ),
                         _OnboardingOption(
                           'B2',
-                          'B2 - Upper Intermediate',
+                          'onboarding.levelB2'.tr(),
                           Icons.directions_bike_rounded,
                         ),
                         _OnboardingOption(
                           'C1',
-                          'C1 - Advanced',
+                          'onboarding.levelC1'.tr(),
                           Icons.workspace_premium_rounded,
                         ),
                       ],
@@ -169,29 +168,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                     _buildChoiceStep(
                       context: context,
-                      title: 'What topics do you like most?',
-                      subtitle:
-                          'We will prioritize lessons around your interests.',
+                      title: 'onboarding.interestQuestion'.tr(),
+                      subtitle: 'onboarding.interestSubtitle'.tr(),
                       value: _selectedInterest,
-                      options: const [
+                      options: [
                         _OnboardingOption(
                           'daily-life',
-                          'Daily life & social topics',
+                          'onboarding.interestDailyLife'.tr(),
                           Icons.coffee_rounded,
                         ),
                         _OnboardingOption(
                           'technology',
-                          'Technology & innovation',
+                          'onboarding.interestTechnology'.tr(),
                           Icons.computer_rounded,
                         ),
                         _OnboardingOption(
                           'culture',
-                          'Culture & entertainment',
+                          'onboarding.interestCulture'.tr(),
                           Icons.palette_rounded,
                         ),
                         _OnboardingOption(
                           'career',
-                          'Career growth & interviews',
+                          'onboarding.interestCareer'.tr(),
                           Icons.business_center_rounded,
                         ),
                       ],
@@ -222,7 +220,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           child: LottieLoadingWidget.tiny(),
                         )
                       : Text(
-                          _currentPage < 2 ? 'Continue' : 'Create My Plan',
+                          _currentPage < 2 ? 'onboarding.continueBtn'.tr() : 'onboarding.createPlan'.tr(),
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                 ),
@@ -247,28 +245,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final goals = [
       {
         'id': 'career',
-        'label': 'Career',
+        'label': 'onboarding.goalCareer'.tr(),
         'icon': Icons.work_outline_rounded,
         'image':
             'https://lh3.googleusercontent.com/aida-public/AB6AXuBSGVTCqylquusN6wGLM_jOvQqZQSuWDjlL-xpyq_2UqBLnr-OByxFEoIsMmggErKwNxosf8XQfnZD1eOVm9caqCYFt05Vh9s94Fn-qplqqhm7a88oozanlytpKwXzKQY4uL6OQEKICN_GEKFKELHvJi_cXq30k9_2eZPpZs3eRonNJhAHVNgOClJeuq0KKKLQykpcHW76NUlAIUOoXBXDSABIrOkJFXYD06oyY5toJFdWSBgQUPG90eJY5ifIrfBZXGY4ELJOVrWo',
       },
       {
         'id': 'travel',
-        'label': 'Travel',
+        'label': 'onboarding.goalTravel'.tr(),
         'icon': Icons.flight_takeoff_rounded,
         'image':
             'https://lh3.googleusercontent.com/aida-public/AB6AXuDs7YS8V0VzuKvGJMR3ApIBaJyOCi2ZqtcHHuf051ELU2SVqSFJeNb6D_GVRXzyKX0qUNzG8nvSegEBBRVqyryZtY_GvGiJoe7SUrzcr3o_iZWnWq-GK_gaCJmwTyepSWQGpkgztvxfL64H9BdF-8T18jx6wfCiajnZsud2H19FBD9SZDIjYG--ITayp8d_X-TvJwKCFeHURrHsXO4YcAQw2avpqGQOAMDi-9oXnro_TKg97Xx6ksqFh5x-YTJqCIG-Z_1pD_f4kuI',
       },
       {
         'id': 'exam',
-        'label': 'Exams',
+        'label': 'onboarding.goalExams'.tr(),
         'icon': Icons.menu_book_rounded,
         'image':
             'https://lh3.googleusercontent.com/aida-public/AB6AXuBCuJx8wfZGG_xbA24mGPi6yv8NQG8CSAvF65QQ3kdvG4K8Oui7yCqIhEvlt-LBa8Xb-Mj23nY7K7zK2BLiZfSB2pZxisXv5e4nL2Kz8TuYsVySB8J4sLnqa-pvJNZz3dsRiSsBv4P1iogZPm5b80saHzpefwNpyDZny2zJ_dOMTEEWrXQg32UErPs8ZKvNjKWsQrc-l1HHTEFvJSd4krbaTs3pNIB1Iz-svOzhvxy3FuhlA26vxzptUIew5jIQ4je18KgT34_R5Og',
       },
       {
         'id': 'culture',
-        'label': 'Culture',
+        'label': 'onboarding.goalCulture'.tr(),
         'icon': Icons.theater_comedy_rounded,
         'image':
             'https://lh3.googleusercontent.com/aida-public/AB6AXuDsX3m4bn2ZpAMoVNcHDZThQaKBGp2tTg2oh1O_uPSbPUvHkkHqEB0f6ji6OFFn85oWNCybtS_5QWPat9X0ADsYcafwBfW0R-GVkmjZzhlCiuWlHLvqu9Ft_03QouejdaijcnxmU1cPRwoGm634qW1UM9kEpALf0YLouTvJn2BHGgzQEk8g1xz5toJAR8JDM3RUtZ7mjHraJ3L6ABIOzCGcpFwPjA1UDa2pa9tQTtz8Qiw3ofb6ydW3gTkr1X69p0KMMGLa2PkmbHA',

@@ -25,6 +25,9 @@ class DeepLinkService {
   /// Referral code received before the user was signed in.
   String? pendingReferralCode;
 
+  /// Reset token received before the navigator was ready (cold-start).
+  String? pendingResetToken;
+
   Future<void> init() async {
     // Handle cold-start link (app launched from a link)
     try {
@@ -66,6 +69,12 @@ class DeepLinkService {
         AppNavigationService.openRoute('/leaderboard');
       case 'achievement':
         AppNavigationService.openRoute('/achievements');
+      case 'reset-password':
+        final token = uri.queryParameters['token'];
+        if (token != null && token.isNotEmpty) {
+          pendingResetToken = token;
+          AppNavigationService.openRoute('/reset-password', arguments: token);
+        }
       case 'referral':
         if (segments.length > 1) {
           pendingReferralCode = segments[1];

@@ -156,7 +156,7 @@ class Settings(BaseSettings):
     SMTP_USE_SSL: bool = False
     SMTP_TIMEOUT: int = 10
     EMAIL_FROM: str = "noreply@lexilingo.app"
-    PASSWORD_RESET_URL_BASE: str = "https://lexilingo.me/reset-password"
+    PASSWORD_RESET_URL_BASE: str = "lexilingo-app://reset-password"
     PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
     EMAIL_VERIFICATION_URL_BASE: str = "https://lexilingo.me/verify-email"
     EMAIL_VERIFICATION_URL_BASE_PRODUCTION: str | None = None

@@ -7,6 +7,6 @@
     "deploy:prod": "flutter build web --release --no-tree-shake-icons && vercel build --prod && vercel deploy --prebuilt --prod"
   },
   "dependencies": {
-    "vercel": "^54.9.1"
+    "vercel": "^54.14.2"
   }
 }
