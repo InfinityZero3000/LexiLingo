@@ -57,7 +57,7 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me
       - key: CORS_ALLOW_ORIGIN_REGEX
-        value: https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?
+        value: https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https?://(localhost|127\.0\.0\.1)(:\d+)?
       - key: ALLOWED_HOSTS
         value: api.lexilingo.me,lexilingo-backend.onrender.com
       
