@@ -247,7 +247,7 @@ class Settings(BaseSettings):
     # Debug key is pre-filled; replace with release key in production .env.
     ANDROID_SHA256_FINGERPRINT: str = "A4:B6:A1:51:F6:7E:AA:A0:61:0C:BC:51:55:43:E6:AA:45:4B:58:9D:73:77:CF:02:75:F2:25:F7:99:1B:B1:89"
     IOS_TEAM_ID: str = "LN798L6Y6X"
-    IOS_BUNDLE_ID: str = "com.nhthang.lexilingoApp"
+    IOS_BUNDLE_ID: str = "com.lexilingo.lexilingoApp"
 
     # Celery. Falls back to REDIS_URL when unset.
     CELERY_BROKER_URL: str | None = None
