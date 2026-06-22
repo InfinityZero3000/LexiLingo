@@ -24,7 +24,7 @@
     "lucide-react": "^1.21.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
-    "react-hook-form": "^7.79.0",
+    "react-hook-form": "^7.80.0",
     "react-router-dom": "^7.18.0",
     "recharts": "^3.8.1",
     "three": "^0.184.0",
