@@ -14,7 +14,7 @@ redis>=7.4.1
 pydantic>=2.13.4
 pydantic-settings>=2.14.1
 defusedxml>=0.7.1
-typer>=0.24.1,<1
+typer>=0.26.7,<1
 
 # Google Gemini AI
 google-generativeai>=0.8.6
