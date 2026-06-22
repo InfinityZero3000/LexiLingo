@@ -46,7 +46,7 @@ faster-whisper>=1.2.1
 # Native streaming primary. Kept behind an optional runtime adapter so an
 # unsupported wheel degrades to Faster-Whisper instead of crashing startup.
 moonshine-voice>=0.0.59,<0.1
-sherpa-onnx>=1.13.2,<2
+sherpa-onnx>=1.13.3,<2
 piper-tts>=1.4.2
 gTTS>=2.5.4
 
