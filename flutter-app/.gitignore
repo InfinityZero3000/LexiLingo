@@ -38,6 +38,8 @@ test_output/
 build/
 .metadata
 template/
+assets/icon-library/
+
 # pubspec.lock is intentionally tracked for apps (not libraries) to ensure
 # reproducible CI builds with the same package versions as local development.
 .packages
@@ -127,7 +129,7 @@ logs/
 firebase-debug.log
 .vercel
 .env*.local
-*plist
+GoogleService-Info.plist
 
 # Keep tracked Firebase options wrapper (contains public config, not private keys)
 !lib/firebase_options.dart

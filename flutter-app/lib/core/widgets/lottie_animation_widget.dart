@@ -31,7 +31,13 @@ enum LottieAnimation {
   starBurst('animation/StarBurst.json'),
 
   /// Level-up orbit celebration (custom)
-  levelUpOrbit('animation/LevelUpOrbit.json');
+  levelUpOrbit('animation/LevelUpOrbit.json'),
+
+  /// Fire loop animation (streaks)
+  fire('animation/Fire.json'),
+
+  /// Flame loop animation (high streaks)
+  flame('animation/Flame.json');
 
   final String path;
   const LottieAnimation(this.path);
@@ -128,6 +134,32 @@ class LottieAnimationWidget extends StatelessWidget {
     this.duration,
   }) : animation = LottieAnimation.pulseLoader;
 
+  /// Quick constructor for the fire loop (streaks)
+  const LottieAnimationWidget.fire({
+    super.key,
+    this.width = 60,
+    this.height = 60,
+    this.fit = BoxFit.contain,
+    this.repeat = true,
+    this.reverse = false,
+    this.controller,
+    this.onLoaded,
+    this.duration,
+  }) : animation = LottieAnimation.fire;
+
+  /// Quick constructor for the flame loop (high streaks)
+  const LottieAnimationWidget.flame({
+    super.key,
+    this.width = 60,
+    this.height = 60,
+    this.fit = BoxFit.contain,
+    this.repeat = true,
+    this.reverse = false,
+    this.controller,
+    this.onLoaded,
+    this.duration,
+  }) : animation = LottieAnimation.flame;
+
   @override
   Widget build(BuildContext context) {
     return Lottie.asset(
@@ -172,6 +204,13 @@ class LottieAnimationWidget extends StatelessWidget {
               Icons.star_rounded,
               size: sz.shortestSide,
               color: Colors.amber,
+            );
+          case LottieAnimation.fire:
+          case LottieAnimation.flame:
+            fallback = Icon(
+              Icons.local_fire_department_rounded,
+              size: sz.shortestSide,
+              color: Colors.orange,
             );
           default:
             fallback = const SizedBox.shrink();

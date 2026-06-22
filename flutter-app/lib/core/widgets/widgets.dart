@@ -17,3 +17,4 @@ export 'language_switcher_button.dart';
 export 'app_button.dart';
 export 'cefr_badge.dart';
 export 'stagger_list.dart';
+export 'game_icon.dart';

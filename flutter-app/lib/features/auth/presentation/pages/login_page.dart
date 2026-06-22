@@ -114,6 +114,28 @@ class _LoginPageState extends State<LoginPage> {
     final canPop = Navigator.of(context).canPop();
     // Subscribe this route to locale changes so String.tr() labels refresh immediately.
     final localeCode = context.locale.languageCode;
+    // Fit-to-screen scale: every `gap(full, compact)` call below smoothly
+    // interpolates between its two values based on the *actual* usable
+    // height (screen height minus safe-area insets minus the on-screen
+    // keyboard, when open). This replaces a hard isCompact cutoff that only
+    // looked at static screen height and never reacted to the keyboard —
+    // which is exactly why the Google/Facebook buttons could end up pushed
+    // below the fold while typing on shorter phones. Below `_tightHeight`
+    // everything uses the tightest (compact) spacing already tuned to keep
+    // the social-login row on screen; above `_roomyHeight` everything uses
+    // full spacing; in between it scales continuously so it looks right on
+    // every device size, not just two presets.
+    const roomyHeight = 820.0;
+    const tightHeight = 600.0;
+    final mediaQuery = MediaQuery.of(context);
+    final usableHeight =
+        mediaQuery.size.height -
+        mediaQuery.padding.top -
+        mediaQuery.padding.bottom -
+        mediaQuery.viewInsets.bottom;
+    final fitT = ((usableHeight - tightHeight) / (roomyHeight - tightHeight))
+        .clamp(0.0, 1.0);
+    double gap(double full, double compact) => compact + (full - compact) * fitT;
 
     return Scaffold(
       key: ValueKey<String>('login-page-$localeCode'),
@@ -149,7 +171,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Center(
                             child: Image.asset(
                               'assets/out-app/LexiLingo-logo.png',
-                              height: 28,
+                              height: 40,
                               fit: BoxFit.contain,
                               color: isDark ? Colors.white : null,
                             ),
@@ -159,13 +181,13 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 8),
+                    SizedBox(height: gap(8, 4)),
 
                     // Hero
                     ClipRRect(
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
-                        height: 200,
+                        height: gap(200, 90),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0x3330E8E8), Color(0x2230E8E8)],
@@ -182,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: gap(24, 10)),
                     Text(
                       'auth.welcomeBack'.tr(),
                       textAlign: TextAlign.center,
@@ -193,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                             : AppColors.surfaceDarkInput,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: gap(8, 4)),
                     Text(
                       'app.tagline'.tr(),
                       textAlign: TextAlign.center,
@@ -203,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
                             : AppColors.textSlateLight,
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: gap(28, 14)),
 
                     Text(
                       'auth.email'.tr(),
@@ -248,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: gap(16, 10)),
                     Row(
                       children: [
                         Expanded(
@@ -307,7 +329,7 @@ class _LoginPageState extends State<LoginPage> {
                       },
                     ),
 
-                    const SizedBox(height: 8),
+                    SizedBox(height: gap(8, 4)),
                     Row(
                       children: [
                         Checkbox(
@@ -329,9 +351,9 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    SizedBox(height: gap(20, 10)),
                     SizedBox(
-                      height: 56,
+                      height: gap(56, 48),
                       child: ElevatedButton(
                         onPressed:
                             authProvider.isLoading || _isLockedAfterFailures
@@ -437,7 +459,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: gap(24, 12)),
                     Row(
                       children: [
                         Expanded(
@@ -468,12 +490,12 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 16),
+                    SizedBox(height: gap(16, 10)),
                     Row(
                       children: [
                         Expanded(
                           child: SizedBox(
-                            height: 56,
+                            height: gap(56, 44),
                             child: OutlinedButton.icon(
                               onPressed: authProvider.isLoading
                                   ? null
@@ -493,7 +515,7 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: SizedBox(
-                            height: 56,
+                            height: gap(56, 44),
                             child: OutlinedButton.icon(
                               onPressed: authProvider.isLoading
                                   ? null
@@ -513,7 +535,7 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    SizedBox(height: gap(24, 12)),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -567,7 +589,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 16),
+                    SizedBox(height: gap(16, 8)),
                   ],
                 ),
               ),

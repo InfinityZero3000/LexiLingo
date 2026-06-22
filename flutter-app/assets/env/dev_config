@@ -1,8 +1,8 @@
 ENVIRONMENT=development
-API_BASE_URL=http://127.0.0.1:8000/api/v1
-API_BASE_URL_FALLBACK=https://api.lexilingo.me/api/v1
-AI_SERVICE_URL=http://127.0.0.1:8001/api/v1
-AI_SERVICE_URL_FALLBACK=https://api.lexilingo.me/api/v1
+API_BASE_URL=https://api.lexilingo.me/api/v1
+API_BASE_URL_FALLBACK=
+AI_SERVICE_URL=https://api.lexilingo.me/api/v1
+AI_SERVICE_URL_FALLBACK=
 ENABLE_VOICE_FEATURE=true
 ENABLE_GAMIFICATION=true
 DEBUG_MODE=true

@@ -57,7 +57,7 @@ services:
       - key: ALLOWED_ORIGINS
         value: https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me
       - key: CORS_ALLOW_ORIGIN_REGEX
-        value: https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https?://(localhost|127\.0\.0\.1)(:\d+)?
+        value: https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?
       - key: ALLOWED_HOSTS
         value: api.lexilingo.me,lexilingo-backend.onrender.com
       
@@ -70,7 +70,30 @@ services:
 
       - key: LOG_LEVEL
         value: INFO
-      
+
+      # Email (SMTP) — required for forgot-password / verify-email to actually send.
+      # Without these, EmailService logs a warning and skips sending, but the
+      # /forgot-password endpoint still returns success (by design, to avoid
+      # leaking which emails are registered).
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USE_TLS
+        value: "false"
+      - key: SMTP_USE_SSL
+        value: "true"
+      - key: SMTP_USERNAME
+        sync: false  # Nhập manual: Gmail address used to send
+      - key: SMTP_PASSWORD
+        sync: false  # Nhập manual: Gmail App Password (not the account password)
+      - key: EMAIL_FROM
+        value: thefirestar312@gmail.com
+      - key: PASSWORD_RESET_URL_BASE_PRODUCTION
+        value: lexilingo-app://reset-password
+      - key: EMAIL_VERIFICATION_URL_BASE_PRODUCTION
+        value: https://lexilingo.me/verify-email
+
       # Redis (optional - dùng Upstash free tier)
       - key: REDIS_URL
         sync: false  # redis://default:pass@host:port

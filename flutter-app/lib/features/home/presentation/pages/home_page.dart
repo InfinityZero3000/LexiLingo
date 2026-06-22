@@ -419,13 +419,17 @@ class _HomePageNewState extends State<HomePageNew> {
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: Icon(
-                              isCompleted ? Icons.emoji_events : Icons.bolt,
-                              color: isCompleted
-                                  ? AppColors.greenSuccessBright
-                                  : accent,
-                              size: badgeIconSize,
-                            ),
+                            child: isCompleted
+                                ? AppGameIcon(
+                                    GameIcon.trophy,
+                                    size: badgeIconSize,
+                                    fallbackColor: AppColors.greenSuccessBright,
+                                  )
+                                : AppGameIcon(
+                                    GameIcon.bolt,
+                                    size: badgeIconSize,
+                                    fallbackColor: accent,
+                                  ),
                           ),
                           const SizedBox(width: 8),
                           Flexible(
@@ -467,10 +471,11 @@ class _HomePageNewState extends State<HomePageNew> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (isCompleted)
-                                    const Icon(
-                                      Icons.check,
-                                      color: AppColors.greenSuccessBright,
-                                      size: 18,
+                                    const AppGameIcon(
+                                      GameIcon.checkmark,
+                                      size: 20,
+                                      fallbackColor:
+                                          AppColors.greenSuccessBright,
                                     )
                                   else
                                     Text(
@@ -526,10 +531,10 @@ class _HomePageNewState extends State<HomePageNew> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (isCompleted)
-                                const Icon(
-                                  Icons.check,
-                                  color: AppColors.greenSuccessBright,
-                                  size: 20,
+                                const AppGameIcon(
+                                  GameIcon.checkmark,
+                                  size: 22,
+                                  fallbackColor: AppColors.greenSuccessBright,
                                 )
                               else
                                 Text(
@@ -560,15 +565,18 @@ class _HomePageNewState extends State<HomePageNew> {
                                     color: colorScheme.surface,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: Icon(
-                                    isCompleted
-                                        ? Icons.emoji_events
-                                        : Icons.bolt,
-                                    color: isCompleted
-                                        ? AppColors.greenSuccessBright
-                                        : accent,
-                                    size: badgeIconSize,
-                                  ),
+                                  child: isCompleted
+                                      ? AppGameIcon(
+                                          GameIcon.trophy,
+                                          size: badgeIconSize,
+                                          fallbackColor:
+                                              AppColors.greenSuccessBright,
+                                        )
+                                      : AppGameIcon(
+                                          GameIcon.bolt,
+                                          size: badgeIconSize,
+                                          fallbackColor: accent,
+                                        ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -615,15 +623,18 @@ class _HomePageNewState extends State<HomePageNew> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    isCompleted
-                                        ? Icons.celebration
-                                        : Icons.trending_up,
-                                    size: 14,
-                                    color: isCompleted
-                                        ? AppColors.greenSuccessBright
-                                        : accent,
-                                  ),
+                                  isCompleted
+                                      ? AppGameIcon(
+                                          GameIcon.giftBox,
+                                          size: 14,
+                                          fallbackColor:
+                                              AppColors.greenSuccessBright,
+                                        )
+                                      : Icon(
+                                          Icons.trending_up,
+                                          size: 14,
+                                          color: accent,
+                                        ),
                                   const SizedBox(width: 4),
                                   Text(
                                     isCompleted
@@ -855,7 +866,11 @@ class _HomePageNewState extends State<HomePageNew> {
                                   ),
                                 ),
                                 if (isSelected)
-                                  Icon(Icons.check_circle, color: primaryColor),
+                                  AppGameIcon(
+                                    GameIcon.checkmark,
+                                    size: 24,
+                                    fallbackColor: primaryColor,
+                                  ),
                               ],
                             ),
                           ),
@@ -913,10 +928,12 @@ class _HomePageNewState extends State<HomePageNew> {
           ),
           child: Column(
             children: [
-              Icon(
-                Icons.school_outlined,
+              AppGameIcon(
+                GameIcon.lessonBoard,
                 size: 48,
-                color: isDark ? AppColors.textMuted : AppColors.textGrey,
+                fallbackColor: isDark
+                    ? AppColors.textMuted
+                    : AppColors.textGrey,
               ),
               const SizedBox(height: 12),
               Text(
@@ -1013,7 +1030,11 @@ class _HomePageNewState extends State<HomePageNew> {
                   border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: course.thumbnailUrl == null
-                    ? Icon(Icons.school, size: 32, color: progressColor)
+                    ? AppGameIcon(
+                        GameIcon.lessonBoard,
+                        size: 32,
+                        fallbackColor: progressColor,
+                      )
                     : null,
               ),
               const SizedBox(width: 16),
@@ -1111,7 +1132,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -1120,11 +1141,18 @@ class _HomePageNewState extends State<HomePageNew> {
                               ],
                             ),
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: progressColor.withValues(alpha: 0.4),
+                                blurRadius: 0,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                          child: Icon(
-                            Icons.play_arrow_rounded,
+                          child: AppGameIcon(
+                            GameIcon.playArrow,
                             size: 16,
-                            color: AppColors.surfaceLight,
+                            fallbackColor: AppColors.surfaceLight,
                           ),
                         ),
                       ],
@@ -1213,7 +1241,11 @@ class _HomePageNewState extends State<HomePageNew> {
                 color: primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.auto_stories_rounded, color: primary, size: 24),
+              child: AppGameIcon(
+                GameIcon.book,
+                size: 24,
+                fallbackColor: primary,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
@@ -1382,10 +1414,10 @@ class _HomePageNewState extends State<HomePageNew> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.star_rounded,
+                            AppGameIcon(
+                              GameIcon.star,
                               size: 14,
-                              color: AppColors.surfaceLight,
+                              fallbackColor: AppColors.surfaceLight,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1445,7 +1477,7 @@ class _HomePageNewState extends State<HomePageNew> {
                     Row(
                       children: [
                         _buildInfoChip(
-                          icon: Icons.menu_book_rounded,
+                          icon: GameIcon.lessonBoard,
                           label: 'profile.lessonsCount'.tr(
                             namedArgs: {'count': '${course.totalLessons}'},
                           ),
@@ -1453,7 +1485,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         const SizedBox(width: 8),
                         _buildInfoChip(
-                          icon: Icons.translate_rounded,
+                          icon: GameIcon.translate,
                           label: course.language,
                           color: AppColors.purple,
                         ),
@@ -1474,10 +1506,10 @@ class _HomePageNewState extends State<HomePageNew> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.play_circle_filled_rounded,
-                            size: 20,
-                            color: AppColors.surfaceLight,
+                          AppGameIcon(
+                            GameIcon.playArrow,
+                            size: 18,
+                            fallbackColor: AppColors.surfaceLight,
                           ),
                           SizedBox(width: 8),
                           Text(
@@ -1540,17 +1572,17 @@ class _HomePageNewState extends State<HomePageNew> {
             width: 2,
           ),
         ),
-        child: const Icon(
-          Icons.school_rounded,
+        child: const AppGameIcon(
+          GameIcon.lessonBoard,
           size: 40,
-          color: AppColors.surfaceLight,
+          fallbackColor: AppColors.surfaceLight,
         ),
       ),
     );
   }
 
   Widget _buildInfoChip({
-    required IconData icon,
+    required GameIcon icon,
     required String label,
     required Color color,
   }) {
@@ -1559,12 +1591,12 @@ class _HomePageNewState extends State<HomePageNew> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.2), width: 1.5),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          AppGameIcon(icon, size: 14, fallbackColor: color),
           const SizedBox(width: 5),
           Text(
             label,
@@ -1638,7 +1670,7 @@ class _HomePageNewState extends State<HomePageNew> {
         'route': '/youtube',
       },
       {
-        'icon': Icons.article,
+        'icon': GameIcon.newspaper,
         'label': 'home.news',
         'color': isDark ? neonDarkActionColors[1] : AppColors.teal,
         'bgColor': (isDark ? neonDarkActionColors[1] : AppColors.teal)
@@ -1646,7 +1678,7 @@ class _HomePageNewState extends State<HomePageNew> {
         'route': '/news',
       },
       {
-        'icon': Icons.sports_esports,
+        'icon': GameIcon.gameController,
         'label': 'home.games',
         'color': isDark ? neonDarkActionColors[2] : AppColors.purple,
         'bgColor': (isDark ? neonDarkActionColors[2] : AppColors.purple)
@@ -1654,7 +1686,7 @@ class _HomePageNewState extends State<HomePageNew> {
         'route': '/games',
       },
       {
-        'icon': Icons.podcasts,
+        'icon': GameIcon.headphones,
         'label': 'home.podcast',
         'color': isDark ? neonDarkActionColors[3] : accent,
         'bgColor': (isDark ? neonDarkActionColors[3] : accent).withValues(
@@ -1663,7 +1695,7 @@ class _HomePageNewState extends State<HomePageNew> {
         'route': '/podcast',
       },
       {
-        'icon': Icons.menu_book_rounded,
+        'icon': GameIcon.book,
         'label': 'home.books',
         'color': isDark ? neonDarkActionColors[4] : AppColors.purpleLight,
         'bgColor': (isDark ? neonDarkActionColors[4] : AppColors.purple)
@@ -1671,7 +1703,7 @@ class _HomePageNewState extends State<HomePageNew> {
         'route': '/books',
       },
       {
-        'icon': Icons.style,
+        'icon': GameIcon.vocabulary,
         'label': 'home.vocabulary',
         'color': isDark ? neonDarkActionColors[5] : AppColors.orange,
         'bgColor': (isDark ? neonDarkActionColors[5] : AppColors.warning)
@@ -1709,7 +1741,7 @@ class _HomePageNewState extends State<HomePageNew> {
               final action = quickActions[index];
               return _buildQuickActionChip(
                 context,
-                icon: action['icon'] as IconData,
+                icon: action['icon']!,
                 label: (action['label'] as String).tr(),
                 color: action['color'] as Color,
                 bgColor: action['bgColor'] as Color,
@@ -1737,7 +1769,7 @@ class _HomePageNewState extends State<HomePageNew> {
 
   Widget _buildQuickActionChip(
     BuildContext context, {
-    required IconData icon,
+    required Object icon,
     required String label,
     required Color color,
     required Color bgColor,
@@ -1746,15 +1778,17 @@ class _HomePageNewState extends State<HomePageNew> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fontSize = iconSize <= 38 ? 9.0 : 10.0;
+    final surfaceColor = Theme.of(context).colorScheme.surface;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: color.withValues(alpha: isDark ? 0.42 : 0.3),
+            color: color.withValues(alpha: isDark ? 0.5 : 0.35),
+            width: 2,
           ),
         ),
         child: Column(
@@ -1765,20 +1799,26 @@ class _HomePageNewState extends State<HomePageNew> {
               height: iconSize,
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.46 : 0.3),
-                    blurRadius: isDark ? 11 : 8,
-                    offset: Offset(0, 2),
+                    color: color.withValues(alpha: isDark ? 0.5 : 0.35),
+                    blurRadius: 0,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
-              child: Icon(
-                icon,
-                color: Theme.of(context).colorScheme.surface,
-                size: iconSize * 0.5,
-              ),
+              child: icon is GameIcon
+                  ? AppGameIcon(
+                      icon,
+                      size: iconSize * 0.5,
+                      fallbackColor: surfaceColor,
+                    )
+                  : Icon(
+                      icon as IconData,
+                      color: surfaceColor,
+                      size: iconSize * 0.5,
+                    ),
             ),
             const SizedBox(height: 10),
             Text(
@@ -1786,7 +1826,7 @@ class _HomePageNewState extends State<HomePageNew> {
               style: TextStyle(
                 fontSize: fontSize,
                 height: 1.1,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: color,
               ),
               textAlign: TextAlign.center,

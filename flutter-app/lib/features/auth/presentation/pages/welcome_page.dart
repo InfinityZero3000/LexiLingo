@@ -87,8 +87,8 @@ class _WelcomePageState extends State<WelcomePage>
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/lexilingo-logo.png',
-                              height: 28,
+                              'assets/out-app/LexiLingo-logo.png',
+                              height: 40,
                               fit: BoxFit.contain,
                             ),
                           ),
