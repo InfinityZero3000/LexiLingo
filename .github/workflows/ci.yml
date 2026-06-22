@@ -56,7 +56,7 @@ jobs:
       PODCASTINDEX_SECRET: ""
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -163,7 +163,7 @@ jobs:
       OPENAI_API_KEY: ""
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -205,7 +205,7 @@ jobs:
         working-directory: mcp-server
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v6
@@ -241,7 +241,7 @@ jobs:
         working-directory: admin-service
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node.js 24
         uses: actions/setup-node@v6
@@ -271,7 +271,7 @@ jobs:
         working-directory: flutter-app
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
