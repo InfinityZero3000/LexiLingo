@@ -51,6 +51,7 @@ Bộ tài liệu Report được đánh mã theo thứ tự để theo dõi rõ 
 | 26 | `RPT-026_SPACED_REPETITION_VOCABULARY.md` | **Spaced Repetition & Vocab** — Thuật toán SM-2, Mastery Score tracking |
 | 27 | `RPT-027_PROFICIENCY_CEFR_ASSESSMENT.md` | **Proficiency CEFR Assessment** — Đánh giá đa kỹ năng, weight system |
 | 28 | `RPT-028_REALWORLD_CONTENT_INTEGRATION.md` | **Real-world Content Integration** — Tích hợp NewsAPI & YouTube với AI |
+| 29 | `RPT-029_FLUTTER_UI_FILE_INVENTORY.md` | **Kiểm kê file giao diện Flutter** — 158 file UI (trừ admin), độ ưu tiên đổi icon, trạng thái redesign |
 | 0 | `RPT-000_UPDATE_SUMMARY.md` | **Tổng hợp cập nhật** — danh sách thay đổi và số liệu thống kê |
 ---
 
