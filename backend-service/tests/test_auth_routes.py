@@ -409,6 +409,35 @@ class TestLogin:
         )
         assert response.status_code == 422
 
+    async def test_login_unverified_user_returns_403(self):
+        """Correct credentials but unverified email returns 403, not tokens."""
+        from app.main import app
+        from app.core.database import get_db
+
+        unverified_user = _make_mock_user(is_verified=False)
+        session = _make_mock_session(scalar_one_or_none_value=unverified_user)
+
+        async def mock_get_db():
+            yield session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+
+        with patch("app.services.auth_service.verify_password_async", new=AsyncMock(return_value=True)):
+            async with AsyncClient(transport=transport, base_url="http://test") as c:
+                response = await c.post(
+                    f"{BASE}/login",
+                    json={"email": "test@example.com", "password": "testpass"},
+                )
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 403
+        message = response.json()["error"]["message"].lower()
+        assert "not verified" in message
+        data = response.json()
+        assert "access_token" not in data
+        assert "refresh_token" not in data
+
 
 # ===========================================================================
 # POST /auth/refresh
@@ -480,6 +509,35 @@ class TestRefreshToken:
                 json={"refresh_token": "valid.refresh.token"},
             )
         assert response.status_code == 401
+
+    async def test_refresh_unverified_user_returns_403(self):
+        """A still-unverified user cannot use a refresh token to renew access either."""
+        from app.main import app
+        from app.core.database import get_db
+
+        unverified_user = _make_mock_user(is_verified=False)
+        session = _make_mock_session(scalar_one_or_none_value=unverified_user)
+
+        async def mock_get_db():
+            yield session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+
+        with patch(
+            "app.core.security.decode_token",
+            return_value={"type": "refresh", "sub": "00000000-0000-0000-0000-000000000001"},
+        ):
+            async with AsyncClient(transport=transport, base_url="http://test") as c:
+                response = await c.post(
+                    f"{BASE}/refresh",
+                    json={"refresh_token": "valid.refresh.token"},
+                )
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 403
+        message = response.json()["error"]["message"].lower()
+        assert "not verified" in message
 
 
 # ===========================================================================

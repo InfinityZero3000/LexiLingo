@@ -129,7 +129,7 @@ async def resend_verification_email(
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
     # Always return 200 to avoid email enumeration
-    if user and not getattr(user, "email_verified", False):
+    if user and not user.is_verified:
         try:
             from app.core.security import create_verification_token
             token = create_verification_token(
@@ -160,6 +160,15 @@ async def login(
         )
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+    # Local (email/password) accounts must verify their email before a session
+    # is issued. Google/Facebook logins set is_verified from the provider's
+    # own email_verified claim at account-creation time, so this never blocks
+    # OAuth users.
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for a verification link before logging in.",
+        )
 
     user_id = str(user.id)
     username = user.username
@@ -256,7 +265,16 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive"
         )
-    
+
+    # A refresh token issued before email verification (or for an account
+    # that was since unverified) must not keep renewing access forever —
+    # otherwise the 7-day rotation window silently bypasses /login's check.
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for a verification link before logging in.",
+        )
+
     # FIX: Implement token rotation
     db_token.is_used = True
     
