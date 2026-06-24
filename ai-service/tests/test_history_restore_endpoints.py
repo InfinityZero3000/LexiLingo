@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
 from api.routes import topic_chat as topic_route
+from api.services import lexi_chat_service as lexi_svc
 from api.core.auth import AuthenticatedUser
 
 
@@ -87,7 +88,7 @@ def mock_lexi_store(monkeypatch):
     store.set_session = AsyncMock()
     store.delete_messages = AsyncMock()
     store.append_message = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr(lexi_svc, "lexi_store", store)
     return store
 
 

@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from starlette.requests import Request
 
 from api.routes import lexi_chat as lexi_route
+from api.services import lexi_chat_service as svc
 from api.core.auth import AuthenticatedUser
 
 
@@ -19,7 +20,7 @@ def mock_store(monkeypatch):
     store.get_session = AsyncMock(return_value=None)
     store.delete_session = AsyncMock()
     store.init_messages = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr(svc, "lexi_store", store)
     return store
 
 
@@ -204,7 +205,7 @@ async def test_delete_lexi_session_cleans_db_and_cache(mock_db, mock_store):
 
 def test_sanitize_lexi_response_preserves_valid_bold_markdown():
     text = "Ah, a **wonderful** question!"
-    sanitized = lexi_route._sanitize_lexi_response(text)
+    sanitized = svc._sanitize_lexi_response(text)
 
     assert sanitized == text
 
@@ -216,7 +217,7 @@ def test_sanitize_lexi_response_fixes_misaligned_bold_markers():
         "3. Keep **good** habits"
     )
 
-    sanitized = lexi_route._sanitize_lexi_response(raw)
+    sanitized = svc._sanitize_lexi_response(raw)
 
     assert "Daily practice**" not in sanitized
     assert "(15 mins), **" not in sanitized
@@ -324,7 +325,7 @@ def test_sanitize_lexi_response_fixes_escaped_misaligned_bold_markers():
         "3. Keep \\*\\*good\\*\\* habits"
     )
 
-    sanitized = lexi_route._sanitize_lexi_response(raw)
+    sanitized = svc._sanitize_lexi_response(raw)
 
     assert "Daily practice**" not in sanitized
     assert "(15 mins), **" not in sanitized
