@@ -361,8 +361,6 @@ async def google_login(
         audience = settings.GOOGLE_CLIENT_ID  # None is also accepted below
     
     # Verify Google token with the correct audience
-    import logging
-    logger = logging.getLogger(__name__)
     logger.info(f"Google login attempt: source={request.source}, audience={audience}")
 
     google_info = await verify_google_token(request.id_token, audience=audience)
@@ -441,19 +439,27 @@ async def google_login(
         await db.refresh(user)
     elif not user.has_google_auth:
         # "google" is NOT yet in this user's providers list
-        if request.source != "admin" or not allowlisted_admin_role:
+        is_admin_link = request.source == "admin" and allowlisted_admin_role
+        # Google has verified this email, and it matches an existing local account —
+        # let Google vouch for the email instead of leaving the user locked out
+        # behind an unclicked verification link.
+        can_verify_local_account = user.has_local_auth and email_verified
+
+        if not is_admin_link and not can_verify_local_account:
             if not user.has_local_auth:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Email already registered with a different login method."
                 )
-            # Non-admin Google login for a local-only account: block provider switch
+            # Local account exists but Google hasn't verified this email either —
+            # an unverified claim can't be trusted to unlock it.
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered. Please login with your existing method."
             )
 
-        # Admin source + allowlisted email → link google to this account
+        # Admin-allowlisted link, or Google vouching for a local account's email →
+        # link google to this account.
         user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
@@ -519,9 +525,7 @@ async def facebook_login(
     """
     from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
     from app.core.config import settings
-    import logging
 
-    logger = logging.getLogger(__name__)
     logger.info(f"Facebook (Firebase) login attempt: source={request.source}")
 
     # Verify Firebase ID token
@@ -803,6 +807,12 @@ async def admin_login(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
 
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for a verification link before logging in.",
+        )
+
     if getattr(user, "role_level", 0) < 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
 
@@ -863,7 +873,7 @@ async def admin_request_otp(
     user = result.scalar_one_or_none()
 
     # Respond the same way whether the user exists or not (anti-enumeration)
-    if user and user.is_active and getattr(user, "role_level", 0) >= 1:
+    if user and user.is_active and user.is_verified and getattr(user, "role_level", 0) >= 1:
         otp = str(random.randint(100000, 999999))
         _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
 
@@ -911,7 +921,7 @@ async def admin_verify_otp(
     )
     user = result.scalar_one_or_none()
 
-    if not user or not user.is_active or getattr(user, "role_level", 0) < 1:
+    if not user or not user.is_active or not user.is_verified or getattr(user, "role_level", 0) < 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
     user_id = str(user.id)
