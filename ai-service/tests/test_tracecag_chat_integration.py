@@ -4,6 +4,7 @@ from datetime import datetime
 
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
+from api.services import lexi_chat_service as svc
 
 
 @pytest.fixture
@@ -71,7 +72,7 @@ def mock_lexi_store(monkeypatch):
     store.get_session = AsyncMock(return_value=None)
     store.delete_session = AsyncMock()
     store.init_messages = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr(svc, "lexi_store", store)
     quota_mock = MagicMock()
     quota_mock.rpm_used = 1
     quota_mock.rpm_limit = 100
@@ -214,8 +215,8 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
     mock_lexi_db,
     mock_lexi_store,
 ):
-    monkeypatch.setattr(lexi_route, "_transcribe_audio", AsyncMock(return_value="Transcribed from voice"))
-    monkeypatch.setattr(lexi_route, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64"))
+    monkeypatch.setattr(svc, "_transcribe_audio", AsyncMock(return_value="Transcribed from voice"))
+    monkeypatch.setattr(svc, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64"))
 
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -264,7 +265,7 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     mock_lexi_db,
     mock_lexi_store,
 ):
-    monkeypatch.setattr(lexi_route, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64"))
+    monkeypatch.setattr(svc, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64"))
 
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -316,7 +317,7 @@ async def test_lexi_chat_tts_timeout_returns_text_without_audio(
         await asyncio.Event().wait()
 
     monkeypatch.setenv("LEXI_TTS_TIMEOUT_SECONDS", "0.01")
-    monkeypatch.setattr(lexi_route, "_synthesize_tts", _stalled_tts)
+    monkeypatch.setattr(svc, "_synthesize_tts", _stalled_tts)
 
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
