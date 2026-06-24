@@ -3,31 +3,12 @@
 /// Defines story/topic data structures for language learning scenarios
 library;
 
-/// Difficulty levels matching CEFR standard
-enum DifficultyLevel {
-  A1('A1', 'Beginner'),
-  A2('A2', 'Elementary'),
-  B1('B1', 'Intermediate'),
-  B2('B2', 'Upper Intermediate'),
-  C1('C1', 'Advanced'),
-  C2('C2', 'Proficiency');
-
-  final String code;
-  final String label;
-
-  const DifficultyLevel(this.code, this.label);
-
-  String get displayName => '$code - $label';
-  String get shortName => code;
-
-  static DifficultyLevel fromString(String? value) {
-    if (value == null) return DifficultyLevel.A1;
-    return DifficultyLevel.values.firstWhere(
-      (e) => e.code.toUpperCase() == value.toUpperCase(),
-      orElse: () => DifficultyLevel.A1,
-    );
-  }
-}
+// DifficultyLevel is a domain concept owned by domain/entities/story.dart.
+// Re-exported here so existing callers of this model file keep working
+// without each needing to import the entity file directly.
+import '../../domain/entities/story.dart' show DifficultyLevel;
+export '../../domain/entities/story.dart' show DifficultyLevel;
+import '../../domain/entities/story.dart' as entities;
 
 /// Localized title with Vietnamese and English
 class LocalizedTitle {
@@ -457,4 +438,96 @@ class StoryListItem {
     'suggested_prompts': suggestedPrompts,
     'tags': tags,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Domain entity mappers — convert wire-format models into the pure domain
+// entities defined in domain/entities/story.dart, used at the repository
+// boundary so domain/presentation never depend on these JSON-aware models.
+// ---------------------------------------------------------------------------
+
+extension LocalizedTitleToEntity on LocalizedTitle {
+  entities.LocalizedTitle toEntity() =>
+      entities.LocalizedTitle(vi: vi, en: en);
+}
+
+extension VocabularyItemToEntity on VocabularyItem {
+  entities.VocabularyItem toEntity() => entities.VocabularyItem(
+    term: term,
+    definition: definition,
+    exampleInStory: exampleInStory,
+    partOfSpeech: partOfSpeech,
+    phonetic: phonetic,
+  );
+}
+
+extension GrammarPointToEntity on GrammarPoint {
+  entities.GrammarPoint toEntity() => entities.GrammarPoint(
+    grammarStructure: grammarStructure,
+    explanation: explanation,
+    usageInStory: usageInStory,
+    examples: examples,
+  );
+}
+
+extension RolePersonaToEntity on RolePersona {
+  entities.RolePersona toEntity() => entities.RolePersona(
+    name: name,
+    role: role,
+    personality: personality,
+    speakingStyle: speakingStyle,
+    background: background,
+  );
+}
+
+extension ContextDescriptionToEntity on ContextDescription {
+  entities.ContextDescription toEntity() => entities.ContextDescription(
+    setting: setting,
+    scenario: scenario,
+    objectives: objectives,
+  );
+}
+
+extension ConversationFlowToEntity on ConversationFlow {
+  entities.ConversationFlow toEntity() => entities.ConversationFlow(
+    openingPrompt: openingPrompt,
+    keyMilestones: keyMilestones,
+    closingScenarios: closingScenarios,
+  );
+}
+
+extension StoryToEntity on Story {
+  entities.Story toEntity() => entities.Story(
+    storyId: storyId,
+    title: title.toEntity(),
+    difficultyLevel: difficultyLevel,
+    category: category,
+    estimatedMinutes: estimatedMinutes,
+    iconKey: iconKey,
+    coverImageUrl: coverImageUrl,
+    contextDescription: contextDescription.toEntity(),
+    rolePersona: rolePersona.toEntity(),
+    vocabularyList: vocabularyList.map((v) => v.toEntity()).toList(),
+    grammarPoints: grammarPoints.map((g) => g.toEntity()).toList(),
+    conversationFlow: conversationFlow.toEntity(),
+    isPublished: isPublished,
+    suggestedPrompts: suggestedPrompts,
+    tags: tags,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
+}
+
+extension StoryListItemToEntity on StoryListItem {
+  entities.StoryListItem toEntity() => entities.StoryListItem(
+    storyId: storyId,
+    title: title.toEntity(),
+    difficultyLevel: difficultyLevel,
+    category: category,
+    estimatedMinutes: estimatedMinutes,
+    iconKey: iconKey,
+    coverImageUrl: coverImageUrl,
+    suggestedPrompts: suggestedPrompts,
+    tags: tags,
+  );
 }

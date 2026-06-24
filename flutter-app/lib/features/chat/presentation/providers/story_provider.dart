@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-import '../../data/models/story_model.dart';
-import '../../data/models/topic_session_model.dart';
+import '../../domain/entities/story.dart';
+import '../../domain/entities/topic_session.dart';
 import '../../domain/repositories/story_repository.dart';
 
 /// State management for Story/Topic-based conversation
@@ -485,7 +485,7 @@ class StoryProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         '$_topicSessionPrefix$storyId',
-        jsonEncode(session.toJson()),
+        jsonEncode(session.toCacheJson()),
       );
     } catch (e) {
       debugPrint('Error saving topic session: $e');
@@ -497,7 +497,9 @@ class StoryProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString('$_topicSessionPrefix$storyId');
       if (raw == null) return null;
-      return TopicSession.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return TopicSession.fromCacheJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
     } catch (e) {
       debugPrint('Error loading saved topic session: $e');
       return null;
@@ -521,7 +523,7 @@ class StoryProvider extends ChangeNotifier {
 
       // Also cache full JSON for quick boot
       final jsonList = _recentlyUsed
-          .map((s) => jsonEncode(s.toJson()))
+          .map((s) => jsonEncode(s.toCacheJson()))
           .toList();
       await prefs.setStringList('${_recentTopicsKey}_data', jsonList);
     } catch (e) {
@@ -536,7 +538,11 @@ class StoryProvider extends ChangeNotifier {
 
       if (jsonList != null) {
         _recentlyUsed = jsonList
-            .map((s) => StoryListItem.fromJson(jsonDecode(s)))
+            .map(
+              (s) => StoryListItem.fromCacheJson(
+                jsonDecode(s) as Map<String, dynamic>,
+              ),
+            )
             .toList();
         notifyListeners();
       }
