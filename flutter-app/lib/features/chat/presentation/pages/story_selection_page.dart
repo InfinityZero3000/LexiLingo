@@ -4,7 +4,7 @@ import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import '../../data/models/story_model.dart';
+import '../../domain/entities/story.dart';
 import '../providers/story_provider.dart';
 import '../utils/topic_icon_resolver.dart';
 import 'topic_chat_page.dart';

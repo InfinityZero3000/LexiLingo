@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../data/models/story_model.dart';
+import '../../domain/entities/story.dart';
 
 class TopicIconResolver {
   const TopicIconResolver._();

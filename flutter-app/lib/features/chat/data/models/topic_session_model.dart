@@ -4,6 +4,7 @@ library;
 
 import 'story_model.dart';
 import 'educational_hints_model.dart';
+import '../../domain/entities/topic_session.dart' as entities;
 
 /// Request to start a topic session
 class StartTopicSessionRequest {
@@ -287,4 +288,51 @@ class StoriesListResponse {
     'page': page,
     'limit': limit,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Domain entity mappers — see story_model.dart for rationale.
+// ---------------------------------------------------------------------------
+
+extension TopicSessionToEntity on TopicSession {
+  entities.TopicSession toEntity() => entities.TopicSession(
+    sessionId: sessionId,
+    story: story.toEntity(),
+    rolePersona: rolePersona.toEntity(),
+    openingMessage: openingMessage,
+    vocabularyPreview: vocabularyPreview.map((v) => v.toEntity()).toList(),
+    createdAt: createdAt,
+  );
+}
+
+extension TopicChatResponseToEntity on TopicChatResponse {
+  entities.TopicChatResponse toEntity() => entities.TopicChatResponse(
+    response: response,
+    messageIdOverride: messageId,
+    educationalHints: educationalHints?.toEntity(),
+    processingTimeMs: processingTimeMs,
+    llmMetadata: llmMetadata?.toEntity(),
+  );
+}
+
+extension TopicChatMessageToEntity on TopicChatMessage {
+  entities.TopicChatMessage toEntity() => entities.TopicChatMessage(
+    id: id,
+    sessionId: sessionId,
+    content: content,
+    isUser: isUser,
+    timestamp: timestamp,
+    hints: hints?.toEntity(),
+    llmMetadata: llmMetadata?.toEntity(),
+  );
+}
+
+extension TopicMessagesPageResultToEntity on TopicMessagesPageResult {
+  entities.TopicMessagesPageResult toEntity() =>
+      entities.TopicMessagesPageResult(
+        messages: messages.map((m) => m.toEntity()).toList(),
+        hasMore: hasMore,
+        nextCursor: nextCursor,
+        returned: returned,
+      );
 }
