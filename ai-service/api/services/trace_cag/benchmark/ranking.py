@@ -217,27 +217,48 @@ def _select_diverse_multihop_evidence(
 
 # ── Graph helpers ─────────────────────────────────────────────────────────────
 
-def _build_candidate_graph(candidates: list[Dict[str, Any]]) -> dict[str, set[str]]:
+def _build_candidate_graph(candidates: list[Dict[str, Any]]) -> dict[str, dict[str, float]]:
+    """
+    Bridge-entity adjacency for multi-hop reasoning: edge A->B means A's body
+    text names the bridge entity that B's title covers (the standard HotpotQA
+    bridge pattern, where doc A mentions the entity whose own page B holds the
+    next-hop answer). Edge weight 1.0 = B's full title appears verbatim in A's
+    text (high-precision bridge mention); 0.4 = weaker token-overlap fallback
+    for titles that get paraphrased instead of quoted exactly.
+    """
+    title_norm_map = {
+        str(candidate["item_id"]): _normalize_benchmark_surface(
+            str(candidate.get("title") or candidate.get("item_id") or "")
+        )
+        for candidate in candidates
+    }
     title_token_map = {
         str(candidate["item_id"]): _title_tokens(str(candidate.get("title") or candidate.get("item_id") or ""))
         for candidate in candidates
     }
-    adjacency: dict[str, set[str]] = {str(candidate["item_id"]): set() for candidate in candidates}
+    adjacency: dict[str, dict[str, float]] = {str(candidate["item_id"]): {} for candidate in candidates}
 
     for candidate in candidates:
         source_id = str(candidate["item_id"])
+        source_text_norm = _normalize_benchmark_surface(str(candidate.get("text") or ""))
         source_text_tokens = set(_benchmark_tokens(str(candidate.get("text") or "")))
         for other in candidates:
             target_id = str(other["item_id"])
             if source_id == target_id:
                 continue
+
+            target_title_norm = title_norm_map.get(target_id, "")
+            if target_title_norm and len(target_title_norm) >= 4 and f" {target_title_norm} " in f" {source_text_norm} ":
+                adjacency[source_id][target_id] = 1.0
+                continue
+
             title_tokens = title_token_map.get(target_id, set())
             if not title_tokens:
                 continue
             overlap = len(source_text_tokens & title_tokens)
             threshold = 1 if len(title_tokens) <= 2 else 2
             if overlap >= threshold:
-                adjacency[source_id].add(target_id)
+                adjacency[source_id][target_id] = 0.4
     return adjacency
 
 
@@ -291,7 +312,7 @@ def _compute_evidence_budget(
         if config is not None:
             budget += int(config.evidence_budget_delta)
 
-    if benchmark_candidates and benchmark_mode == "trace-cag_adaptive":
+    if benchmark_candidates and benchmark_mode == "tracecag_adaptive":
         config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
         if config is not None:
             budget = max(4, min(max_budget, budget + int(config.evidence_budget_delta)))
@@ -353,7 +374,7 @@ def _rank_benchmark_candidates(
 
     adjacency = _build_candidate_graph(candidates)
     degree_scores = {
-        item_id: (len(neighbors) / max(len(candidates) - 1, 1))
+        item_id: (sum(neighbors.values()) / max(len(candidates) - 1, 1))
         for item_id, neighbors in adjacency.items()
     }
     seed_ids = [
@@ -368,8 +389,9 @@ def _rank_benchmark_candidates(
             if seed_id == item_id:
                 seed_bridge = max(seed_bridge, base_scores.get(seed_id, 0.0))
                 continue
-            if item_id in adjacency.get(seed_id, set()) or seed_id in adjacency.get(item_id, set()):
-                seed_bridge = max(seed_bridge, base_scores.get(seed_id, 0.0))
+            edge_weight = adjacency.get(seed_id, {}).get(item_id) or adjacency.get(item_id, {}).get(seed_id)
+            if edge_weight:
+                seed_bridge = max(seed_bridge, base_scores.get(seed_id, 0.0) * edge_weight)
         graph_scores[item_id] = (0.7 * seed_bridge) + (0.3 * degree_scores.get(item_id, 0.0))
 
     memory_state = _normalize_score_map(base_scores)
@@ -378,9 +400,10 @@ def _rank_benchmark_candidates(
         for source_id, neighbors in adjacency.items():
             if not neighbors:
                 continue
-            shared = 0.85 * memory_state.get(source_id, 0.0) / len(neighbors)
-            for target_id in neighbors:
-                propagated[target_id] = propagated.get(target_id, 0.0) + shared
+            weight_total = sum(neighbors.values()) or 1.0
+            shared = 0.85 * memory_state.get(source_id, 0.0)
+            for target_id, edge_weight in neighbors.items():
+                propagated[target_id] = propagated.get(target_id, 0.0) + shared * (edge_weight / weight_total)
         memory_state = _normalize_score_map(propagated)
 
     scored_candidates: list[Dict[str, Any]] = []
@@ -406,16 +429,19 @@ def _rank_benchmark_candidates(
                     + (0.08 * query_coverage)
                     + (0.08 * anchor_coverage)
                 )
-            elif benchmark_mode == "trace-cag_rapid":
-                # Rebalance toward broader top-k coverage (R@1..R@5) over top-1 peaking.
+            elif benchmark_mode == "tracecag_rapid":
+                # Keep the full lexical base score (matches flat ranker's strength on
+                # single-hop docs) and add the bridge/graph signal on top instead of
+                # diluting base_score — diluting it previously made multi-hop bridge
+                # targets win at the cost of demoting strong direct matches.
                 final_score = (
-                    (0.34 * base_score)
-                    + (0.16 * graph_score)
-                    + (0.24 * memory_score)
-                    + (0.10 * query_coverage)
-                    + (0.08 * anchor_coverage)
-                    + (0.04 * anchor_title_exact)
-                    + (0.04 * title_token_recall)
+                    base_score
+                    + (0.18 * graph_score)
+                    + (0.06 * memory_score)
+                    + (0.06 * query_coverage)
+                    + (0.05 * anchor_coverage)
+                    + (0.03 * anchor_title_exact)
+                    + (0.03 * title_token_recall)
                 )
                 if title_phrase >= 0.9:
                     final_score += 0.04
@@ -423,7 +449,7 @@ def _rank_benchmark_candidates(
                     final_score += 0.03
                 else:
                     final_score += 0.01 * title_phrase
-            elif benchmark_mode == "trace-cag_adaptive":
+            elif benchmark_mode == "tracecag_adaptive":
                 profile = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
                 if profile is None:
                     profile = _ADAPTIVE_PROFILES["balanced"]
@@ -587,7 +613,7 @@ def _rank_with_online_ranker(
 
     # Keep graph/title heuristic dominant until online ranker has enough updates.
     mode = str(benchmark_mode or "").strip().lower()
-    if mode == "trace-cag_rapid":
+    if mode == "tracecag_rapid":
         snapshot = ranker.snapshot()
         updates = int(snapshot.get("updates", 0) or 0)
         warmup_updates = max(1, _env_int("TRACECAG_RANKER_WARMUP_UPDATES", 40))
