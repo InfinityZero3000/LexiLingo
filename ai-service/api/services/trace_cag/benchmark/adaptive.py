@@ -100,7 +100,7 @@ def _adaptive_mode_enabled(state: TraceCAGState, benchmark_mode: str = "") -> bo
     retrieval_policy = str(state.get("retrieval_policy") or "").strip().lower()
     if retrieval_policy == "adaptive":
         return True
-    if str(benchmark_mode or "").strip().lower() == "trace-cag_adaptive":
+    if str(benchmark_mode or "").strip().lower() == "tracecag_adaptive":
         return True
     return False
 
