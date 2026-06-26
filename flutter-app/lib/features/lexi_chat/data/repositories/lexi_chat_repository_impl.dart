@@ -28,6 +28,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) {
@@ -39,6 +40,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       audioBase64: audioBase64,
       enableTts: enableTts,
       learnerLevel: learnerLevel,
+      nativeLanguage: nativeLanguage,
       storyContext: storyContext,
       idempotencyKey: idempotencyKey,
     );
@@ -137,6 +139,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) {
     return dataSource.sendMessageStream(
@@ -147,6 +150,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       audioBase64: audioBase64,
       enableTts: enableTts,
       learnerLevel: learnerLevel,
+      nativeLanguage: nativeLanguage,
       storyContext: storyContext,
     );
   }

@@ -44,6 +44,32 @@ class ShopItemEntity extends Equatable {
   static const String effectHeartRefill = 'heart_refill';
   static const String effectAvatar = 'avatar';
 
+  /// In-game power-up effect types — instant, single-use consumables
+  /// applied directly inside a mini-game session (see GameIcon mappings).
+  static const String effectTimeFreeze = 'time_freeze';
+  static const String effectExtraTime = 'extra_time';
+  static const String effectSkipToken = 'skip_token';
+  static const String effectRevealHint = 'reveal_hint';
+  static const String effectTranslateHint = 'translate_hint';
+  static const String effectMistakeShield = 'mistake_shield';
+  static const String effectExtraHeart = 'extra_heart';
+  static const String effectLuckyClover = 'lucky_clover';
+  static const String effectScoreMultiplier = 'score_multiplier';
+  static const String effectPairSwap = 'pair_swap';
+
+  static const List<String> gamePowerUpEffectTypes = [
+    effectTimeFreeze,
+    effectExtraTime,
+    effectSkipToken,
+    effectRevealHint,
+    effectTranslateHint,
+    effectMistakeShield,
+    effectExtraHeart,
+    effectLuckyClover,
+    effectScoreMultiplier,
+    effectPairSwap,
+  ];
+
   bool get isPowerUp => category == categoryPowerUps;
   bool get isCosmetic => category == categoryCosmetics;
   bool get isBoost => category == categoryBoosts;
@@ -92,6 +118,7 @@ class ShopItemEntity extends Equatable {
   }
 
   static String _categoryFor(String? itemType) {
+    if (gamePowerUpEffectTypes.contains(itemType)) return categoryPowerUps;
     switch (itemType) {
       case effectDoubleXP:
         return categoryBoosts;

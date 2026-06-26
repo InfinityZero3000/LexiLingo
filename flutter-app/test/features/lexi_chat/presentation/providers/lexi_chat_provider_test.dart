@@ -12,6 +12,8 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   int sendCalls = 0;
   int streamCalls = 0;
   String? lastIdempotencyKey;
+  String? lastNativeLanguage;
+  String? lastStreamNativeLanguage;
   Stream<LexiStreamEvent> Function()? streamFactory;
 
   @override
@@ -67,11 +69,13 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) async {
     sendCalls += 1;
     lastIdempotencyKey = idempotencyKey;
+    lastNativeLanguage = nativeLanguage;
     return LexiMessage(
       id: 'assistant-$sendCalls',
       role: 'assistant',
@@ -89,9 +93,11 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) {
     streamCalls += 1;
+    lastStreamNativeLanguage = nativeLanguage;
     return streamFactory?.call() ??
         Stream<LexiStreamEvent>.fromIterable([
           const LexiStreamChunk('ok'),
@@ -144,6 +150,39 @@ void main() {
       expect(provider.messages.any((m) => m.syncStatus == 'streaming'), false);
       expect(provider.messages.where((m) => m.role == 'user').length, 1);
       expect(provider.messages.last.content, 'ok');
+    });
+
+    test('defaults nativeLanguage to vi and forwards setNativeLanguage', () async {
+      final repo = _FakeLexiChatRepository();
+      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      addTearDown(provider.dispose);
+
+      expect(provider.nativeLanguage, 'vi');
+
+      await provider.sendMessage('hello', userId: 'user-1');
+      expect(repo.lastNativeLanguage, 'vi');
+
+      provider.setNativeLanguage('ja');
+      expect(provider.nativeLanguage, 'ja');
+
+      await provider.sendMessage('hello again', userId: 'user-1');
+      expect(repo.lastNativeLanguage, 'ja');
+    });
+
+    test('forwards nativeLanguage to streaming send', () async {
+      final repo = _FakeLexiChatRepository();
+      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      addTearDown(provider.dispose);
+
+      provider.setNativeLanguage('ko');
+      await provider.sendMessageStreaming('hello', userId: 'user-1');
+
+      expect(repo.lastStreamNativeLanguage, 'ko');
+
+      // Let the constructor's fire-and-forget _loadSavedSessions() finish
+      // before addTearDown disposes the provider (it calls notifyListeners()
+      // on completion, which throws if disposal already happened).
+      await Future<void>.delayed(const Duration(milliseconds: 50));
     });
 
     test('keeps streamed text when SSE has chunks but no done event', () async {

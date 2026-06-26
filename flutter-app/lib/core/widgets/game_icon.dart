@@ -45,11 +45,28 @@ enum GameIcon {
   sunMorning,
   moonNight,
   book,
+  refresh,
+  trendingUp,
+  video,
+  snowflakeFreeze,
+  microphone,
+  peoplePair,
+  forwardArrow,
+  sparkle,
+  sunsetAfternoon,
+
+  // Game power-up icons (shop items usable mid-game).
+  timeFreezeClock,
+  hourglassTime,
+  lightningBoltPower,
+  magnifyingGlass,
+  shieldPowerUp,
+  luckyClover,
+  swapArrow,
 
   // Pending custom art — rendered with a Material fallback for now.
   newspaper,
   headphones,
-  sunsetAfternoon,
   translate,
 }
 
@@ -67,8 +84,10 @@ const Map<GameIcon, String> _assetPath = {
   GameIcon.padlockUnlocked: 'assets/icon-library/unlocked_padlock.png',
   GameIcon.clock: 'assets/icon-library/clock.png',
   GameIcon.lessonBoard: 'assets/icon-library/chalkboard_abc.png',
+  GameIcon.playArrow: 'assets/icon-library/button/triangle_right.png',
   GameIcon.fastForward: 'assets/icon-library/button/fast_forward_button.png',
   GameIcon.rewind: 'assets/icon-library/button/rewind_button.png',
+  GameIcon.backArrow: 'assets/icon-library/button/left_arrow.png',
   GameIcon.nextButton: 'assets/icon-library/button/next_button.png',
   GameIcon.prevButton: 'assets/icon-library/button/prev_button.png',
   GameIcon.speakerOn: 'assets/icon-library/speaker_on.png',
@@ -89,19 +108,44 @@ const Map<GameIcon, String> _assetPath = {
   GameIcon.sunMorning: 'assets/icon-library/yellow_sun.png',
   GameIcon.moonNight: 'assets/icon-library/crescent_moon.png',
   GameIcon.book: 'assets/icon-library/blue_book.png',
+  GameIcon.refresh: 'assets/icon-library/button/refresh_arrow.png',
+  GameIcon.trendingUp: 'assets/icon-library/double_up_arrow.png',
+  GameIcon.video: 'assets/icon-library/clapperboard.png',
+  GameIcon.snowflakeFreeze: 'assets/icon-library/snowflake_badge.png',
+  GameIcon.microphone: 'assets/icon-library/microphone.png',
+  GameIcon.peoplePair: 'assets/icon-library/character_pair.png',
+  GameIcon.forwardArrow: 'assets/icon-library/button/right_arrow.png',
+  GameIcon.sparkle: 'assets/icon-library/sparkles.png',
+  GameIcon.sunsetAfternoon: 'assets/icon-library/sun.png',
+  GameIcon.timeFreezeClock: 'assets/icon-library/clock_freeze.png',
+  GameIcon.hourglassTime: 'assets/icon-library/hourglass.png',
+  GameIcon.lightningBoltPower: 'assets/icon-library/lightning_bolt.png',
+  GameIcon.magnifyingGlass: 'assets/icon-library/magnifying_glass.png',
+  GameIcon.shieldPowerUp: 'assets/icon-library/shield.png',
+  GameIcon.luckyClover: 'assets/icon-library/four_leaf_clover.png',
+  GameIcon.swapArrow: 'assets/icon-library/swap_arrow.png',
 };
 
 const Map<GameIcon, IconData> _fallbackIcon = {
-  // playArrow/backArrow: the previous pack's plain UI-arrow icons (plain
-  // triangle, curved back arrow) have no equivalent in the current
-  // icon-library — it's all game items/badges now. Falls back until a
-  // dedicated UI-arrow asset is supplied.
-  GameIcon.playArrow: Icons.play_arrow_rounded,
-  GameIcon.backArrow: Icons.arrow_back_rounded,
   GameIcon.newspaper: Icons.article_rounded,
   GameIcon.headphones: Icons.headphones_rounded,
-  GameIcon.sunsetAfternoon: Icons.wb_twilight_rounded,
   GameIcon.translate: Icons.translate_rounded,
+};
+
+/// Maps a shop `item_type` string for an in-game power-up (time_freeze,
+/// skip_token, reveal_hint, ...) to its [GameIcon]. Shared by the shop
+/// item card and the in-game power-up tray so both render the same art.
+const Map<String, GameIcon> gamePowerUpIcons = {
+  'time_freeze': GameIcon.timeFreezeClock,
+  'extra_time': GameIcon.hourglassTime,
+  'skip_token': GameIcon.lightningBoltPower,
+  'reveal_hint': GameIcon.magnifyingGlass,
+  'translate_hint': GameIcon.speechBubble,
+  'mistake_shield': GameIcon.shieldPowerUp,
+  'extra_heart': GameIcon.heart,
+  'lucky_clover': GameIcon.luckyClover,
+  'score_multiplier': GameIcon.trendingUp,
+  'pair_swap': GameIcon.swapArrow,
 };
 
 /// Renders a custom flat game-style icon by semantic [GameIcon] key,

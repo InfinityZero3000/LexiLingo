@@ -69,6 +69,15 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
 
   VocabularyRemoteDataSourceImpl({required this.apiClient});
 
+  static List<dynamic> _readList(
+    Map<String, dynamic> response, {
+    String field = 'data',
+  }) {
+    final payload = response[field];
+    if (payload is List<dynamic>) return payload;
+    throw ServerException('Invalid list response');
+  }
+
   @override
   Future<List<VocabularyItemModel>> getVocabularyItems({
     String? courseId,
@@ -80,24 +89,20 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
     int offset = 0,
   }) async {
     try {
-      final pathParams = <String>[];
-      pathParams.add('limit=$limit');
-      pathParams.add('offset=$offset');
-      if (courseId != null) pathParams.add('course_id=$courseId');
-      if (lessonId != null) pathParams.add('lesson_id=$lessonId');
-      if (difficultyLevel != null) {
-        pathParams.add('difficulty_level=$difficultyLevel');
-      }
-      if (tag != null) pathParams.add('tag=$tag');
-      if (search != null) pathParams.add('search=$search');
-
-      final queryString = pathParams.isEmpty ? '' : '?${pathParams.join('&')}';
-      final response = await apiClient.get('/vocabulary/items$queryString');
-
-      final data = response['data'];
-      if (data is! List<dynamic>) {
-        throw ServerException('Invalid vocabulary items response');
-      }
+      final uri = Uri(
+        path: '/vocabulary/items',
+        queryParameters: {
+          'limit': limit.toString(),
+          'offset': offset.toString(),
+          if (courseId != null) 'course_id': courseId,
+          if (lessonId != null) 'lesson_id': lessonId,
+          if (difficultyLevel != null) 'difficulty_level': difficultyLevel,
+          if (tag != null) 'tag': tag,
+          if (search != null) 'search': search,
+        },
+      );
+      final response = await apiClient.get(uri.toString());
+      final data = _readList(response);
 
       return data.map((json) {
         if (json is! Map<String, dynamic>) {
@@ -183,7 +188,10 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
         },
       );
       return (cached ?? [])
-          .map((json) => UserVocabularyModel.fromJson(json as Map<String, dynamic>))
+          .map(
+            (json) =>
+                UserVocabularyModel.fromJson(json as Map<String, dynamic>),
+          )
           .toList();
     } on ServerException {
       rethrow;
@@ -256,8 +264,13 @@ class VocabularyRemoteDataSourceImpl implements VocabularyRemoteDataSource {
   Future<List<UserVocabularyModel>> getDeckItems(String deckId) async {
     try {
       final response = await apiClient.get('/vocabulary/decks/$deckId/items');
-      final List<dynamic> data = response as List<dynamic>;
-      return data.map((json) => UserVocabularyModel.fromJson(json)).toList();
+      final data = _readList(response);
+      return data
+          .map(
+            (json) =>
+                UserVocabularyModel.fromJson(json as Map<String, dynamic>),
+          )
+          .toList();
     } on ServerException {
       rethrow;
     } catch (e) {

@@ -28,7 +28,7 @@ class _FakeRepository implements GamificationRepository {
   @override
   Future<bool> purchaseItem(String itemId, {int quantity = 1}) async => false;
   @override
-  Future<bool> useItem(String inventoryId) async => false;
+  Future<Map<String, dynamic>?> useItem(String inventoryId) async => null;
   @override
   Future<String?> equipAvatar(String inventoryId) async => null;
   @override

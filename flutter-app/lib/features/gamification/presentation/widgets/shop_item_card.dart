@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -291,6 +292,8 @@ class ShopItemCard extends StatelessWidget {
       );
     }
 
+    final gameIcon = gamePowerUpIcons[item.effectType];
+
     IconData icon;
     switch (item.effectType) {
       case ShopItemEntity.effectStreakFreeze:
@@ -333,7 +336,11 @@ class ShopItemCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Icon(icon, color: AppColors.surfaceLight, size: 32),
+      child: Center(
+        child: gameIcon != null
+            ? AppGameIcon(gameIcon, size: 32, fallbackColor: AppColors.surfaceLight)
+            : Icon(icon, color: AppColors.surfaceLight, size: 32),
+      ),
     );
   }
 
