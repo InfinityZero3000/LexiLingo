@@ -23,7 +23,7 @@ class QuickActionsGrid extends StatelessWidget {
 
     final quickActions = [
       {
-        'icon': Icons.smart_display,
+        'icon': GameIcon.video,
         'label': 'home.youtube',
         'color': isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0],
         'bgColor':

@@ -38,9 +38,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
           return Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.surfaceDarkMuted
-                  : AppColors.surfaceLight,
+              color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isDark
@@ -118,7 +116,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                           fallbackColor: AppColors.purple,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,8 +145,8 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       // XP earned
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.warning.withValues(
@@ -168,11 +166,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                               size: 13,
                               fallbackColor: AppColors.warningDark,
                             ),
-                            const SizedBox(width: 3),
+                            const SizedBox(width: 4),
                             Text(
                               '+${provider.xpEarned} XP',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
                                 color: isDark
                                     ? AppColors.warning
@@ -184,11 +182,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // Progress bar
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: provider.progress,
                       backgroundColor: isDark
@@ -199,15 +197,15 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                             ? AppColors.greenSuccessBright
                             : AppColors.purple,
                       ),
-                      minHeight: 5,
+                      minHeight: 8,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // Mini challenge list
                   ...provider.challenges.take(3).map((challenge) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: _buildMiniChallenge(context, challenge, provider),
                     );
                   }),
@@ -260,7 +258,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
           size: 18,
           fallbackColor: categoryColor,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             challenge.title,
@@ -283,9 +281,9 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
         else
           Text(
             '${challenge.current}/${challenge.target}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: textMuted),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: textMuted,
+            ),
           ),
       ],
     );
@@ -370,9 +368,7 @@ class DailyChallengesSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
-                    : AppColors.grey300,
+                color: isDark ? Colors.white.withValues(alpha: 0.2) : AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -477,8 +473,8 @@ class DailyChallengesSheet extends StatelessWidget {
                           AppColors.orange.withValues(alpha: 0.3),
                         ]
                       : AppColors.warmGradient
-                            .map((c) => c.withValues(alpha: 0.22))
-                            .toList(),
+                          .map((c) => c.withValues(alpha: 0.22))
+                          .toList(),
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
@@ -538,9 +534,7 @@ class DailyChallengesSheet extends StatelessWidget {
   }
 
   void _claimReward(BuildContext context, String challengeId) async {
-    final challenge = provider.challenges.firstWhere(
-      (c) => c.id == challengeId,
-    );
+    final challenge = provider.challenges.firstWhere((c) => c.id == challengeId);
     final success = await provider.claimReward(challengeId);
     if (success && context.mounted) {
       // Optimistically update XP immediately so the header reflects it right away.
@@ -584,9 +578,7 @@ class _ChallengeCard extends StatelessWidget {
     final completedBorder = isDark
         ? AppColors.greenSuccessBright.withValues(alpha: 0.4)
         : AppColors.greenSuccessSoft.withValues(alpha: 0.6);
-    final defaultBg = isDark
-        ? AppColors.surfaceDarkMuted
-        : AppColors.surfaceLight;
+    final defaultBg = isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight;
     final defaultBorder = isDark
         ? Colors.white.withValues(alpha: 0.1)
         : AppColors.grey200;
@@ -649,7 +641,9 @@ class _ChallengeCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   challenge.description,
-                  style: theme.textTheme.bodySmall?.copyWith(color: textMuted),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: textMuted,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 // Progress bar
@@ -735,10 +729,7 @@ class _ChallengeCard extends StatelessWidget {
                   )
                 else
                   ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      minHeight: 44,
-                      minWidth: 44,
-                    ),
+                    constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
                     child: ElevatedButton(
                       onPressed: onClaim,
                       style: ElevatedButton.styleFrom(

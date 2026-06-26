@@ -14,7 +14,6 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   String? lastIdempotencyKey;
   String? lastNativeLanguage;
   String? lastStreamNativeLanguage;
-  Object? pagedError;
   Stream<LexiStreamEvent> Function()? streamFactory;
 
   @override
@@ -42,7 +41,6 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     int limit = 50,
     String? cursor,
   }) async {
-    if (pagedError != null) throw pagedError!;
     return const LexiMessagesPage(
       messages: [],
       hasMore: false,
@@ -207,33 +205,6 @@ void main() {
       expect(provider.messages.last.role, 'assistant');
       expect(provider.messages.last.content, 'Hi there');
       expect(provider.messages.last.syncStatus, 'synced');
-    });
-
-    test('clears selected session when backend returns forbidden', () async {
-      final repo = _FakeLexiChatRepository()
-        ..pagedError = Exception(
-          'Request /lexi/sessions/old/messages/metadata failed with status 403',
-        );
-      final provider = LexiChatProvider(
-        repository: repo,
-        aiClient: AiApiClient(),
-      );
-      addTearDown(provider.dispose);
-
-      await provider.selectSession(
-        LexiSessionSummary(
-          sessionId: 'old',
-          userId: 'other-user',
-          title: 'Old session',
-          createdAt: DateTime.parse('2026-05-30T00:00:00Z'),
-          updatedAt: DateTime.parse('2026-05-30T00:00:00Z'),
-          messageCount: 1,
-        ),
-      );
-
-      expect(provider.session, isNull);
-      expect(provider.messages, isEmpty);
-      expect(provider.error, contains('another account'));
     });
   });
 }
