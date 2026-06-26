@@ -17,7 +17,7 @@ Covers:
 
 import pytest
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -125,8 +125,8 @@ def _make_mock_category(
     cat.order_index = 0
     cat.is_active = True
     cat.course_count = 5
-    cat.created_at = datetime.utcnow()
-    cat.updated_at = datetime.utcnow()
+    cat.created_at = datetime.now(UTC)
+    cat.updated_at = datetime.now(UTC)
     return cat
 
 

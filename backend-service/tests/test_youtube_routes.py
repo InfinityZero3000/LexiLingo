@@ -28,8 +28,12 @@ async def no_db_client():
     from app.main import app
     from app.core.database import get_db
 
+    class NoDbSession:
+        async def execute(self, *args, **kwargs):
+            raise RuntimeError("Database is disabled for this route test")
+
     async def mock_get_db():
-        yield AsyncMock()
+        yield NoDbSession()
 
     app.dependency_overrides[get_db] = mock_get_db
     transport = ASGITransport(app=app)
@@ -310,6 +314,7 @@ class TestSearchVideos:
         call_args = mock_cache_instance.get_or_fetch.call_args
         cache_key = call_args.kwargs.get("cache_key") or call_args.args[0]
         assert "UCHaHD477h-FeBbVh9Sh7syA" in cache_key
+        assert call_args.kwargs["cost"] == 100
 
 
 # ============================================================================
@@ -402,6 +407,7 @@ class TestGetCaptions:
 
         call_kwargs = mock_cache_instance.get_or_fetch.call_args.kwargs
         assert call_kwargs["cache_key"] == "youtube:captions:myVideoId123:en"
+        assert call_kwargs["cost"] == 0
 
 
 # ============================================================================
@@ -459,6 +465,7 @@ class TestGetChannelVideos:
         assert data["channel_id"] == "UCHaHD477h-FeBbVh9Sh7syA"
         assert "data" in data
         assert "source" in data
+        assert mock_cache_instance.get_or_fetch.call_args.kwargs["cost"] == 100
 
     @pytest.mark.asyncio
     async def test_max_results_validation(self, no_db_client: AsyncClient):
@@ -745,6 +752,7 @@ class TestTranslateEndpoint:
     async def test_translate_passes_context_to_fetch(self, no_db_client):
         """context query param is forwarded to the cache fetch_fn."""
         captured_context: list[str] = []
+        captured_cost: list[int] = []
 
         mock_result = MagicMock()
         mock_result.data = {
@@ -756,6 +764,7 @@ class TestTranslateEndpoint:
             # Execute fetch_fn to capture the context via _fetch_word_data signature
             # We just verify cache_key is stable (word+lang, not context)
             captured_context.append(cache_key)
+            captured_cost.append(kwargs["cost"])
             return mock_result
 
         with patch("app.routes.youtube.APICacheService") as MockCache:
@@ -770,6 +779,7 @@ class TestTranslateEndpoint:
         assert resp.status_code == 200
         # Cache key must NOT include context (stable hit rate)
         assert captured_context[0] == "youtube:translate:run:vi"
+        assert captured_cost[0] == 0
 
     @pytest.mark.asyncio
     async def test_translate_returns_empty_on_exception(self, no_db_client):

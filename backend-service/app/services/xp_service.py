@@ -105,6 +105,7 @@ async def award_xp_transaction(
     source_id: str | None = None,
     source_detail: str | None = None,
     commit: bool = True,
+    item_multiplier: float = 1.0,
     daily_xp_loader: Callable[
         [uuid.UUID, AsyncSession], Awaitable[int]
     ] = get_daily_xp,
@@ -119,7 +120,7 @@ async def award_xp_transaction(
         )
     if source in REPEAT_SENSITIVE_SOURCES and not source_id:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"source_id is required for source '{source}' to prevent duplicate awards.",
         )
     if base_xp < 0 or base_xp > MAX_SINGLE_AWARD:
@@ -149,7 +150,7 @@ async def award_xp_transaction(
 
     capped_base_xp = min(base_xp, XP_SOURCE_CAPS[source])
     streak_days = await streak_loader(user.id, db)
-    multiplier = calculate_streak_multiplier(streak_days)
+    multiplier = calculate_streak_multiplier(streak_days) * max(1.0, item_multiplier)
     raw_awarded = int(capped_base_xp * multiplier)
     daily_xp_today = await daily_xp_loader(user.id, db)
     cap_remaining = max(0, DAILY_XP_CAP - daily_xp_today)

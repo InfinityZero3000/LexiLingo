@@ -399,17 +399,86 @@ class TestAdminShop:
         response = await async_client.post(
             "/api/v1/admin/shop",
             headers=admin_headers,
-            params={
+            json={
                 "name": "Test Shop Item",
                 "description": "Test item",
                 "item_type": "test",
                 "price_gems": 100
             }
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_create_shop_item_persists_effects_and_icon_url(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict
+    ):
+        """effects/icon_url must round-trip — admin-created power-ups need a real effects payload to work in-game"""
+        response = await async_client.post(
+            "/api/v1/admin/shop",
+            headers=admin_headers,
+            json={
+                "name": "Test Time Freeze",
+                "description": "Pauses the timer",
+                "item_type": "time_freeze",
+                "price_gems": 10,
+                "icon_url": "assets/icon-library/clock_freeze.png",
+                "effects": {"seconds": 15},
+            }
+        )
+
+        assert response.status_code == 200
+        item_id = response.json()["data"]["id"]
+
+        list_response = await async_client.get(
+            "/api/v1/admin/shop?include_unavailable=true",
+            headers=admin_headers
+        )
+        created = next(
+            item for item in list_response.json()["data"] if item["id"] == item_id
+        )
+        assert created["effects"] == {"seconds": 15}
+        assert created["icon_url"] == "assets/icon-library/clock_freeze.png"
+
+    @pytest.mark.asyncio
+    async def test_update_shop_item_can_change_effects(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict
+    ):
+        """Admin must be able to retune an existing power-up's effects payload"""
+        create_response = await async_client.post(
+            "/api/v1/admin/shop",
+            headers=admin_headers,
+            json={
+                "name": "Test Lucky Clover",
+                "description": "30% auto-correct chance",
+                "item_type": "lucky_clover",
+                "price_gems": 20,
+                "effects": {"chance": 0.3},
+            }
+        )
+        item_id = create_response.json()["data"]["id"]
+
+        update_response = await async_client.put(
+            f"/api/v1/admin/shop/{item_id}",
+            headers=admin_headers,
+            json={"effects": {"chance": 0.5}}
+        )
+        assert update_response.status_code == 200
+
+        list_response = await async_client.get(
+            "/api/v1/admin/shop?include_unavailable=true",
+            headers=admin_headers
+        )
+        updated = next(
+            item for item in list_response.json()["data"] if item["id"] == item_id
+        )
+        assert updated["effects"] == {"chance": 0.5}
 
 
 class TestAdminSeed:

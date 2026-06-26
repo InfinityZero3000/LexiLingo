@@ -160,6 +160,63 @@ def test_invalid_course_level_is_blocking() -> None:
     assert "INVALID_COURSE_LEVEL" in codes
 
 
+def test_courses_must_be_a_list_without_crashing() -> None:
+    art = _base_artifact()
+    art["courses"] = "not-a-list"
+    report = validate_artifact(art)
+    codes = {e.code for e in report.blocking_errors}
+    assert "COURSES_TYPE" in codes
+    assert report.metrics["course_count"] == 0
+
+
+def test_course_and_child_entries_must_be_objects_without_crashing() -> None:
+    art = _base_artifact()
+    art["courses"] = [
+        "not-a-course",
+        {
+            "title": "Broken course",
+            "level": "A1",
+            "units": [
+                "not-a-unit",
+                {
+                    "title": "Broken unit",
+                    "order_index": 0,
+                    "lessons": [
+                        "not-a-lesson",
+                        {
+                            "title": "Broken lesson",
+                            "order_index": 0,
+                            "vocabulary": ["not-vocabulary"],
+                            "exercises": ["not-exercise"],
+                        },
+                    ],
+                },
+            ],
+        },
+    ]
+    report = validate_artifact(art)
+    codes = {e.code for e in report.blocking_errors}
+    assert {
+        "COURSE_ENTRY_TYPE",
+        "UNIT_ENTRY_TYPE",
+        "LESSON_ENTRY_TYPE",
+        "VOCABULARY_ENTRY_TYPE",
+        "EXERCISE_ENTRY_TYPE",
+    }.issubset(codes)
+
+
+def test_empty_units_and_lessons_are_blocking() -> None:
+    art = _base_artifact()
+    art["courses"][0]["units"] = []
+    report = validate_artifact(art)
+    assert "NO_UNITS" in {error.code for error in report.blocking_errors}
+
+    art = _base_artifact()
+    art["courses"][0]["units"][0]["lessons"] = []
+    report = validate_artifact(art)
+    assert "NO_LESSONS" in {error.code for error in report.blocking_errors}
+
+
 # --- license gate ---
 
 

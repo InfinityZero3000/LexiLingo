@@ -38,7 +38,7 @@ async def segment_users(
     min_streak = filters.get("min_streak")
     inactive_days = filters.get("inactive_days")
 
-    conditions = [User.is_active == True]
+    conditions = [User.is_active.is_(True)]
 
     if cefr_levels:
         normalized = [lvl.upper() for lvl in cefr_levels]
@@ -47,7 +47,7 @@ async def segment_users(
     if inactive_days is not None:
         cutoff = datetime.now(UTC) - timedelta(days=inactive_days)
         conditions.append(
-            (User.last_login < cutoff) | (User.last_login == None)
+            (User.last_login < cutoff) | User.last_login.is_(None)
         )
 
     if has_fcm_required:
@@ -55,7 +55,7 @@ async def segment_users(
             exists(
                 select(UserDevice.id).where(
                     UserDevice.user_id == User.id,
-                    UserDevice.fcm_token != None,
+                    UserDevice.fcm_token.is_not(None),
                     UserDevice.fcm_token != "",
                 )
             )
@@ -98,7 +98,7 @@ async def segment_users(
             await db.execute(
                 select(UserDevice.user_id, UserDevice.fcm_token).where(
                     UserDevice.user_id.in_([row.id for row in rows]),
-                    UserDevice.fcm_token != None,
+                    UserDevice.fcm_token.is_not(None),
                     UserDevice.fcm_token != "",
                 )
             )

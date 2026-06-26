@@ -56,8 +56,7 @@ class VocabularyItemResponse(VocabularyItemBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ===== UserVocabulary Schemas =====
@@ -114,8 +113,7 @@ class UserVocabularyResponse(BaseModel):
     is_due: bool = Field(default=False, description="Whether review is due")
     accuracy: float = Field(default=0.0, description="Accuracy percentage")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserVocabularyWithItem(UserVocabularyResponse):
@@ -147,10 +145,12 @@ class QuickSaveVocabularyRequest(BaseModel):
     difficulty_level: Optional[str] = Field("A1", max_length=2)
 
     @field_validator("difficulty_level")
+    @classmethod
     def normalize_difficulty_level(cls, v: Optional[str]) -> Optional[str]:
         return v.upper() if isinstance(v, str) else v
 
     @field_validator("part_of_speech")
+    @classmethod
     def normalize_part_of_speech(cls, v: Optional[str]) -> Optional[str]:
         return v.lower() if isinstance(v, str) else v
 
@@ -172,7 +172,8 @@ class ReviewSubmission(BaseModel):
     quality: int = Field(..., ge=0, le=5, description="Quality rating (0-5)")
     time_spent_ms: int = Field(default=0, ge=0, description="Time spent in milliseconds")
     
-    @field_validator('quality')
+    @field_validator("quality")
+    @classmethod
     def validate_quality(cls, v):
         """Ensure quality is in valid range"""
         if not 0 <= v <= 5:
@@ -212,8 +213,7 @@ class VocabularyReviewHistoryItem(BaseModel):
     interval_after: Optional[int]
     reviewed_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ===== Due Vocabulary Schemas =====
@@ -262,8 +262,7 @@ class VocabularyDeckResponse(VocabularyDeckBase):
     updated_at: datetime
     item_count: int = Field(default=0, description="Number of items in deck")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AddToDeckRequest(BaseModel):

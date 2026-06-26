@@ -13,7 +13,7 @@ Key Features:
 """
 
 from typing import Optional, List, Dict, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
@@ -600,7 +600,13 @@ class ProficiencyService:
         
         # Check if last assessment was over a week ago
         if profile.last_full_assessment:
-            days_since = (datetime.now() - profile.last_full_assessment).days
+            last_assessment = profile.last_full_assessment
+            if (
+                last_assessment.tzinfo is None
+                or last_assessment.utcoffset() is None
+            ):
+                last_assessment = last_assessment.replace(tzinfo=timezone.utc)
+            days_since = (datetime.now(timezone.utc) - last_assessment).days
             if days_since < 7:
                 return False
         

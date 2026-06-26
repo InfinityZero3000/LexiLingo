@@ -135,7 +135,10 @@ class VocabularyCRUD:
             func.lower(VocabularyItem.word),
             VocabularyItem.id,
         )
-        
+
+        if not tag:
+            query = query.offset(offset).limit(limit)
+
         result = await db.execute(query)
         items = [
             item
@@ -150,7 +153,7 @@ class VocabularyCRUD:
                 if expected_tag in normalize_all_tags(item.tags)
             ]
             return items[offset : offset + limit]
-        return items[offset : offset + limit]
+        return items
     
     async def search_vocabulary(
         self,
@@ -270,6 +273,29 @@ class VocabularyCRUD:
 
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    async def count_user_vocabulary(
+        self,
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        status: Optional[VocabularyStatus] = None,
+    ) -> int:
+        """Count visible vocabulary entries in a user's collection."""
+        query = (
+            select(func.count(UserVocabulary.id))
+            .join(
+                VocabularyItem,
+                VocabularyItem.id == UserVocabulary.vocabulary_id,
+            )
+            .where(UserVocabulary.user_id == user_id)
+            .where(*_valid_definition_conditions())
+        )
+
+        if status:
+            query = query.where(UserVocabulary.status == status)
+
+        result = await db.execute(query)
+        return result.scalar() or 0
     
     async def add_to_collection(
         self,

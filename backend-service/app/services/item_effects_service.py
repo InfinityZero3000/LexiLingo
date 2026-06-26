@@ -13,22 +13,25 @@ from uuid import UUID
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
+from sqlalchemy.exc import IntegrityError
 
-from app.models.gamification import UserInventory, ShopItem
+from app.core.shop_catalog import GAME_POWERUP_ITEM_TYPES
+from app.models.gamification import ChallengeRewardClaim, UserInventory, ShopItem
 from app.models.progress import LessonAttempt, Streak
 
 
 class ItemEffectsService:
     """Service for managing item usage and effects."""
-    
+
+    COSMETIC_ITEM_TYPES = frozenset({"avatar", "theme"})
+
     # Item type handlers
     ITEM_HANDLERS = {
         'streak_freeze': '_handle_streak_freeze',
         'double_xp': '_handle_double_xp',
         'hint_pack': '_handle_hint_pack',
         'heart_refill': '_handle_heart_refill',
-        'avatar': '_handle_cosmetic',
-        'theme': '_handle_cosmetic',
+        **{item_type: '_handle_instant_game_powerup' for item_type in GAME_POWERUP_ITEM_TYPES},
     }
     
     def __init__(self, db: AsyncSession):
@@ -74,6 +77,12 @@ class ItemEffectsService:
         
         if not shop_item:
             return False, "Shop item not found", None
+
+        if shop_item.item_type in self.COSMETIC_ITEM_TYPES:
+            return False, (
+                f"{shop_item.item_type} items are permanent cosmetics. "
+                "Equip them from the dedicated inventory endpoint."
+            ), None
         
         # Get handler for this item type
         handler_name = self.ITEM_HANDLERS.get(shop_item.item_type)
@@ -165,12 +174,13 @@ class ItemEffectsService:
         if not attempt:
             return False, "Start a lesson before using a hint pack", None
 
-        attempt.bonus_hints += hint_count
+        attempt.bonus_hints = (attempt.bonus_hints or 0) + hint_count
+        hints_used = attempt.hints_used or 0
         return True, f"Added {hint_count} hints to your active lesson!", {
             "hints_added": hint_count,
             "hints_remaining": max(
                 0,
-                3 + attempt.bonus_hints - attempt.hints_used,
+                3 + attempt.bonus_hints - hints_used,
             ),
             "effect": "hints"
         }
@@ -209,16 +219,21 @@ class ItemEffectsService:
         )
         return result.scalars().first()
     
-    async def _handle_cosmetic(
+    async def _handle_instant_game_powerup(
         self,
         user_id: UUID,
         inventory: UserInventory,
         shop_item: ShopItem,
     ) -> Tuple[bool, str, Optional[Dict]]:
-        """Handle cosmetic items (avatars, themes) - just mark as owned/active."""
-        return True, f"{shop_item.name} equipped!", {
+        """Handle one-shot in-game power-ups (time freeze, skip, reveal, shield, etc.).
+
+        These have no server-tracked state — the mini-games apply the effect
+        client-side. The handler just validates and echoes the item's effects
+        payload back so the client knows what to do.
+        """
+        return True, f"{shop_item.name} ready!", {
             "item_type": shop_item.item_type,
-            "effect": "cosmetic"
+            **(shop_item.effects or {}),
         }
     
     async def get_active_boosts(self, user_id: UUID) -> List[Dict[str, Any]]:
@@ -235,7 +250,7 @@ class ItemEffectsService:
             .where(
                 and_(
                     UserInventory.user_id == user_id,
-                    UserInventory.is_active == True,
+                    UserInventory.is_active.is_(True),
                     UserInventory.expires_at > now
                 )
             )
@@ -288,7 +303,7 @@ class ItemEffectsService:
             .where(
                 and_(
                     UserInventory.user_id == user_id,
-                    UserInventory.is_active == True,
+                    UserInventory.is_active.is_(True),
                     UserInventory.expires_at <= now
                 )
             )
@@ -319,9 +334,28 @@ class DailyChallengeService:
         """
         from app.models.progress import DailyActivity
         from app.crud.gamification import WalletCRUD
-        from datetime import date
         
-        today = date.today()
+        today = datetime.now(timezone.utc).date()
+        claim_date = datetime.combine(
+            today,
+            datetime.min.time(),
+            tzinfo=timezone.utc,
+        )
+
+        existing_claim = await self.db.execute(
+            select(ChallengeRewardClaim).where(
+                and_(
+                    ChallengeRewardClaim.user_id == user_id,
+                    ChallengeRewardClaim.challenge_id == challenge_id,
+                    ChallengeRewardClaim.claim_date == claim_date,
+                )
+            )
+        )
+        if existing_claim.scalar_one_or_none():
+            return False, "Reward already claimed today", {
+                "challenge_id": challenge_id,
+                "already_claimed": True,
+            }
 
         # Award XP to User.total_xp and DailyActivity
         if xp_reward > 0:
@@ -360,8 +394,26 @@ class DailyChallengeService:
                 user_id,
                 gems_reward,
                 source="daily_challenge",
-                description=f"Challenge reward: {challenge_id}"
+                description=f"Challenge reward: {challenge_id}",
+                commit=False,
             )
+
+        self.db.add(ChallengeRewardClaim(
+            user_id=user_id,
+            challenge_id=challenge_id,
+            claim_date=claim_date,
+            xp_reward=xp_reward,
+            gems_reward=gems_reward,
+        ))
+
+        try:
+            await self.db.commit()
+        except IntegrityError:
+            await self.db.rollback()
+            return False, "Reward already claimed today", {
+                "challenge_id": challenge_id,
+                "already_claimed": True,
+            }
         
         return True, f"Claimed! +{xp_reward} XP" + (f" +{gems_reward} gems" if gems_reward else ""), {
             "xp_earned": xp_reward,
