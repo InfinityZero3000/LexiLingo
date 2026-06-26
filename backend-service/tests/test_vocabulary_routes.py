@@ -18,7 +18,7 @@ Covers:
 
 import pytest
 import uuid
-from datetime import datetime, date, timedelta
+from datetime import UTC, datetime, date, timedelta
 from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
@@ -124,8 +124,8 @@ def _make_mock_vocab_item(vocab_id: str = VOCAB_ID):
     item.course_id = None
     item.lesson_id = None
     item.usage_frequency = 0
-    item.created_at = datetime.utcnow()
-    item.updated_at = datetime.utcnow()
+    item.created_at = datetime.now(UTC)
+    item.updated_at = datetime.now(UTC)
     return item
 
 
@@ -140,7 +140,7 @@ def _make_mock_user_vocab():
     uv.interval = 1
     uv.streak = 0
     uv.repetitions = 0
-    uv.next_review_date = datetime.utcnow()
+    uv.next_review_date = datetime.now(UTC)
     uv.last_reviewed_at = None
     uv.fsrs_stability = 0.0
     uv.fsrs_difficulty = 0.0
@@ -157,7 +157,7 @@ def _make_mock_user_vocab():
     uv.longest_streak = 0
     uv.total_xp_earned = 0
     uv.notes = None
-    uv.added_at = datetime.utcnow()
+    uv.added_at = datetime.now(UTC)
     return uv
 
 
@@ -269,6 +269,15 @@ class TestGetUserCollection:
         data = response.json()
         assert "items" in data
         assert "total" in data
+
+    @pytest.mark.asyncio
+    async def test_total_comes_from_count_query(self, auth_client):
+        client, _, _, _ = auth_client
+        with patch("app.crud.vocabulary.vocabulary_crud.get_user_vocabulary_list", new=AsyncMock(return_value=[])), \
+             patch("app.crud.vocabulary.vocabulary_crud.count_user_vocabulary", new=AsyncMock(return_value=42)):
+            response = await client.get(f"{BASE}/collection")
+        assert response.status_code == 200
+        assert response.json()["total"] == 42
 
     @pytest.mark.asyncio
     async def test_invalid_status_returns_400(self, auth_client):
@@ -727,7 +736,7 @@ class TestCreateDeck:
         mock_deck.name = "Travel Phrases"
         mock_deck.description = "Words for travel"
         mock_deck.color = "#2196F3"
-        mock_deck.created_at = datetime.utcnow()
+        mock_deck.created_at = datetime.now(UTC)
         mock_deck.user_id = "00000000-0000-0000-0000-000000000001"
         mock_deck.word_count = 0
         with patch("app.crud.vocabulary.vocabulary_crud.create_deck", new=AsyncMock(return_value=mock_deck)):
@@ -774,7 +783,7 @@ class TestGetUserDecks:
         mock_deck.name = "Travel Phrases"
         mock_deck.description = "Words for travel"
         mock_deck.color = "#2196F3"
-        mock_deck.created_at = datetime.utcnow()
+        mock_deck.created_at = datetime.now(UTC)
         mock_deck.user_id = "00000000-0000-0000-0000-000000000001"
         mock_deck.word_count = 5
         with patch("app.crud.vocabulary.vocabulary_crud.get_user_decks", new=AsyncMock(return_value=[mock_deck])):

@@ -7,7 +7,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.models.course import Course, Unit, Lesson
 from app.models.user import User
@@ -85,7 +85,7 @@ class TestLearningSession:
         existing_attempt = LessonAttempt(
             user_id=test_user.id,
             lesson_id=test_lesson.id,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             total_questions=10,
             lives_remaining=2,
             hints_used=1,
@@ -320,7 +320,7 @@ class TestLearningSession:
         test_lesson_attempt: LessonAttempt
     ):
         """Test cannot complete already completed lesson"""
-        test_lesson_attempt.finished_at = datetime.utcnow()
+        test_lesson_attempt.finished_at = datetime.now(UTC)
         await db_session.commit()
         
         response = await async_client.post(

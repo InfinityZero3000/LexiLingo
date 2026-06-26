@@ -5,7 +5,7 @@ Schemas for Grammar, Question Bank, and Test Exams.
 import json
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, Field, UUID4, field_validator
+from pydantic import BaseModel, ConfigDict, Field, UUID4, field_validator
 
 
 def _coerce_json_list(value: Any) -> list[Any] | None:
@@ -99,8 +99,7 @@ class GrammarResponse(GrammarBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ------------------- Question Bank -------------------
@@ -148,8 +147,7 @@ class QuestionResponse(QuestionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ------------------- Test Exams -------------------
@@ -188,5 +186,4 @@ class TestExamResponse(TestExamBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

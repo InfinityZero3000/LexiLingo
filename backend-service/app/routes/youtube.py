@@ -38,6 +38,9 @@ _YOUTUBE_API_ERROR_CODES = {
 }
 
 YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
+YOUTUBE_CHANNEL_THUMBNAIL_COST = 1
+YOUTUBE_SEARCH_COST = 100
+YOUTUBE_NO_DATA_API_COST = 0
 
 
 def _raise_youtube_api_error(response: httpx.Response) -> None:
@@ -181,6 +184,7 @@ async def get_curated_channels(
             api_name="youtube",
             fetch_fn=lambda: _fetch_channel_thumbnails(channel_ids),
             priority=Priority.LOW,
+            cost=YOUTUBE_CHANNEL_THUMBNAIL_COST,
             redis_ttl=604800,   # 7 days
             db_ttl=2592000,     # 30 days
         )
@@ -267,6 +271,7 @@ async def search_videos(
                 page_token=page_token,
             ),
             priority=Priority.HIGH,
+            cost=YOUTUBE_SEARCH_COST,
             redis_ttl=21600,    # 6 hours
             db_ttl=43200,       # 12 hours
         )
@@ -338,6 +343,7 @@ async def get_captions(
             api_name="youtube",
             fetch_fn=lambda: _fetch_captions_transcript_api(video_id, lang),
             priority=Priority.HIGH,
+            cost=YOUTUBE_NO_DATA_API_COST,
             redis_ttl=604800,       # 7 days
             db_ttl=31536000,        # 1 year
         )
@@ -456,6 +462,7 @@ async def get_channel_videos(
                 page_token=page_token,
             ),
             priority=Priority.MEDIUM,
+            cost=YOUTUBE_SEARCH_COST,
             redis_ttl=43200,    # 12 hours
             db_ttl=86400,       # 24 hours
         )
@@ -526,6 +533,7 @@ async def translate_word(
             api_name="youtube",
             fetch_fn=lambda: _fetch_word_data(clean_word, lang, context),
             priority=Priority.MEDIUM,
+            cost=YOUTUBE_NO_DATA_API_COST,
             redis_ttl=2592000,   # 30 days
             db_ttl=7776000,      # 90 days
         )

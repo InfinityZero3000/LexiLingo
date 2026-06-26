@@ -20,7 +20,7 @@ Covers:
 
 import uuid
 import pytest
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -74,7 +74,7 @@ def _make_mock_user(
     u.is_admin = False
     u.is_super_admin = False
     u.role_id = None
-    u.created_at = datetime.utcnow()
+    u.created_at = datetime.now(UTC)
     u.last_login = None
     u.avatar_url = None
     return u
@@ -105,7 +105,7 @@ def _make_mock_session(
         if not getattr(obj, "id", None):
             obj.id = uuid.UUID("550e8400-e29b-41d4-a716-446655440002")
         if not getattr(obj, "created_at", None):
-            obj.created_at = datetime.utcnow()
+            obj.created_at = datetime.now(UTC)
         if getattr(obj, "is_active", None) is None:
             obj.is_active = True
         if getattr(obj, "is_verified", None) is None:

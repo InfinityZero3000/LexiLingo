@@ -6,7 +6,7 @@ Request and response schemas for Course Category endpoints.
 
 from typing import Optional
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 import uuid
 
 
@@ -48,8 +48,7 @@ class CourseCategoryResponse(CourseCategoryBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseCategoryListItem(BaseModel):
@@ -62,5 +61,4 @@ class CourseCategoryListItem(BaseModel):
     color: Optional[str] = None
     course_count: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

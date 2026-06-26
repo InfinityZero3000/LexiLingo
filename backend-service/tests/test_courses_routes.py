@@ -11,6 +11,7 @@ Covers:
 
 import pytest
 import uuid
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -314,11 +315,10 @@ class TestEnrollInCourse:
 
     @pytest.mark.asyncio
     async def test_new_enrollment_returns_200_with_success_message(self, auth_client: AsyncClient):
-        from datetime import datetime
         mock_course = MagicMock()
         mock_course.is_published = True
         mock_progress = MagicMock()
-        mock_progress.started_at = datetime.utcnow()
+        mock_progress.started_at = datetime.now(UTC)
 
         with patch("app.crud.course.CourseCRUD.get_course", new=AsyncMock(return_value=mock_course)), \
              patch("app.crud.course.CourseCRUD.is_user_enrolled", new=AsyncMock(return_value=False)), \

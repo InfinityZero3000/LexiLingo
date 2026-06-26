@@ -16,7 +16,7 @@ Covers:
 
 import pytest
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -46,8 +46,8 @@ def _make_mock_user(user_id: str = "550e8400-e29b-41d4-a716-446655440001"):
     user.rank = "bronze"
     user.avatar_url = None
     user.bio = None
-    user.created_at = datetime.utcnow()
-    user.updated_at = datetime.utcnow()
+    user.created_at = datetime.now(UTC)
+    user.updated_at = datetime.now(UTC)
     user.last_login = None
     user.role_slug = "user"
     user.role_id = None

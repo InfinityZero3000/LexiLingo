@@ -330,12 +330,12 @@ async def test_lesson_attempt(
     test_lesson: Lesson
 ) -> LessonAttempt:
     """Create a test lesson attempt"""
-    from datetime import datetime
+    from datetime import UTC, datetime
     
     attempt = LessonAttempt(
         user_id=test_user.id,
         lesson_id=test_lesson.id,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(UTC),
         total_questions=10,
         lives_remaining=3,
         hints_used=0,

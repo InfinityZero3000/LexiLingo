@@ -12,7 +12,7 @@ Covers:
 """
 
 import pytest
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 from httpx import AsyncClient, ASGITransport
 
@@ -109,8 +109,8 @@ def _make_mock_device():
     device.device_type = "android"
     device.device_name = "Pixel 8"
     device.fcm_token = "mock-fcm-token-xyz"
-    device.last_active = datetime.utcnow()
-    device.created_at = datetime.utcnow()
+    device.last_active = datetime.now(UTC)
+    device.created_at = datetime.now(UTC)
     return device
 
 
@@ -145,7 +145,7 @@ class TestRegisterDevice:
                 import uuid as _uuid
                 obj.id = _uuid.uuid4()
             if not getattr(obj, "created_at", None) or str(type(obj.created_at)) == "<class 'unittest.mock.MagicMock'>":
-                obj.created_at = datetime.utcnow()
+                obj.created_at = datetime.now(UTC)
 
         mock_session.refresh = AsyncMock(side_effect=refresh_side_effect)
 

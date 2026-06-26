@@ -6,7 +6,7 @@ Phase 4: Schemas for Achievements, Leaderboards, Shop, and Social Features
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from enum import Enum
 
 
@@ -77,8 +77,7 @@ class AchievementResponse(AchievementBase):
     is_hidden: bool = False
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserAchievementResponse(BaseModel):
@@ -89,8 +88,7 @@ class UserAchievementResponse(BaseModel):
     progress: int = 0
     is_showcased: bool = False
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AchievementProgressResponse(BaseModel):
@@ -107,8 +105,7 @@ class AchievementProgressResponse(BaseModel):
     progress_percentage: float = 0.0
     unlocked_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -124,8 +121,7 @@ class WalletResponse(BaseModel):
     total_gems_spent: int
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WalletTransactionResponse(BaseModel):
@@ -138,8 +134,7 @@ class WalletTransactionResponse(BaseModel):
     description: Optional[str] = None
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StarterRewardResponse(BaseModel):
@@ -155,8 +150,7 @@ class WalletHistoryResponse(BaseModel):
     wallet: WalletResponse
     transactions: List[WalletTransactionResponse]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -175,8 +169,7 @@ class LeaderboardUserEntry(BaseModel):
     lessons_completed: int
     is_current_user: bool = False
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LeaderboardResponse(BaseModel):
@@ -190,8 +183,7 @@ class LeaderboardResponse(BaseModel):
     promotion_zone: int = 3  # Top N get promoted
     demotion_zone: int = 3   # Bottom N get demoted
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserLeagueStatusResponse(BaseModel):
@@ -212,8 +204,7 @@ class UserLeagueStatusResponse(BaseModel):
     week_ends_in_hours: int
     rank_icon_url: str = ""
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -232,8 +223,31 @@ class ShopItemResponse(BaseModel):
     is_available: bool = True
     stock_quantity: Optional[int] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ShopItemAdminCreate(BaseModel):
+    """Admin payload to create a shop item, including effects/icon_url."""
+    name: str
+    description: str
+    item_type: str
+    price_gems: int
+    icon_url: Optional[str] = None
+    effects: Optional[Dict[str, Any]] = None
+    is_available: bool = True
+    stock_quantity: Optional[int] = None
+
+
+class ShopItemAdminUpdate(BaseModel):
+    """Admin payload to update a shop item. All fields optional (partial update)."""
+    name: Optional[str] = None
+    description: Optional[str] = None
+    item_type: Optional[str] = None
+    price_gems: Optional[int] = None
+    icon_url: Optional[str] = None
+    effects: Optional[Dict[str, Any]] = None
+    is_available: Optional[bool] = None
+    stock_quantity: Optional[int] = None
 
 
 class PurchaseRequest(BaseModel):
@@ -251,8 +265,7 @@ class PurchaseResponse(BaseModel):
     new_balance: int
     message: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EquipAvatarRequest(BaseModel):
@@ -276,8 +289,7 @@ class UserInventoryItemResponse(BaseModel):
     expires_at: Optional[datetime] = None
     purchased_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class InventoryResponse(BaseModel):
@@ -285,8 +297,7 @@ class InventoryResponse(BaseModel):
     items: List[UserInventoryItemResponse]
     total_items: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UseItemRequest(BaseModel):
@@ -302,8 +313,7 @@ class UseItemResponse(BaseModel):
     effects_applied: Optional[Dict[str, Any]] = None
     expires_at: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -338,8 +348,7 @@ class UserSocialProfile(BaseModel):
     similarity_score: Optional[float] = None
     distance_km: Optional[float] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FollowersListResponse(BaseModel):
@@ -347,8 +356,7 @@ class FollowersListResponse(BaseModel):
     users: List[UserSocialProfile]
     total: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FriendSuggestionsResponse(BaseModel):
@@ -356,8 +364,7 @@ class FriendSuggestionsResponse(BaseModel):
     users: List[UserSocialProfile]
     total: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LocationUpdateRequest(BaseModel):
@@ -375,8 +382,7 @@ class LocationUpdateResponse(BaseModel):
     stored_longitude: Optional[float] = None
     expires_in_seconds: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NearbyUsersResponse(BaseModel):
@@ -386,8 +392,7 @@ class NearbyUsersResponse(BaseModel):
     radius_km: float
     location_enabled: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActivityFeedItem(BaseModel):
@@ -402,8 +407,7 @@ class ActivityFeedItem(BaseModel):
     activity_data: Optional[Dict[str, Any]] = None
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActivityFeedResponse(BaseModel):
@@ -412,5 +416,4 @@ class ActivityFeedResponse(BaseModel):
     total: int
     has_more: bool = False
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

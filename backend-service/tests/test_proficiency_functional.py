@@ -23,6 +23,7 @@ Usage:
 
 import pytest
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Dict
 
@@ -488,7 +489,54 @@ class TestLevelNavigation:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# 6. Level Thresholds Configuration
+# 6. Assessment Suggestion Logic
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestAssessmentSuggestion:
+    """Test formal assessment suggestion rules."""
+
+    def _profile(
+        self,
+        *,
+        last_full_assessment: datetime | None,
+        assessment_count: int = 50,
+        score: float = 70,
+    ) -> ProficiencyProfile:
+        return ProficiencyProfile(
+            user_id="user-1",
+            overall_level=ProficiencyLevel.A1,
+            skills={
+                skill: SkillAssessment(
+                    skill=skill,
+                    score=score,
+                    level=ProficiencyLevel.A1,
+                    confidence=1.0,
+                    total_exercises=assessment_count,
+                    correct_exercises=int(assessment_count * 0.8),
+                )
+                for skill in SkillType
+            },
+            assessment_count=assessment_count,
+            last_full_assessment=last_full_assessment,
+        )
+
+    def test_accepts_timezone_aware_last_assessment(self):
+        profile = self._profile(
+            last_full_assessment=datetime.now(UTC) - timedelta(days=8),
+        )
+
+        assert ProficiencyService.should_suggest_assessment(profile) is True
+
+    def test_recent_timezone_aware_assessment_suppresses_suggestion(self):
+        profile = self._profile(
+            last_full_assessment=datetime.now(UTC) - timedelta(days=2),
+        )
+
+        assert ProficiencyService.should_suggest_assessment(profile) is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 7. Level Thresholds Configuration
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestLevelThresholds:
