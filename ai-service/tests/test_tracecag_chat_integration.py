@@ -260,6 +260,41 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
 
 
 @pytest.mark.asyncio
+async def test_lexi_chat_native_language_ja_maps_to_japanese_in_learner_profile(
+    monkeypatch,
+    mock_lexi_db,
+    mock_lexi_store,
+):
+    """A Japanese learner's request must reach orchestrator.process with
+    learner_profile["native_language"] == "Japanese", not the Vietnamese
+    default — and the cache must not be shared across languages."""
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock(
+        return_value={"tutor_response": "Good job!", "metadata": {}}
+    )
+
+    async def _fake_get_orchestrator():
+        return orchestrator
+
+    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+
+    await lexi_route.lexi_chat(
+        request_context=MagicMock(),
+        request=lexi_route.LexiChatRequest(
+            user_id="u1",
+            message="text input",
+            learner_level="B1",
+            native_language="ja",
+        ),
+        db=mock_lexi_db,
+        current_user=MagicMock(user_id="u1"),
+    )
+
+    learner_profile = orchestrator.process.call_args.kwargs["learner_profile"]
+    assert learner_profile["native_language"] == "Japanese"
+
+
+@pytest.mark.asyncio
 async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     monkeypatch,
     mock_lexi_db,
@@ -291,6 +326,7 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
             input_type="text",
             enable_tts=True,
             learner_level="B1",
+            native_language="ja",
         ),
         db=mock_lexi_db,
         current_user=MagicMock(user_id="u1"),
@@ -303,6 +339,10 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     assert "tts_complete" in response.metadata["pipeline_steps"]
     assert response.metadata["trace-cag_metadata"]["fallback_used"] is True
     assert response.metadata["trace-cag_metadata"]["retry_mode"] == "trace-cag_degraded"
+
+    # native_language must survive into the degraded retry call too.
+    retry_learner_profile = orchestrator.process.await_args_list[1].kwargs["learner_profile"]
+    assert retry_learner_profile["native_language"] == "Japanese"
 
 
 @pytest.mark.asyncio

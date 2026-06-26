@@ -1,8 +1,7 @@
-"""SCAR-L1 state-certified reuse decisions for TraceCAG.
+"""SCAR-L1 state-certified reuse decisions.
 
-This module is intentionally pure: no Redis, no LLM calls, no graph service.
-It answers one question for cache-gate orchestration: can this L1 candidate be
-reused, patched, or must the request fall back to full reconstruction?
+This module is pure Python so it can be copied into another project without
+Redis, FastAPI, LangGraph, or model-provider dependencies.
 """
 
 from __future__ import annotations
@@ -11,7 +10,7 @@ from dataclasses import dataclass, field
 import time
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class L1Request:
     """State signature for the current request."""
 
@@ -25,10 +24,9 @@ class L1Request:
     answer_target: str = ""
     relation_hints: set[str] = field(default_factory=set)
     evidence_hash: str = ""
-    native_language: str = ""
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class L1Candidate:
     """State signature for an L1 cache candidate."""
 
@@ -43,12 +41,11 @@ class L1Candidate:
     answer_target: str = ""
     relation_hints: set[str] = field(default_factory=set)
     evidence_hash: str = ""
-    native_language: str = ""
     created_at: float = 0.0
     ttl: int = 3600
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class L1Decision:
     """SCAR-L1 ternary decision."""
 
@@ -84,22 +81,13 @@ def decide_l1_reuse(
     tau_patch: float = 0.55,
     concept_floor: float = 0.50,
 ) -> L1Decision:
-    """Decide whether an L1 candidate can be reused, patched, or rejected.
+    """Decide whether an L1 candidate can be reused, patched, or rejected."""
 
-    Hard constraints protect learner/profile and task-state compatibility.
-    Risk scoring then separates exact safe reuse from near-hit patching.
-    """
-
-    # Wall-clock: candidate.created_at is read back from Redis and may have
-    # been written by a different process/host (monotonic()'s reference point
-    # is undefined across processes per the stdlib docs).
-    current_time = time.time() if now is None else now
+    current_time = time.monotonic() if now is None else now
     reasons: list[str] = []
 
     if request.level != candidate.level:
         reasons.append("level_mismatch")
-    if not _empty_or_equal(request.native_language, candidate.native_language):
-        reasons.append("native_language_mismatch")
     if request.profile_epoch != candidate.profile_epoch:
         reasons.append("profile_epoch_mismatch")
     if not _empty_or_equal(request.intent, candidate.intent):
@@ -133,7 +121,7 @@ def decide_l1_reuse(
         + 0.15 * (1.0 - relation_overlap)
         + 0.10 * age_ratio
     )
-    risk = max(0.0, min(1.0, risk))
+    risk = round(max(0.0, min(1.0, risk)), 6)
     rank_score = (1.0 - risk) + (0.30 * concept_overlap) + (0.20 * entity_overlap)
 
     if reasons:
@@ -143,3 +131,4 @@ def decide_l1_reuse(
     if risk <= tau_patch:
         return L1Decision("patch", risk, rank_score, ("state_compatible_near_hit",), True)
     return L1Decision("full", risk, rank_score, ("risk_above_patch_threshold",), False)
+

@@ -56,6 +56,7 @@ class CacheFingerprint(TypedDict, total=False):
     query_norm: str          # normalized user input
     intent: str              # diagnosed intent
     level: str               # CEFR level
+    native_language: str     # learner's native language (e.g. Vietnamese)
     root_concepts: List[str] # root-cause concept IDs
     session_turn: int        # turn number within session
 
@@ -75,7 +76,7 @@ class CacheEntry(TypedDict, total=False):
     fluency_score: float
     vocabulary_level: str
     action_plan: List[Dict[str, Any]]
-    created_at: float                  # t_c: timestamp (monotonic)
+    created_at: float                  # t_c: timestamp (wall-clock epoch — Redis-persisted, read across processes/hosts)
     ttl: int                           # seconds
 
 

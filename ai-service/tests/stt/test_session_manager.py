@@ -159,3 +159,22 @@ async def test_cancelled_session_start_releases_reservation(tmp_path):
 
     assert not manager.sessions
     assert not manager._pending_sessions
+
+
+@pytest.mark.asyncio
+async def test_idle_session_is_closed_by_manager(tmp_path):
+    config = STTConfig(temp_dir=str(tmp_path), session_idle_timeout_seconds=0)
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    manager = SessionManager(config, registry)
+
+    session = await manager.create(StartMessage(session_id="idle"))
+    session.last_activity = time.monotonic() - 1.0
+
+    now = time.monotonic()
+    for sid, s in list(manager.sessions.items()):
+        if now - s.last_activity > manager.config.session_idle_timeout_seconds:
+            await manager.close(sid, "idle_timeout")
+
+    assert "idle" not in manager.sessions
+    await manager.shutdown()

@@ -16,6 +16,16 @@ from api.services.trace_cag.state import TraceCAGState
 # Local copy of the decay constant (mirrors nodes_v2._RECENCY_LAMBDA).
 _RECENCY_LAMBDA = 0.01
 
+# tracecag_rapid bridge/graph weight. NOTE (2026-06-26, Run 22): raising this
+# from 0.18→0.80 was offline-validated to lift recall@5 79%→84% and
+# both-supporting@7 69%→78% with flat rank-1 precision — yet live it REGRESSED
+# end-to-end EM 46.9%→43.8% (recovered 0 of the 25% "gold dropped by ranking"
+# questions, flipped 2 clean wins via added distractors). Lesson: retrieval
+# recall is NOT the binding constraint here — the 32B reader's multi-hop
+# synthesis is — so more/higher-ranked evidence the reader can't use is
+# net-negative. Default stays 0.18 (the EM-best config); knob kept for research.
+_RAPID_GRAPH_WEIGHT = _env_float("TRACECAG_RAPID_GRAPH_WEIGHT", 0.18)
+
 
 # ── Text helpers ──────────────────────────────────────────────────────────────
 
@@ -292,6 +302,7 @@ def _compute_evidence_budget(
     benchmark_mode: str,
     benchmark_candidates: bool,
     adaptive_profile: str = "",
+    benchmark_task: str = "",
 ) -> int:
     # Lazy import to avoid circular dependency at module load time.
     from api.services.trace_cag.benchmark.adaptive import _ADAPTIVE_PROFILES
@@ -300,8 +311,6 @@ def _compute_evidence_budget(
     max_budget = max(base, _env_int("TRACECAG_EVIDENCE_BUDGET_MAX", 9))
     complexity = _question_complexity_score(question)
     budget = base + max(0, complexity - 2)
-
-    benchmark_task = "multihop_qa" if "multihop" in (question or "").lower() else ""
 
     if retrieval_policy == "rapid":
         # Keep full evidence budget for multihop-style questions in rapid mode.
@@ -436,7 +445,7 @@ def _rank_benchmark_candidates(
                 # targets win at the cost of demoting strong direct matches.
                 final_score = (
                     base_score
-                    + (0.18 * graph_score)
+                    + (_RAPID_GRAPH_WEIGHT * graph_score)
                     + (0.06 * memory_score)
                     + (0.06 * query_coverage)
                     + (0.05 * anchor_coverage)

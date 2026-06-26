@@ -9,13 +9,14 @@ at call time to avoid a circular import at module load.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
 import time
 from typing import Any, Dict
 
-from api.services.trace_cag.env_helpers import _env_float
+from api.services.trace_cag.env_helpers import _env_float, _env_flag, _env_int
 from api.services.trace_cag.benchmark.ranking import (
     _answer_support_score,
     _content_tokens,
@@ -191,6 +192,22 @@ def _generate_extractive_qa_response(question: str, context: str) -> str:
     return answer or best_sentence
 
 
+def _is_strong_benchmark_model(model_used: str) -> bool:
+    """Whether the generating model is capable enough to trust over extractive spans.
+
+    Classify by actual parameter size, not substring tags: the old tag list
+    ("70b","7b",…) mis-read "groq/qwen/qwen3-32b" as WEAK (no tag matched) and
+    "qwen3-1.7b" as STRONG ("7b" is a substring of "1.7b") — exactly backwards,
+    so the main 32B benchmark model got the aggressive extractive override.
+    """
+    model_name = str(model_used or "").strip().lower()
+    if model_name in ("extractive_fallback", "extractive_policy"):
+        return False
+    param_sizes = [float(m) for m in re.findall(r"(\d+(?:\.\d+)?)\s*b\b", model_name)]
+    max_params_b = max(param_sizes) if param_sizes else 0.0
+    return max_params_b >= 14.0 or any(tag in model_name for tag in ("gemini", "gpt", "claude"))
+
+
 def _postprocess_benchmark_qa_answer(
     question: str,
     raw_answer: str,
@@ -216,10 +233,10 @@ def _postprocess_benchmark_qa_answer(
     if low in {"yes", "no", "unknown"}:
         return low
 
-    # Strong LLM models (70b+) produce high-quality answers that should be trusted
-    # more than extractive span matching. Only override for clear hallucinations.
-    model_name = str(model_used or "").strip().lower()
-    is_strong_llm = any(tag in model_name for tag in ("70b", "7b", "gemini", "gpt", "claude")) and model_name not in ("extractive_fallback", "extractive_policy")
+    # Capable LLMs produce high-quality answers that should be trusted more than
+    # extractive span matching; only override for clear hallucinations.
+    low_model = str(model_used or "").strip().lower()
+    is_strong_llm = _is_strong_benchmark_model(low_model)
 
     extractive_answer = _generate_extractive_qa_response(question, context)
     llm_support = _answer_support_score(candidate, context)
@@ -254,14 +271,42 @@ def _postprocess_benchmark_qa_answer(
     return candidate
 
 
-def _truncate_benchmark_context(context: str, question: str, max_chars: int = _BENCHMARK_CONTEXT_MAX_CHARS) -> str:
+def _truncate_benchmark_context(
+    context: str,
+    question: str,
+    max_chars: int = _BENCHMARK_CONTEXT_MAX_CHARS,
+    items: "list[dict] | None" = None,
+) -> str:
     """Truncate context to keep token usage within TPM budget.
 
-    Keeps the most relevant passages by scoring each paragraph's lexical overlap
-    with the question, then greedily fills up to max_chars.
+    When `items` (the upstream rank-ordered retrieval trace) is supplied, drop
+    whole lowest-ranked tail items to fit the budget — this preserves the
+    bridge-aware multihop ordering computed upstream in ranking.py. The single
+    joined `context` string has no recoverable per-document boundaries (items
+    are joined with a single "\\n" and start with "[", so the lexical
+    paragraph-split regex below never fires — it degenerates to a blind
+    front-truncate that can sever a document mid-sentence). Falls back to that
+    paragraph-overlap heuristic only when no structured items are available.
     """
     if not context or len(context) <= max_chars:
         return context
+
+    if items:
+        selected_parts: list[str] = []
+        total = 0
+        for item in items:
+            title = str(item.get("title") or "").strip()
+            text = str(item.get("text") or "").strip()
+            if not text:
+                continue
+            part = f"[{title}] {text}" if title else text
+            if total + len(part) + 1 > max_chars:
+                break
+            selected_parts.append(part)
+            total += len(part) + 1
+        if selected_parts:
+            return "\n".join(selected_parts)
+        return context[:max_chars]
 
     paragraphs = [p.strip() for p in re.split(r"\n{2,}|\n(?=[A-Z])|(?<=\.)\s{2,}", context) if p.strip()]
     if not paragraphs:
@@ -313,19 +358,61 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     else:
         response = ""
         model_used = "llm_unavailable"
-        truncated_context = _truncate_benchmark_context(clean_context, question)
+        truncated_context = _truncate_benchmark_context(
+            clean_context, question, items=list(state.get("retrieval_trace") or [])
+        )
         _bench_groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
         _no_think_prefix = "/no_think\n" if "qwen" in _bench_groq_model.lower() else ""
-        system_prompt = (
-            _no_think_prefix +
-            "You are a precise QA system for multi-hop reasoning benchmarks. "
-            "The context spans multiple passages — read ALL of them, identify key entities and facts, "
-            "then chain the evidence to reach the answer. "
-            "Output ONLY the minimal final answer: a short entity/phrase (1–6 words), 'yes', or 'no'. "
-            "Never explain, never add punctuation or preamble. "
-            "If genuinely unanswerable from the context, output exactly: unknown"
-        )
-        user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
+        # E2G ("Evidence → minimal Answer"): one bounded reasoning step before the
+        # answer, grounded in the passages, with an exemplar that pins HotpotQA
+        # answer granularity. Targets the dominant failure buckets (2-hop synthesis
+        # + near-miss span/format), per arXiv:2401.05787 / 2212.10509. Kept bounded
+        # (still /no_think, no <think> explosion) to stay inside the TPM budget.
+        # Default OFF: Run 23 (n=64, tracecag_rapid) showed bounded E2G with /no_think
+        # kept REGRESSES EM 46.9%→39.1% (net −5 EM per-sample: 1 gain, 6 losses) —
+        # the model writes a post-hoc Evidence line without real reasoning and diverges
+        # to wrong entities on questions direct answering got right (Phil Spector→"the
+        # Teddy Bears", YG Entertainment→WINNER). The research-backed gain needs REAL
+        # Qwen3 thinking (remove /no_think, ~500+ reasoning tokens/call), which blows the
+        # 500K/day TPD across n=64×3-modes. Knob kept for a future quota-permitting test.
+        _use_e2g = _env_flag("TRACECAG_BENCHMARK_E2G", False)
+        _bench_max_tokens = _env_int("TRACECAG_BENCHMARK_MAX_TOKENS", 220 if _use_e2g else 96)
+        if _use_e2g:
+            system_prompt = (
+                _no_think_prefix +
+                "You are a precise multi-hop QA system. Read ALL passages, find the "
+                "supporting fact(s), and chain them across passages to reach the answer.\n"
+                "Then give the MINIMAL final answer copied in the gold style: a short "
+                "entity/phrase (1–6 words), 'yes', or 'no'. Use the exact surface form as "
+                "it appears in the passage; do NOT add titles, honorifics, given names, "
+                "dates, or parentheticals beyond what the question asks. If the context "
+                "does not contain the answer, output 'unknown'.\n"
+                "Respond in EXACTLY this format, nothing else:\n"
+                "Evidence: <one short supporting fact chaining the hops>\n"
+                "Answer: <minimal final answer>\n\n"
+                "Example:\n"
+                "Context:\n"
+                "[Doctor Strange (2016 film)] Doctor Strange is a 2016 Marvel film starring "
+                "Benedict Cumberbatch, directed by Scott Derrickson.\n"
+                "[Scott Derrickson] Scott Derrickson is an American director.\n"
+                "Question: What nationality is the director of the 2016 film starring "
+                "Benedict Cumberbatch as the title role?\n"
+                "Evidence: Doctor Strange (2016) stars Cumberbatch and was directed by Scott "
+                "Derrickson, who is American.\n"
+                "Answer: American"
+            )
+            user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}"
+        else:
+            system_prompt = (
+                _no_think_prefix +
+                "You are a precise QA system for multi-hop reasoning benchmarks. "
+                "The context spans multiple passages — read ALL of them, identify key entities and facts, "
+                "then chain the evidence to reach the answer. "
+                "Output ONLY the minimal final answer: a short entity/phrase (1–6 words), 'yes', or 'no'. "
+                "Never explain, never add punctuation or preamble. "
+                "If genuinely unanswerable from the context, output exactly: unknown"
+            )
+            user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
 
         try:
             import httpx
@@ -340,15 +427,18 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                     break
 
                 if provider == "groq":
-                    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, get_groq_key_pool
+                    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, get_configured_key_count
                     groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
                     # Retry across all available keys — skip keys returning 401 (expired/invalid)
-                    _pool = get_groq_key_pool()
-                    _max_key_tries = _pool.count if _pool else 4
+                    # 5 retries (2s..32s, ~62s worst case): Run 19 showed Groq's qwen3-32b
+                    # over-capacity periods can outlast 3 retries (14s) for a sample.
+                    _max_503_retries = 5
+                    _max_key_tries = (get_configured_key_count() or 1) + _max_503_retries
                     _tried_groq_keys: set = set()
+                    _503_retry_count = 0
                     for _key_attempt in range(_max_key_tries):
                         groq_key = await get_available_groq_key(estimated_tokens=96)
-                        if not groq_key or groq_key in _tried_groq_keys:
+                        if not groq_key or (groq_key in _tried_groq_keys and _503_retry_count >= _max_503_retries):
                             break
                         _tried_groq_keys.add(groq_key)
                         try:
@@ -356,23 +446,48 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                                 provider="groq",
                                 url="https://api.groq.com/openai/v1/chat/completions",
                                 headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                                payload={"model": groq_model, "messages": messages, "max_tokens": 96, "temperature": 0.0},
+                                payload={"model": groq_model, "messages": messages, "max_tokens": _bench_max_tokens, "temperature": 0.0},
                                 httpx_module=httpx,
                                 timeout=30.0,
                             )
                             if resp is not None and resp.status_code == 200:
                                 data = resp.json()
-                                tokens = data.get("usage", {}).get("total_tokens", 96)
+                                tokens = data.get("usage", {}).get("total_tokens", _bench_max_tokens)
                                 await record_groq_key_usage(groq_key, tokens)
                                 _raw = data["choices"][0]["message"]["content"].strip()
                                 # Strip <think>…</think> blocks (Qwen3 thinking mode)
-                                response = re.sub(r"<think>.*?</think>\s*", "", _raw, flags=re.DOTALL).strip()
+                                _raw = re.sub(r"<think>.*?</think>\s*", "", _raw, flags=re.DOTALL).strip()
+                                # E2G: keep only the final "Answer:" line (drop the Evidence
+                                # reasoning so it never reaches the EM/F1 scorer). Fall back to
+                                # the last non-empty line if the model skipped the format.
+                                if _use_e2g:
+                                    _ans_lines = re.findall(r"(?im)^\s*(?:final\s+)?answer\s*:\s*(.+?)\s*$", _raw)
+                                    if _ans_lines:
+                                        response = _ans_lines[-1].strip()
+                                    else:
+                                        _nonempty = [ln.strip() for ln in _raw.splitlines() if ln.strip()]
+                                        response = (_nonempty[-1] if _nonempty else _raw).strip()
+                                else:
+                                    response = _raw
                                 model_used = f"groq/{groq_model}"
                                 break
                             elif resp is not None and resp.status_code == 401:
                                 logger.warning(
                                     "[_generate_benchmark_qa_response] Groq key invalid (401), trying next key"
                                 )
+                                continue
+                            elif resp is not None and resp.status_code == 503 and _503_retry_count < _max_503_retries:
+                                # Transient "over capacity" — Groq's own error message asks for
+                                # exponential backoff; the old code gave up to extractive_fallback
+                                # on the very first occurrence instead of honoring that.
+                                _503_retry_count += 1
+                                _backoff = 2 ** _503_retry_count
+                                logger.warning(
+                                    "[_generate_benchmark_qa_response] Groq 503 over capacity, "
+                                    "backing off %ss (retry %d/%d)",
+                                    _backoff, _503_retry_count, _max_503_retries,
+                                )
+                                await asyncio.sleep(_backoff)
                                 continue
                             else:
                                 logger.warning(

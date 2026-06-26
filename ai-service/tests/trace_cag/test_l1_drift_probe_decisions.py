@@ -55,7 +55,7 @@ def _candidate(
         answer_target=answer_target,
         relation_hints=relations,
         evidence_hash="",
-        created_at=time.monotonic(),
+        created_at=time.time(),
         ttl=3600,
     )
 

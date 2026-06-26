@@ -398,6 +398,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         benchmark_mode=benchmark_mode,
         benchmark_candidates=bool(benchmark_candidates),
         adaptive_profile=adaptive_profile,
+        benchmark_task=benchmark_task,
     )
     if benchmark_candidates and benchmark_task in {"multihop_qa", "retrieval_qa"}:
         top_evidence = _select_diverse_multihop_evidence(

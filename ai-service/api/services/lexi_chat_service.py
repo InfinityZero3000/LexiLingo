@@ -66,6 +66,7 @@ class LexiChatRequest(BaseModel):
     audio_base64: Optional[str] = Field(default=None, description="Base64 audio for STT")
     enable_tts: bool = Field(default=True, description="Generate TTS audio response")
     learner_level: str = Field(default="B1", description="CEFR level: A1-C2")
+    native_language: str = Field(default="vi", description="ISO 639-1 code, e.g. vi/en/ja")
     story_context: Optional[str] = Field(default=None, description="Story/adventure context")
 
 
@@ -134,6 +135,7 @@ def idempotency_request_hash(request: "LexiChatRequest") -> str:
         "audio_base64": request.audio_base64,
         "enable_tts": request.enable_tts,
         "learner_level": request.learner_level,
+        "native_language": request.native_language,
         "story_context": request.story_context,
     }
     normalized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -328,13 +330,17 @@ async def run_lexi_pipeline(
 
     try:
         from api.services.orchestrator import get_orchestrator
+        from api.utils.languages import iso_to_language_name
 
         orchestrator = await get_orchestrator()
         graph_result = await orchestrator.process(
             user_input=user_text,
             session_id=session_id,
             user_id=request.user_id,
-            learner_profile={"level": request.learner_level},
+            learner_profile={
+                "level": request.learner_level,
+                "native_language": iso_to_language_name(request.native_language),
+            },
             conversation_history=history,
         )
         lexi_response = graph_result.get("tutor_response", "")
@@ -357,13 +363,17 @@ async def run_lexi_pipeline(
         metadata["pipeline_steps"].append("trace-cag_failed_primary")
         try:
             from api.services.orchestrator import get_orchestrator
+            from api.utils.languages import iso_to_language_name
 
             orchestrator = await get_orchestrator()
             retry_result = await orchestrator.process(
                 user_input=user_text,
                 session_id=session_id,
                 user_id=request.user_id,
-                learner_profile={"level": request.learner_level},
+                learner_profile={
+                    "level": request.learner_level,
+                    "native_language": iso_to_language_name(request.native_language),
+                },
                 conversation_history=[],
                 cache_policy="off",
                 retrieval_policy="rapid",
@@ -559,6 +569,7 @@ async def stream_lexi_chat(
     from api.services.orchestrator import get_orchestrator
     from api.services.trace_cag.nodes_v2 import build_generation_prompt, stream_llm_tokens
     from api.services.trace_cag.evaluation_agent import EvaluationAgent
+    from api.utils.languages import iso_to_language_name
 
     user_text = request.message
 
@@ -653,7 +664,10 @@ async def stream_lexi_chat(
                 user_input=user_text,
                 session_id=session_id,
                 user_id=request.user_id,
-                learner_profile={"level": request.learner_level},
+                learner_profile={
+                    "level": request.learner_level,
+                    "native_language": iso_to_language_name(request.native_language),
+                },
                 conversation_history=history,
             )
         )

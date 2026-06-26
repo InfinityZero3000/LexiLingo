@@ -719,7 +719,7 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
 
         # --- Attempt 3: Hardcoded strings ---
         if not native_hint:
-            native_hint = _get_predefined_vietnamese(errors)
+            native_hint = _get_predefined_native_hint(errors, native_language)
             models_used.append("native_fallback")
 
         latency_ms = int((time.time() - start_time) * 1000)
@@ -732,26 +732,69 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"[vietnamese_node] Error: {e}")
         return {
-            "vietnamese_hint": _get_predefined_vietnamese(errors),
+            "vietnamese_hint": _get_predefined_native_hint(errors, native_language),
             "models_used": ["native_fallback"],
         }
 
 
-def _get_predefined_vietnamese(errors: list) -> str:
-    """Fallback predefined Vietnamese explanations"""
-    if not errors:
-        return "Câu của bạn rất tốt! Tiếp tục cố gắng nhé! "
-    
-    error_type = errors[0].get("type", "").lower()
-    explanations = {
+# Last-resort hardcoded explanations, keyed by language name (matches the
+# `native_language` values produced by api.utils.languages.iso_to_language_name).
+# Only the most common onboarding languages get a translated dict — anything
+# else falls back to a short English line rather than translating every string.
+_PREDEFINED_NATIVE_EXPLANATIONS: Dict[str, Dict[str, str]] = {
+    "Vietnamese": {
+        "_no_errors": "Câu của bạn rất tốt! Tiếp tục cố gắng nhé! ",
+        "_default": "Hãy chú ý quy tắc ngữ pháp này nhé!",
         "subject_verb_agreement": "Trong tiếng Anh, động từ phải hòa hợp với chủ ngữ. Với 'I/you/we/they' dùng động từ nguyên mẫu, với 'he/she/it' thêm -s hoặc -es.",
         "third_person_s": "Với chủ ngữ ngôi thứ 3 số ít (he, she, it), động từ cần thêm -s hoặc -es. Ví dụ: He goes, She works.",
         "past_tense": "Khi nói về quá khứ (yesterday, last week...), cần dùng thì quá khứ đơn. Động từ bất quy tắc cần học thuộc!",
         "present_perfect": "Thì hiện tại hoàn thành dùng: have/has + past participle. Ví dụ: have gone, has eaten.",
         "article": "Dùng 'a' trước phụ âm, 'an' trước nguyên âm (a, e, i, o, u). Ví dụ: a book, an apple.",
-    }
-    
-    return explanations.get(error_type, "Hãy chú ý quy tắc ngữ pháp này nhé!")
+    },
+    "Japanese": {
+        "_no_errors": "あなたの文章はとても良いです!頑張り続けてください!",
+        "_default": "この文法のルールに気をつけてください!",
+        "subject_verb_agreement": "英語では動詞は主語と一致させる必要があります。'I/you/we/they'には原形、'he/she/it'には-sか-esを付けます。",
+        "third_person_s": "三人称単数の主語(he, she, it)には、動詞に-sか-esを付けます。例:He goes, She works.",
+        "past_tense": "過去のことを話すとき(yesterday, last weekなど)は過去形を使います。不規則動詞は覚える必要があります!",
+        "present_perfect": "現在完了形は have/has + 過去分詞 を使います。例:have gone, has eaten.",
+        "article": "子音の前には'a'、母音(a, e, i, o, u)の前には'an'を使います。例:a book, an apple.",
+    },
+    "Korean": {
+        "_no_errors": "문장이 정말 좋아요! 계속 노력하세요!",
+        "_default": "이 문법 규칙에 주의하세요!",
+        "subject_verb_agreement": "영어에서는 동사가 주어와 일치해야 합니다. 'I/you/we/they'는 원형을, 'he/she/it'는 -s나 -es를 붙입니다.",
+        "third_person_s": "3인칭 단수 주어(he, she, it)는 동사에 -s나 -es를 붙입니다. 예: He goes, She works.",
+        "past_tense": "과거(yesterday, last week 등)를 말할 때는 과거 시제를 사용합니다. 불규칙 동사는 외워야 해요!",
+        "present_perfect": "현재완료는 have/has + 과거분사를 사용합니다. 예: have gone, has eaten.",
+        "article": "자음 앞에는 'a', 모음(a, e, i, o, u) 앞에는 'an'을 사용합니다. 예: a book, an apple.",
+    },
+    "Chinese": {
+        "_no_errors": "你的句子很好!继续努力!",
+        "_default": "请注意这个语法规则!",
+        "subject_verb_agreement": "在英语中,动词必须与主语一致。'I/you/we/they'用原形动词,'he/she/it'要加-s或-es。",
+        "third_person_s": "第三人称单数主语(he, she, it)的动词要加-s或-es。例如:He goes, She works.",
+        "past_tense": "说过去的事情(yesterday, last week等)要用过去时。不规则动词需要记住!",
+        "present_perfect": "现在完成时用:have/has + 过去分词。例如:have gone, has eaten.",
+        "article": "辅音前用'a',元音(a, e, i, o, u)前用'an'。例如:a book, an apple.",
+    },
+}
+
+_FALLBACK_NATIVE_NO_ERRORS = "Nice work, your sentence is correct! Keep practicing!"
+_FALLBACK_NATIVE_DEFAULT = "Pay attention to this grammar rule!"
+
+
+def _get_predefined_native_hint(errors: list, native_language: str) -> str:
+    """Last-resort fallback explanation in the learner's native language."""
+    explanations = _PREDEFINED_NATIVE_EXPLANATIONS.get(native_language)
+    if not explanations:
+        return _FALLBACK_NATIVE_NO_ERRORS if not errors else _FALLBACK_NATIVE_DEFAULT
+
+    if not errors:
+        return explanations["_no_errors"]
+
+    error_type = errors[0].get("type", "").lower()
+    return explanations.get(error_type, explanations["_default"])
 
 
 # ============================================================

@@ -69,6 +69,8 @@ class GroqKeyPool:
 
 
 _pool_instance: Optional[GroqKeyPool] = None
+_fallback_keys: Optional[List[str]] = None
+_fallback_cursor = 0
 
 
 def get_groq_key_pool() -> Optional[GroqKeyPool]:
@@ -76,18 +78,44 @@ def get_groq_key_pool() -> Optional[GroqKeyPool]:
     return _pool_instance
 
 
+def _get_fallback_keys() -> List[str]:
+    """All configured Groq keys, used when the Redis-backed pool isn't built
+    (e.g. standalone scripts that never call build_groq_key_pool)."""
+    global _fallback_keys
+    if _fallback_keys is None:
+        raw = os.getenv("GROQ_API_KEYS", "").strip() or os.getenv("GROQ_API_KEY", "").strip()
+        _fallback_keys = [k.strip() for k in raw.split(",") if k.strip()]
+    return _fallback_keys
+
+
+def get_configured_key_count() -> int:
+    """Number of usable Groq keys, whether or not the Redis pool is initialized."""
+    pool = get_groq_key_pool()
+    return pool.count if pool else len(_get_fallback_keys())
+
+
 async def get_available_groq_key(estimated_tokens: int = 600) -> Optional[str]:
     """
     Get the next available Groq API key from the pool.
-    Falls back to the single GROQ_API_KEY environment variable if pool is empty/disabled.
+    Falls back to round-robin over all configured GROQ_API_KEYS when the
+    Redis-backed pool isn't initialized — without this, callers like the
+    standalone benchmark CLI always got the same single key back and burned
+    through one account's daily quota while the rest of the pool sat idle.
     """
+    global _fallback_cursor
     pool = get_groq_key_pool()
     if pool:
         slot = await pool.get_available(estimated_tokens)
         if slot:
             api_key, _ = slot
             return api_key
-    return os.getenv("GROQ_API_KEY", "").strip() or None
+
+    keys = _get_fallback_keys()
+    if not keys:
+        return None
+    key = keys[_fallback_cursor % len(keys)]
+    _fallback_cursor += 1
+    return key
 
 
 async def record_groq_key_usage(api_key: str, tokens_used: int) -> None:
