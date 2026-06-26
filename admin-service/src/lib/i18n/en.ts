@@ -479,6 +479,13 @@ const en: Translations = {
     stockQuantity: "Stock Quantity",
     unlimitedPlaceholder: "Leave blank = unlimited",
     updateFailed: "Update failed",
+    useTemplate: "Use Template",
+    templateApplied: "Template applied for this item type — adjust as needed before saving.",
+    iconUrl: "Icon URL",
+    iconUrlPlaceholder: "e.g. assets/icon-library/clock_freeze.png",
+    effectsLabel: "Effects (JSON)",
+    effectsHint: "e.g. {\"seconds\": 10} — determines how this item behaves in-game.",
+    effectsInvalidJson: "Effects must be valid JSON, e.g. {\"seconds\": 10}",
   },
 
   // ============== Ads/Banner ==============
