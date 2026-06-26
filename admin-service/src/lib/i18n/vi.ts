@@ -477,6 +477,13 @@ const vi = {
     stockQuantity: "Số lượng kho",
     unlimitedPlaceholder: "Để trống = vô hạn",
     updateFailed: "Cập nhật thất bại",
+    useTemplate: "Dùng mẫu",
+    templateApplied: "Đã điền mẫu cho loại item này — có thể chỉnh lại trước khi lưu.",
+    iconUrl: "URL icon",
+    iconUrlPlaceholder: "VD: assets/icon-library/clock_freeze.png",
+    effectsLabel: "Hiệu ứng (JSON)",
+    effectsHint: "VD: {\"seconds\": 10} — quyết định cách item này hoạt động trong game.",
+    effectsInvalidJson: "Hiệu ứng phải là JSON hợp lệ, ví dụ {\"seconds\": 10}",
   },
 
   // ============== Ads/Banner ==============
