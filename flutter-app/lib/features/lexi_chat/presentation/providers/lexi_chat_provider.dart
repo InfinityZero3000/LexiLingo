@@ -71,6 +71,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _ttsEnabled = true;
   double _ttsSpeed = 1.0;
   String _learnerLevel = 'B1';
+  String _nativeLanguage = 'vi';
   Timer? _typingStageTimer;
   DateTime? _responseStateStartedAt;
   int _requestSequence = 0;
@@ -115,6 +116,7 @@ class LexiChatProvider extends ChangeNotifier {
   }
 
   String get learnerLevel => _learnerLevel;
+  String get nativeLanguage => _nativeLanguage;
 
   // ── Session ────────────────────────────────────────────────────────────────
   Future<void> startSession(String userId) async {
@@ -384,6 +386,7 @@ class LexiChatProvider extends ChangeNotifier {
         message: text.trim(),
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
+        nativeLanguage: _nativeLanguage,
         idempotencyKey: requestId,
       );
 
@@ -448,6 +451,7 @@ class LexiChatProvider extends ChangeNotifier {
         'input_type': 'text',
         'enable_tts': _ttsEnabled,
         'learner_level': _learnerLevel,
+        'native_language': _nativeLanguage,
       },
     );
   }
@@ -533,6 +537,7 @@ class LexiChatProvider extends ChangeNotifier {
         message: text.trim(),
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
+        nativeLanguage: _nativeLanguage,
       )) {
         switch (event) {
           case LexiStreamThinking():
@@ -736,6 +741,7 @@ class LexiChatProvider extends ChangeNotifier {
         audioBase64: audioBase64,
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
+        nativeLanguage: _nativeLanguage,
       );
 
       _messages.add(response);
@@ -856,6 +862,12 @@ class LexiChatProvider extends ChangeNotifier {
 
   void setLearnerLevel(String level) {
     _learnerLevel = level;
+    notifyListeners();
+  }
+
+  void setNativeLanguage(String language) {
+    if (language.isEmpty || language == _nativeLanguage) return;
+    _nativeLanguage = language;
     notifyListeners();
   }
 

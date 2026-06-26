@@ -66,6 +66,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
+      provider.setNativeLanguage(_nativeLanguage);
       unawaited(
         provider.restoreLatestSession(_userId).catchError((Object error) {
           debugPrint('restoreLatestSession failed: $error');
@@ -82,6 +83,17 @@ class _LexiChatPageState extends State<LexiChatPage>
           'demo_user_001';
     } catch (_) {
       return 'demo_user_001';
+    }
+  }
+
+  String get _nativeLanguage {
+    try {
+      return Provider.of<AuthProvider>(context, listen: false)
+              .user
+              ?.nativeLanguage ??
+          'vi';
+    } catch (_) {
+      return 'vi';
     }
   }
 

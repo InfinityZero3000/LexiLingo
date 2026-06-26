@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
@@ -115,9 +116,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                   ).colorScheme.surface.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  Icons.style,
-                  color: Theme.of(context).colorScheme.surface,
+                child: const AppGameIcon(
+                  GameIcon.flashcards,
                   size: 32,
                 ),
               ),
