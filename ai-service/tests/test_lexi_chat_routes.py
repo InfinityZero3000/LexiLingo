@@ -193,6 +193,61 @@ async def test_lexi_chat_returns_cached_idempotency_response(mock_store, mock_id
     run_pipeline.assert_not_called()
 
 
+# ─── native_language ──────────────────────────────────────────────────────────
+
+def test_idempotency_request_hash_differs_by_native_language():
+    """Two otherwise-identical requests in different native languages must not
+    collide on the same idempotency key — a Japanese learner's reply shouldn't
+    surface a cached Vietnamese-hint response (or vice versa)."""
+    base = dict(user_id="u1", session_id="s1", message="Hello Lexi")
+    req_vi = svc.LexiChatRequest(**base, native_language="vi")
+    req_ja = svc.LexiChatRequest(**base, native_language="ja")
+
+    assert svc.idempotency_request_hash(req_vi) != svc.idempotency_request_hash(req_ja)
+
+
+def test_lexi_chat_request_defaults_native_language_to_vi():
+    request = lexi_route.LexiChatRequest(user_id="u1", message="Hello")
+    assert request.native_language == "vi"
+
+
+@pytest.mark.asyncio
+async def test_lexi_chat_passes_native_language_into_learner_profile(
+    mock_store, mock_idempotency, monkeypatch
+):
+    """native_language="ja" must reach orchestrator.process as a mapped
+    learner_profile["native_language"] = "Japanese", not the Vietnamese default."""
+    monkeypatch.setattr(lexi_route, "enforce_user_scope", lambda cu, uid: uid)
+    monkeypatch.setattr(lexi_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
+    monkeypatch.setattr(lexi_route, "emit_ai_audit_event", AsyncMock())
+
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock(
+        return_value={"tutor_response": "Good job!", "metadata": {}}
+    )
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator)
+    )
+
+    db = _make_db()
+    request_ctx = MagicMock()
+    request_ctx.headers = {"X-Request-Id": "req-ja"}
+
+    await lexi_route.lexi_chat(
+        request_context=request_ctx,
+        request=lexi_route.LexiChatRequest(
+            user_id="u1", message="Hello Lexi", native_language="ja"
+        ),
+        x_idempotency_key=None,
+        db=db,
+        current_user=_user(),
+    )
+
+    orchestrator.process.assert_awaited_once()
+    learner_profile = orchestrator.process.call_args.kwargs["learner_profile"]
+    assert learner_profile["native_language"] == "Japanese"
+
+
 @pytest.mark.asyncio
 async def test_lexi_chat_uses_hot_cached_session_without_mongo_lookup(
     mock_store,

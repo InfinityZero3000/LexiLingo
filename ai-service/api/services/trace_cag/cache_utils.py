@@ -60,6 +60,11 @@ def _is_exact_reuse_match(fingerprint: CacheFingerprint, entry: CacheEntry) -> b
     if fingerprint.get("level") != cached_fingerprint.get("level"):
         return False
 
+    cur_lang = fingerprint.get("native_language")
+    cached_lang = cached_fingerprint.get("native_language")
+    if cur_lang and cached_lang and cur_lang != cached_lang:
+        return False
+
     current_intent = fingerprint.get("intent", "unknown")
     cached_intent = cached_fingerprint.get("intent", "unknown")
     if current_intent != "unknown" and cached_intent != "unknown" and current_intent != cached_intent:
@@ -83,10 +88,18 @@ def _compute_reuse_risk(
 
     ρ = clip[0,1]( w1·ΔI + w2·ΔC + w3·Δℓ + w4·Δprog + w5·s )
     """
+    # A cached response generated for a different native language can't be
+    # reused or patched — the hint/explanation text is in the wrong language
+    # regardless of how close the grammar/intent/level match is.
+    cached_fp = entry.get("fingerprint") or {}
+    cur_lang = fingerprint.get("native_language")
+    cached_lang = cached_fp.get("native_language")
+    if cur_lang and cached_lang and cur_lang != cached_lang:
+        return 1.0
+
     # Compare intents fingerprint-to-fingerprint: both sides are built with the
     # same pre-diagnosis extractor. execution_plan.intent is diagnosis-stage
     # vocabulary and would read as drift even for identical queries.
-    cached_fp = entry.get("fingerprint") or {}
     cur_intent = fingerprint.get("intent", "unknown")
     cached_intent = cached_fp.get("intent") or (entry.get("execution_plan") or {}).get("intent", "unknown")
     if cur_intent == "unknown" or cached_intent == "unknown":
@@ -145,6 +158,7 @@ def _build_fingerprint(state: TraceCAGState) -> CacheFingerprint:
         query_norm=state.get("user_input", "").strip().lower(),
         intent=_infer_intent_pre_diagnosis(state.get("user_input", "")),
         level=state.get("learner_profile", {}).get("level", "B1"),
+        native_language=state.get("learner_profile", {}).get("native_language", "Vietnamese"),
         root_concepts=_extract_lightweight_graph_concepts(state.get("user_input", "")),
         session_turn=len(state.get("conversation_history", [])),
     )
@@ -201,6 +215,7 @@ def _build_l1_request_signature(
         answer_target=_answer_target_hint(user_input),
         relation_hints=_relation_hints(user_input),
         evidence_hash="",
+        native_language=str(fingerprint.get("native_language") or ""),
     )
     hints = state_hints or {}
     return replace(
@@ -255,7 +270,8 @@ def _build_l1_candidate_signature(
         answer_target=_answer_target_hint(candidate_query),
         relation_hints=_relation_hints(candidate_query),
         evidence_hash=_evidence_dependency_hash(entry),
-        created_at=float(entry.get("created_at") or time.monotonic()),
+        native_language=str(candidate_fp.get("native_language") or ""),
+        created_at=float(entry.get("created_at") or time.time()),
         ttl=int(entry.get("ttl") or 3600),
     )
     return replace(
@@ -782,7 +798,10 @@ async def _write_cache_entry(
     )
 
     ttl = 3600 if errors else 1800
-    now = time.monotonic()
+    # Wall-clock, not monotonic: created_at is serialized into Redis and read
+    # back by other processes/hosts, where monotonic()'s reference point is
+    # undefined (Python docs) and only happens to align on a single host.
+    now = time.time()
 
     raw_bundle = [
         {"type": "kg", "content": c}
@@ -908,10 +927,12 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     bucket = _build_graph_bucket(user_input, level, intent_hint, profile_epoch, conversation_history)
     l1_buckets = _build_l1_bucket_aliases(user_input, level, intent_hint, profile_epoch, conversation_history)
 
+    native_language = learner_profile.get("native_language", "Vietnamese")
     fingerprint = CacheFingerprint(
         query_norm=user_input.strip().lower(),
         intent=intent_hint,
         level=level,
+        native_language=native_language,
         root_concepts=_extract_lightweight_graph_concepts(user_input),
         session_turn=len(conversation_history),
     )
@@ -985,7 +1006,9 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     best_rejection: tuple[float, tuple[str, ...]] | None = None
 
     # --- Try in-process cache ---
-    now = time.monotonic()
+    # Wall-clock (see _write_cache_entry): must compare against created_at
+    # values that may have been written by a different process/host via Redis.
+    now = time.time()
     entry = await _get_cache_entry(cache_key, level, now)
     if entry:
         if not _cache_entry_quality_ok_for_benchmark(entry, benchmark_task):
