@@ -28,7 +28,7 @@ python-dotenv>=1.2.2
 
 # Logging and Error Tracking
 loguru>=0.7.3
-sentry-sdk[fastapi,loguru]>=2.20.0
+sentry-sdk[fastapi,loguru]>=2.63.0
 
 # HTTP Client (for calling DL-Model-Support)
 httpx>=0.28.1
