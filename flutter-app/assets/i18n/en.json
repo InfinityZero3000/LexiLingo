@@ -1210,5 +1210,25 @@
     "privacy_title": "Privacy Policy",
     "terms_title": "Terms of Service",
     "last_updated": "Last updated: {date}"
+  },
+  "vocabQuiz": {
+    "title": "Vocabulary Quiz",
+    "loading": "Building your quiz...",
+    "empty": "No words due for review!",
+    "tryAgain": "Try again",
+    "term": "TERM",
+    "definition": "DEFINITION",
+    "chooseCorrect": "Choose the correct answer",
+    "continueLabel": "Continue",
+    "finish": "Finish",
+    "correct": "Correct!",
+    "incorrect": "Not quite",
+    "exitTitle": "Exit quiz?",
+    "exitMessage": "Your progress so far is saved. Are you sure you want to exit?",
+    "chooseMode": "Choose a review mode",
+    "modeQuizTitle": "Multiple-choice quiz",
+    "modeQuizSubtitle": "Test meaning and term — auto-graded",
+    "modeFlashcardTitle": "Flashcards",
+    "modeFlashcardSubtitle": "Flip cards and rate yourself"
   }
 }

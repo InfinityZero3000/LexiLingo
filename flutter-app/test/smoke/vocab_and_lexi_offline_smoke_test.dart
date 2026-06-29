@@ -67,6 +67,7 @@ class _FakeLexiRepo implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) async {
@@ -99,6 +100,7 @@ class _FakeLexiRepo implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) {
     return Stream.empty();
@@ -138,7 +140,10 @@ void main() {
         ],
       );
 
-      final provider = LexiChatProvider(repository: fakeRepo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: fakeRepo,
+        aiClient: AiApiClient(),
+      );
       final summary = LexiSessionSummary(
         sessionId: 's-1',
         userId: 'smoke-user-1',

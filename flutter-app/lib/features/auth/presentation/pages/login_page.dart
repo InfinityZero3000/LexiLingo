@@ -72,7 +72,8 @@ class _LoginPageState extends State<LoginPage> {
     if (!remember) return;
 
     final savedEmail = prefs.getString(_savedEmailKey) ?? '';
-    final savedPassword = await _secureStorage.read(key: _savedPasswordKey) ?? '';
+    final savedPassword =
+        await _secureStorage.read(key: _savedPasswordKey) ?? '';
 
     if (!mounted) return;
     setState(() {
@@ -144,7 +145,8 @@ class _LoginPageState extends State<LoginPage> {
         mediaQuery.viewInsets.bottom;
     final fitT = ((usableHeight - tightHeight) / (roomyHeight - tightHeight))
         .clamp(0.0, 1.0);
-    double gap(double full, double compact) => compact + (full - compact) * fitT;
+    double gap(double full, double compact) =>
+        compact + (full - compact) * fitT;
 
     return Scaffold(
       key: ValueKey<String>('login-page-$localeCode'),
@@ -272,7 +274,9 @@ class _LoginPageState extends State<LoginPage> {
                         if (value == null || value.isEmpty) {
                           return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(value.trim())) {
                           return 'auth.invalidEmail'.tr();
                         }
                         return null;
@@ -372,6 +376,7 @@ class _LoginPageState extends State<LoginPage> {
                                   final messenger = ScaffoldMessenger.of(
                                     context,
                                   );
+                                  final navigator = Navigator.of(context);
                                   await authProvider.signInWithEmailPassword(
                                     _emailController.text.trim(),
                                     _passwordController.text,
@@ -386,9 +391,8 @@ class _LoginPageState extends State<LoginPage> {
                                     authProvider.errorMessage,
                                   )) {
                                     if (!mounted) return;
-                                    final email = _emailController.text
-                                        .trim();
-                                    Navigator.of(context).push(
+                                    final email = _emailController.text.trim();
+                                    navigator.push(
                                       MaterialPageRoute(
                                         builder: (_) =>
                                             EmailVerificationPendingPage(

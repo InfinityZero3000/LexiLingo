@@ -36,6 +36,7 @@ class LexiChatProvider extends ChangeNotifier {
   final BackgroundSyncQueueService _syncQueue =
       BackgroundSyncQueueService.instance;
   StreamSubscription<SyncQueueItem>? _syncQueueSub;
+  bool _isDisposed = false;
 
   LexiChatProvider({required this.repository, required AiApiClient aiClient})
     : _aiClient = aiClient {
@@ -117,6 +118,12 @@ class LexiChatProvider extends ChangeNotifier {
 
   String get learnerLevel => _learnerLevel;
   String get nativeLanguage => _nativeLanguage;
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
+  }
 
   // ── Session ────────────────────────────────────────────────────────────────
   Future<void> startSession(String userId) async {
@@ -575,8 +582,8 @@ class LexiChatProvider extends ChangeNotifier {
               final finalContent = serverText.isNotEmpty
                   ? serverText
                   : (accumulated.isNotEmpty
-                      ? accumulated
-                      : 'Squawk! Something went quiet. Can you ask that again?');
+                        ? accumulated
+                        : 'Squawk! Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',
@@ -879,6 +886,7 @@ class LexiChatProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _syncQueueSub?.cancel();
     _typingStageTimer?.cancel();
     _ttsPlayer.dispose();
