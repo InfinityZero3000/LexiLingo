@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/usecases/submit_review_
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/get_user_collection_usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/add_to_collection_usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 
 /// Vocabulary Dependency Injection Setup
@@ -47,6 +48,14 @@ void setupVocabularyDependencies() {
   // Providers (ChangeNotifier)
   getIt.registerFactory(
     () => FlashcardProvider(
+      getDueVocabularyUseCase: getIt<GetDueVocabularyUseCase>(),
+      submitReviewUseCase: getIt<SubmitReviewUseCase>(),
+      vocabularyRepository: getIt<VocabularyRepository>(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => QuizProvider(
       getDueVocabularyUseCase: getIt<GetDueVocabularyUseCase>(),
       submitReviewUseCase: getIt<SubmitReviewUseCase>(),
       vocabularyRepository: getIt<VocabularyRepository>(),

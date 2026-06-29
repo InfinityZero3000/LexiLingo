@@ -1209,5 +1209,25 @@
     "privacy_title": "Chính sách bảo mật",
     "terms_title": "Điều khoản sử dụng",
     "last_updated": "Cập nhật lần cuối: {date}"
+  },
+  "vocabQuiz": {
+    "title": "Quiz từ vựng",
+    "loading": "Đang tạo bài quiz...",
+    "empty": "Không có từ nào đến hạn ôn!",
+    "tryAgain": "Thử lại",
+    "term": "THUẬT NGỮ",
+    "definition": "ĐỊNH NGHĨA",
+    "chooseCorrect": "Chọn đáp án đúng",
+    "continueLabel": "Tiếp tục",
+    "finish": "Hoàn thành",
+    "correct": "Chính xác!",
+    "incorrect": "Chưa đúng",
+    "exitTitle": "Thoát quiz?",
+    "exitMessage": "Tiến độ của bạn đã được lưu. Bạn có chắc muốn thoát?",
+    "chooseMode": "Chọn chế độ ôn tập",
+    "modeQuizTitle": "Quiz trắc nghiệm",
+    "modeQuizSubtitle": "Kiểm tra nghĩa và thuật ngữ — tự chấm điểm",
+    "modeFlashcardTitle": "Thẻ ghi nhớ",
+    "modeFlashcardSubtitle": "Lật thẻ và tự đánh giá"
   }
 }
