@@ -55,6 +55,9 @@ Thumbs.db
 .coverage
 htmlcov/
 *.cover
+coverage.xml
+pytest-output.txt
+proficiency-output.txt
 
 # Database
 *.db
