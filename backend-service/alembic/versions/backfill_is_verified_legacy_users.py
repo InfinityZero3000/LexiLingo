@@ -1,6 +1,6 @@
 """Backfill is_verified for users created before email-verification enforcement
 
-Revision ID: backfill_is_verified_legacy_users
+Revision ID: backfill_verified_users
 Revises: 0d7ae4e272b7
 Create Date: 2026-06-23
 
@@ -17,7 +17,7 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision: str = "backfill_is_verified_legacy_users"
+revision: str = "backfill_verified_users"
 down_revision: Union[str, None] = "0d7ae4e272b7"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

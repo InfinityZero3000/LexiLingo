@@ -10,7 +10,8 @@ import {
   LayoutDashboard, Users, BookOpen, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
-  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell
+  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell,
+  ClipboardCheck, Gauge
 } from "lucide-react";
 
 // Lazy-loaded components
@@ -31,9 +32,11 @@ const AdsPage = lazy(() => import("./pages/AdsPage").then(m => ({ default: m.Ads
 const LogsPage = lazy(() => import("./pages/LogsPage").then(m => ({ default: m.LogsPage })));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage").then(m => ({ default: m.MonitoringPage })));
 const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ default: m.ContentLabPage })));
+const ContentQaQueuePage = lazy(() => import("./pages/ContentQaQueuePage").then(m => ({ default: m.ContentQaQueuePage })));
 const DatabasePage = lazy(() => import("./pages/DatabasePage").then(m => ({ default: m.DatabasePage })));
 const AiModelsPage = lazy(() => import("./pages/AiModelsPage").then(m => ({ default: m.AiModelsPage })));
 const ContentAnalyticsPage = lazy(() => import("./pages/ContentAnalyticsPage").then(m => ({ default: m.ContentAnalyticsPage })));
+const AiQualityDashboardPage = lazy(() => import("./pages/AiQualityDashboardPage").then(m => ({ default: m.AiQualityDashboardPage })));
 const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
 const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage").then(m => ({ default: m.AdminManagementPage })));
 const AiChatSettingsPage = lazy(() => import("./pages/AiChatSettingsPage").then(m => ({ default: m.AiChatSettingsPage })));
@@ -60,7 +63,9 @@ const AppRoutes = () => {
     { to: "/admin/lessons", label: t.nav.lessons, icon: <FileText size={18} /> },
     { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} /> },
     { to: "/admin/content-lab", label: t.nav.grammarTest, icon: <PenTool size={18} /> },
+    { to: "/admin/content-qa", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} /> },
     { to: "/admin/content-analytics", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} /> },
+    { to: "/admin/ai-quality", label: t.nav.aiQuality, icon: <Gauge size={18} /> },
     { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} /> },
     { to: "/admin/achievements", label: t.nav.achievements, icon: <Trophy size={18} /> },
     { to: "/admin/shop", label: t.nav.shop, icon: <ShoppingBag size={18} /> },
@@ -104,7 +109,9 @@ const AppRoutes = () => {
               <Route path="/admin/lessons" element={<LessonsPage />} />
               <Route path="/admin/topics" element={<TopicsPage />} />
               <Route path="/admin/content-lab" element={<ContentLabPage />} />
+              <Route path="/admin/content-qa" element={<ContentQaQueuePage />} />
               <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
+              <Route path="/admin/ai-quality" element={<AiQualityDashboardPage />} />
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
               <Route path="/admin/achievements" element={<AchievementsPage />} />
               <Route path="/admin/shop" element={<ShopPage />} />

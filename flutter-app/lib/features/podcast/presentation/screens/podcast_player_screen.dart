@@ -6,6 +6,7 @@ import '../../../../core/services/podcast_audio_handler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/lottie_loading_widget.dart';
 import '../../../games/data/repositories/games_repository.dart';
+import '../../data/repositories/podcast_repository.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../widgets/audio_player_controls.dart';
 import '../widgets/transcript_panel.dart';
@@ -36,6 +37,7 @@ class PodcastPlayerScreen extends StatefulWidget {
 
 class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   PodcastAudioHandler? _handler;
+  final PodcastRepository _podcastRepository = PodcastRepository();
 
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -379,9 +381,14 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   Future<void> _generateTranscript() async {
     setState(() => _transcriptLoading = true);
     try {
-      // Placeholder: real implementation would call AI service.
-      await Future<void>.delayed(const Duration(seconds: 1));
-      setState(() => _transcript = null);
+      final transcript = await _podcastRepository.generateTranscript(
+        widget.episode,
+      );
+      if (!mounted) return;
+      setState(() => _transcript = transcript);
+    } catch (e) {
+      debugPrint('PodcastPlayerScreen: failed to generate transcript: $e');
+      if (mounted) setState(() => _transcript = null);
     } finally {
       if (mounted) setState(() => _transcriptLoading = false);
     }

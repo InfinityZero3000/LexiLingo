@@ -11,6 +11,7 @@ import 'package:lexilingo_app/features/home/presentation/widgets/home_page/level
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/quick_actions_grid.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/section_title.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/streak_card_section.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_section.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
@@ -77,7 +78,9 @@ class _HomePageNewState extends State<HomePageNew> {
     }
 
     final streak = streakProvider.streak;
-    if (streak != null && streak.isDailyRewardAvailable && !_isDailyRewardDialogShowing) {
+    if (streak != null &&
+        streak.isDailyRewardAvailable &&
+        !_isDailyRewardDialogShowing) {
       _isDailyRewardDialogShowing = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -173,6 +176,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         ],
                       ),
                     ),
+                    const TodayPlanSection(),
                     const Padding(
                       padding: EdgeInsets.only(top: 12),
                       child: ActiveBoostsBar(),
@@ -211,9 +215,7 @@ class _HomePageNewState extends State<HomePageNew> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SectionTitle(
-                            title: 'home.featuredCourses'.tr(),
-                          ),
+                          SectionTitle(title: 'home.featuredCourses'.tr()),
                           const SizedBox(height: 8),
                           const FeaturedCoursesSection(),
                         ],

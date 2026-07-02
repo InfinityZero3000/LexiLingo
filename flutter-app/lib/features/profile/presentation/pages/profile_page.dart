@@ -183,6 +183,13 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           IconButton(
+            icon: Icon(Icons.workspace_premium_rounded, color: accent),
+            tooltip: 'premium.title'.tr(),
+            onPressed: () {
+              Navigator.pushNamed(context, '/premium');
+            },
+          ),
+          IconButton(
             icon: Icon(Icons.settings, color: accent),
             onPressed: () {
               Navigator.push(

@@ -1,7 +1,7 @@
 """Add in-game power-up shop items (time freeze, skip token, shield, etc).
 
 Revision ID: add_game_powerup_items
-Revises: backfill_is_verified_legacy_users
+Revises: backfill_verified_users
 """
 
 from typing import Sequence, Union
@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSON as PG_JSON
 
 
 revision: str = "add_game_powerup_items"
-down_revision: Union[str, None] = "backfill_is_verified_legacy_users"
+down_revision: Union[str, None] = "backfill_verified_users"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

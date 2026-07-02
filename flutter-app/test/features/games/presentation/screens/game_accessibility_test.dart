@@ -8,10 +8,11 @@
 /// - GameLoadState button accessible via semantics
 library;
 
+import 'package:dartz/dartz.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
@@ -22,6 +23,7 @@ import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.da
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Fakes ─────────────────────────────────────────────────────────────────────
 
@@ -55,8 +57,54 @@ class _FakeProgressRepository implements ProgressRepository {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+class _GameTestAssetLoader extends AssetLoader {
+  const _GameTestAssetLoader();
+
+  @override
+  Future<Map<String, dynamic>?> load(String path, Locale locale) async {
+    return const {
+      'gameResult': {
+        'xpNotAwarded': 'XP was not awarded. Your game result is preserved.',
+        'retryXp': 'Retry XP award',
+        'accuracyLabel': 'Accuracy',
+        'correctLabel': 'Correct',
+        'scoreLabel': 'Score',
+        'durationLabel': 'Duration',
+        'levelLabel': 'Level',
+        'xpEarnedLabel': 'XP Earned',
+        'totalXpLabel': 'Total XP',
+        'dailyXpLabel': 'Daily XP',
+        'streakLabel': 'Streak',
+        'streakBonusLabel': 'Streak bonus: {multiplier}x',
+        'playAgainButton': 'Play Again',
+        'backToGamesButton': 'Back to Games',
+      },
+      'games': {'retryLoad': 'Try again'},
+    };
+  }
+}
+
+Widget _localizedApp({required Widget home}) {
+  return EasyLocalization(
+    supportedLocales: const [Locale('en')],
+    path: 'assets/i18n',
+    fallbackLocale: const Locale('en'),
+    startLocale: const Locale('en'),
+    useOnlyLangCode: true,
+    assetLoader: const _GameTestAssetLoader(),
+    child: Builder(
+      builder: (context) => MaterialApp(
+        locale: context.locale,
+        supportedLocales: context.supportedLocales,
+        localizationsDelegates: context.localizationDelegates,
+        home: home,
+      ),
+    ),
+  );
+}
+
 Widget _wrapWithSize(Widget child, Size size) {
-  return MaterialApp(
+  return _localizedApp(
     home: MediaQuery(
       data: MediaQueryData(size: size),
       child: child,
@@ -65,7 +113,7 @@ Widget _wrapWithSize(Widget child, Size size) {
 }
 
 Widget _wrapWithProvider(Widget child) {
-  return MaterialApp(
+  return _localizedApp(
     home: MultiProvider(
       providers: [
         ChangeNotifierProvider<GamesProvider>.value(
@@ -102,6 +150,13 @@ GameResult _makeResult({XPAwardResult? xpResult}) => GameResult(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    EasyLocalization.logger.enableLevels = [];
+    await EasyLocalization.ensureInitialized();
+  });
+
   group('GameLoadState — accessibility', () {
     testWidgets('retry button is semantically a button', (tester) async {
       await tester.pumpWidget(
@@ -110,6 +165,7 @@ void main() {
           const Size(390, 844),
         ),
       );
+      await tester.pumpAndSettle();
 
       final semantics = tester.getSemantics(find.byIcon(Icons.refresh_rounded));
       // The button has tap action via semantics
@@ -127,6 +183,7 @@ void main() {
           const Size(390, 844),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Error icon is decorative, not tappable
       final errorIcon = find.byIcon(Icons.error_outline_rounded);
@@ -142,6 +199,7 @@ void main() {
           const Size(390, 844),
         ),
       );
+      await tester.pumpAndSettle();
 
       // FilledButton.icon uses _InputPadding which pads the hit region to 48px.
       // The render size of the visible button is 40px (Material 3 default).

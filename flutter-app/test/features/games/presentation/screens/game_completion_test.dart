@@ -10,6 +10,7 @@ library;
 import 'dart:async';
 
 import 'package:dartz/dartz.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -21,6 +22,7 @@ import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.da
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Fakes ─────────────────────────────────────────────────────────────────────
 
@@ -82,8 +84,54 @@ const _answers = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+class _GameTestAssetLoader extends AssetLoader {
+  const _GameTestAssetLoader();
+
+  @override
+  Future<Map<String, dynamic>?> load(String path, Locale locale) async {
+    return const {
+      'gameResult': {
+        'xpNotAwarded': 'XP was not awarded. Your game result is preserved.',
+        'retryXp': 'Retry XP award',
+        'accuracyLabel': 'Accuracy',
+        'correctLabel': 'Correct',
+        'scoreLabel': 'Score',
+        'durationLabel': 'Duration',
+        'levelLabel': 'Level',
+        'xpEarnedLabel': 'XP Earned',
+        'totalXpLabel': 'Total XP',
+        'dailyXpLabel': 'Daily XP',
+        'streakLabel': 'Streak',
+        'streakBonusLabel': 'Streak bonus: {multiplier}x',
+        'playAgainButton': 'Play Again',
+        'backToGamesButton': 'Back to Games',
+      },
+      'games': {'retryLoad': 'Try again'},
+    };
+  }
+}
+
+Widget _localizedApp({required Widget home}) {
+  return EasyLocalization(
+    supportedLocales: const [Locale('en')],
+    path: 'assets/i18n',
+    fallbackLocale: const Locale('en'),
+    startLocale: const Locale('en'),
+    useOnlyLangCode: true,
+    assetLoader: const _GameTestAssetLoader(),
+    child: Builder(
+      builder: (context) => MaterialApp(
+        locale: context.locale,
+        supportedLocales: context.supportedLocales,
+        localizationsDelegates: context.localizationDelegates,
+        home: home,
+      ),
+    ),
+  );
+}
+
 Widget _wrap(Widget child, GamesProvider provider) {
-  return MaterialApp(
+  return _localizedApp(
     home: MultiProvider(
       providers: [
         ChangeNotifierProvider<GamesProvider>.value(value: provider),
@@ -118,8 +166,11 @@ Future<void> _drainTimers(WidgetTester tester) async {
 // ── Widget Tests ──────────────────────────────────────────────────────────────
 
 void main() {
-  setUpAll(() {
+  setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    EasyLocalization.logger.enableLevels = [];
+    await EasyLocalization.ensureInitialized();
   });
 
   group('GameResultScreen — award succeeded', () {

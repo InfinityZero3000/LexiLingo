@@ -2,9 +2,9 @@ import pytest
 
 from tracecag_bench.catalog import MODES
 from tracecag_bench.config import BenchmarkConfig
-from tracecag_bench.protocols.public_qa import run_public_qa_protocol
+from tracecag_bench.protocols.public_qa import ircot_summary, run_public_qa_protocol
 from tracecag_bench.runtime.ai_service import AIServiceRuntime, classify_provider
-from tracecag_bench.schemas import ContextDocument, PublicQASample
+from tracecag_bench.schemas import ContextDocument, PublicQASample, RunObservation
 
 
 class FakePipeline:
@@ -49,3 +49,42 @@ async def test_public_protocol_passes_context_docs_and_measures_trace():
 
 def test_provider_classification_keeps_full_qwen_model_name():
     assert classify_provider(["groq/qwen/qwen3-32b"]) == ("groq", "qwen/qwen3-32b", "")
+
+
+def test_ircot_summary_counts_gate_and_contract_outcomes():
+    rows = [
+        {
+            "evaluated": True,
+            "selected": False,
+            "reason": "skip_yes_no",
+        },
+        {
+            "evaluated": True,
+            "selected": True,
+            "reason": "augmented",
+            "reason_latency_ms": 12,
+            "contract": {"passes": True},
+        },
+        {
+            "evaluated": True,
+            "selected": True,
+            "reason": "contract_rejected",
+            "reason_latency_ms": 18,
+            "contract": {"passes": False},
+        },
+    ]
+    summary = ircot_summary([
+        RunObservation(sample_id=f"s{i}", mode="tracecag_rapid", retrieval_meta={"ircot": row})
+        for i, row in enumerate(rows)
+    ])
+
+    assert summary["evaluated"] == 3
+    assert summary["selected"] == 2
+    assert summary["selection_rate"] == pytest.approx(2 / 3)
+    assert summary["reason_counts"] == {
+        "augmented": 1,
+        "contract_rejected": 1,
+        "skip_yes_no": 1,
+    }
+    assert summary["contract_pass_rate"] == 0.5
+    assert summary["avg_reason_latency_ms"] == 15

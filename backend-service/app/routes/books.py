@@ -3,12 +3,13 @@ Book API Routes — English Book Reading for Language Learners
 
 Endpoints search Gutendex (Project Gutenberg) and Open Library for free,
 public-domain books. CEFR levels are estimated from description text.
-Comprehension quizzes are AI-generated per chapter (stub, coming soon).
+Comprehension quizzes are generated from book metadata and chapter context.
 Curated recommendations are served from hardcoded data (no API cost).
 
 Phase 5: Book Reading Feature.
 """
 
+import hashlib
 import logging
 import re
 from typing import Optional
@@ -62,6 +63,160 @@ _CEFR_BY_SUBJECT: list[tuple[str, str]] = [
     # C2 — Proficiency
     ("epic poem", "C2"), ("metaphysics", "C2"), ("existentialism", "C2"),
 ]
+
+_QUIZ_COMMON_WORDS = {
+    "about", "after", "again", "against", "also", "because", "before",
+    "between", "chapter", "could", "every", "first", "great", "little",
+    "other", "people", "should", "there", "these", "thing", "through",
+    "under", "where", "which", "while", "would",
+}
+
+_VOCAB_DECOYS = [
+    "ordinary",
+    "careful",
+    "sudden",
+    "private",
+    "distant",
+    "curious",
+    "certain",
+    "gentle",
+]
+
+
+def _clean_quiz_context(text: Optional[str], max_chars: int = 3000) -> str:
+    """Normalize optional chapter text sent by a client reader."""
+    if not text:
+        return ""
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text[:max_chars]
+
+
+def _split_quiz_sentences(text: str) -> list[str]:
+    sentences = [
+        re.sub(r"\s+", " ", sentence).strip()
+        for sentence in re.split(r"(?<=[.!?])\s+", text)
+    ]
+    return [s for s in sentences if 20 <= len(s) <= 220]
+
+
+def _display_book_title(book_id: str, book_title: Optional[str]) -> str:
+    if book_title and book_title.strip():
+        return book_title.strip()[:120]
+    return book_id.replace("-", " ").replace("_", " ").title()
+
+
+def _infer_quiz_theme(text: str) -> str:
+    lowered = text.lower()
+    theme_map = [
+        (("journey", "adventure", "road", "sail", "travel"), "a journey or adventure"),
+        (("friend", "loyal", "family", "sister", "brother"), "relationships and loyalty"),
+        (("mystery", "secret", "detective", "clue", "strange"), "a mystery or hidden clue"),
+        (("fear", "danger", "escape", "fight", "risk"), "danger and difficult choices"),
+        (("dream", "wonder", "magic", "curious", "fantasy"), "imagination and discovery"),
+        (("love", "marriage", "heart", "feeling"), "personal feelings and social expectations"),
+    ]
+    for words, label in theme_map:
+        if any(word in lowered for word in words):
+            return label
+    return "the chapter's central conflict"
+
+
+def _select_learning_word(text: str, fallback: str) -> str:
+    candidates = re.findall(r"[A-Za-z][A-Za-z'-]{5,}", text)
+    seen: set[str] = set()
+    for raw in candidates:
+        word = raw.strip("'").lower()
+        if word in seen or word in _QUIZ_COMMON_WORDS:
+            continue
+        seen.add(word)
+        if 6 <= len(word) <= 14:
+            return word
+    return fallback
+
+
+def _vocab_options(correct: str) -> list[str]:
+    options = [correct]
+    for decoy in _VOCAB_DECOYS:
+        if decoy.lower() != correct.lower():
+            options.append(decoy)
+        if len(options) == 4:
+            break
+    return options
+
+
+def _generate_contextual_book_quiz(
+    *,
+    book_id: str,
+    chapter: int,
+    book_title: Optional[str] = None,
+    cefr_level: Optional[str] = None,
+    chapter_text: Optional[str] = None,
+) -> dict:
+    """Build a stable chapter quiz from available reader context."""
+    title = _display_book_title(book_id, book_title)
+    context = _clean_quiz_context(chapter_text)
+    sentences = _split_quiz_sentences(context)
+    theme = _infer_quiz_theme(f"{title} {context}")
+    detail = (
+        sentences[0]
+        if sentences
+        else f"Chapter {chapter} of {title} introduces events that shape the learner's understanding of the story."
+    )
+    detail_option = detail if len(detail) <= 150 else f"{detail[:147]}..."
+    vocab_word = _select_learning_word(context, fallback="conflict")
+    level = (cefr_level or "B1").upper()
+    source = "chapter_excerpt" if context else "book_metadata"
+
+    return {
+        "questions": [
+            {
+                "id": f"{book_id}_ch{chapter}_main_idea",
+                "question": f"What should a reader focus on most in chapter {chapter} of {title}?",
+                "options": [
+                    f"How the chapter develops {theme}",
+                    "Only the exact year when the book was published",
+                    "The cover design and page layout",
+                    "A list of unrelated facts about the author",
+                ],
+                "correct_index": 0,
+                "explanation": (
+                    f"The strongest reading focus is how this chapter develops {theme}, "
+                    "because that helps connect details to meaning."
+                ),
+            },
+            {
+                "id": f"{book_id}_ch{chapter}_vocabulary",
+                "question": f"Which word from this chapter is a useful {level} vocabulary focus?",
+                "options": _vocab_options(vocab_word),
+                "correct_index": 0,
+                "explanation": (
+                    f"'{vocab_word}' is selected from the available chapter context "
+                    "as a useful word to notice and review."
+                ),
+            },
+            {
+                "id": f"{book_id}_ch{chapter}_evidence",
+                "question": "Which detail best supports your understanding of this chapter?",
+                "options": [
+                    detail_option,
+                    "The reader can ignore all character choices in the chapter.",
+                    "The chapter is only useful for counting paragraph numbers.",
+                    "The title alone explains every important event.",
+                ],
+                "correct_index": 0,
+                "explanation": (
+                    "Good comprehension answers point back to specific evidence "
+                    "from the chapter or the book metadata."
+                ),
+            },
+        ],
+        "xp_reward": 25,
+        "is_stub": False,
+        "generator": "lexilingo-contextual-quiz-v1",
+        "source": source,
+        "skills": ["main_idea", "vocabulary", "text_evidence"],
+    }
 
 # ── Curated English-Learning Books by CEFR Level (4 per level) ───
 CURATED_BOOKS = [
@@ -786,59 +941,36 @@ async def browse_books(
 async def get_book_quiz(
     book_id: str,
     chapter: int = Query(1, ge=1, description="Chapter number"),
+    book_title: Optional[str] = Query(None, max_length=160, description="Optional book title for contextual generation"),
+    cefr_level: Optional[str] = Query(None, max_length=2, description="Optional CEFR level hint"),
+    chapter_text: Optional[str] = Query(None, max_length=4000, description="Optional chapter excerpt from the reader"),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Return a comprehension quiz for the given (book, chapter).
 
-    Currently returns a placeholder quiz; full AI generation via
-    the AI service will be integrated in a future update.
+    Generates a contextual quiz from chapter excerpt/metadata and keeps the
+    response contract stable for a future AI-service generator.
 
     Results are cached permanently per (book_id, chapter) pair.
     """
-    cache_key = f"books:quiz:{book_id}:ch:{chapter}"
+    context = _clean_quiz_context(chapter_text)
+    context_parts = [book_title or "", cefr_level or "", context]
+    if any(part.strip() for part in context_parts):
+        fingerprint = hashlib.sha1("|".join(context_parts).encode("utf-8")).hexdigest()[:12]
+        cache_key = f"books:quiz:{book_id}:ch:{chapter}:ctx:{fingerprint}"
+    else:
+        cache_key = f"books:quiz:{book_id}:ch:{chapter}"
     cache_service = APICacheService(db)
 
     async def _generate_quiz() -> dict:
-        # Stub — replace with call to AI service when available.
-        return {
-            "questions": [
-                {
-                    "id": f"{book_id}_ch{chapter}_q1",
-                    "question": "What is the main theme explored in this chapter?",
-                    "options": [
-                        "Identity and self-discovery",
-                        "Adventure and exploration",
-                        "Friendship and loyalty",
-                        "Conflict and resolution",
-                    ],
-                    "correct_index": 0,
-                    "explanation": (
-                        "This chapter focuses on themes of identity, exploring how "
-                        "the characters define themselves in response to challenges."
-                    ),
-                },
-                {
-                    "id": f"{book_id}_ch{chapter}_q2",
-                    "question": "Which word from this chapter means 'extremely surprised'?",
-                    "options": ["astonished", "confused", "tired", "happy"],
-                    "correct_index": 0,
-                    "explanation": "'Astonished' means greatly surprised or amazed.",
-                },
-                {
-                    "id": f"{book_id}_ch{chapter}_q3",
-                    "question": "What literary device is most prominently used?",
-                    "options": ["Simile", "Metaphor", "Foreshadowing", "Alliteration"],
-                    "correct_index": 2,
-                    "explanation": (
-                        "Foreshadowing — hints about future events — is used "
-                        "throughout to build tension and anticipation."
-                    ),
-                },
-            ],
-            "xp_reward": 25,
-            "is_stub": True,
-        }
+        return _generate_contextual_book_quiz(
+            book_id=book_id,
+            chapter=chapter,
+            book_title=book_title,
+            cefr_level=cefr_level,
+            chapter_text=context,
+        )
 
     try:
         result = await cache_service.get_or_fetch(

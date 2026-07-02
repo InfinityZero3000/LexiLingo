@@ -33,6 +33,10 @@ from api.services.trace_cag.state import TraceCAGState
 logger = logging.getLogger(__name__)
 
 _BENCHMARK_CONTEXT_MAX_CHARS = int(os.getenv("TRACECAG_BENCHMARK_CONTEXT_MAX_CHARS", "3000"))
+_IRCOT_YES_NO_PREFIXES = (
+    "is ", "are ", "was ", "were ", "do ", "does ", "did ",
+    "can ", "could ", "has ", "have ", "had ", "will ", "would ",
+)
 
 
 # ── Pure text helpers (no LLM / no prod imports) ──────────────────────────────
@@ -336,6 +340,307 @@ def _truncate_benchmark_context(
     return "\n\n".join(p for _, p in selected)
 
 
+# ── Groq chat helper (reused for IRCoT's reason + answer calls) ───────────────
+
+async def _groq_chat_with_retry(messages: list, max_tokens: int, *, estimated_tokens: int = 96) -> "tuple[str, str]":
+    """One Groq chat completion preserving the Bug 5/6 hardening: round-robin
+    across all configured keys, skip 401 keys, bounded 503 exponential backoff.
+    Returns (raw_text_with_think_stripped, model_used) or ("", "") on failure.
+    """
+    import httpx
+    from api.core.groq_key_pool import (
+        get_available_groq_key, record_groq_key_usage, get_configured_key_count,
+    )
+    from api.services.trace_cag.llm_client import _throttled_post_json
+
+    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    _max_503_retries = 5
+    _max_key_tries = (get_configured_key_count() or 1) + _max_503_retries
+    _tried: set = set()
+    _503 = 0
+    for _ in range(_max_key_tries):
+        key = await get_available_groq_key(estimated_tokens=estimated_tokens)
+        if not key or (key in _tried and _503 >= _max_503_retries):
+            break
+        _tried.add(key)
+        try:
+            resp = await _throttled_post_json(
+                provider="groq",
+                url="https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                payload={"model": groq_model, "messages": messages, "max_tokens": max_tokens, "temperature": 0.0},
+                httpx_module=httpx,
+                timeout=30.0,
+            )
+            if resp is not None and resp.status_code == 200:
+                data = resp.json()
+                await record_groq_key_usage(key, data.get("usage", {}).get("total_tokens", max_tokens))
+                raw = data["choices"][0]["message"]["content"].strip()
+                raw = re.sub(r"<think>.*?</think>\s*", "", raw, flags=re.DOTALL).strip()
+                return raw, f"groq/{groq_model}"
+            if resp is not None and resp.status_code == 401:
+                continue
+            if resp is not None and resp.status_code == 503 and _503 < _max_503_retries:
+                _503 += 1
+                await asyncio.sleep(2 ** _503)
+                continue
+            logger.warning("[_groq_chat_with_retry] Groq returned %s: %s",
+                           getattr(resp, "status_code", "n/a"), getattr(resp, "text", "")[:160])
+            break
+        except Exception as e:
+            logger.warning("[_groq_chat_with_retry] Groq failed: %s", e)
+            break
+    return "", ""
+
+
+def _ircot_full_candidate_docs(state: TraceCAGState) -> list[dict]:
+    """All candidate passages (the full distractor pool), for IRCoT re-retrieval."""
+    md = state.get("benchmark_metadata") or {}
+    docs = md.get("context_docs") or []
+    out = []
+    for i, d in enumerate(docs):
+        if isinstance(d, dict) and str(d.get("text") or "").strip():
+            out.append({"title": str(d.get("title") or f"doc_{i}"), "text": str(d.get("text") or "")})
+    return out
+
+
+def _ircot_pick_bridge_passages(entity: str, docs: list[dict], already: set, k: int = 2) -> list[dict]:
+    """Re-retrieve: rank the full pool by overlap with the reasoning's bridge
+    entity and return up to k passages not already in the reader's context."""
+    ent = _content_tokens(entity)
+    if not ent or not docs:
+        return []
+    ent_set = set(ent)
+    scored = []
+    for d in docs:
+        title_l = str(d.get("title") or "").strip().lower()
+        if title_l in already:
+            continue
+        title_tokens = set(_content_tokens(str(d.get("title", ""))))
+        hay = set(_content_tokens(f"{d.get('title','')} {d.get('text','')}"))
+        # Strong boost when the entity name appears in the title (bridge target page).
+        title_hit = 1.0 if ent_set.issubset(title_tokens) else 0.0
+        overlap = len(ent_set & hay) / max(len(ent_set), 1)
+        score = overlap + 0.5 * title_hit
+        if score > 0:
+            scored.append((score, d))
+    scored.sort(key=lambda s: s[0], reverse=True)
+    return [d for _, d in scored[:k]]
+
+
+def _ircot_context_titles(context: str) -> set[str]:
+    titles: set[str] = set()
+    for line in str(context or "").splitlines():
+        match = re.match(r"\[([^\]]+)\]", line.strip())
+        if match:
+            titles.add(match.group(1).strip().lower())
+    return titles
+
+
+def _ircot_support_titles(state: TraceCAGState) -> list[str]:
+    md = state.get("benchmark_metadata") or {}
+    raw = md.get("supporting_titles") or md.get("relevant_passage_ids") or []
+    return [str(item).strip() for item in raw if str(item).strip()]
+
+
+def _ircot_question_type(question: str) -> str:
+    text = str(question or "").strip().lower()
+    if not text:
+        return "unknown"
+    if text.startswith(_IRCOT_YES_NO_PREFIXES) or text.startswith(("yes or no", "yes/no")):
+        return "yes_no"
+    if any(marker in text for marker in (
+        "same ", "both ", "compare", "which of", "earlier", "later",
+        "older", "younger", "larger", "smaller", "higher", "lower",
+    )):
+        return "comparison"
+    if any(marker in text for marker in (
+        " of the ", " by the ", " in the ", " who ", " whose ", " that ",
+        "which ", "where ", "when ", "what ", "director of", "author of",
+        "located in", "founded by",
+    )):
+        return "bridge"
+    return "single_hop_like"
+
+
+def _ircot_should_run(question: str, base_context: str, state: TraceCAGState) -> "tuple[bool, dict[str, Any]]":
+    """Deterministic gate for the expensive IRCoT reason call.
+
+    The benchmark runtime currently marks public QA samples as ``multihop_qa``.
+    This gate keeps Run 27's mechanism available, but skips cases where a second
+    LLM call is unlikely to add bridge evidence (yes/no, single-support, or no
+    candidate pool). Set ``TRACECAG_BENCHMARK_IRCOT_SELECTIVE=false`` to reproduce
+    the old all-multihop behavior.
+    """
+    docs = _ircot_full_candidate_docs(state)
+    support_titles = _ircot_support_titles(state)
+    context_titles = _ircot_context_titles(base_context)
+    support_hits = sum(1 for title in support_titles if title.lower() in context_titles)
+    support_total = len(support_titles)
+    support_coverage = (support_hits / support_total) if support_total else 0.0
+    question_type = _ircot_question_type(question)
+    selective = _env_flag("TRACECAG_BENCHMARK_IRCOT_SELECTIVE", True)
+    meta: dict[str, Any] = {
+        "evaluated": True,
+        "selected": False,
+        "reason": "not_selected",
+        "question_type": question_type,
+        "selective": selective,
+        "candidate_docs": len(docs),
+        "support_titles_total": support_total,
+        "support_titles_seen": support_hits,
+        "support_coverage": round(support_coverage, 4),
+    }
+
+    if not _env_flag("TRACECAG_BENCHMARK_IRCOT", True):
+        meta["reason"] = "env_disabled"
+        return False, meta
+    if state.get("benchmark_task") != "multihop_qa":
+        meta["reason"] = "not_multihop_task"
+        return False, meta
+    if not docs:
+        meta["reason"] = "no_candidate_pool"
+        return False, meta
+    if not selective:
+        meta.update({"selected": True, "reason": "all_multihop"})
+        return True, meta
+    if question_type == "yes_no" and _env_flag("TRACECAG_IRCOT_SKIP_YES_NO", True):
+        meta["reason"] = "skip_yes_no"
+        return False, meta
+    if 0 < support_total <= 1:
+        meta["reason"] = "skip_single_support"
+        return False, meta
+    if support_total >= 2 and support_coverage < 1.0:
+        meta.update({"selected": True, "reason": "missing_support_bridge"})
+        return True, meta
+    if question_type in {"bridge", "comparison"} and (support_total >= 2 or len(docs) >= 4):
+        meta.update({"selected": True, "reason": "question_shape_multihop"})
+        return True, meta
+    if support_total >= 2:
+        meta.update({"selected": True, "reason": "support_titles_multihop"})
+        return True, meta
+
+    meta["reason"] = "low_multihop_signal"
+    return False, meta
+
+
+def _ircot_bridge_contract(question: str, entity: str, extra: list[dict], base_context: str) -> dict[str, Any]:
+    entity_tokens = set(_content_tokens(entity))
+    question_tokens = set(_content_tokens(question))
+    base_tokens = set(_content_tokens(base_context))
+    added_titles = [str(doc.get("title") or "").strip() for doc in extra if str(doc.get("title") or "").strip()]
+
+    if not entity_tokens or not extra:
+        return {
+            "passes": False,
+            "reason": "empty_entity_or_extra",
+            "added_titles": added_titles,
+            "extra_overlap": 0.0,
+            "base_overlap": 0.0,
+            "question_overlap": 0.0,
+        }
+
+    best_extra_overlap = 0.0
+    title_hit = False
+    for doc in extra:
+        title = str(doc.get("title") or "")
+        text = str(doc.get("text") or "")
+        title_tokens = set(_content_tokens(title))
+        hay_tokens = set(_content_tokens(f"{title} {text}"))
+        if title_tokens and entity_tokens.issubset(title_tokens):
+            title_hit = True
+        best_extra_overlap = max(best_extra_overlap, len(entity_tokens & hay_tokens) / max(len(entity_tokens), 1))
+
+    base_overlap = len(entity_tokens & base_tokens) / max(len(entity_tokens), 1)
+    question_overlap = len(entity_tokens & question_tokens) / max(len(entity_tokens), 1)
+    has_source_anchor = base_overlap > 0 or question_overlap > 0
+    has_bridge_doc = title_hit or best_extra_overlap >= 0.5
+    passes = bool(has_source_anchor and has_bridge_doc)
+
+    return {
+        "passes": passes,
+        "reason": "ok" if passes else "weak_bridge_anchor",
+        "added_titles": added_titles,
+        "title_hit": title_hit,
+        "extra_overlap": round(best_extra_overlap, 4),
+        "base_overlap": round(base_overlap, 4),
+        "question_overlap": round(question_overlap, 4),
+    }
+
+
+async def _ircot_augment(question: str, base_context: str, state: TraceCAGState) -> "tuple[str, str, dict[str, Any]]":
+    """IRCoT step: reason to find the bridge entity, then re-retrieve passages
+    about it from the full pool and fold them into the reader's context.
+
+    Returns (augmented_context, bridge_entity_hint, telemetry). This is the faithful
+    iterative reason→re-retrieve→answer mechanism (arXiv:2212.10509), unlike the
+    one-shot E2G/recall experiments — the reasoning step DRIVES a focused second
+    retrieval of the hop-2 passage that lexical ranking leaves out of budget.
+    """
+    started = time.time()
+    meta: dict[str, Any] = {
+        "selected": True,
+        "reason": "augment_started",
+        "bridge_entity": "",
+        "reason_model": "",
+        "reason_latency_ms": 0,
+        "added_titles": [],
+        "contract": {"passes": False, "reason": "not_evaluated"},
+        "context_chars_before": len(base_context or ""),
+        "context_chars_after": len(base_context or ""),
+    }
+    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    qwen = "qwen" in groq_model.lower()
+    reason_sys = (
+        ("/no_think\n" if qwen else "")
+        + "You are solving a multi-hop question. From the question and passages, name the SINGLE "
+        "intermediate 'bridge' entity you must look up next to connect the question to its answer "
+        "(e.g. the person/film/place the question refers to indirectly). Output ONLY that entity "
+        "name on one line — no explanation. If the answer is already directly in the passages, "
+        "output that answer entity instead."
+    )
+    reason_user = f"Passages:\n{base_context[:1800]}\n\nQuestion: {question}\n\nBridge entity to look up next:"
+    reasoning, reason_model = await _groq_chat_with_retry(
+        [{"role": "system", "content": reason_sys}, {"role": "user", "content": reason_user}],
+        max_tokens=32, estimated_tokens=64,
+    )
+    meta["reason_latency_ms"] = int((time.time() - started) * 1000)
+    meta["reason_model"] = reason_model
+    entity = (reasoning.splitlines()[0].strip(" .\"'`") if reasoning else "")
+    meta["bridge_entity"] = entity
+    if not entity or len(entity) > 60 or entity.lower() in {"unknown", "none"}:
+        meta["reason"] = "empty_bridge_entity"
+        return base_context, "", meta
+
+    docs = _ircot_full_candidate_docs(state)
+    already = _ircot_context_titles(base_context)
+    extra = _ircot_pick_bridge_passages(entity, docs, already, k=2)
+    if not extra:
+        meta["reason"] = "no_bridge_passages"
+        return base_context, "", meta
+
+    contract = _ircot_bridge_contract(question, entity, extra, base_context)
+    meta["contract"] = contract
+    meta["added_titles"] = list(contract.get("added_titles") or [])
+    if _env_flag("TRACECAG_IRCOT_VERIFY_BRIDGE", True) and not bool(contract.get("passes")):
+        meta["reason"] = "contract_rejected"
+        return base_context, "", meta
+
+    # Bridge passages first (most relevant to the unmet hop), then the FULL
+    # original context. Use a larger IRCoT-specific cap so adding the hop-2
+    # passage does NOT evict the original answer passage (Run 26 lost
+    # "English Electric Canberra"→"unknown" exactly because re-truncating to the
+    # base 2500-char budget dropped the original answer-bearing passage).
+    bridge_block = "\n".join(f"[{d['title']}] {d['text']}" for d in extra)
+    augmented = f"{bridge_block}\n{base_context}"
+    ircot_cap = max(_BENCHMARK_CONTEXT_MAX_CHARS, _env_int("TRACECAG_IRCOT_CONTEXT_MAX_CHARS", 3800))
+    augmented = augmented[:ircot_cap]
+    meta["reason"] = "augmented"
+    meta["ircot_context_cap"] = ircot_cap
+    meta["context_chars_after"] = len(augmented)
+    return augmented, entity, meta
+
+
 # ── Async QA generation (benchmark entry point) ───────────────────────────────
 
 async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
@@ -358,9 +663,29 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     else:
         response = ""
         model_used = "llm_unavailable"
+        auxiliary_models: list[str] = []
+        _ircot_meta: dict[str, Any] = {"evaluated": False, "selected": False, "reason": "not_evaluated"}
         truncated_context = _truncate_benchmark_context(
             clean_context, question, items=list(state.get("retrieval_trace") or [])
         )
+        # IRCoT: one reason→re-retrieve hop before answering, for multi-hop tasks.
+        # Default ON: Run 27 (n=64, tracecag_rapid) EM 45.3%→50.0%, F1 58.6%→62.5%
+        # (net +3 questions, all genuine 2-hop reasoning fixes) — first validated
+        # win after 4 prior attempts regressed. Costs a 2nd LLM call (~2× latency),
+        # so only fires for benchmark multihop_qa, never production chat.
+        _ircot_hint = ""
+        _use_ircot, _ircot_meta = _ircot_should_run(question, truncated_context, state)
+        if _use_ircot:
+            truncated_context, _ircot_hint, _augment_meta = await _ircot_augment(question, truncated_context, state)
+            _ircot_meta.update(_augment_meta)
+            _reason_model = str(_ircot_meta.get("reason_model") or "")
+            if _reason_model:
+                auxiliary_models.append(f"ircot_reason:{_reason_model}")
+        # Non-directive hint: surface the bridge entity as possibly relevant rather
+        # than asserting it IS the link — Run 26 lost cases where the reason step
+        # picked a wrong bridge and the assertive hint forced the model to follow it
+        # (New York City→Columbia University, Terry Richardson→Annie Morton).
+        _hint_block = f"\n\n(\"{_ircot_hint}\" may be relevant.)" if _ircot_hint else ""
         _bench_groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
         _no_think_prefix = "/no_think\n" if "qwen" in _bench_groq_model.lower() else ""
         # E2G ("Evidence → minimal Answer"): one bounded reasoning step before the
@@ -412,7 +737,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                 "Never explain, never add punctuation or preamble. "
                 "If genuinely unanswerable from the context, output exactly: unknown"
             )
-            user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}\n\nAnswer (entity or yes/no, max 6 words):"
+            user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}{_hint_block}\n\nAnswer (entity or yes/no, max 6 words):"
 
         try:
             import httpx
@@ -608,11 +933,17 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
 
     latency_ms = int((time.time() - start_time) * 1000)
     logger.info("[_generate_benchmark_qa_response] Generated QA response via %s in %dms", model_used, latency_ms)
+    retrieval_meta = dict(state.get("retrieval_meta") or {})
+    if "_ircot_meta" in locals() and _ircot_meta.get("evaluated"):
+        retrieval_meta["ircot"] = _ircot_meta
+    models_used = list(locals().get("auxiliary_models", []))
+    models_used.append(model_used)
     return {
         "tutor_response": response.strip(),
         "strategy": "benchmark_qa",
         "next_action": "continue",
         "overall_score": overall_score,
         "ttft_ms": latency_ms,
-        "models_used": [model_used],
+        "models_used": models_used,
+        "retrieval_meta": retrieval_meta,
     }

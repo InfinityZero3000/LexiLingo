@@ -13,35 +13,34 @@ Tests cover:
   6. GET  /proficiency/placement-test     — returns 20 questions without answers
   7. POST /proficiency/placement-test/submit — correct scoring and level assignment
 
-Prerequisites:
-  - Run seed first:  python -m tests.seed_proficiency_data
-
 Usage:
   cd backend-service
   pytest tests/test_proficiency_api_integration.py -v
 """
 
-import pytest
-import sys
-from pathlib import Path
-from typing import AsyncGenerator
+# ruff: noqa: E402
 
-from httpx import AsyncClient, ASGITransport
+import asyncio
+import sys
+from collections.abc import AsyncGenerator
+from pathlib import Path
+
+import pytest
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
-from app.main import app
+from app.core.config import settings as app_settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.main import app
 from app.models.user import User
-from app.models.proficiency import SkillType
-
-from app.core.config import settings as app_settings
+from tests.seed_proficiency_data import seed as seed_proficiency_data
 
 DB_URL = app_settings.DATABASE_URL
 BASE = "/api/v1/proficiency"
@@ -59,19 +58,25 @@ _session_factory = async_sessionmaker(_engine, class_=AsyncSession, expire_on_co
 @pytest.fixture(autouse=True)
 def disable_rate_limiting(monkeypatch):
     from app.core.middleware import RateLimitMiddleware
+
     async def mock_dispatch(self, request, call_next):
         return await call_next(request)
+
     monkeypatch.setattr(RateLimitMiddleware, "dispatch", mock_dispatch)
+
+
+@pytest.fixture(scope="module", autouse=True)
+def seed_database() -> None:
+    """Reset deterministic proficiency data before this module mutates it."""
+    asyncio.run(seed_proficiency_data())
 
 
 @pytest.fixture
 async def auth_client() -> AsyncGenerator[AsyncClient, None]:
     """
     Authenticated HTTP client.
-    
-    Prerequisite: run `python -m tests.seed_proficiency_data` before tests.
-    The seed script populates the DB with proficiency data for the target user.
     """
+
     async def override_get_db():
         async with _session_factory() as session:
             yield session
@@ -82,8 +87,7 @@ async def auth_client() -> AsyncGenerator[AsyncClient, None]:
             user = result.scalar_one_or_none()
             if user is None:
                 pytest.fail(
-                    f"User '{TARGET_EMAIL}' not found. "
-                    "Run: python -m tests.seed_proficiency_data"
+                    f"User '{TARGET_EMAIL}' not found. Run: python -m tests.seed_proficiency_data"
                 )
             return user
 
@@ -108,6 +112,7 @@ async def no_auth_client() -> AsyncGenerator[AsyncClient, None]:
 # ═══════════════════════════════════════════════════════════════════════
 # 1. GET /proficiency/profile
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestGetProfile:
     """Test proficiency profile retrieval with seeded data."""
@@ -176,6 +181,7 @@ class TestGetProfile:
 # ═══════════════════════════════════════════════════════════════════════
 # 2. POST /proficiency/record-exercises
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestRecordExercises:
     """Test recording new exercises on top of seeded data."""
@@ -263,26 +269,30 @@ class TestRecordExercises:
         assert resp.status_code in (200, 422)
 
     async def test_invalid_skill_returns_422(self, auth_client):
-        exercises = [{
-            "exercise_type": "test",
-            "skill": "nonexistent_skill",
-            "difficulty_level": "A1",
-            "is_correct": True,
-            "score": 50.0,
-            "time_spent_seconds": 10,
-        }]
+        exercises = [
+            {
+                "exercise_type": "test",
+                "skill": "nonexistent_skill",
+                "difficulty_level": "A1",
+                "is_correct": True,
+                "score": 50.0,
+                "time_spent_seconds": 10,
+            }
+        ]
         resp = await auth_client.post(f"{BASE}/record-exercises", json=exercises)
         assert resp.status_code == 422
 
     async def test_invalid_score_range_returns_422(self, auth_client):
-        exercises = [{
-            "exercise_type": "test",
-            "skill": "vocabulary",
-            "difficulty_level": "A1",
-            "is_correct": True,
-            "score": 150.0,  # out of range
-            "time_spent_seconds": 10,
-        }]
+        exercises = [
+            {
+                "exercise_type": "test",
+                "skill": "vocabulary",
+                "difficulty_level": "A1",
+                "is_correct": True,
+                "score": 150.0,  # out of range
+                "time_spent_seconds": 10,
+            }
+        ]
         resp = await auth_client.post(f"{BASE}/record-exercises", json=exercises)
         assert resp.status_code == 422
 
@@ -294,6 +304,7 @@ class TestRecordExercises:
 # ═══════════════════════════════════════════════════════════════════════
 # 3. GET /proficiency/level-check
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestLevelCheck:
     """Test level-check endpoint with seeded B1 user."""
@@ -347,6 +358,7 @@ class TestLevelCheck:
 # 4. GET /proficiency/level-thresholds
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestLevelThresholds:
     """Test level thresholds endpoint (no auth required)."""
 
@@ -392,6 +404,7 @@ class TestLevelThresholds:
 # ═══════════════════════════════════════════════════════════════════════
 # 5. GET /proficiency/history
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestHistory:
     """Test level history with seeded transitions."""
@@ -439,6 +452,7 @@ class TestHistory:
 # 6. GET /proficiency/placement-test
 # ═══════════════════════════════════════════════════════════════════════
 
+
 class TestPlacementTest:
     """Test placement test question retrieval."""
 
@@ -478,6 +492,7 @@ class TestPlacementTest:
 # ═══════════════════════════════════════════════════════════════════════
 # 7. POST /proficiency/placement-test/submit
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestPlacementSubmit:
     """Test placement test submission and scoring."""
@@ -568,6 +583,7 @@ class TestPlacementSubmit:
 # ═══════════════════════════════════════════════════════════════════════
 # 8. Cross-endpoint Consistency Tests
 # ═══════════════════════════════════════════════════════════════════════
+
 
 class TestCrossEndpointConsistency:
     """Verify data consistency across multiple endpoints."""

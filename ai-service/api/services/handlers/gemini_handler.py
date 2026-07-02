@@ -11,12 +11,15 @@ from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 import os
 
+from api.services.gemini_compat import import_generativeai
+
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class GeminiConfig:
     """Configuration for Gemini API."""
+
     api_key: Optional[str] = None
     model: str = "gemini-1.5-flash"  # Fast and efficient
     temperature: float = 0.7
@@ -28,65 +31,65 @@ class GeminiConfig:
 class GeminiHandler:
     """
     Handler for Google Gemini API.
-    
+
     This is a cloud-based fallback for when local models
     are unavailable or for tasks requiring more capability.
     """
-    
+
     def __init__(self, config: Optional[GeminiConfig] = None):
         self.config = config or GeminiConfig()
         self._client = None
         self._loaded = False
         self._lock = asyncio.Lock()
-        
+
     @property
     def is_loaded(self) -> bool:
         return self._loaded
-    
+
     @property
     def memory_usage_mb(self) -> float:
         """Cloud API uses minimal local memory."""
         return 10.0 if self._loaded else 0.0
-    
+
     async def load(self) -> bool:
         """Initialize Gemini client."""
         if self._loaded:
             return True
-            
+
         async with self._lock:
             if self._loaded:
                 return True
-                
+
             try:
                 logger.info("[GeminiHandler] Initializing Gemini client...")
-                
+
                 # Get API key
                 api_key = self.config.api_key or os.environ.get("GEMINI_API_KEY")
-                
+
                 if not api_key:
                     logger.error("[GeminiHandler] No API key found")
                     return False
-                
-                import google.generativeai as genai
-                
+
+                genai = import_generativeai()
+
                 genai.configure(api_key=api_key)
                 self._client = genai.GenerativeModel(self.config.model)
-                
+
                 self._loaded = True
                 logger.info("[GeminiHandler]  Gemini client initialized")
                 return True
-                
+
             except Exception as e:
                 logger.error(f"[GeminiHandler] Failed to initialize: {e}")
                 self._loaded = False
                 return False
-    
+
     async def unload(self) -> None:
         """Cleanup resources."""
         self._client = None
         self._loaded = False
         logger.info("[GeminiHandler] Client unloaded")
-    
+
     async def chat(
         self,
         messages: List[Dict[str, str]],
@@ -96,25 +99,25 @@ class GeminiHandler:
     ) -> str:
         """
         Generate chat response.
-        
+
         Args:
             messages: List of {"role": "user/model", "content": "..."}
             system_prompt: System instructions
             temperature: Override config temperature
             max_tokens: Override max output tokens
-            
+
         Returns:
             Generated response text
         """
         if not await self.load():
             raise RuntimeError("Failed to initialize Gemini")
-        
+
         # Build prompt
         parts = []
-        
+
         if system_prompt:
             parts.append(f"System: {system_prompt}\n\n")
-        
+
         for msg in messages:
             role = msg.get("role", "user")
             content = msg.get("content", "")
@@ -122,9 +125,9 @@ class GeminiHandler:
                 parts.append(f"User: {content}\n")
             elif role in ("assistant", "model"):
                 parts.append(f"Assistant: {content}\n")
-        
+
         prompt = "".join(parts)
-        
+
         # Generate
         generation_config = {
             "temperature": temperature or self.config.temperature,
@@ -132,7 +135,7 @@ class GeminiHandler:
             "top_p": self.config.top_p,
             "top_k": self.config.top_k,
         }
-        
+
         try:
             response = await asyncio.to_thread(
                 self._client.generate_content,
@@ -143,7 +146,7 @@ class GeminiHandler:
         except Exception as e:
             logger.error(f"[GeminiHandler] Generation failed: {e}")
             raise
-    
+
     async def analyze_grammar(
         self,
         text: str,
@@ -151,7 +154,7 @@ class GeminiHandler:
     ) -> Dict[str, Any]:
         """
         Analyze grammar and provide corrections.
-        
+
         Returns similar structure to QwenHandler for compatibility.
         """
         system_prompt = f"""You are an expert {target_language} grammar tutor.
@@ -175,16 +178,17 @@ Output ONLY valid JSON format (no markdown, no code blocks):
 Be thorough but fair. Score 1.0 means perfect."""
 
         messages = [{"role": "user", "content": f"Analyze this text:\n\n{text}"}]
-        
+
         response = await self.chat(
             messages,
             system_prompt=system_prompt,
             temperature=0.3,
         )
-        
+
         # Parse JSON response
         try:
             import json
+
             # Clean response
             response = response.strip()
             if response.startswith("```"):
@@ -193,7 +197,7 @@ Be thorough but fair. Score 1.0 means perfect."""
                 else:
                     response = response.split("```")[1]
                 response = response.split("```")[0]
-            
+
             result = json.loads(response.strip())
             return result
         except json.JSONDecodeError:
@@ -204,7 +208,7 @@ Be thorough but fair. Score 1.0 means perfect."""
                 "fluency_score": 0.8,
                 "raw_response": response,
             }
-    
+
     async def generate_response(
         self,
         user_input: str,
@@ -231,19 +235,18 @@ Guidelines:
                 f"- '{e.get('span')}' → '{e.get('correction')}' ({e.get('type')})"
                 for e in errors
             )
-        
-        messages = [{
-            "role": "user",
-            "content": f"{user_input}{context_str}{errors_str}"
-        }]
-        
+
+        messages = [
+            {"role": "user", "content": f"{user_input}{context_str}{errors_str}"}
+        ]
+
         return await self.chat(
             messages,
             system_prompt=system_prompt,
             temperature=0.7,
             max_tokens=400,
         )
-    
+
     async def explain_vietnamese(
         self,
         english_text: str,
@@ -259,23 +262,22 @@ Giữ giải thích ngắn gọn (2-3 câu)."""
         content = f"Explain in Vietnamese:\n\n{english_text}"
         if errors:
             content += "\n\nErrors to explain:\n" + "\n".join(
-                f"- '{e.get('span')}' → '{e.get('correction')}'"
-                for e in errors
+                f"- '{e.get('span')}' → '{e.get('correction')}'" for e in errors
             )
-        
+
         messages = [{"role": "user", "content": content}]
-        
+
         return await self.chat(
             messages,
             system_prompt=system_prompt,
             temperature=0.7,
             max_tokens=300,
         )
-    
+
     async def invoke(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
         Unified invoke interface for ModelGateway.
-        
+
         Args:
             params: {
                 "task": "chat" | "grammar" | "response" | "vietnamese",
@@ -283,17 +285,17 @@ Giữ giải thích ngắn gọn (2-3 câu)."""
                 "messages": [...],
                 ...other params
             }
-            
+
         Returns:
             Task-specific result
         """
         task = params.get("task", "chat")
-        
+
         if task == "grammar":
             return await self.analyze_grammar(
                 text=params.get("text", ""),
             )
-            
+
         elif task == "response":
             return {
                 "response": await self.generate_response(
@@ -303,7 +305,7 @@ Giữ giải thích ngắn gọn (2-3 câu)."""
                     errors=params.get("errors"),
                 )
             }
-            
+
         elif task == "vietnamese":
             return {
                 "explanation": await self.explain_vietnamese(
@@ -312,12 +314,12 @@ Giữ giải thích ngắn gọn (2-3 câu)."""
                     learner_level=params.get("level", "B1"),
                 )
             }
-            
+
         else:  # chat
             messages = params.get("messages", [])
             if not messages and params.get("text"):
                 messages = [{"role": "user", "content": params["text"]}]
-            
+
             return {
                 "response": await self.chat(
                     messages=messages,

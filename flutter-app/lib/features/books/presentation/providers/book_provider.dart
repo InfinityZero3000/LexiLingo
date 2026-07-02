@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:lexilingo_app/features/mistakes/data/mistake_notebook_repository.dart';
+import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.dart';
+
 import '../../data/repositories/book_repository.dart';
 import '../../domain/entities/book_entities.dart';
 
@@ -10,9 +13,14 @@ import '../../domain/entities/book_entities.dart';
 /// Phase 5: Book Reading.
 class BookProvider extends ChangeNotifier {
   final BookRepository _repository;
+  final MistakeNotebookRepository _mistakeRepository;
 
-  BookProvider({BookRepository? repository})
-    : _repository = repository ?? BookRepository();
+  BookProvider({
+    BookRepository? repository,
+    MistakeNotebookRepository? mistakeRepository,
+  }) : _repository = repository ?? BookRepository(),
+       _mistakeRepository =
+           mistakeRepository ?? const MistakeNotebookRepository();
 
   // ── State ──────────────────────────────────────────────────
 
@@ -321,8 +329,9 @@ class BookProvider extends ChangeNotifier {
   }
 
   // Regex for Roman numerals (I–XXXIX range sufficient for chapters)
-  static final _romanNumeralRe =
-      RegExp(r'^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$');
+  static final _romanNumeralRe = RegExp(
+    r'^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$',
+  );
 
   /// Convert all-caps words (2+ letters) to title case.
   ///
@@ -346,15 +355,16 @@ class BookProvider extends ChangeNotifier {
       // Snap to a paragraph boundary (double newline) within ±200 chars of
       // the target end, but never before the current page start.
       if (end < text.length) {
-        final searchFrom =
-            (end - 200).clamp(offset + 1, text.length).toInt();
+        final searchFrom = (end - 200).clamp(offset + 1, text.length).toInt();
         final nextNewline = text.indexOf('\n\n', searchFrom);
         if (nextNewline != -1 && nextNewline <= end + 200) {
           end = nextNewline + 2;
         }
       }
       // Guard: ensure we always advance at least one character
-      if (end <= offset) end = (offset + charsPerPage).clamp(offset + 1, text.length);
+      if (end <= offset) {
+        end = (offset + charsPerPage).clamp(offset + 1, text.length);
+      }
       pages.add(text.substring(offset, end).trim());
       offset = end;
     }
@@ -470,6 +480,14 @@ class BookProvider extends ChangeNotifier {
 
   // ── Quiz ───────────────────────────────────────────────────
 
+  String? _quizExcerptForChapter(int chapter) {
+    if (_pages.isEmpty) return null;
+    final index = (chapter - 1).clamp(0, _pages.length - 1);
+    final excerpt = _pages[index].trim();
+    if (excerpt.isEmpty) return null;
+    return excerpt.length > 1800 ? excerpt.substring(0, 1800) : excerpt;
+  }
+
   Future<void> loadChapterQuiz(int chapter) async {
     final book = _currentBook;
     if (book == null) return;
@@ -485,6 +503,8 @@ class BookProvider extends ChangeNotifier {
       _currentQuiz = await _repository.getChapterQuiz(
         bookId: book.id,
         chapter: chapter,
+        book: book,
+        chapterExcerpt: _quizExcerptForChapter(chapter),
       );
     } catch (e) {
       _error = e.toString();
@@ -497,10 +517,50 @@ class BookProvider extends ChangeNotifier {
   void submitQuizAnswer(int questionIndex, int selectedIndex) {
     final quiz = _currentQuiz;
     if (quiz == null || questionIndex >= quiz.questions.length) return;
-    if (quiz.questions[questionIndex].correctIndex == selectedIndex) {
+    final question = quiz.questions[questionIndex];
+    if (question.correctIndex == selectedIndex) {
       _quizScore++;
+    } else {
+      unawaited(_saveQuizMistake(quiz, question, questionIndex, selectedIndex));
     }
     notifyListeners();
+  }
+
+  Future<void> _saveQuizMistake(
+    BookQuiz quiz,
+    BookQuizQuestion question,
+    int questionIndex,
+    int selectedIndex,
+  ) async {
+    final selectedAnswer = _optionText(question.options, selectedIndex);
+    final correctAnswer = _optionText(question.options, question.correctIndex);
+
+    await _mistakeRepository.saveMistake(
+      MistakeNotebookEntry(
+        id: MistakeNotebookEntry.buildId(
+          sourceType: 'book_quiz',
+          sourceId: quiz.bookId,
+          questionId: question.id.isEmpty
+              ? '${quiz.chapter}:$questionIndex'
+              : question.id,
+          selectedAnswer: selectedAnswer,
+        ),
+        sourceType: 'book_quiz',
+        sourceId: quiz.bookId,
+        sourceTitle: _currentBook?.title ?? 'Book quiz',
+        question: question.question,
+        selectedAnswer: selectedAnswer,
+        correctAnswer: correctAnswer,
+        explanation: question.explanation,
+        skill: 'reading',
+        createdAt: DateTime.now(),
+      ),
+    );
+  }
+
+  String _optionText(List<String> options, int index) {
+    if (index < 0 || index >= options.length) return '';
+    return options[index];
   }
 
   void completeQuiz() {

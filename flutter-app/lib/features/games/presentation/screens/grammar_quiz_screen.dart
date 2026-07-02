@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
+import 'package:lexilingo_app/features/games/presentation/helpers/game_mistake_recorder.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
@@ -49,6 +50,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   bool _luckyCloverActive = false;
   int _scoreMultiplier = 1;
   final _random = Random();
+  final _mistakeRecorder = const GameMistakeRecorder();
 
   // Per-topic correct tracking for mastery message
   final Map<String, int> _topicCorrect = {};
@@ -150,6 +152,14 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final q = game.questions[_questionIndex];
     _submittedAnswers[q.id] = '';
     _recordTopic(q.topic, false);
+    unawaited(
+      _mistakeRecorder.recordGrammarQuizMiss(
+        question: q,
+        sessionId: game.sessionId,
+        questionIndex: _questionIndex,
+        selectedAnswer: '',
+      ),
+    );
     setState(() {
       _answered = true;
       _feedbackText =
@@ -171,6 +181,16 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
     _recordTopic(q.topic, correct);
+    if (!correct) {
+      unawaited(
+        _mistakeRecorder.recordGrammarQuizMiss(
+          question: q,
+          sessionId: game.sessionId,
+          questionIndex: _questionIndex,
+          selectedAnswer: q.options[index],
+        ),
+      );
+    }
     final masteryMsg = _buildMasteryMessage(q.topic);
     setState(() {
       _selectedIndex = index;
@@ -289,10 +309,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       correctAnswers: _correctCount,
       answers: [
         for (final question in game.questions)
-          {
-            'id': question.id,
-            'answer': _submittedAnswers[question.id] ?? '',
-          },
+          {'id': question.id, 'answer': _submittedAnswers[question.id] ?? ''},
       ],
     );
     if (!mounted) return;
@@ -336,277 +353,284 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
               message: 'games.loadFailed'.tr(),
               onRetry: () async {
                 await provider.loadGrammarQuiz();
-              if (mounted) _startQuestion();
-            },
-          );
-        }
-        if (game == null || game.questions.isEmpty) {
-          return GameLoadState(
-            message: 'games.emptyGame'.tr(),
-            onRetry: () async {
-              await provider.loadGrammarQuiz();
-              if (mounted) _startQuestion();
-            },
-          );
-        }
-        if (!_gameLoaded) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final q = game.questions[_questionIndex];
+                if (mounted) _startQuestion();
+              },
+            );
+          }
+          if (game == null || game.questions.isEmpty) {
+            return GameLoadState(
+              message: 'games.emptyGame'.tr(),
+              onRetry: () async {
+                await provider.loadGrammarQuiz();
+                if (mounted) _startQuestion();
+              },
+            );
+          }
+          if (!_gameLoaded) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final q = game.questions[_questionIndex];
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            title: Text(
-              'grammarQuiz.questionProgress'.tr(
-                namedArgs: {
-                  'current': '${_questionIndex + 1}',
-                  'total': '${game.questions.length}',
-                },
-              ),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Center(
-                  child: _TimerWidget(
-                    timeLeft: _timeLeft,
-                    total: game.timerSecondsPerQuestion,
-                  ),
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 0,
+              title: Text(
+                'grammarQuiz.questionProgress'.tr(
+                  namedArgs: {
+                    'current': '${_questionIndex + 1}',
+                    'total': '${game.questions.length}',
+                  },
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-            ],
-          ),
-          body: Stack(
-            children: [
-              Column(
-                children: [
-                  LinearProgressIndicator(
-                    value: _questionIndex / game.questions.length,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    color: AppColors.primary,
-                    minHeight: 4,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Center(
+                    child: _TimerWidget(
+                      timeLeft: _timeLeft,
+                      total: game.timerSecondsPerQuestion,
+                    ),
                   ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GamePowerUpTray(
-                            availableTypes: _grammarQuizPowerUps,
-                            enabled: !_answered,
-                            onUse: _onPowerUpUsed,
-                          ),
-                          if (_luckyCloverActive)
-                            const Padding(
-                              padding: EdgeInsets.only(top: 6),
-                              child: ActivePowerUpBadge(
-                                itemType: ShopItemEntity.effectLuckyClover,
-                                label: 'Lucky Clover Active',
+                ),
+              ],
+            ),
+            body: Stack(
+              children: [
+                Column(
+                  children: [
+                    LinearProgressIndicator(
+                      value: _questionIndex / game.questions.length,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      color: AppColors.primary,
+                      minHeight: 4,
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GamePowerUpTray(
+                              availableTypes: _grammarQuizPowerUps,
+                              enabled: !_answered,
+                              onUse: _onPowerUpUsed,
+                            ),
+                            if (_luckyCloverActive)
+                              const Padding(
+                                padding: EdgeInsets.only(top: 6),
+                                child: ActivePowerUpBadge(
+                                  itemType: ShopItemEntity.effectLuckyClover,
+                                  label: 'Lucky Clover Active',
+                                ),
                               ),
-                            ),
-                          const SizedBox(height: 12),
-                          // Topic chip
-                          Chip(
-                            label: Text(
-                              _formatTopic(game.topic),
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                            const SizedBox(height: 12),
+                            // Topic chip
+                            Chip(
+                              label: Text(
+                                _formatTopic(game.topic),
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                              backgroundColor: AppColors.primary.withValues(
+                                alpha: 0.1,
+                              ),
+                              side: const BorderSide(color: AppColors.primary),
                             ),
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.1,
+                            const SizedBox(height: 12),
+                            // Timer bar
+                            LinearProgressIndicator(
+                              value: _timeLeft / game.timerSecondsPerQuestion,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              color: _timeLeft > 4
+                                  ? AppColors.primary
+                                  : AppColors.errorBright,
+                              minHeight: 6,
                             ),
-                            side: const BorderSide(color: AppColors.primary),
-                          ),
-                          const SizedBox(height: 12),
-                          // Timer bar
-                          LinearProgressIndicator(
-                            value: _timeLeft / game.timerSecondsPerQuestion,
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                            color: _timeLeft > 4
-                                ? AppColors.primary
-                                : AppColors.errorBright,
-                            minHeight: 6,
-                          ),
-                          const SizedBox(height: 16),
-                          // Question
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
+                            const SizedBox(height: 16),
+                            // Question
+                            Container(
+                              width: double.infinity,
+                              padding: EdgeInsets.all(18),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Theme.of(context).colorScheme.shadow
+                                        .withValues(alpha: 0.05),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                q.question,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.shadow.withValues(alpha: 0.05),
-                                  blurRadius: 6,
+                                  ).colorScheme.onSurface,
+                                  height: 1.5,
                                 ),
-                              ],
-                            ),
-                            child: Text(
-                              q.question,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                height: 1.5,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Answer cards
-                          ...List.generate(q.options.length, (i) {
-                            final eliminated = _eliminatedIndices.contains(i);
-                            Color bg = Theme.of(context).colorScheme.surface;
-                            Color border = Theme.of(
-                              context,
-                            ).colorScheme.outlineVariant;
-                            Color text = Theme.of(
-                              context,
-                            ).colorScheme.onSurface;
-                            IconData? icon;
-                            if (_answered) {
-                              if (q.options[i] == q.correctAnswer) {
-                                bg = AppColors.greenSuccess.withValues(
-                                  alpha: 0.1,
-                                );
-                                border = AppColors.greenSuccess;
-                                text = AppColors.greenSuccess;
-                                icon = Icons.check_circle_outline;
-                              } else if (i == _selectedIndex) {
-                                bg = Colors.red.withValues(alpha: 0.08);
-                                border = AppColors.errorBright;
-                                text = AppColors.errorBright;
-                                icon = Icons.cancel_outlined;
+                            const SizedBox(height: 16),
+                            // Answer cards
+                            ...List.generate(q.options.length, (i) {
+                              final eliminated = _eliminatedIndices.contains(i);
+                              Color bg = Theme.of(context).colorScheme.surface;
+                              Color border = Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant;
+                              Color text = Theme.of(
+                                context,
+                              ).colorScheme.onSurface;
+                              IconData? icon;
+                              if (_answered) {
+                                if (q.options[i] == q.correctAnswer) {
+                                  bg = AppColors.greenSuccess.withValues(
+                                    alpha: 0.1,
+                                  );
+                                  border = AppColors.greenSuccess;
+                                  text = AppColors.greenSuccess;
+                                  icon = Icons.check_circle_outline;
+                                } else if (i == _selectedIndex) {
+                                  bg = Colors.red.withValues(alpha: 0.08);
+                                  border = AppColors.errorBright;
+                                  text = AppColors.errorBright;
+                                  icon = Icons.cancel_outlined;
+                                }
+                              } else if (_selectedIndex == i) {
+                                bg = AppColors.primary.withValues(alpha: 0.1);
+                                border = AppColors.primary;
+                                text = AppColors.primary;
+                              } else if (eliminated) {
+                                bg = Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest;
+                                text = Theme.of(context)
+                                    .colorScheme
+                                    .onSurfaceVariant
+                                    .withValues(alpha: 0.4);
                               }
-                            } else if (_selectedIndex == i) {
-                              bg = AppColors.primary.withValues(alpha: 0.1);
-                              border = AppColors.primary;
-                              text = AppColors.primary;
-                            } else if (eliminated) {
-                              bg = Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest;
-                              text = Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.4,
-                              );
-                            }
-                            return GestureDetector(
-                              onTap: eliminated ? null : () => _selectAnswer(i),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: bg,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: border, width: 1.5),
-                                ),
-                                child: Row(
-                                  children: [
-                                    if (icon != null) ...[
-                                      Icon(icon, color: border, size: 18),
-                                      const SizedBox(width: 8),
-                                    ],
-                                    Expanded(
-                                      child: Text(
-                                        q.options[i],
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: text,
+                              return GestureDetector(
+                                onTap: eliminated
+                                    ? null
+                                    : () => _selectAnswer(i),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: bg,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: border,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      if (icon != null) ...[
+                                        Icon(icon, color: border, size: 18),
+                                        const SizedBox(width: 8),
+                                      ],
+                                      Expanded(
+                                        child: Text(
+                                          q.options[i],
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: text,
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          }),
-                          // Feedback
-                          if (_feedbackText != null) ...[
-                            const SizedBox(height: 8),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color:
-                                    _answered &&
-                                        _selectedIndex != null &&
-                                        q.options[_selectedIndex!] ==
-                                            q.correctAnswer
-                                    ? AppColors.greenSuccess.withValues(
-                                        alpha: 0.08,
-                                      )
-                                    : Colors.red.withValues(alpha: 0.07),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
+                              );
+                            }),
+                            // Feedback
+                            if (_feedbackText != null) ...[
+                              const SizedBox(height: 8),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
                                   color:
                                       _answered &&
                                           _selectedIndex != null &&
                                           q.options[_selectedIndex!] ==
                                               q.correctAnswer
-                                      ? AppColors.greenSuccess
-                                      : AppColors.errorBright,
+                                      ? AppColors.greenSuccess.withValues(
+                                          alpha: 0.08,
+                                        )
+                                      : Colors.red.withValues(alpha: 0.07),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color:
+                                        _answered &&
+                                            _selectedIndex != null &&
+                                            q.options[_selectedIndex!] ==
+                                                q.correctAnswer
+                                        ? AppColors.greenSuccess
+                                        : AppColors.errorBright,
+                                  ),
+                                ),
+                                child: Text(
+                                  _feedbackText!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                _feedbackText!,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              // Confetti overlay (skill: gamification-confetti-win)
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  numberOfParticles: 20,
-                  gravity: 0.4,
-                  colors: const [
-                    AppColors.primary,
-                    Colors.yellow,
-                    AppColors.greenSuccessBright,
-                    AppColors.orange,
                   ],
                 ),
-              ),
-            ],
-          ),
-        );
+                // Confetti overlay (skill: gamification-confetti-win)
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: ConfettiWidget(
+                    confettiController: _confettiController,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    numberOfParticles: 20,
+                    gravity: 0.4,
+                    colors: const [
+                      AppColors.primary,
+                      Colors.yellow,
+                      AppColors.greenSuccessBright,
+                      AppColors.orange,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
