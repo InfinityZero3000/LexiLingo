@@ -2,9 +2,15 @@ name: Mirror to GitLab
 
 on:
   push:
-    branches: ["**"]
+    branches:
+      - main
+      - dev
+    tags:
+      - "v*"
   delete:
-    branches: ["**"]
+    branches:
+      - main
+      - dev
 
 jobs:
   mirror:
