@@ -39,7 +39,7 @@ def _candidate(**overrides):
         "answer_target": "person",
         "relation_hints": {"founder", "maker"},
         "evidence_hash": "ev:iphone:apple",
-        "created_at": time.monotonic(),
+        "created_at": time.time(),
         "ttl": 3600,
     }
     base.update(overrides)
@@ -117,7 +117,7 @@ def test_l1_full_for_low_concept_overlap():
 
 
 def test_l1_full_for_stale_candidate():
-    candidate = _candidate(created_at=time.monotonic() - 7200, ttl=3600)
+    candidate = _candidate(created_at=time.time() - 7200, ttl=3600)
 
     decision = decide_l1_reuse(_request(), candidate)
 

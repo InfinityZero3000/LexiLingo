@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
+import 'email_verification_pending_page.dart';
 import 'forgot_password_page.dart';
 import 'register_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -57,13 +58,22 @@ class _LoginPageState extends State<LoginPage> {
         normalized.contains('auth_invalid');
   }
 
+  bool _isEmailNotVerifiedMessage(String? message) {
+    if (message == null) return false;
+    final normalized = message.toLowerCase();
+    return normalized.contains('not verified') ||
+        normalized.contains('chưa được xác thực') ||
+        normalized.contains('chưa xác thực');
+  }
+
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     final remember = prefs.getBool(_rememberPasswordKey) ?? false;
     if (!remember) return;
 
     final savedEmail = prefs.getString(_savedEmailKey) ?? '';
-    final savedPassword = await _secureStorage.read(key: _savedPasswordKey) ?? '';
+    final savedPassword =
+        await _secureStorage.read(key: _savedPasswordKey) ?? '';
 
     if (!mounted) return;
     setState(() {
@@ -135,7 +145,8 @@ class _LoginPageState extends State<LoginPage> {
         mediaQuery.viewInsets.bottom;
     final fitT = ((usableHeight - tightHeight) / (roomyHeight - tightHeight))
         .clamp(0.0, 1.0);
-    double gap(double full, double compact) => compact + (full - compact) * fitT;
+    double gap(double full, double compact) =>
+        compact + (full - compact) * fitT;
 
     return Scaffold(
       key: ValueKey<String>('login-page-$localeCode'),
@@ -263,7 +274,9 @@ class _LoginPageState extends State<LoginPage> {
                         if (value == null || value.isEmpty) {
                           return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(value.trim())) {
                           return 'auth.invalidEmail'.tr();
                         }
                         return null;
@@ -363,6 +376,7 @@ class _LoginPageState extends State<LoginPage> {
                                   final messenger = ScaffoldMessenger.of(
                                     context,
                                   );
+                                  final navigator = Navigator.of(context);
                                   await authProvider.signInWithEmailPassword(
                                     _emailController.text.trim(),
                                     _passwordController.text,
@@ -373,6 +387,19 @@ class _LoginPageState extends State<LoginPage> {
                                   if (authProvider.isAuthenticated) {
                                     await _persistCredentialPreference();
                                     setState(() => _failedAttempts = 0);
+                                  } else if (_isEmailNotVerifiedMessage(
+                                    authProvider.errorMessage,
+                                  )) {
+                                    if (!mounted) return;
+                                    final email = _emailController.text.trim();
+                                    navigator.push(
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            EmailVerificationPendingPage(
+                                              email: email,
+                                            ),
+                                      ),
+                                    );
                                   } else if (_isInvalidCredentialMessage(
                                     authProvider.errorMessage,
                                   )) {

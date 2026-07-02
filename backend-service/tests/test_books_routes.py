@@ -576,6 +576,60 @@ class TestGetBookQuiz:
         call_kwargs = mock_cache.get_or_fetch.call_args.kwargs
         assert call_kwargs["cache_key"] == "books:quiz:gutenberg-1342:ch:5"
 
+    def test_contextual_generator_uses_chapter_excerpt(self):
+        from app.routes.books import _generate_contextual_book_quiz
+
+        quiz = _generate_contextual_book_quiz(
+            book_id="gutenberg-11",
+            chapter=2,
+            book_title="Alice's Adventures in Wonderland",
+            cefr_level="A2",
+            chapter_text=(
+                "Alice felt curious as she followed the strange rabbit. "
+                "The journey became more confusing when the hallway changed again."
+            ),
+        )
+
+        assert quiz["is_stub"] is False
+        assert quiz["source"] == "chapter_excerpt"
+        assert quiz["generator"] == "lexilingo-contextual-quiz-v1"
+        assert len(quiz["questions"]) == 3
+        assert quiz["questions"][0]["correct_index"] == 0
+        assert quiz["questions"][1]["options"][0] in {"followed", "curious", "strange"}
+
+    @pytest.mark.asyncio
+    async def test_contextual_route_cache_key_includes_context_hash(self, no_db_client: AsyncClient):
+        async def call_fetch(**kwargs):
+            data = await kwargs["fetch_fn"]()
+            mock_result = MagicMock()
+            mock_result.data = data
+            mock_result.source = "fresh"
+            mock_result.is_stale = False
+            return mock_result
+
+        with patch("app.routes.books.APICacheService") as MockCache:
+            mock_cache = AsyncMock()
+            mock_cache.get_or_fetch.side_effect = call_fetch
+            MockCache.return_value = mock_cache
+
+            response = await no_db_client.get(
+                f"{BASE}/gutenberg-11/quiz",
+                params={
+                    "chapter": "2",
+                    "book_title": "Alice's Adventures in Wonderland",
+                    "cefr_level": "A2",
+                    "chapter_text": "Alice followed a curious rabbit into a strange hallway.",
+                },
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["is_stub"] is False
+        assert data["source"] == "chapter_excerpt"
+        assert data["book_id"] == "gutenberg-11"
+        call_kwargs = mock_cache.get_or_fetch.call_args.kwargs
+        assert call_kwargs["cache_key"].startswith("books:quiz:gutenberg-11:ch:2:ctx:")
+
 
 # ============================================================================
 # Integration Tests — _fetch_books internal function
@@ -776,4 +830,3 @@ class TestProxyEndpoints:
         assert response.content == b"Chapter 1: Once upon a time..."
         assert response.headers["content-type"] == "text/plain; charset=utf-8"
         assert "max-age=86400" in response.headers["cache-control"]
-

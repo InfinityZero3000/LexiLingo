@@ -10,11 +10,13 @@ import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart'
 class DailyChallengeCard extends StatelessWidget {
   final DailyChallenge challenge;
   final VoidCallback onTap;
+  final bool allowCompletedTap;
 
   const DailyChallengeCard({
     super.key,
     required this.challenge,
     required this.onTap,
+    this.allowCompletedTap = false,
   });
 
   /// Map apiKey → matching GameType, returning null when unknown.
@@ -32,7 +34,7 @@ class DailyChallengeCard extends StatelessWidget {
     final completed = challenge.completed;
 
     return GestureDetector(
-      onTap: completed ? null : onTap,
+      onTap: completed && !allowCompletedTap ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         decoration: BoxDecoration(

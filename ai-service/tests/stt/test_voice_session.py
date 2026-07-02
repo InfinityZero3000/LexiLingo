@@ -207,6 +207,98 @@ async def test_stop_emits_downstream_timeout_before_closing(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_silence_frames_produce_no_final(tmp_path):
+    config = STTConfig(
+        temp_dir=str(tmp_path),
+        min_speech_ms=20,
+        min_silence_ms=20,
+        verify_enabled=False,
+    )
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    session = VoiceSession(
+        StartMessage(session_id="silent"), config, registry, STTMetrics()
+    )
+    await session.start_worker()
+    for i in range(5):
+        silence = parse_audio_frame(HEADER.pack(1, 0, i, i * 20) + b"\x00\x00" * 320)
+        session.enqueue(silence)
+    await asyncio.sleep(0.05)
+    await session.stop()
+    events = list(session.event_queue._queue)
+    final_events = [e for e in events if e.get("type") == "stt.final"]
+    assert not final_events
+
+
+@pytest.mark.asyncio
+async def test_metrics_records_time_to_first_partial(tmp_path):
+    config = STTConfig(
+        temp_dir=str(tmp_path),
+        min_speech_ms=20,
+        min_silence_ms=20,
+        verify_enabled=False,
+    )
+    primary_session = FakePrimarySession()
+    registry = STTModelRegistry(
+        config, primary=FakePrimary(primary_session), verifier=FakeVerifier()
+    )
+    registry.status = "ready"
+    metrics = STTMetrics()
+    session = VoiceSession(
+        StartMessage(session_id="partial-metrics"), config, registry, metrics
+    )
+    await session.start_worker()
+    session.enqueue(_speech_frame(0))
+    await asyncio.sleep(0.05)
+    await session.stop()
+    stats = metrics.latency_stats("stt_time_to_first_partial_ms")
+    assert stats["count"] == 1
+    assert stats["avg"] >= 0
+
+
+@pytest.mark.asyncio
+async def test_metrics_records_final_latency(tmp_path):
+    config = STTConfig(
+        temp_dir=str(tmp_path),
+        min_speech_ms=20,
+        min_silence_ms=20,
+        verify_enabled=False,
+    )
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    metrics = STTMetrics()
+    session = VoiceSession(
+        StartMessage(session_id="final-metrics"), config, registry, metrics
+    )
+    await session.start_worker()
+    session.enqueue(_speech_frame(0))
+    silence = parse_audio_frame(HEADER.pack(1, 0, 1, 20) + b"\x00\x00" * 320)
+    session.enqueue(silence)
+    await asyncio.sleep(0.05)
+    await session.stop()
+    stats = metrics.latency_stats("stt_final_latency_ms")
+    assert stats["count"] >= 1
+    assert stats["avg"] >= 0
+
+
+@pytest.mark.asyncio
+async def test_metrics_records_session_duration(tmp_path):
+    config = STTConfig(temp_dir=str(tmp_path))
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    metrics = STTMetrics()
+    session = VoiceSession(
+        StartMessage(session_id="duration-metrics"), config, registry, metrics
+    )
+    await session.start_worker()
+    await asyncio.sleep(0.01)
+    await session.stop()
+    stats = metrics.latency_stats("stt_session_duration_s")
+    assert stats["count"] == 1
+    assert stats["avg"] >= 0.01
+
+
+@pytest.mark.asyncio
 async def test_stop_timeout_does_not_overwrite_completed_response(tmp_path):
     config = STTConfig(
         temp_dir=str(tmp_path),

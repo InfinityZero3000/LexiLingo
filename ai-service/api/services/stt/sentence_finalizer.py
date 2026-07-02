@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from uuid import uuid4
 
 from api.services.stt.config import STTConfig
@@ -16,10 +17,11 @@ from api.services.stt.verifier_router import VerifierRouter
 
 
 class SentenceFinalizer:
-    def __init__(self, config: STTConfig, registry):
+    def __init__(self, config: STTConfig, registry, metrics=None):
         self.config = config
         self.registry = registry
         self.router = VerifierRouter(config)
+        self.metrics = metrics
 
     async def finalize(
         self,
@@ -31,7 +33,7 @@ class SentenceFinalizer:
         primary: PrimaryResult,
         utterance_id: str | None = None,
         user_id: str | None = None,
-    ) -> FinalTranscriptEvent:
+    ) -> FinalTranscriptEvent | None:
         decision = self.router.decide(primary, audio.duration_ms, use_case)
         selected = primary
         source = primary.source
@@ -39,7 +41,13 @@ class SentenceFinalizer:
         uncertain = primary.confidence < 0.70
         if decision.verify and self.config.verify_enabled:
             try:
+                t0 = time.monotonic()
                 verifier = await self.registry.verify(audio, language)
+                if self.metrics:
+                    self.metrics.record_latency(
+                        "stt_verify_latency_ms",
+                        (time.monotonic() - t0) * 1000,
+                    )
                 verified = True
                 if verifier.text and (
                     verifier.confidence >= primary.confidence
@@ -53,6 +61,8 @@ class SentenceFinalizer:
                 uncertain = primary.confidence < self.config.confidence_verify
         preserve = use_case == UseCase.PRONUNCIATION_SCORING
         text, rules = normalize_transcript(selected.text, preserve_exact=preserve)
+        if not text:
+            return None
         return FinalTranscriptEvent(
             session_id=session_id,
             user_id=user_id,

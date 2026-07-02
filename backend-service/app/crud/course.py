@@ -6,14 +6,22 @@ Supports filtering, pagination, and user-specific data (enrollment, progress).
 """
 
 from typing import List, Optional
-from sqlalchemy import select, func, and_, or_, text
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy import String, case, cast, select, func, and_
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
 from app.models.course import Course, Unit, Lesson
 from app.models.progress import UserCourseProgress, LessonCompletion
 from app.schemas.course import CourseCreate, CourseUpdate, UnitCreate, UnitUpdate, LessonCreate, LessonUpdate
+
+
+def _seed_first_ordering():
+    """Return a portable expression that sorts seeded courses first."""
+    return case(
+        (cast(Course.tags, String).like('%"seed"%'), 0),
+        else_=1,
+    )
 
 
 # =====================
@@ -79,7 +87,7 @@ class CourseCRUD:
         
         # Get paginated results — seed/curated courses first, then crawled
         query = query.order_by(
-            text("CASE WHEN tags @> '[\"seed\"]'::jsonb THEN 0 ELSE 1 END"),
+            _seed_first_ordering(),
             Course.created_at.asc()
         ).offset(skip).limit(limit)
         result = await db.execute(query)

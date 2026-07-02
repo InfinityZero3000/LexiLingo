@@ -191,6 +191,7 @@ class LexiChatDataSource {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) async {
@@ -202,6 +203,7 @@ class LexiChatDataSource {
       if (audioBase64 != null) 'audio_base64': audioBase64,
       'enable_tts': enableTts,
       'learner_level': learnerLevel,
+      'native_language': nativeLanguage,
       if (storyContext != null) 'story_context': storyContext,
     };
 
@@ -468,6 +470,7 @@ class LexiChatDataSource {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) async* {
     final payload = {
@@ -478,6 +481,7 @@ class LexiChatDataSource {
       if (audioBase64 != null) 'audio_base64': audioBase64,
       'enable_tts': enableTts,
       'learner_level': learnerLevel,
+      'native_language': nativeLanguage,
       if (storyContext != null) 'story_context': storyContext,
     };
 

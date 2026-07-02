@@ -66,6 +66,13 @@ class GamificationProvider extends ChangeNotifier {
       .where((i) => i.isActive && !i.isExpired && i.expiresAt != null)
       .toList();
 
+  /// Owned, usable in-game power-ups of a given [itemType] (e.g.
+  /// [ShopItemEntity.effectTimeFreeze]), used by the games feature's
+  /// power-up tray to show what the player can consume mid-game.
+  List<InventoryItemEntity> powerUpsOf(String itemType) => _inventory
+      .where((i) => i.item.effectType == itemType && i.quantity > 0)
+      .toList();
+
   bool get isLoadingInventory => _isLoadingInventory;
   String? get inventoryError => _inventoryError;
   bool ownsItem(String shopItemId) =>
@@ -215,13 +222,22 @@ class GamificationProvider extends ChangeNotifier {
   }
 
   Future<bool> useItem(String inventoryId) async {
+    final effects = await useItemWithEffects(inventoryId);
+    return effects != null;
+  }
+
+  /// Uses an inventory item and returns its applied effects payload
+  /// (e.g. `{"seconds": 10}` for a Time Freeze), or null on failure.
+  /// Used by the games feature's power-up tray to apply the right
+  /// gameplay effect after a successful consume.
+  Future<Map<String, dynamic>?> useItemWithEffects(String inventoryId) async {
     try {
-      final ok = await _repository.useItem(inventoryId);
-      if (ok) await loadInventory();
-      return ok;
+      final effects = await _repository.useItem(inventoryId);
+      if (effects != null) await loadInventory();
+      return effects;
     } catch (e) {
       debugPrint('Error using item: $e');
-      return false;
+      return null;
     }
   }
 

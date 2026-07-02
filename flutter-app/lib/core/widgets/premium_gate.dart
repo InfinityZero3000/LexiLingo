@@ -31,17 +31,25 @@ class _PremiumGateState extends State<PremiumGate> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isPremium == null && widget.lockedChild != null) {
+      return _buildLockedContent();
+    }
     if (_isPremium == null) return const SizedBox.shrink();
     if (_isPremium!) return widget.child;
 
+    return _buildLockedContent();
+  }
+
+  Widget _buildLockedContent() {
     return GestureDetector(
       onTap: () async {
-        final unlocked = await Navigator.of(context).push<bool>(
-          MaterialPageRoute(builder: (_) => const PaywallScreen()),
-        );
+        final unlocked = await Navigator.of(
+          context,
+        ).push<bool>(MaterialPageRoute(builder: (_) => const PaywallScreen()));
         if (unlocked == true) _check();
       },
-      child: widget.lockedChild ??
+      child:
+          widget.lockedChild ??
           ColoredBox(
             color: Colors.black12,
             child: Stack(

@@ -24,8 +24,14 @@ class GrammarItem(Base):
     tags: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of tags
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        TZDateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     questions = relationship("QuestionItem", back_populates="grammar", lazy="noload")
 
@@ -52,8 +58,14 @@ class QuestionItem(Base):
         GUID(), ForeignKey("grammar_items.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
-    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        TZDateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     grammar = relationship("GrammarItem", back_populates="questions", lazy="selectin")
 
@@ -64,6 +76,7 @@ class QuestionItem(Base):
 
 
 class TestExam(Base):
+    __test__ = False
     __tablename__ = "test_exams"
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -72,11 +85,19 @@ class TestExam(Base):
     level: Mapped[str] = mapped_column(String(20), nullable=False, default="A1")
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=20)
     passing_score: Mapped[int] = mapped_column(Integer, nullable=False, default=70)
-    question_ids: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of question UUIDs
+    question_ids: Mapped[dict | None] = mapped_column(
+        PortableJSON, nullable=True
+    )  # list of question UUIDs
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        TZDateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     __table_args__ = (
         Index("ix_test_exams_level", "level"),

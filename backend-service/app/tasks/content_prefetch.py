@@ -114,6 +114,7 @@ async def prefetch_youtube(db: AsyncSession) -> dict:
                 api_name="youtube",
                 fetch_fn=lambda cid=channel_id: _fetch_youtube_channel(cid),
                 priority=Priority.LOW,
+                cost=100,
                 redis_ttl=43200,    # 12 hours
                 db_ttl=86400,       # 24 hours
             )

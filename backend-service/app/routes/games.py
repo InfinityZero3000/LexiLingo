@@ -31,6 +31,7 @@ from app.schemas.games import (
     GameSessionCompleteResponse,
 )
 from app.services.game_scoring_service import GameScoringError, score_game
+from app.services.item_effects_service import ItemEffectsService
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
 from app.services import check_achievements_for_user
@@ -984,6 +985,7 @@ async def get_word_scramble(
             "definition": w.definition,
             "xp_value": w.xp_value,
             "cefr_level": w.cefr_level,
+            "vietnamese_translation": w.vietnamese_translation,
         })
 
     session = await create_game_session(
@@ -1169,6 +1171,7 @@ async def get_spelling_bee(
             "example_sentence": w.example_sentence,
             "xp_value": w.xp_value,
             "audio_url": None,
+            "vietnamese_translation": w.vietnamese_translation,
         })
 
     session = await create_game_session(
@@ -1275,6 +1278,7 @@ async def get_hangman_word(
             "xp_value": word_obj.xp_value,
             "base_xp": word_obj.xp_value,
             "max_lives": 6,
+            "vietnamese_translation": word_obj.vietnamese_translation,
             "hints": {
                 "hint1_free": word_obj.hint or "",
                 "hint2_xp_cost": hint2_cost,
@@ -1323,6 +1327,7 @@ async def get_hangman_word(
         "xp_value": word_obj["xp_value"],
         "base_xp": word_obj["xp_value"],
         "max_lives": 6,
+        "vietnamese_translation": word_obj.get("vietnamese_translation"),
         "hints": {
             "hint1_free": word_obj["hint"],
             "hint2_xp_cost": hint2_cost,
@@ -1579,6 +1584,7 @@ async def complete_game_session(
             detail=str(exc),
         ) from exc
 
+    item_multiplier = await ItemEffectsService(db).get_xp_multiplier(current_user.id)
     xp_result = await award_xp_transaction(
         db=db,
         user=current_user,
@@ -1587,6 +1593,7 @@ async def complete_game_session(
         source_id=str(session.id),
         source_detail=session.game_type,
         commit=False,
+        item_multiplier=item_multiplier,
     )
 
     session.score = score.correct_count

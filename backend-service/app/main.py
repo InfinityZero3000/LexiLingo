@@ -48,7 +48,9 @@ from app.routes import (
     gamification_router,
 )
 from app.routes.learning import router as learning_router
-from app.routes.admin import router as admin_router
+from app.routes.admin_courses import router as admin_courses_router
+from app.routes.admin_gamification import router as admin_gamification_router
+from app.routes.admin_system import router as admin_system_router
 from app.routes.content_agent import router as content_agent_router
 from app.routes.notification_campaign import router as notification_campaign_router
 from app.routes.ranking_agent import router as ranking_agent_router
@@ -282,7 +284,9 @@ app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["L
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
-app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_courses_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")

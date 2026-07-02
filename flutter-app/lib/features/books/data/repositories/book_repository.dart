@@ -32,6 +32,15 @@ class BookRepository {
 
   String get _baseUrl => '${ApiConfig.baseUrl}/books';
 
+  String _stableFingerprint(String value) {
+    var hash = 0x811c9dc5;
+    for (final codeUnit in value.codeUnits.take(2000)) {
+      hash ^= codeUnit;
+      hash = (hash * 0x01000193) & 0xffffffff;
+    }
+    return hash.toRadixString(16).padLeft(8, '0');
+  }
+
   // ── Book Discovery ────────────────────────────────────────────
 
   /// Fetch curated books, optionally filtered by [cefrLevel].
@@ -136,16 +145,27 @@ class BookRepository {
   Future<BookQuiz> getChapterQuiz({
     required String bookId,
     required int chapter,
+    Book? book,
+    String? chapterExcerpt,
   }) async {
-    final cacheKey = 'books:quiz:$bookId:ch:$chapter';
+    final hasContext = chapterExcerpt?.trim().isNotEmpty == true;
+    final cacheKey = hasContext
+        ? 'books:quiz:$bookId:ch:$chapter:ctx:${_stableFingerprint(chapterExcerpt!.trim())}'
+        : 'books:quiz:$bookId:ch:$chapter';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
       type: 'book',
       fetchFn: () async {
+        final params = <String, String>{
+          'chapter': chapter.toString(),
+          if (book?.title.isNotEmpty == true) 'book_title': book!.title,
+          if (book?.cefrLevel.isNotEmpty == true) 'cefr_level': book!.cefrLevel,
+          if (hasContext) 'chapter_text': chapterExcerpt!.trim(),
+        };
         final uri = Uri.parse(
           '$_baseUrl/$bookId/quiz',
-        ).replace(queryParameters: {'chapter': chapter.toString()});
+        ).replace(queryParameters: params);
         final response = await _client.get(uri);
         if (response.statusCode != 200) {
           throw Exception('Quiz fetch failed: ${response.statusCode}');

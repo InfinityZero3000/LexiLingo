@@ -252,6 +252,31 @@ class LocalCacheService {
     return Sqflite.firstIntValue(result) ?? 0;
   }
 
+  /// Get cache entry counts grouped by content type.
+  Future<Map<String, int>> getCacheCountsByType() async {
+    if (kIsWeb) {
+      final counts = <String, int>{};
+      for (final entry in _memoryCache.values) {
+        counts.update(
+          entry.contentType,
+          (value) => value + 1,
+          ifAbsent: () => 1,
+        );
+      }
+      return counts;
+    }
+
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.rawQuery(
+      'SELECT content_type, COUNT(*) as count FROM $_tableName GROUP BY content_type',
+    );
+
+    return {
+      for (final row in rows)
+        row['content_type'] as String: (row['count'] as int?) ?? 0,
+    };
+  }
+
   /// Clear all cache data.
   Future<void> clearAll() async {
     if (kIsWeb) {

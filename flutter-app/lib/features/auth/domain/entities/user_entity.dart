@@ -11,6 +11,7 @@ class UserEntity {
   final bool isOnboardingCompleted;
   final String roleSlug; // 'user', 'admin', 'super_admin'
   final String cefrLevel; // CEFR level: A1, A2, B1, B2, C1, C2
+  final String nativeLanguage; // ISO code: vi, en, ja, ko, zh, fr, es
   final int totalXp;
   final int numericLevel;
   final int currentStreak;
@@ -30,6 +31,7 @@ class UserEntity {
     this.isOnboardingCompleted = false,
     this.roleSlug = 'user',
     this.cefrLevel = 'A1',
+    this.nativeLanguage = 'vi',
     this.totalXp = 0,
     this.numericLevel = 1,
     this.currentStreak = 0,
@@ -50,6 +52,7 @@ class UserEntity {
     bool? isOnboardingCompleted,
     String? roleSlug,
     String? cefrLevel,
+    String? nativeLanguage,
     int? totalXp,
     int? numericLevel,
     int? currentStreak,
@@ -70,6 +73,7 @@ class UserEntity {
           isOnboardingCompleted ?? this.isOnboardingCompleted,
       roleSlug: roleSlug ?? this.roleSlug,
       cefrLevel: cefrLevel ?? this.cefrLevel,
+      nativeLanguage: nativeLanguage ?? this.nativeLanguage,
       totalXp: totalXp ?? this.totalXp,
       numericLevel: numericLevel ?? this.numericLevel,
       currentStreak: currentStreak ?? this.currentStreak,

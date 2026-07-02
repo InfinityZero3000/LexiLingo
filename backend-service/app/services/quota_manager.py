@@ -9,13 +9,17 @@ Phase 0 Infrastructure: Required by all content features.
 """
 
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from typing import Optional
 
 from app.core.redis import RedisClient
 
 logger = logging.getLogger(__name__)
+
+
+def _utc_today() -> date:
+    return datetime.now(timezone.utc).date()
 
 
 class QuotaStatus(Enum):
@@ -67,7 +71,7 @@ class QuotaManager:
     @classmethod
     def _redis_key(cls, api_name: str) -> str:
         """Generate date-keyed Redis key (auto-resets daily)."""
-        return f"quota:{api_name}:{date.today().isoformat()}"
+        return f"quota:{api_name}:{_utc_today().isoformat()}"
     
     @classmethod
     async def check_status(cls, api_name: str, cost: int = 1) -> QuotaStatus:
@@ -81,15 +85,15 @@ class QuotaManager:
         Returns:
             QuotaStatus enum value
         """
+        budget = cls.LIMITS.get(api_name)
+        if budget is None:
+            logger.error("Unknown API: %s. No quota limit configured.", api_name)
+            return QuotaStatus.NORMAL
+
         redis = await RedisClient.get_instance()
         if redis is None:
             # Redis down → be conservative, allow but log
-            logger.warning(f"Redis unavailable, assuming NORMAL for {api_name}")
-            return QuotaStatus.NORMAL
-        
-        budget = cls.LIMITS.get(api_name)
-        if budget is None:
-            logger.error(f"Unknown API: {api_name}. No quota limit configured.")
+            logger.warning("Redis unavailable, assuming NORMAL for %s", api_name)
             return QuotaStatus.NORMAL
         
         key = cls._redis_key(api_name)
@@ -140,33 +144,52 @@ class QuotaManager:
         Returns:
             Updated QuotaStatus after recording
         """
+        if cost < 0:
+            raise ValueError("quota cost must be non-negative")
+
+        budget = cls.LIMITS.get(api_name)
+        if budget is None:
+            logger.error("Unknown API: %s. Quota usage was not recorded.", api_name)
+            return QuotaStatus.NORMAL
+
+        if cost == 0:
+            return await cls.check_status(api_name, cost=0)
+
         redis = await RedisClient.get_instance()
         if redis is None:
-            logger.warning(f"Redis unavailable, cannot track quota for {api_name}")
+            logger.warning("Redis unavailable, cannot track quota for %s", api_name)
             return QuotaStatus.NORMAL
         
         key = cls._redis_key(api_name)
         new_count = await redis.incrby(key, cost)
         await redis.expire(key, 86400)  # Auto-expire after 24h (cleanup)
         
-        budget = cls.LIMITS.get(api_name, 1)
         ratio = new_count / budget
         
         # Log threshold crossings
         if ratio >= 1.0:
             logger.warning(
-                f" BLOCKED: {api_name} at {ratio*100:.0f}% "
-                f"({new_count}/{budget}). No more requests until reset."
+                "Quota BLOCKED: %s at %.0f%% (%s/%s). No more requests until reset.",
+                api_name,
+                ratio * 100,
+                new_count,
+                budget,
             )
         elif ratio >= cls.CRITICAL_THRESHOLD:
             logger.warning(
-                f" CRITICAL: {api_name} at {ratio*100:.0f}% "
-                f"({new_count}/{budget}). Only HIGH priority allowed."
+                "Quota CRITICAL: %s at %.0f%% (%s/%s). Only HIGH priority allowed.",
+                api_name,
+                ratio * 100,
+                new_count,
+                budget,
             )
         elif ratio >= cls.WARNING_THRESHOLD:
             logger.info(
-                f"️ WARNING: {api_name} at {ratio*100:.0f}% "
-                f"({new_count}/{budget}). LOW priority blocked."
+                "Quota WARNING: %s at %.0f%% (%s/%s). LOW priority blocked.",
+                api_name,
+                ratio * 100,
+                new_count,
+                budget,
             )
         
         return await cls.check_status(api_name, cost=0)
@@ -215,11 +238,15 @@ class QuotaManager:
     @classmethod
     async def reset_quota(cls, api_name: str) -> bool:
         """Manual quota reset (emergency use / admin endpoint)."""
+        if api_name not in cls.LIMITS:
+            logger.error("Unknown API: %s. Quota reset was skipped.", api_name)
+            return False
+
         redis = await RedisClient.get_instance()
         if redis is None:
             return False
         
         key = cls._redis_key(api_name)
         await redis.delete(key)
-        logger.info(f" Manual quota reset for {api_name}")
+        logger.info("Manual quota reset for %s", api_name)
         return True

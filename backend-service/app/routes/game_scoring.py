@@ -14,6 +14,7 @@ from app.models.user import User
 from app.schemas.games import GameSessionCompleteRequest, GameSessionCompleteResponse
 from app.services import check_achievements_for_user
 from app.services.game_scoring_service import GameScoringError, score_game
+from app.services.item_effects_service import ItemEffectsService
 from app.services.streak_service import update_user_streak
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 
@@ -88,6 +89,7 @@ async def complete_game_session(
     except GameScoringError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
+    item_multiplier = await ItemEffectsService(db).get_xp_multiplier(current_user.id)
     xp_result = await award_xp_transaction(
         db=db,
         user=current_user,
@@ -96,6 +98,7 @@ async def complete_game_session(
         source_id=str(session.id),
         source_detail=session.game_type,
         commit=False,
+        item_multiplier=item_multiplier,
     )
 
     session.score = score.correct_count

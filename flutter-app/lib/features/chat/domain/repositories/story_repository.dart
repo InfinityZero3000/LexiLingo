@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
-import '../../data/models/story_model.dart';
-import '../../data/models/topic_session_model.dart';
+import '../entities/story.dart';
+import '../entities/topic_session.dart';
 
 /// Repository interface for Story/Topic-based conversation
 abstract class StoryRepository {

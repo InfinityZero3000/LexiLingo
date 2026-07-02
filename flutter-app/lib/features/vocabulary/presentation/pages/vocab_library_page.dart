@@ -9,6 +9,12 @@ import 'package:lexilingo_app/features/vocabulary/presentation/widgets/vocab_wor
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/quiz_review_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart' as vocab_di;
+
+/// Review modes offered before launching a deck/topic study session.
+enum _ReviewMode { quiz, flashcards }
 
 class VocabLibraryPage extends StatefulWidget {
   const VocabLibraryPage({super.key});
@@ -658,7 +664,77 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     );
   }
 
+  /// Ask the user whether to study via quiz or flashcards.
+  Future<_ReviewMode?> _chooseReviewMode(BuildContext context) {
+    return showModalBottomSheet<_ReviewMode>(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'vocabQuiz.chooseMode'.tr(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.quiz_rounded, color: AppColors.primary),
+              title: Text('vocabQuiz.modeQuizTitle'.tr()),
+              subtitle: Text('vocabQuiz.modeQuizSubtitle'.tr()),
+              onTap: () => Navigator.of(sheetContext).pop(_ReviewMode.quiz),
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.style_rounded, color: AppColors.primary),
+              title: Text('vocabQuiz.modeFlashcardTitle'.tr()),
+              subtitle: Text('vocabQuiz.modeFlashcardSubtitle'.tr()),
+              onTap: () =>
+                  Navigator.of(sheetContext).pop(_ReviewMode.flashcards),
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Push the quiz screen with a route-owned provider started by [starter].
+  void _launchQuiz(
+    BuildContext context,
+    Future<void> Function(QuizProvider) starter,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => vocab_di.getIt<QuizProvider>(),
+          child: QuizReviewScreen(sessionStarter: starter),
+        ),
+      ),
+    );
+  }
+
   Future<void> _startDeckStudy(BuildContext context, VocabularyDeck deck) async {
+    final mode = await _chooseReviewMode(context);
+    if (mode == null || !context.mounted) return;
+    if (mode == _ReviewMode.quiz) {
+      _launchQuiz(context, (p) => p.startDeckSession(deckId: deck.id));
+      return;
+    }
+
     final flashcardProvider = Provider.of<FlashcardProvider>(context, listen: false);
 
     showDialog(
@@ -826,6 +902,13 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   }
 
   Future<void> _startTopicStudy(BuildContext context, _TopicConfig topic) async {
+    final mode = await _chooseReviewMode(context);
+    if (mode == null || !context.mounted) return;
+    if (mode == _ReviewMode.quiz) {
+      _launchQuiz(context, (p) => p.startTopicSession(tag: topic.tag));
+      return;
+    }
+
     final flashcardProvider = Provider.of<FlashcardProvider>(context, listen: false);
 
     showDialog(

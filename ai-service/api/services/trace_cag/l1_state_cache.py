@@ -25,6 +25,7 @@ class L1Request:
     answer_target: str = ""
     relation_hints: set[str] = field(default_factory=set)
     evidence_hash: str = ""
+    native_language: str = ""
 
 
 @dataclass(frozen=True)
@@ -42,6 +43,7 @@ class L1Candidate:
     answer_target: str = ""
     relation_hints: set[str] = field(default_factory=set)
     evidence_hash: str = ""
+    native_language: str = ""
     created_at: float = 0.0
     ttl: int = 3600
 
@@ -88,11 +90,16 @@ def decide_l1_reuse(
     Risk scoring then separates exact safe reuse from near-hit patching.
     """
 
-    current_time = time.monotonic() if now is None else now
+    # Wall-clock: candidate.created_at is read back from Redis and may have
+    # been written by a different process/host (monotonic()'s reference point
+    # is undefined across processes per the stdlib docs).
+    current_time = time.time() if now is None else now
     reasons: list[str] = []
 
     if request.level != candidate.level:
         reasons.append("level_mismatch")
+    if not _empty_or_equal(request.native_language, candidate.native_language):
+        reasons.append("native_language_mismatch")
     if request.profile_epoch != candidate.profile_epoch:
         reasons.append("profile_epoch_mismatch")
     if not _empty_or_equal(request.intent, candidate.intent):

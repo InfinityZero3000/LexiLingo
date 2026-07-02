@@ -5,7 +5,7 @@ User Schemas
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, UUID4
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, UUID4
 
 
 class UserBase(BaseModel):
@@ -63,8 +63,7 @@ class UserResponse(UserBase):
     role_id: Optional[UUID] = None
     role_slug: Optional[str] = None  # Populated from role relationship
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserInDB(UserResponse):
@@ -93,5 +92,4 @@ class AdminUserListItem(BaseModel):
     created_at: datetime
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

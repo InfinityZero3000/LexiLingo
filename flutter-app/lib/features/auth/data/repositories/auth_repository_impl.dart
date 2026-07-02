@@ -278,6 +278,7 @@ class AuthRepositoryImpl implements AuthRepository {
       case ErrorCodes.authInvalid:
       case ErrorCodes.authExpired:
       case ErrorCodes.authMissing:
+      case ErrorCodes.authForbidden:
         return AuthFailure(e.message);
 
       case ErrorCodes.validationError:

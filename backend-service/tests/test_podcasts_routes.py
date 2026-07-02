@@ -578,37 +578,99 @@ class TestGetPodcastEpisodes:
 # ============================================================================
 
 class TestTranscriptEndpoint:
-    """Tests for POST /podcasts/transcript placeholder endpoint."""
+    """Tests for POST /podcasts/transcript endpoint."""
 
     @pytest.mark.asyncio
-    async def test_returns_pending_status(self, no_db_client: AsyncClient):
-        response = await no_db_client.post(
-            f"{BASE}/transcript",
-            json={
-                "feed_url": "https://example.com/feed.rss",
-                "episode_guid": "ep001",
-                "audio_url": "https://example.com/ep1.mp3",
-            },
-        )
+    async def test_returns_ready_transcript_artifact(self, no_db_client: AsyncClient):
+        async def call_fetch(**kwargs):
+            data = await kwargs["fetch_fn"]()
+            mock_result = MagicMock()
+            mock_result.data = data
+            return mock_result
+
+        with patch("app.routes.podcasts.APICacheService") as MockCache, patch(
+            "app.routes.podcasts._fetch_rss_episodes",
+            new_callable=AsyncMock,
+        ) as mock_fetch:
+            mock_cache = AsyncMock()
+            mock_cache.get_or_fetch.side_effect = call_fetch
+            MockCache.return_value = mock_cache
+            mock_fetch.return_value = {
+                "episodes": [
+                    {
+                        "guid": "ep001",
+                        "title": "How to ask better questions",
+                        "description": "A short lesson about polite questions and follow-up phrases.",
+                        "audio_url": "https://example.com/ep1.mp3",
+                        "duration_seconds": 360,
+                    }
+                ]
+            }
+
+            response = await no_db_client.post(
+                f"{BASE}/transcript",
+                json={
+                    "feed_url": "https://example.com/feed.rss",
+                    "episode_guid": "ep001",
+                    "audio_url": "https://example.com/ep1.mp3",
+                },
+            )
+
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "pending"
-        assert "message" in data
+        assert data["status"] == "ready"
+        assert data["source"] == "rss_summary"
+        assert data["requires_stt"] is False
+        assert "polite questions" in data["transcript"]
+        assert len(data["segments"]) == 3
 
     @pytest.mark.asyncio
     async def test_echoes_back_feed_url_and_guid(self, no_db_client: AsyncClient):
-        response = await no_db_client.post(
-            f"{BASE}/transcript",
-            json={
-                "feed_url": "https://example.com/myfeed.rss",
-                "episode_guid": "guid-12345",
-                "audio_url": "https://example.com/audio.mp3",
-            },
-        )
+        mock_result = MagicMock()
+        mock_result.data = {
+            "message": "cached",
+            "status": "ready",
+            "feed_url": "https://example.com/myfeed.rss",
+            "episode_guid": "guid-12345",
+            "audio_url": "https://example.com/audio.mp3",
+            "transcript": "Cached transcript",
+            "segments": [],
+            "source": "rss_summary",
+            "requires_stt": False,
+        }
+
+        with patch("app.routes.podcasts.APICacheService") as MockCache:
+            mock_cache = AsyncMock()
+            mock_cache.get_or_fetch.return_value = mock_result
+            MockCache.return_value = mock_cache
+
+            response = await no_db_client.post(
+                f"{BASE}/transcript",
+                json={
+                    "feed_url": "https://example.com/myfeed.rss",
+                    "episode_guid": "guid-12345",
+                    "audio_url": "https://example.com/audio.mp3",
+                },
+            )
+
         assert response.status_code == 200
         data = response.json()
         assert data["feed_url"] == "https://example.com/myfeed.rss"
         assert data["episode_guid"] == "guid-12345"
+
+    def test_build_transcript_artifact_falls_back_to_request_metadata(self):
+        from app.routes.podcasts import _build_transcript_artifact
+
+        artifact = _build_transcript_artifact(
+            feed_url="https://example.com/feed.rss",
+            episode_guid="missing",
+            audio_url="https://example.com/audio.mp3",
+            episode=None,
+        )
+
+        assert artifact["status"] == "ready"
+        assert artifact["source"] == "request_metadata"
+        assert "Transcript audio is not available yet" in artifact["transcript"]
 
 
 # ============================================================================

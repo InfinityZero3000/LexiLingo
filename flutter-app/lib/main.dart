@@ -40,7 +40,9 @@ import 'package:lexilingo_app/features/chat/presentation/providers/story_provide
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/pages/placement_test_page.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/placement_test_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
@@ -55,6 +57,7 @@ import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/today_plan_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
@@ -78,6 +81,10 @@ import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_play
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
 import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
+import 'package:lexilingo_app/features/mistakes/presentation/pages/mistake_notebook_page.dart';
+import 'package:lexilingo_app/features/offline/presentation/pages/offline_sync_center_page.dart';
+import 'package:lexilingo_app/features/practice/presentation/pages/practice_lab_page.dart';
+import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
 
@@ -452,6 +459,15 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               },
               // Phase 3: English Games
               '/games': (context) => const GamesHubScreen(),
+              '/today-plan': (context) => const TodayPlanPage(),
+              '/practice-lab': (context) => const PracticeLabPage(),
+              '/mistake-notebook': (context) => const MistakeNotebookPage(),
+              '/premium': (context) => const PaywallScreen(),
+              '/offline-sync': (context) => const OfflineSyncCenterPage(),
+              '/placement-test': (context) => ChangeNotifierProvider(
+                create: (_) => di.sl<PlacementTestProvider>(),
+                child: const PlacementTestPage(),
+              ),
               '/vocabulary/review': (context) => ChangeNotifierProvider(
                 create: (_) => vocab_di.getIt<FlashcardProvider>(),
                 child: const FlashcardReviewScreen(),

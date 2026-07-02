@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
-import 'package:lexilingo_app/features/chat/data/models/story_model.dart';
+import 'package:lexilingo_app/features/chat/domain/entities/story.dart';
 import 'package:lexilingo_app/features/chat/presentation/pages/topic_chat_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart';

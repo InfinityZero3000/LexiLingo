@@ -110,7 +110,7 @@ class ReminderService:
         result = await db.execute(
             select(UserReminderPreference)
             .where(
-                UserReminderPreference.enabled == True,
+                UserReminderPreference.enabled.is_(True),
                 UserReminderPreference.next_check_at <= now_utc,
             )
             .order_by(UserReminderPreference.next_check_at)

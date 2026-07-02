@@ -8,8 +8,8 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
-import '../../data/models/story_model.dart';
-import '../../data/models/topic_session_model.dart';
+import '../../domain/entities/story.dart';
+import '../../domain/entities/topic_session.dart';
 import '../providers/story_provider.dart';
 import '../widgets/educational_hints_widgets.dart';
 

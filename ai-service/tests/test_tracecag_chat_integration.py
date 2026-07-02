@@ -1,9 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime
+from datetime import UTC, datetime
+
+import pytest
 
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
+from api.services import lexi_chat_service as svc
 
 
 @pytest.fixture
@@ -11,7 +13,9 @@ def mock_chat_db():
     db = MagicMock()
 
     chat_sessions = MagicMock()
-    chat_sessions.find_one = AsyncMock(return_value={"session_id": "s1", "user_id": "u1"})
+    chat_sessions.find_one = AsyncMock(
+        return_value={"session_id": "s1", "user_id": "u1"}
+    )
     chat_sessions.update_one = AsyncMock()
 
     chat_messages = MagicMock()
@@ -71,7 +75,7 @@ def mock_lexi_store(monkeypatch):
     store.get_session = AsyncMock(return_value=None)
     store.delete_session = AsyncMock()
     store.init_messages = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr(svc, "lexi_store", store)
     quota_mock = MagicMock()
     quota_mock.rpm_used = 1
     quota_mock.rpm_limit = 100
@@ -81,7 +85,9 @@ def mock_lexi_store(monkeypatch):
     quota_mock.tpm_limit = 50000
     quota_mock.tpd_used = 1000
     quota_mock.tpd_limit = 1000000
-    monkeypatch.setattr("api.routes.lexi_chat.enforce_user_quota", AsyncMock(return_value=quota_mock))
+    monkeypatch.setattr(
+        "api.routes.lexi_chat.enforce_user_quota", AsyncMock(return_value=quota_mock)
+    )
     monkeypatch.setattr("api.core.redis_client.RedisClient.get_instance", AsyncMock())
     return store
 
@@ -99,7 +105,9 @@ async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_cha
     async def _fake_get_orchestrator():
         return orchestrator
 
-    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
 
     response = await chat_route.send_message(
         chat_route.SendMessageRequest(session_id="s1", user_id="u1", message="Hello"),
@@ -110,7 +118,9 @@ async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_cha
     assert response.metadata["model_used"] == "groq/qwen3-32b"
     assert response.metadata["trace-cag"]["path"] == "trace-cag"
     assert mock_chat_db["chat_messages"].insert_one.await_count == 2
-    mock_chat_db["chat_messages"].find.return_value.sort.assert_called_with("timestamp", -1)
+    mock_chat_db["chat_messages"].find.return_value.sort.assert_called_with(
+        "timestamp", -1
+    )
 
     ai_doc = mock_chat_db["chat_messages"].insert_one.await_args_list[1].args[0]
     assert ai_doc["role"] == "assistant"
@@ -128,12 +138,12 @@ async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_ch
                 {
                     "role": "user",
                     "content": "hello",
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(UTC),
                 },
                 {
                     "role": "assistant",
                     "content": "hi",
-                    "timestamp": datetime.utcnow(),
+                    "timestamp": datetime.now(UTC),
                 },
             ],
             [],
@@ -153,14 +163,19 @@ async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_ch
 
 
 @pytest.mark.asyncio
-async def test_chat_send_message_trace_cag_degraded_retry_success(monkeypatch, mock_chat_db):
+async def test_chat_send_message_trace_cag_degraded_retry_success(
+    monkeypatch, mock_chat_db
+):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         side_effect=[
             RuntimeError("primary graph failure"),
             {
                 "tutor_response": "TraceCAG degraded retry response",
-                "metadata": {"models_used": ["groq/qwen3-retry"], "path": "trace-cag_degraded"},
+                "metadata": {
+                    "models_used": ["groq/qwen3-retry"],
+                    "path": "trace-cag_degraded",
+                },
             },
         ]
     )
@@ -168,10 +183,14 @@ async def test_chat_send_message_trace_cag_degraded_retry_success(monkeypatch, m
     async def _fake_get_orchestrator():
         return orchestrator
 
-    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
 
     response = await chat_route.send_message(
-        chat_route.SendMessageRequest(session_id="s1", user_id="u1", message="Need fallback"),
+        chat_route.SendMessageRequest(
+            session_id="s1", user_id="u1", message="Need fallback"
+        ),
         db=mock_chat_db,
     )
 
@@ -183,7 +202,9 @@ async def test_chat_send_message_trace_cag_degraded_retry_success(monkeypatch, m
 
 
 @pytest.mark.asyncio
-async def test_chat_send_message_trace_cag_hard_failure_uses_safe_response(monkeypatch, mock_chat_db):
+async def test_chat_send_message_trace_cag_hard_failure_uses_safe_response(
+    monkeypatch, mock_chat_db
+):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         side_effect=[
@@ -195,10 +216,14 @@ async def test_chat_send_message_trace_cag_hard_failure_uses_safe_response(monke
     async def _fake_get_orchestrator():
         return orchestrator
 
-    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
 
     response = await chat_route.send_message(
-        chat_route.SendMessageRequest(session_id="s1", user_id="u1", message="Need safe response"),
+        chat_route.SendMessageRequest(
+            session_id="s1", user_id="u1", message="Need safe response"
+        ),
         db=mock_chat_db,
     )
 
@@ -214,8 +239,12 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
     mock_lexi_db,
     mock_lexi_store,
 ):
-    monkeypatch.setattr(lexi_route, "_transcribe_audio", AsyncMock(return_value="Transcribed from voice"))
-    monkeypatch.setattr(lexi_route, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64"))
+    monkeypatch.setattr(
+        svc, "_transcribe_audio", AsyncMock(return_value="Transcribed from voice")
+    )
+    monkeypatch.setattr(
+        svc, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64")
+    )
 
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -230,7 +259,9 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
     async def _fake_get_orchestrator():
         return orchestrator
 
-    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
 
     response = await lexi_route.lexi_chat(
         request_context=MagicMock(),
@@ -259,12 +290,51 @@ async def test_lexi_chat_voice_uses_stt_trace_cag_and_tts(
 
 
 @pytest.mark.asyncio
+async def test_lexi_chat_native_language_ja_maps_to_japanese_in_learner_profile(
+    monkeypatch,
+    mock_lexi_db,
+    mock_lexi_store,
+):
+    """A Japanese learner's request must reach orchestrator.process with
+    learner_profile["native_language"] == "Japanese", not the Vietnamese
+    default — and the cache must not be shared across languages."""
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock(
+        return_value={"tutor_response": "Good job!", "metadata": {}}
+    )
+
+    async def _fake_get_orchestrator():
+        return orchestrator
+
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
+
+    await lexi_route.lexi_chat(
+        request_context=MagicMock(),
+        request=lexi_route.LexiChatRequest(
+            user_id="u1",
+            message="text input",
+            learner_level="B1",
+            native_language="ja",
+        ),
+        db=mock_lexi_db,
+        current_user=MagicMock(user_id="u1"),
+    )
+
+    learner_profile = orchestrator.process.call_args.kwargs["learner_profile"]
+    assert learner_profile["native_language"] == "Japanese"
+
+
+@pytest.mark.asyncio
 async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     monkeypatch,
     mock_lexi_db,
     mock_lexi_store,
 ):
-    monkeypatch.setattr(lexi_route, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64"))
+    monkeypatch.setattr(
+        svc, "_synthesize_tts", AsyncMock(return_value="FAKE_AUDIO_BASE64")
+    )
 
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -272,7 +342,10 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
             RuntimeError("primary graph failure"),
             {
                 "tutor_response": "Lexi response from degraded TraceCAG",
-                "metadata": {"models_used": ["groq/qwen3-retry"], "path": "trace-cag_degraded"},
+                "metadata": {
+                    "models_used": ["groq/qwen3-retry"],
+                    "path": "trace-cag_degraded",
+                },
             },
         ]
     )
@@ -280,7 +353,9 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     async def _fake_get_orchestrator():
         return orchestrator
 
-    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
 
     response = await lexi_route.lexi_chat(
         request_context=MagicMock(),
@@ -290,6 +365,7 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
             input_type="text",
             enable_tts=True,
             learner_level="B1",
+            native_language="ja",
         ),
         db=mock_lexi_db,
         current_user=MagicMock(user_id="u1"),
@@ -302,6 +378,12 @@ async def test_lexi_chat_trace_cag_primary_fail_then_degraded_retry_with_tts(
     assert "tts_complete" in response.metadata["pipeline_steps"]
     assert response.metadata["trace-cag_metadata"]["fallback_used"] is True
     assert response.metadata["trace-cag_metadata"]["retry_mode"] == "trace-cag_degraded"
+
+    # native_language must survive into the degraded retry call too.
+    retry_learner_profile = orchestrator.process.await_args_list[1].kwargs[
+        "learner_profile"
+    ]
+    assert retry_learner_profile["native_language"] == "Japanese"
 
 
 @pytest.mark.asyncio
@@ -316,7 +398,7 @@ async def test_lexi_chat_tts_timeout_returns_text_without_audio(
         await asyncio.Event().wait()
 
     monkeypatch.setenv("LEXI_TTS_TIMEOUT_SECONDS", "0.01")
-    monkeypatch.setattr(lexi_route, "_synthesize_tts", _stalled_tts)
+    monkeypatch.setattr(svc, "_synthesize_tts", _stalled_tts)
 
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -329,7 +411,9 @@ async def test_lexi_chat_tts_timeout_returns_text_without_audio(
     async def _fake_get_orchestrator():
         return orchestrator
 
-    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
+    )
 
     response = await lexi_route.lexi_chat(
         request_context=MagicMock(),

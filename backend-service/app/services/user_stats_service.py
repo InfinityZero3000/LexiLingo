@@ -46,7 +46,7 @@ async def get_user_stats(db: AsyncSession, user: User) -> UserStatsResponse:
     lessons_completed = (await db.execute(
         select(func.count(LessonCompletion.id)).where(
             LessonCompletion.user_id == user.id,
-            LessonCompletion.is_passed == True,
+            LessonCompletion.is_passed.is_(True),
         )
     )).scalar() or 0
 
@@ -119,7 +119,7 @@ async def get_weekly_activity(db: AsyncSession, user: User) -> WeeklyActivityRes
                 LessonAttempt.user_id == user.id,
                 LessonAttempt.finished_at >= day_start,
                 LessonAttempt.finished_at <= day_end,
-                LessonAttempt.passed == True,
+                LessonAttempt.passed.is_(True),
             )
         )).first()
 
