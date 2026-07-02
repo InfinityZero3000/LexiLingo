@@ -181,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/LexiLingo-logo.png',
+                              'assets/out-app/lexilingo-logo.png',
                               height: 40,
                               fit: BoxFit.contain,
                               color: isDark ? Colors.white : null,
