@@ -72,6 +72,7 @@ from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
+from app.routes.mistakes import router as mistakes_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -297,6 +298,7 @@ app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["
 app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
 app.include_router(reminders_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Reminder Preferences"])
 app.include_router(notifications_router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
+app.include_router(mistakes_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Mistakes"])
 
 # Content Features
 app.include_router(youtube_router, prefix=f"{settings.API_V1_PREFIX}", tags=["YouTube"])

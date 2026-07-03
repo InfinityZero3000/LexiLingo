@@ -336,7 +336,7 @@ async def get_article_quiz(
     
     Cache: permanent (article content doesn't change).
     """
-    cache_key = f"news:quiz:{article_id}"
+    cache_key = f"news:quiz:v2:{article_id}"
     cache_service = APICacheService(db)
     
     try:
@@ -586,82 +586,260 @@ def _extract_highlight_words(article: dict) -> list[str]:
     return sorted(list(highlights))[:10]  # Max 10 highlighted words
 
 
-async def _generate_quiz(article_id: str) -> dict:
+async def _generate_quiz(article_id: str, article: dict | None = None) -> dict:
     """
     Generate a comprehension quiz for an article.
-    
-    TODO: Integrate with AI service for real quiz generation.
-    Returns placeholder quiz structure for now.
+
+    This deterministic generator keeps the route useful even when the AI
+    service is unavailable. A future AI-backed generator can replace this
+    helper as long as it preserves the response contract below.
     """
+    article = article or {}
+    context = _build_quiz_context(article_id, article)
+    topic = context["topic"]
+    sentences = context["sentences"]
+    highlight_words = context["highlight_words"]
+
+    main_sentence = sentences[0]
+    detail_sentence = sentences[1] if len(sentences) > 1 else main_sentence
+    support_sentence = sentences[2] if len(sentences) > 2 else detail_sentence
+
+    first_word = highlight_words[0] if highlight_words else _topic_keyword(topic)
+    second_word = (
+        highlight_words[1]
+        if len(highlight_words) > 1
+        else _topic_keyword(detail_sentence)
+    )
+    if second_word == first_word:
+        second_word = _topic_keyword(support_sentence)
+
     return {
         "questions": [
             {
                 "id": 1,
                 "type": "comprehension",
-                "question": "What is the main idea of this article?",
-                "options": [
-                    "Option A — correct answer",
-                    "Option B — distractor",
-                    "Option C — distractor",
-                    "Option D — distractor",
-                ],
+                "question": f"What is the main idea of the article about {topic}?",
+                "options": _unique_options(
+                    [
+                        _shorten(main_sentence, 110),
+                        f"The article mainly lists unrelated facts about {topic}.",
+                        "The article is mostly a personal travel diary.",
+                        "The article explains a fictional story with no real-world details.",
+                    ]
+                ),
                 "correct_index": 0,
-                "explanation": "This will be AI-generated based on the article content.",
+                "explanation": (
+                    "The first key sentence gives the clearest summary of the article's focus."
+                ),
             },
             {
                 "id": 2,
                 "type": "comprehension",
-                "question": "Which detail is mentioned in the article?",
-                "options": [
-                    "Option A — distractor",
-                    "Option B — correct answer",
-                    "Option C — distractor",
-                    "Option D — distractor",
-                ],
+                "question": "Which supporting detail is mentioned in the article?",
+                "options": _unique_options(
+                    [
+                        f"The article says that {topic} happened without any context.",
+                        _shorten(detail_sentence, 110),
+                        "The article says the topic was cancelled before it began.",
+                        "The article says readers should ignore the main event.",
+                    ]
+                ),
                 "correct_index": 1,
-                "explanation": "AI-generated explanation.",
+                "explanation": (
+                    "This option repeats a concrete detail from the article text."
+                ),
             },
             {
                 "id": 3,
                 "type": "vocabulary",
-                "question": "What does the word '[highlighted word]' mean in context?",
-                "options": [
-                    "Option A — distractor",
-                    "Option B — distractor",
-                    "Option C — correct answer",
-                    "Option D — distractor",
-                ],
+                "question": f"What does '{first_word}' most closely relate to in this article?",
+                "options": _unique_options(
+                    [
+                        "A person who is not connected to the article",
+                        "A time expression used only for dates",
+                        _vocabulary_definition(first_word, topic),
+                        "A number used to rank sports teams",
+                    ]
+                ),
                 "correct_index": 2,
-                "explanation": "AI-generated vocabulary explanation.",
+                "explanation": (
+                    f"In this context, '{first_word}' is connected to the article's main topic."
+                ),
             },
             {
                 "id": 4,
                 "type": "vocabulary",
-                "question": "Choose the synonym for '[highlighted word]' as used here.",
-                "options": [
-                    "Option A — correct answer",
-                    "Option B — distractor",
-                    "Option C — distractor",
-                    "Option D — distractor",
-                ],
+                "question": f"Which phrase best matches '{second_word}' in context?",
+                "options": _unique_options(
+                    [
+                        _vocabulary_definition(second_word, topic),
+                        "A completely separate topic",
+                        "A decorative detail with no meaning",
+                        "A command to stop reading",
+                    ]
+                ),
                 "correct_index": 0,
-                "explanation": "AI-generated synonym explanation.",
+                "explanation": (
+                    f"The word '{second_word}' is used as a meaningful clue in the article."
+                ),
             },
             {
                 "id": 5,
                 "type": "grammar",
                 "question": "Which sentence structure is correct?",
-                "options": [
-                    "Option A — distractor",
-                    "Option B — distractor",
-                    "Option C — distractor",
-                    "Option D — correct answer",
-                ],
+                "options": _unique_options(
+                    [
+                        f"{topic} are explains by the article.",
+                        f"The article explain {topic}.",
+                        f"Readers learning about {topic} yesterday important.",
+                        _shorten(support_sentence, 120),
+                    ]
+                ),
                 "correct_index": 3,
-                "explanation": "AI-generated grammar explanation.",
+                "explanation": (
+                    "The correct option uses a complete sentence from the article context."
+                ),
             },
         ],
         "total_questions": 5,
         "xp_reward": 15,
-        "note": "Quiz generation will be powered by AI service in production.",
+        "source": context["source"],
     }
+
+
+def _build_quiz_context(article_id: str, article: dict) -> dict:
+    """Build safe article context for deterministic quiz generation."""
+    raw_parts = [
+        str(article.get("title") or "").strip(),
+        str(article.get("description") or "").strip(),
+        str(article.get("content") or "").strip(),
+    ]
+    raw_text = " ".join(part for part in raw_parts if part)
+    topic = raw_parts[0] or _humanize_article_id(article_id)
+
+    if not raw_text:
+        raw_text = (
+            f"The article focuses on {topic}. "
+            f"It explains important details about {topic}. "
+            f"Readers can use the article to understand why {topic} matters."
+        )
+
+    sentences = _split_quiz_sentences(raw_text)
+    if len(sentences) < 3:
+        sentences.extend(
+            [
+                f"The article gives readers useful background about {topic}.",
+                f"It highlights why {topic} is important for everyday understanding.",
+                f"Readers can connect the details to the larger topic of {topic}.",
+            ]
+        )
+
+    highlight_words = _extract_highlight_words(article)
+    if not highlight_words:
+        highlight_words = _extract_quiz_keywords(raw_text, topic)
+
+    return {
+        "topic": _shorten(topic, 80),
+        "sentences": sentences[:3],
+        "highlight_words": highlight_words[:2],
+        "source": "article_context" if any(raw_parts) else "article_id_fallback",
+    }
+
+
+def _humanize_article_id(article_id: str) -> str:
+    """Convert a cache-safe article ID into a readable fallback topic."""
+    cleaned = re.sub(r"[_\-]+", " ", article_id).strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    return cleaned or "this news article"
+
+
+def _split_quiz_sentences(text: str) -> list[str]:
+    """Extract readable sentences for quiz options."""
+    candidates = re.split(r"(?<=[.!?])\s+", text)
+    sentences: list[str] = []
+    for candidate in candidates:
+        cleaned = re.sub(r"\s+", " ", candidate).strip(" .")
+        if len(cleaned.split()) >= 4:
+            sentences.append(f"{cleaned}.")
+    if sentences:
+        return sentences
+
+    cleaned = re.sub(r"\s+", " ", text).strip(" .")
+    return [f"{cleaned}."] if cleaned else []
+
+
+def _extract_quiz_keywords(text: str, topic: str) -> list[str]:
+    """Extract stable fallback keywords when highlighted words are unavailable."""
+    stop_words = {
+        "about", "article", "because", "between", "could", "every", "focuses",
+        "important", "learning", "matters", "readers", "should", "their",
+        "there", "these", "those", "through", "understand", "useful", "which",
+    }
+    words = re.findall(r"\b[a-zA-Z][a-zA-Z\-]{4,}\b", f"{text} {topic}")
+    keywords: list[str] = []
+    for word in words:
+        lower = word.lower()
+        if lower in stop_words or lower in keywords:
+            continue
+        keywords.append(lower)
+        if len(keywords) == 4:
+            break
+    return keywords or [_topic_keyword(topic)]
+
+
+def _topic_keyword(text: str) -> str:
+    """Return a readable keyword from arbitrary text."""
+    words = re.findall(r"\b[a-zA-Z][a-zA-Z\-]{3,}\b", text)
+    if not words:
+        return "topic"
+    return max((word.lower() for word in words), key=len)
+
+
+def _vocabulary_definition(word: str, topic: str) -> str:
+    """Return a useful beginner-friendly definition for common news terms."""
+    definitions = {
+        "electricity": "power used by lights, machines, and buildings",
+        "installed": "put something in place so it can be used",
+        "panels": "flat pieces of equipment used to collect or display something",
+        "project": "a planned piece of work with a clear goal",
+        "reduces": "makes something smaller or lower",
+        "renewable": "able to be replaced naturally and used again",
+        "science": "the study of how the world works",
+        "students": "people who are learning at school or in a course",
+        "support": "help something work or become stronger",
+        "teachers": "people who help students learn",
+    }
+    return definitions.get(
+        word.lower(),
+        f"a key idea connected to {topic}",
+    )
+
+
+def _unique_options(options: list[str]) -> list[str]:
+    """Ensure quiz options are unique while preserving the correct index."""
+    seen: set[str] = set()
+    unique: list[str] = []
+    fillers = [
+        "A background detail that is not the best answer",
+        "A different idea not supported by the article",
+        "A general statement that misses the article's focus",
+        "A confusing option with no clear connection",
+    ]
+    for option in options + fillers:
+        normalized = option.strip()
+        key = normalized.lower()
+        if normalized and key not in seen:
+            unique.append(normalized)
+            seen.add(key)
+        if len(unique) == 4:
+            return unique
+    return unique[:4]
+
+
+def _shorten(text: str, max_length: int) -> str:
+    """Shorten long generated options without cutting in the middle of a word."""
+    cleaned = re.sub(r"\s+", " ", text).strip()
+    if len(cleaned) <= max_length:
+        return cleaned
+    truncated = cleaned[: max_length - 1].rsplit(" ", 1)[0].strip()
+    return f"{truncated}."
