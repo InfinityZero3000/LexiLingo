@@ -12,6 +12,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   int sendCalls = 0;
   int streamCalls = 0;
   String? lastIdempotencyKey;
+  Object? pagedError;
   Stream<LexiStreamEvent> Function()? streamFactory;
 
   @override
@@ -39,6 +40,9 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     int limit = 50,
     String? cursor,
   }) async {
+    if (pagedError != null) {
+      throw pagedError!;
+    }
     return const LexiMessagesPage(
       messages: [],
       hasMore: false,
@@ -112,7 +116,10 @@ void main() {
   group('LexiChatProvider', () {
     test('builds web-safe request ids without crypto random', () async {
       final repo = _FakeLexiChatRepository();
-      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
       addTearDown(provider.dispose);
 
       await provider.sendMessage('hello', userId: 'user@example.com');
@@ -132,7 +139,10 @@ void main() {
     test('falls back to non-streaming send when SSE closes empty', () async {
       final repo = _FakeLexiChatRepository()
         ..streamFactory = () => const Stream<LexiStreamEvent>.empty();
-      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
       addTearDown(provider.dispose);
 
       await provider.sendMessageStreaming('hello', userId: 'user-1');
@@ -153,7 +163,10 @@ void main() {
           const LexiStreamChunk('Hi'),
           const LexiStreamChunk(' there'),
         ]);
-      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
       addTearDown(provider.dispose);
 
       await provider.sendMessageStreaming('hello', userId: 'user-1');
@@ -166,6 +179,33 @@ void main() {
       expect(provider.messages.last.role, 'assistant');
       expect(provider.messages.last.content, 'Hi there');
       expect(provider.messages.last.syncStatus, 'synced');
+    });
+
+    test('clears selected session when backend returns forbidden', () async {
+      final repo = _FakeLexiChatRepository()
+        ..pagedError = Exception(
+          'Request /lexi/sessions/old/messages/metadata failed with status 403',
+        );
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      await provider.selectSession(
+        LexiSessionSummary(
+          sessionId: 'old',
+          userId: 'other-user',
+          title: 'Old session',
+          createdAt: DateTime.parse('2026-05-30T00:00:00Z'),
+          updatedAt: DateTime.parse('2026-05-30T00:00:00Z'),
+          messageCount: 1,
+        ),
+      );
+
+      expect(provider.session, isNull);
+      expect(provider.messages, isEmpty);
+      expect(provider.error, contains('another account'));
     });
   });
 }
