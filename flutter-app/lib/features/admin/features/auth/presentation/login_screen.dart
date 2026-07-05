@@ -109,24 +109,33 @@ class LoginScreen extends StatelessWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Image.asset(
-                                      'assets/out-app/LexiLingo-logo.png',
-                                      height: 30,
-                                      fit: BoxFit.contain,
-                                    ),
-                                    Text(
-                                      'ADMIN CONSOLE',
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.18,
-                                        color: AppColors.onSurfaceMuted,
+                                Flexible(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 220,
+                                        ),
+                                        child: Image.asset(
+                                          'assets/out-app/lexilingo-logo.png',
+                                          height: 30,
+                                          fit: BoxFit.contain,
+                                          alignment: Alignment.centerLeft,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      Text(
+                                        'ADMIN CONSOLE',
+                                        style: GoogleFonts.spaceGrotesk(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.18,
+                                          color: AppColors.onSurfaceMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),

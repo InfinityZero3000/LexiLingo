@@ -63,7 +63,8 @@ class _LoginPageState extends State<LoginPage> {
     if (!remember) return;
 
     final savedEmail = prefs.getString(_savedEmailKey) ?? '';
-    final savedPassword = await _secureStorage.read(key: _savedPasswordKey) ?? '';
+    final savedPassword =
+        await _secureStorage.read(key: _savedPasswordKey) ?? '';
 
     if (!mounted) return;
     setState(() {
@@ -135,7 +136,8 @@ class _LoginPageState extends State<LoginPage> {
         mediaQuery.viewInsets.bottom;
     final fitT = ((usableHeight - tightHeight) / (roomyHeight - tightHeight))
         .clamp(0.0, 1.0);
-    double gap(double full, double compact) => compact + (full - compact) * fitT;
+    double gap(double full, double compact) =>
+        compact + (full - compact) * fitT;
 
     return Scaffold(
       key: ValueKey<String>('login-page-$localeCode'),
@@ -170,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/LexiLingo-logo.png',
+                              'assets/out-app/lexilingo-logo.png',
                               height: 40,
                               fit: BoxFit.contain,
                               color: isDark ? Colors.white : null,
@@ -263,7 +265,9 @@ class _LoginPageState extends State<LoginPage> {
                         if (value == null || value.isEmpty) {
                           return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(value.trim())) {
                           return 'auth.invalidEmail'.tr();
                         }
                         return null;
