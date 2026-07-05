@@ -88,8 +88,8 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
         );
       }
     } catch (e) {
-      if (_isSessionNotFoundError(e)) {
-        // Let provider handle stale session cleanup and auto-create a new session.
+      if (_isSessionAccessError(e)) {
+        // Let provider handle stale or cross-account session cleanup.
         rethrow;
       }
       // Metadata endpoint is an optimization layer only.
@@ -108,6 +108,14 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     return msg.contains('status 404') ||
         msg.contains('404') ||
         msg.contains('not found');
+  }
+
+  bool _isSessionAccessError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return _isSessionNotFoundError(error) ||
+        msg.contains('forbidden') ||
+        msg.contains('status 403') ||
+        msg.contains('403');
   }
 
   @override
