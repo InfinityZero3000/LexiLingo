@@ -45,8 +45,8 @@ numpy>=1.26.4,<2.0.0
 faster-whisper>=1.2.1
 # Native streaming primary. Kept behind an optional runtime adapter so an
 # unsupported wheel degrades to Faster-Whisper instead of crashing startup.
-moonshine-voice>=0.0.62,<0.1
-sherpa-onnx>=1.13.3,<2
+moonshine-voice>=0.0.59,<0.1
+sherpa-onnx>=1.13.2,<2
 piper-tts>=1.4.2
 gTTS>=2.5.4
 
@@ -56,7 +56,7 @@ gTTS>=2.5.4
 transformers>=4.41.0,<5.0.0
 accelerate>=0.34.2
 # NOTE: torch>=2.4.0 has no wheels for macOS x86_64. Max available: 2.2.2.
-torch<=2.12.1,>=2.12.1
+torch<=2.2.2,>=2.2.2
 peft>=0.19.1  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (TRACECAG Orchestration)

@@ -9,12 +9,20 @@ library;
 
 import 'dart:async';
 
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/games/data/repositories/games_repository.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
 
 // ── Fakes ─────────────────────────────────────────────────────────────────────
@@ -42,6 +50,67 @@ class _FakeGamesRepository extends GamesRepository {
   }
 }
 
+class _FakeProgressRepository implements ProgressRepository {
+  @override
+  Future<Either<Failure, StreakUpdateResult>> updateStreak() async => Right(
+    StreakUpdateResult(
+      currentStreak: 1,
+      longestStreak: 1,
+      totalDaysActive: 1,
+      freezeCount: 0,
+      streakIncreased: false,
+      streakSaved: false,
+    ),
+  );
+
+  @override
+  Future<Either<Failure, StreakEntity>> getMyStreak() async =>
+      Right(StreakEntity.empty());
+
+  @override
+  Future<Either<Failure, ProgressStatsEntity>> getMyProgress() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, CourseProgressWithUnits>> getCourseProgress(
+    String courseId,
+  ) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, LessonCompletionResult>> completeLesson({
+    required String lessonId,
+    required double score,
+  }) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, int>> getTotalXp() async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, WeeklyProgressEntity>> getWeeklyProgress() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> useStreakFreeze() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, StreakEntity>> restoreStreak() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyReward() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, DailyChallengesResponse>> getDailyChallenges() async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> claimChallengeReward(
+    String challengeId,
+  ) async => throw UnimplementedError();
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const _award = XPAwardResult(
@@ -61,8 +130,13 @@ const _answers = [
 
 Widget _wrap(Widget child, GamesProvider provider) {
   return MaterialApp(
-    home: ChangeNotifierProvider<GamesProvider>.value(
-      value: provider,
+    home: MultiProvider(
+      providers: [
+        ChangeNotifierProvider<GamesProvider>.value(value: provider),
+        ChangeNotifierProvider<StreakProvider>(
+          create: (_) => StreakProvider(repository: _FakeProgressRepository()),
+        ),
+      ],
       child: child,
     ),
   );
@@ -112,8 +186,9 @@ void main() {
       expect(find.byIcon(Icons.cloud_off_rounded), findsNothing);
     });
 
-    testWidgets('does not show error card when xpResult is present',
-        (tester) async {
+    testWidgets('does not show error card when xpResult is present', (
+      tester,
+    ) async {
       final result = _makeResult(xpResult: _award);
 
       await tester.pumpWidget(
@@ -129,8 +204,9 @@ void main() {
   });
 
   group('GameResultScreen — award failed', () {
-    testWidgets('shows error card with cloud_off icon when xpResult is null',
-        (tester) async {
+    testWidgets('shows error card with cloud_off icon when xpResult is null', (
+      tester,
+    ) async {
       final result = _makeResult(xpResult: null);
 
       await tester.pumpWidget(
@@ -144,8 +220,9 @@ void main() {
       expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
     });
 
-    testWidgets('retry button (refresh icon) is visible in error state',
-        (tester) async {
+    testWidgets('retry button (refresh icon) is visible in error state', (
+      tester,
+    ) async {
       final result = _makeResult(xpResult: null);
 
       await tester.pumpWidget(
@@ -160,8 +237,9 @@ void main() {
       expect(find.byIcon(Icons.refresh_rounded), findsAtLeastNWidgets(1));
     });
 
-    testWidgets('tapping retry triggers second completion and awards XP',
-        (tester) async {
+    testWidgets('tapping retry triggers second completion and awards XP', (
+      tester,
+    ) async {
       final repo = _FakeGamesRepository(
         outcomes: [Exception('network error'), _award],
       );
@@ -203,47 +281,45 @@ void main() {
 
   group('GameResultScreen — already awarded', () {
     testWidgets(
-        'result screen renders without resubmitting when already awarded',
-        (tester) async {
-      final repository = _FakeGamesRepository(outcomes: [_award]);
-      final provider = GamesProvider(repository: repository);
+      'result screen renders without resubmitting when already awarded',
+      (tester) async {
+        final repository = _FakeGamesRepository(outcomes: [_award]);
+        final provider = GamesProvider(repository: repository);
 
-      // Award once
-      await provider.completeGame(
-        gameType: GameType.wordScramble,
-        score: 10,
-        totalQuestions: 10,
-        correctAnswers: 10,
-        answers: _answers,
-        sessionId: 'session-z',
-      );
-      // Try to award again — should hit alreadyAwarded path
-      await provider.completeGame(
-        gameType: GameType.wordScramble,
-        score: 10,
-        totalQuestions: 10,
-        correctAnswers: 10,
-        answers: _answers,
-        sessionId: 'session-z',
-      );
-      expect(provider.awardStatus, GameAwardStatus.alreadyAwarded);
-      expect(repository.completionCalls, 1);
+        // Award once
+        await provider.completeGame(
+          gameType: GameType.wordScramble,
+          score: 10,
+          totalQuestions: 10,
+          correctAnswers: 10,
+          answers: _answers,
+          sessionId: 'session-z',
+        );
+        // Try to award again — should hit alreadyAwarded path
+        await provider.completeGame(
+          gameType: GameType.wordScramble,
+          score: 10,
+          totalQuestions: 10,
+          correctAnswers: 10,
+          answers: _answers,
+          sessionId: 'session-z',
+        );
+        expect(provider.awardStatus, GameAwardStatus.alreadyAwarded);
+        expect(repository.completionCalls, 1);
 
-      final result = _makeResult(xpResult: _award);
+        final result = _makeResult(xpResult: _award);
 
-      await tester.pumpWidget(
-        _wrap(
-          GameResultScreen(result: result, xpResult: _award),
-          provider,
-        ),
-      );
-      await _drainTimers(tester);
+        await tester.pumpWidget(
+          _wrap(GameResultScreen(result: result, xpResult: _award), provider),
+        );
+        await _drainTimers(tester);
 
-      // Still only one network call
-      expect(repository.completionCalls, 1);
-      // Result screen shows correctly (no error state)
-      expect(find.byIcon(Icons.cloud_off_rounded), findsNothing);
-    });
+        // Still only one network call
+        expect(repository.completionCalls, 1);
+        // Result screen shows correctly (no error state)
+        expect(find.byIcon(Icons.cloud_off_rounded), findsNothing);
+      },
+    );
   });
 
   // ── Unit tests for provider answer payloads ────────────────────────────────
@@ -299,7 +375,9 @@ void main() {
         score: 10,
         totalQuestions: 1,
         correctAnswers: 1,
-        answers: [{'id': 'h1', 'answer': 'elephant'}],
+        answers: [
+          {'id': 'h1', 'answer': 'elephant'},
+        ],
         sessionId: 'hangman-session-1',
         hintsUsed: 2,
       );
