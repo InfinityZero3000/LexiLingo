@@ -68,6 +68,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   bool _isRestoringSession = false;
+  bool _isDisposed = false;
   String? _error;
   bool _ttsEnabled = true;
   double _ttsSpeed = 1.0;
@@ -114,6 +115,13 @@ class LexiChatProvider extends ChangeNotifier {
     return normalized.contains('unauthorized') ||
         normalized.contains('status 401') ||
         normalized.contains('401');
+  }
+
+  bool _isForbiddenSessionError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('forbidden') ||
+        normalized.contains('status 403') ||
+        normalized.contains('403');
   }
 
   String get learnerLevel => _learnerLevel;
@@ -189,6 +197,7 @@ class LexiChatProvider extends ChangeNotifier {
 
     try {
       await syncSessions(userId);
+      await _removeSessionsForOtherUsers(userId);
 
       if (_sessions.isNotEmpty) {
         await selectSession(_sessions.first);
@@ -285,18 +294,32 @@ class LexiChatProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      if (restoredFromCache) {
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
       final err = e.toString().toLowerCase();
       if (err.contains('404') || err.contains('not found')) {
         _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
         await _saveSessions();
         await startSession(summary.userId);
         _error = 'Session expired on server. Started a new one.';
+        return;
+      }
+
+      if (_isForbiddenSessionError(e)) {
+        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
+        await _saveSessions();
+        _session = null;
+        _messages.clear();
+        _isLoadingMoreMessages = false;
+        _hasMoreMessages = false;
+        _nextMessageCursor = null;
+        _error = 'This session belongs to another account. Start a new chat.';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      if (restoredFromCache) {
+        _isLoading = false;
+        notifyListeners();
         return;
       }
 
@@ -948,13 +971,24 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _removeSessionsForOtherUsers(String userId) async {
+    final before = _sessions.length;
+    _sessions.removeWhere((s) => s.userId != userId);
+    if (_sessions.length != before) {
+      await _saveSessions();
+      notifyListeners();
+    }
+  }
+
   Future<void> _loadSavedSessions() async {
+    if (_isDisposed) return;
     _isLoadingSessions = true;
     notifyListeners();
 
     try {
       final rawString = await _secureStorage.read(key: _savedSessionsKey);
       if (rawString == null || rawString.isEmpty) {
+        if (_isDisposed) return;
         _isLoadingSessions = false;
         notifyListeners();
         return;
@@ -974,6 +1008,7 @@ class LexiChatProvider extends ChangeNotifier {
       logWarn(_tag, 'Failed to load saved Lexi sessions: $e');
     }
 
+    if (_isDisposed) return;
     _isLoadingSessions = false;
     notifyListeners();
   }

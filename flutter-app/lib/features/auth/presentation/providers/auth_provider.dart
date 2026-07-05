@@ -211,7 +211,9 @@ class AuthProvider extends ChangeNotifier {
         _user = user;
         _errorMessage = null;
         _isJustLoggedIn = true;
-        FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+        FirebaseMessagingService.instance.registerTokenWithBackend(
+          sl<ApiClient>(),
+        );
         unawaited(_claimPendingReferral());
       },
     );
@@ -247,7 +249,9 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true;
-          FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
           unawaited(_claimPendingReferral());
         },
       );
@@ -286,7 +290,9 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true;
-          FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
           unawaited(_claimPendingReferral());
         },
       );

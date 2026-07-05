@@ -10,6 +10,7 @@ from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
+from app.core.cache import build_cache_key, delete_cached
 from app.models.gamification import (
     Achievement, UserAchievement, UserWallet, WalletTransaction,
     LeaderboardEntry, UserFollowing, ActivityFeed, ShopItem, UserInventory
