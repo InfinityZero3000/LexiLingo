@@ -26,9 +26,13 @@ from api.services.trace_cag.benchmark.adaptive import (
     _adaptive_mode_enabled, _choose_adaptive_profile,
 )
 from api.services.trace_cag.benchmark.ranking import (
-    _select_diverse_multihop_evidence, _compute_evidence_budget,
-    _rank_benchmark_candidates, _ranker_enabled, _rank_with_online_ranker,
+    _benchmark_evidence_snippet,
     _build_benchmark_candidates,
+    _compute_evidence_budget,
+    _rank_benchmark_candidates,
+    _rank_with_online_ranker,
+    _ranker_enabled,
+    _select_diverse_multihop_evidence,
 )
 
 logger = logging.getLogger(__name__)
@@ -406,6 +410,17 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             question=user_input,
             budget=evidence_budget,
         )
+        shaped_evidence = []
+        for idx, item in enumerate(top_evidence):
+            text = str(item.get("text") or "")
+            if idx >= 2:
+                text = _benchmark_evidence_snippet(
+                    question=user_input,
+                    title=str(item.get("title") or ""),
+                    text=text,
+                )
+            shaped_evidence.append({**item, "text": text})
+        top_evidence = shaped_evidence
     else:
         top_evidence = evidence_items[:evidence_budget]
     retrieval_trace = [

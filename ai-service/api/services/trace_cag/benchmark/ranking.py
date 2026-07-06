@@ -225,6 +225,53 @@ def _select_diverse_multihop_evidence(
     return selected
 
 
+def _benchmark_evidence_snippet(
+    *,
+    question: str,
+    title: str,
+    text: str,
+    max_sentences: int = 2,
+    max_chars: int = 520,
+) -> str:
+    """Keep benchmark evidence reader-friendly without changing ranking."""
+    body = str(text or "").strip()
+    if not body:
+        return ""
+
+    sentences = _split_benchmark_sentences(body)
+    if len(sentences) <= max_sentences and len(body) <= max_chars:
+        return body
+
+    anchors = _extract_query_anchors(question)
+    q_tokens = set(_content_tokens(question))
+    question_lower = str(question or "").lower()
+    want_numbers = any(
+        token in question_lower for token in ("when", "year", "how many", "how much")
+    )
+
+    def _score(sentence: str, idx: int) -> float:
+        s_tokens = set(_content_tokens(sentence))
+        overlap = len(q_tokens & s_tokens) / max(len(q_tokens), 1) if q_tokens else 0.0
+        anchor = _anchor_coverage_score(anchors, title, sentence)
+        number_bonus = 0.18 if want_numbers and re.search(r"\b\d{2,4}\b", sentence) else 0.0
+        first_sentence_bonus = 0.12 if idx == 0 else 0.0
+        return overlap + (0.35 * anchor) + number_bonus + first_sentence_bonus
+
+    ranked = sorted(
+        enumerate(sentences),
+        key=lambda item: (_score(item[1], item[0]), -item[0]),
+        reverse=True,
+    )
+    keep = {0}
+    for idx, _ in ranked:
+        keep.add(idx)
+        if len(keep) >= max_sentences:
+            break
+
+    selected = " ".join(sentences[idx] for idx in sorted(keep)).strip()
+    return selected[:max_chars].rstrip()
+
+
 # ── Graph helpers ─────────────────────────────────────────────────────────────
 
 def _build_candidate_graph(candidates: list[Dict[str, Any]]) -> dict[str, dict[str, float]]:
