@@ -225,8 +225,8 @@ def run(force: bool = False, dry_run: bool = False) -> int:
     skipped_nodes = 0
     t0 = time.time()
     for nid, attrs in all_nodes.items():
-        title = attrs["title"].replace("'", "''")
-        keywords = attrs["keywords"].replace("'", "''")
+        title = attrs["title"].replace("'", "\\'")
+        keywords = attrs["keywords"].replace("'", "\\'")
         level = attrs["level"]
         # Try insert first; on duplicate skip
         try:
@@ -257,7 +257,7 @@ def run(force: bool = False, dry_run: bool = False) -> int:
         # Only create edge if both endpoints exist
         if src not in all_nodes or dst not in all_nodes:
             continue
-        rel_safe = rel.replace("'", "''")
+        rel_safe = rel.replace("'", "\\'")
         try:
             conn.execute(
                 f"MATCH (a:Concept {{id: '{src}'}}), (b:Concept {{id: '{dst}'}}) "

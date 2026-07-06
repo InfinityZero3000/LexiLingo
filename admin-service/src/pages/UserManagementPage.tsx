@@ -282,13 +282,9 @@ export default function UserManagementPage() {
                     </td>
                     <td style={{ padding: '16px' }}>
                       <div className="cluster" style={{ gap: 12, alignItems: 'center' }}>
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
-                        ) : (
-                          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
-                            {user.email[0].toUpperCase()}
-                          </div>
-                        )}
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
+                          {(user.display_name || user.email)[0].toUpperCase()}
+                        </div>
                         <div>
                           <div className="table-title">{user.display_name || user.email.split('@')[0]}</div>
                           <div className="table-sub">{user.email}</div>
