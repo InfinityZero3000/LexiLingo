@@ -73,6 +73,7 @@ from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
 from app.routes.mistakes import router as mistakes_router
+from app.routes.well_known import router as well_known_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -275,6 +276,7 @@ async def limit_request_body(request: Request, call_next):
     return await call_next(request)
 
 # Include routers
+app.include_router(well_known_router)
 app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 app.include_router(users_router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])

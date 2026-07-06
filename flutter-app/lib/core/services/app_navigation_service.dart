@@ -3,10 +3,18 @@ import 'package:flutter/material.dart';
 class AppNavigationService {
   static final navigatorKey = GlobalKey<NavigatorState>();
 
-  static Future<void> openRoute(String route, {Object? arguments}) async {
+  static Future<bool> openRoute(String route, {Object? arguments}) async {
     final navigator = navigatorKey.currentState;
-    if (navigator == null) return;
-    await navigator.pushNamed(route, arguments: arguments);
+    if (navigator == null) return false;
+
+    try {
+      await navigator.pushNamed(route, arguments: arguments);
+      return true;
+    } catch (error, stackTrace) {
+      debugPrint('Failed to open route "$route": $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return false;
+    }
   }
 
   static void returnToRoot() {

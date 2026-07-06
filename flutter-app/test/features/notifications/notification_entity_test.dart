@@ -265,6 +265,30 @@ void main() {
       expect(notification.iconIdentifier, 'schedule');
     });
 
+    test('should parse common achievement aliases', () {
+      for (final type in ['achievement_unlocked', 'achievements']) {
+        final notification = NotificationEntity.fromFcm(
+          id: type,
+          title: 'Achievement',
+          body: 'Body',
+          data: {'type': type},
+        );
+
+        expect(notification.type, NotificationType.achievement);
+      }
+    });
+
+    test('should parse new_content_available alias', () {
+      final notification = NotificationEntity.fromFcm(
+        id: '1',
+        title: 'New content',
+        body: 'Body',
+        data: {'type': 'new_content_available'},
+      );
+
+      expect(notification.type, NotificationType.newContent);
+    });
+
     test('should default to general type for unknown', () {
       final notification = NotificationEntity.fromFcm(
         id: '1',
@@ -325,6 +349,95 @@ void main() {
 
       expect(notification.route, '/courses/123');
     });
+  });
+
+  group('NotificationEntity - navigation destination', () {
+    test('destinationRoute should prefer explicit data route', () {
+      final notification = NotificationEntity(
+        id: '1',
+        type: NotificationType.achievement,
+        title: 'Test',
+        body: 'Body',
+        timestamp: DateTime.now(),
+        data: {'route': '/custom-route'},
+      );
+
+      expect(notification.destinationRoute, '/custom-route');
+      expect(notification.opensRoot, false);
+    });
+
+    test('opensRoot should be true for root route aliases', () {
+      for (final route in ['/', '/home', 'home', 'root']) {
+        final notification = NotificationEntity(
+          id: route,
+          type: NotificationType.general,
+          title: 'Test',
+          body: 'Body',
+          timestamp: DateTime.now(),
+          data: {'route': route},
+        );
+
+        expect(notification.opensRoot, true);
+        expect(notification.destinationRoute, isNull);
+      }
+    });
+
+    test('opensRoot should be true for starter reward payloads', () {
+      final notification = NotificationEntity.fromFcm(
+        id: 'starter',
+        title: 'Starter reward',
+        body: 'Claim your reward',
+        data: {'type': 'starter_reward'},
+      );
+
+      expect(notification.opensRoot, true);
+      expect(notification.destinationRoute, isNull);
+    });
+
+    test('destinationRoute should map known notification types', () {
+      final expectedRoutes = {
+        NotificationType.streakReminder: '/today-plan',
+        NotificationType.lessonReminder: '/courses',
+        NotificationType.vocabularyReviewReminder: '/vocabulary/review',
+        NotificationType.achievement: '/achievements',
+        NotificationType.newContent: '/courses',
+        NotificationType.weeklySummary: '/profile',
+        NotificationType.social: '/social',
+      };
+
+      for (final entry in expectedRoutes.entries) {
+        final notification = NotificationEntity(
+          id: entry.key.name,
+          type: entry.key,
+          title: 'Test',
+          body: 'Body',
+          timestamp: DateTime.now(),
+        );
+
+        expect(notification.destinationRoute, entry.value);
+      }
+    });
+
+    test(
+      'destinationRoute should be null for general/system without route',
+      () {
+        for (final type in [
+          NotificationType.general,
+          NotificationType.system,
+        ]) {
+          final notification = NotificationEntity(
+            id: type.name,
+            type: type,
+            title: 'Test',
+            body: 'Body',
+            timestamp: DateTime.now(),
+          );
+
+          expect(notification.destinationRoute, isNull);
+          expect(notification.opensRoot, false);
+        }
+      },
+    );
   });
 
   group('NotificationGroup', () {

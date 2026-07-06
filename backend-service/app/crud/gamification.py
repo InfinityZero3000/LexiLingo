@@ -16,6 +16,7 @@ from app.models.gamification import (
 )
 from app.models.user import User
 from app.crud.leaderboard import competition_rank
+from app.core.cache import build_cache_key, delete_cached
 
 
 # ============================================================================
@@ -207,6 +208,7 @@ class WalletCRUD:
             await db.refresh(wallet)
         else:
             await db.flush()
+        await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         
         return wallet, transaction
     
@@ -256,6 +258,7 @@ class WalletCRUD:
             await db.refresh(wallet)
         else:
             await db.flush()
+        await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         
         return wallet, transaction
     

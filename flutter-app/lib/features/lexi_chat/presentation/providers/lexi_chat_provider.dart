@@ -116,6 +116,13 @@ class LexiChatProvider extends ChangeNotifier {
         normalized.contains('401');
   }
 
+  bool _isForbiddenSessionError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('status 403') ||
+        normalized.contains('403') ||
+        normalized.contains('forbidden');
+  }
+
   String get learnerLevel => _learnerLevel;
   String get nativeLanguage => _nativeLanguage;
 
@@ -189,6 +196,7 @@ class LexiChatProvider extends ChangeNotifier {
 
     try {
       await syncSessions(userId);
+      await _removeSessionsForOtherUsers(userId);
 
       if (_sessions.isNotEmpty) {
         await selectSession(_sessions.first);
@@ -297,6 +305,20 @@ class LexiChatProvider extends ChangeNotifier {
         await _saveSessions();
         await startSession(summary.userId);
         _error = 'Session expired on server. Started a new one.';
+        return;
+      }
+
+      if (_isForbiddenSessionError(e)) {
+        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
+        await _saveSessions();
+        _session = null;
+        _messages.clear();
+        _isLoadingMoreMessages = false;
+        _hasMoreMessages = false;
+        _nextMessageCursor = null;
+        _error = 'This session belongs to another account. Start a new chat.';
+        _isLoading = false;
+        notifyListeners();
         return;
       }
 
@@ -945,6 +967,15 @@ class LexiChatProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       logWarn(_tag, 'syncSessions failed: $e');
+    }
+  }
+
+  Future<void> _removeSessionsForOtherUsers(String userId) async {
+    final before = _sessions.length;
+    _sessions.removeWhere((s) => s.userId.isNotEmpty && s.userId != userId);
+    if (_sessions.length != before) {
+      await _saveSessions();
+      notifyListeners();
     }
   }
 

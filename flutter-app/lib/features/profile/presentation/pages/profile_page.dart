@@ -212,34 +212,40 @@ class _ProfilePageState extends State<ProfilePage> {
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.only(bottom: 24),
-          child: Column(
-            children: [
-              // Profile Header
-              ProfileHeader(user: user, onProfileEdited: _loadData),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 960),
+              child: Column(
+                children: [
+                  // Profile Header
+                  ProfileHeader(user: user, onProfileEdited: _loadData),
 
-              // Quick Actions (Shop, Leaderboard, Social, Wallet)
-              const QuickActionsRow(),
+                  // Quick Actions (Shop, Leaderboard, Social, Wallet)
+                  const QuickActionsRow(),
 
-              // Level Progress Card
-              const ProfileLevelProgressCard(),
+                  // Level Progress Card
+                  const ProfileLevelProgressCard(),
 
-              // AI Proficiency Assessment (radar chart)
-              const ProficiencyCard(),
+                  // AI Proficiency Assessment (radar chart)
+                  const ProficiencyCard(),
 
-              // Learning Stats
-              const LearningStatsSection(),
+                  // Learning Stats
+                  const LearningStatsSection(),
 
-              // Weekly Activity
-              const WeeklyActivitySection(),
+                  // Weekly Activity
+                  const WeeklyActivitySection(),
 
-              // Recent Badges
-              const RecentBadgesSection(),
+                  // Recent Badges
+                  const RecentBadgesSection(),
 
-              // Admin Panel shortcut (only for authorised accounts)
-              if (_isAdminUser(user)) AdminPanelTile(onTap: _openAdminPanel),
+                  // Admin Panel shortcut (only for authorised accounts)
+                  if (_isAdminUser(user))
+                    AdminPanelTile(onTap: _openAdminPanel),
 
-              const SizedBox(height: 80),
-            ],
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
           ),
         ),
       ),

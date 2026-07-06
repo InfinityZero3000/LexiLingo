@@ -152,76 +152,81 @@ class _HomePageNewState extends State<HomePageNew> {
               ]),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                child: StaggeredList(
-                  itemDelay: const Duration(milliseconds: 55),
-                  itemDuration: const Duration(milliseconds: 460),
-                  slideOffset: 22,
-                  children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: HomeHeader(),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: StreakCardSection(),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SectionTitle(title: 'home.quickActions'.tr()),
-                          const SizedBox(height: 8),
-                          const QuickActionsGrid(),
-                        ],
-                      ),
-                    ),
-                    const TodayPlanSection(),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: ActiveBoostsBar(),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: WordOfDayCard(),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(top: 12),
-                      child: LevelAndDailyGoalRow(),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: DailyChallengesCard(),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: DailyReviewCard(),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SectionTitle(
-                            title: 'home.continueLearningSection'.tr(),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1180),
+                    child: StaggeredList(
+                      itemDelay: const Duration(milliseconds: 55),
+                      itemDuration: const Duration(milliseconds: 460),
+                      slideOffset: 22,
+                      children: [
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: HomeHeader(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: StreakCardSection(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SectionTitle(title: 'home.quickActions'.tr()),
+                              const SizedBox(height: 8),
+                              const QuickActionsGrid(),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          const EnrolledCoursesSection(),
-                        ],
-                      ),
+                        ),
+                        const TodayPlanSection(),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: ActiveBoostsBar(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: WordOfDayCard(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: LevelAndDailyGoalRow(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: DailyChallengesCard(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: DailyReviewCard(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SectionTitle(
+                                title: 'home.continueLearningSection'.tr(),
+                              ),
+                              const SizedBox(height: 8),
+                              const EnrolledCoursesSection(),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12, bottom: 24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SectionTitle(title: 'home.featuredCourses'.tr()),
+                              const SizedBox(height: 8),
+                              const FeaturedCoursesSection(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12, bottom: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SectionTitle(title: 'home.featuredCourses'.tr()),
-                          const SizedBox(height: 8),
-                          const FeaturedCoursesSection(),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             );

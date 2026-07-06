@@ -2,14 +2,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
     as glass;
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 
-void _showDailyGoalSheet(BuildContext context, HomeProvider homeProvider) async {
+void _showDailyGoalSheet(
+  BuildContext context,
+  HomeProvider homeProvider,
+) async {
   final settings = context.read<SettingsProvider>();
   final settingsState = settings.settings;
 
@@ -84,9 +86,7 @@ void _showDailyGoalSheet(BuildContext context, HomeProvider homeProvider) async 
                       children: [
                         Text(
                           '${homeProvider.dailyXP}/${settingsProvider.dailyGoalXP} XP',
-                          style: Theme.of(sheetContext)
-                              .textTheme
-                              .headlineSmall
+                          style: Theme.of(sheetContext).textTheme.headlineSmall
                               ?.copyWith(
                                 color: colorScheme.onPrimary,
                                 fontWeight: FontWeight.w800,
@@ -137,9 +137,7 @@ void _showDailyGoalSheet(BuildContext context, HomeProvider homeProvider) async 
                             );
                           } else {
                             ScaffoldMessenger.of(sheetContext).showSnackBar(
-                              SnackBar(
-                                content: Text(settingsProvider.error!),
-                              ),
+                              SnackBar(content: Text(settingsProvider.error!)),
                             );
                           }
                         },
@@ -182,8 +180,7 @@ void _showDailyGoalSheet(BuildContext context, HomeProvider homeProvider) async 
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       '${(goal['label'] as String).tr()} • $xp XP',
@@ -210,11 +207,7 @@ void _showDailyGoalSheet(BuildContext context, HomeProvider homeProvider) async 
                                 ),
                               ),
                               if (isSelected)
-                                AppGameIcon(
-                                  GameIcon.checkmark,
-                                  size: 24,
-                                  fallbackColor: primaryColor,
-                                ),
+                                Icon(Icons.check_circle, color: primaryColor),
                             ],
                           ),
                         ),
@@ -359,17 +352,13 @@ class _DailyGoalCard extends StatelessWidget {
                               color: colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: isCompleted
-                                ? AppGameIcon(
-                                    GameIcon.trophy,
-                                    size: badgeIconSize,
-                                    fallbackColor: AppColors.greenSuccessBright,
-                                  )
-                                : AppGameIcon(
-                                    GameIcon.bolt,
-                                    size: badgeIconSize,
-                                    fallbackColor: accent,
-                                  ),
+                            child: Icon(
+                              isCompleted ? Icons.emoji_events : Icons.bolt,
+                              color: isCompleted
+                                  ? AppColors.greenSuccessBright
+                                  : accent,
+                              size: badgeIconSize,
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Flexible(
@@ -411,11 +400,10 @@ class _DailyGoalCard extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (isCompleted)
-                                    const AppGameIcon(
-                                      GameIcon.checkmark,
-                                      size: 20,
-                                      fallbackColor:
-                                          AppColors.greenSuccessBright,
+                                    const Icon(
+                                      Icons.check,
+                                      color: AppColors.greenSuccessBright,
+                                      size: 18,
                                     )
                                   else
                                     Text(
@@ -471,10 +459,10 @@ class _DailyGoalCard extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (isCompleted)
-                                const AppGameIcon(
-                                  GameIcon.checkmark,
-                                  size: 22,
-                                  fallbackColor: AppColors.greenSuccessBright,
+                                const Icon(
+                                  Icons.check,
+                                  color: AppColors.greenSuccessBright,
+                                  size: 20,
                                 )
                               else
                                 Text(
@@ -505,18 +493,15 @@ class _DailyGoalCard extends StatelessWidget {
                                     color: colorScheme.surface,
                                     borderRadius: BorderRadius.circular(8),
                                   ),
-                                  child: isCompleted
-                                      ? AppGameIcon(
-                                          GameIcon.trophy,
-                                          size: badgeIconSize,
-                                          fallbackColor:
-                                              AppColors.greenSuccessBright,
-                                        )
-                                      : AppGameIcon(
-                                          GameIcon.bolt,
-                                          size: badgeIconSize,
-                                          fallbackColor: accent,
-                                        ),
+                                  child: Icon(
+                                    isCompleted
+                                        ? Icons.emoji_events
+                                        : Icons.bolt,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccessBright
+                                        : accent,
+                                    size: badgeIconSize,
+                                  ),
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -563,18 +548,15 @@ class _DailyGoalCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  isCompleted
-                                      ? AppGameIcon(
-                                          GameIcon.giftBox,
-                                          size: 14,
-                                          fallbackColor:
-                                              AppColors.greenSuccessBright,
-                                        )
-                                      : Icon(
-                                          Icons.trending_up,
-                                          size: 14,
-                                          color: accent,
-                                        ),
+                                  Icon(
+                                    isCompleted
+                                        ? Icons.celebration
+                                        : Icons.trending_up,
+                                    size: 14,
+                                    color: isCompleted
+                                        ? AppColors.greenSuccessBright
+                                        : accent,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     isCompleted

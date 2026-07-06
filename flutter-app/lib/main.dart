@@ -31,6 +31,7 @@ import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/language_flag_cache.dart';
 import 'package:lexilingo_app/core/services/sync_queue_lifecycle_runner.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/pages/reset_password_page.dart';
@@ -63,6 +64,7 @@ import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
+import 'package:lexilingo_app/features/social/presentation/screens/social_screen.dart';
 import 'package:lexilingo_app/features/youtube/presentation/providers/youtube_provider.dart';
 import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_explore_screen.dart';
 import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_player_screen.dart';
@@ -87,6 +89,7 @@ import 'package:lexilingo_app/features/practice/presentation/pages/practice_lab_
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -459,9 +462,13 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               },
               // Phase 3: English Games
               '/games': (context) => const GamesHubScreen(),
+              '/courses': (context) => const MainScreen(initialIndex: 1),
               '/today-plan': (context) => const TodayPlanPage(),
               '/practice-lab': (context) => const PracticeLabPage(),
               '/mistake-notebook': (context) => const MistakeNotebookPage(),
+              '/profile': (context) => const MainScreen(initialIndex: 4),
+              '/achievements': (context) => const AchievementsScreen(),
+              '/social': (context) => const SocialScreen(),
               '/premium': (context) => const PaywallScreen(),
               '/offline-sync': (context) => const OfflineSyncCenterPage(),
               '/placement-test': (context) => ChangeNotifierProvider(

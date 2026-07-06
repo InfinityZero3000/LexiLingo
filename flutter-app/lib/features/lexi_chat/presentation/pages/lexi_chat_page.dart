@@ -51,7 +51,8 @@ class _LexiChatPageState extends State<LexiChatPage>
   bool _isWebSpeechActive = false;
   String _liveTranscript = '';
 
-  bool get _isVoiceActive => _isRecording || _isTranscribing || _isWebSpeechActive;
+  bool get _isVoiceActive =>
+      _isRecording || _isTranscribing || _isWebSpeechActive;
 
   int _lastMessageCount = 0;
   List<String> get _quickReplies => [
@@ -88,9 +89,10 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   String get _nativeLanguage {
     try {
-      return Provider.of<AuthProvider>(context, listen: false)
-              .user
-              ?.nativeLanguage ??
+      return Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          ).user?.nativeLanguage ??
           'vi';
     } catch (_) {
       return 'vi';
@@ -170,12 +172,10 @@ class _LexiChatPageState extends State<LexiChatPage>
           _liveTranscript += result.transcript;
         }
         // Show accumulated + current interim text in input field live
-        final display = _liveTranscript +
-            (result.isFinal ? '' : result.transcript);
+        final display =
+            _liveTranscript + (result.isFinal ? '' : result.transcript);
         _controller.text = display;
-        _controller.selection = TextSelection.collapsed(
-          offset: display.length,
-        );
+        _controller.selection = TextSelection.collapsed(offset: display.length);
       },
       onError: (error) {
         setState(() => _isWebSpeechActive = false);
@@ -283,9 +283,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         _isRecording = false;
         _isTranscribing = false;
       });
-      _showSnack(
-        'lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}),
-      );
+      _showSnack('lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}));
     }
   }
 
@@ -320,12 +318,18 @@ class _LexiChatPageState extends State<LexiChatPage>
           ),
         ),
         child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(isDark),
-              Expanded(child: _buildMessageList(isDark)),
-              _buildInputBar(isDark),
-            ],
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 980),
+              child: Column(
+                children: [
+                  _buildHeader(isDark),
+                  Expanded(child: _buildMessageList(isDark)),
+                  _buildInputBar(isDark),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -426,7 +430,10 @@ class _LexiChatPageState extends State<LexiChatPage>
                         onTap: provider.cycleTtsSpeed,
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
                           child: Text(
                             provider.ttsSpeedLabel,
                             style: TextStyle(
@@ -748,20 +755,22 @@ class _LexiChatPageState extends State<LexiChatPage>
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: (_isWebSpeechActive
-                        ? Colors.blue
-                        : _isTranscribing
+                color:
+                    (_isWebSpeechActive
+                            ? Colors.blue
+                            : _isTranscribing
                             ? Colors.orange
                             : Colors.red)
-                    .withValues(alpha: 0.08),
+                        .withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (_isWebSpeechActive
-                          ? Colors.blue
-                          : _isTranscribing
+                  color:
+                      (_isWebSpeechActive
+                              ? Colors.blue
+                              : _isTranscribing
                               ? Colors.orange
                               : Colors.red)
-                      .withValues(alpha: 0.2),
+                          .withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -790,17 +799,19 @@ class _LexiChatPageState extends State<LexiChatPage>
                     _isTranscribing
                         ? 'lexiChat.transcribingStatus'.tr()
                         : _isWebSpeechActive
-                            ? 'lexiChat.webSpeechRecording'.tr()
-                            : 'lexiChat.recordingStatus'.tr(namedArgs: {
-                                'seconds':
-                                    _recordingDuration.inSeconds.toString(),
-                              }),
+                        ? 'lexiChat.webSpeechRecording'.tr()
+                        : 'lexiChat.recordingStatus'.tr(
+                            namedArgs: {
+                              'seconds': _recordingDuration.inSeconds
+                                  .toString(),
+                            },
+                          ),
                     style: TextStyle(
                       color: _isWebSpeechActive
                           ? Colors.blue
                           : _isTranscribing
-                              ? Colors.orange
-                              : AppColors.errorBright,
+                          ? Colors.orange
+                          : AppColors.errorBright,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -933,8 +944,8 @@ class _LexiChatPageState extends State<LexiChatPage>
     final activeColor = _isWebSpeechActive
         ? Colors.blue
         : _isTranscribing
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
 
     Widget button = AnimatedContainer(
       duration: const Duration(milliseconds: 200),

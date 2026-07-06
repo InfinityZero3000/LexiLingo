@@ -11,6 +11,8 @@ Tests cover:
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+import httpx
+from fastapi import HTTPException
 from httpx import AsyncClient, ASGITransport
 
 
@@ -206,6 +208,59 @@ class TestExtractHighlightWords:
         words = _extract_highlight_words(article)
         for w in words:
             assert w == w.lower()
+
+
+class TestNewsUrlSafety:
+    """Tests for server-side fetch URL guard."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "ftp://example.com/image.jpg",
+            "http://localhost/image.jpg",
+            "http://127.0.0.1/image.jpg",
+            "http://10.0.0.1/image.jpg",
+        ],
+    )
+    def test_rejects_non_public_urls(self, url):
+        from app.routes.news import _validate_public_http_url
+
+        with pytest.raises(HTTPException):
+            _validate_public_http_url(url)
+
+    def test_rejects_host_if_any_resolved_ip_is_private(self, monkeypatch):
+        from app.routes.news import _validate_public_http_url
+
+        def fake_getaddrinfo(*args, **kwargs):
+            return [
+                (None, None, None, "", ("93.184.216.34", 443)),
+                (None, None, None, "", ("10.0.0.1", 443)),
+            ]
+
+        monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)
+
+        with pytest.raises(HTTPException):
+            _validate_public_http_url("https://safe.example/image.jpg")
+
+    @pytest.mark.asyncio
+    async def test_rejects_redirect_to_private_url(self, monkeypatch):
+        from app.routes.news import _get_public_url
+
+        def fake_getaddrinfo(*args, **kwargs):
+            return [(None, None, None, "", ("93.184.216.34", 443))]
+
+        class RedirectClient:
+            async def get(self, url, **kwargs):
+                return httpx.Response(
+                    302,
+                    headers={"location": "http://127.0.0.1/private"},
+                    request=httpx.Request("GET", url),
+                )
+
+        monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)
+
+        with pytest.raises(HTTPException):
+            await _get_public_url(RedirectClient(), "https://safe.example/image.jpg")
 
 
 # ============================================================================

@@ -13,7 +13,7 @@ import re
 from typing import Optional
 
 import httpx
-from urllib.parse import quote, urlparse
+from urllib.parse import quote, urljoin, urlparse
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,6 +32,13 @@ router = APIRouter(prefix="/news", tags=["News"])
 
 NEWSAPI_BASE = "https://newsapi.org/v2"
 NEWSDATA_BASE = "https://newsdata.io/api/1"
+_PRIVATE_HOST_PREFIXES = (
+    "localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
+    "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
+    "172.22.", "172.23.", "172.24.", "172.25.", "172.26.",
+    "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
+    "169.254.", "fc00", "fd", "fe80",
+)
 
 # ── CEFR Level Definitions ──────────────────────────────────────
 CEFR_LEVELS = {
@@ -162,22 +169,14 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     """
     Proxy news images to bypass browser CORS on web.
     """
-    try:
-        parsed_url = urlparse(url)
-        if not parsed_url.netloc:
-            raise ValueError()
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid URL."
-        )
+    _validate_public_http_url(url)
         
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
-            resp = await client.get(
-                url, 
+            resp = await _get_public_url(
+                client,
+                url,
                 headers={"User-Agent": "LexiLingo/1.0 (English learning app; proxy)"},
-                follow_redirects=True
             )
             if resp.status_code != 200:
                 raise HTTPException(
@@ -191,6 +190,8 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                     "Cache-Control": "public, max-age=86400",  # Cache for 24h
                 }
             )
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"Error proxying image {url}: {e}")
             raise HTTPException(
@@ -222,8 +223,7 @@ async def get_full_article_content(
 
     Cache: Redis 24h, DB 7 days (article content doesn't change).
     """
-    if not url or not url.startswith(("http://", "https://")):
-        raise HTTPException(status_code=400, detail="Invalid URL")
+    _validate_public_http_url(url)
 
     cache_key = f"news:full:{hashlib.md5(url.encode()).hexdigest()[:16]}"
     cache_service = APICacheService(db)
@@ -242,6 +242,8 @@ async def get_full_article_content(
             "content": result.data.get("content", ""),
             "source": result.source,
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to scrape article from {url}: {e}")
         raise HTTPException(
@@ -259,10 +261,9 @@ async def _scrape_full_article(url: str) -> dict:
 
         async with httpx.AsyncClient(
             timeout=15.0,
-            follow_redirects=True,
             headers={"User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)"},
         ) as client:
-            response = await client.get(url)
+            response = await _get_public_url(client, url)
             response.raise_for_status()
             html = response.text
 
@@ -289,14 +290,65 @@ async def _scrape_full_article(url: str) -> dict:
         logger.warning("trafilatura not installed, using basic HTML extraction")
         async with httpx.AsyncClient(
             timeout=15.0,
-            follow_redirects=True,
             headers={"User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)"},
         ) as client:
-            response = await client.get(url)
+            response = await _get_public_url(client, url)
             response.raise_for_status()
             html = response.text
 
         return {"content": _strip_html_basic(html)}
+
+
+def _validate_public_http_url(url: str) -> None:
+    """Reject non-public URLs before server-side fetches."""
+    try:
+        parsed_url = urlparse(url)
+        if parsed_url.scheme not in ("http", "https") or not parsed_url.hostname:
+            raise ValueError
+        host = parsed_url.hostname.lower()
+        if any(host == prefix or host.startswith(prefix) for prefix in _PRIVATE_HOST_PREFIXES):
+            raise ValueError
+
+        from ipaddress import ip_address
+        import socket
+
+        try:
+            resolved_ips = {
+                result[4][0]
+                for result in socket.getaddrinfo(
+                    host, None, socket.AF_UNSPEC, socket.SOCK_STREAM
+                )
+            }
+        except socket.gaierror:
+            return
+        for resolved_ip in resolved_ips:
+            parsed_ip = ip_address(resolved_ip)
+            if (
+                parsed_ip.is_private
+                or parsed_ip.is_loopback
+                or parsed_ip.is_link_local
+            ):
+                raise ValueError
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only public HTTP/HTTPS URLs are allowed.",
+        ) from exc
+
+
+async def _get_public_url(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
+    """Fetch a public URL while validating each redirect target."""
+    current_url = url
+    for _ in range(5):
+        _validate_public_http_url(current_url)
+        response = await client.get(current_url, follow_redirects=False, **kwargs)
+        if response.is_redirect and response.headers.get("location"):
+            current_url = urljoin(current_url, response.headers["location"])
+            continue
+        return response
+    raise HTTPException(status_code=400, detail="Too many redirects.")
 
 
 def _strip_html_basic(html: str) -> str:

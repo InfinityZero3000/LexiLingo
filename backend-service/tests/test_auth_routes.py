@@ -24,6 +24,8 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
+from app.core.security import create_access_token
+
 
 BASE = "/api/v1/auth"
 
@@ -600,6 +602,33 @@ class TestLogout:
         assert "message" in data
         assert "Logged out" in data["message"]
 
+    async def test_logout_blacklists_bearer_access_token(self, client):
+        token = create_access_token({"sub": "550e8400-e29b-41d4-a716-446655440001"})
+
+        with patch("app.routes.auth.TokenBlacklist.add", new=AsyncMock(return_value=True)) as add:
+            response = await client.post(
+                f"{BASE}/logout",
+                json={},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        assert response.status_code == 200
+        add.assert_awaited_once()
+
+    async def test_blacklisted_access_token_is_rejected(self, client):
+        token = create_access_token({"sub": "550e8400-e29b-41d4-a716-446655440001"})
+
+        with patch(
+            "app.core.dependencies.TokenBlacklist.is_blacklisted",
+            new=AsyncMock(return_value=True),
+        ):
+            response = await client.get(
+                f"{BASE}/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+
+        assert response.status_code == 401
+
 
 # ===========================================================================
 # POST /auth/forgot-password
@@ -1107,6 +1136,20 @@ class TestAdminOtp:
             json={"email": "ghost@example.com"},
         )
         assert response.status_code == 200
+
+    async def test_request_otp_requires_redis_in_production(self, client, monkeypatch):
+        monkeypatch.setattr("app.routes.auth.settings.APP_ENV", "production")
+
+        with patch(
+            "app.routes.auth.RedisClient.get_instance",
+            new=AsyncMock(return_value=None),
+        ):
+            response = await client.post(
+                f"{BASE}/admin/request-otp",
+                json={"email": "ghost@example.com"},
+            )
+
+        assert response.status_code == 503
 
     async def test_request_otp_unverified_admin_still_200_but_no_otp_sent(self):
         """An unverified admin gets the same generic 200 response (Phase 2.1), but no

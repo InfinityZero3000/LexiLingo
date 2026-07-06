@@ -53,12 +53,10 @@ class EnrolledCoursesSection extends StatelessWidget {
           ),
           child: Column(
             children: [
-              AppGameIcon(
-                GameIcon.lessonBoard,
+              Icon(
+                Icons.school_outlined,
                 size: 48,
-                fallbackColor: isDark
-                    ? AppColors.textMuted
-                    : AppColors.textGrey,
+                color: isDark ? AppColors.textMuted : AppColors.textGrey,
               ),
               const SizedBox(height: 12),
               Text(
@@ -158,11 +156,7 @@ class _EnrolledCourseCard extends StatelessWidget {
                   border: Border.all(color: colorScheme.outlineVariant),
                 ),
                 child: course.thumbnailUrl == null
-                    ? AppGameIcon(
-                        GameIcon.lessonBoard,
-                        size: 32,
-                        fallbackColor: progressColor,
-                      )
+                    ? Icon(Icons.school, size: 32, color: progressColor)
                     : null,
               ),
               const SizedBox(width: 16),
@@ -277,10 +271,10 @@ class _EnrolledCourseCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: AppGameIcon(
-                            GameIcon.playArrow,
+                          child: Icon(
+                            Icons.play_arrow_rounded,
                             size: 16,
-                            fallbackColor: AppColors.surfaceLight,
+                            color: AppColors.surfaceLight,
                           ),
                         ),
                       ],
