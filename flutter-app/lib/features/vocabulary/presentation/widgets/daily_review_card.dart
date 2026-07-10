@@ -79,8 +79,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
         onTap: _handleCardTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
@@ -92,14 +92,14 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
                 color: (isDark ? accent : AppColors.primary).withValues(
-                  alpha: 0.3,
+                  alpha: 0.25,
                 ),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -107,22 +107,22 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
             children: [
               // Icon
               Container(
-                width: 60,
-                height: 60,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
                   ).colorScheme.surface.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.style,
                   color: Theme.of(context).colorScheme.surface,
-                  size: 32,
+                  size: 24,
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
 
               // Content
               Expanded(
@@ -133,14 +133,14 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                       'home.dailyReview'.tr(),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.surface,
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     _isLoading
                         ? const SizedBox(
-                            width: 100,
+                            width: 80,
                             child: LinearProgressIndicator(
                               backgroundColor: Colors.white24,
                               valueColor: AlwaysStoppedAnimation(Colors.white),
@@ -156,7 +156,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                               color: Theme.of(
                                 context,
                               ).colorScheme.surface.withValues(alpha: 0.9),
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
                   ],
@@ -167,20 +167,20 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
               if (!_isLoading && _dueCount > 0)
                 Material(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                   child: InkWell(
                     onTap: _startReview,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
+                        horizontal: 14,
+                        vertical: 8,
                       ),
                       child: Text(
                         'home.startReview'.tr(),
                         style: const TextStyle(
                           color: AppColors.slate900,
-                          fontSize: 16,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
