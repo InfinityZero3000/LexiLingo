@@ -1712,55 +1712,39 @@ class _HomePageNewState extends State<HomePageNew> {
       },
     ];
 
-    const crossAxisCount = 3;
-    const spacing = 12.0;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final tileWidth =
-              (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
-                  crossAxisCount;
-          // Scale the icon (and tile height) with tile width instead of a
-          // fixed aspect ratio, so narrow screens don't overflow vertically.
-          final iconSize = (tileWidth * 0.42).clamp(34.0, 44.0);
-          final tileHeight = iconSize + 56;
-
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              mainAxisSpacing: spacing,
-              crossAxisSpacing: spacing,
-              mainAxisExtent: tileHeight,
+    const double chipHeight = 50.0;
+    
+    return SizedBox(
+      height: chipHeight,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: quickActions.length,
+        itemBuilder: (context, index) {
+          final action = quickActions[index];
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: _buildQuickActionChip(
+              context,
+              icon: action['icon']!,
+              label: (action['label'] as String).tr(),
+              color: action['color'] as Color,
+              bgColor: action['bgColor'] as Color,
+              onTap: () {
+                final route = action['route'] as String;
+                if (route == '/vocab') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const VocabLibraryPage(),
+                    ),
+                  );
+                } else {
+                  Navigator.pushNamed(context, route);
+                }
+              },
             ),
-            itemCount: quickActions.length,
-            itemBuilder: (context, index) {
-              final action = quickActions[index];
-              return _buildQuickActionChip(
-                context,
-                icon: action['icon']!,
-                label: (action['label'] as String).tr(),
-                color: action['color'] as Color,
-                bgColor: action['bgColor'] as Color,
-                iconSize: iconSize,
-                onTap: () {
-                  final route = action['route'] as String;
-                  if (route == '/vocab') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const VocabLibraryPage(),
-                      ),
-                    );
-                  } else {
-                    Navigator.pushNamed(context, route);
-                  }
-                },
-              );
-            },
           );
         },
       ),
@@ -1774,64 +1758,44 @@ class _HomePageNewState extends State<HomePageNew> {
     required Color color,
     required Color bgColor,
     required VoidCallback onTap,
-    double iconSize = 44,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fontSize = iconSize <= 38 ? 9.0 : 10.0;
-    final surfaceColor = Theme.of(context).colorScheme.surface;
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: color.withValues(alpha: isDark ? 0.5 : 0.35),
-            width: 2,
+            width: 1.5,
           ),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: iconSize,
-              height: iconSize,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: isDark ? 0.5 : 0.35),
-                    blurRadius: 0,
-                    offset: const Offset(0, 4),
+            icon is GameIcon
+                ? AppGameIcon(
+                    icon,
+                    size: 20,
+                    fallbackColor: color,
+                  )
+                : Icon(
+                    icon as IconData,
+                    color: color,
+                    size: 20,
                   ),
-                ],
-              ),
-              child: icon is GameIcon
-                  ? AppGameIcon(
-                      icon,
-                      size: iconSize * 0.5,
-                      fallbackColor: surfaceColor,
-                    )
-                  : Icon(
-                      icon as IconData,
-                      color: surfaceColor,
-                      size: iconSize * 0.5,
-                    ),
-            ),
-            const SizedBox(height: 10),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
-                fontSize: fontSize,
-                height: 1.1,
-                fontWeight: FontWeight.w700,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
                 color: color,
               ),
-              textAlign: TextAlign.center,
               maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

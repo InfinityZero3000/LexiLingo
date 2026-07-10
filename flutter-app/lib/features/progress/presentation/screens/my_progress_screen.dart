@@ -24,6 +24,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProgressProvider>().fetchMyProgress();
+      context.read<HomeProvider>().loadWeeklyProgress();
     });
   }
 
@@ -57,6 +58,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                   ElevatedButton.icon(
                     onPressed: () {
                       progressProvider.fetchMyProgress();
+                      context.read<HomeProvider>().loadWeeklyProgress();
                     },
                     icon: const Icon(Icons.refresh),
                     label: Text('common.retry'.tr()),
@@ -74,7 +76,10 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => progressProvider.fetchMyProgress(),
+            onRefresh: () => Future.wait([
+              progressProvider.fetchMyProgress(),
+              context.read<HomeProvider>().loadWeeklyProgress(),
+            ]),
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
