@@ -77,155 +77,165 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ? AppColors.accentMintDark
           : AppColors.backgroundLight,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Column(
-            children: [
-              Row(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              child: Column(
                 children: [
-                  Text(
-                    'onboarding.personalizeTitle'.tr(),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
+                  Row(
+                    children: [
+                      Text(
+                        'onboarding.personalizeTitle'.tr(),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${_currentPage + 1}/3',
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          color: isDark ? Colors.white70 : AppColors.textSlate,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: (_currentPage + 1) / 3,
+                      minHeight: 8,
+                      backgroundColor: isDark
+                          ? AppColors.slate800
+                          : AppColors.slate200,
+                      valueColor: const AlwaysStoppedAnimation(
+                        AppColors.accentMint,
+                      ),
                     ),
                   ),
-                  const Spacer(),
-                  Text(
-                    '${_currentPage + 1}/3',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: isDark ? Colors.white70 : AppColors.textSlate,
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      physics: const NeverScrollableScrollPhysics(),
+                      onPageChanged: (index) {
+                        setState(() => _currentPage = index);
+                      },
+                      children: [
+                        _buildGoalGridStep(
+                          context: context,
+                          title: 'onboarding.goalQuestion'.tr(),
+                          subtitle: 'onboarding.goalSubtitle'.tr(),
+                          value: _selectedGoal,
+                          onSelected: (value) {
+                            setState(() => _selectedGoal = value);
+                          },
+                        ),
+                        _buildChoiceStep(
+                          context: context,
+                          title: 'onboarding.levelQuestion'.tr(),
+                          subtitle: 'onboarding.levelSubtitle'.tr(),
+                          value: _selectedLevel,
+                          options: [
+                            _OnboardingOption(
+                              'A1',
+                              'onboarding.levelA1'.tr(),
+                              Icons.child_care_rounded,
+                            ),
+                            _OnboardingOption(
+                              'A2',
+                              'onboarding.levelA2'.tr(),
+                              Icons.directions_walk_rounded,
+                            ),
+                            _OnboardingOption(
+                              'B1',
+                              'onboarding.levelB1'.tr(),
+                              Icons.directions_run_rounded,
+                            ),
+                            _OnboardingOption(
+                              'B2',
+                              'onboarding.levelB2'.tr(),
+                              Icons.directions_bike_rounded,
+                            ),
+                            _OnboardingOption(
+                              'C1',
+                              'onboarding.levelC1'.tr(),
+                              Icons.workspace_premium_rounded,
+                            ),
+                          ],
+                          onSelected: (value) {
+                            setState(() => _selectedLevel = value);
+                          },
+                        ),
+                        _buildChoiceStep(
+                          context: context,
+                          title: 'onboarding.interestQuestion'.tr(),
+                          subtitle: 'onboarding.interestSubtitle'.tr(),
+                          value: _selectedInterest,
+                          options: [
+                            _OnboardingOption(
+                              'daily-life',
+                              'onboarding.interestDailyLife'.tr(),
+                              Icons.coffee_rounded,
+                            ),
+                            _OnboardingOption(
+                              'technology',
+                              'onboarding.interestTechnology'.tr(),
+                              Icons.computer_rounded,
+                            ),
+                            _OnboardingOption(
+                              'culture',
+                              'onboarding.interestCulture'.tr(),
+                              Icons.palette_rounded,
+                            ),
+                            _OnboardingOption(
+                              'career',
+                              'onboarding.interestCareer'.tr(),
+                              Icons.business_center_rounded,
+                            ),
+                          ],
+                          onSelected: (value) {
+                            setState(() => _selectedInterest = value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _goNext,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentMint,
+                        foregroundColor: AppColors.accentMintDark,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: LottieLoadingWidget.tiny(),
+                            )
+                          : Text(
+                              _currentPage < 2
+                                  ? 'onboarding.continueBtn'.tr()
+                                  : 'onboarding.createPlan'.tr(),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  value: (_currentPage + 1) / 3,
-                  minHeight: 8,
-                  backgroundColor: isDark
-                      ? AppColors.slate800
-                      : AppColors.slate200,
-                  valueColor: const AlwaysStoppedAnimation(
-                    AppColors.accentMint,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: (index) {
-                    setState(() => _currentPage = index);
-                  },
-                  children: [
-                    _buildGoalGridStep(
-                      context: context,
-                      title: 'onboarding.goalQuestion'.tr(),
-                      subtitle: 'onboarding.goalSubtitle'.tr(),
-                      value: _selectedGoal,
-                      onSelected: (value) {
-                        setState(() => _selectedGoal = value);
-                      },
-                    ),
-                    _buildChoiceStep(
-                      context: context,
-                      title: 'onboarding.levelQuestion'.tr(),
-                      subtitle: 'onboarding.levelSubtitle'.tr(),
-                      value: _selectedLevel,
-                      options: [
-                        _OnboardingOption(
-                          'A1',
-                          'onboarding.levelA1'.tr(),
-                          Icons.child_care_rounded,
-                        ),
-                        _OnboardingOption(
-                          'A2',
-                          'onboarding.levelA2'.tr(),
-                          Icons.directions_walk_rounded,
-                        ),
-                        _OnboardingOption(
-                          'B1',
-                          'onboarding.levelB1'.tr(),
-                          Icons.directions_run_rounded,
-                        ),
-                        _OnboardingOption(
-                          'B2',
-                          'onboarding.levelB2'.tr(),
-                          Icons.directions_bike_rounded,
-                        ),
-                        _OnboardingOption(
-                          'C1',
-                          'onboarding.levelC1'.tr(),
-                          Icons.workspace_premium_rounded,
-                        ),
-                      ],
-                      onSelected: (value) {
-                        setState(() => _selectedLevel = value);
-                      },
-                    ),
-                    _buildChoiceStep(
-                      context: context,
-                      title: 'onboarding.interestQuestion'.tr(),
-                      subtitle: 'onboarding.interestSubtitle'.tr(),
-                      value: _selectedInterest,
-                      options: [
-                        _OnboardingOption(
-                          'daily-life',
-                          'onboarding.interestDailyLife'.tr(),
-                          Icons.coffee_rounded,
-                        ),
-                        _OnboardingOption(
-                          'technology',
-                          'onboarding.interestTechnology'.tr(),
-                          Icons.computer_rounded,
-                        ),
-                        _OnboardingOption(
-                          'culture',
-                          'onboarding.interestCulture'.tr(),
-                          Icons.palette_rounded,
-                        ),
-                        _OnboardingOption(
-                          'career',
-                          'onboarding.interestCareer'.tr(),
-                          Icons.business_center_rounded,
-                        ),
-                      ],
-                      onSelected: (value) {
-                        setState(() => _selectedInterest = value);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _isSubmitting ? null : _goNext,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accentMint,
-                    foregroundColor: AppColors.accentMintDark,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: LottieLoadingWidget.tiny(),
-                        )
-                      : Text(
-                          _currentPage < 2 ? 'onboarding.continueBtn'.tr() : 'onboarding.createPlan'.tr(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

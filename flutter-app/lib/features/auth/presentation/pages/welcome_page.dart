@@ -62,7 +62,7 @@ class _WelcomePageState extends State<WelcomePage>
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 8,
+                      vertical: 12,
                     ),
                     child: Row(
                       children: [
@@ -87,7 +87,7 @@ class _WelcomePageState extends State<WelcomePage>
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/LexiLingo-logo.png',
+                              'assets/out-app/lexilingo-logo.png',
                               height: 40,
                               fit: BoxFit.contain,
                             ),

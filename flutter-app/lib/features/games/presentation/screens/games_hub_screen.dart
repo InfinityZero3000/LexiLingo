@@ -104,41 +104,47 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
       body: Consumer2<GamesProvider, DailyChallengesProvider>(
         builder: (context, provider, challengesProvider, _) {
-          return CustomScrollView(
-            slivers: [
-              _buildAppBar(provider, titleColor),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      _buildXpHeader(provider),
-                      const SizedBox(height: 16),
-                      _buildDailyChallenge(context, challengesProvider),
-                      const SizedBox(height: 20),
-                      _buildLevelPicker(provider),
-                      const SizedBox(height: 20),
-                      _buildSectionTitle(
-                        'gamesHub.gamesSectionTitle'.tr(),
-                        titleColor,
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: CustomScrollView(
+                slivers: [
+                  _buildAppBar(provider, titleColor),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          _buildXpHeader(provider),
+                          const SizedBox(height: 16),
+                          _buildDailyChallenge(context, challengesProvider),
+                          const SizedBox(height: 20),
+                          _buildLevelPicker(provider),
+                          const SizedBox(height: 20),
+                          _buildSectionTitle(
+                            'gamesHub.gamesSectionTitle'.tr(),
+                            titleColor,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildGameGrid(context, provider),
+                          const SizedBox(height: 24),
+                          _buildSectionTitle(
+                            'gamesHub.leaderboardSectionTitle'.tr(),
+                            titleColor,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildLeaderboard(provider),
+                          const SizedBox(height: 32),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildGameGrid(context, provider),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(
-                        'gamesHub.leaderboardSectionTitle'.tr(),
-                        titleColor,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLeaderboard(provider),
-                      const SizedBox(height: 32),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
@@ -408,21 +414,32 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   }
 
   Widget _buildGameGrid(BuildContext context, GamesProvider provider) {
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: GameType.values.length,
-      itemBuilder: (context, index) {
-        final type = GameType.values[index];
-        return GameCard(
-          gameType: type,
-          onTap: () => _navigateToGame(context, type),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1000
+            ? 4
+            : width >= 680
+            ? 3
+            : 2;
+
+        return GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: GameType.values.length,
+          itemBuilder: (context, index) {
+            final type = GameType.values[index];
+            return GameCard(
+              gameType: type,
+              onTap: () => _navigateToGame(context, type),
+            );
+          },
         );
       },
     );

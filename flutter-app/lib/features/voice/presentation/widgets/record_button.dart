@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 
 /// Record Button Widget
 /// Animated button for recording audio
@@ -10,6 +9,7 @@ class RecordButton extends StatefulWidget {
   final bool isProcessing;
   final VoidCallback onPressed;
   final Duration recordingDuration;
+  final Duration? maxDuration;
 
   const RecordButton({
     super.key,
@@ -17,6 +17,7 @@ class RecordButton extends StatefulWidget {
     required this.isProcessing,
     required this.onPressed,
     this.recordingDuration = Duration.zero,
+    this.maxDuration,
   });
 
   @override
@@ -65,6 +66,16 @@ class _RecordButtonState extends State<RecordButton>
 
   @override
   Widget build(BuildContext context) {
+    final maxDuration = widget.maxDuration;
+    final recordingLabel = widget.isRecording && maxDuration != null
+        ? '${_formatDuration(widget.recordingDuration)} / ${_formatDuration(maxDuration)}'
+        : _formatDuration(widget.recordingDuration);
+    final progress = maxDuration == null || maxDuration.inMilliseconds == 0
+        ? null
+        : (widget.recordingDuration.inMilliseconds / maxDuration.inMilliseconds)
+              .clamp(0.0, 1.0)
+              .toDouble();
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -72,7 +83,7 @@ class _RecordButtonState extends State<RecordButton>
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
-              _formatDuration(widget.recordingDuration),
+              recordingLabel,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: AppColors.errorBright,
                 fontWeight: FontWeight.bold,
@@ -109,12 +120,10 @@ class _RecordButtonState extends State<RecordButton>
                     ],
                   ),
                   child: widget.isProcessing
-                      ? Center(
-                          child: SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: LottieLoadingWidget.tiny(),
-                          ),
+                      ? Icon(
+                          Icons.hourglass_top,
+                          color: Theme.of(context).colorScheme.surface,
+                          size: 32,
                         )
                       : Icon(
                           widget.isRecording ? Icons.stop : Icons.mic,
@@ -126,6 +135,23 @@ class _RecordButtonState extends State<RecordButton>
             },
           ),
         ),
+        if (widget.isRecording && progress != null) ...[
+          const SizedBox(height: 14),
+          SizedBox(
+            width: 132,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: AppColors.errorBright.withValues(alpha: 0.14),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  AppColors.errorBright,
+                ),
+              ),
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         Text(
           widget.isProcessing

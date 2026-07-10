@@ -140,10 +140,50 @@ class NotificationEntity extends Equatable {
   }
 
   /// Get target ID from data if available
-  String? get targetId => data?['target_id'] as String?;
+  String? get targetId => _readString(data?['target_id']);
 
   /// Get route from data if available
-  String? get route => data?['route'] as String?;
+  String? get route => _readString(data?['route']);
+
+  /// Whether this notification should close back to the app root.
+  bool get opensRoot {
+    final directRoute = route;
+    if (directRoute != null) {
+      return _isRootRoute(directRoute);
+    }
+    return _readString(data?['type']) == 'starter_reward';
+  }
+
+  /// Best app route for this notification.
+  ///
+  /// Backend/FCM payloads can override this with `data.route`. If no explicit
+  /// route is provided, the app falls back to the closest existing screen.
+  String? get destinationRoute {
+    final directRoute = route;
+    if (directRoute != null && !_isRootRoute(directRoute)) {
+      return directRoute;
+    }
+
+    switch (type) {
+      case NotificationType.streakReminder:
+        return '/today-plan';
+      case NotificationType.lessonReminder:
+        return '/courses';
+      case NotificationType.vocabularyReviewReminder:
+        return '/vocabulary/review';
+      case NotificationType.achievement:
+        return '/achievements';
+      case NotificationType.newContent:
+        return '/courses';
+      case NotificationType.weeklySummary:
+        return '/profile';
+      case NotificationType.social:
+        return '/social';
+      case NotificationType.system:
+      case NotificationType.general:
+        return null;
+    }
+  }
 
   /// Factory for creating notification from FCM message
   factory NotificationEntity.fromFcm({
@@ -204,8 +244,11 @@ class NotificationEntity extends Equatable {
       case 'vocabulary_review_reminder':
         return NotificationType.vocabularyReviewReminder;
       case 'achievement':
+      case 'achievement_unlocked':
+      case 'achievements':
         return NotificationType.achievement;
       case 'new_content':
+      case 'new_content_available':
         return NotificationType.newContent;
       case 'weekly_summary':
         return NotificationType.weeklySummary;
@@ -262,6 +305,19 @@ class NotificationEntity extends Equatable {
       case NotificationType.general:
         return '#2196F3'; // Blue
     }
+  }
+
+  static String? _readString(Object? value) {
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  static bool _isRootRoute(String route) {
+    return route == '/' ||
+        route == '/home' ||
+        route == 'home' ||
+        route == 'root';
   }
 
   @override

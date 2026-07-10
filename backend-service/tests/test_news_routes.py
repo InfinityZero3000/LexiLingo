@@ -11,6 +11,8 @@ Tests cover:
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+import httpx
+from fastapi import HTTPException
 from httpx import AsyncClient, ASGITransport
 
 
@@ -206,6 +208,59 @@ class TestExtractHighlightWords:
         words = _extract_highlight_words(article)
         for w in words:
             assert w == w.lower()
+
+
+class TestNewsUrlSafety:
+    """Tests for server-side fetch URL guard."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "ftp://example.com/image.jpg",
+            "http://localhost/image.jpg",
+            "http://127.0.0.1/image.jpg",
+            "http://10.0.0.1/image.jpg",
+        ],
+    )
+    def test_rejects_non_public_urls(self, url):
+        from app.routes.news import _validate_public_http_url
+
+        with pytest.raises(HTTPException):
+            _validate_public_http_url(url)
+
+    def test_rejects_host_if_any_resolved_ip_is_private(self, monkeypatch):
+        from app.routes.news import _validate_public_http_url
+
+        def fake_getaddrinfo(*args, **kwargs):
+            return [
+                (None, None, None, "", ("93.184.216.34", 443)),
+                (None, None, None, "", ("10.0.0.1", 443)),
+            ]
+
+        monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)
+
+        with pytest.raises(HTTPException):
+            _validate_public_http_url("https://safe.example/image.jpg")
+
+    @pytest.mark.asyncio
+    async def test_rejects_redirect_to_private_url(self, monkeypatch):
+        from app.routes.news import _get_public_url
+
+        def fake_getaddrinfo(*args, **kwargs):
+            return [(None, None, None, "", ("93.184.216.34", 443))]
+
+        class RedirectClient:
+            async def get(self, url, **kwargs):
+                return httpx.Response(
+                    302,
+                    headers={"location": "http://127.0.0.1/private"},
+                    request=httpx.Request("GET", url),
+                )
+
+        monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)
+
+        with pytest.raises(HTTPException):
+            await _get_public_url(RedirectClient(), "https://safe.example/image.jpg")
 
 
 # ============================================================================
@@ -443,7 +498,7 @@ class TestGetArticleQuiz:
 
     @pytest.mark.asyncio
     async def test_quiz_cache_key_format(self, no_db_client: AsyncClient):
-        """Cache key should be news:quiz:{article_id}"""
+        """Cache key should be versioned so stale placeholder quizzes are bypassed."""
         mock_result = MagicMock()
         mock_result.data = {"questions": [], "total_questions": 0, "xp_reward": 15}
         mock_result.source = "db"
@@ -457,7 +512,7 @@ class TestGetArticleQuiz:
             await no_db_client.get("/api/v1/news/myArticle001/quiz")
 
         call_kwargs = mock_cache.get_or_fetch.call_args.kwargs
-        assert call_kwargs["cache_key"] == "news:quiz:myArticle001"
+        assert call_kwargs["cache_key"] == "news:quiz:v2:myArticle001"
 
     @pytest.mark.asyncio
     async def test_429_on_quota_error(self, no_db_client: AsyncClient):
@@ -481,6 +536,39 @@ class TestGetArticleQuiz:
 
 class TestGenerateQuizStructure:
     """Tests for the quiz placeholder structure returned by _generate_quiz."""
+
+    @pytest.mark.asyncio
+    async def test_quiz_uses_article_context_when_available(self):
+        from app.routes.news import _generate_quiz
+
+        article = {
+            "title": "Solar Panels Power Local School",
+            "description": "Students learn from a new renewable energy project.",
+            "content": (
+                "A local school installed solar panels on the roof. "
+                "The project reduces electricity costs and teaches students about renewable energy. "
+                "Teachers said the panels will support science lessons throughout the year."
+            ),
+        }
+
+        quiz = await _generate_quiz("solar_school", article=article)
+
+        serialized = str(quiz).lower()
+        assert "solar" in serialized
+        assert "renewable" in serialized or "electricity" in serialized
+        assert "option a" not in serialized
+        assert "ai-generated" not in serialized
+
+    @pytest.mark.asyncio
+    async def test_quiz_falls_back_to_article_id_without_placeholders(self):
+        from app.routes.news import _generate_quiz
+
+        quiz = await _generate_quiz("climate_policy_2026")
+
+        serialized = str(quiz).lower()
+        assert "option a" not in serialized
+        assert "ai-generated" not in serialized
+        assert quiz["total_questions"] == len(quiz["questions"])
 
     @pytest.mark.asyncio
     async def test_quiz_has_5_questions(self):

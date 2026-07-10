@@ -95,11 +95,7 @@ class _FeaturedCoursesEmptyState extends StatelessWidget {
                 color: primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: AppGameIcon(
-                GameIcon.book,
-                size: 24,
-                fallbackColor: primary,
-              ),
+              child: Icon(Icons.auto_stories_rounded, size: 24, color: primary),
             ),
             const SizedBox(height: 12),
             Text(
@@ -270,10 +266,10 @@ class _CourseCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            AppGameIcon(
-                              GameIcon.star,
+                            Icon(
+                              Icons.star_rounded,
                               size: 14,
-                              fallbackColor: AppColors.surfaceLight,
+                              color: AppColors.surfaceLight,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -333,7 +329,7 @@ class _CourseCard extends StatelessWidget {
                     Row(
                       children: [
                         _InfoChip(
-                          icon: GameIcon.lessonBoard,
+                          icon: Icons.menu_book_rounded,
                           label: 'profile.lessonsCount'.tr(
                             namedArgs: {'count': '${course.totalLessons}'},
                           ),
@@ -341,7 +337,7 @@ class _CourseCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         _InfoChip(
-                          icon: GameIcon.translate,
+                          icon: Icons.translate_rounded,
                           label: course.language,
                           color: AppColors.purple,
                         ),
@@ -362,10 +358,10 @@ class _CourseCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          AppGameIcon(
-                            GameIcon.playArrow,
-                            size: 18,
-                            fallbackColor: AppColors.surfaceLight,
+                          Icon(
+                            Icons.play_circle_filled_rounded,
+                            size: 20,
+                            color: AppColors.surfaceLight,
                           ),
                           SizedBox(width: 8),
                           Text(
@@ -443,10 +439,10 @@ class _FeaturedCourseThumbnailPlaceholder extends StatelessWidget {
             width: 2,
           ),
         ),
-        child: const AppGameIcon(
-          GameIcon.lessonBoard,
+        child: const Icon(
+          Icons.school_rounded,
           size: 40,
-          fallbackColor: AppColors.surfaceLight,
+          color: AppColors.surfaceLight,
         ),
       ),
     );
@@ -454,7 +450,7 @@ class _FeaturedCourseThumbnailPlaceholder extends StatelessWidget {
 }
 
 class _InfoChip extends StatelessWidget {
-  final GameIcon icon;
+  final IconData icon;
   final String label;
   final Color color;
 
@@ -476,7 +472,7 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AppGameIcon(icon, size: 14, fallbackColor: color),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 5),
           Text(
             label,

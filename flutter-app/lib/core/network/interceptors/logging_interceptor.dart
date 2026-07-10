@@ -14,8 +14,10 @@ class LoggingInterceptor implements ApiInterceptor {
   void onRequest(ApiRequest request) {
     if (!enabled) return;
     logDebug(tag, '[REQ] ${request.method} ${request.uri}');
+    final headers = _redactHeaders(request.headers);
+    final body = _isSensitivePath(request.uri) ? '<redacted>' : request.body;
     log(
-      '[REQ] ${request.method} ${request.uri} headers=${request.headers} body=${request.body}',
+      '[REQ] ${request.method} ${request.uri} headers=$headers body=$body',
       name: tag,
     );
   }
@@ -24,10 +26,10 @@ class LoggingInterceptor implements ApiInterceptor {
   void onResponse(ApiResponse response) {
     if (!enabled) return;
     logDebug(tag, '[RES] ${response.statusCode} ${response.uri}');
-    log(
-      '[RES] ${response.statusCode} ${response.uri} body=${response.bodyPreview}',
-      name: tag,
-    );
+    final body = _isSensitivePath(response.uri)
+        ? '<redacted>'
+        : response.bodyPreview;
+    log('[RES] ${response.statusCode} ${response.uri} body=$body', name: tag);
   }
 
   @override
@@ -39,5 +41,18 @@ class LoggingInterceptor implements ApiInterceptor {
       name: tag,
       error: error.cause,
     );
+  }
+
+  bool _isSensitivePath(Uri uri) {
+    return uri.pathSegments.contains('mistakes');
+  }
+
+  Map<String, String> _redactHeaders(Map<String, String> headers) {
+    return headers.map((key, value) {
+      if (key.toLowerCase() == 'authorization') {
+        return MapEntry(key, '<redacted>');
+      }
+      return MapEntry(key, value);
+    });
   }
 }

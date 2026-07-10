@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import time
 
 import pytest
@@ -66,3 +67,20 @@ async def test_cache_gate_reports_benchmark_evidence_mismatch(monkeypatch):
     assert result["cache_decision"] == "full"
     assert result["cache_gate_meta"]["pcc_passed"] is False
     assert "evidence_mismatch" in result["cache_gate_meta"]["reasons"]
+
+
+@pytest.mark.asyncio
+async def test_input_node_skips_redis_warning_when_benchmark_redis_disabled(
+    monkeypatch,
+    caplog,
+):
+    monkeypatch.setenv("BENCHMARK_REDIS_DISABLED", "true")
+    caplog.set_level(logging.WARNING, logger="api.services.trace_cag.nodes_v2")
+
+    result = await nodes.input_node({
+        "user_input": "What verb collocates with decision?",
+        "learner_profile": {"level": "B1"},
+    })
+
+    assert result["learner_profile"] == {"level": "B1"}
+    assert "Redis unavailable" not in caplog.text

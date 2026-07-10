@@ -452,10 +452,10 @@ class AuthProvider extends ChangeNotifier {
           _user = null;
           _isJustLoggedIn = false;
         },
-        (user) {
-          _user = user;
+        (_) {
+          _user = null;
           _errorMessage = null;
-          _isJustLoggedIn = true;
+          _isJustLoggedIn = false;
         },
       );
     } catch (e) {

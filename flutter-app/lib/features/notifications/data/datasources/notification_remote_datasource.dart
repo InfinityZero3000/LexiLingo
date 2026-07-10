@@ -25,4 +25,12 @@ class NotificationRemoteDataSource {
   Future<void> markAllAsRead() async {
     await apiClient.patch('/notifications/read-all');
   }
+
+  Future<void> deleteNotification(String id) async {
+    await apiClient.delete('/notifications/$id');
+  }
+
+  Future<void> deleteAllNotifications() async {
+    await apiClient.delete('/notifications');
+  }
 }

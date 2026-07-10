@@ -180,6 +180,23 @@ void main() {
       expect(dataSource.lastPagedSessionId, 'session_1');
     });
 
+    test(
+      'rethrows forbidden metadata errors without calling paged endpoint',
+      () async {
+        dataSource.metadataError = Exception(
+          'Request /lexi/sessions/session_1/messages/metadata failed with status 403',
+        );
+
+        await expectLater(
+          repository.getMessagesPaged(sessionId: 'session_1'),
+          throwsA(isA<Exception>()),
+        );
+
+        expect(dataSource.metadataCalls, 1);
+        expect(dataSource.pagedCalls, 0);
+      },
+    );
+
     test('skips metadata check when cursor is provided', () async {
       dataSource.pagedResult = const LexiMessagesPage(
         messages: [],

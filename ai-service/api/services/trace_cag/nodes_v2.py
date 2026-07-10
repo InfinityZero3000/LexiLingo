@@ -99,6 +99,9 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
         
         try:
             import asyncio as _asyncio
+            if RedisClient._benchmark_redis_disabled():
+                raise RuntimeError("Redis disabled for benchmark")
+
             redis_client = await RedisClient.get_instance()
 
             user_id = state.get("user_id")
@@ -131,7 +134,10 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             conversation_history = fetched_history or []
 
         except Exception as e:
-            logger.warning(f"Redis unavailable: {e}")
+            if RedisClient._benchmark_redis_disabled():
+                logger.debug(f"Redis unavailable: {e}")
+            else:
+                logger.warning(f"Redis unavailable: {e}")
     
         latency_ms = int((time.time() - start_time) * 1000)
         

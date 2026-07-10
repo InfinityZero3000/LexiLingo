@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 
 /// Quick Actions - Horizontal scrollable section with circular buttons
@@ -33,7 +32,7 @@ class QuickActionsGrid extends StatelessWidget {
         'route': '/practice-lab',
       },
       {
-        'icon': GameIcon.video,
+        'icon': Icons.smart_display,
         'label': 'home.youtube',
         'color': isDark ? neonDarkActionColors[1] : AppColors.dangerGradient[0],
         'bgColor':
@@ -42,7 +41,7 @@ class QuickActionsGrid extends StatelessWidget {
         'route': '/youtube',
       },
       {
-        'icon': GameIcon.newspaper,
+        'icon': Icons.article,
         'label': 'home.news',
         'color': isDark ? neonDarkActionColors[2] : AppColors.teal,
         'bgColor': (isDark ? neonDarkActionColors[2] : AppColors.teal)
@@ -50,7 +49,7 @@ class QuickActionsGrid extends StatelessWidget {
         'route': '/news',
       },
       {
-        'icon': GameIcon.gameController,
+        'icon': Icons.sports_esports,
         'label': 'home.games',
         'color': isDark ? neonDarkActionColors[3] : AppColors.purple,
         'bgColor': (isDark ? neonDarkActionColors[3] : AppColors.purple)
@@ -58,7 +57,7 @@ class QuickActionsGrid extends StatelessWidget {
         'route': '/games',
       },
       {
-        'icon': GameIcon.headphones,
+        'icon': Icons.podcasts,
         'label': 'home.podcast',
         'color': isDark ? neonDarkActionColors[4] : accent,
         'bgColor': (isDark ? neonDarkActionColors[4] : accent).withValues(
@@ -67,7 +66,7 @@ class QuickActionsGrid extends StatelessWidget {
         'route': '/podcast',
       },
       {
-        'icon': GameIcon.book,
+        'icon': Icons.menu_book_rounded,
         'label': 'home.books',
         'color': isDark ? neonDarkActionColors[5] : AppColors.purpleLight,
         'bgColor': (isDark ? neonDarkActionColors[5] : AppColors.purple)
@@ -75,7 +74,7 @@ class QuickActionsGrid extends StatelessWidget {
         'route': '/books',
       },
       {
-        'icon': GameIcon.vocabulary,
+        'icon': Icons.style,
         'label': 'home.vocabulary',
         'color': isDark ? neonDarkActionColors[6] : AppColors.orange,
         'bgColor': (isDark ? neonDarkActionColors[6] : AppColors.warning)
@@ -84,13 +83,17 @@ class QuickActionsGrid extends StatelessWidget {
       },
     ];
 
-    const crossAxisCount = 3;
     const spacing = 12.0;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final crossAxisCount = constraints.maxWidth >= 960
+              ? quickActions.length
+              : constraints.maxWidth >= 640
+              ? 4
+              : 3;
           final tileWidth =
               (constraints.maxWidth - spacing * (crossAxisCount - 1)) /
               crossAxisCount;
@@ -112,7 +115,7 @@ class QuickActionsGrid extends StatelessWidget {
             itemBuilder: (context, index) {
               final action = quickActions[index];
               return _QuickActionChip(
-                icon: action['icon']!,
+                icon: action['icon'] as IconData,
                 label: (action['label'] as String).tr(),
                 color: action['color'] as Color,
                 bgColor: action['bgColor'] as Color,
@@ -140,7 +143,7 @@ class QuickActionsGrid extends StatelessWidget {
 }
 
 class _QuickActionChip extends StatelessWidget {
-  final Object icon;
+  final IconData icon;
   final String label;
   final Color color;
   final Color bgColor;
@@ -160,7 +163,6 @@ class _QuickActionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fontSize = iconSize <= 38 ? 9.0 : 10.0;
-    final surfaceColor = Theme.of(context).colorScheme.surface;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -190,17 +192,11 @@ class _QuickActionChip extends StatelessWidget {
                   ),
                 ],
               ),
-              child: icon is GameIcon
-                  ? AppGameIcon(
-                      icon as GameIcon,
-                      size: iconSize * 0.5,
-                      fallbackColor: surfaceColor,
-                    )
-                  : Icon(
-                      icon as IconData,
-                      color: surfaceColor,
-                      size: iconSize * 0.5,
-                    ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.surface,
+                size: iconSize * 0.5,
+              ),
             ),
             const SizedBox(height: 10),
             Text(

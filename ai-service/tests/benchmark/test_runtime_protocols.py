@@ -1,5 +1,6 @@
 import pytest
 
+from api.core.redis_client import RedisClient
 from tracecag_bench.catalog import MODES
 from tracecag_bench.config import BenchmarkConfig
 from tracecag_bench.protocols.public_qa import ircot_summary, run_public_qa_protocol
@@ -49,6 +50,26 @@ async def test_public_protocol_passes_context_docs_and_measures_trace():
 
 def test_provider_classification_keeps_full_qwen_model_name():
     assert classify_provider(["groq/qwen/qwen3-32b"]) == ("groq", "qwen/qwen3-32b", "")
+
+
+def test_redis_client_reads_benchmark_disabled_env(monkeypatch):
+    monkeypatch.setenv("BENCHMARK_REDIS_DISABLED", "true")
+
+    assert RedisClient._benchmark_redis_disabled() is True
+
+
+def test_redis_client_disables_redis_when_benchmark_fail_fast(monkeypatch):
+    monkeypatch.delenv("BENCHMARK_REDIS_DISABLED", raising=False)
+    monkeypatch.setenv("BENCHMARK_REDIS_FAIL_FAST", "true")
+
+    assert RedisClient._benchmark_redis_disabled() is True
+
+
+def test_redis_client_disabled_env_overrides_fail_fast(monkeypatch):
+    monkeypatch.setenv("BENCHMARK_REDIS_DISABLED", "false")
+    monkeypatch.setenv("BENCHMARK_REDIS_FAIL_FAST", "true")
+
+    assert RedisClient._benchmark_redis_disabled() is False
 
 
 def test_ircot_summary_counts_gate_and_contract_outcomes():

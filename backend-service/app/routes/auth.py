@@ -5,7 +5,7 @@ import logging
 import uuid
 
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,14 +13,18 @@ from sqlalchemy.exc import IntegrityError
 
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core.redis import RedisClient
 from app.core.security import (
     get_password_hash,
     get_password_hash_async,
     create_access_token,
     create_refresh_token,
+    decode_token,
     verify_password_async,
 )
+from app.core.token_blacklist import TokenBlacklist
 from app.services.starter_reward_service import StarterRewardService
 from app.models.user import User, RefreshToken
 from app.services.email_service import EmailService
@@ -308,7 +312,8 @@ async def get_current_user_via_auth(
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
     request: LogoutRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    authorization: str | None = Header(default=None),
 ):
     """
     Logout user.
@@ -323,6 +328,22 @@ async def logout(
             db_token.is_revoked = True
             db_token.revoked_at = datetime.now(timezone.utc)
             await db.commit()
+
+    if authorization and authorization.lower().startswith("bearer "):
+        access_token = authorization.split(" ", 1)[1].strip()
+        payload = decode_token(access_token)
+        if payload and payload.get("type") == "access":
+            exp = payload.get("exp")
+            expires_at = (
+                datetime.fromtimestamp(exp, timezone.utc)
+                if isinstance(exp, (int, float))
+                else None
+            )
+            await TokenBlacklist.add(
+                access_token,
+                expires_at=expires_at,
+                user_id=str(payload.get("sub") or ""),
+            )
 
     return MessageResponse(
         message="Logged out successfully",
@@ -848,10 +869,52 @@ async def admin_login(
 import random
 import time
 
-# In-memory OTP store: {email: (otp, expires_at)}
-# For production, replace with Redis or a DB table.
+# Dev/test fallback store: {email: (otp, expires_at)}. Production requires Redis.
 _admin_otp_store: dict[str, tuple[str, float]] = {}
 _OTP_TTL_SECONDS = 300  # 5 minutes
+_ADMIN_OTP_KEY_PREFIX = "admin:otp:"
+
+
+async def _get_admin_otp_redis():
+    redis = await RedisClient.get_instance()
+    if redis is None and settings.is_production:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin OTP storage is unavailable",
+        )
+    return redis
+
+
+async def _store_admin_otp(email: str, otp: str, redis=None) -> None:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        await redis.setex(f"{_ADMIN_OTP_KEY_PREFIX}{email}", _OTP_TTL_SECONDS, otp)
+        return
+    _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
+
+
+async def _consume_admin_otp(email: str, otp: str, redis=None) -> bool:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        return bool(await redis.eval(
+            """
+            local current = redis.call("GET", KEYS[1])
+            if current == ARGV[1] then
+                redis.call("DEL", KEYS[1])
+                return 1
+            end
+            return 0
+            """,
+            1,
+            f"{_ADMIN_OTP_KEY_PREFIX}{email}",
+            otp,
+        ))
+
+    stored = _admin_otp_store.get(email)
+    if not stored or stored[1] < time.time() or stored[0] != otp:
+        return False
+    del _admin_otp_store[email]
+    return True
 
 
 @router.post("/admin/request-otp")
@@ -866,6 +929,7 @@ async def admin_request_otp(
     email: str = (body.get("email") or "").strip().lower()
     if not email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
+    otp_redis = await _get_admin_otp_redis()
 
     result = await db.execute(
         select(User).where(User.email == email)
@@ -875,7 +939,7 @@ async def admin_request_otp(
     # Respond the same way whether the user exists or not (anti-enumeration)
     if user and user.is_active and user.is_verified and getattr(user, "role_level", 0) >= 1:
         otp = str(random.randint(100000, 999999))
-        _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
+        await _store_admin_otp(email, otp, otp_redis)
 
         try:
             from app.services.email_service import EmailService
@@ -909,12 +973,8 @@ async def admin_verify_otp(
     if not email or not otp:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and OTP are required")
 
-    stored = _admin_otp_store.get(email)
-    if not stored or stored[1] < time.time() or stored[0] != otp:
+    if not await _consume_admin_otp(email, otp):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP")
-
-    # Consume OTP (one-time use)
-    del _admin_otp_store[email]
 
     result = await db.execute(
         select(User).where(User.email == email)

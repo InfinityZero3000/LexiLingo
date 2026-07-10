@@ -96,12 +96,22 @@ class NotificationRepositoryImpl implements NotificationRepository {
   @override
   Future<void> deleteNotification(String notificationId) async {
     await _localDataSource.deleteNotification(notificationId);
+    try {
+      await _remoteDataSource?.deleteNotification(notificationId);
+    } catch (e) {
+      debugPrint('Remote delete notification failed: $e');
+    }
     await _refreshStreams();
   }
 
   @override
   Future<void> deleteAllNotifications() async {
     await _localDataSource.deleteAllNotifications();
+    try {
+      await _remoteDataSource?.deleteAllNotifications();
+    } catch (e) {
+      debugPrint('Remote delete all notifications failed: $e');
+    }
     await _refreshStreams();
   }
 

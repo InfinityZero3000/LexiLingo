@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -127,97 +126,157 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final useRail = width >= 840;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      body: IndexedStack(
-        index: _currentIndex,
-        children: List.generate(_pageCount, (i) {
-          // Use a lightweight placeholder until the tab is first visited.
-          return _pageCache.containsKey(i)
-              ? _pageCache[i]!
-              : const SizedBox.shrink();
-        }),
-      ),
-      bottomNavigationBar: Builder(
-        builder: (context) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Container(
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceDark : Colors.white,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.4)
-                      : Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 20,
-                  spreadRadius: 0,
-                  offset: const Offset(0, -4),
-                ),
+      body: useRail
+          ? Row(
+              children: [
+                _buildNavigationRail(context, width),
+                Expanded(child: _buildPageStack()),
               ],
+            )
+          : _buildPageStack(),
+      bottomNavigationBar: useRail ? null : _buildBottomNavigationBar(context),
+    );
+  }
+
+  Widget _buildPageStack() {
+    return IndexedStack(
+      index: _currentIndex,
+      children: List.generate(_pageCount, (i) {
+        // Use a lightweight placeholder until the tab is first visited.
+        return _pageCache.containsKey(i)
+            ? _pageCache[i]!
+            : const SizedBox.shrink();
+      }),
+    );
+  }
+
+  void _selectTab(int index) {
+    if (index == 2 && !_lexiWarmedUp) {
+      _lexiWarmedUp = true;
+      _warmupAiModels();
+    }
+    setState(() {
+      _getPage(index); // build page lazily on first visit
+      _currentIndex = index;
+    });
+  }
+
+  Widget _buildNavigationRail(BuildContext context, double width) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final extended = width >= 1100;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        border: Border(
+          right: BorderSide(
+            color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        child: NavigationRail(
+          selectedIndex: _currentIndex,
+          extended: extended,
+          minExtendedWidth: 190,
+          labelType: extended
+              ? NavigationRailLabelType.none
+              : NavigationRailLabelType.selected,
+          onDestinationSelected: _selectTab,
+          destinations: [
+            NavigationRailDestination(
+              icon: const Icon(Icons.explore_outlined),
+              selectedIcon: const Icon(Icons.explore),
+              label: Text('home.navDiscovery'.tr()),
             ),
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
-              ),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                type: BottomNavigationBarType.fixed,
-                onTap: (index) {
-                  if (index == 2 && !_lexiWarmedUp) {
-                    _lexiWarmedUp = true;
-                    _warmupAiModels();
-                  }
-                  setState(() {
-                    _getPage(index); // build page lazily on first visit
-                    _currentIndex = index;
-                  });
-                },
-                items: [
-                  BottomNavigationBarItem(
-                    icon: Icon(PhosphorIcons.compass()),
-                    activeIcon: Icon(
-                      PhosphorIcons.compass(PhosphorIconsStyle.fill),
-                    ),
-                    label: 'home.navDiscovery'.tr(),
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(PhosphorIcons.bookOpen()),
-                    activeIcon: Icon(
-                      PhosphorIcons.bookOpen(PhosphorIconsStyle.fill),
-                    ),
-                    label: 'home.navLearning'.tr(),
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(PhosphorIcons.bird()),
-                    activeIcon: Icon(
-                      PhosphorIcons.bird(PhosphorIconsStyle.fill),
-                    ),
-                    label: 'home.navLexi'.tr(),
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(PhosphorIcons.chatCircleText()),
-                    activeIcon: Icon(
-                      PhosphorIcons.chatCircleText(PhosphorIconsStyle.fill),
-                    ),
-                    label: 'home.navTopic'.tr(),
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(PhosphorIcons.userCircle()),
-                    activeIcon: Icon(
-                      PhosphorIcons.userCircle(PhosphorIconsStyle.fill),
-                    ),
-                    label: 'home.navAccount'.tr(),
-                  ),
-                ],
-              ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.menu_book_outlined),
+              selectedIcon: const Icon(Icons.menu_book),
+              label: Text('home.navLearning'.tr()),
             ),
-          );
-        },
+            NavigationRailDestination(
+              icon: const Icon(Icons.smart_toy_outlined),
+              selectedIcon: const Icon(Icons.smart_toy),
+              label: Text('home.navLexi'.tr()),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.chat_bubble_outline),
+              selectedIcon: const Icon(Icons.chat_bubble),
+              label: Text('home.navTopic'.tr()),
+            ),
+            NavigationRailDestination(
+              icon: const Icon(Icons.account_circle_outlined),
+              selectedIcon: const Icon(Icons.account_circle),
+              label: Text('home.navAccount'.tr()),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDark : Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.08),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          type: BottomNavigationBarType.fixed,
+          onTap: _selectTab,
+          items: [
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.explore_outlined),
+              activeIcon: const Icon(Icons.explore),
+              label: 'home.navDiscovery'.tr(),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.menu_book_outlined),
+              activeIcon: const Icon(Icons.menu_book),
+              label: 'home.navLearning'.tr(),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.smart_toy_outlined),
+              activeIcon: const Icon(Icons.smart_toy),
+              label: 'home.navLexi'.tr(),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.chat_bubble_outline),
+              activeIcon: const Icon(Icons.chat_bubble),
+              label: 'home.navTopic'.tr(),
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.account_circle_outlined),
+              activeIcon: const Icon(Icons.account_circle),
+              label: 'home.navAccount'.tr(),
+            ),
+          ],
+        ),
       ),
     );
   }

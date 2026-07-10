@@ -1,0 +1,17 @@
+[Unit]
+Description=LexiLingo Auto-Healing & Sentinel Agent
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/lexilingo
+EnvironmentFile=/opt/lexilingo/.env.production
+EnvironmentFile=/opt/lexilingo/.env.production.secrets
+ExecStart=/usr/bin/python3 -u /opt/lexilingo/scripts/lexilingo-sentinel.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

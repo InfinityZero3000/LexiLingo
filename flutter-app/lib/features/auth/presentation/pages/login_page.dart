@@ -135,18 +135,21 @@ class _LoginPageState extends State<LoginPage> {
     // the social-login row on screen; above `_roomyHeight` everything uses
     // full spacing; in between it scales continuously so it looks right on
     // every device size, not just two presets.
-    const roomyHeight = 820.0;
-    const tightHeight = 600.0;
+    const roomyHeight = 900.0;
+    const tightHeight = 760.0;
     final mediaQuery = MediaQuery.of(context);
     final usableHeight =
         mediaQuery.size.height -
         mediaQuery.padding.top -
         mediaQuery.padding.bottom -
         mediaQuery.viewInsets.bottom;
+    final isKeyboardOpen = mediaQuery.viewInsets.bottom > 0;
     final fitT = ((usableHeight - tightHeight) / (roomyHeight - tightHeight))
         .clamp(0.0, 1.0);
     double gap(double full, double compact) =>
         compact + (full - compact) * fitT;
+    final logoHeight = gap(40, 32);
+    final heroHeight = isKeyboardOpen ? 0.0 : gap(320, 185);
 
     return Scaffold(
       key: ValueKey<String>('login-page-$localeCode'),
@@ -158,7 +161,10 @@ class _LoginPageState extends State<LoginPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: gap(8, 4),
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -181,8 +187,8 @@ class _LoginPageState extends State<LoginPage> {
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/LexiLingo-logo.png',
-                              height: 40,
+                              'assets/out-app/lexilingo-logo.png',
+                              height: logoHeight,
                               fit: BoxFit.contain,
                               color: isDark ? Colors.white : null,
                             ),
@@ -192,28 +198,30 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    SizedBox(height: gap(8, 4)),
+                    if (heroHeight > 0) ...[
+                      SizedBox(height: gap(8, 4)),
 
-                    // Hero
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        height: gap(200, 90),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0x3330E8E8), Color(0x2230E8E8)],
+                      // Hero
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          height: heroHeight,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0x3330E8E8), Color(0x2230E8E8)],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Image.network(
-                          'https://lh3.googleusercontent.com/aida-public/AB6AXuC9e5sG5ITzGQOOtLmmixgmi3eqy1u2vjREx5V2LGBCdNg_bgu7OQarns0X8kgNuuuRN6bV1yWvZej9RBzXmsN0DYptA_CsuDNIuGLUOa_JlGU5R_fFBaQJZgQnWOvW6YVqMVd3tVGfLxAGrmQuwwyVsPQdEpGwB3E_bGE4Zbdw5Eya67psT55Ru81ggipsdLz1q7mHhNths64jCip1sXDvPCi_RBDeHWeza1RJmiuGVC9FfcWdVPLMLPZd2XM9pzu5ezA_FzA2O5g',
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, _, __) => const Center(
-                            child: Icon(Icons.language, size: 64),
+                          child: Image.network(
+                            'https://lh3.googleusercontent.com/aida-public/AB6AXuC9e5sG5ITzGQOOtLmmixgmi3eqy1u2vjREx5V2LGBCdNg_bgu7OQarns0X8kgNuuuRN6bV1yWvZej9RBzXmsN0DYptA_CsuDNIuGLUOa_JlGU5R_fFBaQJZgQnWOvW6YVqMVd3tVGfLxAGrmQuwwyVsPQdEpGwB3E_bGE4Zbdw5Eya67psT55Ru81ggipsdLz1q7mHhNths64jCip1sXDvPCi_RBDeHWeza1RJmiuGVC9FfcWdVPLMLPZd2XM9pzu5ezA_FzA2O5g',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, _, __) => const Center(
+                              child: Icon(Icons.language, size: 64),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
 
                     SizedBox(height: gap(24, 10)),
                     Text(
@@ -226,17 +234,7 @@ class _LoginPageState extends State<LoginPage> {
                             : AppColors.surfaceDarkInput,
                       ),
                     ),
-                    SizedBox(height: gap(8, 4)),
-                    Text(
-                      'app.tagline'.tr(),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark
-                            ? Colors.white70
-                            : AppColors.textSlateLight,
-                      ),
-                    ),
-                    SizedBox(height: gap(28, 14)),
+                    SizedBox(height: gap(24, 12)),
 
                     Text(
                       'auth.email'.tr(),
@@ -353,12 +351,14 @@ class _LoginPageState extends State<LoginPage> {
                             });
                           },
                         ),
-                        Text(
-                          'auth.rememberPassword'.tr(),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDark
-                                ? Colors.white70
-                                : AppColors.surfaceDarkInput,
+                        Expanded(
+                          child: Text(
+                            'auth.rememberPassword'.tr(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isDark
+                                  ? Colors.white70
+                                  : AppColors.surfaceDarkInput,
+                            ),
                           ),
                         ),
                       ],
@@ -457,6 +457,16 @@ class _LoginPageState extends State<LoginPage> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'If this account uses Google, tap Google below.',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? Colors.white70
+                              : AppColors.textSlateLight,
+                        ),
+                      ),
                     ],
 
                     if (_isLockedAfterFailures) ...[
@@ -530,7 +540,7 @@ class _LoginPageState extends State<LoginPage> {
                                       await authProvider.signInWithGoogle();
                                     },
                               icon: const Icon(Icons.g_mobiledata, size: 26),
-                              label: Text('auth.loginWithGoogle'.tr()),
+                              label: const Text('Google'),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -550,7 +560,7 @@ class _LoginPageState extends State<LoginPage> {
                                       await authProvider.signInWithFacebook();
                                     },
                               icon: const Icon(Icons.facebook, size: 22),
-                              label: Text('auth.signInWithFacebook'.tr()),
+                              label: const Text('Facebook'),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -563,8 +573,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     SizedBox(height: gap(24, 12)),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           'auth.dontHaveAccount'.tr(),
