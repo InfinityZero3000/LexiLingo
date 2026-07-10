@@ -59,7 +59,10 @@ htmlcov/
 # Database
 *.db
 *.sqlite3
-seed_*
+seed_*.sqlite3
+seed_*.db
+seed_*.json
+seed_*.csv
 !tests/seed_*
 data/
 
