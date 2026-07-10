@@ -31,7 +31,7 @@ class XpLineChart extends StatelessWidget {
         LineChartData(
           minY: 0,
           maxY: (maxXP * 1.2).ceilToDouble(),
-          clipData: const FlClipData.all(),
+          clipData: const FlClipData.none(),
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
@@ -52,8 +52,10 @@ class XpLineChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 24,
+                interval: 1,
                 getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
+                  final i = value.round();
+                  if ((value - i).abs() > 0.01) return const SizedBox.shrink();
                   if (i < 0 || i >= days.length) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
@@ -181,8 +183,10 @@ class LessonsBarChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 24,
+                interval: 1,
                 getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
+                  final i = value.round();
+                  if ((value - i).abs() > 0.01) return const SizedBox.shrink();
                   if (i < 0 || i >= days.length) return const SizedBox.shrink();
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),

@@ -376,12 +376,12 @@ Nếu cần, có thể tách thêm 1 tài liệu riêng cho Docker Compose produ
 Phần này là luồng triển khai Docker hóa end-to-end cho đúng mục tiêu "tách service + Nginx + SSL".
 
 Template có sẵn trong repo:
-- [docs/deploy/docker-templates/docker-compose.gateway.yml](docs/deploy/docker-templates/docker-compose.gateway.yml)
-- [docs/deploy/docker-templates/docker-compose.backend.yml](docs/deploy/docker-templates/docker-compose.backend.yml)
-- [docs/deploy/docker-templates/docker-compose.ai.yml](docs/deploy/docker-templates/docker-compose.ai.yml)
-- [docs/deploy/docker-templates/nginx/conf.d/lexilingo.http.conf](docs/deploy/docker-templates/nginx/conf.d/lexilingo.http.conf)
-- [docs/deploy/docker-templates/nginx/conf.d/lexilingo.https.conf](docs/deploy/docker-templates/nginx/conf.d/lexilingo.https.conf)
-- [docs/deploy/docker-templates/nginx/snippets/proxy-common.conf](docs/deploy/docker-templates/nginx/snippets/proxy-common.conf)
+- [deploy/docker-templates/docker-compose.gateway.yml](deploy/docker-templates/docker-compose.gateway.yml)
+- [deploy/docker-templates/docker-compose.backend.yml](deploy/docker-templates/docker-compose.backend.yml)
+- [deploy/docker-templates/docker-compose.ai.yml](deploy/docker-templates/docker-compose.ai.yml)
+- [deploy/docker-templates/nginx/conf.d/lexilingo.http.conf](deploy/docker-templates/nginx/conf.d/lexilingo.http.conf)
+- [deploy/docker-templates/nginx/conf.d/lexilingo.https.conf](deploy/docker-templates/nginx/conf.d/lexilingo.https.conf)
+- [deploy/docker-templates/nginx/snippets/proxy-common.conf](deploy/docker-templates/nginx/snippets/proxy-common.conf)
 
 ### 11.1 Option 2 VPS (Docker)
 
@@ -427,7 +427,7 @@ cd LexiLingo
 ### 12.3 Triển khai AI (VPS ai)
 
 ```bash
-cd /opt/lexilingo/LexiLingo/docs/deploy/docker-templates
+cd /opt/lexilingo/LexiLingo/deploy/docker-templates
 cp ../../../ai-service/.env.example .env.ai 2>/dev/null || touch .env.ai
 
 # Sửa file .env.ai: GEMINI_API_KEY và các biến cần thiết
@@ -441,7 +441,7 @@ curl -sS http://127.0.0.1:8001/health || curl -sS http://127.0.0.1:8001/docs
 ### 12.4 Triển khai Backend (VPS backend hoặc VPS-1 nếu 2 VPS)
 
 ```bash
-cd /opt/lexilingo/LexiLingo/docs/deploy/docker-templates
+cd /opt/lexilingo/LexiLingo/deploy/docker-templates
 cp ../../../backend-service/.env.example .env.backend 2>/dev/null || touch .env.backend
 
 # Sửa .env.backend: DATABASE_URL, SECRET_KEY, ALLOWED_ORIGINS, AI_SERVICE_URL
@@ -460,11 +460,11 @@ curl -sS http://127.0.0.1:8000/health || curl -sS http://127.0.0.1:8000/docs
 mkdir -p /opt/lexilingo/deploy-gateway
 cd /opt/lexilingo/deploy-gateway
 
-cp /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/docker-compose.gateway.yml .
+cp /opt/lexilingo/LexiLingo/deploy/docker-templates/docker-compose.gateway.yml .
 mkdir -p certbot/www certbot/conf nginx/conf.d nginx/snippets
-cp /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/nginx/conf.d/lexilingo.http.conf nginx/conf.d/
-cp /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/nginx/conf.d/lexilingo.https.conf nginx/conf.d/
-cp /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/nginx/snippets/proxy-common.conf nginx/snippets/
+cp /opt/lexilingo/LexiLingo/deploy/docker-templates/nginx/conf.d/lexilingo.http.conf nginx/conf.d/
+cp /opt/lexilingo/LexiLingo/deploy/docker-templates/nginx/conf.d/lexilingo.https.conf nginx/conf.d/
+cp /opt/lexilingo/LexiLingo/deploy/docker-templates/nginx/snippets/proxy-common.conf nginx/snippets/
 
 # Sửa nginx/conf.d/lexilingo.https.conf:
 # <PRIVATE_IP_BACKEND> -> IP private của backend
@@ -510,12 +510,12 @@ cd /opt/lexilingo/deploy-gateway
 
 # Xem log nhanh
 docker compose -f docker-compose.gateway.yml logs --tail=200 nginx
-docker compose -f /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/docker-compose.backend.yml logs --tail=200 backend
-docker compose -f /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/docker-compose.ai.yml logs --tail=200 ai
+docker compose -f /opt/lexilingo/LexiLingo/deploy/docker-templates/docker-compose.backend.yml logs --tail=200 backend
+docker compose -f /opt/lexilingo/LexiLingo/deploy/docker-templates/docker-compose.ai.yml logs --tail=200 ai
 
 # Restart service lỗi
-docker compose -f /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/docker-compose.backend.yml restart backend
-docker compose -f /opt/lexilingo/LexiLingo/docs/deploy/docker-templates/docker-compose.ai.yml restart ai
+docker compose -f /opt/lexilingo/LexiLingo/deploy/docker-templates/docker-compose.backend.yml restart backend
+docker compose -f /opt/lexilingo/LexiLingo/deploy/docker-templates/docker-compose.ai.yml restart ai
 docker compose -f docker-compose.gateway.yml restart nginx
 ```
 
