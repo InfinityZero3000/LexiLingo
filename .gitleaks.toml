@@ -45,6 +45,7 @@ regexes = [
 paths = [
   '''(^|/)backend-service/QUICKSTART\.md$''',
   '''(^|/)docs/gateway/API_GATEWAY_FULL_POLICY_SETUP\.md$''',
+  '''(^|/)docs/operations/API_GATEWAY_FULL_POLICY_SETUP\.md$''',
   '''(^|/)gateway/kong/kong\.yml$''',
 ]
 
