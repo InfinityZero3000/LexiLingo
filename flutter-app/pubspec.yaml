@@ -175,9 +175,6 @@ flutter:
     - assets/sounds/
     - assets/logo/
     - assets/out-app/
-    - assets/icon-library/
-    - assets/icon-library/learning-icons/
-    - assets/icon-library/button/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
