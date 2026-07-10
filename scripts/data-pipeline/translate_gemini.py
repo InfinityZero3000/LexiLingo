@@ -1,16 +1,20 @@
 import json
+import os
 import time
 import requests
 import sys
 import random
 import re
 
-API_KEYS = [
-    "AIzaSyA7KgjM3Jt3E09RudKLUcA6e0WO4YOW2vY",
-    "AIzaSyCiKyxQERiVTEmlwa4euWOlQdlFo6UKLSo",
-    "AIzaSyBGjPwt7QLrZz4NgLUHnRts1E12yJEVgNQ",
-    "AIzaSyB_tii-C0tZEr4yEIsiCCtQQ_kx1o-SJLw"
-]
+def _load_api_keys():
+    raw_keys = os.getenv("GEMINI_API_KEYS") or os.getenv("GEMINI_API_KEY", "")
+    keys = [key.strip() for key in raw_keys.split(",") if key.strip()]
+    if not keys:
+        raise RuntimeError("Set GEMINI_API_KEYS or GEMINI_API_KEY before running translation")
+    return keys
+
+
+API_KEYS = _load_api_keys()
 
 FILE_PATH = "/opt/lexilingo/scripts/categorized_words_final.json"
 
