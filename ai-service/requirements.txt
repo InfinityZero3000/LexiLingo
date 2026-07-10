@@ -1,5 +1,5 @@
 # FastAPI and Server
-fastapi>=0.138.0
+fastapi>=0.139.0
 uvicorn[standard]>=0.49.0
 python-multipart>=0.0.32
 
@@ -45,8 +45,8 @@ numpy>=1.26.4,<2.0.0
 faster-whisper>=1.2.1
 # Native streaming primary. Kept behind an optional runtime adapter so an
 # unsupported wheel degrades to Faster-Whisper instead of crashing startup.
-moonshine-voice>=0.0.59,<0.1
-sherpa-onnx>=1.13.2,<2
+moonshine-voice>=0.0.65,<0.1
+sherpa-onnx>=1.13.3,<2
 piper-tts>=1.4.2
 gTTS>=2.5.4
 
@@ -60,15 +60,15 @@ torch<=2.2.2,>=2.2.2
 peft>=0.19.1  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (TRACECAG Orchestration)
-langgraph>=1.2.6
+langgraph>=1.2.7
 langchain-core>=1.4.8
 langchain-community>=0.4.2
 
 # LLaMA.cpp for GGUF model inference (Vietnamese explanation)
-llama-cpp-python>=0.3.31
+llama-cpp-python>=0.3.33
 
 # Audio Processing (for HuBERT resampling)
-scipy>=1.17.1
+scipy>=1.18.0
 
 # HTTP Downloads
 requests>=2.34.2
