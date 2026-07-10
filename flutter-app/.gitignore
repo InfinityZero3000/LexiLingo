@@ -136,3 +136,7 @@ GoogleService-Info.plist
 
 # coverage
 coverage/
+
+# Google OAuth client plist
+client_*.plist
+

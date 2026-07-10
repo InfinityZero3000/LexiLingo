@@ -62,7 +62,7 @@ class _WelcomePageState extends State<WelcomePage>
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 8,
+                      vertical: 12,
                     ),
                     child: Row(
                       children: [

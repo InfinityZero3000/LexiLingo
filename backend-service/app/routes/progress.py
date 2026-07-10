@@ -130,7 +130,7 @@ async def get_my_progress(
             "date": str(row.activity_date),
             "xp_earned": row.xp_earned,
             "lessons_completed": row.lessons_completed,
-            "study_time_minutes": row.study_time_minutes,
+            "time_spent_minutes": row.study_time_minutes,
             "daily_goal_met": row.daily_goal_met,
         }
         for row in activity_rows.scalars().all()

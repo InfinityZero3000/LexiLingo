@@ -198,13 +198,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            {user.avatar_url ? (
-              <img src={user.avatar_url} alt="" style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
-            ) : (
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 22 }}>
-                {user.email[0].toUpperCase()}
-              </div>
-            )}
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 22 }}>
+              {(user.display_name || user.email)[0].toUpperCase()}
+            </div>
             <div>
               <h3 style={{ margin: '0 0 4px', fontSize: 20, fontWeight: 700 }}>
                 {user.display_name || user.email.split('@')[0]}

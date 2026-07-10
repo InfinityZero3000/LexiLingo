@@ -114,7 +114,7 @@ class LoginScreen extends StatelessWidget {
                                   children: [
                                     Image.asset(
                                       'assets/out-app/LexiLingo-logo.png',
-                                      height: 22,
+                                      height: 30,
                                       fit: BoxFit.contain,
                                     ),
                                     Text(
