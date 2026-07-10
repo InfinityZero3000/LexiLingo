@@ -2,6 +2,14 @@
 # Use Google Gemini API
 model = "google/gemini-2.5-pro"
 fallback_models = ["google/gemini-2.5-flash"]
+git_provider = "github"
+pr_commands = [
+    "/review",
+    "/describe",
+    "/improve",
+    "/ask",
+    "/update_changelog",
+]
 
 [pr_reviewer]
 # Enable/disable features
@@ -58,20 +66,7 @@ extra_instructions = """
 - Clarify implementation choices
 """
 
-[config]
 # Model configuration (uncomment to customize)
 # model = "gpt-4-turbo-preview"
 # model = "anthropic/claude-3-5-sonnet-20241022"
 # fallback_models = ["gpt-3.5-turbo"]
-
-# Git provider
-git_provider = "github"
-
-# Review triggers
-pr_commands = [
-    "/review",
-    "/describe",
-    "/improve",
-    "/ask",
-    "/update_changelog",
-]
