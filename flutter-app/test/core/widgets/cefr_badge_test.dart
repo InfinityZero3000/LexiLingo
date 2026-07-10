@@ -4,7 +4,7 @@ import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 void main() {
-  Widget _wrap(Widget child) => MaterialApp(
+  Widget wrap(Widget child) => MaterialApp(
         theme: ThemeData.light(),
         home: Scaffold(body: Center(child: child)),
       );
@@ -37,20 +37,20 @@ void main() {
     });
 
     testWidgets('renders level text', (tester) async {
-      await tester.pumpWidget(_wrap(const CefrBadge(level: 'B2')));
+      await tester.pumpWidget(wrap(const CefrBadge(level: 'B2')));
       expect(find.text('B2'), findsOneWidget);
     });
 
     testWidgets('small size renders without overflow', (tester) async {
       await tester.pumpWidget(
-        _wrap(const CefrBadge(level: 'A1', size: CefrBadgeSize.small)),
+        wrap(const CefrBadge(level: 'A1', size: CefrBadgeSize.small)),
       );
       expect(tester.takeException(), isNull);
     });
 
     testWidgets('large size renders without overflow', (tester) async {
       await tester.pumpWidget(
-        _wrap(const CefrBadge(level: 'C2', size: CefrBadgeSize.large)),
+        wrap(const CefrBadge(level: 'C2', size: CefrBadgeSize.large)),
       );
       expect(tester.takeException(), isNull);
     });

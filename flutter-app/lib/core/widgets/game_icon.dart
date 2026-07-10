@@ -92,12 +92,43 @@ const Map<GameIcon, String> _assetPath = {
 };
 
 const Map<GameIcon, IconData> _fallbackIcon = {
-  // playArrow/backArrow: the previous pack's plain UI-arrow icons (plain
-  // triangle, curved back arrow) have no equivalent in the current
-  // icon-library — it's all game items/badges now. Falls back until a
-  // dedicated UI-arrow asset is supplied.
+  GameIcon.star: Icons.star_rounded,
+  GameIcon.trophy: Icons.emoji_events_rounded,
+  GameIcon.xp: Icons.bolt_rounded,
+  GameIcon.gem: Icons.diamond_rounded,
+  GameIcon.crown: Icons.workspace_premium_rounded,
+  GameIcon.checkmark: Icons.check_circle_rounded,
+  GameIcon.giftBox: Icons.card_giftcard_rounded,
+  GameIcon.treasureChest: Icons.inventory_2_rounded,
+  GameIcon.speechBubble: Icons.chat_bubble_rounded,
+  GameIcon.settings: Icons.settings_rounded,
+  GameIcon.padlockUnlocked: Icons.lock_open_rounded,
+  GameIcon.clock: Icons.schedule_rounded,
+  GameIcon.lessonBoard: Icons.menu_book_rounded,
   GameIcon.playArrow: Icons.play_arrow_rounded,
+  GameIcon.fastForward: Icons.fast_forward_rounded,
+  GameIcon.rewind: Icons.fast_rewind_rounded,
   GameIcon.backArrow: Icons.arrow_back_rounded,
+  GameIcon.nextButton: Icons.navigate_next_rounded,
+  GameIcon.prevButton: Icons.navigate_before_rounded,
+  GameIcon.speakerOn: Icons.volume_up_rounded,
+  GameIcon.speakerMuted: Icons.volume_off_rounded,
+  GameIcon.lightBulb: Icons.lightbulb_rounded,
+  GameIcon.heart: Icons.favorite_rounded,
+  GameIcon.flashcards: Icons.style_rounded,
+  GameIcon.grammar: Icons.spellcheck_rounded,
+  GameIcon.listening: Icons.headphones_rounded,
+  GameIcon.quizzes: Icons.quiz_rounded,
+  GameIcon.speaking: Icons.mic_rounded,
+  GameIcon.vocabulary: Icons.translate_rounded,
+  GameIcon.streakFire: Icons.local_fire_department_rounded,
+  GameIcon.bolt: Icons.bolt_rounded,
+  GameIcon.gameController: Icons.sports_esports_rounded,
+  GameIcon.notificationBell: Icons.notifications_rounded,
+  GameIcon.calendar: Icons.calendar_month_rounded,
+  GameIcon.sunMorning: Icons.wb_sunny_rounded,
+  GameIcon.moonNight: Icons.nightlight_round,
+  GameIcon.book: Icons.book_rounded,
   GameIcon.newspaper: Icons.article_rounded,
   GameIcon.headphones: Icons.headphones_rounded,
   GameIcon.sunsetAfternoon: Icons.wb_twilight_rounded,
@@ -124,8 +155,18 @@ class AppGameIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = _assetPath[icon];
     if (path != null) {
-      return Image.asset(path, width: size, height: size, fit: BoxFit.contain);
+      return Image.asset(
+        path,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => _buildFallbackIcon(),
+      );
     }
+    return _buildFallbackIcon();
+  }
+
+  Widget _buildFallbackIcon() {
     return Icon(
       _fallbackIcon[icon] ?? Icons.help_outline,
       size: size,

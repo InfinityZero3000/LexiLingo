@@ -150,7 +150,7 @@ void main() {
   });
 
   group('StreakEntity.isMilestone', () {
-    StreakEntity _entity(int streak) => StreakEntity(
+    StreakEntity entity(int streak) => StreakEntity(
           currentStreak: streak,
           longestStreak: streak,
           totalDaysActive: streak,
@@ -162,13 +162,13 @@ void main() {
 
     for (final days in [7, 14, 30, 60, 100, 365]) {
       test('returns true for $days days', () {
-        expect(_entity(days).isMilestone, isTrue);
+        expect(entity(days).isMilestone, isTrue);
       });
     }
 
     for (final days in [1, 6, 8, 29, 31, 101]) {
       test('returns false for $days days', () {
-        expect(_entity(days).isMilestone, isFalse);
+        expect(entity(days).isMilestone, isFalse);
       });
     }
   });
