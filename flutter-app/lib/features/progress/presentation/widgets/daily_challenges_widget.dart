@@ -59,7 +59,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
             onTap: () => _showChallengesSheet(context, provider),
             borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,18 +67,18 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: Colors.purple.shade100,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Icon(
                           Icons.star,
                           color: Colors.purple.shade700,
-                          size: 20,
+                          size: 16,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,6 +87,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                               'home.dailyChallenges'.tr(),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
+                                fontSize: 15,
                               ),
                             ),
                             Text(
@@ -96,9 +97,9 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                                   'total': '${provider.totalChallenges}',
                                 },
                               ),
-
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.grey,
+                                fontSize: 11,
                               ),
                             ),
                           ],
@@ -107,26 +108,26 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       // XP earned
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: 6,
+                          vertical: 3,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.amber.shade100,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.star,
-                              size: 12,
+                              size: 10,
                               color: Colors.amber.shade800,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: 3),
                             Text(
                               '+${provider.xpEarned} XP',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.amber.shade800,
                               ),
@@ -136,11 +137,11 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Progress bar
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(3),
                     child: LinearProgressIndicator(
                       value: provider.progress,
                       backgroundColor: AppColors.grey200,
@@ -149,15 +150,15 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                             ? AppColors.greenSuccessBright
                             : AppColors.purple,
                       ),
-                      minHeight: 8,
+                      minHeight: 5,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 10),
 
                   // Mini challenge list
                   ...provider.challenges.take(3).map((challenge) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 6),
                       child: _buildMiniChallenge(context, challenge, provider),
                     );
                   }),
@@ -165,16 +166,26 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   // View all button
                   if (provider.challenges.length > 3)
                     Center(
-                      child: TextButton(
-                        onPressed: () =>
-                            _showChallengesSheet(context, provider),
-                        child: Text(
-                          'home.viewAllChallenges'.tr(
-                            namedArgs: {
-                              'count': '${provider.challenges.length}',
-                            },
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: InkWell(
+                          onTap: () => _showChallengesSheet(context, provider),
+                          borderRadius: BorderRadius.circular(4),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                            child: Text(
+                              'home.viewAllChallenges'.tr(
+                                namedArgs: {
+                                  'count': '${provider.challenges.length}',
+                                },
+                              ),
+                              style: TextStyle(
+                                color: Colors.purple.shade600,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
-                          style: TextStyle(color: Colors.purple.shade600),
                         ),
                       ),
                     ),
@@ -197,10 +208,10 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
       children: [
         Icon(
           _getCategoryIcon(challenge.category),
-          size: 16,
+          size: 14,
           color: _getCategoryColor(challenge.category, isDark: isDark),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 6),
         Expanded(
           child: Text(
             challenge.title,
@@ -209,17 +220,18 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   ? TextDecoration.lineThrough
                   : null,
               color: challenge.isCompleted ? Colors.grey : null,
+              fontSize: 13,
             ),
           ),
         ),
         if (challenge.isCompleted)
-          Icon(Icons.check_circle, color: Colors.green.shade400, size: 20)
+          Icon(Icons.check_circle, color: Colors.green.shade400, size: 16)
         else
           Text(
             '${challenge.current}/${challenge.target}',
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+            ).textTheme.bodySmall?.copyWith(color: Colors.grey, fontSize: 11),
           ),
       ],
     );
