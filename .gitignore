@@ -140,12 +140,12 @@ backups/
 gateway/nginx/logs/*.log
 default.conf
 
-scripts/extracted_media
-scripts
-!ai-service/scripts/
-!ai-service/scripts/crawl_topic_knowledge.py
-!ai-service/scripts/generate_tracecag_topic_corpus.py
-!backend-service/scripts/
+# Root scripts data pipeline outputs and logs (tracked scripts are preserved)
+/scripts/data-pipeline/*/
+/scripts/data-pipeline/*.json
+/scripts/data-pipeline/*.txt
+/scripts/data-pipeline/*.log
+
 
 .understand-anything/
 
