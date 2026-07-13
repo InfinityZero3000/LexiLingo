@@ -6,48 +6,64 @@ Replace browser-generated research charts in the TRACE-CAG benchmark dashboard w
 
 ## Architecture
 
-Create a focused Python figure module beside the benchmark dashboard. It accepts the dashboard summary model as its only metric input and emits immutable figure artifacts plus a small manifest. Metric computation stays in the existing aggregation layer; the renderer only validates, formats, and plots supplied values.
+Create a focused Python figure module beside the benchmark dashboard. It accepts a versioned figure-summary contract as its only metric input and emits content-addressed figure artifacts plus a manifest. Metric computation stays in the aggregation layer. For rates, that layer supplies the point estimate, numerator, denominator, nullable Wilson bounds, and an explicit availability state; the renderer verifies and plots those values but never calculates metrics or confidence intervals.
 
 Matplotlib and Seaborn are the default plotting stack. Graphviz may be used for static architecture or routing diagrams when available, with a Matplotlib fallback so the dashboard does not require an external executable.
 
-For live runs, the dashboard server triggers a lightweight PNG render after five newly completed samples or after 30 seconds, whichever occurs first. Rendering is serialized and atomic: files are written to a temporary path and renamed only after a successful save. A failed render leaves the last valid image visible and reports the failure in dashboard status.
+For each `(run_id, stage_id)`, a completed sample is a sample recorded by the runner with its terminal observation set and included in a validated partial summary. Render when `completed_count - last_rendered_count >= 5`, or when that delta is positive and 30 seconds have elapsed since the first unrendered completion. The first four samples therefore render after at most 30 seconds. Arrivals during rendering are coalesced into one subsequent render. Rendering is serialized globally and never concurrent.
 
-At stage completion, the renderer additionally emits SVG and PDF publication artifacts. PNG output uses 300 DPI. The browser displays PNG through ordinary `img` elements and refreshes URLs using the figure manifest version, avoiding stale browser caches.
+With the current runner, only progress and timeline inputs are available before a report is aggregated. Those figures may update live immediately. Research figures update live only after the aggregation layer is extended to publish a validated partial summary containing the same fields as a final summary; otherwise their status remains `pending` and they update when the validated report appears. A partial summary carries explicit `run_id`, `stage_id`, `suite_id`, completed/target counts, and `partial=true`.
 
-## Figure set
+Successful validated report publication is the authoritative stage-completion signal. Only then does the renderer emit SVG and PDF publication artifacts. Failed or cancelled stages retain their last live PNG and never receive finalized formats. At startup, the server discovers validated completed reports and renders missing final artifacts. PNG output uses 300 DPI. The browser displays PNG through ordinary `img` elements and refreshes URLs using each figure's artifact version.
 
-The renderer covers the current research views:
+Artifacts use `<figure_id>.<artifact_version>.<format>`, where `artifact_version` is the first 16 hexadecimal characters of the SHA-256 digest of the figure input and renderer configuration. Each file is fully closed before a versioned manifest is atomically published last. A failure preserves the previous manifest and files. Superseded artifacts are retained for the current and previous manifest and cleaned on a later successful publication.
 
-- DriftBench route accuracy with Wilson 95% confidence intervals.
-- Unsafe acceptance with Wilson 95% confidence intervals.
-- Per-drift-type heatmap and breakdown.
-- Route confusion matrix and patch recall.
-- Exploratory threshold-sensitivity curves.
-- Public-QA quality, latency, and token-cost comparisons.
-- Quality-cost scatter and paired-delta forest plots.
-- Benchmark progress/timeline charts.
-- TRACE-CAG certificate and routing schematic.
+## Figure registry
 
-Missing or incomplete metrics produce a clearly labelled `Pending scheduled evaluation` panel. The renderer must not substitute values, combine suites, or infer missing results.
+The registry is code-owned and stable. Every entry declares its JSON inputs, suite scope, dimensions, eligibility, and pending rule.
+
+| Figure ID | Input and axes | Size | Eligibility |
+|---|---|---:|---|
+| `drift_route_accuracy` | methods: route-accuracy estimate and Wilson bounds; x=accuracy %, y=method | 7.2 x 4.2 in | partial or final DriftBench suite |
+| `drift_unsafe_acceptance` | methods: unsafe-acceptance estimate and Wilson bounds; x=rate %, y=method | 7.2 x 4.2 in | partial or final DriftBench suite |
+| `drift_type_heatmap` | method x drift type; cell=unsafe-acceptance % | 8.0 x 4.8 in | final, or validated partial with all requested cells |
+| `route_confusion_matrix` | rows=expected route, columns=actual route; cells=count, with a separately labelled row-normalized panel | 7.2 x 4.8 in | final DriftBench only |
+| `patch_recall` | eligible patch cases: true positives/eligible cases, estimate and Wilson bounds; x=recall %, y=method | 7.2 x 3.8 in | final DriftBench only |
+| `threshold_sensitivity` | supplied threshold series; x=threshold, y=route accuracy/unsafe acceptance; separate panels | 7.2 x 4.8 in | final sensitivity suite only |
+| `publicqa_quality` | x=F1/EM/R@5 %, grouped by method | 7.2 x 4.2 in | partial or final single Public-QA suite |
+| `publicqa_latency` | x=P95 wall-clock latency in ms, y=method | 7.2 x 4.2 in | final only; simulated cost excluded |
+| `publicqa_tokens` | effective prompt, saved prompt, completion tokens per sample; stacked x, y=method | 7.2 x 4.2 in | final only |
+| `quality_cost_scatter` | x=effective tokens/sample, y=F1 %, point=method | 7.2 x 4.8 in | final only |
+| `paired_delta_forest` | supplied paired mean delta and 95% CI; x=delta, y=comparison | 7.2 x 4.8 in | final only |
+| `run_progress` | x=elapsed wall time, y=completed sample count, line=stage | 7.2 x 3.8 in | live and final |
+| `tracecag_routing` | version-controlled routing/certificate node-edge specification | 7.2 x 4.8 in | static |
+
+Absent metrics are nullable and accompanied by `availability: pending|ready|invalid`; zero is always a legitimate value. Missing series produce a labelled `Pending scheduled evaluation` panel without placeholder numbers. Pending may be panel- or series-level as declared by the registry. The renderer must not substitute values, combine suites, or infer missing results.
+
+Suite identity is explicit: `driftbench_v2_smoke_24`, `driftbench_legacy_122`, `driftbench_v2_240`, or a named Public-QA/sensitivity suite. It is never inferred from `n`. A figure contains one suite unless its registry entry explicitly permits paired comparisons. Mixed input is rejected, the prior manifest remains published, and dashboard status reports the validation error.
 
 ## Research presentation standard
 
-All plots use a shared publication style: serif typography, color-blind-safe palette, restrained grid lines, explicit units, visible sample size, and captions that identify the confidence interval method. Axis limits are metric-aware and never visually exaggerate small differences. No 3D effects are allowed.
+All plots use Matplotlib's deterministic `Agg` backend and a pinned Matplotlib/Seaborn dependency range. They use an embedded or documented serif font with DejaVu Serif fallback, a color-blind-safe palette, restrained grid lines, explicit units, visible sample size, and captions that identify the confidence interval method. Vector output embeds fonts where the backend permits. Axis limits are metric-aware, declared in the registry, and never visually exaggerate small differences. Figures use `bbox_inches="tight"`; PNG uses the registry's physical size at 300 DPI. No 3D effects are allowed.
 
-Each render manifest records the figure ID, available formats, creation timestamp, source dataset hash, configuration hash, suite/sample count, metric name, confidence-interval method, and artifact checksum. This metadata makes dashboard figures traceable to benchmark inputs.
+Each manifest contains `schema_version`, `manifest_version`, and per-figure `artifact_version`, status, figure ID, formats, alt text, caption, creation timestamp, `run_id`, `stage_id`, `suite_id`, completed/target counts, renderer version, source dataset hash, configuration hash, metric, confidence-interval method, and SHA-256 checksum of exact artifact bytes. Dataset/config hashes are SHA-256 over canonical JSON (UTF-8, sorted keys, compact separators); the configuration payload explicitly includes model/provider, generation policy, evidence mode, seed, cache repeats, modes, and thresholds. `manifest_version` hashes the canonical list of figure entries and changes only after changed bytes are successfully published.
 
 ## Dashboard behavior
 
-Research chart containers become image components sourced from Python artifacts. Existing KPI text, progress state, runner controls, and logs remain HTML and continue updating through the existing event stream. JavaScript may refresh an image, download an existing artifact, or show its metadata; it must not contain chart geometry or metric formulas.
+Research chart containers become image components sourced from Python artifacts. `GET /api/figures` returns the manifest and render status; `GET /figures/<allowlisted-filename>` serves only manifest-listed files with the correct PNG/SVG/PDF content type, `ETag`, and immutable cache headers. Unknown files return 404 and traversal is rejected. The existing event stream emits a `figures_changed` event containing `manifest_version`; the browser refetches the manifest and uses `/figures/<filename>?v=<artifact_version>`.
 
-While a new image is rendering, the previous valid image remains displayed with a small updating indicator. If no valid artifact exists, the dashboard shows an accessible pending/error state. SVG and PDF download actions appear only when those finalized formats exist.
+Existing KPI text, progress state, runner controls, and logs remain HTML. KPI and research-table values come directly from Python summary fields. JavaScript may format supplied values, refresh/download an artifact, or show metadata; it performs no aggregation, CI calculation, scale calculation, chart geometry, or metric derivation. Existing client chart builders for bars, scatter, heatmap, stacked routes/tokens, forest plots, confusion matrices, and timelines are removed.
+
+While a new image is rendering, the previous valid image remains displayed with a small updating indicator. If no valid artifact exists, the dashboard shows an accessible pending/error state. Every image uses manifest-provided alt text/caption and fixed aspect-ratio dimensions to avoid layout shift. SVG and PDF download actions appear only when those finalized formats exist. A failed image request keeps the prior DOM image and exposes a retry action.
 
 ## Validation and tests
 
-Unit tests validate source-summary requirements, filenames, manifest metadata, pending panels, and atomic replacement. Figure tests use small deterministic fixtures and check that PNG, SVG, and PDF outputs are valid and non-empty. Contract tests ensure captions and displayed values match the input summary and that 24-, 122-, and 240-case suites cannot be mixed.
+Unit tests validate source-summary requirements, filenames, registry uniqueness, manifest metadata, pending panels, zero-versus-missing values, explicit suite isolation, canonical hash/checksum determinism, and manifest-last atomic replacement. Fake-clock tests cover the exact five-sample and 30-second boundaries, per-run/stage reset, run switching, arrivals during rendering, serialization, and coalescing. Lifecycle tests cover restart discovery, failed/cancelled stages, failed artifact or manifest saves, cleanup, and preservation of the prior version.
 
-Dashboard tests verify that research charts use image endpoints, cache-busting versions change after a render, incomplete renders preserve the previous image, and no browser-side chart builder remains. A browser smoke test confirms figures load and update during a simulated live benchmark.
+Figure tests use deterministic fixtures and structurally verify expected labels, units, sample sizes, CI method, point/error-bar counts, axis bounds, output dimensions, valid PNG/SVG/PDF structure, and manifest-to-file checksums. Contract tests ensure captions and displayed values match the input summary and that suite identities cannot be mixed.
+
+Dashboard/API tests cover content types, ETags/cache headers, unknown files, path traversal, status/error payloads, accessible alt text, pending/error states, finalized-button visibility, cache-busting only after successful publication, and absence of browser-side metric/geometry builders. Browser smoke tests cover live updates, image failure, and a manifest change during image load.
 
 ## Non-goals
 
-This change does not alter benchmark metrics, thresholds, model calls, dataset scheduling, or the paper's claims. Interactive tooltips and client-side chart manipulation are intentionally excluded; traceability and publication reproducibility take priority.
+This change does not alter benchmark metrics, thresholds, model calls, dataset scheduling, or the paper's claims. It may extend aggregation output with nullable values, counts, bounds, identity, and availability metadata, but may not change their meaning. Interactive tooltips and client-side chart manipulation are intentionally excluded; traceability and publication reproducibility take priority.
