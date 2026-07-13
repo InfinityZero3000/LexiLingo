@@ -18,7 +18,7 @@ SPEC.loader.exec_module(figures)
 
 
 EXPECTED = {
-    "drift_route_accuracy": ("metrics.methods[].route_accuracy", "driftbench", (7.2, 4.2), "rate_0_1"),
+    "drift_route_accuracy": ("metrics.methods[].route_accuracy", "driftbench", (9.6, 5.8), "rate_0_1"),
     "drift_unsafe_acceptance": ("metrics.methods[].unsafe_acceptance", "driftbench", (7.2, 4.2), "rate_0_1"),
     "drift_type_heatmap": ("metrics.methods[].drift_types.<drift_type>.unsafe_acceptance", "driftbench", (8.0, 4.8), "rate_0_1"),
     "route_confusion_matrix": ("metrics.methods[].route_confusion.{labels,counts}", "driftbench", (7.2, 4.8), "count_and_row_normalized"),
@@ -132,7 +132,7 @@ def test_publish_png_has_exact_pixels_checksum_and_manifest(tmp_path):
     assert entry["status"] == "ready" and path.exists()
     assert hashlib.sha256(path.read_bytes()).hexdigest() == artifact["sha256"]
     assert artifact["byte_size"] == path.stat().st_size and artifact["media_type"] == "image/png"
-    with Image.open(path) as image: assert image.size == (2160, 1260)
+    with Image.open(path) as image: assert image.size == (2880, 1740)
     assert figures.load_manifest(tmp_path)["manifest_version"] == manifest["manifest_version"]
 
 
