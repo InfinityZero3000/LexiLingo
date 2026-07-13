@@ -124,6 +124,8 @@ def test_figure_grid_aligns_cards_to_the_start_instead_of_stretching_them():
     assert ".figure-grid > .figure:only-child { grid-column: 1 / -1; }" in html
     assert ".figure-grid--paired-primary > .figure-card--primary { grid-column: auto; height: 100%; }" in html
     assert '<div class="figure-grid figure-grid--paired-primary"> ${pythonFigure("drift_route_accuracy", "Route accuracy by method")} ${pythonFigure("drift_unsafe_acceptance", "Unsafe acceptance by method")} </div>' in html
+    assert ".figure-grid--overview > .figure { grid-column: auto; height: 100%; }" in html
+    assert '<div class="figure-grid figure-grid--overview"> ${pythonFigure("drift_route_accuracy", "DriftBench route accuracy")} ${pythonFigure("quality_cost_scatter", "Public QA F1 vs token cost")} </div>' in html
     assert ".figure { overflow: hidden; margin: 0 0 var(--spacing-4); min-width: 0; align-self: start; }" in html
     assert 'role="group" aria-label="Download ${esc(title)} figure"' in dashboard.HTML
     assert "a.button { min-height: 44px; padding-inline: var(--spacing-3); }" in html
