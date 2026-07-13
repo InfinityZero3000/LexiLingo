@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import re
 import sys
 from pathlib import Path
 
@@ -14,6 +15,11 @@ assert SPEC and SPEC.loader
 dashboard = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = dashboard
 SPEC.loader.exec_module(dashboard)
+
+
+def _compact_html() -> str:
+    """Normalize whitespace without coupling layout tests to formatting."""
+    return re.sub(r"\s+", " ", dashboard.HTML)
 
 
 def _dashboard_summary(*, n_safe: int = 1) -> dict:
@@ -101,3 +107,55 @@ def test_manifest_signature_changes_when_benchmark_metrics_change(tmp_path, monk
 
     assert first["manifest_version"] != second["manifest_version"]
     assert len(calls) == 4
+
+
+def test_primary_research_figures_span_the_full_figure_grid():
+    html = _compact_html()
+
+    assert ".figure-card--primary { grid-column: 1 / -1; }" in html
+    assert 'new Set(["drift_route_accuracy", "drift_unsafe_acceptance", "route_confusion_matrix", "threshold_sensitivity"])' in html
+    assert 'primaryIds.has(id) ? "figure-card--primary" : "figure-card--secondary"' in html
+
+
+def test_figure_grid_aligns_cards_to_the_start_instead_of_stretching_them():
+    html = _compact_html()
+
+    assert ".figure-grid { align-items: start; }" in html
+    assert ".figure-grid > .figure:only-child { grid-column: 1 / -1; }" in html
+    assert ".figure { overflow: hidden; margin: 0 0 var(--spacing-4); min-width: 0; align-self: start; }" in html
+    assert 'role="group" aria-label="Download ${esc(title)} figure"' in dashboard.HTML
+    assert "a.button { min-height: 44px; padding-inline: var(--spacing-3); }" in html
+    stats_pair = '${pythonFigure("threshold_sensitivity", "Exploratory threshold sensitivity")} ${pythonFigure("paired_delta_forest", "Paired deltas with supplied 95% CI")}'
+    assert stats_pair in html
+
+
+def test_figure_chrome_uses_compact_tokenized_padding():
+    html = _compact_html()
+
+    assert "padding: var(--spacing-3) var(--spacing-4);" in html
+    assert ".figure-body { padding: var(--spacing-2); overflow-x: auto; }" in html
+    assert "figcaption { padding: var(--spacing-1) var(--spacing-4) var(--spacing-3);" in html
+
+
+def test_active_dashboard_section_is_centered_and_capped_at_1440_pixels():
+    html = _compact_html()
+
+    assert ".section { display: none; width: min(100%, 1440px); margin-inline: auto; }" in html
+
+
+def test_responsive_breakpoints_collapse_figure_grids_to_one_column():
+    html = _compact_html()
+
+    assert "@media (max-width: 1180px)" in html
+    assert ".grid2, .figure-grid { grid-template-columns: 1fr; }" in html
+    assert "@media (max-width: 760px)" in html
+    assert ".content { padding: var(--spacing-3); }" in html
+    assert ".figure-body { padding: var(--spacing-1); }" in html
+
+
+def test_python_figure_images_expose_intrinsic_dimensions_and_alt_text():
+    html = _compact_html()
+
+    assert "const width = Math.round(Number(entry.width_inches || 7.2) * Number(entry.dpi || 300));" in html
+    assert "const height = Math.round(Number(entry.height_inches || 4.2) * Number(entry.dpi || 300));" in html
+    assert '<img src="/figures/${esc(png.filename)}?v=${esc(entry.artifact_version)}" width="${width}" height="${height}" alt="${esc(entry.alt_text)}" loading="lazy">' in html

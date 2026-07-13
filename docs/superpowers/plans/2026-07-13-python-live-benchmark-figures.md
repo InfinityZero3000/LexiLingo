@@ -108,6 +108,18 @@
 
 ## Chunk 4: Image-only dashboard
 
+### Task 7A: Balance responsive research-card layout
+
+**Files:**
+- Modify: `ai-service/model-development/scripts/benchmark_dashboard.py`
+- Modify: `ai-service/tests/trace_cag/test_benchmark_dashboard_figures.py`
+
+- [ ] Add source/DOM assertions for a 12-column figure grid, full-width primary charts, equal secondary cards, compact padding, and one-column mobile behavior.
+- [ ] Implement semantic `figure-grid`, `figure-card--primary`, and `figure-card--secondary` layout classes with a centered 1440 px content canvas.
+- [ ] Reduce figure header/body/caption padding and style PNG/SVG/PDF actions as compact accessible controls.
+- [ ] Ensure image aspect ratio is preserved; secondary cards use equal `6/12` widths with `align-items: start` and independent content-driven heights.
+- [ ] Verify Overview, DriftBench, Public QA, and Statistics at desktop and mobile widths with browser screenshots.
+
 ### Task 7: Remove browser research-chart geometry
 
 **Files:**

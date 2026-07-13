@@ -131,6 +131,12 @@ Existing KPI text, progress state, runner controls, and logs remain HTML. KPI an
 
 While a new image is rendering, the previous valid image remains displayed with a small updating indicator. If no valid artifact exists, the dashboard shows an accessible pending/error state. Every image uses manifest-provided alt text/caption and fixed aspect-ratio dimensions to avoid layout shift. SVG and PDF download actions appear only when those finalized formats exist. A failed image request keeps the prior DOM image and exposes a retry action.
 
+### Responsive research-figure layout
+
+The dashboard uses a 12-column hierarchy rather than allowing arbitrary figure widths. Primary research figures—route accuracy, unsafe acceptance, confusion matrix, and threshold sensitivity—span all 12 columns. Compatible secondary Public-QA figures share equal `6/12` widths, but retain independent content-driven heights; grid rows use start alignment and never stretch a shorter card to match a taller sibling. Otherwise each figure spans the full row. Below 900 px every figure spans one column.
+
+The content canvas is centered with a 1440 px maximum width. Figure cards use compact 16 px body padding and 16–20 px header padding, with download actions styled as small controls rather than oversized text links. Images fill the available card width while preserving their intrinsic aspect ratio. Captions sit directly below the image with compact spacing. The Matplotlib canvas owns the scientific plot whitespace; the dashboard must not add large duplicate margins around it.
+
 ## Validation and tests
 
 Unit tests validate source-summary requirements, filenames, registry uniqueness, manifest metadata, pending panels, zero-versus-missing values, explicit suite isolation, canonical hash/checksum determinism, and manifest-last atomic replacement. Fake-clock tests cover the exact five-sample and 30-second boundaries, per-run/stage reset, run switching, arrivals during rendering, serialization, and coalescing. Lifecycle tests cover restart discovery, failed/cancelled stages, failed artifact or manifest saves, cleanup, and preservation of the prior version.
