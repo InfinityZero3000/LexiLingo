@@ -38,6 +38,78 @@ The registry is code-owned and stable. Every entry declares its JSON inputs, sui
 | `run_progress` | x=elapsed wall time, y=completed sample count, line=stage | 7.2 x 3.8 in | live and final |
 | `tracecag_routing` | version-controlled routing/certificate node-edge specification | 7.2 x 4.8 in | static |
 
+Rate axes are fixed to `[0, 1]` and formatted as percentages. Confusion-matrix color limits are `[0, max(cell_count)]`; its normalized panel is `[0, 1]`. Threshold x limits use the supplied tested minimum/maximum and rate y limits remain `[0, 1]`. Latency, token, progress, and elapsed-time axes start at zero and end at `1.05 * max`, falling back to `[0, 1]` when all values are zero. Forest limits are symmetric about zero at `1.10 * max(abs(ci_low), abs(ci_high))`, with a fallback of `[-1, 1]`.
+
+## Figure-summary contracts
+
+The aggregation boundary emits schema `tracecag.figure-summary.v1`. Required identity and provenance fields are:
+
+```json
+{
+  "schema_version": "tracecag.figure-summary.v1",
+  "run_id": "day-01-20260713T120000Z",
+  "stage_id": "full",
+  "suite_id": "driftbench_v2_smoke_24",
+  "partial": false,
+  "completed_count": 24,
+  "target_count": 24,
+  "dataset": {"id": "driftbench-v2", "revision": "v2", "rows_sha256": "..."},
+  "config": {
+    "model": "qwen/qwen3-32b", "provider": "groq", "generation_policy": "auto",
+    "evidence_mode": "candidate_pool", "seed": 42, "cache_repeats": 2,
+    "modes": ["trace_cag"], "route_threshold": null, "patch_threshold": null
+  },
+  "availability": "ready",
+  "metrics": {}
+}
+```
+
+All listed fields are required. Unknown/absent optional configuration values normalize to JSON `null`; arrays preserve semantically significant order; numbers use JSON numeric values, not formatted strings. `availability` is `pending`, `ready`, or `invalid` and includes `error` when invalid.
+
+Reusable metric objects have these exact shapes:
+
+```json
+{
+  "rate": {"estimate": 0.875, "numerator": 21, "denominator": 24, "ci_low": 0.69, "ci_high": 0.96, "ci_method": "wilson_95", "availability": "ready"},
+  "scalar": {"value": 1250.4, "unit": "ms", "availability": "ready"},
+  "paired_delta": {"label": "TRACE-CAG - baseline", "mean": 0.12, "ci_low": 0.03, "ci_high": 0.21, "n": 24, "p_value": 0.01, "availability": "ready"}
+}
+```
+
+Nullable numeric fields use `null`, never zero, for missing values. The exact registry paths are:
+
+- `drift_route_accuracy`: `metrics.methods[].route_accuracy` (rate object).
+- `drift_unsafe_acceptance`: `metrics.methods[].unsafe_acceptance` (rate object).
+- `drift_type_heatmap`: `metrics.methods[].drift_types.<drift_type>.unsafe_acceptance` (rate object).
+- `route_confusion_matrix`: `metrics.methods[].route_confusion.labels[]` and `counts[][]`.
+- `patch_recall`: `metrics.methods[].patch_recall` (rate object).
+- `threshold_sensitivity`: `metrics.thresholds[].{threshold,route_accuracy,unsafe_acceptance}`.
+- `publicqa_quality`: `metrics.methods[].quality.{f1,exact_match,recall_at_5}` (rate objects).
+- `publicqa_latency`: `metrics.methods[].latency.p95_wall_clock_ms` (scalar object).
+- `publicqa_tokens`: `metrics.methods[].tokens.{effective_prompt,saved_prompt,completion}_per_sample` (scalar objects).
+- `quality_cost_scatter`: the `f1` and `effective_prompt_per_sample` paths above.
+- `paired_delta_forest`: `metrics.paired_deltas[]` (paired-delta objects).
+- `run_progress`: the separate progress contract below.
+- `tracecag_routing`: `routing_spec.nodes[]` and `routing_spec.edges[]` from the version-controlled routing JSON.
+
+Each method object requires stable `method_id` and display `label`. Threshold entries require numeric `threshold` and the two rate objects. Confusion labels are route IDs; `counts` is a square non-negative integer matrix in the same row/column label order.
+
+Before a research partial summary exists, runner-log parsing emits a separate `tracecag.progress-summary.v1` contract:
+
+```json
+{
+  "schema_version": "tracecag.progress-summary.v1",
+  "run_id": "day-01-20260713T120000Z",
+  "stage_id": "full",
+  "suite_id": "hotpotqa_64",
+  "target_count": 64,
+  "observations": [{"sample_id": "hp-0001", "completed_at": "2026-07-13T12:01:02Z", "elapsed_seconds": 62.0, "completed_count": 1}],
+  "availability": "ready"
+}
+```
+
+An observation is valid only when the parser sees the runner's terminal sample marker, its `sample_id` is unique within `(run_id, stage_id)`, timestamps/counts are monotonic, and `completed_count <= target_count`. This validated observation count is authoritative for the live trigger and `run_progress`; a later research partial summary must match it before research figures become live-eligible.
+
 Absent metrics are nullable and accompanied by `availability: pending|ready|invalid`; zero is always a legitimate value. Missing series produce a labelled `Pending scheduled evaluation` panel without placeholder numbers. Pending may be panel- or series-level as declared by the registry. The renderer must not substitute values, combine suites, or infer missing results.
 
 Suite identity is explicit: `driftbench_v2_smoke_24`, `driftbench_legacy_122`, `driftbench_v2_240`, or a named Public-QA/sensitivity suite. It is never inferred from `n`. A figure contains one suite unless its registry entry explicitly permits paired comparisons. Mixed input is rejected, the prior manifest remains published, and dashboard status reports the validation error.
@@ -46,7 +118,9 @@ Suite identity is explicit: `driftbench_v2_smoke_24`, `driftbench_legacy_122`, `
 
 All plots use Matplotlib's deterministic `Agg` backend and a pinned Matplotlib/Seaborn dependency range. They use an embedded or documented serif font with DejaVu Serif fallback, a color-blind-safe palette, restrained grid lines, explicit units, visible sample size, and captions that identify the confidence interval method. Vector output embeds fonts where the backend permits. Axis limits are metric-aware, declared in the registry, and never visually exaggerate small differences. Figures use `bbox_inches="tight"`; PNG uses the registry's physical size at 300 DPI. No 3D effects are allowed.
 
-Each manifest contains `schema_version`, `manifest_version`, and per-figure `artifact_version`, status, figure ID, formats, alt text, caption, creation timestamp, `run_id`, `stage_id`, `suite_id`, completed/target counts, renderer version, source dataset hash, configuration hash, metric, confidence-interval method, and SHA-256 checksum of exact artifact bytes. Dataset/config hashes are SHA-256 over canonical JSON (UTF-8, sorted keys, compact separators); the configuration payload explicitly includes model/provider, generation policy, evidence mode, seed, cache repeats, modes, and thresholds. `manifest_version` hashes the canonical list of figure entries and changes only after changed bytes are successfully published.
+Each manifest contains `schema_version`, `manifest_version`, and per-figure `artifact_version`, status, figure ID, alt text, caption, creation timestamp, `run_id`, `stage_id`, `suite_id`, completed/target counts, renderer version, source dataset hash, configuration hash, metric, and confidence-interval method. Each figure has `artifacts`, keyed by `png`, `svg`, or `pdf`; every entry contains `format`, allowlisted `filename`, SHA-256 of exact bytes, `media_type`, and byte size.
+
+`source_dataset_hash` is SHA-256 of canonical JSON containing `{dataset_id, revision, rows}`, where `rows` are the exact normalized input rows sorted by stable row ID, excluding paths and mtimes. `configuration_hash` is SHA-256 of the required normalized `config` object shown above, including explicit nulls. `artifact_version` hashes canonical JSON containing the exact normalized figure input subtree, source/config hashes, renderer and style versions, dimensions, DPI, backend, and output formats. `manifest_version` hashes the canonical manifest entries excluding `created_at`, `manifest_version`, and transient render status; it changes only when published artifact bytes or stable metadata change.
 
 ## Dashboard behavior
 
