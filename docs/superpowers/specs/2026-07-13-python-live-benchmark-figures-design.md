@@ -53,7 +53,7 @@ The aggregation boundary emits schema `tracecag.figure-summary.v1`. Required ide
   "partial": false,
   "completed_count": 24,
   "target_count": 24,
-  "dataset": {"id": "driftbench-v2", "revision": "v2", "rows_sha256": "..."},
+  "dataset": {"id": "driftbench-v2", "revision": "v2", "source_dataset_hash": "..."},
   "config": {
     "model": "qwen/qwen3-32b", "provider": "groq", "generation_policy": "auto",
     "evidence_mode": "candidate_pool", "seed": 42, "cache_repeats": 2,
@@ -71,6 +71,7 @@ Reusable metric objects have these exact shapes:
 ```json
 {
   "rate": {"estimate": 0.875, "numerator": 21, "denominator": 24, "ci_low": 0.69, "ci_high": 0.96, "ci_method": "wilson_95", "availability": "ready"},
+  "bounded_mean": {"estimate": 0.62, "n": 64, "ci_low": 0.57, "ci_high": 0.67, "ci_method": "paired_bootstrap_95", "availability": "ready"},
   "scalar": {"value": 1250.4, "unit": "ms", "availability": "ready"},
   "paired_delta": {"label": "TRACE-CAG - baseline", "mean": 0.12, "ci_low": 0.03, "ci_high": 0.21, "n": 24, "p_value": 0.01, "availability": "ready"}
 }
@@ -84,7 +85,7 @@ Nullable numeric fields use `null`, never zero, for missing values. The exact re
 - `route_confusion_matrix`: `metrics.methods[].route_confusion.labels[]` and `counts[][]`.
 - `patch_recall`: `metrics.methods[].patch_recall` (rate object).
 - `threshold_sensitivity`: `metrics.thresholds[].{threshold,route_accuracy,unsafe_acceptance}`.
-- `publicqa_quality`: `metrics.methods[].quality.{f1,exact_match,recall_at_5}` (rate objects).
+- `publicqa_quality`: `metrics.methods[].quality.exact_match` (rate object) and `.quality.{f1,recall_at_5}` (bounded-mean objects). Bounded means may have nullable CI bounds with `ci_method: null` when the aggregator has not run a valid interval procedure; Wilson intervals are prohibited for them.
 - `publicqa_latency`: `metrics.methods[].latency.p95_wall_clock_ms` (scalar object).
 - `publicqa_tokens`: `metrics.methods[].tokens.{effective_prompt,saved_prompt,completion}_per_sample` (scalar objects).
 - `quality_cost_scatter`: the `f1` and `effective_prompt_per_sample` paths above.
@@ -116,11 +117,11 @@ Suite identity is explicit: `driftbench_v2_smoke_24`, `driftbench_legacy_122`, `
 
 ## Research presentation standard
 
-All plots use Matplotlib's deterministic `Agg` backend and a pinned Matplotlib/Seaborn dependency range. They use an embedded or documented serif font with DejaVu Serif fallback, a color-blind-safe palette, restrained grid lines, explicit units, visible sample size, and captions that identify the confidence interval method. Vector output embeds fonts where the backend permits. Axis limits are metric-aware, declared in the registry, and never visually exaggerate small differences. Figures use `bbox_inches="tight"`; PNG uses the registry's physical size at 300 DPI. No 3D effects are allowed.
+All plots use Matplotlib's deterministic `Agg` backend and a pinned Matplotlib/Seaborn dependency range. They use an embedded or documented serif font with DejaVu Serif fallback, a color-blind-safe palette, restrained grid lines, explicit units, visible sample size, and captions that identify the confidence interval method. Vector output embeds fonts where the backend permits. Axis limits are metric-aware, declared in the registry, and never visually exaggerate small differences. Figures use constrained layout without `bbox_inches="tight"`; PNG uses the registry's exact physical size at 300 DPI (for example, 7.2 x 4.2 inches produces 2160 x 1260 pixels). No 3D effects are allowed.
 
 Each manifest contains `schema_version`, `manifest_version`, and per-figure `artifact_version`, status, figure ID, alt text, caption, creation timestamp, `run_id`, `stage_id`, `suite_id`, completed/target counts, renderer version, source dataset hash, configuration hash, metric, and confidence-interval method. Each figure has `artifacts`, keyed by `png`, `svg`, or `pdf`; every entry contains `format`, allowlisted `filename`, SHA-256 of exact bytes, `media_type`, and byte size.
 
-`source_dataset_hash` is SHA-256 of canonical JSON containing `{dataset_id, revision, rows}`, where `rows` are the exact normalized input rows sorted by stable row ID, excluding paths and mtimes. `configuration_hash` is SHA-256 of the required normalized `config` object shown above, including explicit nulls. `artifact_version` hashes canonical JSON containing the exact normalized figure input subtree, source/config hashes, renderer and style versions, dimensions, DPI, backend, and output formats. `manifest_version` hashes the canonical manifest entries excluding `created_at`, `manifest_version`, and transient render status; it changes only when published artifact bytes or stable metadata change.
+The aggregation layer computes `dataset.source_dataset_hash` as SHA-256 of canonical JSON containing `{dataset_id, revision, rows}`, where `rows` are the exact normalized input rows sorted by stable row ID, excluding paths and mtimes. The renderer copies and validates this supplied digest; raw rows do not cross the figure-summary boundary. `configuration_hash` is SHA-256 of the required normalized `config` object shown above, including explicit nulls. `artifact_version` hashes canonical JSON containing the exact normalized figure input subtree, source/config hashes, renderer and style versions, dimensions, DPI, backend, and output formats. `manifest_version` hashes the canonical manifest entries excluding `created_at`, `manifest_version`, and transient render status; it changes only when published artifact bytes or stable metadata change.
 
 ## Dashboard behavior
 
