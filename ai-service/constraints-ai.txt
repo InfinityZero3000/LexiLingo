@@ -6,4 +6,4 @@ transformers==4.57.6
 sentence-transformers==4.1.0
 faster-whisper==1.2.1
 moonshine-voice==0.0.68
-sherpa-onnx==1.13.3
+sherpa-onnx==1.13.4
