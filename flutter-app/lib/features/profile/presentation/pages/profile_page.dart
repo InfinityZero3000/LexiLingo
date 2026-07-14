@@ -15,7 +15,6 @@ import 'package:lexilingo_app/features/profile/presentation/widgets/profile_page
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_page/weekly_activity_section.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
-import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -173,13 +172,10 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.mic_rounded, color: accent),
-            tooltip: 'voice.pronunciation'.tr(),
+            icon: Icon(Icons.science_rounded, color: accent),
+            tooltip: 'practiceLab.shortTitle'.tr(),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const VoicePracticeScreen()),
-              );
+              Navigator.pushNamed(context, '/practice-lab');
             },
           ),
           IconButton(

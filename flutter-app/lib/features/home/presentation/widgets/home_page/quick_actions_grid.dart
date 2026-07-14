@@ -13,7 +13,6 @@ class QuickActionsGrid extends StatelessWidget {
     final accent = AppColorRoles.primary(isDark);
     // Keep all dark-mode quick actions in a consistent neon range.
     const neonDarkActionColors = <Color>[
-      Color(0xFF00E5FF), // Practice Lab
       Color(0xFFFF3131), // YouTube
       Color(0xFFFC1AD3), // News
       Color(0xFFFFA319), // Games
@@ -24,43 +23,35 @@ class QuickActionsGrid extends StatelessWidget {
 
     final quickActions = [
       {
-        'icon': Icons.science_rounded,
-        'label': 'practiceLab.shortTitle',
-        'color': isDark ? neonDarkActionColors[0] : AppColors.primary,
-        'bgColor': (isDark ? neonDarkActionColors[0] : AppColors.primary)
-            .withValues(alpha: isDark ? 0.16 : 0.1),
-        'route': '/practice-lab',
-      },
-      {
         'icon': Icons.smart_display,
         'label': 'home.youtube',
-        'color': isDark ? neonDarkActionColors[1] : AppColors.dangerGradient[0],
+        'color': isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0],
         'bgColor':
-            (isDark ? neonDarkActionColors[1] : AppColors.dangerGradient[0])
+            (isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0])
                 .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/youtube',
       },
       {
         'icon': Icons.article,
         'label': 'home.news',
-        'color': isDark ? neonDarkActionColors[2] : AppColors.teal,
-        'bgColor': (isDark ? neonDarkActionColors[2] : AppColors.teal)
+        'color': isDark ? neonDarkActionColors[1] : AppColors.teal,
+        'bgColor': (isDark ? neonDarkActionColors[1] : AppColors.teal)
             .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/news',
       },
       {
         'icon': Icons.sports_esports,
         'label': 'home.games',
-        'color': isDark ? neonDarkActionColors[3] : AppColors.purple,
-        'bgColor': (isDark ? neonDarkActionColors[3] : AppColors.purple)
+        'color': isDark ? neonDarkActionColors[2] : AppColors.purple,
+        'bgColor': (isDark ? neonDarkActionColors[2] : AppColors.purple)
             .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/games',
       },
       {
         'icon': Icons.podcasts,
         'label': 'home.podcast',
-        'color': isDark ? neonDarkActionColors[4] : accent,
-        'bgColor': (isDark ? neonDarkActionColors[4] : accent).withValues(
+        'color': isDark ? neonDarkActionColors[3] : accent,
+        'bgColor': (isDark ? neonDarkActionColors[3] : accent).withValues(
           alpha: isDark ? 0.16 : 0.12,
         ),
         'route': '/podcast',
@@ -68,16 +59,16 @@ class QuickActionsGrid extends StatelessWidget {
       {
         'icon': Icons.menu_book_rounded,
         'label': 'home.books',
-        'color': isDark ? neonDarkActionColors[5] : AppColors.purpleLight,
-        'bgColor': (isDark ? neonDarkActionColors[5] : AppColors.purple)
+        'color': isDark ? neonDarkActionColors[4] : AppColors.purpleLight,
+        'bgColor': (isDark ? neonDarkActionColors[4] : AppColors.purple)
             .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/books',
       },
       {
         'icon': Icons.style,
         'label': 'home.vocabulary',
-        'color': isDark ? neonDarkActionColors[6] : AppColors.orange,
-        'bgColor': (isDark ? neonDarkActionColors[6] : AppColors.warning)
+        'color': isDark ? neonDarkActionColors[5] : AppColors.orange,
+        'bgColor': (isDark ? neonDarkActionColors[5] : AppColors.warning)
             .withValues(alpha: isDark ? 0.16 : 0.1),
         'route': '/vocab',
       },
