@@ -214,3 +214,56 @@ class TestGenerateNode:
             result = await generate_node(state_with_errors)
 
             assert "models_used" in result
+
+    @pytest.mark.asyncio
+    async def test_generate_uses_topic_system_prompt(self, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        captured_payloads = []
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": "May I see your passport?"}}],
+            "usage": {"total_tokens": 50},
+        }
+
+        async def fake_post_json(**kwargs):
+            captured_payloads.append(kwargs["payload"])
+            return mock_resp
+
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.setattr(
+            "api.core.groq_key_pool.get_available_groq_key",
+            AsyncMock(return_value="groq-key"),
+        )
+        monkeypatch.setattr(
+            "api.core.groq_key_pool.record_groq_key_usage",
+            AsyncMock(),
+        )
+        monkeypatch.setattr(
+            "api.services.trace_cag.generate._throttled_post_json",
+            fake_post_json,
+        )
+
+        from api.services.trace_cag.generate import generate_node
+
+        await generate_node(
+            {
+                "user_input": "I need check in.",
+                "session_id": "sess-1",
+                "learner_profile": {"level": "A2"},
+                "conversation_history": [],
+                "diagnosis_errors": [],
+                "diagnosis_intent": "correct",
+                "fluency_score": 0.9,
+                "grammar_score": 0.9,
+                "vocabulary_level": "A2",
+                "retrieved_context": "",
+                "topic_system_prompt": "You are Sarah, an airport check-in agent.",
+                "cache_policy": "off",
+            }
+        )
+
+        system_prompt = captured_payloads[0]["messages"][0]["content"]
+        assert "You are Sarah, an airport check-in agent." in system_prompt
+        assert "You are Lexi" not in system_prompt

@@ -235,6 +235,10 @@ services:
       FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-}
+      LEARNER_STATE_ENABLED: ${LEARNER_STATE_ENABLED:-false}
+      LEARNER_STATE_INTERNAL_TOKEN: ${LEARNER_STATE_INTERNAL_TOKEN:-}
+      LEARNER_STATE_INTERNAL_AUDIENCE: lexilingo-backend
+      LEARNER_STATE_OUTBOX_BATCH_SIZE: ${LEARNER_STATE_OUTBOX_BATCH_SIZE:-100}
     depends_on:
       postgres:
         condition: service_healthy
@@ -321,8 +325,9 @@ services:
     environment:
       ENVIRONMENT: development
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      AI_ADMIN_API_KEY: ${AI_ADMIN_API_KEY:?Set AI_ADMIN_API_KEY in .env}
       MONGODB_URI: mongodb://mongodb:27017
-      MONGODB_DB_NAME: lexilingo
+      MONGODB_DATABASE: lexilingo
       REDIS_HOST: redis-ai
       REDIS_PORT: 6379
       REDIS_PASSWORD: ""
@@ -331,6 +336,11 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       DEBUG: ${DEBUG:-false}
+      LEARNER_STATE_MODE: ${LEARNER_STATE_MODE:-off}
+      LEARNER_STATE_API_URL: http://backend-service:8000/api/v1/internal
+      LEARNER_STATE_INTERNAL_TOKEN: ${LEARNER_STATE_INTERNAL_TOKEN:-}
+      LEARNER_STATE_INTERNAL_AUDIENCE: lexilingo-backend
+      KUZU_USER_MASTERY_WRITES_ENABLED: ${KUZU_USER_MASTERY_WRITES_ENABLED:-true}
     depends_on:
       mongodb:
         condition: service_healthy

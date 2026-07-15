@@ -299,6 +299,7 @@ class OllamaQwenHandler:
             full_messages.extend(messages_list)
         else:
             full_messages = messages_list
+        full_messages = self._apply_no_think(full_messages, self.config.model)
         
         payload = {
             "model": self.config.model,

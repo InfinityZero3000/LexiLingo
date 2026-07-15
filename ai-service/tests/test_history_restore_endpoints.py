@@ -15,6 +15,9 @@ from api.core.auth import AuthenticatedUser
 def mock_chat_db():
     db = MagicMock()
 
+    chat_sessions = MagicMock()
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "chat_s1", "user_id": "u1"})
+
     chat_messages = MagicMock()
     cursor = MagicMock()
     cursor.sort.return_value = cursor
@@ -23,6 +26,8 @@ def mock_chat_db():
     chat_messages.find.return_value = cursor
 
     def get_collection(name):
+        if name == "chat_sessions":
+            return chat_sessions
         if name == "chat_messages":
             return chat_messages
         return AsyncMock()
@@ -109,6 +114,7 @@ async def test_chat_messages_limit_positive_uses_limit_cursor(mock_chat_db):
         session_id="chat_s1",
         limit=1,
         db=mock_chat_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert len(result) == 1

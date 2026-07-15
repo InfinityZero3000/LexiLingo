@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import hmac
 import json
 import logging
 import re
@@ -24,8 +25,16 @@ from typing import Any, Dict, Mapping, Optional, Sequence
 
 from api.services.trace_cag.state import (
     TraceCAGState, CacheFingerprint, CacheEntry, BucketVersionRecord,
+    CacheAdmissibilityCertificate,
 )
-from api.services.trace_cag.l1_state_cache import L1Candidate, L1Request, decide_l1_reuse
+from api.core.config import settings
+from api.services.trace_cag.l1_state_cache import (
+    BASE_REQUIRED_DIMENSIONS,
+    CERTIFICATE_SCHEMA_VERSION,
+    L1Candidate,
+    L1Request,
+    decide_l1_reuse,
+)
 from api.services.trace_cag.env_helpers import _env_float
 from api.services.trace_cag.kg_utils import _cefr_distance
 
@@ -164,6 +173,85 @@ def _build_fingerprint(state: TraceCAGState) -> CacheFingerprint:
     )
 
 
+def _build_admissibility_certificate(
+    *,
+    state: TraceCAGState,
+    fingerprint: CacheFingerprint,
+    profile_epoch: int,
+    state_hints: Mapping[str, Any],
+    now: float,
+) -> CacheAdmissibilityCertificate:
+    """Build the reusable artifact contract checked before cache reuse."""
+    retrieval_meta = state.get("retrieval_meta") or {}
+    # Store concepts in the same signature space used by the request-side
+    # verifier.  Mixing lightweight fingerprint tokens with the richer L1
+    # signature made identical requests fail the concept-overlap hard gate.
+    concepts = state_hints.get("concepts") or _l1_signature_concepts(
+        state.get("user_input", ""), fingerprint
+    )
+    relation_path = state_hints.get("relation_path")
+    if not relation_path:
+        relation_hints = _canonical_relation_hints(state.get("user_input", ""))
+        relation_path = next(iter(relation_hints), "")
+
+    required_dimensions = set(BASE_REQUIRED_DIMENSIONS)
+    dependencies = {
+        "evidence_hash": state_hints.get("evidence_hash") or retrieval_meta.get("evidence_hash"),
+        "source_version": state_hints.get("source_version") or retrieval_meta.get("source_version"),
+        "freshness_class": state_hints.get("freshness_class") or retrieval_meta.get("freshness_class"),
+        "relation_path": relation_path,
+        "native_language": fingerprint.get("native_language"),
+    }
+    required_dimensions.update(name for name, value in dependencies.items() if value not in (None, "", [], set()))
+
+    return CacheAdmissibilityCertificate(
+        schema_version=CERTIFICATE_SCHEMA_VERSION,
+        required_dimensions=sorted(required_dimensions),
+        query_norm=str(fingerprint.get("query_norm") or ""),
+        intent=str(state_hints.get("intent") or fingerprint.get("intent") or ""),
+        level=str(fingerprint.get("level") or ""),
+        native_language=str(fingerprint.get("native_language") or ""),
+        profile_epoch=_hint_profile_epoch(state_hints, profile_epoch),
+        policy_version=str(state_hints.get("policy_version") or f"policy_v{_POLICY_VERSION}"),
+        kg_version=str(state_hints.get("kg_version") or f"kg_schema_v{_GRAPH_SCHEMA_VERSION}"),
+        evidence_hash=str(state_hints.get("evidence_hash") or retrieval_meta.get("evidence_hash") or ""),
+        source_version=str(state_hints.get("source_version") or retrieval_meta.get("source_version") or ""),
+        freshness_class=str(state_hints.get("freshness_class") or retrieval_meta.get("freshness_class") or ""),
+        answer_target=str(state_hints.get("answer_target") or _answer_target_hint(state.get("user_input", ""))),
+        relation_path=str(relation_path or ""),
+        concepts=[str(item) for item in concepts],
+        graph_fingerprint=str(state_hints.get("graph_fingerprint") or retrieval_meta.get("graph_fingerprint") or ""),
+        patchable_slots=[str(item) for item in (state_hints.get("patchable_slots") or [])],
+        created_at=now,
+    )
+
+
+def _certificate_from_entry(entry: CacheEntry) -> Mapping[str, Any]:
+    cert = entry.get("admissibility_certificate") or {}
+    if cert:
+        return cert
+    fp = entry.get("fingerprint") or {}
+    execution_plan = entry.get("execution_plan") or {}
+    state_hints = execution_plan.get("benchmark_state") or {}
+    return {
+        "schema_version": 1,
+        "required_dimensions": [],
+        "query_norm": fp.get("query_norm") or "",
+        "intent": state_hints.get("intent") or fp.get("intent") or "",
+        "level": fp.get("level") or "",
+        "native_language": fp.get("native_language") or "",
+        "profile_epoch": _hint_profile_epoch(state_hints, 0),
+        "policy_version": state_hints.get("policy_version") or "",
+        "kg_version": state_hints.get("kg_version") or "",
+        "evidence_hash": state_hints.get("evidence_hash") or _evidence_dependency_hash(entry),
+        "source_version": state_hints.get("source_version") or "",
+        "freshness_class": state_hints.get("freshness_class") or "",
+        "answer_target": state_hints.get("answer_target") or "",
+        "relation_path": state_hints.get("relation_path") or "",
+        "concepts": state_hints.get("concepts") or fp.get("root_concepts") or [],
+    }
+
+
 def _l1_signature_concepts(user_input: str, fingerprint: Mapping[str, Any]) -> set[str]:
     raw_concepts = {str(concept) for concept in (fingerprint.get("root_concepts") or [])}
     concepts = {concept for concept in raw_concepts if not concept.startswith("token:")}
@@ -204,6 +292,21 @@ def _build_l1_request_signature(
     conversation_history: list[dict[str, Any]],
     state_hints: Mapping[str, Any] | None = None,
 ) -> L1Request:
+    hints = state_hints or {}
+    # Certificates store one deterministic coarse relation path.  Compare the
+    # request in the same representation; otherwise an identical query with
+    # multiple lexical cues (e.g. author + time_order) rejects its own entry.
+    primary_relation = _canonical_relation_hints(user_input)
+    required_dimensions = set(BASE_REQUIRED_DIMENSIONS)
+    required_dimensions.update(
+        name for name, value in {
+            "evidence_hash": hints.get("evidence_hash"),
+            "source_version": hints.get("source_version"),
+            "freshness_class": hints.get("freshness_class"),
+            "relation_path": hints.get("relation_path") or primary_relation,
+            "native_language": fingerprint.get("native_language"),
+        }.items() if value not in (None, "", [], set())
+    )
     request = L1Request(
         query_norm=normalized,
         intent=intent_hint,
@@ -213,11 +316,16 @@ def _build_l1_request_signature(
         concepts=_l1_signature_concepts(user_input, fingerprint),
         entities=_extract_l1_entities(user_input),
         answer_target=_answer_target_hint(user_input),
-        relation_hints=_relation_hints(user_input),
+        relation_hints=primary_relation,
         evidence_hash="",
+        policy_version=f"policy_v{_POLICY_VERSION}",
+        kg_version=f"kg_schema_v{_GRAPH_SCHEMA_VERSION}",
+        source_version="",
+        freshness_class="",
         native_language=str(fingerprint.get("native_language") or ""),
+        schema_version=CERTIFICATE_SCHEMA_VERSION,
+        required_dimensions=required_dimensions,
     )
-    hints = state_hints or {}
     return replace(
         request,
         intent=str(hints.get("intent") or request.intent),
@@ -226,6 +334,10 @@ def _build_l1_request_signature(
         answer_target=str(hints.get("answer_target") or request.answer_target),
         relation_hints={str(item) for item in ([hints.get("relation_path")] if hints.get("relation_path") else request.relation_hints)},
         evidence_hash=str(hints.get("evidence_hash") or ""),
+        policy_version=str(hints.get("policy_version") or request.policy_version),
+        kg_version=str(hints.get("kg_version") or request.kg_version),
+        source_version=str(hints.get("source_version") or request.source_version),
+        freshness_class=str(hints.get("freshness_class") or request.freshness_class),
     )
 
 
@@ -247,7 +359,8 @@ def _build_l1_candidate_signature(
     current_profile: Mapping[str, Any],
 ) -> L1Candidate:
     candidate_fp = entry.get("fingerprint") or {}
-    candidate_query = str(candidate_fp.get("query_norm") or "").strip().lower()
+    certificate = _certificate_from_entry(entry)
+    candidate_query = str(certificate.get("query_norm") or candidate_fp.get("query_norm") or "").strip().lower()
     candidate_profile = entry.get("profile_snapshot") or dict(current_profile)
     candidate_level = str(
         candidate_fp.get("level")
@@ -261,16 +374,22 @@ def _build_l1_candidate_signature(
     candidate = L1Candidate(
         cache_key=cache_key,
         query_norm=candidate_query,
-        intent=candidate_intent,
-        level=candidate_level,
-        profile_epoch=_profile_epoch(candidate_profile if isinstance(candidate_profile, Mapping) else current_profile),
+        intent=str(certificate.get("intent") or candidate_intent),
+        level=str(certificate.get("level") or candidate_level),
+        profile_epoch=int(certificate.get("profile_epoch") or _profile_epoch(candidate_profile if isinstance(candidate_profile, Mapping) else current_profile)),
         session_turn=int(candidate_fp.get("session_turn") or 0),
-        concepts=_l1_signature_concepts(candidate_query, candidate_fp),
+        concepts={str(item) for item in (certificate.get("concepts") or [])} or _l1_signature_concepts(candidate_query, candidate_fp),
         entities=_extract_l1_entities(candidate_query),
-        answer_target=_answer_target_hint(candidate_query),
-        relation_hints=_relation_hints(candidate_query),
-        evidence_hash=_evidence_dependency_hash(entry),
-        native_language=str(candidate_fp.get("native_language") or ""),
+        answer_target=str(certificate.get("answer_target") or _answer_target_hint(candidate_query)),
+        relation_hints={str(certificate.get("relation_path"))} if certificate.get("relation_path") else _canonical_relation_hints(candidate_query),
+        evidence_hash=str(certificate.get("evidence_hash") or _evidence_dependency_hash(entry)),
+        policy_version=str(certificate.get("policy_version") or ""),
+        kg_version=str(certificate.get("kg_version") or ""),
+        source_version=str(certificate.get("source_version") or ""),
+        freshness_class=str(certificate.get("freshness_class") or ""),
+        native_language=str(certificate.get("native_language") or candidate_fp.get("native_language") or ""),
+        schema_version=int(certificate.get("schema_version") or 1),
+        required_dimensions={str(item) for item in (certificate.get("required_dimensions") or [])},
         created_at=float(entry.get("created_at") or time.time()),
         ttl=int(entry.get("ttl") or 3600),
     )
@@ -282,6 +401,10 @@ def _build_l1_candidate_signature(
         answer_target=str(state_hints.get("answer_target") or candidate.answer_target),
         relation_hints={str(item) for item in ([state_hints.get("relation_path")] if state_hints.get("relation_path") else candidate.relation_hints)},
         evidence_hash=str(state_hints.get("evidence_hash") or candidate.evidence_hash),
+        policy_version=str(state_hints.get("policy_version") or candidate.policy_version),
+        kg_version=str(state_hints.get("kg_version") or candidate.kg_version),
+        source_version=str(state_hints.get("source_version") or candidate.source_version),
+        freshness_class=str(state_hints.get("freshness_class") or candidate.freshness_class),
     )
 
 
@@ -308,6 +431,17 @@ def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
         response += f"\n\n(Also related: {extras})"
 
     return response
+
+
+def _patch_allowed(entry: CacheEntry, fingerprint: CacheFingerprint) -> bool:
+    """Permit patching only for explicitly declared non-factual slots."""
+    declared = {str(item) for item in (_certificate_from_entry(entry).get("patchable_slots") or [])}
+    cached = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
+    current = set(fingerprint.get("root_concepts") or [])
+    changed = {"concepts"} if cached != current else set()
+    if (entry.get("fingerprint") or {}).get("query_norm") != fingerprint.get("query_norm"):
+        changed.add("query")
+    return bool(changed) and changed.issubset(declared)
 
 
 def _concept_overlap_score(current: CacheFingerprint, candidate: CacheEntry) -> float:
@@ -526,6 +660,12 @@ def _relation_hints(user_input: str) -> set[str]:
     return hints
 
 
+def _canonical_relation_hints(user_input: str) -> set[str]:
+    """Encode the complete relation set as one deterministic certificate value."""
+    hints = _relation_hints(user_input)
+    return {"|".join(sorted(hints))} if hints else set()
+
+
 def _infer_intent_pre_diagnosis(user_input: str) -> str:
     text = (user_input or "").lower()
     if any(token in text for token in ["why", "explain", "what does", "how does"]):
@@ -580,8 +720,24 @@ def _profile_epoch(profile: Mapping[str, Any]) -> int:
     vocabulary_count = int(profile.get("vocabulary_count") or 0)
     common_errors = profile.get("common_errors") or []
     error_bucket = len(common_errors) // 2 if isinstance(common_errors, list) else 0
-    key = f"{level}|{sessions_completed // 3}|{vocabulary_count // 200}|{error_bucket}"
+    learner_state_epoch = int(profile.get("_learner_state_epoch") or 0)
+    key = (
+        f"{level}|{sessions_completed // 3}|{vocabulary_count // 200}|"
+        f"{error_bucket}|{learner_state_epoch}"
+    )
     return int(hashlib.md5(key.encode()).hexdigest()[:8], 16)
+
+
+def _user_cache_scope(state: Mapping[str, Any]) -> str:
+    """Non-reversible scope for personalized response caches only."""
+    if settings.LEARNER_STATE_MODE == "off" or not state.get("user_id"):
+        return ""
+    secret = settings.SECRET_KEY or settings.LEARNER_STATE_INTERNAL_TOKEN
+    if not secret:
+        return "unavailable"
+    return hmac.new(
+        secret.encode(), str(state["user_id"]).encode(), hashlib.sha256
+    ).hexdigest()[:24]
 
 
 def _build_graph_bucket(
@@ -744,6 +900,7 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
         raw = json.loads(cached_json)
         entry: CacheEntry = {
             "fingerprint": raw.get("fingerprint", {"level": level}),
+            "admissibility_certificate": raw.get("admissibility_certificate", {}),
             "graph_bucket": raw.get("graph_bucket", ""),
             "profile_snapshot": raw.get("profile_snapshot", {}),
             "response": raw.get("response", raw.get("tutor_response", "")),
@@ -785,12 +942,25 @@ async def _write_cache_entry(
     state_hints = (state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}
     intent_hint = str(state_hints.get("intent") or state.get("diagnosis_intent") or _infer_intent_pre_diagnosis(user_input))
     profile_epoch = _profile_epoch(learner_profile)
+    if (
+        settings.LEARNER_STATE_MODE != "off"
+        and state.get("user_id")
+        and not learner_profile.get("_learner_state_available")
+    ):
+        logger.debug("[_write_cache_entry] Skip personalized cache: learner epoch unavailable")
+        return
+    user_scope = _user_cache_scope(state)
+    scoped_input = f"{user_scope}:{user_input}" if user_scope else user_input
 
     normalized = user_input.strip().lower()
-    cache_raw = f"{normalized}||{level}"
+    cache_raw = (
+        f"{user_scope}||{normalized}||{level}"
+        if user_scope
+        else f"{normalized}||{level}"
+    )
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
     graph_bucket = _build_graph_bucket(
-        user_input,
+        scoped_input,
         level,
         intent_hint,
         profile_epoch,
@@ -809,8 +979,18 @@ async def _write_cache_entry(
     ]
     retrieval_trace = list(state.get("retrieval_trace") or [])[:8]
 
+    fingerprint = _build_fingerprint(state)
+    certificate = _build_admissibility_certificate(
+        state=state,
+        fingerprint=fingerprint,
+        profile_epoch=profile_epoch,
+        state_hints=state_hints,
+        now=now,
+    )
+
     entry = CacheEntry(
-        fingerprint=_build_fingerprint(state),
+        fingerprint=fingerprint,
+        admissibility_certificate=certificate,
         graph_bucket=graph_bucket,
         profile_snapshot=dict(state.get("learner_profile", {})),
         response=response,
@@ -846,7 +1026,7 @@ async def _write_cache_entry(
 
     if _is_pcc_stable(state):
         buckets = _register_l1_bucket_aliases(
-            user_input,
+            scoped_input,
             level,
             intent_hint,
             profile_epoch,
@@ -868,7 +1048,7 @@ async def _write_cache_entry(
         await redis_client.set(f"v1:resp:{cache_key}", json.dumps(entry), ex=ttl)
         if should_promote_l1:
             for alias in _build_l1_bucket_aliases(
-                user_input,
+                scoped_input,
                 level,
                 intent_hint,
                 profile_epoch,
@@ -924,8 +1104,26 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     intent_hint = _infer_intent_pre_diagnosis(user_input)
     benchmark_task = state.get("benchmark_task") or ""
     profile_epoch = _profile_epoch(learner_profile)
-    bucket = _build_graph_bucket(user_input, level, intent_hint, profile_epoch, conversation_history)
-    l1_buckets = _build_l1_bucket_aliases(user_input, level, intent_hint, profile_epoch, conversation_history)
+    if (
+        settings.LEARNER_STATE_MODE != "off"
+        and state.get("user_id")
+        and not learner_profile.get("_learner_state_available")
+    ):
+        return {
+            "cache_hit": False,
+            "cache_decision": "full",
+            "reuse_risk": 1.0,
+            "path": "slow",
+            "cache_gate_meta": {
+                "pcc_passed": False,
+                "reasons": ["learner_epoch_unavailable"],
+                "risk": 1.0,
+            },
+        }
+    user_scope = _user_cache_scope(state)
+    scoped_input = f"{user_scope}:{user_input}" if user_scope else user_input
+    bucket = _build_graph_bucket(scoped_input, level, intent_hint, profile_epoch, conversation_history)
+    l1_buckets = _build_l1_bucket_aliases(scoped_input, level, intent_hint, profile_epoch, conversation_history)
 
     native_language = learner_profile.get("native_language", "Vietnamese")
     fingerprint = CacheFingerprint(
@@ -939,6 +1137,13 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
 
     benchmark_metadata = state.get("benchmark_metadata") or {}
     state_hints = benchmark_metadata.get("_tracecag_state") or {}
+    request_certificate = _build_admissibility_certificate(
+        state=state,
+        fingerprint=fingerprint,
+        profile_epoch=profile_epoch,
+        state_hints=state_hints,
+        now=time.time(),
+    )
     benchmark_mode = str(benchmark_metadata.get("_benchmark_mode") or "").strip().lower()
     adaptive_choice = _choose_adaptive_profile(
         state=state,
@@ -987,13 +1192,35 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             "tau_patch": tau_patch,
             "routing_latency_ms": (time.perf_counter() - routing_started) * 1000.0,
             "request_state": dict(state_hints),
+            "admissibility_certificate": dict(request_certificate),
         }
+        try:
+            from api.services.telemetry import get_telemetry
+
+            decision = str(merged.get("cache_decision") or "full")
+            telemetry = get_telemetry()
+            telemetry.increment_counter("tracecag_personalized_cache_decision_total")
+            telemetry.record_metric(
+                "tracecag_personalized_cache_decision",
+                1,
+                unit="count",
+                tags={"decision": decision},
+            )
+        except Exception:
+            pass
         return _with_adaptive(merged)
 
     normalized = user_input.strip().lower()
-    cache_raw = f"{normalized}||{level}"
+    cache_raw = (
+        f"{user_scope}||{normalized}||{level}"
+        if user_scope
+        else f"{normalized}||{level}"
+    )
     cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
     l1_request = _build_l1_request_signature(
+        # The user-scope HMAC belongs in cache keys/buckets only.  Feeding it
+        # to semantic extractors creates a synthetic entity and makes an
+        # identical personalized request diverge from its stored certificate.
         user_input=user_input,
         normalized=normalized,
         fingerprint=fingerprint,
@@ -1017,26 +1244,23 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     if entry:
         rho = _compute_reuse_risk(fingerprint, entry, now)
 
-        l0_safe = True
-        l0_reasons: tuple[str, ...] = ("exact_key_match",)
-        if state_hints:
-            l0_candidate = _build_l1_candidate_signature(
-                cache_key=cache_key,
-                entry=entry,
-                current_level=level,
-                current_profile=learner_profile,
-            )
-            l0_certificate = decide_l1_reuse(
-                l1_request,
-                l0_candidate,
-                now=now,
-                tau_reuse=tau_reuse,
-                tau_patch=tau_patch,
-            )
-            l0_safe = l0_certificate.safe_to_reuse
-            l0_reasons = l0_certificate.reasons
-            if not l0_safe:
-                best_rejection = (l0_certificate.risk, l0_certificate.reasons)
+        l0_candidate = _build_l1_candidate_signature(
+            cache_key=cache_key,
+            entry=entry,
+            current_level=level,
+            current_profile=learner_profile,
+        )
+        l0_certificate = decide_l1_reuse(
+            l1_request,
+            l0_candidate,
+            now=now,
+            tau_reuse=tau_reuse,
+            tau_patch=tau_patch,
+        )
+        l0_safe = l0_certificate.safe_to_reuse
+        l0_reasons = l0_certificate.reasons
+        if not l0_safe:
+            best_rejection = (l0_certificate.risk, l0_certificate.reasons)
 
         logger.info(f"[cache_gate_node] L0 HIT key={cache_key[:8]} ρ={rho:.3f} safe={l0_safe}")
 
@@ -1063,7 +1287,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
                 "tokens_saved": 650 + len(_resp_text) // 4,
                 "models_used": ["rapid_reuse_l0"],
             }, pcc_passed=True, reasons=l0_reasons, risk=rho)
-        elif l0_safe and rho <= tau_patch:
+        elif l0_safe and rho <= tau_patch and _patch_allowed(entry, fingerprint):
             patched = _patch_response(entry, fingerprint)
             return _with_gate_meta({
                 "cache_hit": True,
@@ -1139,6 +1363,9 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
                 f"[cache_gate_node] L1 reject key={candidate_key[:8]} "
                 f"reasons={','.join(decision.reasons)}"
             )
+            continue
+        if decision.decision == "patch" and not _patch_allowed(candidate_entry, fingerprint):
+            best_rejection = (decision.risk, ("patch_slots_not_declared",))
             continue
         if best_candidate is None or decision.rank_score > best_candidate[2]:
             best_candidate = (

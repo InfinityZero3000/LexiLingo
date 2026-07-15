@@ -71,6 +71,23 @@ async def ai_client():
 class TestTranslateRoute:
 
     @pytest.mark.asyncio
+    async def test_route_requires_admin_key(self, monkeypatch):
+        """HTTP route is server-to-server only."""
+        from fastapi import FastAPI
+        from httpx import ASGITransport, AsyncClient
+
+        from api.routes.translate import router
+
+        monkeypatch.setenv("AI_ADMIN_API_KEY", "secret")
+        app = FastAPI()
+        app.include_router(router, prefix="/api/v1/ai")
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get("/api/v1/ai/translate?word=run")
+
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
     async def test_groq_primary_path(self):
         """Happy path: Groq returns valid JSON → used as translation."""
         groq_payload = {

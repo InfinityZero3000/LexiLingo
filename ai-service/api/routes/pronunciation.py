@@ -16,10 +16,18 @@ from starlette.concurrency import run_in_threadpool
 from api.core.auth import AuthenticatedUser, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
+from api.routes.stt import _validate_audio_magic
 from api.services.hubert_service import get_hubert_service
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+_UPLOAD_MAX_BYTES = int(
+    os.getenv(
+        "PRONUNCIATION_UPLOAD_MAX_BYTES",
+        os.getenv("STT_LEGACY_UPLOAD_MAX_BYTES", str(10 * 1024 * 1024)),
+    )
+)
 
 
 def _decode_audio_file(path: str) -> Tuple[np.ndarray, int]:
@@ -57,7 +65,7 @@ def _decode_audio_file(path: str) -> Tuple[np.ndarray, int]:
 async def assess_pronunciation(
     request_context: Request,
     audio: UploadFile = File(...),
-    target_text: str = Form(...),
+    target_text: str = Form(..., min_length=1, max_length=500),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
     start_time = time.time()
@@ -79,11 +87,24 @@ async def assess_pronunciation(
             else ".wav"
         )
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-            content = await audio.read()
-            if not content:
-                raise HTTPException(status_code=400, detail="Audio file is empty")
-            tmp.write(content)
             tmp_path = tmp.name
+            first_chunk = True
+            total = 0
+            while chunk := await audio.read(64 * 1024):
+                total += len(chunk)
+                if total > _UPLOAD_MAX_BYTES:
+                    raise HTTPException(
+                        status_code=413, detail="Audio clip exceeds upload limit"
+                    )
+                if first_chunk:
+                    if not _validate_audio_magic(chunk[:8]):
+                        raise HTTPException(
+                            status_code=415, detail="Unsupported audio format"
+                        )
+                    first_chunk = False
+                tmp.write(chunk)
+            if total == 0:
+                raise HTTPException(status_code=400, detail="Audio file is empty")
 
         waveform, sample_rate = await run_in_threadpool(_decode_audio_file, tmp_path)
         hubert = await get_hubert_service()

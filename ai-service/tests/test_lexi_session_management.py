@@ -281,6 +281,94 @@ async def test_lexi_stream_starts_before_session_store_finishes(
 
 
 @pytest.mark.asyncio
+async def test_lexi_stream_cache_miss_updates_cache_and_ranker(
+    mock_db,
+    mock_store,
+    monkeypatch,
+):
+    import api.core.audit_emitter as audit_mod
+    import api.services.orchestrator as orch_mod
+    import api.services.trace_cag.benchmark.ranking as ranking_mod
+    import api.services.trace_cag.cache_utils as cache_mod
+    import api.services.trace_cag.nodes_v2 as nodes_mod
+    import api.services.learner_observation_spool as spool_mod
+
+    raw_state = {
+        "user_input": "hello",
+        "learner_profile": {"level": "B1"},
+        "conversation_history": [],
+        "diagnosis_errors": [],
+        "diagnosis_intent": "correct",
+        "retrieved_context": "ctx",
+        "retrieval_trace": [{"item_id": "kg_1"}],
+        "grammar_score": 0.8,
+        "fluency_score": 0.8,
+        "vocabulary_level": "B1",
+        "cache_hit": False,
+        "cache_policy": "on",
+        "strategy": "praise",
+    }
+
+    pipeline = MagicMock()
+    pipeline.analyze_for_streaming = AsyncMock(return_value=raw_state)
+    monkeypatch.setattr(
+        orch_mod,
+        "get_orchestrator",
+        AsyncMock(return_value=MagicMock(pipeline=pipeline)),
+    )
+    monkeypatch.setattr(nodes_mod, "build_generation_prompt", lambda _state: ("sys", []))
+
+    async def _tokens(**_kwargs):
+        yield "Hello"
+        yield " there"
+
+    monkeypatch.setattr(nodes_mod, "stream_llm_tokens", _tokens)
+    write_cache = AsyncMock()
+    update_ranker = MagicMock()
+    monkeypatch.setattr(cache_mod, "_write_cache_entry", write_cache)
+    monkeypatch.setattr(ranking_mod, "_update_ranker_from_generation", update_ranker)
+    monkeypatch.setattr(audit_mod, "emit_ai_audit_event", AsyncMock())
+    terminal_order = []
+
+    async def _persist_before_terminal(**_kwargs):
+        terminal_order.append("spool")
+        return {
+            "observation_count": 1,
+            "observation_durability_degraded": False,
+        }
+
+    monkeypatch.setattr(spool_mod, "persist_trace_observations", _persist_before_terminal)
+
+    quota = MagicMock(rpm_used=1, rpm_limit=30, rpd_used=1, rpd_limit=500)
+
+    events = []
+    async for event in svc.stream_lexi_chat(
+        request=lexi_route.LexiChatRequest(
+            user_id="u1",
+            session_id="s1",
+            message="hello",
+            enable_tts=False,
+        ),
+        session_id="s1",
+        prechecked_history=[],
+        quota=quota,
+        start_time=0.0,
+        request_id="req-1",
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
+        db=mock_db,
+    ):
+        events.append(event)
+        if event.startswith("event: done"):
+            terminal_order.append("done")
+
+    assert any(event.startswith("event: done") for event in events)
+    update_ranker.assert_called_once()
+    write_cache.assert_awaited_once()
+    assert write_cache.call_args.args[1] == "Hello there"
+    assert terminal_order == ["spool", "done"]
+
+
+@pytest.mark.asyncio
 async def test_lexi_stream_returns_503_when_quota_check_times_out(
     mock_db,
     mock_store,

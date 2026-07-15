@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "packageManager": "pnpm@11.1.0",
   "scripts": {
-    "vercel-build": "test -f build/web/index.html && test -f build/web/assets/assets/env/prod_config || (echo 'Missing production build artifacts or public env bundle. Run flutter build web --release first.' && exit 1)",
+    "vercel-build": "test -f build/web/index.html && test -f build/web/assets/assets/env/prod_config && test -f build/web/assets/assets/out-app/lexilingo-logo.png && test -f build/web/assets/assets/out-app/banner-start.png || (echo 'Missing production build artifacts or bundled assets. Run flutter build web --release first.' && exit 1)",
     "deploy:prod": "flutter build web --release --no-tree-shake-icons && vercel build --prod && vercel deploy --prebuilt --prod"
   },
   "dependencies": {

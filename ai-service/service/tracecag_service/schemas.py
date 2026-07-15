@@ -22,6 +22,7 @@ class TraceCAGRequest:
     retrieval_policy: str = "full"
     diagnosis_policy: str = "auto"
     generation_policy: str = "auto"
+    topic_system_prompt: str | None = None
     benchmark_task: str | None = None
     benchmark_context: str | None = None
     benchmark_metadata: dict[str, Any] | None = None
@@ -56,6 +57,7 @@ class TraceCAGRequest:
             "retrieval_policy": self.retrieval_policy,
             "diagnosis_policy": self.diagnosis_policy,
             "generation_policy": self.generation_policy,
+            "topic_system_prompt": self.topic_system_prompt,
             "benchmark_task": self.benchmark_task,
             "benchmark_context": self.benchmark_context,
             "benchmark_metadata": deepcopy(self.benchmark_metadata),

@@ -1,8 +1,10 @@
+import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from datetime import UTC, datetime
 
 import pytest
 
+from api.core.auth import AuthenticatedUser
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
 from api.services import lexi_chat_service as svc
@@ -41,6 +43,11 @@ def mock_chat_db():
 
     db.__getitem__.side_effect = get_collection
     return db
+
+
+@pytest.fixture
+def chat_user():
+    return AuthenticatedUser(user_id="u1", claims={})
 
 
 @pytest.fixture
@@ -93,7 +100,7 @@ def mock_lexi_store(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_chat_db):
+async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_chat_db, chat_user):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
         return_value={
@@ -108,10 +115,12 @@ async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_cha
     monkeypatch.setattr(
         "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
     )
+    monkeypatch.setattr("api.routes.chat.enforce_user_quota", AsyncMock())
 
     response = await chat_route.send_message(
         chat_route.SendMessageRequest(session_id="s1", user_id="u1", message="Hello"),
         db=mock_chat_db,
+        current_user=chat_user,
     )
 
     assert response.response == "TraceCAG primary response"
@@ -128,7 +137,7 @@ async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_cha
 
 
 @pytest.mark.asyncio
-async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_chat_db):
+async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_chat_db, chat_user):
     cursor = MagicMock()
     cursor.sort.return_value = cursor
     cursor.limit.return_value = cursor
@@ -155,6 +164,7 @@ async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_ch
         session_id="s1",
         limit=0,
         db=mock_chat_db,
+        current_user=chat_user,
     )
 
     assert len(result) == 2
@@ -164,7 +174,7 @@ async def test_chat_get_session_messages_limit_zero_returns_full_history(mock_ch
 
 @pytest.mark.asyncio
 async def test_chat_send_message_trace_cag_degraded_retry_success(
-    monkeypatch, mock_chat_db
+    monkeypatch, mock_chat_db, chat_user
 ):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -186,24 +196,26 @@ async def test_chat_send_message_trace_cag_degraded_retry_success(
     monkeypatch.setattr(
         "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
     )
+    monkeypatch.setattr("api.routes.chat.enforce_user_quota", AsyncMock())
 
     response = await chat_route.send_message(
         chat_route.SendMessageRequest(
             session_id="s1", user_id="u1", message="Need fallback"
         ),
         db=mock_chat_db,
+        current_user=chat_user,
     )
 
     assert response.response == "TraceCAG degraded retry response"
     assert response.metadata["model_used"] == "groq/qwen3-retry"
     assert response.metadata["trace-cag"]["fallback_used"] is True
     assert response.metadata["trace-cag"]["retry_mode"] == "trace-cag_degraded"
-    assert "primary_error" in response.metadata["trace-cag"]
+    assert response.metadata["trace-cag"]["primary_error_type"] == "RuntimeError"
 
 
 @pytest.mark.asyncio
 async def test_chat_send_message_trace_cag_hard_failure_uses_safe_response(
-    monkeypatch, mock_chat_db
+    monkeypatch, mock_chat_db, chat_user
 ):
     orchestrator = MagicMock()
     orchestrator.process = AsyncMock(
@@ -219,18 +231,92 @@ async def test_chat_send_message_trace_cag_hard_failure_uses_safe_response(
     monkeypatch.setattr(
         "api.services.orchestrator.get_orchestrator", _fake_get_orchestrator
     )
+    monkeypatch.setattr("api.routes.chat.enforce_user_quota", AsyncMock())
 
     response = await chat_route.send_message(
         chat_route.SendMessageRequest(
             session_id="s1", user_id="u1", message="Need safe response"
         ),
         db=mock_chat_db,
+        current_user=chat_user,
     )
 
     assert response.response == chat_route.SAFE_FIXED_RESPONSE
     assert response.metadata["model_used"] == "trace-cag_safe_response"
     assert response.metadata["trace-cag"]["path"] == "safe_fixed_response"
     assert response.metadata["trace-cag"]["fallback_used"] is True
+
+
+@pytest.mark.asyncio
+async def test_chat_bounds_primary_and_retry_then_returns_safe_response(
+    monkeypatch, mock_chat_db, chat_user
+):
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock()
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator",
+        AsyncMock(return_value=orchestrator),
+    )
+    monkeypatch.setattr("api.routes.chat.enforce_user_quota", AsyncMock())
+    real_wait_for = asyncio.wait_for
+    orchestrator_timeouts = []
+
+    async def bounded_wait_for(awaitable, timeout):
+        if timeout in {30.0, 15.0}:
+            orchestrator_timeouts.append(timeout)
+            awaitable.close()
+            raise TimeoutError(f"deadline {timeout}")
+        return await real_wait_for(awaitable, timeout=timeout)
+
+    monkeypatch.setattr(asyncio, "wait_for", bounded_wait_for)
+
+    response = await chat_route.send_message(
+        chat_route.SendMessageRequest(
+            session_id="s1", user_id="u1", message="Bound this request"
+        ),
+        db=mock_chat_db,
+        current_user=chat_user,
+    )
+
+    assert orchestrator_timeouts == [30.0, 15.0]
+    assert orchestrator.process.call_count == 2
+    primary_call, retry_call = orchestrator.process.call_args_list
+    assert primary_call.kwargs["conversation_history"]
+    assert retry_call.kwargs["conversation_history"] == []
+    assert retry_call.kwargs["cache_policy"] == "off"
+    assert retry_call.kwargs["retrieval_policy"] == "rapid"
+    assert response.response == chat_route.SAFE_FIXED_RESPONSE
+    assert response.metadata["model_used"] == "trace-cag_safe_response"
+    assert response.metadata["trace-cag"]["path"] == "safe_fixed_response"
+    assert response.metadata["trace-cag"]["primary_error_type"] == "TimeoutError"
+    assert response.metadata["trace-cag"]["retry_error_type"] == "TimeoutError"
+
+
+@pytest.mark.asyncio
+async def test_chat_outer_request_deadline_is_fifty_seconds(
+    monkeypatch, mock_chat_db, chat_user
+):
+    seen = []
+
+    async def fake_wait_for(awaitable, timeout):
+        seen.append(timeout)
+        awaitable.close()
+        raise asyncio.TimeoutError
+
+    monkeypatch.setattr(asyncio, "wait_for", fake_wait_for)
+
+    with pytest.raises(chat_route.HTTPException) as exc:
+        await chat_route.send_message(
+            chat_route.SendMessageRequest(
+                session_id="s1", user_id="u1", message="slow"
+            ),
+            db=mock_chat_db,
+            current_user=chat_user,
+        )
+
+    assert seen == [50.0]
+    assert exc.value.status_code == 504
+    assert exc.value.detail == "Chat response timed out"
 
 
 @pytest.mark.asyncio

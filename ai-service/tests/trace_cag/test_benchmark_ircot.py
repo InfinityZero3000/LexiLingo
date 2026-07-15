@@ -103,6 +103,7 @@ async def test_ircot_augment_returns_contract_telemetry(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_benchmark_response_exposes_ircot_metadata_and_reason_model(monkeypatch):
+    monkeypatch.setenv("TRACECAG_BENCHMARK_FAIL_ON_PROVIDER_ERROR", "false")
     async def fake_reason_call(messages, max_tokens, *, estimated_tokens=96):
         return "Bridge Target", "groq/qwen/qwen3-32b"
 
@@ -127,3 +128,22 @@ async def test_benchmark_response_exposes_ircot_metadata_and_reason_model(monkey
     assert ircot_meta["bridge_entity"] == "Bridge Target"
     assert "ircot_reason:groq/qwen/qwen3-32b" in result["models_used"]
     assert result["models_used"][-1] == "extractive_fallback"
+
+
+@pytest.mark.asyncio
+async def test_benchmark_response_fails_instead_of_using_fallback_in_strict_run(monkeypatch):
+    monkeypatch.setenv("TRACECAG_BENCHMARK_FAIL_ON_PROVIDER_ERROR", "true")
+    monkeypatch.setattr(qa_generation, "_benchmark_provider_order", lambda: [])
+    state = _state()
+    state.update(
+        {
+            "user_input": "Was Seed Page founded in Khazan?",
+            "retrieved_context": "[Seed Page] Seed Page mentions Bridge Target.",
+            "generation_policy": "auto",
+            "cache_policy": "off",
+            "retrieval_trace": [],
+        }
+    )
+
+    with pytest.raises(RuntimeError, match="Primary benchmark provider returned no response"):
+        await _generate_benchmark_qa_response(state, time.time())

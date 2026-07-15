@@ -15,6 +15,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 import httpx
+from dotenv import load_dotenv
 from datetime import datetime, timezone
 from typing import Optional
 from pymongo import ASCENDING, DESCENDING
@@ -30,7 +31,6 @@ from api.core.config import get_settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from dotenv import load_dotenv
 load_dotenv()
 
 # Settings (loaded after dotenv so env vars are available)
@@ -152,6 +152,31 @@ async def _ensure_mongo_indexes() -> None:
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="lexi_messages_session_timestamp_idx",
     )
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("event_id", ASCENDING)],
+        name="learner_observation_spool_event_id_uq",
+        unique=True,
+    )
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("status", ASCENDING), ("available_at", ASCENDING)],
+        name="learner_observation_spool_claim_idx",
+    )
+    # TTL applies only after delivery. Pending/retry rows have no delivered_at
+    # and therefore never expire.
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("delivered_at", ASCENDING)],
+        name="learner_observation_spool_delivered_ttl",
+        expireAfterSeconds=90 * 24 * 60 * 60,
+    )
+    await _create_index_safe(
+        "ai_interactions",
+        [("indexed_at", ASCENDING)],
+        name="ai_interactions_indexed_at_ttl",
+        expireAfterSeconds=90 * 24 * 60 * 60,
+    )
 
 
 @asynccontextmanager
@@ -181,6 +206,13 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Redis initialization failed; continuing without cache/rate pool: {e}")
 
     _http_client = httpx.AsyncClient(timeout=30.0)
+
+    if settings.LEARNER_STATE_MODE != "off":
+        from api.services.learner_observation_spool import (
+            start_learner_observation_forwarder,
+        )
+
+        start_learner_observation_forwarder()
     
     if USE_GATEWAY:
         try:
@@ -208,8 +240,22 @@ async def lifespan(app: FastAPI):
     # Shutdown
     if _http_client:
         await _http_client.aclose()
+    try:
+        from api.services.learner_observation_spool import (
+            stop_learner_observation_forwarder,
+        )
+
+        await stop_learner_observation_forwarder()
+    except Exception as e:
+        logger.warning(f"Failed to stop learner observation forwarder cleanly: {e}")
     await mongodb_manager.disconnect()
     await RedisClient.close()
+    try:
+        from api.clients.learner_state_client import close_learner_state_client
+
+        await close_learner_state_client()
+    except Exception as e:
+        logger.warning(f"Failed to close learner-state client cleanly: {e}")
     if _gateway_initialized:
         from api.services.gateway_setup import shutdown_gateway
         await shutdown_gateway()
@@ -252,7 +298,7 @@ app.add_middleware(
 
 
 # Include Routers
-from api.routes import (
+from api.routes import (  # noqa: E402
     admin,
     ai,
     chat,

@@ -10,8 +10,11 @@ services:
       - "8001:8001"
     environment:
       - ENVIRONMENT=development
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - AI_ADMIN_API_KEY=${AI_ADMIN_API_KEY:?Set AI_ADMIN_API_KEY in .env}
       - MONGODB_URI=mongodb://mongodb:27017
-      - MONGODB_DB_NAME=lexilingo
+      - MONGODB_DATABASE=lexilingo
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0

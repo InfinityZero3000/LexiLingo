@@ -19,12 +19,10 @@ import json
 import time
 from typing import Dict, Any, List, Optional
 
+from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.jit_graph_service import get_jit_graph_service
-
-from api.services.trace_cag.env_helpers import _env_flag
-from api.services.trace_cag.provider_state import _provider_is_disabled
 
 # LLM client — httpx pooling and rate-limit throttling
 from api.services.trace_cag.llm_client import _throttled_post_json
@@ -91,21 +89,34 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     start_time = time.time()
     
     try:
-        # Load learner profile from Redis
+        # Learner-state versioning is independent from Redis. A Redis outage
+        # must not silently permit reuse of a stale personalized response.
         from api.core.redis_client import LearnerProfileCache, ConversationCache, RedisClient
+        import asyncio as _asyncio
         
         learner_profile = state.get("learner_profile", {"level": "B1"})
         conversation_history = []
+        user_id = state.get("user_id")
+        session_id = state.get("session_id", "")
+        epoch_result = None
+
+        async def _get_learner_epoch():
+            if not user_id or settings.LEARNER_STATE_MODE == "off":
+                return None
+            from api.clients.learner_state_client import get_learner_state_client
+
+            deadline = time.monotonic() + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
+            return await get_learner_state_client().batch_get(
+                str(user_id), [], deadline=deadline
+            )
+
+        epoch_task = _asyncio.create_task(_get_learner_epoch())
         
         try:
-            import asyncio as _asyncio
             if RedisClient._benchmark_redis_disabled():
                 raise RuntimeError("Redis disabled for benchmark")
 
             redis_client = await RedisClient.get_instance()
-
-            user_id = state.get("user_id")
-            session_id = state.get("session_id", "")
 
             # Fetch profile and history concurrently.
             async def _get_profile():
@@ -138,6 +149,27 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                 logger.debug(f"Redis unavailable: {e}")
             else:
                 logger.warning(f"Redis unavailable: {e}")
+
+        learner_state_update: Dict[str, Any] = {}
+        try:
+            epoch_result = await epoch_task
+            if epoch_result is not None:
+                learner_profile["_learner_state_available"] = not epoch_result.degraded
+                if not epoch_result.degraded:
+                    learner_profile["_learner_state_epoch"] = epoch_result.state_epoch
+                learner_state_update = {
+                    "learner_state_epoch": epoch_result.state_epoch,
+                    "learner_state_degraded": epoch_result.degraded,
+                    "learner_state_reason": epoch_result.reason,
+                }
+        except Exception as e:
+            logger.warning("Learner-state epoch unavailable: %s", e)
+            if user_id and settings.LEARNER_STATE_MODE != "off":
+                learner_profile["_learner_state_available"] = False
+                learner_state_update = {
+                    "learner_state_degraded": True,
+                    "learner_state_reason": "unexpected_error",
+                }
     
         latency_ms = int((time.time() - start_time) * 1000)
         
@@ -147,6 +179,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             "native_explanation_requested": _detect_native_request(user_input),
             "models_used": ["redis_cache"],
             "latency_ms": latency_ms,
+            **learner_state_update,
         }
         
     except Exception as e:
@@ -596,6 +629,8 @@ async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     merged.update(kg_result or {})
     merged.update(diag_result or {})
     merged.update(jit_result or {})
+    learner_update = await _load_learner_concept_overlay(state, merged)
+    merged.update(learner_update)
     # Merge the accumulator list explicitly (avoid overwrite by dict.update)
     merged["models_used"] = (
         list((kg_result or {}).get("models_used", []))
@@ -603,6 +638,50 @@ async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         + list((jit_result or {}).get("models_used", []))
     )
     return merged
+
+
+async def _load_learner_concept_overlay(
+    state: TraceCAGState,
+    merged: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Batch-load only concepts selected by this request's bounded KG work."""
+    if settings.LEARNER_STATE_MODE == "off" or not state.get("user_id"):
+        return {}
+    from api.clients.learner_state_client import get_learner_state_client
+
+    concept_ids: list[str] = []
+    concept_ids.extend(str(item) for item in merged.get("kg_seed_concepts", []) if item)
+    concept_ids.extend(str(item) for item in merged.get("diagnosis_root_causes", []) if item)
+    concept_ids.extend(
+        str(item.get("id"))
+        for item in merged.get("kg_expanded_nodes", [])
+        if isinstance(item, dict) and item.get("id")
+    )
+    concept_ids = list(dict.fromkeys(concept_ids))[:60]
+    started = time.monotonic()
+    deadline = started + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
+    try:
+        result = await get_learner_state_client().batch_get(
+            str(state["user_id"]), concept_ids, deadline=deadline
+        )
+    except Exception as exc:
+        logger.warning("Learner-state overlay unavailable: %s", exc)
+        return {
+            "learner_concept_states": {},
+            "learner_state_epoch": state.get("learner_profile", {}).get(
+                "_learner_state_epoch", 0
+            ),
+            "learner_state_degraded": True,
+            "learner_state_reason": "unexpected_error",
+            "learner_state_latency_ms": (time.monotonic() - started) * 1000.0,
+        }
+    return {
+        "learner_concept_states": result.states,
+        "learner_state_epoch": result.state_epoch,
+        "learner_state_degraded": result.degraded,
+        "learner_state_reason": result.reason,
+        "learner_state_latency_ms": (time.monotonic() - started) * 1000.0,
+    }
 
 
 async def _jit_graph_extract_node(state: TraceCAGState) -> Dict[str, Any]:

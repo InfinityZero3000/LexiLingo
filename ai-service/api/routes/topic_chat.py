@@ -483,6 +483,7 @@ async def send_topic_message(
             conversation_history=conversation_history,
             kg_seeds=kg_seeds,
             preferred_llm=preferred_llm,
+            topic_system_prompt=session.get("system_prompt"),
         )
 
         if not tracecag_result.ai_response:

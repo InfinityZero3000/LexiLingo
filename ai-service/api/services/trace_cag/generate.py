@@ -5,7 +5,6 @@ Split out of nodes_v2.py (Phase 4 refactor) along with its prompt-building and
 token-streaming helpers, which the streaming chat endpoint also calls directly.
 """
 
-import asyncio
 import json
 import logging
 import os
@@ -35,6 +34,26 @@ _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
     "Provide grounded, concise and actionable feedback. "
     "If evidence is weak, state uncertainty explicitly."
 )
+
+
+def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str) -> str:
+    topic_prompt = str(state.get("topic_system_prompt") or "").strip()
+    if topic_prompt:
+        return (
+            f"{topic_prompt}\n\n"
+            "--- TraceCAG Turn Guidance ---\n"
+            f"The learner's current CEFR level is: {level}\n"
+            f"Difficulty setting for this turn: {difficulty}\n"
+        )
+
+    return (
+        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
+        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
+        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
+        "Gently correct mistakes with encouraging context.\n"
+        f"The learner's current CEFR level is: {level}\n"
+        f"Difficulty setting for this turn: {difficulty}\n"
+    )
 
 
 def _compute_difficulty_ramp(session_turn: int, overall_score: float) -> str:
@@ -84,14 +103,7 @@ def build_generation_prompt(
     else:
         strategy = "scaffold"
 
-    system_prompt = (
-        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
-        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
-        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
-        "Gently correct mistakes with encouraging context.\n"
-        f"The learner's current CEFR level is: {level}\n"
-        f"Difficulty setting for this turn: {difficulty}\n"
-    )
+    system_prompt = _build_base_system_prompt(state, level, difficulty)
     if context:
         system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
 
@@ -210,7 +222,7 @@ async def stream_llm_tokens(
 
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-2.0-flash:streamGenerateContent?key={gemini_key}&alt=sse"
+            "gemini-2.0-flash:streamGenerateContent?alt=sse"
         )
         request_body = {
             "contents": [{"role": "user", "parts": [{"text": user_input}]}],
@@ -219,7 +231,11 @@ async def stream_llm_tokens(
         client = _get_httpx_client("gemini")
         try:
             async with client.stream(
-                "POST", url, json=request_body, timeout=25.0
+                "POST",
+                url,
+                headers={"x-goog-api-key": gemini_key},
+                json=request_body,
+                timeout=25.0,
             ) as resp:
                 if resp.status_code != 200:
                     logger.warning("[stream_llm_tokens] Gemini status %d", resp.status_code)
@@ -347,14 +363,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     prev_overall = state.get("overall_score", 0.5)
     difficulty = _compute_difficulty_ramp(session_turn, prev_overall)
 
-    system_prompt = (
-        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
-        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
-        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
-        "Gently correct mistakes with encouraging context.\n"
-        f"The learner's current CEFR level is: {level}\n"
-        f"Difficulty setting for this turn: {difficulty}\n"
-    )
+    system_prompt = _build_base_system_prompt(state, level, difficulty)
 
     if context:
         system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
@@ -474,7 +483,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                     return None, None
                 try:
                     gemini_contents = [{"role": "user", "parts": [{"text": user_input}]}]
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
                     request_body = {
                         "contents": gemini_contents,
                         "systemInstruction": {"parts": [{"text": system_prompt}]},
@@ -484,6 +493,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         url=url,
                         payload=request_body,
                         httpx_module=httpx,
+                        headers={"x-goog-api-key": gemini_key},
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:

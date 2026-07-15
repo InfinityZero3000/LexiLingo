@@ -30,6 +30,10 @@ from api.services.kg_data_loader import (
 
 logger = logging.getLogger(__name__)
 
+
+def _env_enabled(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
 # ── Singleton instance ────────────────────────────────────────────────────────
 _kg_instance: Optional["KnowledgeGraphServiceV3"] = None
 
@@ -50,6 +54,7 @@ class KnowledgeGraphServiceV3:
             os.path.dirname(__file__), "..", "..", "data", "kuzu"
         )
         self._db_path = os.path.abspath(db_path)
+        self._strict_snapshot = _env_enabled("TRACECAG_KG_STRICT_SNAPSHOT")
         self._recovery_attempted = False
         self._lock = asyncio.Lock()
 
@@ -78,7 +83,12 @@ class KnowledgeGraphServiceV3:
             self._ensure_schema()
             
             # Only seed if this is a fresh database
-            if needs_seed or self.get_concept_count() == 0:
+            concept_count = self.get_concept_count()
+            if self._strict_snapshot and (needs_seed or concept_count == 0):
+                raise RuntimeError(
+                    f"Benchmark strict snapshot is missing or empty: {self._db_path}"
+                )
+            if needs_seed or concept_count == 0:
                 logger.info("[KG] Seeding default knowledge graph...")
                 self._seed_default_graph()
                 # Clear synced files metadata cache on fresh database
@@ -100,11 +110,16 @@ class KnowledgeGraphServiceV3:
             # Warm in-memory caches after all DB writes are done.
             self._build_concept_cache()
         except Exception as e:
+            if self._strict_snapshot:
+                logger.error("[KG] Strict snapshot initialization failed: %s", e)
+                raise
             logger.warning(f"[KG] DB may be corrupted, rebuilding: {e}")
             self._hard_rebuild_db(reason=str(e))
 
     def _hard_rebuild_db(self, reason: str = "unknown") -> None:
         """Rebuild Kuzu DB from scratch when corruption is detected."""
+        if self._strict_snapshot:
+            raise RuntimeError(f"KG rebuild disabled for benchmark strict snapshot: {reason}")
         logger.warning("[KG] Hard rebuild triggered: %s", reason)
         if os.path.isdir(self._db_path):
             if "lock" in reason.lower():
@@ -155,6 +170,9 @@ class KnowledgeGraphServiceV3:
         )
 
     def _recover_and_retry(self, op_name: str) -> bool:
+        if self._strict_snapshot:
+            logger.error("[KG] Recovery disabled for benchmark strict snapshot: %s", op_name)
+            return False
         if self._recovery_attempted:
             return False
         try:
@@ -605,6 +623,8 @@ class KnowledgeGraphServiceV3:
         error_types: List[str],
     ) -> None:
         if not user_id or not linked_concepts:
+            return None
+        if not settings.KUZU_USER_MASTERY_WRITES_ENABLED:
             return None
 
         # Ensure user node exists

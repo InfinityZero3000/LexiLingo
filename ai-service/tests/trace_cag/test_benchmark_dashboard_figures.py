@@ -114,7 +114,7 @@ def test_primary_research_figures_span_the_full_figure_grid():
 
     assert ".figure-card--primary { grid-column: 1 / -1; }" in html
     assert 'new Set(["drift_route_accuracy", "drift_unsafe_acceptance", "route_confusion_matrix", "threshold_sensitivity"])' in html
-    assert 'primaryIds.has(id) ? "figure-card--primary" : "figure-card--secondary"' in html
+    assert 'allowPrimary && primaryIds.has(id) ? "figure-card--primary" : "figure-card--secondary"' in html
 
 
 def test_figure_grid_aligns_cards_to_the_start_instead_of_stretching_them():
@@ -125,7 +125,8 @@ def test_figure_grid_aligns_cards_to_the_start_instead_of_stretching_them():
     assert ".figure-grid--paired-primary > .figure-card--primary { grid-column: auto; height: 100%; }" in html
     assert '<div class="figure-grid figure-grid--paired-primary"> ${pythonFigure("drift_route_accuracy", "Route accuracy by method")} ${pythonFigure("drift_unsafe_acceptance", "Unsafe acceptance by method")} </div>' in html
     assert ".figure-grid--overview > .figure { grid-column: auto; height: 100%; }" in html
-    assert '<div class="figure-grid figure-grid--overview"> ${pythonFigure("drift_route_accuracy", "DriftBench route accuracy")} ${pythonFigure("quality_cost_scatter", "Public QA F1 vs token cost")} </div>' in html
+    assert ".figure-grid--overview { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }" in html
+    assert '<div class="figure-grid figure-grid--overview"> ${pythonFigure("drift_route_accuracy", "DriftBench route accuracy", false)} ${pythonFigure("quality_cost_scatter", "Public QA F1 vs token cost", false)} </div>' in html
     assert ".figure { overflow: hidden; margin: 0 0 var(--spacing-4); min-width: 0; align-self: start; }" in html
     assert 'role="group" aria-label="Download ${esc(title)} figure"' in dashboard.HTML
     assert "a.button { min-height: 44px; padding-inline: var(--spacing-3); }" in html
@@ -152,6 +153,7 @@ def test_responsive_breakpoints_collapse_figure_grids_to_one_column():
 
     assert "@media (max-width: 1180px)" in html
     assert ".grid2, .figure-grid { grid-template-columns: 1fr; }" in html
+    assert ".figure-grid--overview { grid-template-columns: 1fr; }" in html
     assert "@media (max-width: 760px)" in html
     assert ".content { padding: var(--spacing-3); }" in html
     assert ".figure-body { padding: var(--spacing-1); }" in html

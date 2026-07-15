@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 import logging
 from typing import Callable, Dict, Any, Optional
@@ -106,6 +107,10 @@ class TopicContextPreloader:
             
         # 2. Collect Dynamic Data if applicable
         dynamic_context = await self._collect_dynamic_context(story)
+        dynamic_context_hash = (
+            hashlib.sha256(dynamic_context.encode("utf-8")).hexdigest()[:16]
+            if dynamic_context else ""
+        )
         
         # 3. Build master prompt with dynamic injection
         master_prompt = TopicPromptBuilder.build_master_prompt(story)
@@ -135,6 +140,9 @@ class TopicContextPreloader:
             "kg_topic_fingerprint": "",
             "cache_metadata": {
                 "context_cache_warmed": False,
+                "evidence_hash": dynamic_context_hash,
+                "source_version": f"dynamic:{dynamic_context_hash}" if dynamic_context_hash else "",
+                "freshness_class": "volatile" if dynamic_context else "static",
                 "kg_cache_warmed": False,
                 "kg_seed_count": 0,
                 "kg_node_count": 0,

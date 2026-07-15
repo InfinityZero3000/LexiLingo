@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from bson import ObjectId
 
+from api.core.auth import AuthenticatedUser
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
 from api.routes import topic_chat as topic_route
@@ -49,10 +50,14 @@ async def test_chat_messages_paged_returns_cursor_pagination_payload():
     chat_messages = MagicMock()
     chat_messages.find.return_value = _mock_cursor(docs_desc)
     chat_messages.count_documents = AsyncMock(return_value=3)
+    chat_sessions = MagicMock()
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "chat_s1", "user_id": "u1"})
 
     db = MagicMock()
 
     def get_collection(name):
+        if name == "chat_sessions":
+            return chat_sessions
         if name == "chat_messages":
             return chat_messages
         return AsyncMock()
@@ -64,6 +69,7 @@ async def test_chat_messages_paged_returns_cursor_pagination_payload():
         limit=2,
         cursor=None,
         db=db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert result["success"] is True
@@ -100,10 +106,14 @@ async def test_chat_messages_metadata_returns_expected_fields():
         _mock_cursor([latest_doc]),
         _mock_cursor([oldest_doc]),
     ]
+    chat_sessions = MagicMock()
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "chat_s1", "user_id": "u1"})
 
     db = MagicMock()
 
     def get_collection(name):
+        if name == "chat_sessions":
+            return chat_sessions
         if name == "chat_messages":
             return chat_messages
         return AsyncMock()
@@ -113,6 +123,7 @@ async def test_chat_messages_metadata_returns_expected_fields():
     result = await chat_route.get_session_messages_metadata(
         session_id="chat_s1",
         db=db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     metadata = result["metadata"]

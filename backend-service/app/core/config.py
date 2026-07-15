@@ -5,6 +5,7 @@ Using Pydantic settings for type-safe configuration
 """
 
 import os
+from datetime import UTC, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -40,6 +41,22 @@ class Settings(BaseSettings):
                 return False
             if normalized == "debug":
                 return True
+        return value
+
+    @field_validator("LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT")
+    @classmethod
+    def validate_previous_token_expiry(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("previous learner-state token expiry must include a timezone")
+        return value.astimezone(UTC)
+
+    @field_validator("LEARNER_STATE_MAX_BODY_BYTES")
+    @classmethod
+    def validate_learner_state_body_limit(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("LEARNER_STATE_MAX_BODY_BYTES must be positive")
         return value
 
     # Database
@@ -151,6 +168,22 @@ class Settings(BaseSettings):
                 "CONTENT_AGENT_SERVICE_TOKEN is required when the content agent is enabled"
             )
 
+        if self.LEARNER_STATE_ENABLED and not self.LEARNER_STATE_INTERNAL_TOKEN.strip():
+            raise ValueError(
+                "LEARNER_STATE_INTERNAL_TOKEN is required when learner state is enabled"
+            )
+        if self.LEARNER_STATE_ENABLED:
+            if len(self.LEARNER_STATE_INTERNAL_TOKEN) < 32:
+                raise ValueError("LEARNER_STATE_INTERNAL_TOKEN must be at least 32 characters")
+            if not self.LEARNER_STATE_INTERNAL_AUDIENCE.strip():
+                raise ValueError("LEARNER_STATE_INTERNAL_AUDIENCE must not be empty")
+            previous = self.LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS
+            if previous:
+                if previous == self.LEARNER_STATE_INTERNAL_TOKEN:
+                    raise ValueError("current and previous learner-state tokens must differ")
+                if self.LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT is None:
+                    raise ValueError("previous learner-state token requires an expiry")
+
         return self
 
     # Logging
@@ -176,6 +209,17 @@ class Settings(BaseSettings):
     # AI Service (optional)
     AI_SERVICE_URL: str = "https://api.lexilingo.me/api/v1"
     AI_AUDIT_INGEST_SECRET: str = ""
+    LEARNER_STATE_ENABLED: bool = False
+    LEARNER_STATE_INTERNAL_TOKEN: str = ""
+    LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS: str = ""
+    LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT: datetime | None = None
+    LEARNER_STATE_INTERNAL_AUDIENCE: str = "lexilingo-backend"
+    LEARNER_STATE_MAX_BODY_BYTES: int = 512 * 1024
+    LEARNER_STATE_OUTBOX_BATCH_SIZE: int = 100
+    LEARNER_STATE_OUTBOX_POLL_MS: int = 100
+    LEARNER_STATE_OUTBOX_LEASE_SECONDS: int = 30
+    LEARNER_STATE_OUTBOX_MAX_ATTEMPTS: int = 10
+    LEARNER_STATE_STATEMENT_TIMEOUT_MS: int = 100
     CONTENT_AGENT_ENABLED: bool = False
     CONTENT_AGENT_SERVICE_TOKEN: str = ""
     CONTENT_AGENT_UPLOAD_TTL_DAYS: int = 7

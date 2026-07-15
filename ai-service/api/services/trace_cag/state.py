@@ -61,9 +61,32 @@ class CacheFingerprint(TypedDict, total=False):
     session_turn: int        # turn number within session
 
 
+class CacheAdmissibilityCertificate(TypedDict, total=False):
+    """Traceable state contract required before a cached artifact can be reused."""
+    schema_version: int
+    required_dimensions: List[str]
+    query_norm: str
+    intent: str
+    level: str
+    native_language: str
+    profile_epoch: int
+    policy_version: str
+    kg_version: str
+    evidence_hash: str
+    source_version: str
+    freshness_class: str
+    answer_target: str
+    relation_path: str
+    concepts: List[str]
+    graph_fingerprint: str
+    patchable_slots: List[str]
+    created_at: float
+
+
 class CacheEntry(TypedDict, total=False):
     """Structured cache entry ⟨F, P_c, R, B, σ, t_c⟩ (paper §4.1)."""
     fingerprint: CacheFingerprint
+    admissibility_certificate: CacheAdmissibilityCertificate
     graph_bucket: str                  # cheap concept-state bucket for L1 lookup
     profile_snapshot: Dict[str, Any]   # P_c: profile at creation time
     response: str                      # R: tutor response text
@@ -118,6 +141,11 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     learner_profile: LearnerProfile
     conversation_history: List[Dict[str, Any]]
+    learner_concept_states: Dict[str, Dict[str, Any]]
+    learner_state_epoch: int
+    learner_state_degraded: bool
+    learner_state_reason: Optional[str]
+    learner_state_latency_ms: float
     
     # ============================================
     # Knowledge Graph (from KuzuDB)
@@ -147,6 +175,7 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     # Response Generation
     # ============================================
+    topic_system_prompt: Optional[str]
     tutor_response: str
     vietnamese_hint: Optional[str]
     native_explanation_requested: Optional[bool]
@@ -190,6 +219,14 @@ class TraceCAGState(TypedDict, total=False):
     retrieval_policy: str  # "full" | "rapid"
     diagnosis_policy: str  # "auto" | "rules"
     generation_policy: str  # "auto" | "extractive" (template is deprecated alias)
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    cached_tokens: int
+    effective_prompt_tokens: float
+    prompt_cache_token_rate: float
+    prompt_discount_savings_rate: float
+    usage_source: str  # "provider" when backend exposes usage, otherwise "estimated"
     models_used: Annotated[List[str], add]  # Accumulator pattern
     latency_ms: int
     ttft_ms: int
@@ -212,6 +249,7 @@ def create_initial_state(
     retrieval_policy: str = "full",
     diagnosis_policy: str = "auto",
     generation_policy: str = "auto",
+    topic_system_prompt: Optional[str] = None,
     benchmark_task: Optional[str] = None,
     benchmark_context: Optional[str] = None,
     benchmark_metadata: Optional[Dict[str, Any]] = None,
@@ -243,6 +281,11 @@ def create_initial_state(
         # Context (will be populated by input_node)
         learner_profile=learner_profile or {"level": "B1"},
         conversation_history=[],
+        learner_concept_states={},
+        learner_state_epoch=0,
+        learner_state_degraded=False,
+        learner_state_reason=None,
+        learner_state_latency_ms=0.0,
         
         # KG (will be populated by kg_expand_node)
         kg_seed_concepts=[],
@@ -264,6 +307,7 @@ def create_initial_state(
         retrieval_meta={},
         
         # Response (will be populated by generate_node)
+        topic_system_prompt=topic_system_prompt,
         tutor_response="",
         vietnamese_hint=None,
         native_explanation_requested=False,
@@ -298,6 +342,14 @@ def create_initial_state(
         retrieval_policy=retrieval_policy,
         diagnosis_policy=diagnosis_policy,
         generation_policy=generation_policy,
+        prompt_tokens=0,
+        completion_tokens=0,
+        total_tokens=0,
+        cached_tokens=0,
+        effective_prompt_tokens=0.0,
+        prompt_cache_token_rate=0.0,
+        prompt_discount_savings_rate=0.0,
+        usage_source="",
         models_used=[],
         latency_ms=0,
         ttft_ms=0,

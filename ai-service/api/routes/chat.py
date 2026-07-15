@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure
 import uuid
+import asyncio
 import time
 import logging
 from datetime import datetime, timezone
@@ -22,6 +23,8 @@ from api.utils.cursor import (
 )
 
 from api.core.database import get_database
+from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.models.schemas import (
     CreateSessionRequest,
     CreateSessionResponse,
@@ -78,6 +81,20 @@ def _serialize_chat_message(doc: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+async def _ensure_chat_session_owner(
+    session_id: str,
+    current_user: AuthenticatedUser,
+    db: AsyncIOMotorDatabase,
+) -> Dict[str, Any]:
+    session = await db["chat_sessions"].find_one({"session_id": session_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    owner_user_id = str(session.get("user_id") or "")
+    if not owner_user_id or owner_user_id != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    return session
+
+
 @router.post(
     "/sessions",
     response_model=CreateSessionResponse,
@@ -85,10 +102,13 @@ def _serialize_chat_message(doc: Dict[str, Any]) -> Dict[str, Any]:
 )
 async def create_session(
     request: CreateSessionRequest,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """Create a new chat session in MongoDB."""
     try:
+        auth_user_id = enforce_user_scope(current_user, request.user_id)
+        request = request.model_copy(update={"user_id": auth_user_id})
         session_id = str(uuid.uuid4())
         now = datetime.now(timezone.utc)
         
@@ -107,9 +127,11 @@ async def create_session(
             session_id=session_id,
             created_at=now
         )
-        
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Chat request failed error=%s", type(e).__name__)
+        raise HTTPException(status_code=500, detail="Unable to process chat request") from e
 
 
 @router.post(
@@ -119,15 +141,37 @@ async def create_session(
 )
 async def send_message(
     msg_req: SendMessageRequest,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """Bound the complete request, including initialization, DB, and cache work."""
+    try:
+        return await asyncio.wait_for(
+            _send_message_impl(msg_req, current_user, db), timeout=50.0
+        )
+    except asyncio.TimeoutError as exc:
+        raise HTTPException(status_code=504, detail="Chat response timed out") from exc
+
+
+async def _send_message_impl(
+    msg_req: SendMessageRequest,
+    current_user: AuthenticatedUser,
+    db: AsyncIOMotorDatabase,
 ):
     """Send message and get AI response via TraceCAG."""
     try:
         start_time = time.time()
 
-        session = await db["chat_sessions"].find_one({"session_id": msg_req.session_id})
-        if not session:
-            raise HTTPException(status_code=404, detail="Session not found")
+        auth_user_id = enforce_user_scope(current_user, msg_req.user_id)
+        msg_req = msg_req.model_copy(update={"user_id": auth_user_id})
+        await enforce_user_quota(
+            current_user.user_id,
+            "chat.messages",
+            token_cost=default_token_cost_for_endpoint("chat.messages", text=msg_req.message),
+            fail_closed=True,
+        )
+
+        await _ensure_chat_session_owner(msg_req.session_id, current_user, db)
 
         try:
             history_cursor = db["chat_messages"].find(
@@ -174,20 +218,25 @@ async def send_message(
 
         # 2. TraceCAG-first response
         graph_metadata: Dict[str, Any] = {}
+        observation_trace_result: Dict[str, Any] = {}
         model_used = "trace-cag"
         try:
             from api.services.orchestrator import get_orchestrator
 
             orchestrator = await get_orchestrator()
-            graph_result = await orchestrator.process(
-                user_input=msg_req.message,
-                session_id=msg_req.session_id,
-                user_id=msg_req.user_id,
-                learner_profile=learner_profile,
-                conversation_history=conversation_history,
+            graph_result = await _asyncio.wait_for(
+                orchestrator.process(
+                    user_input=msg_req.message,
+                    session_id=msg_req.session_id,
+                    user_id=msg_req.user_id,
+                    learner_profile=learner_profile,
+                    conversation_history=conversation_history,
+                ),
+                timeout=30.0,
             )
             ai_response = str(graph_result.get("tutor_response") or "").strip()
             graph_metadata = graph_result.get("metadata", {}) or {}
+            observation_trace_result = graph_result
             if not ai_response:
                 raise RuntimeError("TraceCAG returned empty tutor_response")
             models_used = graph_metadata.get("models_used") or ["trace-cag"]
@@ -198,16 +247,19 @@ async def send_message(
                 from api.services.orchestrator import get_orchestrator
 
                 orchestrator = await get_orchestrator()
-                retry_result = await orchestrator.process(
-                    user_input=msg_req.message,
-                    session_id=msg_req.session_id,
-                    user_id=msg_req.user_id,
-                    learner_profile=learner_profile,
-                    conversation_history=[],
-                    cache_policy="off",
-                    retrieval_policy="rapid",
-                    diagnosis_policy="rules",
-                    generation_policy="auto",
+                retry_result = await _asyncio.wait_for(
+                    orchestrator.process(
+                        user_input=msg_req.message,
+                        session_id=msg_req.session_id,
+                        user_id=msg_req.user_id,
+                        learner_profile=learner_profile,
+                        conversation_history=[],
+                        cache_policy="off",
+                        retrieval_policy="rapid",
+                        diagnosis_policy="rules",
+                        generation_policy="auto",
+                    ),
+                    timeout=15.0,
                 )
                 ai_response = str(retry_result.get("tutor_response") or "").strip()
                 retry_meta = retry_result.get("metadata", {}) or {}
@@ -218,8 +270,9 @@ async def send_message(
                     **retry_meta,
                     "fallback_used": True,
                     "retry_mode": "trace-cag_degraded",
-                    "primary_error": str(graph_err),
+                    "primary_error_type": type(graph_err).__name__,
                 }
+                observation_trace_result = retry_result
             except Exception as retry_err:
                 logger.error("TraceCAG failed in /chat/messages (degraded retry): %s", retry_err)
                 ai_response = SAFE_FIXED_RESPONSE
@@ -228,8 +281,8 @@ async def send_message(
                     "path": "safe_fixed_response",
                     "cache_hit": False,
                     "fallback_used": True,
-                    "primary_error": str(graph_err),
-                    "retry_error": str(retry_err),
+                    "primary_error_type": type(graph_err).__name__,
+                    "retry_error_type": type(retry_err).__name__,
                 }
         
         # 3. Save AI message + 4. Update session — run in parallel, also await user msg
@@ -254,6 +307,22 @@ async def send_message(
             ),
             return_exceptions=True,
         )
+
+        observation_meta: Dict[str, Any] = {}
+        try:
+            from api.services.learner_observation_spool import (
+                persist_trace_observations,
+            )
+
+            observation_meta = await persist_trace_observations(
+                user_id=msg_req.user_id,
+                session_id=msg_req.session_id,
+                turn_id=user_message["message_id"],
+                trace_result=observation_trace_result,
+            )
+        except Exception as observation_err:
+            logger.error("Learner observation durability degraded: %s", observation_err)
+            observation_meta = {"observation_durability_degraded": True}
         
         processing_time = int((time.time() - start_time) * 1000)
 
@@ -280,13 +349,17 @@ async def send_message(
             response=ai_response,
             metadata={
                 "processing_time_ms": processing_time,
+                **observation_meta,
                 "model_used": model_used,
                 "trace-cag": graph_metadata,
             },
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Chat request failed error=%s", type(e).__name__)
+        raise HTTPException(status_code=500, detail="Unable to process chat request") from e
 
 
 @router.get(
@@ -297,10 +370,12 @@ async def send_message(
 async def get_session_messages(
     session_id: str,
     limit: int = 0,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """Get all messages in a session."""
     try:
+        await _ensure_chat_session_owner(session_id, current_user, db)
         if limit < 0:
             raise HTTPException(status_code=400, detail="limit must be >= 0")
 
@@ -336,6 +411,8 @@ async def get_session_messages(
                 timestamp=msg["timestamp"]
             ) for msg in messages
         ]
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -348,8 +425,11 @@ async def get_session_messages_paged(
     session_id: str,
     limit: int = 50,
     cursor: str | None = None,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
+    await _ensure_chat_session_owner(session_id, current_user, db)
+
     if limit < 1:
         raise HTTPException(status_code=400, detail="limit must be >= 1")
 
@@ -409,8 +489,11 @@ async def get_session_messages_paged(
 )
 async def get_session_messages_metadata(
     session_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
+    await _ensure_chat_session_owner(session_id, current_user, db)
+
     base_query: Dict[str, Any] = {"session_id": session_id}
     total_count = await db["chat_messages"].count_documents(base_query)
 
@@ -482,10 +565,12 @@ async def get_session_messages_metadata(
 async def get_user_sessions(
     user_id: str,
     limit: int = 20,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """Get all sessions for a user."""
     try:
+        enforce_user_scope(current_user, user_id)
         cursor = db["chat_sessions"].find(
             {"user_id": user_id}
         ).sort("last_activity", -1).limit(limit)
@@ -494,5 +579,7 @@ async def get_user_sessions(
         for s in sessions:
             s["_id"] = str(s["_id"])
         return sessions
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

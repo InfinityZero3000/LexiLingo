@@ -72,6 +72,7 @@ from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
+from app.routes.learner_state import router as learner_state_router
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
@@ -121,11 +122,22 @@ async def lifespan(app: FastAPI):
         await RedisClient.connect()
     except Exception as e:
         logger.warning(f"Redis unavailable — rate limiting will use in-memory fallback: {e}")
+
+    if settings.LEARNER_STATE_ENABLED:
+        from app.services.learner_state_outbox import (
+            start_learner_state_outbox_worker,
+        )
+
+        start_learner_state_outbox_worker()
     
     yield
     
     # Shutdown
     logger.info("Shutting down...")
+    if settings.LEARNER_STATE_ENABLED:
+        from app.services.learner_state_outbox import stop_learner_state_outbox_worker
+
+        await stop_learner_state_outbox_worker()
     await RedisClient.close()
     await close_db()
     logger.info("Shutdown complete")
@@ -267,13 +279,45 @@ async def forward_proto_middleware(request: Request, call_next):
 @app.middleware("http")
 async def limit_request_body(request: Request, call_next):
     """Reject requests with bodies larger than MAX_REQUEST_BODY_BYTES."""
+    limit = settings.MAX_REQUEST_BODY_BYTES
+    if request.url.path.startswith(f"{settings.API_V1_PREFIX}/internal/learner-state"):
+        limit = settings.LEARNER_STATE_MAX_BODY_BYTES
     content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > settings.MAX_REQUEST_BODY_BYTES:
+    try:
+        declared_length = int(content_length) if content_length else None
+    except ValueError:
+        return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length"})
+    if declared_length is not None and declared_length > limit:
         return JSONResponse(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             content={"detail": "Request body too large"},
         )
-    return await call_next(request)
+    if request.method not in {"POST", "PUT", "PATCH"}:
+        return await call_next(request)
+
+    class _RequestBodyTooLarge(Exception):
+        pass
+
+    original_receive = request._receive
+    received = 0
+
+    async def limited_receive():
+        nonlocal received
+        message = await original_receive()
+        if message.get("type") == "http.request":
+            received += len(message.get("body", b""))
+            if received > limit:
+                raise _RequestBodyTooLarge
+        return message
+
+    request._receive = limited_receive
+    try:
+        return await call_next(request)
+    except _RequestBodyTooLarge:
+        return JSONResponse(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            content={"detail": "Request body too large"},
+        )
 
 # Include routers
 app.include_router(well_known_router)
@@ -316,6 +360,7 @@ app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Book
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
+app.include_router(learner_state_router, prefix=f"{settings.API_V1_PREFIX}")
 
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:

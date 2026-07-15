@@ -39,6 +39,51 @@ _IRCOT_YES_NO_PREFIXES = (
 )
 
 
+def _safe_int(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _usage_state_from_provider_usage(usage: dict[str, Any]) -> dict[str, Any]:
+    prompt_tokens = _safe_int(
+        usage.get("prompt_tokens")
+        or usage.get("promptTokenCount")
+        or usage.get("prompt_eval_count")
+    )
+    completion_tokens = _safe_int(
+        usage.get("completion_tokens")
+        or usage.get("candidatesTokenCount")
+        or usage.get("eval_count")
+    )
+    total_tokens = _safe_int(usage.get("total_tokens") or usage.get("totalTokenCount"))
+    details = (
+        usage.get("prompt_tokens_details")
+        or usage.get("prompt_token_details")
+        or usage.get("input_token_details")
+        or {}
+    )
+    cached_tokens = _safe_int(usage.get("cached_tokens") or details.get("cached_tokens"))
+    if not total_tokens and (prompt_tokens or completion_tokens):
+        total_tokens = prompt_tokens + completion_tokens
+    if not (prompt_tokens or completion_tokens or total_tokens or cached_tokens):
+        return {}
+    effective_prompt_tokens = max(0.0, float(prompt_tokens) - 0.5 * float(cached_tokens))
+    return {
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+        "cached_tokens": cached_tokens,
+        "effective_prompt_tokens": effective_prompt_tokens,
+        "prompt_cache_token_rate": (cached_tokens / prompt_tokens) if prompt_tokens else 0.0,
+        "prompt_discount_savings_rate": (
+            (prompt_tokens - effective_prompt_tokens) / prompt_tokens
+        ) if prompt_tokens else 0.0,
+        "usage_source": "provider",
+    }
+
+
 # ── Pure text helpers (no LLM / no prod imports) ──────────────────────────────
 
 def _extract_first_sentence(text: str) -> str:
@@ -663,6 +708,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     else:
         response = ""
         model_used = "llm_unavailable"
+        usage_state: dict[str, Any] = {}
         auxiliary_models: list[str] = []
         _ircot_meta: dict[str, Any] = {"evaluated": False, "selected": False, "reason": "not_evaluated"}
         truncated_context = _truncate_benchmark_context(
@@ -777,7 +823,8 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             )
                             if resp is not None and resp.status_code == 200:
                                 data = resp.json()
-                                tokens = data.get("usage", {}).get("total_tokens", _bench_max_tokens)
+                                usage_state = _usage_state_from_provider_usage(data.get("usage") or {})
+                                tokens = usage_state.get("total_tokens") or data.get("usage", {}).get("total_tokens", _bench_max_tokens)
                                 await record_groq_key_usage(groq_key, tokens)
                                 _raw = data["choices"][0]["message"]["content"].strip()
                                 # Strip <think>…</think> blocks (Qwen3 thinking mode)
@@ -830,7 +877,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                     if not gemini_key:
                         continue
                     try:
-                        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+                        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
                         request_body = {
                             "contents": [{"parts": [{"text": user_prompt}]}],
                             "system_instruction": {"parts": [{"text": system_prompt}]},
@@ -841,10 +888,13 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             url=url,
                             payload=request_body,
                             httpx_module=httpx,
+                            headers={"x-goog-api-key": gemini_key},
                             timeout=30.0,
                         )
                         if resp is not None and resp.status_code == 200:
-                            candidates = resp.json().get("candidates", [])
+                            data = resp.json()
+                            usage_state = _usage_state_from_provider_usage(data.get("usageMetadata") or {})
+                            candidates = data.get("candidates", [])
                             if candidates:
                                 response = candidates[0]["content"]["parts"][0]["text"].strip()
                                 model_used = "gemini-2.0-flash"
@@ -876,7 +926,9 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             max_retries=1,
                         )
                         if resp is not None and resp.status_code == 200:
-                            response = resp.json().get("message", {}).get("content", "").strip()
+                            data = resp.json()
+                            usage_state = _usage_state_from_provider_usage(data)
+                            response = data.get("message", {}).get("content", "").strip()
                             model_used = f"ollama/{ollama_model}"
                         else:
                             logger.warning(
@@ -890,6 +942,8 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
             logger.error("[_generate_benchmark_qa_response] QA generation error: %s", e)
 
         if not response:
+            if _env_flag("TRACECAG_BENCHMARK_FAIL_ON_PROVIDER_ERROR", False):
+                raise RuntimeError("Primary benchmark provider returned no response")
             response = _generate_extractive_qa_response(question, clean_context)
             model_used = "extractive_fallback"
 
@@ -946,4 +1000,5 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         "ttft_ms": latency_ms,
         "models_used": models_used,
         "retrieval_meta": retrieval_meta,
+        **locals().get("usage_state", {}),
     }

@@ -13,6 +13,7 @@ from typing import List, Optional, Union
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from functools import lru_cache
+from urllib.parse import urlparse
 
 
 class Settings(BaseSettings):
@@ -63,6 +64,21 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = os.getenv("REDIS_PASSWORD", "")
     REDIS_DB: int = int(os.getenv("REDIS_DB", "1"))
     REDIS_MAX_CONNECTIONS: int = 50
+
+    # ============================================================
+    # Sparse Learner State (safe rollout; disabled by default)
+    # ============================================================
+    LEARNER_STATE_MODE: str = Field(default="off", pattern=r"^(off|shadow|read|primary)$")
+    LEARNER_STATE_API_URL: str = "http://backend-service:8000/api/v1/internal"
+    LEARNER_STATE_INTERNAL_TOKEN: str = ""
+    LEARNER_STATE_INTERNAL_AUDIENCE: str = "lexilingo-backend"
+    LEARNER_STATE_DEADLINE_MS: int = Field(default=40, ge=5, le=500)
+    LEARNER_STATE_CONNECT_TIMEOUT_MS: int = Field(default=10, ge=1, le=100)
+    LEARNER_STATE_POOL_TIMEOUT_MS: int = Field(default=5, ge=1, le=100)
+    LEARNER_STATE_MAX_INFLIGHT: int = Field(default=100, ge=1, le=1000)
+    LEARNER_STATE_CIRCUIT_FAILURES: int = Field(default=5, ge=1, le=100)
+    LEARNER_STATE_CIRCUIT_RESET_SECONDS: float = Field(default=30.0, ge=0.1, le=600.0)
+    KUZU_USER_MASTERY_WRITES_ENABLED: bool = True
 
     # ============================================================
     # Internal CEFR Content Agent
@@ -152,6 +168,22 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_security(self):
         """Reject common insecure deployment settings."""
+        if self.LEARNER_STATE_MODE != "off":
+            if len(self.LEARNER_STATE_INTERNAL_TOKEN) < 32:
+                raise ValueError(
+                    "LEARNER_STATE_INTERNAL_TOKEN must be at least 32 characters when enabled"
+                )
+            if not self.LEARNER_STATE_INTERNAL_AUDIENCE.strip():
+                raise ValueError("LEARNER_STATE_INTERNAL_AUDIENCE must not be empty")
+            if self.ENVIRONMENT == "production":
+                parsed = urlparse(self.LEARNER_STATE_API_URL)
+                private_service = parsed.hostname == "backend-service" or bool(
+                    parsed.hostname and parsed.hostname.endswith(".internal")
+                )
+                if parsed.scheme != "https" and not private_service:
+                    raise ValueError(
+                        "LEARNER_STATE_API_URL must use HTTPS or private service DNS in production"
+                    )
         if self.ENVIRONMENT != "production":
             return self
 
@@ -255,6 +287,7 @@ class Settings(BaseSettings):
     # ============================================================
     # Ollama (Local LLM) Configuration
     # ============================================================
+    USE_OLLAMA: bool = os.getenv("USE_OLLAMA", "false").lower() == "true"
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
     OLLAMA_TIMEOUT: int = int(os.getenv("OLLAMA_TIMEOUT", "60"))

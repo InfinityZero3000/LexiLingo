@@ -16,7 +16,9 @@ import re
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from api.routes.admin import verify_admin_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +155,7 @@ async def translate_word(
     word: str = Query(..., min_length=1, max_length=100, description="English word to translate"),
     lang: str = Query("vi", description="Target language code (vi, fr, ja, …)"),
     context: str = Query("", max_length=500, description="Caption sentence the word appears in"),
+    _admin_key: str = Depends(verify_admin_api_key),
 ):
     """
     Contextual LLM-powered word translation.

@@ -327,6 +327,7 @@ async def run_lexi_pipeline(
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used = "trace-cag"
+    observation_trace_result: Dict[str, Any] = {}
 
     try:
         from api.services.orchestrator import get_orchestrator
@@ -357,6 +358,7 @@ async def run_lexi_pipeline(
         metadata["pipeline_steps"].append("trace-cag_complete")
         metadata["trace-cag_metadata"] = graph_result.get("metadata", {})
         model_used = ", ".join(graph_result.get("metadata", {}).get("models_used", ["trace-cag"]))
+        observation_trace_result = graph_result
 
     except Exception as e:
         logger.error("TraceCAG hard failure in Lexi pipeline (primary): %s", e)
@@ -392,6 +394,7 @@ async def run_lexi_pipeline(
                 "primary_error": str(e),
             }
             model_used = ", ".join(retry_meta.get("models_used", ["trace-cag_retry"]))
+            observation_trace_result = retry_result
         except Exception as retry_err:
             logger.error("TraceCAG hard failure in Lexi pipeline (degraded retry): %s", retry_err)
             metadata["pipeline_steps"].append("trace-cag_failed_hard")
@@ -518,6 +521,24 @@ async def run_lexi_pipeline(
         }),
         _write_conv_cache(),
     )
+
+    try:
+        from api.services.learner_observation_spool import persist_trace_observations
+
+        metadata.update(
+            await persist_trace_observations(
+                user_id=request.user_id,
+                session_id=session_id,
+                turn_id=user_message["id"],
+                trace_result=observation_trace_result,
+            )
+        )
+    except Exception as observation_err:
+        logger.error(
+            "Lexi learner observation durability degraded: %s",
+            type(observation_err).__name__,
+        )
+        metadata["observation_durability_degraded"] = True
 
     total_ms = int((time.time() - start_time) * 1000)
     metadata["latency_ms"] = total_ms
@@ -755,6 +776,32 @@ async def stream_lexi_chat(
             model_used = f"groq/{os.getenv('GROQ_MODEL', 'qwen/qwen3-32b')}" \
                 if os.getenv("GROQ_API_KEY") else "gemini-2.0-flash"
 
+    if not cache_hit and lexi_response:
+        try:
+            from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
+            from api.services.trace_cag.cache_utils import _write_cache_entry
+
+            overall_for_cache = EvaluationAgent.compute_overall_score(
+                grammar_score, fluency_score, vocab_level
+            )
+            _update_ranker_from_generation(
+                question=user_text,
+                response=lexi_response,
+                retrieval_trace=list(raw_state.get("retrieval_trace") or []),
+            )
+            if raw_state.get("cache_policy", "on") == "on":
+                await _write_cache_entry(
+                    raw_state,
+                    lexi_response,
+                    str(raw_state.get("strategy") or "feedback"),
+                    diag_errors,
+                    overall_for_cache,
+                    str(raw_state.get("retrieved_context") or ""),
+                    model_used=model_used,
+                )
+        except Exception as side_effect_err:
+            logger.debug("Lexi stream cache/ranker side effect skipped: %s", side_effect_err)
+
     # 4. TTS synthesis — after all chunks so TTFB is unaffected
     audio_b64: Optional[str] = None
     if request.enable_tts:
@@ -820,6 +867,23 @@ async def stream_lexi_chat(
     except Exception as persist_err:
         logger.warning("Lexi stream persist error: %s", persist_err)
 
+    observation_meta: Dict[str, Any] = {}
+    try:
+        from api.services.learner_observation_spool import persist_trace_observations
+
+        observation_meta = await persist_trace_observations(
+            user_id=request.user_id,
+            session_id=session_id,
+            turn_id=user_message["id"],
+            trace_result=raw_state,
+        )
+    except Exception as observation_err:
+        logger.error(
+            "Lexi stream learner observation durability degraded: %s",
+            type(observation_err).__name__,
+        )
+        observation_meta = {"observation_durability_degraded": True}
+
     # 6. Done event
     overall_score = EvaluationAgent.compute_overall_score(
         grammar_score, fluency_score, vocab_level
@@ -853,6 +917,7 @@ async def stream_lexi_chat(
             "latency_ms": total_ms,
             "model_used": model_used,
             "cache_hit": cache_hit,
+            **observation_meta,
             "quota": {
                 "rpm_used": quota.rpm_used,
                 "rpm_limit": quota.rpm_limit,

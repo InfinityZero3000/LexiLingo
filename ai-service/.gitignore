@@ -32,9 +32,11 @@ temp/
 data/kuzu_db
 data/kuzu_db/
 data/kuzu_db.wal
+data/kuzu_db.shadow*
 data/kuzu
 data/kuzu/
 data/kuzu.wal
+data/*.init.lock
 data/kuzu_synced_files.json
 api/data/
 data/backups/

@@ -10,12 +10,15 @@ import logging
 import math
 import re
 import time
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 from api.services.trace_cag.state import TraceCAGState
 from api.services.document_intelligence import get_doc_intel_service
 from api.services.trace_cag.env_helpers import _env_float, _env_int, _clip01
 from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
+from api.services.learner_overlay import rank_with_learner_overlay
+from api.core.config import settings
 
 from api.services.trace_cag.kg_utils import (
     _KG_QUERY_CACHE, _kg_cache_key, _kg_cache_get, _kg_cache_set,
@@ -163,6 +166,15 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
 
             cache_key = _kg_cache_key(user_input, learner_level, top_k)
             queried_nodes = _kg_cache_get(cache_key)
+            if queried_nodes is not None:
+                try:
+                    from api.services.telemetry import get_telemetry
+
+                    get_telemetry().increment_counter(
+                        "tracecag_shared_subgraph_cache_hit_total"
+                    )
+                except Exception:
+                    pass
             if queried_nodes is None:
                 kg = get_kg_service()
                 queried_nodes = kg.query_concepts(user_input, learner_level=learner_level, top_k=top_k)
@@ -203,7 +215,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         )
         for candidate in ranked_candidates:
             final_score = float(candidate.get("fusion_score", candidate.get("vec_sim", 0.0)))
-            evidence_items.append({
+            evidence_item = {
                 "item_id": candidate["item_id"],
                 "title": candidate["title"],
                 "text": candidate["text"],
@@ -213,8 +225,10 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "graph_score": float(candidate.get("graph_score") or 0.0),
                 "memory_score": float(candidate.get("memory_score") or 0.0),
                 "precomputed_score": final_score,
-                "is_relevant": candidate["item_id"] in relevant_ids,
-            })
+            }
+            if relevant_ids:
+                evidence_item["is_relevant"] = candidate["item_id"] in relevant_ids
+            evidence_items.append(evidence_item)
     elif benchmark_context:
         evidence_items.insert(0, {
             "item_id": "benchmark_context",
@@ -396,6 +410,25 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         allow_exploration=_adaptive_mode_enabled(state, benchmark_mode),
         benchmark_mode=benchmark_mode,
     )
+    if (
+        settings.LEARNER_STATE_MODE in {"read", "primary"}
+        and not benchmark_candidates
+        and evidence_items
+    ):
+        overlay_candidates = [
+            {
+                **item,
+                "concept_id": str(item.get("item_id") or item.get("title") or ""),
+                "relevance": float(item.get("fusion_score") or item.get("vec_sim") or 0.0),
+            }
+            for item in evidence_items
+        ]
+        evidence_items = rank_with_learner_overlay(
+            overlay_candidates,
+            dict(state.get("learner_concept_states") or {}),
+            now=datetime.now(timezone.utc),
+            top_k=len(overlay_candidates),
+        )
     evidence_budget = _compute_evidence_budget(
         question=user_input,
         retrieval_policy=retrieval_policy,
@@ -423,17 +456,18 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         top_evidence = shaped_evidence
     else:
         top_evidence = evidence_items[:evidence_budget]
-    retrieval_trace = [
-        {
+    retrieval_trace = []
+    for idx, item in enumerate(top_evidence):
+        trace_item = {
             "item_id": str(item.get("item_id") or item.get("title") or f"item_{idx}"),
             "title": str(item.get("title") or item.get("item_id") or ""),
             "text": str(item.get("text") or ""),
             "rank": idx + 1,
             "score": float(item.get("fusion_score") or 0.0),
-            "is_relevant": bool(item.get("is_relevant") or False),
         }
-        for idx, item in enumerate(top_evidence)
-    ]
+        if "is_relevant" in item:
+            trace_item["is_relevant"] = bool(item["is_relevant"])
+        retrieval_trace.append(trace_item)
 
     if benchmark_candidates:
         context_parts = []
@@ -511,6 +545,14 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "profile": adaptive_profile or None,
                 "features": adaptive_features,
                 "controller": adaptive_controller,
+            },
+            "learner_state": {
+                "mode": settings.LEARNER_STATE_MODE,
+                "epoch": int(state.get("learner_state_epoch") or 0),
+                "degraded": bool(state.get("learner_state_degraded") or False),
+                "reason": state.get("learner_state_reason"),
+                "latency_ms": float(state.get("learner_state_latency_ms") or 0.0),
+                "concept_count": len(state.get("learner_concept_states") or {}),
             },
         },
         "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),

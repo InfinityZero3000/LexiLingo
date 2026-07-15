@@ -9,7 +9,20 @@ import api.services.trace_cag.cache_utils as cache_mod
 
 
 @pytest.mark.asyncio
-async def test_cache_gate_reports_benchmark_evidence_mismatch(monkeypatch):
+@pytest.mark.parametrize(
+    ("request_evidence", "expected_decision", "expected_pcc", "expected_reason"),
+    [
+        ("old", "reuse", True, None),
+        ("new", "full", False, "mismatch:evidence_hash"),
+    ],
+)
+async def test_cache_gate_enforces_benchmark_evidence_certificate(
+    monkeypatch,
+    request_evidence,
+    expected_decision,
+    expected_pcc,
+    expected_reason,
+):
     query = "What verb collocates with decision?"
     level = "B1"
     profile = {"level": level}
@@ -21,6 +34,20 @@ async def test_cache_gate_reports_benchmark_evidence_mismatch(monkeypatch):
             "level": level,
             "root_concepts": ["collocation"],
             "session_turn": 0,
+        },
+        "admissibility_certificate": {
+            "schema_version": 2,
+            "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target", "evidence_hash"],
+            "query_norm": query.lower(),
+            "intent": "ask",
+            "level": level,
+            "profile_epoch": nodes._profile_epoch(profile),
+            "policy_version": "policy_v1",
+            "kg_version": "kg_schema_v1",
+            "answer_target": "word",
+            "native_language": "Vietnamese",
+            "evidence_hash": "old",
+            "concepts": ["collocation"],
         },
         "profile_snapshot": profile,
         "response": "make",
@@ -35,7 +62,7 @@ async def test_cache_gate_reports_benchmark_evidence_mismatch(monkeypatch):
                 "evidence_hash": "old",
             },
         },
-        "created_at": time.monotonic(),
+        "created_at": time.time(),
         "ttl": 3600,
     }
 
@@ -59,14 +86,20 @@ async def test_cache_gate_reports_benchmark_evidence_mismatch(monkeypatch):
                 "intent": "ask",
                 "concepts": ["collocation"],
                 "answer_target": "word",
-                "evidence_hash": "new",
+                "evidence_hash": request_evidence,
             }
         },
     })
 
-    assert result["cache_decision"] == "full"
-    assert result["cache_gate_meta"]["pcc_passed"] is False
-    assert "evidence_mismatch" in result["cache_gate_meta"]["reasons"]
+    assert result["cache_decision"] == expected_decision, result.get("cache_gate_meta", {}).get("reasons")
+    assert result["cache_gate_meta"]["pcc_passed"] is expected_pcc
+    if expected_reason:
+        assert expected_reason in result["cache_gate_meta"]["reasons"]
+    else:
+        assert not any(
+            reason.startswith(("missing_required:", "mismatch:"))
+            for reason in result["cache_gate_meta"]["reasons"]
+        )
 
 
 @pytest.mark.asyncio

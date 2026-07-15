@@ -107,6 +107,13 @@ from app.models.ranking_agent import RankingAgentJob
 # Notification Campaign Agent models
 from app.models.notification_campaign import NotificationCampaignJob
 
+# Sparse learner-state and durable observation outbox
+from app.models.learner_state import (
+    LearnerConceptState,
+    LearnerObservationEvent,
+    LearnerStateProfile,
+)
+
 __all__ = [
     # User (Phase 1)
     "User",
@@ -184,4 +191,8 @@ __all__ = [
     "RankingAgentJob",
     # Notification Campaign Agent
     "NotificationCampaignJob",
+    # Learner state
+    "LearnerConceptState",
+    "LearnerObservationEvent",
+    "LearnerStateProfile",
 ]
