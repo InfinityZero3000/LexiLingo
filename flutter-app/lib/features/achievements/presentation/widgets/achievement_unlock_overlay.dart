@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
-import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
+import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 
 /// Full-screen overlay shown when one or more achievements are unlocked.
 ///
@@ -9,7 +9,7 @@ import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_ach
 /// auto-dismisses after [displayDuration]. Each achievement in the queue
 /// is shown sequentially.
 class AchievementUnlockOverlay extends StatefulWidget {
-  final List<UnlockedAchievement> achievements;
+  final List<UnlockedAchievementModel> achievements;
   final VoidCallback onDismiss;
   final Duration displayDuration;
 
@@ -22,7 +22,7 @@ class AchievementUnlockOverlay extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required List<UnlockedAchievement> achievements,
+    required List<UnlockedAchievementModel> achievements,
     required VoidCallback onDismiss,
   }) {
     return showGeneralDialog(
@@ -52,7 +52,6 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
   late final AnimationController _badgeScale;
   late final Animation<double> _scaleAnim;
   int _current = 0;
-  bool _dismissed = false;
 
   @override
   void initState() {
@@ -74,12 +73,11 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
   }
 
   void _next() {
-    if (!mounted || _dismissed) return;
+    if (!mounted) return;
     if (_current < widget.achievements.length - 1) {
       setState(() => _current++);
       _playForCurrent();
     } else {
-      _dismissed = true;
       widget.onDismiss();
       Navigator.of(context, rootNavigator: true).pop();
     }

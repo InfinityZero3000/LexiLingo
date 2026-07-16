@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/services/rating_service.dart';
-import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
-import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
-import 'package:lexilingo_app/features/learning/domain/entities/answer_response.dart';
-import 'package:lexilingo_app/features/learning/domain/entities/lesson_complete.dart';
+import 'package:lexilingo_app/features/learning/data/models/roadmap_model.dart';
+import 'package:lexilingo_app/features/learning/data/models/lesson_attempt_model.dart';
+import 'package:lexilingo_app/features/learning/data/models/answer_response_model.dart';
+import 'package:lexilingo_app/features/learning/data/models/lesson_complete_model.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/domain/services/speaking_answer_matcher.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/start_lesson_usecase.dart';

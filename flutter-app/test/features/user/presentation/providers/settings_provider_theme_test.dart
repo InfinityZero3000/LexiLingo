@@ -202,7 +202,6 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(enableLogging: false),
     );
     await provider.loadSettings('user-1');
 

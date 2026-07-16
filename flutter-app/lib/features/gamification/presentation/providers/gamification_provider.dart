@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/features/gamification/domain/repositories/gamification_repository.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
@@ -62,6 +64,7 @@ class GamificationProvider extends ChangeNotifier {
 
   List<InventoryItemEntity> get inventory => _inventory;
 
+  /// Active boosts: items that are currently active and have not expired.
   List<InventoryItemEntity> get activeBoosts => _inventory
       .where((i) => i.isActive && !i.isExpired && i.expiresAt != null)
       .toList();
@@ -85,6 +88,7 @@ class GamificationProvider extends ChangeNotifier {
   String? _leaderboardError;
   String _selectedLeague = 'bronze';
 
+  // League change detection (populated by loadLeagueStatus)
   String? _leagueChangedFrom;
   String? _leagueChangedTo;
 
@@ -100,9 +104,11 @@ class GamificationProvider extends ChangeNotifier {
   String? get leaderboardError => _leaderboardError;
   String get selectedLeague => _selectedLeague;
 
+  /// Non-null when the user was promoted or demoted since the last session.
   String? get leagueChangedFrom => _leagueChangedFrom;
   String? get leagueChangedTo => _leagueChangedTo;
 
+  /// Call after showing LeagueCeremonyScreen to clear the pending state.
   void clearLeagueChange() {
     _leagueChangedFrom = null;
     _leagueChangedTo = null;
@@ -268,8 +274,12 @@ class GamificationProvider extends ChangeNotifier {
     _isLoadingLeagueStatus = true;
     notifyListeners();
     try {
-      _leagueStatus = await _repository.getLeagueStatus();
-      await _detectLeagueChange(_leagueStatus!.league);
+      final response = await _apiClient.get('/gamification/leaderboard/me');
+      final data = _extractData(response);
+      if (_isSuccessResponse(response) && data is Map<String, dynamic>) {
+        _leagueStatus = LeagueStatusEntity.fromJson(data);
+        await _detectLeagueChange(_leagueStatus!.league);
+      }
     } catch (e) {
       debugPrint('Error loading league status: $e');
     } finally {

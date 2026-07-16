@@ -8,7 +8,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any
 
-from api.repositories.topic_chat_repository import TopicChatRepository
+from motor.motor_asyncio import AsyncIOMotorDatabase
+
 from api.services.subgraph_hot_cache import get_subgraph
 import os
 
@@ -150,28 +151,35 @@ async def persist_topic_turn(
     user_id: str,
     message: str,
     ai_response: str,
-    repo: TopicChatRepository,
+    db: AsyncIOMotorDatabase,
 ) -> str:
-    """Insert user + AI messages, update session activity. Returns ai_message_id."""
+    """Insert user + AI messages, update session message_count. Returns ai_message_id."""
     now = datetime.now(timezone.utc)
 
+    user_message = {
+        "message_id": str(uuid.uuid4()),
+        "session_id": session_id,
+        "user_id": user_id,
+        "content": message,
+        "role": "user",
+        "timestamp": now,
+    }
     ai_message_id = str(uuid.uuid4())
-    await repo.insert_messages_bulk([
+    ai_message_doc = {
+        "message_id": ai_message_id,
+        "session_id": session_id,
+        "content": ai_response,
+        "role": "assistant",
+        "timestamp": now,
+    }
+    await db["chat_messages"].insert_many([user_message, ai_message_doc])
+
+    await db["chat_sessions"].update_one(
+        {"session_id": session_id},
         {
-            "message_id": str(uuid.uuid4()),
-            "session_id": session_id,
-            "user_id": user_id,
-            "content": message,
-            "role": "user",
-            "timestamp": now,
+            "$set": {"last_activity": now},
+            "$inc": {"message_count": 2},
         },
-        {
-            "message_id": ai_message_id,
-            "session_id": session_id,
-            "content": ai_response,
-            "role": "assistant",
-            "timestamp": now,
-        },
-    ])
-    await repo.update_session_activity(session_id, now, message_count_increment=2)
+    )
+
     return ai_message_id

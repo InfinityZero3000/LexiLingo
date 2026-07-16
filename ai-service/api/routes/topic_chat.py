@@ -496,7 +496,7 @@ async def send_topic_message(
             user_id=request.user_id,
             message=request.message,
             ai_response=display_response,
-            repo=repo,
+            db=db,
         )
         
         processing_time = int((time.time() - start_time) * 1000)
@@ -582,7 +582,17 @@ async def get_topic_messages(
     if limit < 0:
         raise HTTPException(status_code=400, detail="limit must be >= 0")
 
-    messages = await repo.get_messages(session_id, limit=limit)
+    cursor = db["chat_messages"].find(
+        {"session_id": session_id}
+    ).sort("timestamp", 1)
+
+    if limit > 0:
+        cursor = cursor.limit(limit)
+        messages = await cursor.to_list(length=limit)
+    else:
+        messages = await load_full_cursor(cursor)
+    
+    # Clean up for response
     for msg in messages:
         msg.pop("_id", None)
         if "timestamp" in msg and isinstance(msg["timestamp"], datetime):
@@ -607,9 +617,34 @@ async def get_topic_messages_paged(
     if limit < 1:
         raise HTTPException(status_code=400, detail="limit must be >= 1")
 
-    docs, has_more = await repo.get_messages_paged(session_id, limit=limit, cursor=cursor)
+    safe_limit = min(limit, 200)
+    base_query: dict = {"session_id": session_id}
+    query: dict = dict(base_query)
+
+    if cursor:
+        cursor_ts, cursor_oid = decode_cursor_dt(cursor)
+        query = {
+            "session_id": session_id,
+            "$or": [
+                {"timestamp": {"$lt": cursor_ts}},
+                {"timestamp": cursor_ts, "_id": {"$lt": cursor_oid}},
+            ],
+        }
+
+    docs_desc = await (
+        db["chat_messages"]
+        .find(query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(safe_limit + 1)
+        .to_list(length=safe_limit + 1)
+    )
+
+    has_more = len(docs_desc) > safe_limit
+    docs_desc = docs_desc[:safe_limit]
+    docs = list(reversed(docs_desc))
     messages = [_serialize_topic_message(doc) for doc in docs]
-    total_count = await repo.count_messages(session_id)
+
+    total_count = await db["chat_messages"].count_documents(base_query)
     next_cursor = encode_cursor(docs[0]) if has_more and docs else None
     prev_cursor = encode_cursor(docs[-1]) if docs else None
     window_start_ts = to_iso_timestamp(docs[0].get("timestamp")) if docs else None
@@ -660,8 +695,23 @@ async def get_topic_messages_metadata(
             }
         }
 
-    latest = await repo.get_latest_message(session_id)
-    oldest = await repo.get_oldest_message(session_id)
+    latest_docs = await (
+        db["chat_messages"]
+        .find(base_query)
+        .sort([("timestamp", -1), ("_id", -1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+    oldest_docs = await (
+        db["chat_messages"]
+        .find(base_query)
+        .sort([("timestamp", 1), ("_id", 1)])
+        .limit(1)
+        .to_list(length=1)
+    )
+
+    latest = latest_docs[0]
+    oldest = oldest_docs[0]
     latest_cursor = encode_cursor(latest)
     oldest_cursor = encode_cursor(oldest)
     latest_ts = to_iso_timestamp(latest.get("timestamp"))

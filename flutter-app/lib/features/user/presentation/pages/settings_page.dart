@@ -3,6 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/di/injection_container.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -758,9 +760,6 @@ class _SettingsPageState extends State<SettingsPage> {
           // Sign out button
           InkWell(
             onTap: () => _confirmSignOut(context),
-            borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(16),
-            ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
@@ -784,6 +783,46 @@ class _SettingsPageState extends State<SettingsPage> {
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       color: AppColors.errorDark,
+                    ),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+                ],
+              ),
+            ),
+          ),
+
+          Divider(height: 1, color: AppColors.grey200),
+
+          // Delete account button
+          InkWell(
+            onTap: () => _confirmDeleteAccount(context),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE4E4),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.delete_forever_rounded,
+                      color: Color(0xFFB91C1C),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'settings.delete_account'.tr(),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFFB91C1C),
                     ),
                   ),
                   const Spacer(),
@@ -829,7 +868,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showReferralSheet(BuildContext context) async {
-    final settingsProvider = context.read<SettingsProvider>();
+    final api = sl<ApiClient>();
     String? code;
 
     showModalBottomSheet(
@@ -862,7 +901,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   textAlign: TextAlign.center),
               const SizedBox(height: 24),
               FutureBuilder<Map<String, dynamic>>(
-                future: settingsProvider.getReferralCode(),
+                future: () async {
+                  return await api.get('/api/v1/referral/my-code');
+                }(),
                 builder: (ctx, snap) {
                   if (!snap.hasData) {
                     return const CircularProgressIndicator();
@@ -1048,6 +1089,49 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('settings.delete_account'.tr()),
+        content: Text('settings.delete_account_confirm'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('common.cancel'.tr()),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFB91C1C),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('settings.delete_account_confirm_btn'.tr()),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await context.read<AuthProvider>().deleteAccount();
+      if (context.mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('settings.delete_account_error'.tr())),
+        );
+      }
+    }
   }
 
   Future<void> _confirmSignOut(BuildContext context) async {
