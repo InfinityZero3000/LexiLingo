@@ -53,27 +53,6 @@
   <title>LexiLingo - English Learning App</title>
   <link rel="manifest" href="manifest.json">
 
-  <style>
-    html,
-    body {
-      width: 100%;
-      min-height: 100%;
-      margin: 0;
-      background: #e1f2ff;
-    }
-
-    body {
-      min-height: 100vh;
-      min-height: 100dvh;
-      overflow: hidden;
-    }
-
-    flutter-view {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-
   <!-- Service Worker auto-update: force new SW to activate immediately and reload -->
   <script>
     if ('serviceWorker' in navigator) {
@@ -82,28 +61,10 @@
         window.location.reload();
       });
 
-      // On page load, check if there's a waiting SW and activate it,
-      // then clear stale i18n cache entries so fresh JSON is always fetched
+      // On page load, check if there's a waiting SW and activate it
       navigator.serviceWorker.ready.then(function(reg) {
-        // Bust stale i18n caches before the app renders
-        if (window.caches) {
-          caches.keys().then(function(cacheNames) {
-            cacheNames.forEach(function(name) {
-              caches.open(name).then(function(cache) {
-                cache.keys().then(function(requests) {
-                  requests.forEach(function(req) {
-                    if (req.url.includes('/assets/assets/i18n/')) {
-                      cache.delete(req);
-                    }
-                  });
-                });
-              });
-            });
-          });
-        }
-
         if (reg.waiting) {
-          reg.waiting.postMessage('skipWaiting');
+          reg.waiting.postMessage({ action: 'skipWaiting' });
           return;
         }
         reg.addEventListener('updatefound', function() {
@@ -112,7 +73,7 @@
           newWorker.addEventListener('statechange', function() {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New SW installed while old one is active — force immediate takeover
-              newWorker.postMessage('skipWaiting');
+              newWorker.postMessage({ action: 'skipWaiting' });
             }
           });
         });

@@ -297,20 +297,26 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              // Saved books section
-              if (provider.savedBooks.isNotEmpty) ...[
-                _buildSavedSection(context, provider, isDark),
-                const SizedBox(height: 20),
-              ],
-
+              // CEFR level filter chips
+              _buildCefrFilterRow(context, provider, isDark),
+              const SizedBox(height: 8),
               // Topic / genre filter chips
               _buildTopicFilterRow(context, provider, isDark),
               const SizedBox(height: 20),
 
-              // Sections by CEFR level
-              ..._cefrLevels.map(
-                (level) => _buildLevelSection(context, level, provider, isDark),
-              ),
+              // Section: All Levels
+              if (provider.selectedCefrLevel == null) ...[
+                ..._cefrLevels.map(
+                  (level) =>
+                      _buildLevelSection(context, level, provider, isDark),
+                ),
+              ] else ...[
+                _buildBookGrid(
+                  context,
+                  provider.booksForLevel(provider.selectedCefrLevel!),
+                  isDark,
+                ),
+              ],
 
               const SizedBox(height: 32),
             ],
@@ -320,64 +326,66 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     );
   }
 
-  Widget _buildSavedSection(
+  Widget _buildTopicFilterRow(
     BuildContext context,
     BookProvider provider,
     bool isDark,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.favorite_rounded, color: Colors.red, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              'books.savedBooks'.tr(),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : AppColors.textDark,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '${provider.savedBooks.length}',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 200,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: provider.savedBooks.length,
-            itemBuilder: (context, i) {
-              final book = provider.savedBooks[i];
-              return BookCard(
-                book: book,
-                onTap: () => _openBook(context, book),
-              );
-            },
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _topicChip(context, provider, isDark, null, 'All'),
+          ...BookProvider.kTopics.map(
+            (t) => _topicChip(context, provider, isDark, t, t),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
-  Widget _buildTopicFilterRow(
+  Widget _topicChip(
+    BuildContext context,
+    BookProvider provider,
+    bool isDark,
+    String? topic,
+    String label,
+  ) {
+    final isSelected = provider.selectedTopic == topic;
+    return GestureDetector(
+      onTap: () => provider.setTopicFilter(topic),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: const EdgeInsets.only(right: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary
+              : isDark
+              ? AppColors.surfaceDarkElevated
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.grey300,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : isDark
+                ? Colors.white60
+                : AppColors.textGrey,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCefrFilterRow(
     BuildContext context,
     BookProvider provider,
     bool isDark,
@@ -489,7 +497,11 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
                 return const Center(
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: LottieLoadingWidget.tiny(),
+                    child: SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
                   ),
                 );
               }

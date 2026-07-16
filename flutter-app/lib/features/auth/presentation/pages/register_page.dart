@@ -198,9 +198,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (value == null || value.trim().isEmpty) {
                           return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(value.trim())) {
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
                           return 'auth.invalidEmail'.tr();
                         }
                         return null;
@@ -252,9 +250,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         if (!RegExp(r'[0-9]').hasMatch(value)) {
                           return 'auth.passwordNeedsNumber'.tr();
                         }
-                        if (!RegExp(
-                          r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]',
-                        ).hasMatch(value)) {
+                        if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]').hasMatch(value)) {
                           return 'auth.passwordNeedsSpecial'.tr();
                         }
                         return null;

@@ -363,45 +363,13 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     size: 90,
                     color: Colors.white.withValues(alpha: 0.08),
                   ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.collections_bookmark_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
-                          onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Text(
-                      deck.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'vocabulary.searchPlaceholder'.tr(),
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -450,26 +418,27 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     );
   }
 
-  Widget _buildCreateDeckCard(BuildContext context, VocabProvider vocabProvider) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDark ? Colors.white24 : Colors.black12,
-          width: 2,
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _showCreateDeckDialog(context, vocabProvider),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          // Filters
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                _buildFilterChip('vocabulary.filterAll'.tr(), true),
+                const SizedBox(width: 8),
+                _buildFilterChip('vocabulary.filterTravel'.tr(), false, icon: Icons.flight),
+                const SizedBox(width: 8),
+                _buildFilterChip('vocabulary.filterBusiness'.tr(), false, icon: Icons.work),
+                const SizedBox(width: 8),
+                _buildFilterChip('vocabulary.filterDaily'.tr(), false, icon: Icons.coffee),
+              ],
+            ),
+          ),
+
+          // "Recent Words" Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
               children: [
                 Icon(
                   Icons.add_rounded,
@@ -478,9 +447,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'vocabulary.createCustomDeck'.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
+                  'vocabulary.recentWordsHeader'.tr(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: isDark ? Colors.white70 : Colors.black87,
                   ),
@@ -1193,9 +1161,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            widget.provider.errorMessage ?? 'vocabulary.failedToSaveWord'.tr(),
-          ),
+          content: Text(widget.provider.errorMessage ?? 'vocabulary.failedToSaveWord'.tr()),
           backgroundColor: AppColors.errorBright,
         ),
       );
@@ -1251,9 +1217,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             decoration: InputDecoration(
               labelText: 'vocabulary.wordLabel'.tr(),
               hintText: 'vocabulary.wordInputHint'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Icon(Icons.abc_rounded),
               suffixIcon: _buildWordStatus(),
             ),
@@ -1292,9 +1256,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             decoration: InputDecoration(
               labelText: 'vocabulary.definition'.tr(),
               hintText: 'vocabulary.definitionHint'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 40),
                 child: Icon(Icons.menu_book_outlined),
@@ -1312,9 +1274,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
             decoration: InputDecoration(
               labelText: 'vocabulary.exampleSentenceLabel'.tr(),
               hintText: 'vocabulary.exampleSentenceHint'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 24),
                 child: Icon(Icons.format_quote_outlined),

@@ -101,7 +101,7 @@
       ]
     },
     {
-      "source": "/assets/assets/i18n/(.*)",
+      "source": "/assets/i18n/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
@@ -110,10 +110,6 @@
         {
           "key": "Pragma",
           "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
         }
       ]
     }

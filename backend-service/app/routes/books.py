@@ -727,7 +727,6 @@ LEVEL_DEFAULT_TOPICS = {
 
 @router.get("/browse", summary="Browse books by CEFR level with lazy pagination")
 async def browse_books(
-    request: Request,
     level: str = Query(..., description="CEFR level: A1/A2/B1/B2/C1/C2"),
     page: int = Query(1, ge=1, description="Page number"),
     topic: Optional[str] = Query(None, description="Genre override"),
@@ -761,7 +760,7 @@ async def browse_books(
         )
         books: list[dict] = result.data.get("books", [])
         return {
-            "books": [_proxy_book_urls(b, request) for b in books],
+            "books": books,
             "level": level,
             "page": page,
             "topic": search_topic,

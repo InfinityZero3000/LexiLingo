@@ -180,26 +180,11 @@ class _WalletScreenState extends State<WalletScreen> {
                         ],
                       ),
                       const SizedBox(height: 12),
-                      _buildEarnTip(
-                        'gamification.earnTipCompleteLessons'.tr(),
-                        '+5 gems',
-                      ),
-                      _buildEarnTip(
-                        'gamification.earnTipFinishCourse'.tr(),
-                        '+50 gems',
-                      ),
-                      _buildEarnTip(
-                        'gamification.earnTipStreakBonus'.tr(),
-                        '+3 gems',
-                      ),
-                      _buildEarnTip(
-                        'gamification.earnTipAchievements'.tr(),
-                        '+10-100 gems',
-                      ),
-                      _buildEarnTip(
-                        'gamification.earnTipChallenges'.tr(),
-                        '+20 gems',
-                      ),
+                      _buildEarnTip('gamification.earnTipCompleteLessons'.tr(), '+5 gems'),
+                      _buildEarnTip('gamification.earnTipFinishCourse'.tr(), '+50 gems'),
+                      _buildEarnTip('gamification.earnTipStreakBonus'.tr(), '+3 gems'),
+                      _buildEarnTip('gamification.earnTipAchievements'.tr(), '+10-100 gems'),
+                      _buildEarnTip('gamification.earnTipChallenges'.tr(), '+20 gems'),
                     ],
                   ),
                 ),
