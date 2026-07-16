@@ -148,7 +148,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                   children: [
                     // Fire emoji header
                     Text(
-                      'Streak Milestone!',
+                      '🔥 Streak Milestone!',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

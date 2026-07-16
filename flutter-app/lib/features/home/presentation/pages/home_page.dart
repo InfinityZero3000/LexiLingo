@@ -1712,14 +1712,17 @@ class _HomePageNewState extends State<HomePageNew> {
       },
     ];
 
-    const double chipHeight = 50.0;
-    
-    return SizedBox(
-      height: chipHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.05,
+        ),
         itemCount: quickActions.length,
         itemBuilder: (context, index) {
           final action = quickActions[index];
@@ -1764,7 +1767,7 @@ class _HomePageNewState extends State<HomePageNew> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(24),

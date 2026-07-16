@@ -87,8 +87,8 @@ class _WelcomePageState extends State<WelcomePage>
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/LexiLingo-logo.png',
-                              height: 40,
+                              'assets/out-app/lexilingo-logo.png',
+                              height: 28,
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -104,12 +104,9 @@ class _WelcomePageState extends State<WelcomePage>
                         children: [
                           AspectRatio(
                             aspectRatio: 1,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: Image.asset(
-                                'assets/out-app/banner-start.png',
-                                fit: BoxFit.contain,
-                              ),
+                            child: Image.asset(
+                              'assets/out-app/banner-start.png',
+                              fit: BoxFit.contain,
                             ),
                           ),
                           const SizedBox(height: 20),

@@ -5,9 +5,9 @@ services:
     restart: unless-stopped
     depends_on:
       backend-service:
-        condition: service_started
+        condition: service_healthy
       ai-service:
-        condition: service_started
+        condition: service_healthy
     environment:
       GATEWAY_SERVER_NAME: ${GATEWAY_SERVER_NAME:-api.lexilingo.me}
       GATEWAY_SSL_CERT_PATH: ${GATEWAY_SSL_CERT_PATH:-/etc/letsencrypt/live/api.lexilingo.me/fullchain.pem}
@@ -97,8 +97,6 @@ services:
     command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis_data:/data
-    ports:
-      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
       interval: 10s
@@ -172,8 +170,10 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       DEBUG: ${DEBUG:-False}
+      REDIS_URL: redis://redis:6379/0
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
@@ -253,6 +253,9 @@ services:
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      REDIS_PASSWORD: ""
+      REDIS_DB: 0
+      REDIS_URL: redis://redis-ai:6379/0
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       DEBUG: ${DEBUG:-false}
@@ -261,6 +264,7 @@ services:
       CONTENT_AGENT_MAX_RECORDS: ${CONTENT_AGENT_MAX_RECORDS:-20000}
       CONTENT_AGENT_MAX_BATCH_RECORDS: ${CONTENT_AGENT_MAX_BATCH_RECORDS:-2000}
       CONTENT_AGENT_ALLOW_LOCAL_STORE: ${CONTENT_AGENT_ALLOW_LOCAL_STORE:-true}
+      CONTENT_AGENT_ALLOW_LOCAL_STORE: "false"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -286,6 +290,9 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+      - ./ai-service/models:/app/models
+      - content_etl_data:/data/content-etl
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - lexilingo-prod
 
@@ -312,6 +319,7 @@ services:
       - "--storage.tsdb.retention.time=15d"
       - "--web.enable-lifecycle"
     networks:
+      - lexilingo-network
       - lexilingo-prod
 
   # ============================================
@@ -338,6 +346,7 @@ services:
     depends_on:
       - prometheus
     networks:
+      - lexilingo-network
       - lexilingo-prod
 
 volumes:

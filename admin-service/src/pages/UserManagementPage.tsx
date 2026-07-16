@@ -24,6 +24,12 @@ type UserListItem = ApiUserListItem & {
   streak_days: number;
 };
 
+type UserListItem = ApiUserListItem & {
+  avatar_url: string | null;
+  total_xp: number;
+  streak_days: number;
+};
+
 export default function UserManagementPage() {
   const queryClient = useQueryClient();
   const { user: currentAdmin, role } = useAuth();

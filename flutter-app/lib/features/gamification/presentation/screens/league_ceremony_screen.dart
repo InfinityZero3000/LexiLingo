@@ -140,7 +140,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                   FadeTransition(
                     opacity: _textSlide,
                     child: Text(
-                      isPromotion ? 'Promoted!' : 'Keep Going!',
+                      isPromotion ? '🎉 Promoted!' : 'Keep Going!',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,

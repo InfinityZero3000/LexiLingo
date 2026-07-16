@@ -571,7 +571,7 @@ class LexiChatProvider extends ChangeNotifier {
                   ? serverText
                   : (accumulated.isNotEmpty
                       ? accumulated
-                      : 'Squawk! Something went quiet. Can you ask that again?');
+                      : 'Squawk! 🦜 Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',
