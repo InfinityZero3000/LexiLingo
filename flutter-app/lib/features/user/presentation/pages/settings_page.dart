@@ -3,8 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
-import 'package:lexilingo_app/core/di/injection_container.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';

@@ -90,7 +90,7 @@ Future<SettingsProvider> _createProvider({
     repository: repository,
     notificationService: _FakeNotificationService(),
     themePreferenceStore: ThemePreferenceStore(preferences),
-    apiClient: ApiClient(),
+    apiClient: ApiClient(enableLogging: false),
   );
 }
 
@@ -117,7 +117,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(),
+      apiClient: ApiClient(enableLogging: false),
     );
     await provider.loadSettings('user-1');
     var notifications = 0;
@@ -174,7 +174,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(),
+      apiClient: ApiClient(enableLogging: false),
     );
     await provider.loadSettings('user-1');
 
@@ -203,7 +203,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(),
+      apiClient: ApiClient(enableLogging: false),
     );
     await provider.loadSettings('user-1');
 
@@ -262,7 +262,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(),
+      apiClient: ApiClient(enableLogging: false),
     );
     await provider.loadSettings('user-1');
 
@@ -291,7 +291,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(),
+      apiClient: ApiClient(enableLogging: false),
     );
     await provider.loadSettings('user-1');
 
