@@ -137,7 +137,7 @@ Required environment variables:
 | `GEMINI_API_KEY` | Google Gemini API key |
 
 Optional:
-- `MONGODB_DB_NAME` — Database name (default: lexilingo)
+- `MONGODB_DATABASE` — Database name (default: lexilingo_dev)
 - `ALLOWED_ORIGINS` — CORS origins
 - `RATE_LIMIT_PER_MINUTE` — API rate limiting
 

@@ -633,6 +633,7 @@ class KnowledgeGraphServiceV3:
         except Exception:
             return None
 
+        mutated = False
         for concept_id in linked_concepts:
             # Simple mastery update: decrease on errors, increase otherwise
             delta = -0.05 if error_types else 0.03
@@ -645,10 +646,17 @@ class KnowledgeGraphServiceV3:
                     "ON MATCH SET m.score = min(1.0, max(0.0, m.score + $delta))",
                     {"uid": user_id, "cid": concept_id, "score": 0.5, "delta": delta},
                 )
+                mutated = True
             except Exception as _exc:
                 logger.debug("[kg_service_v3] ignored: %s", _exc)
                 continue
 
+        if mutated:
+            from api.services.trace_cag.cache_utils import invalidate_dependency
+
+            await invalidate_dependency(
+                f"learner:{user_id}:profile", f"mastery:{time.time_ns()}"
+            )
         return None
 
     async def get_user_mastery(self, user_id: str) -> Dict[str, float]:

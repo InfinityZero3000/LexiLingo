@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
@@ -65,10 +66,7 @@ class _TodayPlanPageState extends State<TodayPlanPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('home.todayPlan.title'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        leading: AppBackButton(onPressed: () => Navigator.of(context).pop()),
       ),
       body:
           Consumer3<HomeProvider, DailyChallengesProvider, ProficiencyProvider>(

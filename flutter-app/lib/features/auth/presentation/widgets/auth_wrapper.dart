@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
+import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import '../providers/auth_provider.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../pages/login_page.dart';
@@ -272,7 +273,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           onComplete: (answers) => _completeOnboarding(authProvider, answers),
         );
       } else {
-        currentPage = const MainScreen();
+        currentPage = const LearnerTheme(child: MainScreen());
       }
     } else {
       if (_isResolvingPreAuthFlow || !_preAuthFlowResolved) {

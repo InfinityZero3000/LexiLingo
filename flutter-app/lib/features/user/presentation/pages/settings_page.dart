@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -105,10 +106,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('settings.title'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const AppBackButton(),
       ),
       body: settings.isLoading
           ? const Center(child: LottieLoadingWidget.medium())

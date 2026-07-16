@@ -187,10 +187,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       );
     }
 
-    final progressRatio = _duration.inMilliseconds > 0
-        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
-
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
@@ -268,42 +264,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
               ),
             ),
             const SizedBox(height: 24),
-
-            // ── Progress bar ──
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progressRatio.toDouble(),
-                minHeight: 4,
-                backgroundColor: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.grey200,
-                valueColor: AlwaysStoppedAnimation<Color>(cefrColor),
-              ),
-            ),
-            const SizedBox(height: 6),
-
-            // ── Time labels ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _formatDuration(_position),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
-                  ),
-                ),
-                Text(
-                  _formatDuration(_duration),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
 
             // ── Audio player controls ──
             AudioPlayerControls(
@@ -408,16 +368,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       ),
       child: Icon(Icons.podcasts_rounded, size: 72, color: color),
     );
-  }
-
-  String _formatDuration(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60);
-    final s = d.inSeconds.remainder(60);
-    if (h > 0) {
-      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   Color _cefrColor(String level) {

@@ -11,10 +11,17 @@ from dataclasses import dataclass, field
 import time
 
 
-CERTIFICATE_SCHEMA_VERSION = 2
+CERTIFICATE_SCHEMA_VERSION = 3
 BASE_REQUIRED_DIMENSIONS = frozenset({
     "intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target",
 })
+SCAR_WEIGHTS = {
+    "intent": 0.20,
+    "concept": 0.30,
+    "relation": 0.15,
+    "evidence": 0.20,
+    "state_staleness": 0.15,
+}
 
 
 @dataclass(frozen=True)
@@ -151,19 +158,26 @@ def decide_l1_reuse(
     if age_ratio >= 1.0:
         reasons.append("stale_candidate")
 
-    entity_overlap = _jaccard(request.entities, candidate.entities)
     relation_overlap = _jaccard(request.relation_hints, candidate.relation_hints)
     intent_drift = 0.0 if request.intent == candidate.intent else 1.0
+    evidence_drift = 0.0 if request.evidence_hash == candidate.evidence_hash else 1.0
+    version_drift = float(
+        request.profile_epoch != candidate.profile_epoch
+        or request.policy_version != candidate.policy_version
+        or request.kg_version != candidate.kg_version
+        or request.source_version != candidate.source_version
+        or request.freshness_class != candidate.freshness_class
+    )
 
     risk = (
-        0.30 * intent_drift
-        + 0.25 * (1.0 - concept_overlap)
-        + 0.20 * (1.0 - entity_overlap)
-        + 0.15 * (1.0 - relation_overlap)
-        + 0.10 * age_ratio
+        SCAR_WEIGHTS["intent"] * intent_drift
+        + SCAR_WEIGHTS["concept"] * (1.0 - concept_overlap)
+        + SCAR_WEIGHTS["relation"] * (1.0 - relation_overlap)
+        + SCAR_WEIGHTS["evidence"] * evidence_drift
+        + SCAR_WEIGHTS["state_staleness"] * max(age_ratio, version_drift)
     )
     risk = max(0.0, min(1.0, risk))
-    rank_score = (1.0 - risk) + (0.30 * concept_overlap) + (0.20 * entity_overlap)
+    rank_score = (1.0 - risk) + (0.30 * concept_overlap) + (0.20 * relation_overlap)
 
     if reasons:
         return L1Decision("full", risk, rank_score, tuple(reasons), False)

@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_models.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_navigation.dart';
@@ -73,26 +74,17 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
               onTap: () => Navigator.of(context).pushNamed('/today-plan'),
               child: Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? colorScheme.surfaceContainerHighest
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.10)
-                        : AppColors.grey200,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(
-                        alpha: isDark ? 0.22 : 0.06,
-                      ),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+                decoration: Theme.of(context)
+                    .extension<AppTactileTheme>()!
+                    .decoration(
+                      variant: TactileSurfaceVariant.interactive,
+                      fill: isDark
+                          ? colorScheme.surfaceContainerHighest
+                          : Colors.white,
+                      accent: accent,
+                      borderRadius: BorderRadius.circular(20),
+                      diagnosticId: 'home-today-plan',
                     ),
-                  ],
-                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

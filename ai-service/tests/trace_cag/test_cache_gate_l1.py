@@ -170,7 +170,7 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 2,
+            "schema_version": 3,
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
             "intent": "correct",
@@ -182,6 +182,10 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
             "native_language": "Vietnamese",
             "concepts": ["entity:school", "entity:yesterday"],
             "patchable_slots": ["concepts", "query"],
+            "factual_projection_hash": cache_mod._projection_hash(
+                "Cached feedback from a related past-tense turn."
+            ),
+            "provenance_projection_hash": cache_mod._projection_hash([]),
         },
         "graph_bucket": bucket,
         "profile_snapshot": profile,
@@ -243,11 +247,11 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
             "query_norm": candidate_input.lower(),
             "intent": "ask",
             "level": level,
-            "root_concepts": [],
+            "root_concepts": nodes._extract_lightweight_graph_concepts(user_input),
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 2,
+            "schema_version": 3,
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
             "intent": "ask",
@@ -259,6 +263,8 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
             "native_language": "Vietnamese",
             "concepts": [],
             "patchable_slots": ["concepts", "query"],
+            "factual_projection_hash": cache_mod._projection_hash("Steve Jobs"),
+            "provenance_projection_hash": cache_mod._projection_hash([]),
         },
         "graph_bucket": "test-bucket",
         "profile_snapshot": profile,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -46,18 +47,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     if (Navigator.canPop(context))
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 20,
-                        ),
+                      AppBackButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
                         onPressed: () => Navigator.pop(context),
                         tooltip: 'notifications.tooltipBack'.tr(),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
-                        ),
+                        iconSize: 20,
                       ),
                     Container(
                       padding: const EdgeInsets.all(10),

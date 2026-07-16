@@ -162,12 +162,18 @@ class _ButtonContent extends StatelessWidget {
   });
 
   EdgeInsetsGeometry get _padding => switch (size) {
-    AppButtonSize.small =>
-      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-    AppButtonSize.medium =>
-      const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
-    AppButtonSize.large =>
-      const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+    AppButtonSize.small => const EdgeInsets.symmetric(
+      horizontal: 14,
+      vertical: 8,
+    ),
+    AppButtonSize.medium => const EdgeInsets.symmetric(
+      horizontal: 20,
+      vertical: 13,
+    ),
+    AppButtonSize.large => const EdgeInsets.symmetric(
+      horizontal: 28,
+      vertical: 16,
+    ),
   };
 
   double get _fontSize => switch (size) {
@@ -219,17 +225,18 @@ class _ButtonContent extends StatelessWidget {
   }
 
   Border? _border(bool isDark) {
-    if (variant == AppButtonVariant.outlined) {
-      return Border.all(
-        color: disabled
-            ? (isDark
-                ? Colors.white.withValues(alpha: 0.12)
-                : Colors.black.withValues(alpha: 0.12))
-            : (isDark ? AppColors.primaryDark : AppColors.primary),
-        width: 1.5,
-      );
-    }
-    return null;
+    if (variant == AppButtonVariant.ghost) return null;
+    final color = disabled
+        ? (isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.black.withValues(alpha: 0.12))
+        : switch (variant) {
+            AppButtonVariant.destructive => AppColors.errorDark,
+            AppButtonVariant.filled || AppButtonVariant.outlined =>
+              isDark ? AppColors.primaryDarkModeSoft : AppColors.primaryDark,
+            AppButtonVariant.ghost => Colors.transparent,
+          };
+    return Border.all(color: color, width: 2);
   }
 
   @override
@@ -253,8 +260,7 @@ class _ButtonContent extends StatelessWidget {
             data: IconThemeData(color: fg, size: _iconSize),
             child: leading!,
           ),
-        if ((loading || leading != null))
-          const SizedBox(width: 8),
+        if ((loading || leading != null)) const SizedBox(width: 8),
         Text(
           label,
           style: TextStyle(

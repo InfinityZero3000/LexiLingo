@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/level/level.dart';
@@ -28,10 +29,7 @@ class HomeHeader extends StatelessWidget {
           avatarUrl: user?.avatarUrl,
           notificationCount: notificationProvider.unreadCount,
           onNotificationTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const NotificationsPage()),
-            );
+            LearnerRoute.push(context, (_) => const NotificationsPage());
           },
           onAvatarTap: () {
             // Navigate to profile or settings

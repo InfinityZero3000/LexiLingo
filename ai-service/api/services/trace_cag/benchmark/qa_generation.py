@@ -392,7 +392,6 @@ async def _groq_chat_with_retry(messages: list, max_tokens: int, *, estimated_to
     across all configured keys, skip 401 keys, bounded 503 exponential backoff.
     Returns (raw_text_with_think_stripped, model_used) or ("", "") on failure.
     """
-    import httpx
     from api.core.groq_key_pool import (
         get_available_groq_key, record_groq_key_usage, get_configured_key_count,
     )
@@ -414,7 +413,6 @@ async def _groq_chat_with_retry(messages: list, max_tokens: int, *, estimated_to
                 url="https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                 payload={"model": groq_model, "messages": messages, "max_tokens": max_tokens, "temperature": 0.0},
-                httpx_module=httpx,
                 timeout=30.0,
             )
             if resp is not None and resp.status_code == 200:
@@ -786,8 +784,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
             user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}{_hint_block}\n\nAnswer (entity or yes/no, max 6 words):"
 
         try:
-            import httpx
-
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -818,7 +814,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                                 url="https://api.groq.com/openai/v1/chat/completions",
                                 headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
                                 payload={"model": groq_model, "messages": messages, "max_tokens": _bench_max_tokens, "temperature": 0.0},
-                                httpx_module=httpx,
                                 timeout=30.0,
                             )
                             if resp is not None and resp.status_code == 200:
@@ -887,7 +882,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             provider="gemini",
                             url=url,
                             payload=request_body,
-                            httpx_module=httpx,
                             headers={"x-goog-api-key": gemini_key},
                             timeout=30.0,
                         )
@@ -921,7 +915,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                                 "stream": False,
                                 "options": {"num_predict": 96, "temperature": 0.0},
                             },
-                            httpx_module=httpx,
                             timeout=60.0,
                             max_retries=1,
                         )
