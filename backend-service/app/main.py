@@ -48,7 +48,9 @@ from app.routes import (
     gamification_router,
 )
 from app.routes.learning import router as learning_router
-from app.routes.admin import router as admin_router
+from app.routes.admin_courses import router as admin_courses_router
+from app.routes.admin_gamification import router as admin_gamification_router
+from app.routes.admin_system import router as admin_system_router
 from app.routes.content_agent import router as content_agent_router
 from app.routes.notification_campaign import router as notification_campaign_router
 from app.routes.ranking_agent import router as ranking_agent_router
@@ -62,7 +64,8 @@ from app.routes.user_management import router as user_management_router
 from app.routes.youtube import router as youtube_router
 from app.routes.news import router as news_router
 from app.routes.podcasts import router as podcasts_router
-from app.routes.games import router as games_router
+from app.routes.game_content import router as game_content_router
+from app.routes.game_scoring import router as game_scoring_router
 from app.routes.xp import router as xp_router
 from app.routes.books import router as books_router
 from app.routes.ai_audit import router as ai_audit_router
@@ -70,6 +73,7 @@ from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
+from app.routes.well_known import router as well_known_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -282,7 +286,9 @@ app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["L
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
-app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_courses_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")
@@ -300,7 +306,8 @@ app.include_router(news_router, prefix=f"{settings.API_V1_PREFIX}", tags=["News"
 app.include_router(podcasts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Podcasts"])
 
 # Phase 3: English Games + XP System
-app.include_router(games_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Games"])
+app.include_router(game_content_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Games"])
+app.include_router(game_scoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Games"])
 app.include_router(xp_router, prefix=f"{settings.API_V1_PREFIX}", tags=["XP System"])
 
 # Phase 5: Book Reading
@@ -309,15 +316,15 @@ app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["A
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
 
+# Universal Links / App Links verification files (must be at root, no API prefix)
+app.include_router(well_known_router)
+
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
     import prometheus_fastapi_instrumentator.routing as _pfi_routing
     from starlette.routing import Match, Mount
 
-    # Starlette 1.x adds _IncludedRouter objects to app.routes. These have
-    # a matches() method but no .path attribute, crashing the default route
-    # name resolver. Patch _get_route_name to guard against that.
     def _safe_get_route_name(scope, routes, route_name=None):
         for route in routes:
             match, child_scope = route.matches(scope)

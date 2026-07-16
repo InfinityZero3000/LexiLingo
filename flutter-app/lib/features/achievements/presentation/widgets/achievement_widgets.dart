@@ -9,6 +9,7 @@ import 'package:confetti/confetti.dart';
 import 'package:lexilingo_app/core/network/badge_image_cache.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
+import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/core/widgets/badge_generator.dart';
 import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';

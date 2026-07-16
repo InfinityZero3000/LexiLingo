@@ -1,29 +1,49 @@
-import 'dart:convert';
-
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:lexilingo_app/core/network/api_client.dart';
-import 'package:lexilingo_app/core/network/network_info.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/inventory_item.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/starter_reward.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
+import 'package:lexilingo_app/features/gamification/domain/repositories/gamification_repository.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 
-class _AlwaysConnectedNetworkInfo implements NetworkInfo {
+class _FakeRepository implements GamificationRepository {
+  _FakeRepository({required this.items});
+
+  final List<InventoryItemEntity> items;
+
   @override
-  Future<bool> get isConnected async => true;
+  Future<List<InventoryItemEntity>> getInventory() async => items;
+
+  @override
+  Future<WalletEntity> getWallet() async => throw UnimplementedError();
+  @override
+  Future<List<WalletTransactionEntity>> getTransactions({int limit = 50}) async => [];
+  @override
+  Future<StarterRewardEntity?> getPendingStarterReward() async => null;
+  @override
+  Future<bool> acknowledgeStarterReward() async => false;
+  @override
+  Future<List<ShopItemEntity>> getShopItems() async => [];
+  @override
+  Future<bool> purchaseItem(String itemId, {int quantity = 1}) async => false;
+  @override
+  Future<bool> useItem(String inventoryId) async => false;
+  @override
+  Future<String?> equipAvatar(String inventoryId) async => null;
+  @override
+  Future<LeaderboardEntity> getLeaderboard(String league) async =>
+      throw UnimplementedError();
+  @override
+  Future<LeagueStatusEntity> getLeagueStatus() async => throw UnimplementedError();
 }
 
-ApiClient _apiClient(MockClientHandler handler) => ApiClient(
-      client: MockClient(handler),
-      networkInfo: _AlwaysConnectedNetworkInfo(),
-      baseUrl: 'http://test',
-    );
-
-Map<String, dynamic> _inventoryItem({
+InventoryItemEntity _inventoryItem({
   required String id,
   required bool isActive,
   DateTime? expiresAt,
 }) =>
-    {
+    InventoryItemEntity.fromJson({
       'id': id,
       'item': {
         'id': 'item_$id',
@@ -42,17 +62,13 @@ Map<String, dynamic> _inventoryItem({
       'expires_at': expiresAt?.toIso8601String(),
       'activated_at': isActive ? DateTime.now().toIso8601String() : null,
       'purchased_at': DateTime.now().toIso8601String(),
-    };
+    });
 
 void main() {
   group('GamificationProvider.activeBoosts', () {
     test('returns empty list when inventory is empty', () async {
       final provider = GamificationProvider(
-        apiClient: _apiClient((req) async => http.Response(
-              jsonEncode({'success': true, 'data': {'items': []}}),
-              200,
-              headers: {'content-type': 'application/json'},
-            )),
+        repository: _FakeRepository(items: []),
       );
 
       await provider.loadInventory();
@@ -65,27 +81,16 @@ void main() {
       final pastExpiry = DateTime.now().subtract(const Duration(hours: 1));
 
       final provider = GamificationProvider(
-        apiClient: _apiClient((req) async => http.Response(
-              jsonEncode({
-                'success': true,
-                'data': {
-                  'items': [
-                    // ✅ Active + not expired + has expiresAt → included
-                    _inventoryItem(
-                        id: 'a', isActive: true, expiresAt: futureExpiry),
-                    // ✗ Not active
-                    _inventoryItem(id: 'b', isActive: false),
-                    // ✗ Active but expired
-                    _inventoryItem(
-                        id: 'c', isActive: true, expiresAt: pastExpiry),
-                    // ✗ Active but no expiresAt
-                    _inventoryItem(id: 'd', isActive: true),
-                  ],
-                },
-              }),
-              200,
-              headers: {'content-type': 'application/json'},
-            )),
+        repository: _FakeRepository(items: [
+          // ✅ Active + not expired + has expiresAt → included
+          _inventoryItem(id: 'a', isActive: true, expiresAt: futureExpiry),
+          // ✗ Not active
+          _inventoryItem(id: 'b', isActive: false),
+          // ✗ Active but expired
+          _inventoryItem(id: 'c', isActive: true, expiresAt: pastExpiry),
+          // ✗ Active but no expiresAt
+          _inventoryItem(id: 'd', isActive: true),
+        ]),
       );
 
       await provider.loadInventory();
@@ -96,20 +101,11 @@ void main() {
 
     test('remainingDuration is positive for future expiry', () async {
       final futureExpiry = DateTime.now().add(const Duration(hours: 3));
+
       final provider = GamificationProvider(
-        apiClient: _apiClient((req) async => http.Response(
-              jsonEncode({
-                'success': true,
-                'data': {
-                  'items': [
-                    _inventoryItem(
-                        id: 'x', isActive: true, expiresAt: futureExpiry),
-                  ],
-                },
-              }),
-              200,
-              headers: {'content-type': 'application/json'},
-            )),
+        repository: _FakeRepository(items: [
+          _inventoryItem(id: 'x', isActive: true, expiresAt: futureExpiry),
+        ]),
       );
 
       await provider.loadInventory();

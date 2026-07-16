@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/theme_preference_store.dart';
@@ -89,7 +90,7 @@ Future<SettingsProvider> _createProvider({
     repository: repository,
     notificationService: _FakeNotificationService(),
     themePreferenceStore: ThemePreferenceStore(preferences),
-    apiClient: ApiClient(enableLogging: false),
+    apiClient: ApiClient(),
   );
 }
 
@@ -116,7 +117,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(enableLogging: false),
+      apiClient: ApiClient(),
     );
     await provider.loadSettings('user-1');
     var notifications = 0;
@@ -173,7 +174,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(enableLogging: false),
+      apiClient: ApiClient(),
     );
     await provider.loadSettings('user-1');
 
@@ -202,6 +203,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
+      apiClient: ApiClient(),
     );
     await provider.loadSettings('user-1');
 
@@ -260,7 +262,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(enableLogging: false),
+      apiClient: ApiClient(),
     );
     await provider.loadSettings('user-1');
 
@@ -289,7 +291,7 @@ void main() {
       repository: repository,
       notificationService: _FakeNotificationService(),
       themePreferenceStore: ThemePreferenceStore(preferences),
-      apiClient: ApiClient(enableLogging: false),
+      apiClient: ApiClient(),
     );
     await provider.loadSettings('user-1');
 

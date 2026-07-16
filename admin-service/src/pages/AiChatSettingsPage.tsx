@@ -4,7 +4,7 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
-import { ENV } from "../lib/env";
+import { getAiConfig, updateAiConfig } from "../lib/healthApi";
 import { Bot, Zap, Key } from "lucide-react";
 
 interface AiChatConfig {

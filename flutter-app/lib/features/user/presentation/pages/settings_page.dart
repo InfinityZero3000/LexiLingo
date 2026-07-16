@@ -868,7 +868,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _showReferralSheet(BuildContext context) async {
-    final api = sl<ApiClient>();
+    final settingsProvider = context.read<SettingsProvider>();
     String? code;
 
     showModalBottomSheet(
@@ -901,9 +901,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   textAlign: TextAlign.center),
               const SizedBox(height: 24),
               FutureBuilder<Map<String, dynamic>>(
-                future: () async {
-                  return await api.get('/api/v1/referral/my-code');
-                }(),
+                future: settingsProvider.getReferralCode(),
                 builder: (ctx, snap) {
                   if (!snap.hasData) {
                     return const CircularProgressIndicator();

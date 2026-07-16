@@ -133,6 +133,11 @@ services:
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
+      # Firebase
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-lexilingo-88492}
+      FIREBASE_CREDENTIALS_FILE: /app/firebase-service-account.json
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_ADMIN_CLIENT_ID: ${GOOGLE_ADMIN_CLIENT_ID:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -168,12 +173,10 @@ services:
       - .env.production.secrets
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgres:5432/${POSTGRES_DB:-lexilingo}
-      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-lexilingo}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lexilingo}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       DEBUG: ${DEBUG:-False}
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
@@ -253,9 +256,6 @@ services:
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      REDIS_PASSWORD: ""
-      REDIS_DB: 0
-      REDIS_URL: redis://redis-ai:6379/0
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       DEBUG: ${DEBUG:-false}
@@ -264,7 +264,6 @@ services:
       CONTENT_AGENT_MAX_RECORDS: ${CONTENT_AGENT_MAX_RECORDS:-20000}
       CONTENT_AGENT_MAX_BATCH_RECORDS: ${CONTENT_AGENT_MAX_BATCH_RECORDS:-2000}
       CONTENT_AGENT_ALLOW_LOCAL_STORE: ${CONTENT_AGENT_ALLOW_LOCAL_STORE:-true}
-      CONTENT_AGENT_ALLOW_LOCAL_STORE: "false"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -278,6 +277,7 @@ services:
       - ai_models:/app/models
       - ./ai-service/data:/app/data
       - ./backend-service/data/media:/app/data/media:ro
+      - ./ai-service/models:/app/models
       - content_etl_data:/data/content-etl
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3)\""]
@@ -319,7 +319,6 @@ services:
       - "--storage.tsdb.retention.time=15d"
       - "--web.enable-lifecycle"
     networks:
-      - lexilingo-network
       - lexilingo-prod
 
   # ============================================
@@ -346,7 +345,6 @@ services:
     depends_on:
       - prometheus
     networks:
-      - lexilingo-network
       - lexilingo-prod
 
 volumes:
