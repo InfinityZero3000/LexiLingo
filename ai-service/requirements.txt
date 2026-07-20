@@ -47,7 +47,7 @@ faster-whisper>=1.2.1
 # unsupported wheel degrades to Faster-Whisper instead of crashing startup.
 moonshine-voice>=0.0.69,<0.1
 sherpa-onnx>=1.13.4,<2
-piper-tts>=1.4.2
+piper-tts>=1.5.0
 gTTS>=2.5.4
 
 # HuBERT / Pronunciation Analysis (transformers will auto-install torch)
