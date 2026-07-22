@@ -17,29 +17,29 @@
 **Files:**
 - Modify: `flutter-app/lib/features/home/presentation/widgets/home_page/quick_actions_grid.dart`
 
-- [ ] Remove the Practice Lab map from `quickActions`.
-- [ ] Remove its dark-mode palette value and shift the remaining indexes so each action keeps its current color.
-- [ ] Run `dart format lib/features/home/presentation/widgets/home_page/quick_actions_grid.dart` from `flutter-app`.
+- [x] Remove the Practice Lab map from `quickActions`.
+- [x] Remove its dark-mode palette value and shift the remaining indexes so each action keeps its current color.
+- [x] Run `dart format lib/features/home/presentation/widgets/home_page/quick_actions_grid.dart` from `flutter-app`.
 
 ### Task 2: Replace the Profile Voice button
 
 **Files:**
 - Modify: `flutter-app/lib/features/profile/presentation/pages/profile_page.dart`
 
-- [ ] Remove the unused `VoicePracticeScreen` import.
-- [ ] Change the microphone button to `Icons.science_rounded` with tooltip `Practice Lab`.
-- [ ] Navigate with `Navigator.pushNamed(context, '/practice-lab')`.
-- [ ] Run `dart format lib/features/profile/presentation/pages/profile_page.dart` from `flutter-app`.
+- [x] Remove the unused `VoicePracticeScreen` import.
+- [x] Change the microphone button to `Icons.science_rounded` with tooltip `Practice Lab`.
+- [x] Navigate with `Navigator.pushNamed(context, '/practice-lab')`.
+- [x] Run `dart format lib/features/profile/presentation/pages/profile_page.dart` from `flutter-app`.
 
 ### Task 3: Verify behavior
 
 **Files:**
 - Create: `flutter-app/test/features/navigation/practice_lab_entry_test.dart`
 
-- [ ] Add a focused source-regression test that reads the two UI files and asserts:
+- [x] Add a focused source-regression test that reads the two UI files and asserts:
   - Home contains neither `practiceLab.shortTitle` nor a `/practice-lab` route.
   - Profile contains `Icons.science_rounded`, the `Practice Lab` tooltip, and `Navigator.pushNamed(context, '/practice-lab')`.
   - Profile contains neither `VoicePracticeScreen` nor its import.
-- [ ] Run `flutter test test/features/navigation/practice_lab_entry_test.dart`; expect all tests to pass.
-- [ ] Run `flutter analyze`.
-- [ ] Review the final diff for unrelated changes.
+- [x] Run `flutter test test/features/navigation/practice_lab_entry_test.dart`; expect all tests to pass.
+- [x] Run `flutter analyze`.
+- [x] Review the final diff for unrelated changes.

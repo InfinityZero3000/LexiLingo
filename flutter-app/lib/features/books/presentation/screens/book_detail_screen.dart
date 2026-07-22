@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -72,19 +73,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             backgroundColor: isDark
                 ? AppColors.backgroundDark
                 : AppColors.backgroundLight,
-            leading: IconButton(
-              icon: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_back_rounded,
-                  color: Theme.of(context).colorScheme.surface,
-                  size: 20,
-                ),
-              ),
+            leading: AppBackButton(
+              icon: Icons.arrow_back_rounded,
+              color: Theme.of(context).colorScheme.surface,
               onPressed: () => Navigator.pop(context),
             ),
             actions: [

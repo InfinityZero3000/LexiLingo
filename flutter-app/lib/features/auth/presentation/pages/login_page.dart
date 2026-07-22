@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
@@ -174,14 +175,12 @@ class _LoginPageState extends State<LoginPage> {
                     Row(
                       children: [
                         canPop
-                            ? IconButton(
+                            ? AppBackButton(
                                 onPressed: () => Navigator.of(context).pop(),
-                                icon: Icon(
-                                  Icons.arrow_back,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.surfaceDarkInput,
-                                ),
+                                icon: Icons.arrow_back,
+                                color: isDark
+                                    ? Colors.white
+                                    : AppColors.surfaceDarkInput,
                               )
                             : const SizedBox(width: 48),
                         Expanded(

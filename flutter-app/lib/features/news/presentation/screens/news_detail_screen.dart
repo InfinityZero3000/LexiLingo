@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
@@ -122,13 +123,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                 backgroundColor: isDark
                     ? AppColors.backgroundDark
                     : Colors.white,
-                leading: IconButton(
+                leading: AppBackButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.black45,
-                    foregroundColor: Colors.white,
-                  ),
+                  color: Colors.white,
                 ),
                 flexibleSpace: FlexibleSpaceBar(
                   background: Stack(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/vocab_word_detail_sheet.dart';
@@ -65,20 +66,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         appBar: AppBar(
           title: Text('vocabulary.library'.tr()),
           centerTitle: true,
-          leading: GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: Container(
-              margin: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.transparent,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_back_ios,
-                color: AppColors.primary,
-                size: 20,
-              ),
-            ),
+          leading: AppBackButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icons.arrow_back_ios,
+            color: AppColors.primary,
           ),
           actions: [
             GestureDetector(

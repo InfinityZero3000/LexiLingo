@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
@@ -309,7 +310,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       foregroundColor: AppColorRoles.textPrimary(isDark),
       elevation: 0,
-      leading: BackButton(
+      leading: AppBackButton(
         onPressed: () {
           context.read<StoryProvider>().clearActiveSession();
           Navigator.pop(context);

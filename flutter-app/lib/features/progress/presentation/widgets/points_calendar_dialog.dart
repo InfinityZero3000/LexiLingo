@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../domain/entities/streak_entity.dart';
 
 const _kReminderEnabledKey = 'checkin_reminder_enabled';
@@ -157,13 +158,9 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       padding: const EdgeInsets.fromLTRB(8, 16, 16, 4),
       child: Row(
         children: [
-          IconButton(
+          AppBackButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-              color: isDark ? Colors.white70 : AppColors.textDark,
-            ),
+            color: isDark ? Colors.white70 : AppColors.textDark,
           ),
           Text(
             'home.pointsCalendar'.tr(),
