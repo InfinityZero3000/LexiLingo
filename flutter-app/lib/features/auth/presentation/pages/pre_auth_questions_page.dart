@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 
@@ -474,25 +474,6 @@ class _LanguageOptionIcon extends StatelessWidget {
       return const Icon(Icons.public, size: 20);
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: SizedBox(
-        width: 24,
-        height: 24,
-        child: CachedNetworkImage(
-          imageUrl: AppLocales.flagPngUrlOf(code),
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 100),
-          placeholder: (context, _) => DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.accentMint.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          errorWidget: (_, __, ___) =>
-              const Icon(Icons.flag_outlined, size: 20),
-        ),
-      ),
-    );
+    return LanguageFlag(languageCode: code, width: 24, height: 24);
   }
 }

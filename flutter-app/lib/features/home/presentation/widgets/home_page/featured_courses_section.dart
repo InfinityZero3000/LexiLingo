@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/navigation/learner_route.dart';
+import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -146,30 +148,25 @@ class _CourseCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
+        LearnerRoute.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => CourseDetailScreen(
-              courseId: course.id,
-              heroTag: 'featured-course-image-${course.id}',
-              initialThumbnailUrl: course.thumbnailUrl,
-              fallbackThumbnailUrl: courseFallbackThumbnailUrl(course),
-            ),
+          (_) => CourseDetailScreen(
+            courseId: course.id,
+            heroTag: 'featured-course-image-${course.id}',
+            initialThumbnailUrl: course.thumbnailUrl,
+            fallbackThumbnailUrl: courseFallbackThumbnailUrl(course),
           ),
         );
       },
       child: Container(
         width: 240,
         margin: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
+        decoration: Theme.of(context).extension<AppTactileTheme>()!.decoration(
+          variant: TactileSurfaceVariant.interactive,
+          fill: isDark ? AppColors.surfaceDarkMuted : Colors.white,
+          accent: levelColor,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.1)
-                : levelColor.withValues(alpha: 0.25),
-            width: 1,
-          ),
+          diagnosticId: 'home-featured-course',
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

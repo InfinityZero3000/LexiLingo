@@ -18,17 +18,15 @@ import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
 // import 'package:lexilingo_app/core/services/course_import_service.dart'; // Already disabled
 import 'package:lexilingo_app/core/services/health_check_service.dart';
-import 'package:lexilingo_app/core/localization/network_first_asset_loader.dart';
 import 'package:lexilingo_app/core/startup/startup_coordinator.dart';
 import 'package:lexilingo_app/core/startup/startup_task.dart';
 import 'package:lexilingo_app/core/startup/local_state_migration_service.dart';
-import 'package:lexilingo_app/core/services/locale_service.dart';
-import 'package:lexilingo_app/core/services/language_flag_cache.dart';
 import 'package:lexilingo_app/core/services/sync_queue_lifecycle_runner.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
@@ -194,7 +192,6 @@ void main() async {
           fallbackLocale: const Locale('vi'),
           startLocale: const Locale('vi'),
           useOnlyLangCode: true,
-          assetLoader: NetworkFirstAssetLoader(),
           child: const LexiLingoApp(),
         ),
       ),
@@ -217,7 +214,6 @@ void main() async {
         fallbackLocale: const Locale('vi'),
         startLocale: const Locale('vi'),
         useOnlyLangCode: true,
-        assetLoader: NetworkFirstAssetLoader(),
         child: const LexiLingoApp(),
       ),
     );
@@ -260,22 +256,11 @@ class LexiLingoApp extends StatefulWidget {
 class _LexiLingoAppState extends State<LexiLingoApp>
     with WidgetsBindingObserver {
   SyncQueueLifecycleRunner? _syncQueueRunner;
-  // Tracks the last language code that was synced to EasyLocalization.
-  // Guards against running locale sync on every Consumer2 rebuild (e.g. theme
-  // changes), which on Flutter web causes a race condition that prevents the
-  // theme from visually applying until an unrelated AuthProvider notification
-  // triggers another Consumer2 rebuild.
-  String? _lastSyncedLanguage;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        unawaited(LanguageFlagCache.preload(context));
-      }
-    });
     if (!kIsWeb) {
       _syncQueueRunner = SyncQueueLifecycleRunner(
         apiClient: di.sl<ApiClient>(),
@@ -387,40 +372,8 @@ class _LexiLingoAppState extends State<LexiLingoApp>
         // Phase 6: Lexi Chat — Story Adventure
         ChangeNotifierProvider(create: (_) => di.sl<LexiChatProvider>()),
       ],
-      child: Consumer2<SettingsProvider, AuthProvider>(
-        builder: (context, settings, auth, child) {
-          // Reset sync state on logout so the next login re-syncs the locale.
-          if (auth.currentUser == null) {
-            _lastSyncedLanguage = null;
-          }
-
-          // Sync locale from settings only when the language value actually
-          // changes (initial load or explicit language switch). Running this on
-          // every Consumer2 rebuild (e.g. theme changes) caused a Flutter web
-          // race condition where the async setLocale() call interfered with the
-          // pending theme repaint, leaving the UI in the old theme until an
-          // unrelated AuthProvider notification triggered another rebuild.
-          final currentLanguage =
-              (auth.currentUser != null && settings.settings != null)
-              ? settings.language
-              : null;
-          if (currentLanguage != null &&
-              currentLanguage != _lastSyncedLanguage) {
-            _lastSyncedLanguage = currentLanguage;
-            final langToSync = currentLanguage;
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              if (!mounted) return;
-              final savedLocale = await LocaleService.getSavedLocale();
-              if (!mounted || !context.mounted) return;
-              if (savedLocale != langToSync) {
-                await LocaleService.saveLocale(langToSync);
-                if (!mounted || !context.mounted) return;
-                await context.setLocale(Locale(langToSync));
-                debugPrint('Locale synced from settings: $langToSync');
-              }
-            });
-          }
-
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, child) {
           return MaterialApp(
             title: 'LexiLingo',
             navigatorKey: AppNavigationService.navigatorKey,
@@ -443,51 +396,83 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             localizationsDelegates: context.localizationDelegates,
             home: const AuthWrapper(),
             routes: {
-              '/youtube': (context) => const YouTubeExploreScreen(),
-              '/youtube/player': (context) {
+              '/youtube': LearnerRoute.builder(
+                (context) => const YouTubeExploreScreen(),
+              ),
+              '/youtube/player': LearnerRoute.builder((context) {
                 final video =
                     ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
                 return YouTubePlayerScreen(video: video);
-              },
-              '/news': (context) => const NewsListScreen(),
-              '/news/detail': (context) {
+              }),
+              '/news': LearnerRoute.builder(
+                (context) => const NewsListScreen(),
+              ),
+              '/news/detail': LearnerRoute.builder((context) {
                 final article =
                     ModalRoute.of(context)!.settings.arguments as NewsArticle;
                 return NewsDetailScreen(article: article);
-              },
-              '/news/quiz': (context) {
+              }),
+              '/news/quiz': LearnerRoute.builder((context) {
                 final article =
                     ModalRoute.of(context)!.settings.arguments as NewsArticle;
                 return NewsQuizScreen(article: article);
-              },
+              }),
               // Phase 3: English Games
-              '/games': (context) => const GamesHubScreen(),
-              '/courses': (context) => const MainScreen(initialIndex: 1),
-              '/today-plan': (context) => const TodayPlanPage(),
-              '/practice-lab': (context) => const PracticeLabPage(),
-              '/mistake-notebook': (context) => const MistakeNotebookPage(),
-              '/profile': (context) => const MainScreen(initialIndex: 4),
-              '/achievements': (context) => const AchievementsScreen(),
-              '/social': (context) => const SocialScreen(),
-              '/premium': (context) => const PaywallScreen(),
-              '/offline-sync': (context) => const OfflineSyncCenterPage(),
-              '/placement-test': (context) => ChangeNotifierProvider(
-                create: (_) => di.sl<PlacementTestProvider>(),
-                child: const PlacementTestPage(),
+              '/games': LearnerRoute.builder(
+                (context) => const GamesHubScreen(),
               ),
-              '/vocabulary/review': (context) => ChangeNotifierProvider(
-                create: (_) => vocab_di.getIt<FlashcardProvider>(),
-                child: const FlashcardReviewScreen(),
+              '/courses': LearnerRoute.builder(
+                (context) => const MainScreen(initialIndex: 1),
               ),
-              '/vocabulary/word-of-day': (context) => const WordOfDayScreen(),
+              '/today-plan': LearnerRoute.builder(
+                (context) => const TodayPlanPage(),
+              ),
+              '/practice-lab': LearnerRoute.builder(
+                (context) => const PracticeLabPage(),
+              ),
+              '/mistake-notebook': LearnerRoute.builder(
+                (context) => const MistakeNotebookPage(),
+              ),
+              '/profile': LearnerRoute.builder(
+                (context) => const MainScreen(initialIndex: 4),
+              ),
+              '/achievements': LearnerRoute.builder(
+                (context) => const AchievementsScreen(),
+              ),
+              '/social': LearnerRoute.builder(
+                (context) => const SocialScreen(),
+              ),
+              '/premium': LearnerRoute.builder(
+                (context) => const PaywallScreen(),
+              ),
+              '/offline-sync': LearnerRoute.builder(
+                (context) => const OfflineSyncCenterPage(),
+              ),
+              '/placement-test': LearnerRoute.builder(
+                (context) => ChangeNotifierProvider(
+                  create: (_) => di.sl<PlacementTestProvider>(),
+                  child: const PlacementTestPage(),
+                ),
+              ),
+              '/vocabulary/review': LearnerRoute.builder(
+                (context) => ChangeNotifierProvider(
+                  create: (_) => vocab_di.getIt<FlashcardProvider>(),
+                  child: const FlashcardReviewScreen(),
+                ),
+              ),
+              '/vocabulary/word-of-day': LearnerRoute.builder(
+                (context) => const WordOfDayScreen(),
+              ),
               // Phase 4: Podcast
-              '/podcast': (context) => const PodcastExploreScreen(),
-              '/podcast/detail': (context) {
+              '/podcast': LearnerRoute.builder(
+                (context) => const PodcastExploreScreen(),
+              ),
+              '/podcast/detail': LearnerRoute.builder((context) {
                 final podcast =
                     ModalRoute.of(context)!.settings.arguments as Podcast;
                 return PodcastDetailScreen(podcast: podcast);
-              },
-              '/podcast/player': (context) {
+              }),
+              '/podcast/player': LearnerRoute.builder((context) {
                 final args =
                     ModalRoute.of(context)!.settings.arguments
                         as Map<String, dynamic>;
@@ -495,11 +480,13 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                   episode: args['episode'] as PodcastEpisode,
                   artworkUrl: args['artworkUrl'] as String,
                 );
-              },
+              }),
               // Phase 5: Books
-              '/books': (context) => const BookLibraryScreen(),
+              '/books': LearnerRoute.builder(
+                (context) => const BookLibraryScreen(),
+              ),
               // Phase 6: Lexi Chat
-              '/lexi': (context) => const LexiChatPage(),
+              '/lexi': LearnerRoute.builder((context) => const LexiChatPage()),
               '/reset-password': (context) {
                 final args = ModalRoute.of(context)?.settings.arguments;
                 String? token;

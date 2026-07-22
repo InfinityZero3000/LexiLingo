@@ -259,14 +259,14 @@ SELECT * FROM users WHERE id = ?;
 ```sql
 SELECT * User's Vocabulary
 ```sql
-SELECT * FROM vocabulary 
+SELECT * FROM vocabulary
 WHERE userId = ?
 ORDER BY cre
-SELECT * FROM daily_goals 
+SELECT * FROM daily_goals
 WHERE userId = ? AND date = DATE('now');
 ```Chat History by Session
 ```sql
-SELECT * FROM chat_history 
+SELECT * FROM chat_history
 WHERE userId = ? AND sessionId = ?
 ORDER BY timestamp ASC;
 ```
@@ -278,8 +278,8 @@ SELECT c.*,
        COUNT(DISTINCT up.lessonId) as completedLessons
 FROM courses c
 INNER JOIN course_enrollments ce ON c.id = ce.courseId
-LEFT JOIN user_progress up ON c.id = up.courseId 
-  AND up.userId = ce.userId 
+LEFT JOIN user_progress up ON c.id = up.courseId
+  AND up.userId = ce.userId
   AND up.completedAt IS NOT NULL
 WHERE ce.userId = ? AND c.id = ?
 GROUP BY c.id;
@@ -289,8 +289,8 @@ GROUP BY c.id;
 ```sql
 INSERT INTO daily_goals (userId, date, earnedXP, lessonsCompleted, wordsLearned)
 VALUES (?, DATE('now'), ?, ?, ?)
-ON CONFLICT(userId, date) 
-DO UPDATE SET 
+ON CONFLICT(userId, date)
+DO UPDATE SET
   earnedXP = earnedXP + ?,
   lessonsCompleted = lessonsCompleted + ?,
   wordsLearned = wordsLearned + ?urse_enrollments e ON c.id = e.courseId
@@ -379,34 +379,34 @@ lessons (1) ──< (N) user_progress
 
 #### Get All Featured Courses
 ```sql
-SELECT * FROM courses 
-WHERE isFeatured = 1 
+SELECT * FROM courses
+WHERE isFeatured = 1
 ORDER BY rating DESC;
 ```
 
 #### Get Enrolled Courses
 ```sql
-SELECT * FROM courses 
-WHERE isEnrolled = 1 
+SELECT * FROM courses
+WHERE isEnrolled = 1
 ORDER BY updatedAt DESC;
 ```
 
 #### Get Unlearned Vocabulary
 ```sql
-SELECT * FROM vocabulary 
-WHERE isLearned = 0 
+SELECT * FROM vocabulary
+WHERE isLearned = 0
 ORDER BY createdAt DESC;
 ```
 
 #### Get Chat History
 ```sql
-SELECT * FROM chat_history 
+SELECT * FROM chat_history
 ORDER BY timestamp ASC;
 ```
 
 #### Get Course with Progress
 ```sql
-SELECT c.*, 
+SELECT c.*,
        COALESCE(AVG(up.progress), 0) as overall_progress
 FROM courses c
 LEFT JOIN user_progress up ON c.id = up.courseId

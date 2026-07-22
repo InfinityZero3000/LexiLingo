@@ -1,8 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
+import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:flutter/services.dart';
-import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -39,62 +39,16 @@ class _SettingsPageState extends State<SettingsPage> {
     if (authProvider.currentUser != null) {
       await context.read<SettingsProvider>().loadSettings(
         authProvider.currentUser!.id,
+        context,
       );
     }
   }
 
   Widget _buildFlagWidget(BuildContext context, String languageCode) {
-    final imageUrl = AppLocales.flagPngUrlOf(languageCode);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: SizedBox(
-        width: _flagWidth,
-        height: _flagHeight,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          fadeInDuration: Duration.zero,
-          placeholder: (_, __) => _buildFlagSkeleton(context),
-          errorWidget: (_, __, ___) =>
-              _buildFlagFallback(context, languageCode),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFlagSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return LanguageFlag(
+      languageCode: languageCode,
       width: _flagWidth,
       height: _flagHeight,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.grey700 : AppColors.grey300,
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-
-  Widget _buildFlagFallback(BuildContext context, String languageCode) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
-
-    return Container(
-      width: _flagWidth,
-      height: _flagHeight,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: isDark ? AppColors.grey800 : AppColors.grey200,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
-        ),
-      ),
     );
   }
 
@@ -105,10 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('settings.title'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const AppBackButton(),
       ),
       body: settings.isLoading
           ? const Center(child: LottieLoadingWidget.medium())

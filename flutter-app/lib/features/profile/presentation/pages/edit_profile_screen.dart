@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
@@ -138,9 +139,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     return Scaffold(
       appBar: AppBar(
         title: Text('profile.editProfile'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, size: 20),
+        leading: AppBackButton(
           onPressed: () => Navigator.of(context).pop(),
+          iconSize: 20,
         ),
         actions: [
           TextButton(

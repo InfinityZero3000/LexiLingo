@@ -5,11 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 /// Applies CJK font fallbacks to every style in a [TextTheme].
 /// Lexend has no Chinese/Japanese/Korean glyphs; these fallbacks prevent □ boxes.
 TextTheme _withCjkFallback(TextTheme base) {
-  const fallbacks = [
-    'Noto Sans SC', // Chinese Simplified
-    'Noto Sans JP', // Japanese
-    'Noto Sans KR', // Korean
-  ];
+  const fallbacks = ['NotoSansCJK'];
   return TextTheme(
     displayLarge: base.displayLarge?.copyWith(fontFamilyFallback: fallbacks),
     displayMedium: base.displayMedium?.copyWith(fontFamilyFallback: fallbacks),

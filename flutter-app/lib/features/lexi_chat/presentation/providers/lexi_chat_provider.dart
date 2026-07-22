@@ -68,7 +68,6 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   bool _isRestoringSession = false;
-  bool _isDisposed = false;
   String? _error;
   bool _ttsEnabled = true;
   double _ttsSpeed = 1.0;
