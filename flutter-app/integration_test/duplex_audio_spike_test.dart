@@ -48,10 +48,16 @@ void main() {
     var hasBuffered = false;
     var nonSilentQueued = false;
     final playbackStarted = Completer<void>();
+    final captureStarted = Completer<void>();
     const captureSampleRate = 48000;
     const captureChannels = 1;
     try {
       expect(await recorder.isEncoderSupported(AudioEncoder.pcm16bits), isTrue);
+      expect(
+        await recorder.hasPermission(),
+        isTrue,
+        reason: 'macOS microphone permission is required',
+      );
       source = soloud.setBufferStream(
         bufferingType: BufferingType.released,
         bufferingTimeNeeds: 0.08,
@@ -82,6 +88,9 @@ void main() {
         ),
       );
       subscription = stream.listen((bytes) {
+        if (bytes.isNotEmpty && !captureStarted.isCompleted) {
+          captureStarted.complete();
+        }
         final canonical = normalizer.normalize(
           bytes,
           sampleRate: captureSampleRate,
@@ -94,6 +103,10 @@ void main() {
           soloud.addAudioDataStream(source!, frame);
         }
       });
+      await captureStarted.future.timeout(
+        const Duration(seconds: 5),
+        onTimeout: () => throw StateError('microphone produced no PCM bytes'),
+      );
       await playbackStarted.future.timeout(const Duration(seconds: 10));
       expect(firstPlaybackMs, greaterThanOrEqualTo(0));
       expect(underruns, lessThan(3));

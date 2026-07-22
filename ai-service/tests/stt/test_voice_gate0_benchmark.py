@@ -64,6 +64,21 @@ def test_report_rejects_incomplete_sample_or_concurrency_matrix():
         gate.validate_report(incomplete)
 
 
+def test_runtime_environment_requires_a_provider_key(monkeypatch, tmp_path):
+    for name in ("GROQ_API_KEYS", "GROQ_API_KEY", "GEMINI_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    with pytest.raises(RuntimeError, match="configure GROQ"):
+        gate.load_runtime_environment(tmp_path / "missing.env")
+
+
+def test_runtime_environment_loads_dotenv_without_overriding_exported_key(monkeypatch, tmp_path):
+    env_path = tmp_path / ".env"
+    env_path.write_text("GROQ_API_KEY=from-file\n")
+    monkeypatch.setenv("GROQ_API_KEY", "exported")
+    gate.load_runtime_environment(env_path)
+    assert gate.os.environ["GROQ_API_KEY"] == "exported"
+
+
 @pytest.mark.asyncio
 async def test_runner_is_deterministic_and_rejects_invalid_samples():
     async def fake(text):

@@ -7,7 +7,9 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import statistics
+import sys
 import time
 from pathlib import Path
 from typing import Awaitable, Callable, Iterable
@@ -22,6 +24,16 @@ PIPER_LIMIT_MS = 150.0
 LLM_LIMIT_MS = 300.0
 REQUIRED_SAMPLES = 100
 REQUIRED_CONCURRENCY = {1, 5, 10}
+SERVICE_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SERVICE_ROOT))
+
+
+def load_runtime_environment(env_path: Path | None = None) -> None:
+    from dotenv import load_dotenv
+
+    load_dotenv(env_path or SERVICE_ROOT / ".env")
+    if not (os.getenv("GROQ_API_KEYS") or os.getenv("GROQ_API_KEY") or os.getenv("GEMINI_API_KEY")):
+        raise RuntimeError("configure GROQ_API_KEYS/GROQ_API_KEY or GEMINI_API_KEY in ai-service/.env")
 
 
 def percentile(values: Iterable[float], percent: float = 95) -> float:
@@ -123,6 +135,7 @@ async def main() -> int:
     if set(levels) != REQUIRED_CONCURRENCY or len(levels) != len(REQUIRED_CONCURRENCY):
         parser.error("--concurrency must contain exactly 1,5,10 for Gate 0")
 
+    load_runtime_environment()
     # Warm models/providers before recording production-shaped latency.
     await _piper_ttfa(INPUTS[0])
     await _llm_ttft(INPUTS[0])
