@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:provider/provider.dart';
@@ -95,7 +95,7 @@ class LanguageSwitcherButton extends StatelessWidget {
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: _FlagImage(
+                                child: LanguageFlag(
                                   languageCode: code,
                                   width: 28,
                                   height: 20,
@@ -167,7 +167,7 @@ class LanguageSwitcherButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _FlagImage(languageCode: code, width: 20, height: 14),
+            LanguageFlag(languageCode: code, width: 20, height: 14),
             const SizedBox(width: 4),
             Text(
               code.toUpperCase(),
@@ -210,59 +210,5 @@ class LanguageSwitcherButton extends StatelessWidget {
       if (!context.mounted) return;
       await LocaleService.updateAppLocale(context, code);
     }
-  }
-}
-
-class _FlagImage extends StatelessWidget {
-  const _FlagImage({
-    required this.languageCode,
-    required this.width,
-    required this.height,
-  });
-
-  final String languageCode;
-  final double width;
-  final double height;
-
-  @override
-  Widget build(BuildContext context) {
-    final pngUrl = AppLocales.flagPngUrlOf(languageCode);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: SizedBox(
-        width: width,
-        height: height,
-        child: CachedNetworkImage(
-          imageUrl: pngUrl,
-          fadeInDuration: const Duration(milliseconds: 100),
-          placeholder: (context, _) => DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.accentMint.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          errorWidget: (context, _, __) {
-            return Container(
-              width: width,
-              height: height,
-              color: AppColors.accentMint.withValues(alpha: 0.18),
-              alignment: Alignment.center,
-              child: Icon(
-                Icons.language_rounded,
-                size: height,
-                color: AppColors.accentMintDark,
-              ),
-            );
-          },
-          imageBuilder: (context, imageProvider) => Image(
-            image: imageProvider,
-            width: width,
-            height: height,
-            fit: BoxFit.cover,
-          ),
-        ),
-      ),
-    );
   }
 }
