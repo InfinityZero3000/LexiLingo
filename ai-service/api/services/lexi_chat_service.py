@@ -754,7 +754,9 @@ async def stream_lexi_chat(
             yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
             await asyncio.sleep(0.012)
     else:
-        # Cache miss: stream real LLM tokens as they arrive.
+        # Cache miss: buffer provider tokens, sanitize the complete response,
+        # then deliver it as SSE chunks so token-spanning internal markers
+        # can never reach the client.
         try:
             system_prompt, llm_messages = build_generation_prompt(raw_state)
             tokens: list[str] = []
@@ -764,8 +766,10 @@ async def stream_lexi_chat(
                 user_input=user_text,
             ):
                 tokens.append(token)
-                yield f"event: chunk\ndata: {json.dumps({'text': token})}\n\n"
-            lexi_response = _sanitize_lexi_response("".join(tokens))
+            raw_response = "".join(tokens).strip()
+            lexi_response = _sanitize_lexi_response(raw_response) if raw_response else ""
+            for word in lexi_response.split(" ") if lexi_response else []:
+                yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
         except Exception as gen_err:
             logger.error("Lexi /stream LLM generation error: %s", gen_err)
 
@@ -776,7 +780,7 @@ async def stream_lexi_chat(
             model_used = f"groq/{os.getenv('GROQ_MODEL', 'qwen/qwen3-32b')}" \
                 if os.getenv("GROQ_API_KEY") else "gemini-2.0-flash"
 
-    if not cache_hit and lexi_response:
+    if not cache_hit and lexi_response and model_used != "trace-cag_safe_response":
         try:
             from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
             from api.services.trace_cag.cache_utils import _write_cache_entry
