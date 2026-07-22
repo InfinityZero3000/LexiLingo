@@ -38,7 +38,7 @@
 **Files:**
 - Modify: `ai-service/tests/test_lexi_chat_routes.py`
 
-- [ ] **Step 1: Add test for Mongo-owned session mismatch**
+- [x] **Step 1: Add test for Mongo-owned session mismatch**
 
 Add a test near the existing `lexi_chat` tests:
 
@@ -82,7 +82,7 @@ async def test_lexi_chat_rejects_session_owned_by_another_user(
     mock_idempotency.get.assert_not_called()
 ```
 
-- [ ] **Step 2: Add test for missing supplied session**
+- [x] **Step 2: Add test for missing supplied session**
 
 ```python
 @pytest.mark.asyncio
@@ -125,7 +125,7 @@ async def test_lexi_chat_rejects_unknown_supplied_session_id(
     mock_idempotency.get.assert_not_called()
 ```
 
-- [ ] **Step 3: Run tests and confirm failure**
+- [x] **Step 3: Run tests and confirm failure**
 
 Run:
 
@@ -143,7 +143,7 @@ Expected: both tests fail because current `lexi_chat()` trusts or creates suppli
 **Files:**
 - Modify: `ai-service/api/routes/lexi_chat.py`
 
-- [ ] **Step 1: Add helper for cached session owner checks**
+- [x] **Step 1: Add helper for cached session owner checks**
 
 Place near `_ensure_session_owner()`:
 
@@ -159,7 +159,7 @@ def _assert_cached_session_owner(
         raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
 ```
 
-- [ ] **Step 2: Add helper for existing session preparation**
+- [x] **Step 2: Add helper for existing session preparation**
 
 ```python
 async def _prepare_existing_lexi_session(
@@ -202,7 +202,7 @@ async def _prepare_existing_lexi_session(
     ]
 ```
 
-- [ ] **Step 3: Add helper for new session creation**
+- [x] **Step 3: Add helper for new session creation**
 
 Extract the current "not exists" block from `lexi_chat()` into:
 
@@ -242,7 +242,7 @@ async def _create_lexi_session_for_user(
     )
 ```
 
-- [ ] **Step 4: Run syntax check**
+- [x] **Step 4: Run syntax check**
 
 Run:
 
@@ -260,7 +260,7 @@ Expected: no output.
 - Modify: `ai-service/api/routes/lexi_chat.py`
 - Test: `ai-service/tests/test_lexi_chat_routes.py`
 
-- [ ] **Step 1: Replace current session-management block in `lexi_chat()`**
+- [x] **Step 1: Replace current session-management block in `lexi_chat()`**
 
 Use this shape:
 
@@ -281,7 +281,7 @@ else:
 
 Important: keep this before `_idempotency_request_hash()` and `_idempotency_store.get()` so cached idempotency responses cannot bypass ownership checks.
 
-- [ ] **Step 2: Run targeted tests**
+- [x] **Step 2: Run targeted tests**
 
 Run:
 
@@ -292,7 +292,7 @@ pytest tests/test_lexi_chat_routes.py -v
 
 Expected: pass.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add ai-service/api/routes/lexi_chat.py ai-service/tests/test_lexi_chat_routes.py
@@ -306,7 +306,7 @@ git commit -m "fix(ai): enforce Lexi chat session ownership"
 **Files:**
 - Modify: `ai-service/tests/test_lexi_chat_routes.py`
 
-- [ ] **Step 1: Add stream mismatch test**
+- [x] **Step 1: Add stream mismatch test**
 
 ```python
 @pytest.mark.asyncio
@@ -338,7 +338,7 @@ async def test_lexi_stream_rejects_session_owned_by_another_user(
     assert exc_info.value.status_code == 403
 ```
 
-- [ ] **Step 2: Add stream missing-session test**
+- [x] **Step 2: Add stream missing-session test**
 
 ```python
 @pytest.mark.asyncio
@@ -371,7 +371,7 @@ async def test_lexi_stream_rejects_unknown_supplied_session_id(
     assert exc_info.value.status_code == 404
 ```
 
-- [ ] **Step 3: Run tests and confirm failure**
+- [x] **Step 3: Run tests and confirm failure**
 
 Run:
 
@@ -390,7 +390,7 @@ Expected: fail because `lexi_stream_chat()` does not preflight existing-session 
 - Modify: `ai-service/api/routes/lexi_chat.py`
 - Test: `ai-service/tests/test_lexi_chat_routes.py`
 
-- [ ] **Step 1: Add preflight before returning `StreamingResponse`**
+- [x] **Step 1: Add preflight before returning `StreamingResponse`**
 
 After `session_id = request.session_id or str(uuid.uuid4())` in `lexi_stream_chat()`:
 
@@ -413,7 +413,7 @@ if request.session_id:
         ) from exc
 ```
 
-- [ ] **Step 2: Update `_sse_generator()` session preparation**
+- [x] **Step 2: Update `_sse_generator()` session preparation**
 
 Inside `_sse_generator()`, replace the unconditional `session_task = asyncio.create_task(_prepare_session())` flow with:
 
@@ -427,7 +427,7 @@ else:
 
 For the omitted-session path, keep the current "open SSE first, then prepare session with heartbeat" behavior.
 
-- [ ] **Step 3: Run targeted tests**
+- [x] **Step 3: Run targeted tests**
 
 Run:
 
@@ -438,7 +438,7 @@ pytest tests/test_lexi_chat_routes.py -v
 
 Expected: pass.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add ai-service/api/routes/lexi_chat.py ai-service/tests/test_lexi_chat_routes.py
@@ -452,7 +452,7 @@ git commit -m "fix(ai): enforce Lexi stream session ownership"
 **Files:**
 - No code changes unless tests expose an issue.
 
-- [ ] **Step 1: Run Lexi/session route tests**
+- [x] **Step 1: Run Lexi/session route tests**
 
 ```bash
 cd ai-service
@@ -461,7 +461,7 @@ pytest tests/test_lexi_chat_routes.py tests/test_lexi_session_management.py -v
 
 Expected: pass.
 
-- [ ] **Step 2: Run recently affected AI route tests**
+- [x] **Step 2: Run recently affected AI route tests**
 
 ```bash
 cd ai-service
@@ -470,7 +470,7 @@ pytest tests/test_main_lifespan.py tests/test_topic_chat_routes.py tests/test_tt
 
 Expected: pass.
 
-- [ ] **Step 3: Run static checks**
+- [x] **Step 3: Run static checks**
 
 ```bash
 git diff --check HEAD
@@ -479,7 +479,7 @@ python3 -m py_compile ai-service/api/routes/lexi_chat.py
 
 Expected: no output from both commands.
 
-- [ ] **Step 4: Manual smoke scenario**
+- [x] **Step 4: Manual smoke scenario**
 
 Using two authenticated test users:
 
@@ -489,7 +489,7 @@ Using two authenticated test users:
 4. Confirm both calls return 403 and do not append messages.
 5. User A continues the same session successfully.
 
-- [ ] **Step 5: Final commit**
+- [x] **Step 5: Final commit**
 
 ```bash
 git status --short

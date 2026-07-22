@@ -25,12 +25,12 @@
 - Create: `service/tracecag_service/adapters/memory.py`
 - Create: `service/tracecag_service/README.md`
 
-- [ ] Add portable dataclass schemas.
-- [ ] Add analyzer protocol and service runtime.
-- [ ] Add pure fingerprint and SCAR-L1 helpers.
-- [ ] Add lazy adapter to the existing LexiLingo pipeline.
-- [ ] Add in-memory adapter for dependency-free use.
-- [ ] Document usage.
+- [x] Add portable dataclass schemas.
+- [x] Add analyzer protocol and service runtime.
+- [x] Add pure fingerprint and SCAR-L1 helpers.
+- [x] Add lazy adapter to the existing LexiLingo pipeline.
+- [x] Add in-memory adapter for dependency-free use.
+- [x] Document usage.
 
 ## Chunk 2: Tests
 
@@ -39,7 +39,7 @@
 - Create: `tests/service/test_tracecag_memory_adapter.py`
 - Create: `tests/service/test_tracecag_lexilingo_adapter.py`
 
-- [ ] Test runtime accepts a pluggable analyzer and normalizes dict responses.
-- [ ] Test in-memory adapter cache miss, exact reuse, and L1 patch behavior.
-- [ ] Test LexiLingo adapter lazily calls the existing pipeline with mapped kwargs.
-- [ ] Run targeted pytest for `tests/service`.
+- [x] Test runtime accepts a pluggable analyzer and normalizes dict responses.
+- [x] Test in-memory adapter cache miss, exact reuse, and L1 patch behavior.
+- [x] Test LexiLingo adapter lazily calls the existing pipeline with mapped kwargs.
+- [x] Run targeted pytest for `tests/service`.
