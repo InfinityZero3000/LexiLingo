@@ -3,19 +3,11 @@ set -euo pipefail
 
 # Certbot deploy hook: reload Nginx gateway after successful cert renewal.
 # Usage (manual test):
-#   sudo COMPOSE_PROJECT_ROOT=/opt/lexilingo bash scripts/ssl/reload-gateway-after-renew.sh
+#   sudo bash scripts/ssl/reload-gateway-after-renew.sh
 
-COMPOSE_PROJECT_ROOT="${COMPOSE_PROJECT_ROOT:-/opt/lexilingo}"
-COMPOSE_FILE="${COMPOSE_PROJECT_ROOT}/docker-compose.yml"
-ENV_FILE="${COMPOSE_PROJECT_ROOT}/.env.production"
+GATEWAY_CONTAINER="${GATEWAY_CONTAINER:-lexilingo-gateway}"
 
-if [[ ! -f "${COMPOSE_FILE}" ]]; then
-  echo "Compose file not found: ${COMPOSE_FILE}"
-  exit 1
-fi
-
-cd "${COMPOSE_PROJECT_ROOT}"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" exec -T gateway nginx -t
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" exec -T gateway nginx -s reload
+docker exec "${GATEWAY_CONTAINER}" nginx -t
+docker exec "${GATEWAY_CONTAINER}" nginx -s reload
 
 echo "Gateway reloaded after SSL renewal."

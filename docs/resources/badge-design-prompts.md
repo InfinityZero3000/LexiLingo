@@ -8,9 +8,9 @@
 Dùng đoạn prefix này cho **mọi** prompt badge:
 
 ```
-2D game badge, anime art style, flat vector illustration, cel-shading, 
-vibrant saturated colors, bold black outline (2-3px), soft inner glow, 
-glossy enamel pin aesthetic, centered composition, transparent background, 
+2D game badge, anime art style, flat vector illustration, cel-shading,
+vibrant saturated colors, bold black outline (2-3px), soft inner glow,
+glossy enamel pin aesthetic, centered composition, transparent background,
 512x512px, no text, no watermark
 ```
 
@@ -31,7 +31,7 @@ transparent background, 512x512px, no text
 ### A2 — Rising Flame
 ```
 2D game badge, anime art style, flat vector illustration, cel-shading,
-a small orange flame with anime-style face (determined expression), 
+a small orange flame with anime-style face (determined expression),
 flame has gradient from yellow core to deep orange tips,
 surrounded by floating Japanese-style kanji energy marks,
 circular badge with inner ring glow, game RPG icon style,
@@ -43,7 +43,7 @@ transparent background, 512x512px, no text
 ```
 2D game badge, anime art style, flat vector illustration, cel-shading,
 a lightning bolt sword with electric aura,
-blue-white electric sparks radiating outward, 
+blue-white electric sparks radiating outward,
 game skill icon style (like JRPG),
 hexagonal badge frame with metallic border,
 electric blue and silver color palette,
@@ -320,7 +320,7 @@ Thêm vào prompt để phân biệt độ hiếm của badge:
 - Model gợi ý: `animagine-xl-3.1`, `pony-diffusion-v6-xl`
 - Negative prompt:
 ```
-text, watermark, blurry, 3d render, photorealistic, dark background, 
+text, watermark, blurry, 3d render, photorealistic, dark background,
 low quality, deformed, ugly, extra limbs, nsfw
 ```
 
@@ -340,8 +340,8 @@ low quality, deformed, ugly, extra limbs, nsfw
 Khi muốn badge match với brand color của app:
 
 ```
-use LexiLingo brand colors: primary indigo #6366F1, 
-accent amber #F59E0B, success emerald #10B981, 
+use LexiLingo brand colors: primary indigo #6366F1,
+accent amber #F59E0B, success emerald #10B981,
 danger rose #F43F5E, as the dominant badge palette
 ```
 

@@ -376,12 +376,12 @@ Nếu cần, có thể tách thêm 1 tài liệu riêng cho Docker Compose produ
 Phần này là luồng triển khai Docker hóa end-to-end cho đúng mục tiêu "tách service + Nginx + SSL".
 
 Template có sẵn trong repo:
-- [deploy/docker-templates/docker-compose.gateway.yml](deploy/docker-templates/docker-compose.gateway.yml)
-- [deploy/docker-templates/docker-compose.backend.yml](deploy/docker-templates/docker-compose.backend.yml)
-- [deploy/docker-templates/docker-compose.ai.yml](deploy/docker-templates/docker-compose.ai.yml)
-- [deploy/docker-templates/nginx/conf.d/lexilingo.http.conf](deploy/docker-templates/nginx/conf.d/lexilingo.http.conf)
-- [deploy/docker-templates/nginx/conf.d/lexilingo.https.conf](deploy/docker-templates/nginx/conf.d/lexilingo.https.conf)
-- [deploy/docker-templates/nginx/snippets/proxy-common.conf](deploy/docker-templates/nginx/snippets/proxy-common.conf)
+- [deploy/docker-templates/docker-compose.gateway.yml](../../deploy/docker-templates/docker-compose.gateway.yml)
+- [deploy/docker-templates/docker-compose.backend.yml](../../deploy/docker-templates/docker-compose.backend.yml)
+- [deploy/docker-templates/docker-compose.ai.yml](../../deploy/docker-templates/docker-compose.ai.yml)
+- [deploy/docker-templates/nginx/conf.d/lexilingo.http.conf](../../deploy/docker-templates/nginx/conf.d/lexilingo.http.conf)
+- [deploy/docker-templates/nginx/conf.d/lexilingo.https.conf](../../deploy/docker-templates/nginx/conf.d/lexilingo.https.conf)
+- [deploy/docker-templates/nginx/snippets/proxy-common.conf](../../deploy/docker-templates/nginx/snippets/proxy-common.conf)
 
 ### 11.1 Option 2 VPS (Docker)
 

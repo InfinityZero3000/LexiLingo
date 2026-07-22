@@ -102,12 +102,12 @@ Text Input Flow:
 
 ```yaml
 Speech:
-  STT: 
+  STT:
     - Model: Faster-Whisper v3 Base
     - Size: 244MB
     - Fine-tuned: ❌ No (pre-trained is good enough)
     - Accuracy: 95%+ on clear English
-  
+
   TTS:
     - Model: Piper VITS (en_US-lessac-medium)
     - Size: 63MB
@@ -133,12 +133,12 @@ Knowledge:
     - Edges: 30K (relationships)
     - Size: 50MB in-memory
     - Query: <5ms (hashtable)
-  
+
   CAG:
     - Pre-generated: 1000 lessons, 5000 exercises
     - Size: 100MB
     - Generation: Background async
-  
+
   Cache:
     - Redis: 200MB
     - Hit rate: 40-50%
@@ -148,7 +148,7 @@ Fallbacks (Cloud APIs):
   Vietnamese:
     - Primary: Google Translate API (free tier)
     - Backup: Gemini API
-  
+
   Pronunciation:
     - Azure Speech API (free tier: 5hrs/mo)
     - Google Cloud Speech
@@ -367,7 +367,7 @@ Recommended: YES! 🎯
 
 ---
 
-**Document version:** 1.0  
-**Last updated:** 2026-01-24  
+**Document version:** 1.0
+**Last updated:** 2026-01-24
 **Author:** LexiLingo Team
 

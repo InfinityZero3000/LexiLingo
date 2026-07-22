@@ -28,6 +28,40 @@ check_status() {
   fi
 }
 
+check_cors_preflight() {
+  local origin="https://admin.lexilingo.me"
+  local path method headers
+  while read -r path method; do
+    headers=$(curl -sS --max-time 20 -D - -o /dev/null -X OPTIONS "${BASE_URL}${path}" \
+      -H "Origin: ${origin}" -H "Access-Control-Request-Method: ${method}" \
+      -H "Access-Control-Request-Headers: authorization,content-type" || true)
+
+    if printf '%s' "${headers}" | grep -Eqi '^HTTP/[0-9.]+ 204' \
+      && printf '%s' "${headers}" | grep -Fqi "access-control-allow-origin: ${origin}" \
+      && printf '%s' "${headers}" | grep -Fqi 'access-control-allow-credentials: true' \
+      && printf '%s' "${headers}" | grep -Eqi '^access-control-allow-headers:.*(authorization.*content-type|content-type.*authorization)'; then
+      printf "${GREEN}[PASS]${NC} %-28s %s\n" "Admin Login CORS" "OPTIONS ${path}"
+    else
+      printf "${RED}[FAIL]${NC} %-28s %s\n" "Admin Login CORS" "${path}: invalid preflight"
+      failures=$((failures + 1))
+    fi
+  done <<'EOF'
+/api/v1/auth/google POST
+/api/v1/auth/refresh POST
+/api/v1/auth/me GET
+EOF
+
+  headers=$(curl -sS --max-time 20 -D - -o /dev/null -X OPTIONS \
+    "${BASE_URL}/api/v1/auth/google" -H 'Origin: https://attacker.example' \
+    -H 'Access-Control-Request-Method: POST' || true)
+  if printf '%s' "${headers}" | grep -Fqi 'access-control-allow-origin:'; then
+    printf "${RED}[FAIL]${NC} %-28s %s\n" "Admin CORS Rejection" "untrusted origin allowed"
+    failures=$((failures + 1))
+  else
+    printf "${GREEN}[PASS]${NC} %-28s %s\n" "Admin CORS Rejection" "untrusted origin blocked"
+  fi
+}
+
 echo -e "${YELLOW}=== LexiLingo Production Smoke Test ===${NC}"
 echo "Base URL: ${BASE_URL}"
 echo
@@ -39,6 +73,7 @@ check_status "Gateway AI Health" "/ai-health" "200"
 # Backend routes via gateway
 check_status "News Categories" "/api/v1/news/categories" "200"
 check_status "Auth Me (no token)" "/api/v1/auth/me" "401"
+check_cors_preflight
 
 # AI routes via gateway
 check_status "TraceCAG Health" "/api/v1/ai/trace-cag/health" "200"

@@ -52,38 +52,38 @@ WidgetsBinding.addPostFrameCallback:
 MultiProvider([
     // Core
     AuthProvider, UserProvider, HomeProvider, ProfileProvider,
-    
+
     // Learning
     ChatProvider, StoryProvider, CourseProvider, LearningProvider,
     ProgressProvider, VocabProvider, FlashcardProvider,
-    
+
     // Voice
     VoiceProvider, SpeechRecognitionProvider, TtsSettingsProvider,
-    
+
     // Progress & Gamification
     StreakProvider..loadStreak(),
     DailyChallengesProvider..loadChallenges(),
     AchievementProvider, GamificationProvider,
-    
+
     // User & Settings
     NotificationProvider, LevelProvider, ProficiencyProvider,
     SettingsProvider, SocialProvider,
-    
+
     // Phase 1: YouTube
     YouTubeProvider,
-    
+
     // Phase 2: News
     NewsProvider,
-    
+
     // Phase 3: Games + XP
     GamesProvider (skipXPLoad on web),
-    
+
     // Phase 4: Podcast
     PodcastProvider (skipCurated on web),
-    
+
     // Phase 5: Books
     BookProvider,
-    
+
     // Phase 6: Lexi Chat
     LexiChatProvider,
 ])
@@ -269,11 +269,11 @@ initializeDependencies(skipDatabase: bool) async {
     sl.registerSingleton<ApiClient>(...)
     sl.registerSingleton<HealthCheckService>(...)
     sl.registerSingleton<NotificationService>(...)
-    
+
     // Auth
     sl.registerSingleton<GoogleSignInService>(...)
     sl.registerSingleton<FacebookSignInService>(...)
-    
+
     // Features (via feature modules)
     await authModule.init(sl)
     await courseModule.init(sl)
@@ -467,7 +467,7 @@ SyncQueueLifecycleRunner:
 _extractResetTokenFromDeepLink() {
     // Check query params: ?token=xxx
     Uri.base.queryParameters['token']
-    
+
     // Check fragment: #?token=xxx
     Uri.base.fragment → parse fragment URI
 }
