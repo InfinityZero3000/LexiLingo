@@ -6,7 +6,7 @@
 
 **Architecture:** Add `/api/v1/voice/ticket` and `/api/v1/voice/stream` as thin transports over the existing STT runtime, `VoiceSession`, VAD, and transcript finalizer. `DuplexTurn` owns safe token streaming, sentence boundaries, ordered TTS, and terminal persistence; the existing `VoiceSession` owns bounded live/replay state. Flutter uses `record.startStream` for canonical PCM capture, a reference RMS VAD only for client-clock SLO measurement, and `flutter_soloud` for released-buffer playback. V1 runs one AI voice worker, preserving in-process resume without a new routing service.
 
-**Tech Stack:** Python 3.11, FastAPI WebSocket, asyncio, Redis Streams, MongoDB, Pydantic 2, Flutter/Dart, `record` 5.2.1, `flutter_soloud` 4.0.13, pytest, flutter_test, integration_test.
+**Tech Stack:** Python 3.11, FastAPI WebSocket, asyncio, Redis Streams, MongoDB, Pydantic 2, Flutter/Dart, `record` 5.2.1, `flutter_soloud` 3.5.4, pytest, flutter_test, integration_test.
 
 **References:**
 - Design: `docs/superpowers/specs/2026-07-22-duplex-voice-streaming-design.md`
@@ -45,7 +45,7 @@
 - Create `flutter-app/lib/core/voice/{voice_protocol,voice_audio_normalizer,voice_reference_vad,pcm_frame_chunker,voice_ticket_client,voice_feature_config,duplex_voice_socket,duplex_voice_socket_io,duplex_voice_socket_web,streaming_pcm_player,duplex_voice_controller}.dart`.
 - Modify `flutter-app/lib/features/lexi_chat/presentation/{pages/lexi_chat_page.dart,providers/lexi_chat_provider.dart}`: switch voice turns behind flag; retain fallback.
 - Modify `flutter-app/lib/features/lexi_chat/di/lexi_chat_di.dart`: construct shared controller.
-- Modify `flutter-app/pubspec.yaml` and lockfile: pin `flutter_soloud: 4.0.13`; retain existing `record` overrides until Gate 0 proves removal safe.
+- Modify `flutter-app/pubspec.yaml` and lockfile: pin `flutter_soloud: 3.5.4`, the latest release compatible with the repository's Dart 3.10 toolchain; retain existing `record` overrides until Gate 0 proves removal safe.
 
 ### Gateway and operations
 
@@ -79,7 +79,7 @@
 
 - [ ] **Step 1: Add the playback dependency only**
 
-  Pin `flutter_soloud: 4.0.13`. Do not upgrade `record` or remove its Web/Linux overrides in the same change.
+  Pin `flutter_soloud: 3.5.4`. Do not upgrade Flutter/Dart, `record`, or remove its Web/Linux overrides in the same change. Gate 0 rejected 4.x because it requires Dart ≥3.11 while the repository uses Dart 3.10.
 
 - [ ] **Step 2: Write failing chunker tests**
 
@@ -129,14 +129,14 @@
   (cd ai-service && venv/bin/python -m pytest -q tests/stt/test_voice_gate0_benchmark.py)
   (cd ai-service && venv/bin/python scripts/benchmark_voice_gate0.py --samples 100 --concurrency 1,5,10 --output ../docs/Report/voice-streaming-gate0.json)
   (cd flutter-app && flutter test test/core/voice/pcm_frame_chunker_test.dart test/core/voice/voice_audio_normalizer_test.dart)
-  (cd flutter-app && flutter test integration_test/duplex_audio_spike_test.dart -d <tier-1-device>)
+  (cd flutter-app && flutter test integration_test/duplex_audio_spike_test.dart -d <tier-1-device> --dart-define=VOICE_GATE0_DEVICE=true)
   ```
 
   Expected: all automated tests pass; the report says `go=true`. Stop implementation if any Tier-1 capture/playback proof fails or either p95 threshold fails.
 
 - [ ] **Step 9: Commit**
 
-  `git add flutter-app/pubspec.yaml flutter-app/pubspec.lock flutter-app/lib/core/voice/pcm_frame_chunker.dart flutter-app/lib/core/voice/voice_audio_normalizer.dart flutter-app/test/core/voice/pcm_frame_chunker_test.dart flutter-app/test/core/voice/voice_audio_normalizer_test.dart flutter-app/integration_test/duplex_audio_spike_test.dart ai-service/scripts/benchmark_voice_gate0.py ai-service/tests/stt/test_voice_gate0_benchmark.py docs/Report/voice-streaming-gate0-template.md && git commit -m "test(voice): qualify duplex audio dependencies"`
+  `git add flutter-app/pubspec.yaml flutter-app/pubspec.lock flutter-app/linux/flutter/generated_plugins.cmake flutter-app/windows/flutter/generated_plugins.cmake flutter-app/lib/core/voice/pcm_frame_chunker.dart flutter-app/lib/core/voice/voice_audio_normalizer.dart flutter-app/test/core/voice/pcm_frame_chunker_test.dart flutter-app/test/core/voice/voice_audio_normalizer_test.dart flutter-app/integration_test/duplex_audio_spike_test.dart ai-service/scripts/benchmark_voice_gate0.py ai-service/tests/stt/test_voice_gate0_benchmark.py docs/Report/voice-streaming-gate0-template.md && git commit -m "test(voice): qualify duplex audio dependencies"`
 
 ### Task 2: Version the cross-language protocol contract
 

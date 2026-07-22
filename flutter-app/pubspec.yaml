@@ -89,6 +89,8 @@ dependencies:
   
   # Voice/Audio
   record: ^5.2.1
+  # Last release compatible with the repo's Dart 3.10 toolchain.
+  flutter_soloud: 3.5.4
   just_audio: ^0.9.46
   audio_service: ^0.18.16        # Phase 4: Background podcast playback + lock screen
   path_provider: ^2.1.5
@@ -135,6 +137,8 @@ dependency_overrides:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
   mockito: ^5.4.4
   build_runner: ^2.4.13
