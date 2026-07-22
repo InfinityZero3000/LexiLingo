@@ -20,6 +20,7 @@ from api.services.trace_cag.env_helpers import _env_flag
 from api.services.trace_cag.provider_state import _provider_is_disabled
 from api.services.trace_cag.llm_client import _get_httpx_client, _throttled_post_json
 from api.services.trace_cag.cache_utils import _write_cache_entry
+from api.services.trace_cag.dependencies import POLICY_VERSION_TOKEN, dependency_record
 
 from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
 from api.services.trace_cag.benchmark.qa_generation import (
@@ -28,6 +29,21 @@ from api.services.trace_cag.benchmark.qa_generation import (
 )
 
 logger = logging.getLogger(__name__)
+
+SAFE_TUTOR_FALLBACK = (
+    "Squawk! I'm temporarily unable to reach my language model. "
+    "Please try again in a moment."
+)
+
+
+def _state_with_policy_dependency(state: TraceCAGState) -> TraceCAGState:
+    return {
+        **state,
+        "dependency_events": [
+            *(state.get("dependency_events") or []),
+            dependency_record("policy:tracecag:generation", "policy", POLICY_VERSION_TOKEN, "generation-policy"),
+        ],
+    }
 
 _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
     "You are Lexi, an expert English tutor. "
@@ -343,7 +359,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
 
         if state.get("cache_policy", "on") == "on":
             try:
-                await _write_cache_entry(state, response, strategy, errors, overall_score, context, model_used=model_used)
+                await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context, model_used=model_used)
             except Exception as e:
                 logger.debug(f"[generate_node] Cache write failed: {e}")
 
@@ -419,8 +435,6 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
         model_used = "llm_unavailable"
 
     try:
-        import httpx
-
         messages = [{"role": "system", "content": system_prompt}]
 
         # Inject conversation history (last 6 turns = up to 12 messages)
@@ -466,7 +480,6 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
                         payload={"model": groq_model, "messages": _groq_messages, "max_tokens": 512, "temperature": 0.7},
-                        httpx_module=httpx,
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:
@@ -492,7 +505,6 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         provider="gemini",
                         url=url,
                         payload=request_body,
-                        httpx_module=httpx,
                         headers={"x-goog-api-key": gemini_key},
                         timeout=20.0,
                     )
@@ -551,7 +563,6 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                             "stream": False,
                             "options": {"num_predict": 256, "temperature": 0.7},
                         },
-                        httpx_module=httpx,
                         timeout=15.0,
                         max_retries=1,
                     )
@@ -564,10 +575,11 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"[generate_node] LLM chain error: {e}")
 
-    # 4. Deterministic extractive fallback
+    # 4. Safe conversational fallback. Extractive output is reserved for the
+    # explicit benchmark/extractive branches above and must not leak raw KG context.
     if not response:
-        response = _generate_extractive_fallback_response(errors, strategy, user_input, context)
-        model_used = "extractive_fallback"
+        response = SAFE_TUTOR_FALLBACK
+        model_used = "safe_tutor_fallback"
 
     # Determine next action
     if strategy == "socratic":
@@ -634,7 +646,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     state["action_plan"] = action_plan
 
     # Store response in Redis cache for future hits
-    if state.get("cache_policy", "on") == "on":
+    if state.get("cache_policy", "on") == "on" and model_used != "safe_tutor_fallback":
         try:
             # ── Tiered Cache Management (L0/L1 Promotion) ─────────────
             # Nếu thông tin từ L2 được sử dụng, kiểm tra thăng hạng
@@ -648,11 +660,11 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         chunk_id = str(t.get("item_id") or "").replace("ext_", "")
                         if doc_service.should_promote_to_cache(chunk_id):
                             logger.info(f"[cache_promotion] Chunk {chunk_id[:8]} promoted to L1 cache")
-                            await _write_cache_entry(state, response, strategy, errors, overall_score, context)
+                            await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context)
                             break
             else:
                 # Mặc định cache cho các luồng KG/Rules để tối ưu tốc độ
-                await _write_cache_entry(state, response, strategy, errors, overall_score, context)
+                await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context)
         except Exception as e:
             logger.debug(f"[generate_node] Cache write failed: {e}")
 

@@ -225,6 +225,45 @@ def _select_diverse_multihop_evidence(
     return selected
 
 
+def _interleave_explicit_second_hop(
+    items: list[Dict[str, Any]],
+    *,
+    seeds: int = 3,
+    enabled: bool | None = None,
+) -> list[Dict[str, Any]]:
+    """Keep rank one, then surface candidates explicitly named by top seeds."""
+    if enabled is None:
+        enabled = _env_flag("TRACECAG_SECOND_HOP_INTERLEAVE", False)
+    if not enabled or len(items) < 2:
+        return items
+
+    seed_docs = [
+        (_normalize_benchmark_surface(item.get("title", "")), _normalize_benchmark_surface(item.get("text", "")))
+        for item in items[:seeds]
+    ]
+    linked = []
+    for index, item in enumerate(items[1:], 1):
+        title = _normalize_benchmark_surface(item.get("title", ""))
+        link_count = sum(
+            bool(title and title != seed_title and f" {title} " in f" {seed_text} ")
+            for seed_title, seed_text in seed_docs
+        )
+        if link_count:
+            linked.append((link_count, float(item.get("fusion_score") or 0.0), -index, item))
+
+    ordered = items[:1] + [row[-1] for row in sorted(linked, reverse=True)] + items[1:]
+    seen: set[str] = set()
+    result = []
+    for index, item in enumerate(ordered):
+        key = _normalize_benchmark_surface(item.get("title", ""))
+        key = key or _normalize_benchmark_surface(str(item.get("item_id") or ""))
+        key = key or f"untitled:{index}"
+        if key not in seen:
+            seen.add(key)
+            result.append(item)
+    return result
+
+
 def _benchmark_evidence_snippet(
     *,
     question: str,

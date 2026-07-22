@@ -198,6 +198,48 @@ class TestGenerateNode:
             assert len(result["tutor_response"]) > 0
 
     @pytest.mark.asyncio
+    async def test_provider_outage_returns_safe_uncached_response(self, monkeypatch):
+        """Normal chat must never expose or cache raw retrieval evidence."""
+        import api.services.trace_cag.generate as generate
+
+        leaked_context = (
+            "Concept (concept:benchmark.tell): Tell Concept "
+            "(concept:benchmark.lobban): Lobban Concept"
+        )
+        write_cache = AsyncMock()
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.setenv("TRACECAG_ENABLE_LOCAL_LLAMA_KV", "false")
+        monkeypatch.setattr(
+            "api.core.groq_key_pool.get_available_groq_key",
+            AsyncMock(return_value=None),
+        )
+        monkeypatch.setattr(generate, "_throttled_post_json", AsyncMock(return_value=None))
+        monkeypatch.setattr(generate, "_write_cache_entry", write_cache)
+
+        result = await generate.generate_node(
+            {
+                "user_input": "Hello",
+                "session_id": "session-1",
+                "learner_profile": {"level": "B1"},
+                "conversation_history": [],
+                "diagnosis_errors": [],
+                "diagnosis_intent": "correct",
+                "retrieved_context": leaked_context,
+                "retrieval_trace": [],
+                "grammar_score": 0.8,
+                "fluency_score": 0.8,
+                "vocabulary_level": "B1",
+                "cache_policy": "on",
+            }
+        )
+
+        response = result["tutor_response"]
+        assert response == generate.SAFE_TUTOR_FALLBACK
+        assert "concept:benchmark" not in response
+        assert "Lobban" not in response
+        write_cache.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_generate_tracks_models_used(self, state_with_errors, mock_model_gateway):
         """Test that models_used is tracked."""
         mock_model_gateway.execute_task.return_value = {

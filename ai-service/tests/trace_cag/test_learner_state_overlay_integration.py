@@ -139,6 +139,29 @@ def test_personalized_cache_scope_is_distinct_without_exposing_user_id(monkeypat
     assert "user-b" not in second
 
 
+def test_personalized_cache_scope_remains_distinct_when_learner_state_is_off(monkeypatch):
+    monkeypatch.setattr(cache_utils.settings, "LEARNER_STATE_MODE", "off")
+    monkeypatch.setattr(cache_utils.settings, "SECRET_KEY", "test-cache-secret")
+
+    first = cache_utils._user_cache_scope({"user_id": "user-a"})
+    second = cache_utils._user_cache_scope({"user_id": "user-b"})
+
+    assert first
+    assert second
+    assert first != second
+    assert "user-a" not in first
+    assert "user-b" not in second
+
+
+def test_personalized_cache_scope_fails_closed_without_a_secret(monkeypatch):
+    monkeypatch.setattr(cache_utils.settings, "LEARNER_STATE_MODE", "off")
+    monkeypatch.setattr(cache_utils.settings, "SECRET_KEY", "")
+    monkeypatch.setattr(cache_utils.settings, "LEARNER_STATE_INTERNAL_TOKEN", "")
+
+    assert cache_utils._user_cache_scope({"user_id": "user-a"}) is None
+    assert cache_utils._user_cache_scope({"user_id": "user-b"}) is None
+
+
 @pytest.mark.asyncio
 async def test_personalized_scope_does_not_enter_semantic_request_signature(monkeypatch):
     monkeypatch.setattr(cache_utils.settings, "LEARNER_STATE_MODE", "read")

@@ -36,14 +36,14 @@ async def test_cache_gate_enforces_benchmark_evidence_certificate(
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 2,
+            "schema_version": 3,
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target", "evidence_hash"],
             "query_norm": query.lower(),
             "intent": "ask",
             "level": level,
             "profile_epoch": nodes._profile_epoch(profile),
-            "policy_version": "policy_v1",
-            "kg_version": "kg_schema_v1",
+            "policy_version": f"policy_v{cache_mod._POLICY_VERSION}",
+            "kg_version": f"kg_schema_v{cache_mod._GRAPH_SCHEMA_VERSION}",
             "answer_target": "word",
             "native_language": "Vietnamese",
             "evidence_hash": "old",
@@ -116,4 +116,6 @@ async def test_input_node_skips_redis_warning_when_benchmark_redis_disabled(
     })
 
     assert result["learner_profile"] == {"level": "B1"}
+    assert result["dependency_events"][0]["kind"] == "learner"
+    assert result["dependency_events"][0]["version"].startswith("profile:")
     assert "Redis unavailable" not in caplog.text

@@ -95,6 +95,8 @@ class InMemoryTraceCAGAnalyzer:
             entities=set(fingerprint.entities),
             answer_target=fingerprint.answer_target,
             relation_hints=set(fingerprint.relation_hints),
+            policy_version="portable_v1",
+            kg_version="portable_v1",
         )
 
         best: tuple[float, _MemoryEntry, L1Decision] | None = None
@@ -112,6 +114,8 @@ class InMemoryTraceCAGAnalyzer:
                 entities=set(entry.fingerprint.entities),
                 answer_target=entry.fingerprint.answer_target,
                 relation_hints=set(entry.fingerprint.relation_hints),
+                policy_version="portable_v1",
+                kg_version="portable_v1",
                 created_at=entry.created_at,
                 ttl=entry.ttl,
             )

@@ -73,7 +73,6 @@ async def _throttled_post_json(
     provider: str,
     url: str,
     payload: Dict[str, Any],
-    httpx_module: Any,
     headers: Optional[Dict[str, str]] = None,
     timeout: float = 30.0,
     max_retries: int = 3,

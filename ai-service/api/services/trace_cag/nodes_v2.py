@@ -22,6 +22,11 @@ from typing import Dict, Any, List, Optional
 from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
+from api.services.trace_cag.dependencies import (
+    KG_VERSION_TOKEN,
+    dependency_record,
+    stable_version_token,
+)
 from api.services.jit_graph_service import get_jit_graph_service
 
 # LLM client — httpx pooling and rate-limit throttling
@@ -172,6 +177,9 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                 }
     
         latency_ms = int((time.time() - start_time) * 1000)
+        profile_version = str(learner_profile.get("_learner_state_epoch") or "")
+        if not profile_version:
+            profile_version = stable_version_token(learner_profile, prefix="profile")
         
         return {
             "learner_profile": learner_profile,
@@ -179,6 +187,12 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             "native_explanation_requested": _detect_native_request(user_input),
             "models_used": ["redis_cache"],
             "latency_ms": latency_ms,
+            "dependency_events": [dependency_record(
+                f"learner:{user_id or 'anonymous'}:profile",
+                "learner",
+                profile_version,
+                "learner-state" if epoch_result is not None else "request-profile",
+            )],
             **learner_state_update,
         }
         
@@ -348,6 +362,9 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
                 "edges_added": len(paths),
             },
             "models_used": ["kuzu_kg_bestfirst"],
+            "dependency_events": [dependency_record(
+                "kg:tracecag:main", "kg", KG_VERSION_TOKEN, "kuzu"
+            )],
         }
 
     except Exception as e:
@@ -471,8 +488,6 @@ Be encouraging and focus on the most important errors first."""
             groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3-32b"))
             if groq_key:
                 try:
-                    import httpx
-
                     _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""
                     messages = [
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
@@ -483,7 +498,6 @@ Be encouraging and focus on the most important errors first."""
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
                         payload={"model": groq_model, "messages": messages, "max_tokens": 150, "temperature": 0.0},
-                        httpx_module=httpx,
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:

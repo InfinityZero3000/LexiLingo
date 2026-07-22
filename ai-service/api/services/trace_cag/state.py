@@ -80,7 +80,19 @@ class CacheAdmissibilityCertificate(TypedDict, total=False):
     concepts: List[str]
     graph_fingerprint: str
     patchable_slots: List[str]
+    dependencies: List[Dict[str, Any]]
+    factual_projection_hash: str
+    provenance_projection_hash: str
     created_at: float
+
+
+class DependencyRecord(TypedDict):
+    """Versioned state read captured while constructing a cache artifact."""
+    key: str
+    kind: str
+    version: str
+    provenance: str
+    required: bool
 
 
 class CacheEntry(TypedDict, total=False):
@@ -146,6 +158,7 @@ class TraceCAGState(TypedDict, total=False):
     learner_state_degraded: bool
     learner_state_reason: Optional[str]
     learner_state_latency_ms: float
+    dependency_events: Annotated[List[DependencyRecord], add]
     
     # ============================================
     # Knowledge Graph (from KuzuDB)
@@ -286,6 +299,7 @@ def create_initial_state(
         learner_state_degraded=False,
         learner_state_reason=None,
         learner_state_latency_ms=0.0,
+        dependency_events=[],
         
         # KG (will be populated by kg_expand_node)
         kg_seed_concepts=[],

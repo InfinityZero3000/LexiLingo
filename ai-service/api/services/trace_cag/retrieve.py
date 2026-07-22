@@ -19,6 +19,7 @@ from api.services.trace_cag.env_helpers import _env_float, _env_int, _clip01
 from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
 from api.services.learner_overlay import rank_with_learner_overlay
 from api.core.config import settings
+from api.services.trace_cag.dependencies import dependency_record, stable_version_token
 
 from api.services.trace_cag.kg_utils import (
     _KG_QUERY_CACHE, _kg_cache_key, _kg_cache_get, _kg_cache_set,
@@ -35,6 +36,7 @@ from api.services.trace_cag.benchmark.ranking import (
     _rank_benchmark_candidates,
     _rank_with_online_ranker,
     _ranker_enabled,
+    _interleave_explicit_second_hop,
     _select_diverse_multihop_evidence,
 )
 
@@ -438,6 +440,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         benchmark_task=benchmark_task,
     )
     if benchmark_candidates and benchmark_task in {"multihop_qa", "retrieval_qa"}:
+        evidence_items = _interleave_explicit_second_hop(evidence_items)
         top_evidence = _select_diverse_multihop_evidence(
             items=evidence_items,
             question=user_input,
@@ -498,6 +501,13 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
 
     ranker_snapshot = get_retrieval_ranker().snapshot() if _ranker_enabled() else {}
     graph_update = dict(state.get("graph_update") or {})
+    evidence_projection = [
+        {"item_id": str(item.get("item_id") or ""), "title": str(item.get("title") or "")}
+        for item in retrieval_trace
+    ]
+    evidence_version = stable_version_token(evidence_projection, prefix="evidence")
+    state_hints = (state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}
+    source_version = str(state_hints.get("source_version") or evidence_version)
 
     return {
         "vector_hits": vector_hits,
@@ -556,4 +566,8 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             },
         },
         "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),
+        "dependency_events": [
+            dependency_record("evidence:retrieval", "evidence", evidence_version, "retrieval-fusion"),
+            dependency_record("source:retrieval", "source", source_version, "retrieval-source"),
+        ],
     }
