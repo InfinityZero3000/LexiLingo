@@ -31,6 +31,9 @@ async def test_lifespan_continues_when_redis_unavailable(monkeypatch: pytest.Mon
     stt_runtime = types.ModuleType("api.services.stt.runtime")
     stt_runtime.start_stt_runtime = AsyncMock()
     stt_runtime.stop_stt_runtime = AsyncMock()
+    stt_runtime.get_stt_config = MagicMock()
+    stt_runtime.get_stt_sessions = MagicMock()
+    stt_runtime.get_stt_registry = MagicMock()
     monkeypatch.setitem(sys.modules, "api.services.stt.runtime", stt_runtime)
 
     ai_main = importlib.import_module("api.main")
@@ -53,3 +56,29 @@ async def test_lifespan_continues_when_redis_unavailable(monkeypatch: pytest.Mon
     ai_main.mongodb_manager.connect.assert_awaited_once()
     ai_main.mongodb_manager.disconnect.assert_awaited_once()
     http_client.aclose.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("kg_error", "expected_status"), [(None, 200), (RuntimeError("bad KG"), 503)])
+async def test_health_reflects_kg_readiness(monkeypatch, kg_error, expected_status):
+    _install_sentry_stub(monkeypatch)
+    ai_main = importlib.import_module("api.main")
+    import api.services.orchestrator as orchestrator_module
+
+    kg = MagicMock()
+    kg.assert_runtime_namespace = AsyncMock()
+    if kg_error:
+        kg.assert_runtime_namespace.side_effect = kg_error
+    orchestrator = MagicMock(_kg=kg)
+    orchestrator.is_healthy.return_value = not kg_error
+    monkeypatch.setattr(
+        orchestrator_module,
+        "get_orchestrator",
+        AsyncMock(return_value=orchestrator),
+    )
+
+    response = await ai_main.health_check()
+
+    assert getattr(response, "status_code", 200) == expected_status
+    if not kg_error:
+        kg.assert_runtime_namespace.assert_awaited_once()

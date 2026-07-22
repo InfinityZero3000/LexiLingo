@@ -351,9 +351,13 @@ class Settings(BaseSettings):
     # ============================================================
     # Knowledge Graph (KuzuDB) & Embeddings
     # ============================================================
-    KUZU_DB_PATH: str = os.getenv(
-        "KUZU_DB_PATH",
-        os.path.join(os.path.dirname(__file__), "..", "..", "data", "kuzu")
+    KUZU_DB_PATH: str = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            os.getenv("KUZU_DB_PATH", "data/kuzu_runtime.db"),
+        )
     )
     EMBEDDING_MODEL: str = os.getenv(
         "EMBEDDING_MODEL",

@@ -6,11 +6,12 @@ Initializes resources and includes modular routers.
 """
 
 import sentry_sdk
+import asyncio
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -342,6 +343,23 @@ async def visualizer_redirect():
 
 @app.get("/health")
 async def health_check():
+    try:
+        from api.services.orchestrator import get_orchestrator
+
+        orchestrator = await get_orchestrator()
+        if not orchestrator.is_healthy():
+            raise RuntimeError("AI orchestrator is not initialized")
+        await orchestrator._kg.assert_runtime_namespace()
+    except Exception as exc:
+        logger.error("Health check failed: KG is not ready: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "component": "knowledge_graph",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+        )
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 

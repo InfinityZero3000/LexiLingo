@@ -14,6 +14,32 @@ _T = TypeVar("_T")
 _MERGE_BATCH_SIZE = 500
 
 
+class RuntimeKnowledgeIsolationError(ValueError):
+    pass
+
+
+def validate_runtime_knowledge_payload(
+    payload: Mapping[str, Any],
+    *,
+    source_path: str = "<payload>",
+) -> None:
+    """Reject benchmark-only concepts at the production ingestion boundary."""
+    for concept in payload.get("concepts") or []:
+        concept_id = str(concept.get("id") or "") if isinstance(concept, dict) else ""
+        if concept_id.startswith("concept:benchmark."):
+            raise RuntimeKnowledgeIsolationError(
+                f"Forbidden concept namespace in production KG source: {concept_id} ({source_path})"
+            )
+    for edge in payload.get("edges") or []:
+        if not isinstance(edge, dict):
+            continue
+        for endpoint in (str(edge.get("from") or ""), str(edge.get("to") or "")):
+            if endpoint.startswith("concept:benchmark."):
+                raise RuntimeKnowledgeIsolationError(
+                    f"Forbidden concept namespace in production KG source: {endpoint} ({source_path})"
+                )
+
+
 @dataclass(frozen=True)
 class MergeStats:
     concepts: int = 0
@@ -154,6 +180,8 @@ def sync_knowledge_files(
     connection: Any,
     paths: Iterable[str],
     metadata_path: str,
+    *,
+    forbidden_concept_prefixes: tuple[str, ...] = (),
 ) -> MergeStats:
     """Sync changed JSON files and persist hashes after successful graph writes."""
     metadata: dict[str, str] = {}
@@ -161,6 +189,8 @@ def sync_knowledge_files(
         try:
             loaded = load_json_object(metadata_path)
             metadata = {str(key): str(value) for key, value in loaded.items()}
+        except RuntimeKnowledgeIsolationError:
+            raise
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             logger.warning("[KG] Failed loading sync metadata %s: %s", metadata_path, exc)
 
@@ -172,7 +202,12 @@ def sync_knowledge_files(
             current_hash = file_md5(path)
             if metadata.get(path) == current_hash:
                 continue
-            pending.append((path, current_hash, load_json_object(path)))
+            payload = load_json_object(path)
+            if forbidden_concept_prefixes:
+                validate_runtime_knowledge_payload(payload, source_path=path)
+            pending.append((path, current_hash, payload))
+        except RuntimeKnowledgeIsolationError:
+            raise
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             logger.warning("[KG] Failed loading %s: %s", path, exc)
 
