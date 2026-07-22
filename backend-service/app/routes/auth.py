@@ -2,6 +2,8 @@
 Authentication Routes
 """
 import logging
+import asyncio
+import secrets
 import uuid
 
 from datetime import datetime, timezone, timedelta
@@ -866,13 +868,19 @@ async def admin_login(
 # Admin passwordless OTP login (kept for backward compatibility)
 # ============================================================================
 
-import random
 import time
 
 # Dev/test fallback store: {email: (otp, expires_at)}. Production requires Redis.
 _admin_otp_store: dict[str, tuple[str, float]] = {}
 _OTP_TTL_SECONDS = 300  # 5 minutes
 _ADMIN_OTP_KEY_PREFIX = "admin:otp:"
+_ADMIN_OTP_ATTEMPT_PREFIX = "admin:otp-attempts:"
+_ADMIN_OTP_COOLDOWN_PREFIX = "admin:otp-cooldown:"
+_ADMIN_OTP_MAX_ATTEMPTS = 5
+_ADMIN_OTP_COOLDOWN_SECONDS = 60
+_admin_otp_attempts: dict[str, tuple[int, float]] = {}
+_admin_otp_cooldowns: dict[str, float] = {}
+_admin_otp_locks: dict[str, asyncio.Lock] = {}
 
 
 async def _get_admin_otp_redis():
@@ -893,28 +901,86 @@ async def _store_admin_otp(email: str, otp: str, redis=None) -> None:
     _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
 
 
+async def _claim_admin_otp_cooldown(email: str, redis=None) -> bool:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        claimed = await redis.set(
+            f"{_ADMIN_OTP_COOLDOWN_PREFIX}{email}", "1",
+            ex=_ADMIN_OTP_COOLDOWN_SECONDS, nx=True,
+        )
+        return bool(claimed)
+    now = time.time()
+    if _admin_otp_cooldowns.get(email, 0) > now:
+        return False
+    _admin_otp_cooldowns[email] = now + _ADMIN_OTP_COOLDOWN_SECONDS
+    return True
+
+
+async def _record_admin_otp_failure(email: str, redis=None) -> None:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        key = f"{_ADMIN_OTP_ATTEMPT_PREFIX}{email}"
+        count = await redis.incr(key)
+        if int(count) == 1:
+            await redis.expire(key, _OTP_TTL_SECONDS)
+        return
+    count, expires_at = _admin_otp_attempts.get(email, (0, 0))
+    now = time.time()
+    _admin_otp_attempts[email] = (
+        (count if expires_at > now else 0) + 1,
+        expires_at if expires_at > now else now + _OTP_TTL_SECONDS,
+    )
+
+
+async def _admin_otp_attempts_exhausted(email: str, redis=None) -> bool:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        value = await redis.get(f"{_ADMIN_OTP_ATTEMPT_PREFIX}{email}")
+        return int(value or 0) >= _ADMIN_OTP_MAX_ATTEMPTS
+    count, expires_at = _admin_otp_attempts.get(email, (0, 0))
+    return expires_at > time.time() and count >= _ADMIN_OTP_MAX_ATTEMPTS
+
+
 async def _consume_admin_otp(email: str, otp: str, redis=None) -> bool:
     redis = redis if redis is not None else await _get_admin_otp_redis()
     if redis is not None:
-        return bool(await redis.eval(
+        result = int(await redis.eval(
             """
-            local current = redis.call("GET", KEYS[1])
-            if current == ARGV[1] then
+            local attempts = tonumber(redis.call("GET", KEYS[2]) or "0")
+            if attempts >= tonumber(ARGV[2]) then
+                return -1
+            end
+            if redis.call("GET", KEYS[1]) == ARGV[1] then
                 redis.call("DEL", KEYS[1])
+                redis.call("DEL", KEYS[2])
                 return 1
+            end
+            attempts = redis.call("INCR", KEYS[2])
+            if attempts == 1 then
+                redis.call("EXPIRE", KEYS[2], ARGV[3])
             end
             return 0
             """,
-            1,
+            2,
             f"{_ADMIN_OTP_KEY_PREFIX}{email}",
+            f"{_ADMIN_OTP_ATTEMPT_PREFIX}{email}",
             otp,
+            _ADMIN_OTP_MAX_ATTEMPTS,
+            _OTP_TTL_SECONDS,
         ))
+        return result == 1
 
-    stored = _admin_otp_store.get(email)
-    if not stored or stored[1] < time.time() or stored[0] != otp:
-        return False
-    del _admin_otp_store[email]
-    return True
+    lock = _admin_otp_locks.setdefault(email, asyncio.Lock())
+    async with lock:
+        if await _admin_otp_attempts_exhausted(email, redis):
+            return False
+        stored = _admin_otp_store.get(email)
+        if not stored or stored[1] < time.time() or stored[0] != otp:
+            await _record_admin_otp_failure(email, redis)
+            return False
+        del _admin_otp_store[email]
+        _admin_otp_attempts.pop(email, None)
+        return True
 
 
 @router.post("/admin/request-otp")
@@ -930,6 +996,8 @@ async def admin_request_otp(
     if not email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
     otp_redis = await _get_admin_otp_redis()
+    if not await _claim_admin_otp_cooldown(email, otp_redis):
+        return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
 
     result = await db.execute(
         select(User).where(User.email == email)
@@ -938,7 +1006,7 @@ async def admin_request_otp(
 
     # Respond the same way whether the user exists or not (anti-enumeration)
     if user and user.is_active and user.is_verified and getattr(user, "role_level", 0) >= 1:
-        otp = str(random.randint(100000, 999999))
+        otp = f"{secrets.randbelow(1_000_000):06d}"
         await _store_admin_otp(email, otp, otp_redis)
 
         try:
@@ -953,8 +1021,6 @@ async def admin_request_otp(
             )
         except Exception as exc:
             logger.warning("Failed to send admin OTP to %s: %s", email, exc)
-            # In dev, log the OTP so you can still test
-            logger.info("DEV OTP for %s: %s", email, otp)
 
     return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
 

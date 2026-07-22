@@ -18,6 +18,7 @@ Covers:
 - POST /auth/resend-verification — always-success anti-enumeration response
 """
 
+import asyncio
 import uuid
 import pytest
 from datetime import UTC, datetime
@@ -1308,6 +1309,60 @@ class TestResendVerification:
             json={"email": "ghost@example.com"},
         )
         assert response.status_code == 200
+
+
+class TestAdminOtpSecurityControls:
+
+    @pytest.fixture(autouse=True)
+    def clear_otp_state(self, monkeypatch):
+        from app.routes import auth
+
+        auth._admin_otp_store.clear()
+        auth._admin_otp_attempts.clear()
+        auth._admin_otp_cooldowns.clear()
+        auth._admin_otp_locks.clear()
+        monkeypatch.setattr(auth, "_get_admin_otp_redis", AsyncMock(return_value=None))
+
+    async def test_request_cooldown_is_scoped_by_email(self):
+        from app.routes import auth
+
+        assert await auth._claim_admin_otp_cooldown("one@example.com") is True
+        assert await auth._claim_admin_otp_cooldown("one@example.com") is False
+        assert await auth._claim_admin_otp_cooldown("two@example.com") is True
+
+    async def test_failed_attempt_limit_locks_correct_otp(self):
+        from app.routes import auth
+
+        email = "admin@example.com"
+        await auth._store_admin_otp(email, "123456")
+        for _ in range(auth._ADMIN_OTP_MAX_ATTEMPTS):
+            assert await auth._consume_admin_otp(email, "000000") is False
+
+        assert await auth._consume_admin_otp(email, "123456") is False
+
+    async def test_success_clears_attempts_and_is_single_use(self):
+        from app.routes import auth
+
+        email = "admin@example.com"
+        await auth._store_admin_otp(email, "123456")
+        assert await auth._consume_admin_otp(email, "000000") is False
+        assert await auth._consume_admin_otp(email, "123456") is True
+        assert email not in auth._admin_otp_attempts
+        assert await auth._consume_admin_otp(email, "123456") is False
+
+    async def test_concurrent_failures_cannot_bypass_attempt_limit(self):
+        from app.routes import auth
+
+        email = "admin@example.com"
+        await auth._store_admin_otp(email, "123456")
+        results = await asyncio.gather(*(
+            auth._consume_admin_otp(email, "000000")
+            for _ in range(auth._ADMIN_OTP_MAX_ATTEMPTS * 3)
+        ))
+
+        assert results == [False] * (auth._ADMIN_OTP_MAX_ATTEMPTS * 3)
+        assert auth._admin_otp_attempts[email][0] == auth._ADMIN_OTP_MAX_ATTEMPTS
+        assert await auth._consume_admin_otp(email, "123456") is False
 
     async def test_resend_verification_unverified_user_returns_200(self):
         from app.main import app
