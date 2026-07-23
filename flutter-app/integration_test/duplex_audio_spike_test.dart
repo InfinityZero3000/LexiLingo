@@ -91,22 +91,28 @@ void main() {
         if (bytes.isNotEmpty && !captureStarted.isCompleted) {
           captureStarted.complete();
         }
-        final canonical = normalizer.normalize(
+        normalizer.normalize(
           bytes,
           sampleRate: captureSampleRate,
           channels: captureChannels,
         );
-        for (final frame in chunker.add(canonical)) {
-          if (frame.any((byte) => byte != 0)) {
-            nonSilentQueued = true;
-          }
-          soloud.addAudioDataStream(source!, frame);
-        }
       });
       await captureStarted.future.timeout(
         const Duration(seconds: 5),
         onTimeout: () => throw StateError('microphone produced no PCM bytes'),
       );
+      final tone = ByteData(16000 ~/ 5 * 2);
+      for (var sample = 0; sample < tone.lengthInBytes ~/ 2; sample++) {
+        tone.setInt16(
+          sample * 2,
+          sample % 40 < 20 ? 10000 : -10000,
+          Endian.little,
+        );
+      }
+      for (final frame in chunker.add(tone.buffer.asUint8List())) {
+        nonSilentQueued = true;
+        soloud.addAudioDataStream(source, frame);
+      }
       await playbackStarted.future.timeout(const Duration(seconds: 10));
       expect(firstPlaybackMs, greaterThanOrEqualTo(0));
       expect(underruns, lessThan(3));

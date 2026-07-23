@@ -37,6 +37,7 @@ def _get_httpx_client(provider: str) -> Any:
     if provider not in _HTTPX_CLIENTS:
         import httpx
         _HTTPX_CLIENTS[provider] = httpx.AsyncClient(
+            http2=True,
             limits=httpx.Limits(
                 max_connections=20,
                 max_keepalive_connections=10,
