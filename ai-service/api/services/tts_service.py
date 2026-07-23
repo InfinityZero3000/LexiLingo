@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import io
+import json
 import logging
 import os
+import threading
 import wave
 from pathlib import Path
 from typing import Iterator, Optional
@@ -21,13 +23,18 @@ logger = logging.getLogger(__name__)
 class TTSService:
     def __init__(self) -> None:
         self._voice = None
+        self._load_lock = threading.Lock()
 
     def _load_voice(self):
+        with self._load_lock:
+            return self._load_voice_locked()
+
+    def _load_voice_locked(self):
         if self._voice is not None:
             return self._voice
 
         try:
-            from piper import PiperVoice  # type: ignore
+            from piper import PiperConfig, PiperVoice  # type: ignore
         except Exception as exc:  # pragma: no cover - runtime dependency
             raise RuntimeError(
                 "Piper is not installed. Add 'piper-tts' to requirements."
@@ -67,10 +74,33 @@ class TTSService:
             )
 
         logger.info(f"Loading TTS model: {resolved_model_path}")
-        self._voice = PiperVoice.load(
-            resolved_model_path,
-            config_path=resolved_config_path,
-        )
+        if settings.TTS_INTRA_OP_THREADS > 0:
+            import onnxruntime as ort
+            from piper.phonemize_espeak import ESPEAK_DATA_DIR
+
+            options = ort.SessionOptions()
+            options.intra_op_num_threads = settings.TTS_INTRA_OP_THREADS
+            options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+            with open(
+                resolved_config_path or f"{resolved_model_path}.json",
+                encoding="utf-8",
+            ) as config_file:
+                voice_config = PiperConfig.from_dict(json.load(config_file))
+            self._voice = PiperVoice(
+                config=voice_config,
+                session=ort.InferenceSession(
+                    resolved_model_path,
+                    sess_options=options,
+                    providers=["CPUExecutionProvider"],
+                ),
+                espeak_data_dir=Path(ESPEAK_DATA_DIR),
+                download_dir=Path.cwd(),
+            )
+        else:
+            self._voice = PiperVoice.load(
+                resolved_model_path,
+                config_path=resolved_config_path,
+            )
         return self._voice
 
     def synthesize(self, text: str) -> bytes:
@@ -95,6 +125,10 @@ class TTSService:
         except TypeError:
             voice.synthesize(text, wav_io)
         return wav_io.getvalue()
+
+    def warmup(self) -> None:
+        """Load Piper and run one short inference before readiness."""
+        next(self.iter_pcm_chunks("Hi."), None)
 
     def iter_pcm_chunks(self, text: str, *, max_fragment_chars: int = 24) -> Iterator[bytes]:
         """Yield Piper PCM as soon as the first short fragment is synthesized."""

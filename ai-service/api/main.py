@@ -235,6 +235,17 @@ async def lifespan(app: FastAPI):
         logger.info(" Streaming STT runtime initialized")
     except Exception as e:
         logger.warning(f"Failed to initialize streaming STT runtime: {e}")
+
+    try:
+        from api.services.tts_service import get_tts_service
+
+        await asyncio.wait_for(
+            asyncio.to_thread(get_tts_service().warmup),
+            timeout=20.0,
+        )
+        logger.info(" Piper TTS warmed")
+    except Exception as e:
+        logger.warning(f"Piper TTS warmup failed; continuing without warm cache: {e}")
     
     yield
     

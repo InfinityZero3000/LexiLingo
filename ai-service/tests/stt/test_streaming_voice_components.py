@@ -1,14 +1,25 @@
 import asyncio
+import sys
+from concurrent.futures import ThreadPoolExecutor
 from types import SimpleNamespace
 from threading import Event
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from pydantic import ValidationError
 
+from api.core.config import Settings
 from api.services.stt.sentence_splitter import split_speakable_fragments
 from api.services.stt.streaming_tts import StreamingTTS, TTSBusyError
 from api.services.tts_service import TTSService
 from api.services.trace_cag import generate
+from api.services import tts_service
+
+
+@pytest.mark.parametrize("value", [-1, 17, "not-an-int"])
+def test_tts_thread_setting_rejects_invalid_values(value):
+    with pytest.raises(ValidationError):
+        Settings(TTS_INTRA_OP_THREADS=value, _env_file=None)
 
 
 def test_sentence_fragments_prefer_boundaries_and_respect_limit():
@@ -37,6 +48,112 @@ def test_tts_pcm_is_lazy_and_keeps_fragment_order():
     assert next(chunks) == b"First sentence."
     assert spoken == ["First sentence."]
     assert list(chunks) == [b"Second sentence."]
+
+
+def test_tts_warmup_stops_after_first_pcm_chunk():
+    events = []
+
+    class Voice:
+        def synthesize(self, fragment):
+            events.append(("synthesize", fragment))
+            yield SimpleNamespace(audio_int16_bytes=b"first")
+            events.append(("second", fragment))
+            yield SimpleNamespace(audio_int16_bytes=b"second")
+
+    service = TTSService()
+    service._voice = Voice()
+
+    service.warmup()
+
+    assert events == [("synthesize", "Hi.")]
+
+
+@pytest.mark.parametrize("threads", [4, 0])
+def test_tts_load_uses_one_configured_or_upstream_session(monkeypatch, tmp_path, threads):
+    upstream_voice = SimpleNamespace(session="piper-default")
+    piper_voice = MagicMock(return_value=SimpleNamespace(session="configured-session"))
+    piper_voice.load.return_value = upstream_voice
+    piper_config = SimpleNamespace(from_dict=MagicMock(return_value="voice-config"))
+    inference_session = MagicMock(return_value="configured-session")
+    options = SimpleNamespace(intra_op_num_threads=None, graph_optimization_level=None)
+    config_path = tmp_path / "voice.onnx.json"
+    config_path.write_text("{}")
+    monkeypatch.setitem(
+        sys.modules,
+        "piper",
+        SimpleNamespace(PiperVoice=piper_voice, PiperConfig=piper_config),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "piper.phonemize_espeak",
+        SimpleNamespace(ESPEAK_DATA_DIR=str(tmp_path)),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "onnxruntime",
+        SimpleNamespace(
+            SessionOptions=lambda: options,
+            GraphOptimizationLevel=SimpleNamespace(ORT_ENABLE_ALL="all"),
+            InferenceSession=inference_session,
+        ),
+    )
+    monkeypatch.setattr(tts_service.settings, "TTS_MODEL_PATH", str(tmp_path / "voice.onnx"))
+    monkeypatch.setattr(tts_service.settings, "TTS_CONFIG_PATH", str(config_path))
+    monkeypatch.setattr(tts_service.settings, "TTS_INTRA_OP_THREADS", threads)
+
+    loaded = TTSService()._load_voice()
+
+    if threads:
+        assert loaded.session == "configured-session"
+        assert options.intra_op_num_threads == threads
+        assert options.graph_optimization_level == "all"
+        assert inference_session.call_args.kwargs["providers"] == ["CPUExecutionProvider"]
+        inference_session.assert_called_once()
+        piper_voice.assert_called_once()
+        piper_voice.load.assert_not_called()
+    else:
+        assert loaded.session == "piper-default"
+        inference_session.assert_not_called()
+        piper_voice.assert_not_called()
+        piper_voice.load.assert_called_once()
+
+
+def test_tts_concurrent_load_builds_voice_once(monkeypatch):
+    loading = Event()
+    release = Event()
+    second_started = Event()
+    voice = SimpleNamespace(session="default")
+
+    def load(*_args, **_kwargs):
+        loading.set()
+        release.wait()
+        return voice
+
+    piper_voice = SimpleNamespace(load=MagicMock(side_effect=load))
+    monkeypatch.setitem(
+        sys.modules,
+        "piper",
+        SimpleNamespace(PiperVoice=piper_voice, PiperConfig=object),
+    )
+    monkeypatch.setattr(tts_service.settings, "TTS_MODEL_PATH", "voice.onnx")
+    monkeypatch.setattr(tts_service.settings, "TTS_CONFIG_PATH", "")
+    monkeypatch.setattr(tts_service.settings, "TTS_INTRA_OP_THREADS", 0)
+    service = TTSService()
+
+    def second_load():
+        second_started.set()
+        return service._load_voice()
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(service._load_voice)
+        assert loading.wait(1)
+        second = executor.submit(second_load)
+        assert second_started.wait(1)
+        release.set()
+        assert first.result() is voice
+        assert second.result() is voice
+
+    piper_voice.load.assert_called_once()
 
 
 @pytest.mark.asyncio
