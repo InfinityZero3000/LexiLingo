@@ -177,7 +177,7 @@ async def stream_llm_tokens(
         from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
         groq_key = await get_available_groq_key(estimated_tokens=512)
-        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+        groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
         if not groq_key or _provider_is_disabled("groq"):
             return
 
@@ -460,7 +460,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
             groq_key = await get_available_groq_key(estimated_tokens=512)
-            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+            groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
             # Disable Qwen3 thinking to keep token budget for actual response.

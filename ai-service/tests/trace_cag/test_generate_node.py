@@ -274,6 +274,7 @@ class TestGenerateNode:
             return mock_resp
 
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GROQ_MODEL", raising=False)
         monkeypatch.setattr(
             "api.core.groq_key_pool.get_available_groq_key",
             AsyncMock(return_value="groq-key"),
@@ -307,5 +308,6 @@ class TestGenerateNode:
         )
 
         system_prompt = captured_payloads[0]["messages"][0]["content"]
+        assert captured_payloads[0]["model"] == "llama-3.1-8b-instant"
         assert "You are Sarah, an airport check-in agent." in system_prompt
         assert "You are Lexi" not in system_prompt
