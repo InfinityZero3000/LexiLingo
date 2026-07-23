@@ -104,7 +104,7 @@ async def run_samples(runner: Callable[[str], Awaitable[float]], samples: int, c
 async def _llm_ttft(text: str) -> float:
     from api.services.trace_cag.generate import stream_llm_tokens
     start = time.perf_counter()
-    async for token in stream_llm_tokens(system_prompt="Reply concisely in English.", messages=[{"role": "user", "content": text}], user_input=text):
+    async for token in stream_llm_tokens(system_prompt="Reply concisely in English.", messages=[{"role": "user", "content": text}], user_input=text, max_tokens=96):
         if token:
             return (time.perf_counter() - start) * 1000
     raise RuntimeError("configured Groq/Gemini provider returned no token")
@@ -112,11 +112,11 @@ async def _llm_ttft(text: str) -> float:
 
 async def _piper_ttfa(text: str) -> float:
     from api.services.tts_service import get_tts_service
-    voice = get_tts_service()._load_voice()
+    service = get_tts_service()
     def synthesize_until_audio() -> float:
         start = time.perf_counter()
-        for chunk in voice.synthesize(text):
-            if first_non_silent_pcm(chunk.audio_int16_bytes) is not None:
+        for pcm in service.iter_pcm_chunks(text):
+            if first_non_silent_pcm(pcm) is not None:
                 return (time.perf_counter() - start) * 1000
         raise RuntimeError("Piper returned no non-silent PCM")
 

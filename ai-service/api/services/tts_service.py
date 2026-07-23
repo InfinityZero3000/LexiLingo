@@ -7,9 +7,10 @@ import logging
 import os
 import wave
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 from api.core.config import settings
+from api.services.stt.sentence_splitter import split_speakable_fragments
 
 # Absolute path to the ai-service root (2 levels up from api/services/)
 _SERVICE_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -94,6 +95,14 @@ class TTSService:
         except TypeError:
             voice.synthesize(text, wav_io)
         return wav_io.getvalue()
+
+    def iter_pcm_chunks(self, text: str, *, max_fragment_chars: int = 24) -> Iterator[bytes]:
+        """Yield Piper PCM as soon as the first short fragment is synthesized."""
+        voice = self._load_voice()
+        for fragment in split_speakable_fragments(text, max_fragment_chars):
+            for chunk in voice.synthesize(fragment):
+                if chunk.audio_int16_bytes:
+                    yield chunk.audio_int16_bytes
 
 
 _tts_service: Optional[TTSService] = None

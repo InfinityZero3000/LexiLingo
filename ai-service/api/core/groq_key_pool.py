@@ -1,8 +1,10 @@
 """Round-robin Groq API key pool with per-key Redis rate limiting."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
+import time
 from typing import List, Optional, Tuple
 
 import redis.asyncio as redis
@@ -71,6 +73,8 @@ class GroqKeyPool:
 _pool_instance: Optional[GroqKeyPool] = None
 _fallback_keys: Optional[List[str]] = None
 _fallback_cursor = 0
+_fallback_next_at: List[float] = []
+_fallback_lock = asyncio.Lock()
 
 
 def get_groq_key_pool() -> Optional[GroqKeyPool]:
@@ -109,12 +113,29 @@ async def get_available_groq_key(estimated_tokens: int = 600) -> Optional[str]:
         if slot:
             api_key, _ = slot
             return api_key
+        return None
 
     keys = _get_fallback_keys()
     if not keys:
         return None
-    key = keys[_fallback_cursor % len(keys)]
-    _fallback_cursor += 1
+
+    try:
+        rpm = max(1, int(os.getenv("GROQ_FALLBACK_RPM", str(_GROQ_FREE_RPM))))
+    except ValueError:
+        rpm = _GROQ_FREE_RPM
+
+    async with _fallback_lock:
+        if len(_fallback_next_at) != len(keys):
+            _fallback_next_at[:] = [0.0] * len(keys)
+        index = _fallback_cursor % len(keys)
+        _fallback_cursor += 1
+        now = time.monotonic()
+        wait = max(0.0, _fallback_next_at[index] - now)
+        _fallback_next_at[index] = max(now, _fallback_next_at[index]) + 60.0 / rpm
+        key = keys[index]
+
+    if wait:
+        await asyncio.sleep(wait)
     return key
 
 

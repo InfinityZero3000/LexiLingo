@@ -166,6 +166,7 @@ async def stream_llm_tokens(
     system_prompt: str,
     messages: List[Dict[str, Any]],
     user_input: str,
+    max_tokens: int = 512,
 ) -> "AsyncGenerator[str, None]":
     """Stream tokens from Groq (preferred) then Gemini as fallback.
 
@@ -203,7 +204,7 @@ async def stream_llm_tokens(
                 json={
                     "model": groq_model,
                     "messages": groq_messages,
-                    "max_tokens": 512,
+                    "max_tokens": max_tokens,
                     "temperature": 0.7,
                     "stream": True,
                 },
@@ -243,6 +244,7 @@ async def stream_llm_tokens(
         request_body = {
             "contents": [{"role": "user", "parts": [{"text": user_input}]}],
             "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "generationConfig": {"maxOutputTokens": max_tokens},
         }
         client = _get_httpx_client("gemini")
         try:
