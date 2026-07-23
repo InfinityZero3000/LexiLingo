@@ -5,6 +5,7 @@ Split out of nodes_v2.py (Phase 4 refactor) along with its prompt-building and
 token-streaming helpers, which the streaming chat endpoint also calls directly.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -34,6 +35,10 @@ SAFE_TUTOR_FALLBACK = (
     "Squawk! I'm temporarily unable to reach my language model. "
     "Please try again in a moment."
 )
+
+
+class ProviderBusyError(RuntimeError):
+    pass
 
 
 def _state_with_policy_dependency(state: TraceCAGState) -> TraceCAGState:
@@ -167,6 +172,7 @@ async def stream_llm_tokens(
     messages: List[Dict[str, Any]],
     user_input: str,
     max_tokens: int = 512,
+    allow_gemini_fallback: bool = True,
 ) -> "AsyncGenerator[str, None]":
     """Stream tokens from Groq (preferred) then Gemini as fallback.
 
@@ -174,13 +180,19 @@ async def stream_llm_tokens(
     Falls back silently to Gemini if Groq is unavailable or rate-limited.
     """
 
-    async def _try_groq() -> "AsyncGenerator[str, None]":
-        from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
+    groq_admitted = False
 
-        groq_key = await get_available_groq_key(estimated_tokens=512)
-        groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
-        if not groq_key or _provider_is_disabled("groq"):
+    async def _try_groq() -> "AsyncGenerator[str, None]":
+        nonlocal groq_admitted
+        from api.core.groq_key_pool import record_groq_key_usage, release_groq_key, try_acquire_groq_key
+
+        if _provider_is_disabled("groq"):
             return
+        groq_key = await try_acquire_groq_key(estimated_tokens=max_tokens)
+        groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+        if not groq_key:
+            return
+        groq_admitted = True
 
         # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
         groq_messages = messages
@@ -194,7 +206,7 @@ async def stream_llm_tokens(
         client = _get_httpx_client("groq")
         tokens_yielded = 0
         try:
-            async with client.stream(
+            async with asyncio.timeout(30.0), client.stream(
                 "POST",
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers={
@@ -228,9 +240,17 @@ async def stream_llm_tokens(
                     except Exception as _exc:
                         logger.debug("[generate] ignored: %s", _exc)
                         pass
-            await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
         except Exception as exc:
             logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
+        finally:
+            if groq_key:
+                try:
+                    try:
+                        await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
+                    except Exception as exc:
+                        logger.warning("[stream_llm_tokens] Groq usage accounting failed: %s", exc)
+                finally:
+                    await release_groq_key(groq_key)
 
     async def _try_gemini() -> "AsyncGenerator[str, None]":
         gemini_key = os.getenv("GEMINI_API_KEY", "")
@@ -280,10 +300,18 @@ async def stream_llm_tokens(
 
     # Try Groq first; if it yields nothing, fall back to Gemini
     got_tokens = False
-    async for token in _try_groq():
-        got_tokens = True
-        yield token
+    groq_stream = _try_groq()
+    try:
+        async for token in groq_stream:
+            got_tokens = True
+            yield token
+    finally:
+        await groq_stream.aclose()
 
+    if not got_tokens and not allow_gemini_fallback:
+        if not groq_admitted:
+            raise ProviderBusyError("Groq voice capacity exhausted")
+        raise RuntimeError("Groq admitted the turn but returned no token")
     if not got_tokens:
         async for token in _try_gemini():
             yield token

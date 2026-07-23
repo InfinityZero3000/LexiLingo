@@ -5,6 +5,7 @@ import asyncio
 import logging
 import os
 import time
+import uuid
 from typing import List, Optional, Tuple
 
 import redis.asyncio as redis
@@ -16,6 +17,18 @@ logger = logging.getLogger(__name__)
 _GROQ_FREE_RPM = 30
 _GROQ_FREE_TPM = 12_000
 _GROQ_FREE_RPD = 14_400
+_VOICE_LEASE_MS = 45_000
+
+
+class GroqKeyLease(str):
+    """String-compatible API key carrying its per-acquisition Redis token."""
+
+    lease_token: str
+
+    def __new__(cls, api_key: str, lease_token: str) -> "GroqKeyLease":
+        value = super().__new__(cls, api_key)
+        value.lease_token = lease_token
+        return value
 
 
 class GroqKeyPool:
@@ -41,6 +54,62 @@ class GroqKeyPool:
             for i in range(len(keys))
         ]
         self._cursor = 0
+
+    async def try_acquire_voice(self, estimated_tokens: int = 600) -> Optional[str]:
+        """Atomically reserve provider RPM and one in-flight voice lease."""
+        now = time.time()
+        for offset in range(len(self._keys)):
+            idx = (self._cursor + offset) % len(self._keys)
+            limiter = self._limiters[idx]
+            if not await limiter.can_request(estimated_tokens):
+                continue
+            api_key = self._keys[idx]
+            token = uuid.uuid4().hex
+            script = """
+            redis.call('ZREMRANGEBYSCORE', KEYS[2], 0, ARGV[1] - 60)
+            if redis.call('EXISTS', KEYS[1]) == 1 then return 0 end
+            if redis.call('ZCARD', KEYS[2]) >= tonumber(ARGV[3]) then return 0 end
+            if not redis.call('SET', KEYS[1], ARGV[2], 'NX', 'PX', ARGV[4]) then return 0 end
+            redis.call('ZADD', KEYS[2], ARGV[1], ARGV[2])
+            redis.call('EXPIRE', KEYS[2], 65)
+            return 1
+            """
+            try:
+                admitted = await limiter.redis.eval(
+                    script,
+                    2,
+                    f"{limiter.prefix}:voice:lease",
+                    f"{limiter.prefix}:voice:rpm",
+                    now,
+                    token,
+                    max(1, int(limiter.rpm_limit * limiter.safety)),
+                    _VOICE_LEASE_MS,
+                )
+            except Exception as exc:
+                logger.error("Groq voice admission failed closed: %s", exc)
+                return None
+            if admitted:
+                self._cursor = (idx + 1) % len(self._keys)
+                return GroqKeyLease(api_key, token)
+        return None
+
+    async def release_voice(self, api_key: str) -> None:
+        """Release only the lease token issued to this process."""
+        token = getattr(api_key, "lease_token", None)
+        if not token:
+            return
+        try:
+            idx = self._keys.index(api_key)
+            limiter = self._limiters[idx]
+            await limiter.redis.eval(
+                "if redis.call('GET', KEYS[1]) == ARGV[1] then "
+                "return redis.call('DEL', KEYS[1]) else return 0 end",
+                1,
+                f"{limiter.prefix}:voice:lease",
+                token,
+            )
+        except Exception as exc:
+            logger.error("Groq voice lease release failed: %s", exc)
 
     async def get_available(
         self, estimated_tokens: int = 600
@@ -73,6 +142,7 @@ class GroqKeyPool:
 _pool_instance: Optional[GroqKeyPool] = None
 _fallback_keys: Optional[List[str]] = None
 _fallback_cursor = 0
+_fallback_in_flight: set[int] = set()
 _fallback_next_at: List[float] = []
 _fallback_lock = asyncio.Lock()
 
@@ -118,7 +188,21 @@ async def get_available_groq_key(estimated_tokens: int = 600) -> Optional[str]:
     keys = _get_fallback_keys()
     if not keys:
         return None
+    key = keys[_fallback_cursor % len(keys)]
+    _fallback_cursor += 1
+    return key
 
+
+async def try_acquire_groq_key(estimated_tokens: int = 600) -> Optional[str]:
+    """Reserve one voice key without waiting; caller must release it."""
+    global _fallback_cursor
+    pool = get_groq_key_pool()
+    if pool:
+        return await pool.try_acquire_voice(estimated_tokens)
+
+    keys = _get_fallback_keys()
+    if not keys:
+        return None
     try:
         rpm = max(1, int(os.getenv("GROQ_FALLBACK_RPM", str(_GROQ_FREE_RPM))))
     except ValueError:
@@ -127,16 +211,28 @@ async def get_available_groq_key(estimated_tokens: int = 600) -> Optional[str]:
     async with _fallback_lock:
         if len(_fallback_next_at) != len(keys):
             _fallback_next_at[:] = [0.0] * len(keys)
-        index = _fallback_cursor % len(keys)
-        _fallback_cursor += 1
         now = time.monotonic()
-        wait = max(0.0, _fallback_next_at[index] - now)
-        _fallback_next_at[index] = max(now, _fallback_next_at[index]) + 60.0 / rpm
-        key = keys[index]
+        for offset in range(len(keys)):
+            index = (_fallback_cursor + offset) % len(keys)
+            if index not in _fallback_in_flight and _fallback_next_at[index] <= now:
+                _fallback_in_flight.add(index)
+                _fallback_next_at[index] = now + 60.0 / rpm
+                _fallback_cursor = (index + 1) % len(keys)
+                return keys[index]
+    return None
 
-    if wait:
-        await asyncio.sleep(wait)
-    return key
+
+async def release_groq_key(api_key: str) -> None:
+    if get_groq_key_pool():
+        await get_groq_key_pool().release_voice(api_key)
+        return
+    keys = _get_fallback_keys()
+    try:
+        index = keys.index(api_key)
+    except ValueError:
+        return
+    async with _fallback_lock:
+        _fallback_in_flight.discard(index)
 
 
 async def record_groq_key_usage(api_key: str, tokens_used: int) -> None:

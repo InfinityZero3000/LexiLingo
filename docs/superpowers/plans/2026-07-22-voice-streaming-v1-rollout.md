@@ -70,8 +70,9 @@ No protocol-reliability work begins until all four spikes pass on representative
 |---|---|---|
 | Capture normalization | Flutter proof on Chrome, Android, iOS | Arbitrary recorder chunks become exact 640-byte PCM16LE/16 kHz/mono frames; no drift in 10-minute capture |
 | Playback | `flutter_soloud` released buffer stream proof | First non-silent PCM playback, cancellation, disposal and underrun callback work on Tier 1 |
-| TTS time-to-first-audio | Piper CPU benchmark on production-like host | Warm p95 first non-silent PCM <= 150 ms for 20/80/160-character inputs |
-| Provider time-to-first-token | Real LLM/provider benchmark with voice prompt | Warm p95 TTFT <= 300 ms at 1/5/10 qualified concurrent sessions |
+| Admitted TTS time-to-first-audio | Piper CPU benchmark on production-like host | Warm p95 first non-silent PCM <= 150 ms for 20/80/160-character inputs |
+| Admitted provider time-to-first-token | Real LLM/provider benchmark with voice prompt | p95 <= 300 ms; report separately from the end-to-end 1.5 s release gate |
+| Saturation at 1/5/10 sessions | Real TTS/provider admission controls | No unbounded queue or provider 429; excess turns receive immediate `server_busy`/retry |
 
 **Gate 0 output:** a short benchmark report with host specification, model versions, prompt size, RTT profile, p50/p90/p95/p99, sample count, raw failures, and an explicit go/no-go decision.
 
@@ -102,7 +103,7 @@ The following are diagnostic guards, **not additive proof** of end-to-end p95:
 | `t2 -> t3` sentence decision and TTS admission | p95 <= 350 ms |
 | `t3 -> t4` first PCM, network and 80–120 ms prebuffer | p95 <= 300 ms |
 
-Qualification reports end-to-end p50/p90/p95/p99 separately for warm/cold, cache hit/miss, utterance mix, RTT 20/80/150 ms, and 1/5/10 concurrent sessions. A primary release condition uses at least 400 valid turns per main scenario; 50 turns is smoke coverage only.
+Qualification reports end-to-end p50/p90/p95/p99 separately for warm/cold, cache hit/miss, utterance mix, RTT 20/80/150 ms, and 1/5/10 connected sessions. Latency SLO applies to admitted turns; saturation reports acceptance/rejection separately. A primary release condition uses at least 400 valid turns per main scenario; 50 turns is smoke coverage only.
 
 ## 6. Client audio normalization
 

@@ -53,41 +53,76 @@ def first_non_silent_pcm(pcm16le: bytes, threshold: int = 64) -> int | None:
     return None
 
 
-def build_report(results: dict[str, dict[int, list[float]]]) -> dict:
-    required = {"piper_ttfa", "llm_ttft"}
-    complete = set(results) == required and all(
-        set(results[name]) == REQUIRED_CONCURRENCY
-        and all(len(values) == REQUIRED_SAMPLES for values in results[name].values())
-        for name in required
+def build_report(results: dict[str, list[float]], saturation: dict[str, dict[int, dict]]) -> dict:
+    complete = set(results) == {"piper_ttfa", "llm_ttft"} and all(
+        len(values) == REQUIRED_SAMPLES for values in results.values()
     )
     metrics = {
-        name: {
-            str(concurrency): {"samples": len(values), "p50_ms": statistics.median(values), "p95_ms": percentile(values)}
-            for concurrency, values in sorted(groups.items())
-        }
-        for name, groups in results.items()
+        name: {"samples": len(values), "p50_ms": statistics.median(values), "p95_ms": percentile(values)}
+        for name, values in results.items()
     }
-    go = complete and all(
-        item["p95_ms"] <= (PIPER_LIMIT_MS if name == "piper_ttfa" else LLM_LIMIT_MS)
-        for name, groups in metrics.items()
-        for item in groups.values()
+    saturation_complete = set(saturation) == {"piper", "llm"} and all(
+        set(groups) == REQUIRED_CONCURRENCY and all(
+            item["unexpected_errors"] == 0
+            and item["attempts"] == level
+            and item["attempts"] == item["accepted"] + item["rejected_busy"]
+            and item["accepted"] >= 1
+            for level, item in groups.items()
+        )
+        for groups in saturation.values()
     )
-    return {"schema_version": "lexilingo.voice-gate0.v1", "go": go, "thresholds_ms": {"piper_ttfa_p95": PIPER_LIMIT_MS, "llm_ttft_p95": LLM_LIMIT_MS}, "metrics": metrics}
+    go = (
+        complete
+        and saturation_complete
+        and metrics["piper_ttfa"]["p95_ms"] <= PIPER_LIMIT_MS
+        and metrics["llm_ttft"]["p95_ms"] <= LLM_LIMIT_MS
+    )
+    return {
+        "schema_version": "lexilingo.voice-gate0.v2",
+        "go": go,
+        "thresholds_ms": {"piper_ttfa_p95": PIPER_LIMIT_MS, "llm_ttft_p95": LLM_LIMIT_MS},
+        "admitted_latency": metrics,
+        "saturation": {
+            name: {str(level): item for level, item in sorted(groups.items())}
+            for name, groups in saturation.items()
+        },
+    }
 
 
 def validate_report(report: dict) -> None:
-    if report.get("schema_version") != "lexilingo.voice-gate0.v1" or not isinstance(report.get("go"), bool):
+    if report.get("schema_version") != "lexilingo.voice-gate0.v2" or not isinstance(report.get("go"), bool):
         raise ValueError("invalid Gate 0 report")
-    metrics = report.get("metrics", {})
-    if set(metrics) != {"piper_ttfa", "llm_ttft"} or any(
-        set(groups) != {str(value) for value in REQUIRED_CONCURRENCY}
-        for groups in metrics.values()
-    ):
+    metrics = report.get("admitted_latency", {})
+    if set(metrics) != {"piper_ttfa", "llm_ttft"}:
         raise ValueError("incomplete Gate 0 metrics")
-    for groups in metrics.values():
-        for metric in groups.values():
-            if metric["samples"] != REQUIRED_SAMPLES or metric["p50_ms"] < 0 or metric["p95_ms"] < 0:
-                raise ValueError("invalid benchmark sample")
+    for metric in metrics.values():
+        if metric["samples"] != REQUIRED_SAMPLES or metric["p50_ms"] < 0 or metric["p95_ms"] < 0:
+            raise ValueError("invalid benchmark sample")
+    if report.get("thresholds_ms") != {
+        "piper_ttfa_p95": PIPER_LIMIT_MS,
+        "llm_ttft_p95": LLM_LIMIT_MS,
+    }:
+        raise ValueError("invalid Gate 0 thresholds")
+    expected_levels = {str(value) for value in REQUIRED_CONCURRENCY}
+    saturation = report.get("saturation", {})
+    if set(saturation) != {"piper", "llm"} or any(set(groups) != expected_levels for groups in saturation.values()):
+        raise ValueError("incomplete saturation metrics")
+    valid_saturation = all(
+        item.get("attempts") == int(level)
+        and item.get("unexpected_errors") == 0
+        and item.get("attempts") == item.get("accepted", -1) + item.get("rejected_busy", -1)
+        and item.get("accepted", 0) >= 1
+        for groups in saturation.values()
+        for level, item in groups.items()
+    )
+    if not valid_saturation:
+        raise ValueError("invalid saturation accounting")
+    expected_go = (
+        metrics["piper_ttfa"]["p95_ms"] <= PIPER_LIMIT_MS
+        and metrics["llm_ttft"]["p95_ms"] <= LLM_LIMIT_MS
+    )
+    if report["go"] != expected_go:
+        raise ValueError("Gate 0 GO status is inconsistent with measurements")
 
 
 async def run_samples(runner: Callable[[str], Awaitable[float]], samples: int, concurrency: int) -> list[float]:
@@ -104,23 +139,61 @@ async def run_samples(runner: Callable[[str], Awaitable[float]], samples: int, c
 async def _llm_ttft(text: str) -> float:
     from api.services.trace_cag.generate import stream_llm_tokens
     start = time.perf_counter()
-    async for token in stream_llm_tokens(system_prompt="Reply concisely in English.", messages=[{"role": "user", "content": text}], user_input=text, max_tokens=96):
+    async for token in stream_llm_tokens(system_prompt="Reply concisely in English.", messages=[{"role": "user", "content": text}], user_input=text, max_tokens=96, allow_gemini_fallback=False):
         if token:
             return (time.perf_counter() - start) * 1000
     raise RuntimeError("configured Groq/Gemini provider returned no token")
 
 
 async def _piper_ttfa(text: str) -> float:
-    from api.services.tts_service import get_tts_service
-    service = get_tts_service()
-    def synthesize_until_audio() -> float:
-        start = time.perf_counter()
-        for pcm in service.iter_pcm_chunks(text):
-            if first_non_silent_pcm(pcm) is not None:
-                return (time.perf_counter() - start) * 1000
-        raise RuntimeError("Piper returned no non-silent PCM")
+    from api.services.stt.streaming_tts import StreamingTTS
+    global _TTS_RUNTIME
+    if _TTS_RUNTIME is None:
+        _TTS_RUNTIME = StreamingTTS(capacity=1)
+    start = time.perf_counter()
+    async for pcm in _TTS_RUNTIME.stream(text):
+        if first_non_silent_pcm(pcm) is not None:
+            return (time.perf_counter() - start) * 1000
+    raise RuntimeError("Piper returned no non-silent PCM")
 
-    return await asyncio.to_thread(synthesize_until_audio)
+
+_TTS_RUNTIME = None
+
+
+async def collect_admitted(runner: Callable[[str], Awaitable[float]], samples: int) -> list[float]:
+    from api.services.stt.streaming_tts import TTSBusyError
+    from api.services.trace_cag.generate import ProviderBusyError
+    values: list[float] = []
+    attempt = 0
+    deadline = time.monotonic() + 120.0
+    while len(values) < samples:
+        if time.monotonic() >= deadline:
+            raise TimeoutError("admission did not recover within 120 seconds")
+        try:
+            values.append(await runner(INPUTS[attempt % len(INPUTS)]))
+        except (ProviderBusyError, TTSBusyError):
+            await asyncio.sleep(0.02)
+        attempt += 1
+    return values
+
+
+async def run_saturation(runner: Callable[[str], Awaitable[float]], concurrency: int) -> dict:
+    from api.services.stt.streaming_tts import TTSBusyError
+    from api.services.trace_cag.generate import ProviderBusyError
+    accepted = rejected = unexpected = 0
+
+    async def one(index: int) -> None:
+        nonlocal accepted, rejected, unexpected
+        try:
+            await runner(INPUTS[index % len(INPUTS)])
+            accepted += 1
+        except (ProviderBusyError, TTSBusyError):
+            rejected += 1
+        except Exception:
+            unexpected += 1
+
+    await asyncio.gather(*(one(index) for index in range(concurrency)))
+    return {"attempts": concurrency, "accepted": accepted, "rejected_busy": rejected, "unexpected_errors": unexpected}
 
 
 async def main() -> int:
@@ -139,11 +212,17 @@ async def main() -> int:
     # Warm models/providers before recording production-shaped latency.
     await _piper_ttfa(INPUTS[0])
     await _llm_ttft(INPUTS[0])
-    results = {"piper_ttfa": {}, "llm_ttft": {}}
+    results = {
+        "piper_ttfa": await collect_admitted(_piper_ttfa, args.samples),
+        "llm_ttft": await collect_admitted(_llm_ttft, args.samples),
+    }
+    saturation = {"piper": {}, "llm": {}}
+    await asyncio.sleep(2.1)
     for level in levels:
-        results["piper_ttfa"][level] = await run_samples(_piper_ttfa, args.samples, level)
-        results["llm_ttft"][level] = await run_samples(_llm_ttft, args.samples, level)
-    report = build_report(results)
+        saturation["piper"][level] = await run_saturation(_piper_ttfa, level)
+        saturation["llm"][level] = await run_saturation(_llm_ttft, level)
+        await asyncio.sleep(2.1)
+    report = build_report(results, saturation)
     validate_report(report)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n")

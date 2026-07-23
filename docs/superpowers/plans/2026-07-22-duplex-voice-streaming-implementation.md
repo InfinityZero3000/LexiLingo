@@ -115,7 +115,7 @@
 
 - [ ] **Step 6: Add the backend benchmark harness**
 
-  Use fixed 20/80/160-character English inputs and the configured Groq/Gemini provider. Record warm Piper first non-silent PCM and LLM TTFT at concurrency 1/5/10. The script exits non-zero when Piper p95 exceeds 150 ms or provider TTFT p95 exceeds 300 ms.
+  Use fixed 20/80/160-character English inputs and the configured Groq/Gemini provider. Record warm admitted Piper first non-silent PCM and admitted LLM TTFT separately. At 1/5/10 connected sessions, measure bounded admission and immediate busy rejection; never queue through provider quota and call the wait TTFT. The script exits non-zero when admitted Piper p95 exceeds 150 ms, admitted LLM TTFT p95 exceeds 300 ms, a provider fails after admission, or saturation bypasses a bound. These component gates do not replace the admitted end-to-end 1.5 s Gate.
 
 - [ ] **Step 7: Make the benchmark test deterministic**
 

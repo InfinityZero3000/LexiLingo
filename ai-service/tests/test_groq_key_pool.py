@@ -1,9 +1,63 @@
 import asyncio
+from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
 
 from api.core import groq_key_pool
+
+
+@pytest.mark.asyncio
+async def test_redis_voice_acquire_is_atomic_and_release_uses_lease_token():
+    redis = SimpleNamespace(eval=AsyncMock(return_value=1))
+    pool = groq_key_pool.GroqKeyPool(["key-1"], redis)
+    pool._limiters = [
+        SimpleNamespace(
+            can_request=AsyncMock(return_value=True),
+            redis=redis,
+            prefix="groq:key0",
+            rpm_limit=30,
+            safety=0.9,
+        )
+    ]
+
+    first = await pool.try_acquire_voice(96)
+    second = await pool.try_acquire_voice(96)
+    assert first == second == "key-1"
+    assert first.lease_token != second.lease_token
+    acquire = redis.eval.await_args_list[0]
+    assert acquire.args[1:4] == (
+        2,
+        "groq:key0:voice:lease",
+        "groq:key0:voice:rpm",
+    )
+    assert acquire.args[-1] == 45_000
+
+    await pool.release_voice(first)
+    await pool.release_voice(second)
+    releases = redis.eval.await_args_list[2:]
+    assert [call.args[-1] for call in releases] == [
+        first.lease_token,
+        second.lease_token,
+    ]
+
+
+@pytest.mark.asyncio
+async def test_redis_voice_acquire_fails_closed_when_atomic_eval_fails():
+    redis = SimpleNamespace(eval=AsyncMock(side_effect=RuntimeError("redis down")))
+    pool = groq_key_pool.GroqKeyPool(["key-1"], redis)
+    pool._limiters = [
+        SimpleNamespace(
+            can_request=AsyncMock(return_value=True),
+            redis=redis,
+            prefix="groq:key0",
+            rpm_limit=30,
+            safety=0.9,
+        )
+    ]
+
+    assert await pool.try_acquire_voice(96) is None
+    redis.eval.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -17,19 +71,40 @@ async def test_redis_pool_exhaustion_does_not_bypass_with_raw_key(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_standalone_fallback_paces_each_key_without_real_sleep(monkeypatch):
-    sleep = AsyncMock()
+async def test_standalone_legacy_lookup_rotates_without_reserving(monkeypatch):
     monkeypatch.setattr(groq_key_pool, "_pool_instance", None)
     monkeypatch.setattr(groq_key_pool, "_fallback_keys", None)
     monkeypatch.setattr(groq_key_pool, "_fallback_cursor", 0)
+    monkeypatch.setattr(groq_key_pool, "_fallback_in_flight", set())
+    monkeypatch.setenv("GROQ_API_KEYS", "key-1,key-2")
+
+    assert [await groq_key_pool.get_available_groq_key() for _ in range(3)] == [
+        "key-1",
+        "key-2",
+        "key-1",
+    ]
+    assert groq_key_pool._fallback_in_flight == set()
+
+
+@pytest.mark.asyncio
+async def test_voice_acquire_reserves_each_key_and_obeys_rpm(monkeypatch):
+    clock = {"now": 100.0}
+    monkeypatch.setattr(groq_key_pool, "_pool_instance", None)
+    monkeypatch.setattr(groq_key_pool, "_fallback_keys", None)
+    monkeypatch.setattr(groq_key_pool, "_fallback_cursor", 0)
+    monkeypatch.setattr(groq_key_pool, "_fallback_in_flight", set())
     monkeypatch.setattr(groq_key_pool, "_fallback_next_at", [])
     monkeypatch.setattr(groq_key_pool, "_fallback_lock", asyncio.Lock())
-    monkeypatch.setattr(groq_key_pool.time, "monotonic", lambda: 100.0)
-    monkeypatch.setattr(groq_key_pool.asyncio, "sleep", sleep)
+    monkeypatch.setattr(groq_key_pool.time, "monotonic", lambda: clock["now"])
     monkeypatch.setenv("GROQ_API_KEYS", "key-1,key-2")
     monkeypatch.setenv("GROQ_FALLBACK_RPM", "60")
 
-    keys = [await groq_key_pool.get_available_groq_key() for _ in range(3)]
-
-    assert keys == ["key-1", "key-2", "key-1"]
-    sleep.assert_awaited_once_with(1.0)
+    assert [await groq_key_pool.try_acquire_groq_key() for _ in range(3)] == [
+        "key-1",
+        "key-2",
+        None,
+    ]
+    await groq_key_pool.release_groq_key("key-1")
+    assert await groq_key_pool.try_acquire_groq_key() is None
+    clock["now"] = 101.0
+    assert await groq_key_pool.try_acquire_groq_key() == "key-1"
