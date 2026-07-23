@@ -130,6 +130,10 @@ class TTSService:
         """Load Piper and run one short inference before readiness."""
         next(self.iter_pcm_chunks("Hi."), None)
 
+    @property
+    def sample_rate(self) -> int:
+        return int(self._load_voice().config.sample_rate)
+
     def iter_pcm_chunks(self, text: str, *, max_fragment_chars: int = 24) -> Iterator[bytes]:
         """Yield Piper PCM as soon as the first short fragment is synthesized."""
         voice = self._load_voice()

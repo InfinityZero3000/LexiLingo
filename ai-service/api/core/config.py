@@ -348,6 +348,7 @@ class Settings(BaseSettings):
     TTS_SPEAKER_ID: int = int(os.getenv("TTS_SPEAKER_ID", "0"))
     TTS_VOICE: str = os.getenv("TTS_VOICE", "en_US-lessac-medium")
     TTS_INTRA_OP_THREADS: int = Field(default=4, ge=0, le=16)
+    VOICE_DUPLEX_ENABLED: bool = False
 
     # ============================================================
     # Knowledge Graph (KuzuDB) & Embeddings

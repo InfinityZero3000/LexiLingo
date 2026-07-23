@@ -21,6 +21,10 @@ class StreamingTTS:
         self._active = 0
         self._lock = asyncio.Lock()
 
+    @property
+    def sample_rate(self) -> int:
+        return self._service.sample_rate
+
     async def stream(self, text: str) -> AsyncIterator[bytes]:
         async with self._lock:
             if self._active >= self._capacity:
@@ -46,3 +50,13 @@ class StreamingTTS:
 
 def _next_or_none(iterator: Iterator[bytes]) -> bytes | None:
     return next(iterator, None)
+
+
+_streaming_tts: StreamingTTS | None = None
+
+
+def get_streaming_tts() -> StreamingTTS:
+    global _streaming_tts
+    if _streaming_tts is None:
+        _streaming_tts = StreamingTTS(capacity=1)
+    return _streaming_tts

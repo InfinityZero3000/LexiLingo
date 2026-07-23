@@ -29,6 +29,22 @@ async def test_manager_resume_returns_same_session(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_duplex_session_disables_legacy_final_sink(tmp_path):
+    config = STTConfig(temp_dir=str(tmp_path))
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    legacy_sink = object()
+    manager = SessionManager(config, registry, final_sink=legacy_sink)
+
+    duplex = await manager.create(StartMessage(session_id="duplex", duplex=True))
+    legacy = await manager.create(StartMessage(session_id="legacy"))
+
+    assert duplex.final_sink is None
+    assert legacy.final_sink is legacy_sink
+    await manager.shutdown()
+
+
+@pytest.mark.asyncio
 async def test_manager_rejects_session_over_capacity(tmp_path):
     config = STTConfig(temp_dir=str(tmp_path), max_active_sessions=1)
     registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())

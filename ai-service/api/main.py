@@ -324,12 +324,14 @@ from api.routes import (  # noqa: E402
     topic_chat,
     translate,
     tts,
+    voice,
 )
 
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(stt.router, prefix="/api/v1/stt", tags=["STT"])
 app.include_router(pronunciation.router, prefix="/api/v1/stt", tags=["STT"])
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["TTS"])
+app.include_router(voice.router, prefix="/api/v1/voice", tags=["Voice"])
 app.include_router(topic_chat.router, prefix="/api/v1/topics", tags=["Topic Chat"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analytics"])

@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/voice_remote_datasource.dart';
 import 'package:lexilingo_app/features/voice/data/repositories/voice_repository_impl.dart';
 import 'package:lexilingo_app/features/voice/domain/repositories/voice_repository.dart';
@@ -12,6 +13,10 @@ import 'package:lexilingo_app/features/voice/presentation/providers/speech_recog
 /// Voice Feature Dependency Injection
 /// Registers all voice-related dependencies
 void initVoiceDependencies(GetIt sl) {
+  sl.registerFactory<DuplexVoiceClient>(
+    () => DuplexVoiceClient(authHeaders: sl()),
+  );
+
   // Providers
   sl.registerFactory<VoiceProvider>(
     () => VoiceProvider(

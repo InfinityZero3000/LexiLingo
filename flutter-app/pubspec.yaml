@@ -89,6 +89,7 @@ dependencies:
   
   # Voice/Audio
   record: ^5.2.1
+  web_socket_channel: ^3.0.3
   # Last release compatible with the repo's Dart 3.10 toolchain.
   flutter_soloud: 3.5.4
   just_audio: ^0.9.46
