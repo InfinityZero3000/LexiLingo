@@ -12,6 +12,7 @@ from api.services.trace_cag.generate import ProviderBusyError, stream_llm_tokens
 
 JsonSink = Callable[[dict], Awaitable[None]]
 BinarySink = Callable[[bytes], Awaitable[None]]
+PersistSink = Callable[[str, str, str], Awaitable[None]]
 logger = logging.getLogger(__name__)
 
 
@@ -21,10 +22,12 @@ class DuplexTurn:
         send_json: JsonSink,
         send_bytes: BinarySink,
         tts: StreamingTTS | None = None,
+        persist: PersistSink | None = None,
     ) -> None:
         self._send_json = send_json
         self._send_bytes = send_bytes
         self._tts = tts or get_streaming_tts()
+        self._persist = persist
 
     async def run(
         self,
@@ -39,9 +42,34 @@ class DuplexTurn:
         common = {"session_id": session_id, "turn_id": turn_id, "turn_seq": turn_seq}
         await self._send_json({"type": "turn_started", **common})
         try:
-            await self._run_pipeline(text, common, tts_enabled)
+            response = await self._run_pipeline(text, common, tts_enabled)
             await self._send_json({"type": "llm.done", **common})
-            await self._send_json({"type": "turn.done", **common})
+            if self._persist:
+                try:
+                    await self._persist(turn_id, text, response)
+                    await self._send_json({"type": "turn.persisted", **common})
+                except Exception:
+                    logger.exception(
+                        "Voice persistence failed session=%s turn=%s",
+                        session_id,
+                        turn_id,
+                    )
+                    await self._send_json(
+                        {
+                            "type": "voice.error",
+                            "code": "PERSISTENCE_FAILED",
+                            "message": "Voice turn could not be saved",
+                            **common,
+                        }
+                    )
+                    return
+            await self._send_json(
+                {
+                    "type": "turn.done",
+                    "persistence_status": "persisted" if self._persist else "skipped",
+                    **common,
+                }
+            )
         except asyncio.CancelledError:
             await self._send_json({"type": "turn.cancelled", **common})
             raise
@@ -68,25 +96,29 @@ class DuplexTurn:
 
     async def _run_pipeline(
         self, text: str, common: dict, tts_enabled: bool
-    ) -> None:
+    ) -> str:
         fragments: asyncio.Queue[tuple[int, str] | None] = asyncio.Queue(
             maxsize=2 if tts_enabled else 0
         )
         try:
             async with asyncio.TaskGroup() as tasks:
-                tasks.create_task(self._produce_fragments(text, common, fragments))
+                producer = tasks.create_task(
+                    self._produce_fragments(text, common, fragments)
+                )
                 if tts_enabled:
                     tasks.create_task(self._consume_fragments(fragments, common))
         except* ProviderBusyError as errors:
             raise ProviderBusyError("Voice provider capacity exhausted") from errors
+        return producer.result()
 
     async def _produce_fragments(
         self,
         text: str,
         common: dict,
         fragments: asyncio.Queue[tuple[int, str] | None],
-    ) -> None:
+    ) -> str:
         buffer = ""
+        response = ""
         sanitizer = _ThinkSanitizer()
         sentence_seq = 0
         async for raw_token in stream_llm_tokens(
@@ -102,6 +134,7 @@ class DuplexTurn:
             token = sanitizer.feed(raw_token)
             if not token:
                 continue
+            response += token
             await self._send_json({"type": "llm.token", "text": token, **common})
             buffer += token
             fragment, buffer = _take_fragment(buffer)
@@ -113,6 +146,7 @@ class DuplexTurn:
             sentence_seq += 1
             await self._emit_fragment(sentence_seq, buffer.strip(), common, fragments)
         await fragments.put(None)
+        return response.strip()
 
     async def _emit_fragment(
         self,

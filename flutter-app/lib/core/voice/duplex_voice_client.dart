@@ -41,7 +41,12 @@ class DuplexVoiceClient {
 
   final events = StreamController<Map<String, dynamic>>.broadcast();
 
-  Future<void> start({required String sessionId}) async {
+  Future<void> start({
+    required String sessionId,
+    String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
+  }) async {
+    if (_channel != null) await stop();
     _stopping = false;
     _clock
       ..reset()
@@ -72,17 +77,22 @@ class DuplexVoiceClient {
         socketUri,
         protocols: ['voice.ticket.$ticket'],
       );
-      _socketSubscription = _channel!.stream.listen((data) {
-        final previous = _incoming;
-        _incoming = () async {
-          try {
-            await previous;
-          } catch (_) {
-            // A malformed server frame must not poison later event handling.
-          }
-          if (!_stopping) await _onSocketData(data);
-        }();
-      });
+      _socketSubscription = _channel!.stream.listen(
+        (data) {
+          final previous = _incoming;
+          _incoming = () async {
+            try {
+              await previous;
+            } catch (_) {
+              // A malformed server frame must not poison later event handling.
+            }
+            if (!_stopping) await _onSocketData(data);
+          }();
+        },
+        onError: (_) => unawaited(_handleSocketClosed()),
+        onDone: () => unawaited(_handleSocketClosed()),
+      );
+      await _channel!.ready;
       _channel!.sink.add(
         jsonEncode({
           'type': 'start',
@@ -92,6 +102,8 @@ class DuplexVoiceClient {
           'format': 'pcm16',
           'duplex': true,
           'tts_enabled': true,
+          'learner_level': learnerLevel,
+          'native_language': nativeLanguage,
         }),
       );
 
@@ -168,10 +180,22 @@ class DuplexVoiceClient {
   Future<void> stop() async {
     _stopping = true;
     _clock.stop();
-    _channel?.sink.add(jsonEncode({'type': 'stop'}));
+    final channel = _channel;
+    final socketSubscription = _socketSubscription;
+    _channel = null;
+    _socketSubscription = null;
+    try {
+      channel?.sink.add(jsonEncode({'type': 'stop'}));
+    } catch (_) {
+      // The remote peer may already have closed the sink.
+    }
     await _stopCapture();
-    await _socketSubscription?.cancel();
-    await _channel?.sink.close();
+    await socketSubscription?.cancel();
+    try {
+      await channel?.sink.close();
+    } catch (_) {
+      // Closing an already-closed sink is harmless during cleanup.
+    }
     try {
       await _incoming;
     } catch (_) {
@@ -180,7 +204,6 @@ class DuplexVoiceClient {
     await _resetPlayback();
     _normalizer.reset();
     _chunker.reset();
-    _channel = null;
   }
 
   Future<void> dispose() async {
@@ -203,13 +226,18 @@ class DuplexVoiceClient {
       if (type == 'tts.audio.start') {
         await _ensurePlayback(event['sample_rate'] as int);
       }
+      if (type == 'tts.audio.end') {
+        await _drainPlayback();
+      }
       if (type == 'turn.cancelled' || type == 'voice.error') {
         await _resetPlayback();
         _activeTurnSeq = null;
       }
-      if (type == 'turn.done' ||
-          type == 'turn.cancelled' ||
-          type == 'voice.error') {
+      if (type == 'voice.error') {
+        _stopping = true;
+        await _stopCapture();
+        await _channel?.sink.close();
+      } else if (type == 'turn.done' || type == 'turn.cancelled') {
         await _startCapture();
       }
       events.add(event);
@@ -237,6 +265,44 @@ class DuplexVoiceClient {
       format: BufferType.s16le,
     );
     _handle = await _soloud.play(_source!);
+  }
+
+  Future<void> _drainPlayback() async {
+    final source = _source;
+    if (source == null) return;
+    try {
+      _soloud.setDataIsEnded(source);
+      await source.allInstancesFinished.first.timeout(
+        const Duration(seconds: 30),
+      );
+    } catch (_) {
+      _stopping = true;
+      await _stopCapture();
+      if (!events.isClosed) {
+        events.add({
+          'type': 'voice.error',
+          'code': 'PLAYBACK_FAILED',
+          'message': 'Voice playback failed',
+        });
+      }
+      rethrow;
+    } finally {
+      await _resetPlayback();
+    }
+  }
+
+  Future<void> _handleSocketClosed() async {
+    if (_stopping) return;
+    _stopping = true;
+    await _stopCapture();
+    await _resetPlayback();
+    if (!events.isClosed) {
+      events.add({
+        'type': 'voice.error',
+        'code': 'CONNECTION_CLOSED',
+        'message': 'Voice connection closed',
+      });
+    }
   }
 
   Future<void> _resetPlayback() async {

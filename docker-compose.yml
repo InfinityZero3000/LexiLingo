@@ -254,8 +254,13 @@ services:
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:-}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       DEBUG: ${DEBUG:-false}
+      VOICE_DUPLEX_ENABLED: ${VOICE_DUPLEX_ENABLED:-false}
+      TTS_MODEL_PATH: ${TTS_MODEL_PATH:-/opt/voice-models/piper/en_US-lessac-medium.onnx}
+      TTS_CONFIG_PATH: ${TTS_CONFIG_PATH:-/opt/voice-models/piper/en_US-lessac-medium.onnx.json}
+      TTS_INTRA_OP_THREADS: ${TTS_INTRA_OP_THREADS:-4}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
       CONTENT_AGENT_TTL_SECONDS: ${CONTENT_AGENT_TTL_SECONDS:-3600}
       CONTENT_AGENT_MAX_RECORDS: ${CONTENT_AGENT_MAX_RECORDS:-20000}

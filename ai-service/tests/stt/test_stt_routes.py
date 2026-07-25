@@ -13,6 +13,7 @@ sys.modules.setdefault("kuzu", MagicMock())
 from api.routes import stt as stt_route
 from api.services.stt.audio_ingest import HEADER
 from api.services.stt.config import STTConfig
+from api.services.stt.errors import STTErrorCode, STTProtocolError
 from api.services.stt.model_registry import STTModelRegistry
 from api.services.stt.schemas import FinalTranscriptEvent, StartMessage
 from api.services.stt.session_manager import SessionManager
@@ -102,6 +103,37 @@ def test_invalid_ticket_subprotocol_closes_before_redis(monkeypatch):
     consume.assert_not_awaited()
 
 
+def test_voice_socket_rejects_bearer_without_single_use_ticket(monkeypatch):
+    monkeypatch.setenv("SECRET_KEY", "test-secret")
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/voice")
+
+    with TestClient(app) as client, pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect(
+            "/api/v1/voice/stream",
+            headers={"Authorization": f"Bearer {_access_token()}"},
+        ):
+            pass
+    assert exc.value.code == 4401
+
+
+@pytest.mark.asyncio
+async def test_duplex_session_rejects_missing_owner(monkeypatch):
+    from api.core.database import mongodb_manager
+    import api.services.lexi_chat_service as lexi_service
+
+    monkeypatch.setattr(mongodb_manager, "_db", MagicMock())
+    monkeypatch.setattr(
+        lexi_service,
+        "ensure_session_owner",
+        AsyncMock(return_value={"session_id": "s1"}),
+    )
+
+    with pytest.raises(STTProtocolError) as exc:
+        await stt_route._ensure_duplex_session_owner("s1", "u1")
+    assert exc.value.code == STTErrorCode.SESSION_NOT_FOUND
+
+
 def test_websocket_rejects_duplex_start_when_feature_disabled(monkeypatch, tmp_path):
     monkeypatch.setenv("SECRET_KEY", "test-secret")
     monkeypatch.setattr(stt_route.settings, "VOICE_DUPLEX_ENABLED", False)
@@ -183,6 +215,7 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
     manager = SessionManager(config, registry)
     monkeypatch.setattr(stt_route, "get_stt_config", lambda: config)
     monkeypatch.setattr(stt_route, "get_stt_sessions", lambda: manager)
+    monkeypatch.setattr(stt_route, "_ensure_duplex_session_owner", AsyncMock())
 
     async def allow_quota(*_args, **_kwargs):
         return None
@@ -191,8 +224,9 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
     import api.services.stt.duplex_turn as duplex_module
 
     class FakeTurn:
-        def __init__(self, send_json, _send_bytes):
+        def __init__(self, send_json, _send_bytes, persist=None):
             self.send_json = send_json
+            assert persist is not None
 
         async def run(self, final, *, turn_seq, tts_enabled):
             assert turn_seq == 1
@@ -243,6 +277,7 @@ def test_voice_turn_quota_rejection_does_not_start_turn(monkeypatch, tmp_path):
     manager = SessionManager(config, registry)
     monkeypatch.setattr(stt_route, "get_stt_config", lambda: config)
     monkeypatch.setattr(stt_route, "get_stt_sessions", lambda: manager)
+    monkeypatch.setattr(stt_route, "_ensure_duplex_session_owner", AsyncMock())
     quota = AsyncMock(
         side_effect=[None, HTTPException(status_code=429, detail="quota")]
     )

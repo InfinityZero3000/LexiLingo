@@ -1,5 +1,5 @@
 import hashlib
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import FastAPI
@@ -103,3 +103,39 @@ async def test_ticket_route_is_hidden_when_duplex_disabled(monkeypatch):
 
     assert response.status_code == 404
     issue.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_voice_readiness_fails_closed_and_reports_no_secrets(monkeypatch):
+    monkeypatch.setattr(voice.settings, "VOICE_DUPLEX_ENABLED", True)
+    monkeypatch.setattr(voice, "get_redis", AsyncMock(side_effect=RuntimeError("secret host")))
+
+    response = await voice.ready()
+
+    assert response.status_code == 503
+    assert b"secret host" not in response.body
+
+
+@pytest.mark.asyncio
+async def test_voice_readiness_checks_all_enabled_dependencies(monkeypatch):
+    redis = AsyncMock()
+    registry = type("Registry", (), {"status": "ready"})()
+    tts = type("TTS", (), {"sample_rate": 22050})()
+    monkeypatch.setattr(voice.settings, "VOICE_DUPLEX_ENABLED", True)
+    monkeypatch.setattr(voice, "get_redis", AsyncMock(return_value=redis))
+    monkeypatch.setattr(voice, "get_stt_registry", lambda: registry)
+    monkeypatch.setattr(voice, "get_configured_key_count", lambda: 2)
+    monkeypatch.setattr(voice, "get_tts_service", lambda: tts)
+    collection = MagicMock()
+    collection.index_information = AsyncMock(
+        return_value={"lexi_messages_session_id_uq": {"unique": True}}
+    )
+    database = MagicMock()
+    database.__getitem__.return_value = collection
+    monkeypatch.setattr(voice, "mongodb_manager", MagicMock(db=database))
+
+    response = await voice.ready()
+
+    assert response.status_code == 200
+    assert response.body == b'{"ready":true,"status":"ready"}'
+    redis.ping.assert_awaited_once_with()

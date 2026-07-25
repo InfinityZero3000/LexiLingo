@@ -141,6 +141,36 @@ async def test_duplex_turn_without_tts_emits_no_binary(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_completed_turn_is_persisted_after_done(monkeypatch):
+    sent = []
+    persisted = []
+
+    async def llm(**_kwargs):
+        yield "Hello."
+
+    async def persist(turn_id, user_text, assistant_text):
+        persisted.append((turn_id, user_text, assistant_text))
+
+    monkeypatch.setattr(duplex_turn, "stream_llm_tokens", llm)
+    await duplex_turn.DuplexTurn(
+        lambda event: _append(sent, event),
+        lambda payload: _append(sent, payload),
+        FakeTTS(),
+        persist=persist,
+    ).run({"session_id": "s1", "turn_id": "t1", "text": "Hi"}, turn_seq=1)
+
+    assert persisted == [("t1", "Hi", "Hello.")]
+    assert [event["type"] for event in sent if isinstance(event, dict)][-2:] == [
+        "turn.persisted",
+        "turn.done",
+    ]
+
+
+async def _append(items, item):
+    items.append(item)
+
+
+@pytest.mark.asyncio
 async def test_duplex_turn_cancellation_emits_cancelled(monkeypatch):
     started = asyncio.Event()
     release = asyncio.Event()

@@ -74,6 +74,24 @@ def _websocket_user_id(websocket: WebSocket) -> str | None:
     return str(sub) if sub else None
 
 
+async def _ensure_duplex_session_owner(session_id: str, user_id: str) -> None:
+    from api.core.database import mongodb_manager
+    from api.services import lexi_chat_service
+
+    try:
+        session = await lexi_chat_service.ensure_session_owner(
+            session_id,
+            AuthenticatedUser(user_id=user_id, token_type="access", claims={}),
+            mongodb_manager.db,
+        )
+        if str(session.get("user_id") or "") != user_id:
+            raise HTTPException(status_code=403, detail="Session owner required")
+    except HTTPException as exc:
+        raise STTProtocolError(
+            STTErrorCode.SESSION_NOT_FOUND, "Chat session unavailable"
+        ) from exc
+
+
 @router.websocket("/stream")
 async def stream_audio(websocket: WebSocket):
     protocol = websocket.headers.get("sec-websocket-protocol", "")
@@ -82,6 +100,9 @@ async def stream_audio(websocket: WebSocket):
         "",
     )
     ticket = ticket_protocol.removeprefix("voice.ticket.")
+    if websocket.url.path.endswith("/voice/stream") and not ticket:
+        await websocket.close(code=4401)
+        return
     if ticket and not re.fullmatch(r"[A-Za-z0-9_-]{43}", ticket):
         await websocket.close(code=4401)
         return
@@ -150,6 +171,8 @@ async def stream_audio(websocket: WebSocket):
                 raise STTProtocolError(
                     STTErrorCode.INVALID_START, "Duplex voice is disabled"
                 )
+            if message.duplex:
+                await _ensure_duplex_session_owner(message.session_id, user_id)
             if message.user_id and message.user_id != user_id:
                 raise STTProtocolError(
                     STTErrorCode.INVALID_START, "User scope mismatch"
@@ -232,8 +255,21 @@ async def stream_audio(websocket: WebSocket):
                     from api.services.stt.duplex_turn import DuplexTurn
 
                     turn_seq += 1
+                    from api.core.database import mongodb_manager
+                    from api.services.lexi_chat_service import persist_duplex_voice_turn
+
+                    async def persist(turn_id: str, user_text: str, assistant_text: str):
+                        await persist_duplex_voice_turn(
+                            mongodb_manager.db,
+                            session_id=session.start.session_id,
+                            user_id=user_id,
+                            turn_id=turn_id,
+                            user_text=user_text,
+                            assistant_text=assistant_text,
+                        )
+
                     turn_task = asyncio.create_task(
-                        DuplexTurn(send_json, send_bytes).run(
+                        DuplexTurn(send_json, send_bytes, persist=persist).run(
                             event,
                             turn_seq=turn_seq,
                             tts_enabled=session.start.tts_enabled,

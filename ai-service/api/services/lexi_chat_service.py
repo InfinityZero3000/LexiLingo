@@ -226,6 +226,48 @@ async def prepare_existing_lexi_session(
     ]
 
 
+async def persist_duplex_voice_turn(
+    db: AsyncIOMotorDatabase,
+    *,
+    session_id: str,
+    user_id: str,
+    turn_id: str,
+    user_text: str,
+    assistant_text: str,
+) -> None:
+    """Idempotently persist one completed duplex turn."""
+    timestamp = datetime.now(timezone.utc).isoformat()
+    messages = [
+        {"id": f"voice-user-{turn_id}", "role": "user", "content": user_text, "timestamp": timestamp},
+        {"id": f"voice-assistant-{turn_id}", "role": "assistant", "content": assistant_text, "timestamp": timestamp},
+    ]
+    results = await asyncio.gather(
+        *(
+            db["lexi_messages"].update_one(
+                {"id": message["id"], "session_id": session_id},
+                {"$setOnInsert": {**message, "session_id": session_id, "user_id": user_id}},
+                upsert=True,
+            )
+            for message in messages
+        )
+    )
+    inserted = [
+        message for message, result in zip(messages, results) if result.upserted_id
+    ]
+    if not inserted:
+        return
+    await asyncio.gather(
+        append_lexi_messages(session_id, inserted),
+        db["lexi_sessions"].update_one(
+            {"session_id": session_id, "user_id": user_id},
+            {
+                "$set": {"updated_at": timestamp},
+                "$inc": {"message_count": len(inserted)},
+            },
+        ),
+    )
+
+
 async def create_lexi_session_for_user(
     session_id: str,
     user_id: str,

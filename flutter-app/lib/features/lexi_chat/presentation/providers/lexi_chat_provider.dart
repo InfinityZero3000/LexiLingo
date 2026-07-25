@@ -458,6 +458,60 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
+  void handleDuplexVoiceEvent(Map<String, dynamic> event) {
+    final type = event['type'];
+    final turnId = event['turn_id']?.toString();
+    if (turnId == null) return;
+    final userId = 'voice_user_$turnId';
+    final assistantId = 'voice_assistant_$turnId';
+    if (type == 'stt.final') {
+      final text = event['text']?.toString().trim() ?? '';
+      if (text.isEmpty || _messages.any((message) => message.id == userId)) {
+        return;
+      }
+      _messages.addAll([
+        LexiMessage(
+          id: userId,
+          role: 'user',
+          content: text,
+          timestamp: DateTime.now(),
+        ),
+        LexiMessage(
+          id: assistantId,
+          role: 'assistant',
+          content: '',
+          timestamp: DateTime.now(),
+        ),
+      ]);
+      _isSending = true;
+      notifyListeners();
+    } else if (type == 'llm.token') {
+      final index = _messages.indexWhere(
+        (message) => message.id == assistantId,
+      );
+      if (index >= 0) {
+        _messages[index] = _messages[index].copyWith(
+          content: '${_messages[index].content}${event['text'] ?? ''}',
+        );
+        notifyListeners();
+      }
+    } else if (type == 'turn.done') {
+      _isSending = false;
+      if (_session != null) _touchSession(_session!.sessionId, messageDelta: 2);
+      unawaited(_cacheCurrentMessages());
+      notifyListeners();
+    } else if (type == 'voice.error' || type == 'turn.cancelled') {
+      _isSending = false;
+      _messages.removeWhere(
+        (message) => message.id == assistantId && message.content.isEmpty,
+      );
+      _error = type == 'voice.error'
+          ? 'Voice service is temporarily unavailable.'
+          : null;
+      notifyListeners();
+    }
+  }
+
   Future<void> _enqueuePendingLexiMessage({
     required String userId,
     required String sessionId,

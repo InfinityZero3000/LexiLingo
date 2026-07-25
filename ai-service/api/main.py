@@ -154,6 +154,13 @@ async def _ensure_mongo_indexes() -> None:
         name="lexi_messages_session_timestamp_idx",
     )
     await _create_index_safe(
+        "lexi_messages",
+        [("session_id", ASCENDING), ("id", ASCENDING)],
+        name="lexi_messages_session_id_uq",
+        unique=True,
+        partialFilterExpression={"id": {"$exists": True, "$type": "string"}},
+    )
+    await _create_index_safe(
         "learner_observation_spool",
         [("event_id", ASCENDING)],
         name="learner_observation_spool_event_id_uq",
@@ -246,6 +253,12 @@ async def lifespan(app: FastAPI):
         logger.info(" Piper TTS warmed")
     except Exception as e:
         logger.warning(f"Piper TTS warmup failed; continuing without warm cache: {e}")
+
+    if settings.VOICE_DUPLEX_ENABLED:
+        from api.routes.voice import voice_readiness
+
+        await voice_readiness()
+        logger.info(" Duplex voice dependencies ready")
     
     yield
     
