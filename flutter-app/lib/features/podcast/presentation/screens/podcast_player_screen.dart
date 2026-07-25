@@ -6,6 +6,7 @@ import '../../../../core/services/podcast_audio_handler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/lottie_loading_widget.dart';
 import '../../../games/data/repositories/games_repository.dart';
+import '../../data/repositories/podcast_repository.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../widgets/audio_player_controls.dart';
 import '../widgets/transcript_panel.dart';
@@ -379,9 +380,26 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   Future<void> _generateTranscript() async {
     setState(() => _transcriptLoading = true);
     try {
-      // Placeholder: real implementation would call AI service.
-      await Future<void>.delayed(const Duration(seconds: 1));
-      setState(() => _transcript = null);
+      final transcriptText = await sl<PodcastRepository>().generateTranscript(
+        feedUrl: widget.episode.feedUrl,
+        episodeGuid: widget.episode.guid,
+        audioUrl: widget.episode.audioUrl,
+      );
+      if (mounted) {
+        setState(() {
+          _transcript = transcriptText;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to generate transcript: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate transcript: ${e.toString()}'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _transcriptLoading = false);
     }

@@ -14,6 +14,7 @@ Tests cover:
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
+from app.models.user import User
 
 
 # ============================================================================
@@ -578,10 +579,10 @@ class TestGetPodcastEpisodes:
 # ============================================================================
 
 class TestTranscriptEndpoint:
-    """Tests for POST /podcasts/transcript placeholder endpoint."""
+    """Tests for POST /podcasts/transcript endpoint."""
 
     @pytest.mark.asyncio
-    async def test_returns_pending_status(self, no_db_client: AsyncClient):
+    async def test_requires_authentication(self, no_db_client: AsyncClient):
         response = await no_db_client.post(
             f"{BASE}/transcript",
             json={
@@ -590,25 +591,115 @@ class TestTranscriptEndpoint:
                 "audio_url": "https://example.com/ep1.mp3",
             },
         )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["status"] == "pending"
-        assert "message" in data
+        assert response.status_code == 401
+        assert response.json()["error"]["message"] == "Not authenticated"
 
     @pytest.mark.asyncio
-    async def test_echoes_back_feed_url_and_guid(self, no_db_client: AsyncClient):
-        response = await no_db_client.post(
-            f"{BASE}/transcript",
-            json={
-                "feed_url": "https://example.com/myfeed.rss",
-                "episode_guid": "guid-12345",
-                "audio_url": "https://example.com/audio.mp3",
-            },
+    async def test_returns_cached_transcript(self, no_db_client: AsyncClient):
+        from app.services.api_cache_service import CacheResult
+        from app.core.dependencies import get_current_user
+        from app.main import app
+        from app.models.user import User
+        import uuid
+
+        mock_user = User(id=uuid.uuid4(), username="testuser", email="test@example.com")
+        async def mock_get_current_user():
+            return mock_user
+
+        app.dependency_overrides[get_current_user] = mock_get_current_user
+        
+        mock_cache_result = CacheResult(
+            data={"transcript": "This is a mock podcast transcript."},
+            source="redis",
+            is_stale=False,
         )
+        
+        try:
+            with patch("app.routes.podcasts.APICacheService") as MockCache:
+                mock_cache = AsyncMock()
+                mock_cache.get_or_fetch.return_value = mock_cache_result
+                MockCache.return_value = mock_cache
+                
+                response = await no_db_client.post(
+                    f"{BASE}/transcript",
+                    json={
+                        "feed_url": "https://example.com/feed.rss",
+                        "episode_guid": "ep001",
+                        "audio_url": "https://example.com/ep1.mp3",
+                    },
+                    headers={"Authorization": "Bearer fake_token"},
+                )
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            
         assert response.status_code == 200
         data = response.json()
-        assert data["feed_url"] == "https://example.com/myfeed.rss"
-        assert data["episode_guid"] == "guid-12345"
+        assert data["status"] == "completed"
+        assert data["transcript"] == "This is a mock podcast transcript."
+        assert data["feed_url"] == "https://example.com/feed.rss"
+        assert data["episode_guid"] == "ep001"
+
+    @pytest.mark.asyncio
+    async def test_cache_miss_downloads_and_transcribes(
+        self, no_db_client: AsyncClient
+    ):
+        from app.core.dependencies import get_current_user
+        from app.main import app
+        from app.models.user import User
+        import uuid
+
+        mock_user = User(id=uuid.uuid4(), username="testuser", email="test@example.com")
+        async def mock_get_current_user():
+            return mock_user
+
+        app.dependency_overrides[get_current_user] = mock_get_current_user
+        
+        async def mock_get_or_fetch(cache_key, api_name, fetch_fn, **kwargs):
+            from app.services.api_cache_service import CacheResult
+            data = await fetch_fn()
+            return CacheResult(data=data, source="api", is_stale=False)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.headers = {"Content-Length": "100"}
+        async def mock_iter_bytes(*args, **kwargs):
+            yield b"mock_audio_data"
+        mock_response.iter_bytes = mock_iter_bytes
+        
+        mock_stream = AsyncMock()
+        mock_stream.__aenter__.return_value = mock_response
+        
+        mock_transcribe = AsyncMock(return_value={"text": "Hello world from transcript"})
+        
+        try:
+            with patch("app.routes.podcasts.APICacheService") as MockCache, \
+                 patch("httpx.AsyncClient.stream", return_value=mock_stream), \
+                 patch("app.routes.podcasts.AIServiceClient.transcribe_audio", mock_transcribe):
+                
+                mock_cache = AsyncMock()
+                mock_cache.get_or_fetch.side_effect = mock_get_or_fetch
+                MockCache.return_value = mock_cache
+                
+                response = await no_db_client.post(
+                    f"{BASE}/transcript",
+                    json={
+                        "feed_url": "https://example.com/feed.rss",
+                        "episode_guid": "ep001",
+                        "audio_url": "https://example.com/ep1.mp3",
+                    },
+                    headers={"Authorization": "Bearer fake_token"},
+                )
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
+            
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "completed"
+        assert data["transcript"] == "Hello world from transcript"
+        assert data["feed_url"] == "https://example.com/feed.rss"
+        assert data["episode_guid"] == "ep001"
+
+
 
 
 # ============================================================================

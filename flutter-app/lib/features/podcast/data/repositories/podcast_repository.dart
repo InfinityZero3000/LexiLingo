@@ -4,9 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/di/service_locator.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_config.dart';
 import '../../../../core/services/local_cache_service.dart';
 import '../../domain/entities/podcast_entities.dart';
+
 
 /// Repository for Podcast feature — handles API calls, local SQLite cache,
 /// and follow state persisted to SharedPreferences.
@@ -142,6 +145,33 @@ class PodcastRepository {
     return (data['episodes'] as List<dynamic>? ?? [])
         .map((e) => PodcastEpisode.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  // ──── Transcript ────
+
+  /// Request transcript generation/retrieval for a podcast episode.
+  ///
+  /// Calls `POST /podcasts/transcript` via authenticated ApiClient.
+  Future<String?> generateTranscript({
+    required String feedUrl,
+    required String episodeGuid,
+    required String audioUrl,
+  }) async {
+    try {
+      final apiClient = sl<ApiClient>();
+      final data = await apiClient.post(
+        '/podcasts/transcript',
+        body: {
+          'feed_url': feedUrl,
+          'episode_guid': episodeGuid,
+          'audio_url': audioUrl,
+        },
+      );
+      return data['transcript'] as String?;
+    } catch (e) {
+      debugPrint('[PodcastRepository] generateTranscript failed: $e');
+      rethrow;
+    }
   }
 
   // ──── Listening History (SQLite via LocalCacheService) ────

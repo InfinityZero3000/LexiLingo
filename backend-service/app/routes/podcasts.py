@@ -25,6 +25,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.dependencies import get_current_user
+from app.models.user import User
+from app.clients.ai_service_client import AIServiceClient
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -484,27 +487,158 @@ async def get_podcast_episodes(
 
 
 # ============================================================================
-# 4. Transcript (Not Implemented)
+# 4. Transcript (Speech-to-Text via AI service)
 # ============================================================================
 
 @router.post("/transcript")
 async def generate_transcript(
+    request: Request,
     feed_url: str = Body(..., description="RSS feed URL"),
     episode_guid: str = Body(..., description="Episode GUID"),
     audio_url: str = Body(..., description="Direct audio file URL"),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Request transcript generation for a podcast episode.
-
-    NOT IMPLEMENTED — transcript generation via speech-to-text is planned
-    for a future phase. Returns a pending status response.
+    Downloads the audio file, calls the AI service STT engine,
+    and caches the generated transcript in PostgreSQL/Redis.
     """
-    return {
-        "message": "Transcript generation coming soon",
-        "status": "pending",
-        "feed_url": feed_url,
-        "episode_guid": episode_guid,
-    }
+    feed_url = feed_url.strip()
+    episode_guid = episode_guid.strip()
+    audio_url = audio_url.strip()
+
+    # SSRF protection
+    _parsed = urlparse(audio_url)
+    if _parsed.scheme not in ("http", "https"):
+        raise HTTPException(status_code=400, detail="Only HTTP/HTTPS audio URLs are allowed")
+    _host = (_parsed.hostname or "").lower()
+    from ipaddress import ip_address
+    import socket
+    _private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
+                         "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
+                         "172.22.", "172.23.", "172.24.", "172.25.", "172.26.",
+                         "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
+                         "169.254.", "fc00", "fd", "fe80")
+    if any(_host == p or _host.startswith(p) for p in _private_prefixes):
+        raise HTTPException(status_code=400, detail="Internal/private URLs are not allowed")
+    try:
+        resolved_ip = socket.getaddrinfo(_host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)[0][4][0]
+        if ip_address(resolved_ip).is_private or ip_address(resolved_ip).is_loopback:
+            raise HTTPException(status_code=400, detail="Internal/private URLs are not allowed")
+    except (socket.gaierror, ValueError):
+        pass
+
+    cache_key = f"podcasts:transcript:{hashlib.md5(episode_guid.encode()).hexdigest()[:16]}"
+    cache_service = APICacheService(db)
+
+    async def _fetch_and_transcribe():
+        max_bytes = 20 * 1024 * 1024  # 20MB limit
+        downloaded_bytes = bytearray()
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream("GET", audio_url) as response:
+                    if response.status_code >= 400:
+                        raise HTTPException(
+                            status_code=status.HTTP_502_BAD_GATEWAY,
+                            detail=f"Failed to download audio from {audio_url}: HTTP {response.status_code}",
+                        )
+                    content_length = response.headers.get("Content-Length")
+                    if content_length:
+                        try:
+                            if int(content_length) > max_bytes:
+                                raise HTTPException(
+                                    status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                                    detail=f"Audio file is too large (max 20MB, got {int(content_length) / 1024 / 1024:.1f}MB)",
+                                )
+                        except ValueError:
+                            pass
+                    
+                    async for chunk in response.iter_bytes(chunk_size=65536):
+                        downloaded_bytes.extend(chunk)
+                        if len(downloaded_bytes) > max_bytes:
+                            raise HTTPException(
+                                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                                detail="Audio file exceeds the 20MB limit",
+                            )
+        except httpx.RequestError as exc:
+            logger.error(f"Failed to download audio from {audio_url}: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Failed to download audio: {str(exc)}",
+            )
+
+        if not downloaded_bytes:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Downloaded audio is empty",
+            )
+
+        authorization = request.headers.get("authorization")
+        filename = audio_url.split("/")[-1].split("?")[0] or "podcast.mp3"
+        if not filename.endswith((".mp3", ".m4a", ".wav", ".ogg", ".flac", ".webm")):
+            filename += ".mp3"
+
+        try:
+            ai_data = await AIServiceClient().transcribe_audio(
+                audio_bytes=bytes(downloaded_bytes),
+                filename=filename,
+                language="en",
+                authorization=authorization,
+            )
+        except httpx.HTTPStatusError as exc:
+            logger.error(f"AI service transcription failed with HTTP {exc.response.status_code}: {exc.response.text}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"AI service transcription failed: {exc.response.status_code}",
+            ) from exc
+        except httpx.RequestError as exc:
+            logger.error(f"AI service is unavailable: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"AI service is unavailable: {exc}",
+            ) from exc
+
+        transcript_text = ai_data.get("text", "")
+        if not transcript_text:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="AI service returned empty transcription",
+            )
+
+        return {"transcript": transcript_text}
+
+    try:
+        result = await cache_service.get_or_fetch(
+            cache_key=cache_key,
+            api_name="podcast_transcript",
+            fetch_fn=_fetch_and_transcribe,
+            priority=Priority.MEDIUM,
+            redis_ttl=86400 * 30,    # Cache transcripts for 30 days
+            db_ttl=86400 * 90,       # DB cache for 90 days
+        )
+
+        transcript_data = result.data
+
+        return {
+            "status": "completed",
+            "feed_url": feed_url,
+            "episode_guid": episode_guid,
+            "transcript": transcript_data.get("transcript", ""),
+            "source": result.source,
+        }
+    except QuotaExhaustedError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(e),
+            headers={"Retry-After": e.reset_time},
+        )
+    except QuotaNearLimitError as e:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=str(e),
+        )
+
 
 
 # ============================================================================

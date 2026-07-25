@@ -290,8 +290,6 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
-      - ./ai-service/models:/app/models
-      - content_etl_data:/data/content-etl
     command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
     networks:
       - lexilingo-prod
