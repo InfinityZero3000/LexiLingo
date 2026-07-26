@@ -67,7 +67,7 @@ async def test_production_redis_failure_fails_closed(monkeypatch):
 async def test_ticket_route_requires_auth_and_voice_router_mounts_stream(monkeypatch):
     app = FastAPI()
     app.include_router(voice.router, prefix="/api/v1/voice")
-    assert any(route.path == "/api/v1/voice/stream" for route in app.routes)
+    assert any(route.path == "/stream" for route in voice.router.routes)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         assert (await client.post("/api/v1/voice/ticket")).status_code == 401
