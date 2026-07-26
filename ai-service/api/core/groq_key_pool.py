@@ -15,7 +15,7 @@ from api.core.rate_limiter import RedisRateLimiter
 logger = logging.getLogger(__name__)
 
 _GROQ_FREE_RPM = 30
-_GROQ_FREE_TPM = 12_000
+_GROQ_FREE_TPM = 6_000
 _GROQ_FREE_RPD = 14_400
 _VOICE_LEASE_MS = 45_000
 
@@ -112,6 +112,7 @@ class GroqKeyPool:
                 return None
             if admitted:
                 self._cursor = (idx + 1) % len(self._keys)
+                self._log_slot(idx)
                 return GroqKeyLease(api_key, token)
         return None
 
@@ -137,6 +138,8 @@ class GroqKeyPool:
         self, estimated_tokens: int = 600
     ) -> Optional[Tuple[str, RedisRateLimiter]]:
         """Return (api_key, limiter) for the next available key, or None if all exhausted."""
+        # ponytail: process-local admission matches the one-worker deployment;
+        # switch these callers to Redis leases before scaling AI replicas.
         async with self._acquire_lock:
             n = len(self._keys)
             start = self._cursor

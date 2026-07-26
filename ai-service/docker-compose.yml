@@ -9,7 +9,7 @@ services:
     mem_limit: 2g
     memswap_limit: 2g
     ports:
-      - "127.0.0.1:8001:8001"
+      - "127.0.0.1:${AI_E2E_PORT:-18001}:8001"
     environment:
       ENVIRONMENT: production
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
@@ -22,11 +22,23 @@ services:
       REDIS_DB: 0
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
       REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      REDIS_MAX_CONNECTIONS: ${AI_E2E_REDIS_MAX_CONNECTIONS:-64}
+      GEMINI_API_KEY: ${AI_E2E_GEMINI_API_KEY:-}
       GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys in .env}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.1-8b-instant}
       GROQ_REQUIRE_SEVEN_KEYS: "true"
-      GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-false}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
+      GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-true}
+      TRACECAG_GROQ_RPM: ${AI_E2E_GROQ_RPM:-28}
+      TRACECAG_ENABLE_JIT_MINIGRAPH: ${TRACECAG_ENABLE_JIT_MINIGRAPH:-false}
+      V3_ENABLE_GRAPH_ANALYTICS: ${V3_ENABLE_GRAPH_ANALYTICS:-false}
+      V3_FORCE_HASH_EMBEDDINGS: ${V3_FORCE_HASH_EMBEDDINGS:-true}
+      AI_USER_RPM_LIMIT: ${AI_E2E_USER_RPM_LIMIT:-200}
+      AI_USER_RPD_LIMIT: ${AI_E2E_USER_RPD_LIMIT:-500}
+      AI_USER_TPM_LIMIT: ${AI_E2E_USER_TPM_LIMIT:-1000000}
+      AI_USER_TPD_LIMIT: ${AI_E2E_USER_TPD_LIMIT:-2000000}
+      ALLOWED_ORIGINS: ${AI_E2E_ALLOWED_ORIGINS:-https://e2e.invalid}
+      CORS_ALLOW_ORIGIN_REGEX: ""
+      CORS_ALLOW_PRIVATE_NETWORK: "false"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -40,7 +52,7 @@ services:
 
   # MongoDB
   mongodb:
-    image: mongo:7.0
+    image: mongo:7.0@sha256:9bdaeb6dac6e7e762e84e2f84103d1f9bb078fa1ba6bde8bb9d2274f655ad173
     restart: unless-stopped
     mem_limit: 1g
     memswap_limit: 1g
@@ -81,7 +93,7 @@ services:
 
   # Redis (optional, for caching)
   redis:
-    image: redis:7-alpine
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     restart: unless-stopped
     mem_limit: 256m
     memswap_limit: 256m
@@ -89,11 +101,11 @@ services:
       - "127.0.0.1:6379:6379"
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
-    command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lfu --requirepass "$$REDIS_PASSWORD"'
+    command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 160mb --maxmemory-policy allkeys-lfu --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping"]
       interval: 10s
       timeout: 5s
       retries: 5

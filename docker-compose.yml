@@ -254,7 +254,12 @@ services:
       AI_MODEL_API_URL: http://ai-service:8001
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      GROQ_API_KEYS: ${GROQ_API_KEYS:-}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys}
+      GROQ_REQUIRE_SEVEN_KEYS: "true"
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.1-8b-instant}
+      GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-false}
+      TRACECAG_GROQ_RPM: ${TRACECAG_GROQ_RPM:-28}
+      REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-50}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       DEBUG: ${DEBUG:-false}
       VOICE_DUPLEX_ENABLED: ${VOICE_DUPLEX_ENABLED:-false}

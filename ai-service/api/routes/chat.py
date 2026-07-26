@@ -4,7 +4,7 @@ Chat routes
 Endpoints for chat functionality with TraceCAG-first orchestration.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure
 import uuid
@@ -132,6 +132,25 @@ async def create_session(
     except Exception as e:
         logger.exception("Chat request failed error=%s", type(e).__name__)
         raise HTTPException(status_code=500, detail="Unable to process chat request") from e
+
+
+@router.delete("/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_session(
+    session_id: str,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Response:
+    """Delete one owned session and its persisted messages."""
+    await _ensure_chat_session_owner(session_id, current_user, db)
+    await asyncio.gather(
+        db["chat_messages"].delete_many({"session_id": session_id}),
+        db["lexi_messages"].delete_many({"session_id": session_id}),
+    )
+    await asyncio.gather(
+        db["chat_sessions"].delete_one({"session_id": session_id}),
+        db["lexi_sessions"].delete_one({"session_id": session_id}),
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -295,7 +314,7 @@ async def _send_message_impl(
             "model": model_used
         }
         _now = datetime.now(timezone.utc)
-        await _asyncio.gather(
+        persistence_results = await _asyncio.gather(
             _save_user_msg_task,
             db["chat_messages"].insert_one(ai_message),
             db["chat_sessions"].update_one(
@@ -307,6 +326,14 @@ async def _send_message_impl(
             ),
             return_exceptions=True,
         )
+        persistence_errors = [result for result in persistence_results if isinstance(result, Exception)]
+        if persistence_errors:
+            logger.error(
+                "Chat persistence failed operations=%d first_error=%s",
+                len(persistence_errors),
+                type(persistence_errors[0]).__name__,
+            )
+            raise RuntimeError("Chat persistence failed")
 
         observation_meta: Dict[str, Any] = {}
         try:

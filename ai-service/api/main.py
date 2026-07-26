@@ -211,6 +211,8 @@ async def lifespan(app: FastAPI):
         logger.info(" Redis & Rate Limiter initialized")
     except Exception as e:
         _groq_pool = None
+        if os.getenv("GROQ_REQUIRE_SEVEN_KEYS", "false").lower() == "true":
+            raise RuntimeError("Strict Groq key-pool initialization failed") from e
         logger.warning(f"Redis initialization failed; continuing without cache/rate pool: {e}")
 
     _http_client = httpx.AsyncClient(timeout=30.0)
@@ -318,7 +320,7 @@ app.add_middleware(
         "X-Api-Key",
         "X-Idempotency-Key",
     ],
-    allow_private_network=True,
+    allow_private_network=settings.CORS_ALLOW_PRIVATE_NETWORK,
 )
 
 
@@ -387,6 +389,12 @@ async def health_check():
             },
         )
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@app.get("/live")
+async def liveness_check():
+    """Constant-time process liveness; readiness remains available at /health."""
+    return {"status": "alive"}
 
 
 async def _run_model_warmup() -> None:

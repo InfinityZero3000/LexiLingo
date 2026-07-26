@@ -819,7 +819,7 @@ async def stream_lexi_chat(
             lexi_response = SAFE_FIXED_RESPONSE
             model_used = "trace-cag_safe_response"
         else:
-            model_used = f"groq/{os.getenv('GROQ_MODEL', 'qwen/qwen3-32b')}" \
+            model_used = f"groq/{os.getenv('GROQ_MODEL', 'llama-3.1-8b-instant')}" \
                 if os.getenv("GROQ_API_KEY") else "gemini-2.0-flash"
 
     if not cache_hit and lexi_response and model_used != "trace-cag_safe_response":

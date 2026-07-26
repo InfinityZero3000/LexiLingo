@@ -12,6 +12,7 @@ Enhanced with TraceCAG principles for optimal LLM context.
 from __future__ import annotations
 
 import logging
+import os
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -72,6 +73,12 @@ class RetrievalServiceV3:
     ):
         self.kg = kg
         self.config = config or RetrievalConfig()
+        analytics_enabled = os.getenv("V3_ENABLE_GRAPH_ANALYTICS", "true").lower() in {"1", "true", "yes"}
+        if not analytics_enabled:
+            # ponytail: skip O(VE) NetworkX analytics on latency-sensitive nodes;
+            # enable it on larger workers when structural reranking is required.
+            self.config.use_centrality_ranking = False
+            self.config.use_community_detection = False
         self.embedder = EmbeddingServiceV3()
         self.analytics = get_graph_analytics(kg)
         
@@ -80,7 +87,8 @@ class RetrievalServiceV3:
         self._concept_embeddings: Dict[str, np.ndarray] = {}
         
         # Pre-compute analytics on init
-        self._precompute_analytics()
+        if analytics_enabled:
+            self._precompute_analytics()
     
     def _precompute_analytics(self) -> None:
         """Pre-compute graph analytics and warm the concept embedding cache."""

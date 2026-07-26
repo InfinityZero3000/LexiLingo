@@ -71,7 +71,7 @@ async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[di
         logger.info("[translate] Groq key pool exhausted, skipping")
         return None
 
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     messages = [
         {"role": "system", "content": _SYSTEM_PROMPT},
         {"role": "user", "content": _build_user_prompt(word, lang, context)},

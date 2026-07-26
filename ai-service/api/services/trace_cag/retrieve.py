@@ -506,6 +506,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         for item in retrieval_trace
     ]
     evidence_version = stable_version_token(evidence_projection, prefix="evidence")
+    query_scope = stable_version_token(user_input.strip().lower(), prefix="query")
     state_hints = (state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}
     source_version = str(state_hints.get("source_version") or evidence_version)
 
@@ -567,7 +568,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         },
         "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),
         "dependency_events": [
-            dependency_record("evidence:retrieval", "evidence", evidence_version, "retrieval-fusion"),
-            dependency_record("source:retrieval", "source", source_version, "retrieval-source"),
+            dependency_record(f"evidence:retrieval:{query_scope}", "evidence", evidence_version, "retrieval-fusion"),
+            dependency_record(f"source:retrieval:{query_scope}", "source", source_version, "retrieval-source"),
         ],
     }

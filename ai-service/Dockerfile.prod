@@ -50,7 +50,8 @@ COPY --from=builder /opt/voice-models /opt/voice-models
 COPY api ./api
 COPY data ./data
 
-RUN python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
+RUN SECRET_KEY=build-time-import-check-not-a-runtime-secret \
+    python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
 
 RUN mkdir -p /app/models /app/logs /tmp/lexilingo-stt && \
     chown -R appuser:appuser /app /tmp/lexilingo-stt
@@ -61,6 +62,6 @@ EXPOSE 8001
 STOPSIGNAL SIGTERM
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
-  CMD python -c "import urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3); raise SystemExit(0 if response.status == 200 else 1)"
+  CMD python -c "import urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8001/live', timeout=3); raise SystemExit(0 if response.status == 200 else 1)"
 
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

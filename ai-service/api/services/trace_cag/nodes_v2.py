@@ -485,7 +485,7 @@ Be encouraging and focus on the most important errors first."""
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
             groq_key = await get_available_groq_key(estimated_tokens=150)
-            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3-32b"))
+            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"))
             if groq_key:
                 try:
                     _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""

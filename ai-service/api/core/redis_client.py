@@ -84,7 +84,7 @@ class RedisClient:
             password=password,
             db=settings.REDIS_DB,
             decode_responses=True,
-            max_connections=10,
+            max_connections=max(10, int(os.getenv("REDIS_MAX_CONNECTIONS", "50"))),
             socket_timeout=socket_timeout,
             socket_connect_timeout=socket_connect_timeout,
             health_check_interval=30,

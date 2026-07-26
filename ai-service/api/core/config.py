@@ -138,6 +138,7 @@ class Settings(BaseSettings):
     CORS_ALLOW_ORIGIN_REGEX: str = (
         r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
     )
+    CORS_ALLOW_PRIVATE_NETWORK: bool = True
 
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod

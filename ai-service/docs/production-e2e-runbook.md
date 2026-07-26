@@ -22,9 +22,9 @@ git fetch origin
 git checkout <reviewed-commit>
 docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml config --quiet
 docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml up -d --build mongodb redis ai-service gateway
-docker compose -f docker-compose.yml ps
+docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml ps
 curl --fail --show-error https://<server-host>/health
-docker compose -f docker-compose.yml logs --since 10m --tail 300 ai-service gateway
+docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml logs --since 10m --tail 300 ai-service gateway
 ```
 
 Mongo indexes are created idempotently by the AI-service lifespan. Do not reset MongoDB or delete volumes during deployment.
@@ -33,14 +33,21 @@ Mongo indexes are created idempotently by the AI-service lifespan. Do not reset 
 
 The isolated project uses project-scoped container names and loopback-only ports, so it can be validated independently. Do not start the `admin` profile for routine checks.
 
-```sh
+```bash
 docker compose -p lexilingo-ai-e2e --env-file ai-service/.env -f ai-service/docker-compose.yml config --quiet
 docker compose -p lexilingo-ai-e2e --env-file ai-service/.env -f ai-service/docker-compose.yml up -d --build mongodb redis ai-service
 cd ai-service
 python3 scripts/e2e_ai_service.py preflight --env-file .env
-python3 scripts/e2e_ai_service.py smoke --base-url http://127.0.0.1:8001 --env-file .env
-python3 scripts/e2e_ai_service.py benchmark --base-url http://127.0.0.1:8001 --env-file .env
+smoke_output=$(python3 scripts/e2e_ai_service.py smoke --base-url http://127.0.0.1:18001 --env-file .env)
+echo "$smoke_output"
+smoke_report=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["report"])' <<<"$smoke_output")
+python3 scripts/e2e_ai_service.py benchmark --base-url http://127.0.0.1:18001 --env-file .env
 ls -lt reports/e2e
+cd ..
+docker compose -p lexilingo-ai-e2e --env-file ai-service/.env -f ai-service/docker-compose.yml up -d --no-deps --force-recreate ai-service
+curl --fail --show-error http://127.0.0.1:18001/live
+cd ai-service
+python3 scripts/e2e_ai_service.py verify-persistence --base-url http://127.0.0.1:18001 --env-file .env --source-report "$smoke_report"
 cd ..
 docker compose -p lexilingo-ai-e2e --env-file ai-service/.env -f ai-service/docker-compose.yml logs --since 20m --tail 500 ai-service
 docker compose -p lexilingo-ai-e2e --env-file ai-service/.env -f ai-service/docker-compose.yml down
@@ -65,7 +72,7 @@ Record the current and previous reviewed commits before deployment. Root rollbac
 git checkout <previous-reviewed-commit>
 docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml up -d --build --force-recreate ai-service
 curl --fail --show-error https://<server-host>/health
-docker compose -f docker-compose.yml logs --since 10m --tail 300 ai-service gateway
+docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml logs --since 10m --tail 300 ai-service gateway
 ```
 
 Use the isolated E2E stack to verify that a session created before `--force-recreate ai-service` remains readable afterward. Never use `down --volumes`, database reset scripts, or destructive Git commands for rollback.

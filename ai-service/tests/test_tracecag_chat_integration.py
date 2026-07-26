@@ -50,6 +50,29 @@ def chat_user():
     return AuthenticatedUser(user_id="u1", claims={})
 
 
+@pytest.mark.asyncio
+async def test_delete_session_removes_only_owned_session(chat_user):
+    db = MagicMock()
+    collections = {name: MagicMock() for name in (
+        "chat_sessions", "chat_messages", "lexi_sessions", "lexi_messages"
+    )}
+    collections["chat_sessions"].find_one = AsyncMock(
+        return_value={"session_id": "s1", "user_id": "u1"}
+    )
+    for collection in collections.values():
+        collection.delete_one = AsyncMock()
+        collection.delete_many = AsyncMock()
+    db.__getitem__.side_effect = collections.__getitem__
+
+    response = await chat_route.delete_session("s1", chat_user, db)
+
+    assert response.status_code == 204
+    collections["chat_sessions"].delete_one.assert_awaited_once_with({"session_id": "s1"})
+    collections["chat_messages"].delete_many.assert_awaited_once_with({"session_id": "s1"})
+    collections["lexi_sessions"].delete_one.assert_awaited_once_with({"session_id": "s1"})
+    collections["lexi_messages"].delete_many.assert_awaited_once_with({"session_id": "s1"})
+
+
 @pytest.fixture
 def mock_lexi_db():
     db = MagicMock()
@@ -134,6 +157,34 @@ async def test_chat_send_message_trace_cag_primary_success(monkeypatch, mock_cha
     ai_doc = mock_chat_db["chat_messages"].insert_one.await_args_list[1].args[0]
     assert ai_doc["role"] == "assistant"
     assert ai_doc["model"] == "groq/qwen3-32b"
+
+
+@pytest.mark.asyncio
+async def test_chat_does_not_report_success_when_persistence_fails(monkeypatch, mock_chat_db, chat_user):
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock(
+        return_value={
+            "tutor_response": "Generated response",
+            "metadata": {"models_used": ["groq/qwen3-32b"], "path": "trace-cag"},
+        }
+    )
+
+    async def _fake_get_orchestrator():
+        return orchestrator
+
+    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", _fake_get_orchestrator)
+    monkeypatch.setattr("api.routes.chat.enforce_user_quota", AsyncMock())
+    mock_chat_db["chat_messages"].insert_one.side_effect = [None, RuntimeError("mongo unavailable")]
+
+    with pytest.raises(chat_route.HTTPException) as exc:
+        await chat_route.send_message(
+            chat_route.SendMessageRequest(session_id="s1", user_id="u1", message="Hello"),
+            db=mock_chat_db,
+            current_user=chat_user,
+        )
+
+    assert exc.value.status_code == 500
+    assert exc.value.detail == "Unable to process chat request"
 
 
 @pytest.mark.asyncio
