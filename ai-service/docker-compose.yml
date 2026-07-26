@@ -1,34 +1,38 @@
 services:
   # AI Service (FastAPI)
   ai-service:
-    build: .
-    container_name: lexilingo-ai-service
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     init: true
+    restart: unless-stopped
     mem_limit: 2g
     memswap_limit: 2g
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
     environment:
-      - ENVIRONMENT=development
-      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
-      - ALGORITHM=${ALGORITHM:-HS256}
-      - AI_ADMIN_API_KEY=${AI_ADMIN_API_KEY:?Set AI_ADMIN_API_KEY in .env}
-      - MONGODB_URI=mongodb://mongodb:27017
-      - MONGODB_DATABASE=lexilingo
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_URL=redis://redis:6379/0
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-    volumes:
-      - ./api:/app/api
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      AI_ADMIN_API_KEY: ${AI_ADMIN_API_KEY:?Set AI_ADMIN_API_KEY in .env}
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys in .env}
+      GROQ_REQUIRE_SEVEN_KEYS: "true"
+      GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-false}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080}
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8001
     security_opt:
       - no-new-privileges:true
     networks:
@@ -37,12 +41,9 @@ services:
   # MongoDB
   mongodb:
     image: mongo:7.0
-    container_name: lexilingo-mongo
     restart: unless-stopped
     mem_limit: 1g
     memswap_limit: 1g
-    ports:
-      - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=lexilingo
     volumes:
@@ -60,16 +61,19 @@ services:
   # Mongo Express (Web UI)
   mongo-express:
     image: mongo-express:1.0.2@sha256:1b23d7976f0210dbec74045c209e52fbb26d29b2e873d6c6fa3d3f0ae32c2a64
-    container_name: lexilingo-mongo-express
+    profiles: ["admin"]
     restart: unless-stopped
     mem_limit: 256m
     memswap_limit: 256m
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     environment:
-      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
-      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
-      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:?Set MONGO_EXPRESS_PASSWORD in .env}
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-}
+      MONGO_EXPRESS_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-}
+    entrypoint: ["/bin/sh", "-ec"]
+    command: 'test -n "$$MONGO_EXPRESS_PASSWORD" || { echo "MONGO_EXPRESS_PASSWORD is required" >&2; exit 1; }; exec /docker-entrypoint.sh'
     depends_on:
       - mongodb
     networks:
@@ -78,17 +82,18 @@ services:
   # Redis (optional, for caching)
   redis:
     image: redis:7-alpine
-    container_name: lexilingo-redis
     restart: unless-stopped
     mem_limit: 256m
     memswap_limit: 256m
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lfu
+      - "127.0.0.1:6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lfu --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping"]
       interval: 10s
       timeout: 5s
       retries: 5

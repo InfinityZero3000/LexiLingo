@@ -148,6 +148,10 @@ Optional:
 - **Backend Service** — User & course data at port 8000
 - **Flutter App** — Mobile/Web frontend
 
+## Production E2E
+
+Use [docs/production-e2e-runbook.md](docs/production-e2e-runbook.md) for the pinned deploy, seven-key Groq preflight, real-provider smoke/latency report, and rollback procedure.
+
 ---
 
 ## License

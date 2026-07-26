@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,6 +37,12 @@ def test_images_install_the_locked_ai_stack():
         assert "pip install --no-cache-dir torch==" not in dockerfile
 
 
+def test_production_build_context_excludes_research_and_reports():
+    dockerignore = _read(".dockerignore")
+    assert "model-development/" in dockerignore
+    assert "reports/" in dockerignore
+
+
 def test_local_compose_avoids_latest_and_hardens_service_runtime():
     compose = _read("docker-compose.yml")
 
@@ -52,3 +59,35 @@ def test_local_compose_avoids_latest_and_hardens_service_runtime():
     assert "init: true" in ai_service
     assert "security_opt:" in ai_service
     assert "no-new-privileges:true" in ai_service
+
+
+def test_e2e_compose_matches_production_security_boundary():
+    compose = yaml.safe_load(_read("docker-compose.yml"))
+    services = compose["services"]
+    ai = services["ai-service"]
+
+    assert ai["build"]["dockerfile"] == "Dockerfile.prod"
+    assert ai["environment"]["ENVIRONMENT"] == "production"
+    assert ai["environment"]["GROQ_API_KEYS"]
+    assert ai["environment"]["GROQ_SLOT_TELEMETRY"]
+    assert ai["ports"] == ["127.0.0.1:8001:8001"]
+    assert not ai.get("volumes")
+    assert "--reload" not in ai.get("command", "")
+    assert "container_name" not in ai
+
+    mongodb = services["mongodb"]
+    assert not mongodb.get("ports")
+    assert "container_name" not in mongodb
+
+    redis = services["redis"]
+    assert redis["ports"] == ["127.0.0.1:6379:6379"]
+    assert "--requirepass" in redis["command"]
+    assert "REDIS_PASSWORD" in redis["environment"]
+    assert "REDIS_PASSWORD" in str(redis["healthcheck"]["test"])
+    assert "container_name" not in redis
+
+    admin = services["mongo-express"]
+    assert admin["profiles"] == ["admin"]
+    assert admin["ports"] == ["127.0.0.1:8081:8081"]
+    assert "MONGO_EXPRESS_PASSWORD" in admin["command"]
+    assert "container_name" not in admin

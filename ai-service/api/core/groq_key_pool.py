@@ -20,6 +20,22 @@ _GROQ_FREE_RPD = 14_400
 _VOICE_LEASE_MS = 45_000
 
 
+def parse_groq_keys(raw: str, *, require_seven: bool = False) -> List[str]:
+    """Parse configured keys without ever logging their values."""
+    if not raw.strip():
+        keys: List[str] = []
+    else:
+        parts = raw.split(",")
+        if any(not part.strip() for part in parts):
+            raise ValueError("GROQ_API_KEYS contains a blank entry")
+        keys = [part.strip() for part in parts]
+    if len(set(keys)) != len(keys):
+        raise ValueError("GROQ_API_KEYS contains a duplicate entry")
+    if require_seven and len(keys) != 7:
+        raise ValueError("GROQ_API_KEYS must contain exactly seven unique keys")
+    return keys
+
+
 class GroqKeyLease(str):
     """String-compatible API key carrying its per-acquisition Redis token."""
 
@@ -54,6 +70,12 @@ class GroqKeyPool:
             for i in range(len(keys))
         ]
         self._cursor = 0
+        self._acquire_lock = asyncio.Lock()
+
+    @staticmethod
+    def _log_slot(index: int) -> None:
+        if os.getenv("GROQ_SLOT_TELEMETRY", "false").lower() == "true":
+            logger.info("groq_slot_acquired slot_id=%d", index)
 
     async def try_acquire_voice(self, estimated_tokens: int = 600) -> Optional[str]:
         """Atomically reserve provider RPM and one in-flight voice lease."""
@@ -115,14 +137,16 @@ class GroqKeyPool:
         self, estimated_tokens: int = 600
     ) -> Optional[Tuple[str, RedisRateLimiter]]:
         """Return (api_key, limiter) for the next available key, or None if all exhausted."""
-        n = len(self._keys)
-        start = self._cursor
-        for i in range(n):
-            idx = (start + i) % n
-            limiter = self._limiters[idx]
-            if await limiter.can_request(estimated_tokens):
-                self._cursor = (idx + 1) % n
-                return self._keys[idx], limiter
+        async with self._acquire_lock:
+            n = len(self._keys)
+            start = self._cursor
+            for i in range(n):
+                idx = (start + i) % n
+                limiter = self._limiters[idx]
+                if await limiter.can_request(estimated_tokens):
+                    self._cursor = (idx + 1) % n
+                    self._log_slot(idx)
+                    return self._keys[idx], limiter
         logger.warning("GroqKeyPool: all %d keys are rate-limited", n)
         return None
 
@@ -158,7 +182,7 @@ def _get_fallback_keys() -> List[str]:
     global _fallback_keys
     if _fallback_keys is None:
         raw = os.getenv("GROQ_API_KEYS", "").strip() or os.getenv("GROQ_API_KEY", "").strip()
-        _fallback_keys = [k.strip() for k in raw.split(",") if k.strip()]
+        _fallback_keys = parse_groq_keys(raw)
     return _fallback_keys
 
 
@@ -250,7 +274,8 @@ def build_groq_key_pool(redis_client: redis.Redis) -> Optional[GroqKeyPool]:
     """
     global _pool_instance
     raw = os.getenv("GROQ_API_KEYS", "").strip() or os.getenv("GROQ_API_KEY", "").strip()
-    keys = [k.strip() for k in raw.split(",") if k.strip()] if raw else []
+    require_seven = os.getenv("GROQ_REQUIRE_SEVEN_KEYS", "false").lower() == "true"
+    keys = parse_groq_keys(raw, require_seven=require_seven)
 
     if not keys:
         return None
