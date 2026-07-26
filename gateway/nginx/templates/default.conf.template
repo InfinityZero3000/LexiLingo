@@ -460,8 +460,6 @@ server {
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_buffering off;
         proxy_cache off;
-        proxy_read_timeout 75s;
-        proxy_send_timeout 75s;
         proxy_pass http://ai_upstream;
     }
 
