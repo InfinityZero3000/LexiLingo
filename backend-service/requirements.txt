@@ -1,5 +1,5 @@
 # FastAPI and Server
-fastapi>=0.139.0
+fastapi>=0.139.2
 uvicorn[standard]>=0.51.0
 python-multipart>=0.0.32
 
@@ -24,7 +24,7 @@ python-jose[cryptography]>=3.5.0
 passlib[bcrypt]>=1.7.4
 bcrypt>=5.0.0
 firebase-admin>=7.5.0
-google-auth>=2.55.2
+google-auth>=2.56.0
 google-auth-oauthlib>=1.4.0
 
 # Environment
@@ -32,7 +32,7 @@ python-dotenv>=1.2.2
 
 # Logging and Error Tracking
 loguru>=0.7.3
-sentry-sdk[fastapi,sqlalchemy,loguru]>=2.64.0
+sentry-sdk[fastapi,sqlalchemy,loguru]>=2.66.0
 
 # HTTP Client (optional - for calling AI service)
 httpx>=0.28.1
