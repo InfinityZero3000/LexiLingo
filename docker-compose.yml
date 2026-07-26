@@ -135,6 +135,7 @@ services:
       AI_SERVICE_URL: http://ai-service:8001/api/v1
       CONTENT_AGENT_ENABLED: ${CONTENT_AGENT_ENABLED:-false}
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
+      LEXILINGO_PARTNER_API_KEY_HASHES: ${LEXILINGO_PARTNER_API_KEY_HASHES:-}
     depends_on:
       postgres:
         condition: service_healthy

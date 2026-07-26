@@ -40,6 +40,7 @@ services:
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       DEBUG: ${DEBUG:-False}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      LEXILINGO_PARTNER_API_KEY_HASHES: ${LEXILINGO_PARTNER_API_KEY_HASHES:-}
     depends_on:
       postgres:
         condition: service_healthy
