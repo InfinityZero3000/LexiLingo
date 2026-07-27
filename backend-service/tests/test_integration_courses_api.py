@@ -36,9 +36,9 @@ async def test_integration_courses_requires_valid_api_key(monkeypatch):
         )
 
     assert missing.status_code == 401
-    assert missing.json()["detail"] == "Invalid partner API key"
+    assert missing.json()["error"]["message"] == "Invalid partner API key"
     assert invalid.status_code == 401
-    assert invalid.json()["detail"] == "Invalid partner API key"
+    assert invalid.json()["error"]["message"] == "Invalid partner API key"
     assert valid.status_code == 200
     assert valid.json()["data"] == []
     get_courses.assert_awaited_once()

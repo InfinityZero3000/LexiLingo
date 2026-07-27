@@ -24,11 +24,11 @@ def test_ai_constraints_match_supported_torch_stack():
 
     expected = {
         "numpy": "1.26.4",
-        "torch": "2.12.1",
+        "torch": "2.13.0",
         "transformers": "4.57.6",
         "sentence-transformers": "4.1.0",
         "faster-whisper": "1.2.1",
-        "moonshine-voice": "0.0.68",
+        "moonshine-voice": "0.0.73",
         "sherpa-onnx": "1.13.4",
         "scipy": "1.17.1",
     }
