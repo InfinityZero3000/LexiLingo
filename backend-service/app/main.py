@@ -37,7 +37,7 @@ from app.core.exceptions import (
     unhandled_exception_handler
 )
 from fastapi.exceptions import RequestValidationError
-from fastapi import FastAPI, Request, status, HTTPException
+from fastapi import Depends, FastAPI, Request, status, HTTPException
 from app.routes import (
     health_router,
     auth_router,
@@ -76,6 +76,7 @@ from app.routes.referral import router as referral_router
 from app.routes.learner_state import router as learner_state_router
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
+from app.core.partner_auth import require_partner_api_key
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -319,6 +320,30 @@ async def limit_request_body(request: Request, call_next):
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             content={"detail": "Request body too large"},
         )
+
+# Partner-only OpenAPI document protected by the same key as integration routes.
+@app.get(
+    f"{settings.API_V1_PREFIX}/integrations/openapi.json",
+    include_in_schema=False,
+    dependencies=[Depends(require_partner_api_key)],
+)
+async def integrations_openapi() -> JSONResponse:
+    full_schema = app.openapi()
+    integration_prefix = f"{settings.API_V1_PREFIX}/integrations/"
+    schema = {
+        **full_schema,
+        "info": {
+            **full_schema["info"],
+            "title": "LexiLingo Partner Integrations API",
+        },
+        "paths": {
+            path: definition
+            for path, definition in full_schema.get("paths", {}).items()
+            if path.startswith(integration_prefix)
+        },
+    }
+    return JSONResponse(schema)
+
 
 # Include routers
 app.include_router(well_known_router)
