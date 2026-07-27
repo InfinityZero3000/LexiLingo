@@ -32,7 +32,7 @@ python-dotenv>=1.2.2
 
 # Logging and Error Tracking
 loguru>=0.7.3
-sentry-sdk[fastapi,sqlalchemy,loguru]>=2.66.0
+sentry-sdk[fastapi,sqlalchemy,loguru]>=2.66.1
 
 # HTTP Client (optional - for calling AI service)
 httpx>=0.28.1
