@@ -60,6 +60,9 @@ psutil>=6.1.1
 # Prometheus metrics
 prometheus-fastapi-instrumentator>=7.1.0
 
+# System metrics (used by admin monitoring endpoints)
+psutil>=6.0.0
+
 # Testing
 pytest>=9.1.1
 pytest-asyncio>=1.4.0
