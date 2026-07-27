@@ -58,12 +58,6 @@ extra_instructions = """
 - Clarify implementation choices
 """
 
-[config]
-# Model configuration (uncomment to customize)
-# model = "gpt-4-turbo-preview"
-# model = "anthropic/claude-3-5-sonnet-20241022"
-# fallback_models = ["gpt-3.5-turbo"]
-
 # Git provider
 git_provider = "github"
 

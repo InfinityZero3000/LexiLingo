@@ -73,7 +73,7 @@ def _calculate_mastery_score(mastery):
     accuracy = correct_count / total_reviews                          # 50% weight
     ef_factor = (easiness_factor - 1.3) / (2.5 + 1 - 1.3)          # 30% weight
     interval_factor = min(1.0, interval_days / 30)                   # 20% weight
-    
+
     return accuracy * 0.5 + ef_factor * 0.3 + interval_factor * 0.2
 ```
 
@@ -222,4 +222,4 @@ Trong `MyProgressScreen`, người dùng thấy:
 
 ---
 
-*Tham khảo: [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-027](RPT-027_PROFICIENCY_CEFR_ASSESSMENT.md)*
+*Tham khảo: [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-027](RPT-027_PROFICIENCY_CEFR_ASSESSMENT.md)*

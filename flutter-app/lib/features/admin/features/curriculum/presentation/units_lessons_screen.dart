@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
 import '../data/curriculum_repository.dart';
 
@@ -48,8 +49,9 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
           'Lessons in ${widget.unitTitle}',
           style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+        leading: AppBackButton(
+          icon: Icons.arrow_back,
+          color: AppColors.onSurface,
           onPressed: () => context.pop(),
         ),
         actions: [

@@ -13,7 +13,11 @@
 set -euo pipefail
 
 echo "=== LexiLingo Backend Startup ==="
-echo "DATABASE_URL: ${DATABASE_URL:-<not set>}"
+if [ -n "${DATABASE_URL:-}" ]; then
+    echo "DATABASE_URL: <configured>"
+else
+    echo "DATABASE_URL: <not set>"
+fi
 
 # Check whether alembic_version table exists (means DB was previously managed by Alembic).
 DB_STATE=$(python - <<'EOF'
@@ -37,7 +41,7 @@ async def check() -> bool:
             ))
             return "existing" if result.scalar() > 0 else "fresh"
     except Exception as e:
-        print(f"DB check error: {e}", file=sys.stderr)
+        print(f"DB check failed ({type(e).__name__})", file=sys.stderr)
         return "unreachable"
     finally:
         await engine.dispose()
@@ -49,7 +53,7 @@ EOF
 case "$DB_STATE" in
     fresh)
         echo ">>> Fresh database detected — running create_all + alembic stamp head..."
-        python create_tables.py
+        python scripts/create_tables.py
         alembic stamp head
         echo ">>> Schema initialised."
         ;;

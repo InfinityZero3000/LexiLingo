@@ -20,9 +20,9 @@ Khối monorepo hiện tại gồm **4 dịch vụ runtime chính:**
 
 **Khối hạ tầng và điều phối:**
 - Gateway/API edge: [gateway](../../gateway)
-- Docker stack: [docker-compose.yml](../../docker-compose.yml), [docker-compose.local.yml](../../docker-compose.local.yml), [docker-compose.production.yml](../../docker-compose.production.yml)
+- Docker stack: [docker-compose.yml](../../docker-compose.yml), [docker-compose.local.yml](../../docker-compose.local.yml); `docker-compose.production.yml` is retained here as a historical deployment reference.
 - DevOps scripts: [scripts](../../scripts)
-- System testing: [system-testing](../../system-testing)
+- System testing: `system-testing` (historical path)
 
 ---
 
@@ -105,10 +105,10 @@ App tổ chức theo feature module trong [flutter-app/lib/features](../../flutt
 - API routes: [ai-service/api/routes](../../ai-service/api/routes)
 
 ### 6.2 TRACECAG Pipeline
-- State: [ai-service/api/services/graph_cag/state.py](../../ai-service/api/services/graph_cag/state.py)
-- Nodes v2: [ai-service/api/services/graph_cag/nodes_v2.py](../../ai-service/api/services/graph_cag/nodes_v2.py)
-- Edges/routing: [ai-service/api/services/graph_cag/edges.py](../../ai-service/api/services/graph_cag/edges.py)
-- Graph compile: [ai-service/api/services/graph_cag/graph.py](../../ai-service/api/services/graph_cag/graph.py)
+- State: [ai-service/api/services/trace_cag/state.py](../../ai-service/api/services/trace_cag/state.py)
+- Nodes v2: [ai-service/api/services/trace_cag/nodes_v2.py](../../ai-service/api/services/trace_cag/nodes_v2.py)
+- Edges/routing: [ai-service/api/services/trace_cag/edges.py](../../ai-service/api/services/trace_cag/edges.py)
+- Graph compile: [ai-service/api/services/trace_cag/graph.py](../../ai-service/api/services/trace_cag/graph.py)
 
 Pipeline logic theo flow: input → kg expand → diagnose → retrieve → generate (và các nhánh voice/pronunciation tùy route).
 
@@ -121,7 +121,7 @@ Pipeline logic theo flow: input → kg expand → diagnose → retrieve → gene
 - Retrieval: [ai-service/api/services/retrieval_service_v3.py](../../ai-service/api/services/retrieval_service_v3.py)
 
 ### 6.4 MCP Runtime
-Tài liệu instruction xác nhận MCP runtime HTTP trong [ai-service/api/mcp](../../ai-service/api/mcp), sử dụng cho tool calls như `analyze_text`, `assess_level`, `expand_concepts`.
+Tài liệu lịch sử tham chiếu MCP runtime HTTP tại `ai-service/api/mcp`; runtime hiện tại cần được xác minh từ mã nguồn trước khi sử dụng.
 
 ---
 
@@ -169,12 +169,12 @@ Admin dashboard hiện là khối tách riêng, phụ trách công cụ vận h�
 ### 10.1 Docker
 - Full stack local: [docker-compose.yml](../../docker-compose.yml)
 - AI local profile: [docker-compose.local.yml](../../docker-compose.local.yml)
-- Production profile: [docker-compose.production.yml](../../docker-compose.production.yml)
+- Production profile: `docker-compose.production.yml` (historical path)
 
 ### 10.2 Scripts Vận Hành
-- Setup/start/stop/dev: [scripts/setup-all.sh](../../scripts/setup-all.sh), [scripts/start-all.sh](../../scripts/start-all.sh), [scripts/stop-all.sh](../../scripts/stop-all.sh), [scripts/dev.sh](../../scripts/dev.sh)
-- Deploy: [scripts/deploy-hybrid.sh](../../scripts/deploy-hybrid.sh), [scripts/deploy-admin.sh](../../scripts/deploy-admin.sh), [scripts/deploy-admin-vercel.sh](../../scripts/deploy-admin-vercel.sh)
-- Mac daemon support: [scripts/setup-launchd.sh](../../scripts/setup-launchd.sh)
+- Start/stop/dev: [scripts/start-all.sh](../../scripts/start-all.sh), [scripts/stop-all.sh](../../scripts/stop-all.sh), [scripts/dev.sh](../../scripts/dev.sh)
+- Deploy: [scripts/deploy-admin.sh](../../scripts/deploy-admin.sh), [scripts/deploy-admin-vercel.sh](../../scripts/deploy-admin-vercel.sh); `scripts/deploy-hybrid.sh` is a historical path.
+- Mac daemon support: `scripts/setup-launchd.sh` (historical path)
 
 ### 10.3 Systemd/Deploy Support
 - Service unit templates: [deploy/systemd](../../deploy/systemd)
@@ -189,15 +189,15 @@ Admin dashboard hiện là khối tách riêng, phụ trách công cụ vận h�
 
 ### 11.2 AI
 - AI tests: [ai-service/tests](../../ai-service/tests)
-- Postman collection: [ai-service/postman](../../ai-service/postman)
-- Benchmark reports: [ai-service/model-development/benchmark/reports](../../ai-service/model-development/benchmark/reports)
+- Postman collection: `ai-service/postman` (historical path)
+- Benchmark reports: `ai-service/model-development/benchmark/reports` (historical path)
 
 ### 11.3 Flutter
 - Tests: [flutter-app/test](../../flutter-app/test)
-- Coverage output: [flutter-app/coverage](../../flutter-app/coverage)
+- Coverage output: `flutter-app/coverage` (generated locally)
 
 ### 11.4 System-Level
-- End-to-end/load harness: [system-testing](../../system-testing)
+- End-to-end/load harness: `system-testing` (historical path)
 
 ---
 
@@ -267,4 +267,4 @@ LexiLingo đang ở trạng thái monorepo đã vượt ngưỡng MVP có cấu 
 
 ---
 
-*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md)*
+*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md)*

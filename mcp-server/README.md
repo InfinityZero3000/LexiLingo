@@ -57,10 +57,10 @@ python tests/test_integration.py
 
 ## 📖 Documentation
 
-See [MCP_IMPLEMENTATION_GUIDE.md](../docs/MCP_IMPLEMENTATION_GUIDE.md) for detailed guide.
+Implementation context is maintained in the [system architecture](../docs/ARCHITECTURE.md).
 
 ## 🔗 Links
 
 - [MCP Specification](https://spec.modelcontextprotocol.io/)
 - [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-- [LexiLingo Architecture](../architecture.md)
+- [LexiLingo Architecture](../docs/ARCHITECTURE.md)

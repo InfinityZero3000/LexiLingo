@@ -8,15 +8,22 @@
 /// - GameLoadState button accessible via semantics
 library;
 
+import 'package:dartz/dartz.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 import 'package:lexilingo_app/features/games/data/repositories/games_repository.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ── Fakes ─────────────────────────────────────────────────────────────────────
 
@@ -27,14 +34,77 @@ class _FakeGamesRepository extends GamesRepository {
     required List<Map<String, String>> answers,
     int? clientDurationSeconds,
     int hintsUsed = 0,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
+}
+
+class _FakeProgressRepository implements ProgressRepository {
+  @override
+  Future<Either<Failure, StreakUpdateResult>> updateStreak() async =>
+      const Right(
+        StreakUpdateResult(
+          currentStreak: 1,
+          longestStreak: 1,
+          totalDaysActive: 1,
+          freezeCount: 0,
+          streakIncreased: false,
+          streakSaved: false,
+        ),
+      );
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+class _GameTestAssetLoader extends AssetLoader {
+  const _GameTestAssetLoader();
+
+  @override
+  Future<Map<String, dynamic>?> load(String path, Locale locale) async {
+    return const {
+      'gameResult': {
+        'xpNotAwarded': 'XP was not awarded. Your game result is preserved.',
+        'retryXp': 'Retry XP award',
+        'accuracyLabel': 'Accuracy',
+        'correctLabel': 'Correct',
+        'scoreLabel': 'Score',
+        'durationLabel': 'Duration',
+        'levelLabel': 'Level',
+        'xpEarnedLabel': 'XP Earned',
+        'totalXpLabel': 'Total XP',
+        'dailyXpLabel': 'Daily XP',
+        'streakLabel': 'Streak',
+        'streakBonusLabel': 'Streak bonus: {multiplier}x',
+        'playAgainButton': 'Play Again',
+        'backToGamesButton': 'Back to Games',
+      },
+      'games': {'retryLoad': 'Try again'},
+    };
+  }
+}
+
+Widget _localizedApp({required Widget home}) {
+  return EasyLocalization(
+    supportedLocales: const [Locale('en')],
+    path: 'assets/i18n',
+    fallbackLocale: const Locale('en'),
+    startLocale: const Locale('en'),
+    useOnlyLangCode: true,
+    assetLoader: const _GameTestAssetLoader(),
+    child: Builder(
+      builder: (context) => MaterialApp(
+        locale: context.locale,
+        supportedLocales: context.supportedLocales,
+        localizationsDelegates: context.localizationDelegates,
+        home: home,
+      ),
+    ),
+  );
+}
+
 Widget _wrapWithSize(Widget child, Size size) {
-  return MaterialApp(
+  return _localizedApp(
     home: MediaQuery(
       data: MediaQueryData(size: size),
       child: child,
@@ -43,9 +113,16 @@ Widget _wrapWithSize(Widget child, Size size) {
 }
 
 Widget _wrapWithProvider(Widget child) {
-  return MaterialApp(
-    home: ChangeNotifierProvider<GamesProvider>.value(
-      value: GamesProvider(repository: _FakeGamesRepository()),
+  return _localizedApp(
+    home: MultiProvider(
+      providers: [
+        ChangeNotifierProvider<GamesProvider>.value(
+          value: GamesProvider(repository: _FakeGamesRepository()),
+        ),
+        ChangeNotifierProvider<StreakProvider>.value(
+          value: StreakProvider(repository: _FakeProgressRepository()),
+        ),
+      ],
       child: child,
     ),
   );
@@ -73,17 +150,22 @@ GameResult _makeResult({XPAwardResult? xpResult}) => GameResult(
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 void main() {
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues({});
+    EasyLocalization.logger.enableLevels = [];
+    await EasyLocalization.ensureInitialized();
+  });
+
   group('GameLoadState — accessibility', () {
     testWidgets('retry button is semantically a button', (tester) async {
       await tester.pumpWidget(
         _wrapWithSize(
-          GameLoadState(
-            message: 'Could not load game.',
-            onRetry: () async {},
-          ),
+          GameLoadState(message: 'Could not load game.', onRetry: () async {}),
           const Size(390, 844),
         ),
       );
+      await tester.pumpAndSettle();
 
       final semantics = tester.getSemantics(find.byIcon(Icons.refresh_rounded));
       // The button has tap action via semantics
@@ -97,40 +179,34 @@ void main() {
     testWidgets('error icon does not block tappable controls', (tester) async {
       await tester.pumpWidget(
         _wrapWithSize(
-          GameLoadState(
-            message: 'Error.',
-            onRetry: () async {},
-          ),
+          GameLoadState(message: 'Error.', onRetry: () async {}),
           const Size(390, 844),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Error icon is decorative, not tappable
       final errorIcon = find.byIcon(Icons.error_outline_rounded);
       expect(errorIcon, findsOneWidget);
     });
 
-    testWidgets('retry button has adequate minimum height (≥40px M3 standard)',
-        (tester) async {
+    testWidgets('retry button has adequate minimum height (≥40px M3 standard)', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         _wrapWithSize(
-          GameLoadState(
-            message: 'Error.',
-            onRetry: () async {},
-          ),
+          GameLoadState(message: 'Error.', onRetry: () async {}),
           const Size(390, 844),
         ),
       );
+      await tester.pumpAndSettle();
 
       // FilledButton.icon uses _InputPadding which pads the hit region to 48px.
       // The render size of the visible button is 40px (Material 3 default).
       // We verify the button renders at the expected minimum logical height.
       final retryButton = find.byIcon(Icons.refresh_rounded);
       final renderBox = tester.renderObject<RenderBox>(
-        find.ancestor(
-          of: retryButton,
-          matching: find.byType(InkWell),
-        ).first,
+        find.ancestor(of: retryButton, matching: find.byType(InkWell)).first,
       );
       expect(
         renderBox.size.height,
@@ -150,9 +226,7 @@ void main() {
       final result = _makeResult(xpResult: _award);
 
       await tester.pumpWidget(
-        _wrapWithProvider(
-          GameResultScreen(result: result, xpResult: _award),
-        ),
+        _wrapWithProvider(GameResultScreen(result: result, xpResult: _award)),
       );
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 1400));
@@ -163,14 +237,13 @@ void main() {
       expect(playAgainButtons, findsWidgets);
     });
 
-    testWidgets('cloud_off error icon has no tap action (decorative)',
-        (tester) async {
+    testWidgets('cloud_off error icon has no tap action (decorative)', (
+      tester,
+    ) async {
       final result = _makeResult(xpResult: null);
 
       await tester.pumpWidget(
-        _wrapWithProvider(
-          GameResultScreen(result: result, xpResult: null),
-        ),
+        _wrapWithProvider(GameResultScreen(result: result, xpResult: null)),
       );
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 1400));
@@ -185,9 +258,7 @@ void main() {
       final result = _makeResult(xpResult: null);
 
       await tester.pumpWidget(
-        _wrapWithProvider(
-          GameResultScreen(result: result, xpResult: null),
-        ),
+        _wrapWithProvider(GameResultScreen(result: result, xpResult: null)),
       );
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pump(const Duration(milliseconds: 1400));
@@ -211,8 +282,9 @@ void main() {
       (label: 'standard 390px', width: 390.0, height: 844.0),
       (label: 'tablet 768px', width: 768.0, height: 1024.0),
     ]) {
-      testWidgets('renders without overflow at ${testCase.label}',
-          (tester) async {
+      testWidgets('renders without overflow at ${testCase.label}', (
+        tester,
+      ) async {
         await tester.pumpWidget(
           _wrapWithSize(
             GameLoadState(
@@ -238,16 +310,26 @@ void main() {
       (label: 'standard 390px', width: 390.0, height: 844.0),
       (label: 'tablet 768px', width: 768.0, height: 1024.0),
     ]) {
-      testWidgets('renders without overflow at ${testCase.label}',
-          (tester) async {
+      testWidgets('renders without overflow at ${testCase.label}', (
+        tester,
+      ) async {
         final result = _makeResult(xpResult: _award);
 
         await tester.pumpWidget(
           MaterialApp(
             home: MediaQuery(
               data: MediaQueryData(size: Size(testCase.width, testCase.height)),
-              child: ChangeNotifierProvider<GamesProvider>.value(
-                value: GamesProvider(repository: _FakeGamesRepository()),
+              child: MultiProvider(
+                providers: [
+                  ChangeNotifierProvider<GamesProvider>.value(
+                    value: GamesProvider(repository: _FakeGamesRepository()),
+                  ),
+                  ChangeNotifierProvider<StreakProvider>.value(
+                    value: StreakProvider(
+                      repository: _FakeProgressRepository(),
+                    ),
+                  ),
+                ],
                 child: GameResultScreen(result: result, xpResult: _award),
               ),
             ),
@@ -264,8 +346,9 @@ void main() {
   });
 
   group('SpellingBee listen button — semantics', () {
-    testWidgets('listen button has a semantic label via Semantics widget',
-        (tester) async {
+    testWidgets('listen button has a semantic label via Semantics widget', (
+      tester,
+    ) async {
       // Test the Semantics wrapping we added in spelling_bee_screen.dart
       // by checking that a GestureDetector inside a Semantics(button: true)
       // is correctly labeled.
@@ -285,8 +368,9 @@ void main() {
   });
 
   group('reduced motion', () {
-    testWidgets('AnimatedContainer uses Duration.zero when disableAnimations',
-        (tester) async {
+    testWidgets('AnimatedContainer uses Duration.zero when disableAnimations', (
+      tester,
+    ) async {
       // Simulate reduced motion preference
       await tester.pumpWidget(
         MaterialApp(

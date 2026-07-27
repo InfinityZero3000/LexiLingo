@@ -9,6 +9,7 @@ This module is safe to include even when AI is not enabled.
 
 from __future__ import annotations
 
+import os
 from typing import Any, Optional
 
 import httpx
@@ -65,10 +66,12 @@ class AIServiceClient:
         params: dict = {"word": word, "lang": lang}
         if context:
             params["context"] = context
+        api_key = os.getenv("AI_ADMIN_API_KEY", "").strip()
+        headers = {"X-Admin-Key": api_key} if api_key else {}
 
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_seconds)) as client:
-                resp = await client.get(url, params=params)
+                resp = await client.get(url, params=params, headers=headers)
             if resp.status_code == 200:
                 return resp.json()
         except Exception:

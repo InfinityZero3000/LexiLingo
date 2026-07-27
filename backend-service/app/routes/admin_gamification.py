@@ -11,6 +11,7 @@ from app.core.dependencies import get_current_admin
 from app.models.user import User
 from app.models.gamification import Achievement, ShopItem
 from app.schemas.response import ApiResponse
+from app.schemas.gamification import ShopItemAdminCreate, ShopItemAdminUpdate
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -220,6 +221,8 @@ async def list_shop_items_admin(
             "description": item.description,
             "item_type": item.item_type,
             "price_gems": item.price_gems,
+            "icon_url": item.icon_url,
+            "effects": item.effects,
             "is_available": item.is_available,
             "stock_quantity": item.stock_quantity
         } for item in items]
@@ -228,32 +231,29 @@ async def list_shop_items_admin(
 
 @router.post("/shop", response_model=ApiResponse[dict])
 async def create_shop_item(
-    name: str,
-    description: str,
-    item_type: str,
-    price_gems: int,
-    is_available: bool = True,
-    stock_quantity: Optional[int] = None,
+    payload: ShopItemAdminCreate,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
     """
     Create a new shop item.
-    
+
     Admin only endpoint.
     """
     item = ShopItem(
-        name=name,
-        description=description,
-        item_type=item_type,
-        price_gems=price_gems,
-        is_available=is_available,
-        stock_quantity=stock_quantity
+        name=payload.name,
+        description=payload.description,
+        item_type=payload.item_type,
+        price_gems=payload.price_gems,
+        icon_url=payload.icon_url,
+        effects=payload.effects,
+        is_available=payload.is_available,
+        stock_quantity=payload.stock_quantity
     )
     db.add(item)
     await db.commit()
     await db.refresh(item)
-    
+
     return ApiResponse(
         success=True,
         message="Shop item created successfully",
@@ -268,44 +268,46 @@ async def create_shop_item(
 @router.put("/shop/{item_id}", response_model=ApiResponse[dict])
 async def update_shop_item(
     item_id: UUID,
-    name: Optional[str] = None,
-    description: Optional[str] = None,
-    price_gems: Optional[int] = None,
-    is_available: Optional[bool] = None,
-    stock_quantity: Optional[int] = None,
+    payload: ShopItemAdminUpdate,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
     """
     Update a shop item.
-    
+
     Admin only endpoint.
     """
     result = await db.execute(
         select(ShopItem).where(ShopItem.id == item_id)
     )
     item = result.scalar_one_or_none()
-    
+
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Shop item not found"
         )
-    
-    if name is not None:
-        item.name = name
-    if description is not None:
-        item.description = description
-    if price_gems is not None:
-        item.price_gems = price_gems
-    if is_available is not None:
-        item.is_available = is_available
-    if stock_quantity is not None:
-        item.stock_quantity = stock_quantity
-    
+
+    if payload.name is not None:
+        item.name = payload.name
+    if payload.description is not None:
+        item.description = payload.description
+    if payload.item_type is not None:
+        item.item_type = payload.item_type
+    if payload.price_gems is not None:
+        item.price_gems = payload.price_gems
+    if payload.icon_url is not None:
+        item.icon_url = payload.icon_url
+    if payload.effects is not None:
+        item.effects = payload.effects
+    if payload.is_available is not None:
+        item.is_available = payload.is_available
+    if payload.stock_quantity is not None:
+        item.stock_quantity = payload.stock_quantity
+
     await db.commit()
     await db.refresh(item)
-    
+
     return ApiResponse(
         success=True,
         message="Shop item updated successfully",

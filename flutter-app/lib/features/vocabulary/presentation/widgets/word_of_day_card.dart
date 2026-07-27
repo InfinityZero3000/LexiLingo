@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
+import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
@@ -67,9 +68,8 @@ class _WordCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     color: Colors.white.withValues(alpha: 0.2),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
+                  child: const AppGameIcon(
+                    GameIcon.sparkle,
                     size: 22,
                   ),
                 ),

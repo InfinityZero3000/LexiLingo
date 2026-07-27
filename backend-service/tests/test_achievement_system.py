@@ -6,7 +6,7 @@ that slug mapping works, and that the full pipeline is consistent.
 
 import pytest
 from uuid import uuid4
-from datetime import datetime, date, timedelta
+from datetime import UTC, datetime, date, timedelta
 from unittest.mock import AsyncMock, patch, MagicMock
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -408,7 +408,7 @@ class TestAchievementResponseSchema:
             rarity="common",
             xp_reward=10,
             gems_reward=5,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
         data = resp.model_dump()
         assert data["slug"] == "test_slug"

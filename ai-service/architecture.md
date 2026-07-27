@@ -1,8 +1,8 @@
 
 # LexiLingo AI Architecture v2.0
 
-> **Document**: Kiến trúc hệ thống AI cho ứng dụng học tiếng Anh  
-> **Version**: 2.0 (Optimized)  
+> **Document**: Kiến trúc hệ thống AI cho ứng dụng học tiếng Anh
+> **Version**: 2.0 (Optimized)
 > **Last Updated**: January 2026
 
 ---
@@ -1489,5 +1489,5 @@ common_voice = load_dataset("mozilla-foundation/common_voice_13_0", "en")
 ---
 
 > **Document Version**: 5.2
-> **Last Updated**: January 2026  
-> **Author**: Nguyen Huu Thang  
+> **Last Updated**: January 2026
+> **Author**: Nguyen Huu Thang

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pinput/pinput.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
 import 'auth_provider.dart';
 
@@ -85,8 +86,9 @@ class _OtpScreenState extends State<OtpScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+        leading: AppBackButton(
+          icon: Icons.arrow_back,
+          color: AppColors.onSurface,
           onPressed: () => context.pop(),
         ),
       ),

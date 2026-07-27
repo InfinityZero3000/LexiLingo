@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -50,8 +53,15 @@ class _LexiChatPageState extends State<LexiChatPage>
   StreamSubscription<WebSpeechResult>? _webSpeechSub;
   bool _isWebSpeechActive = false;
   String _liveTranscript = '';
+  DuplexVoiceClient? _duplexVoice;
+  StreamSubscription<Map<String, dynamic>>? _duplexVoiceSub;
+  bool _isDuplexVoiceActive = false;
 
-  bool get _isVoiceActive => _isRecording || _isTranscribing || _isWebSpeechActive;
+  bool get _isVoiceActive =>
+      _isRecording ||
+      _isTranscribing ||
+      _isWebSpeechActive ||
+      _isDuplexVoiceActive;
 
   int _lastMessageCount = 0;
   List<String> get _quickReplies => [
@@ -66,6 +76,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
+      provider.setNativeLanguage(_nativeLanguage);
       unawaited(
         provider.restoreLatestSession(_userId).catchError((Object error) {
           debugPrint('restoreLatestSession failed: $error');
@@ -85,6 +96,18 @@ class _LexiChatPageState extends State<LexiChatPage>
     }
   }
 
+  String get _nativeLanguage {
+    try {
+      return Provider.of<AuthProvider>(
+            context,
+            listen: false,
+          ).user?.nativeLanguage ??
+          'vi';
+    } catch (_) {
+      return 'vi';
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.removeListener(_handleTopReached);
@@ -95,7 +118,51 @@ class _LexiChatPageState extends State<LexiChatPage>
     _recordingTimer?.cancel();
     _webSpeechSub?.cancel();
     _webSpeech?.dispose();
+    _duplexVoiceSub?.cancel();
+    if (_duplexVoice != null) unawaited(_duplexVoice!.dispose());
     super.dispose();
+  }
+
+  Future<void> _toggleDuplexVoice() async {
+    if (_isDuplexVoiceActive) {
+      await _duplexVoice?.stop();
+      if (mounted) setState(() => _isDuplexVoiceActive = false);
+      return;
+    }
+    try {
+      final provider = context.read<LexiChatProvider>();
+      if (!provider.hasSession) await provider.startSession(_userId);
+      final sessionId = provider.session?.sessionId;
+      if (sessionId == null) throw StateError('Chat session unavailable');
+      _duplexVoice ??= sl<DuplexVoiceClient>();
+      await _duplexVoiceSub?.cancel();
+      _duplexVoiceSub = _duplexVoice!.events.stream.listen((event) {
+        if (!mounted) return;
+        final type = event['type'];
+        if (type == 'stt.partial') {
+          _controller.text = event['text']?.toString() ?? '';
+        } else if (type == 'stt.final') {
+          _controller.clear();
+        }
+        provider.handleDuplexVoiceEvent(event);
+        if (type == 'voice.error') {
+          setState(() => _isDuplexVoiceActive = false);
+          _showSnack(event['message']?.toString() ?? 'Voice failed');
+        }
+      });
+      await _duplexVoice!.start(
+        sessionId: sessionId,
+        learnerLevel: provider.learnerLevel,
+        nativeLanguage: provider.nativeLanguage,
+      );
+      if (mounted) setState(() => _isDuplexVoiceActive = true);
+    } catch (error) {
+      await _duplexVoice?.stop();
+      if (mounted) {
+        setState(() => _isDuplexVoiceActive = false);
+        _showSnack('Voice unavailable: $error');
+      }
+    }
   }
 
   void _scrollToBottom() {
@@ -158,12 +225,10 @@ class _LexiChatPageState extends State<LexiChatPage>
           _liveTranscript += result.transcript;
         }
         // Show accumulated + current interim text in input field live
-        final display = _liveTranscript +
-            (result.isFinal ? '' : result.transcript);
+        final display =
+            _liveTranscript + (result.isFinal ? '' : result.transcript);
         _controller.text = display;
-        _controller.selection = TextSelection.collapsed(
-          offset: display.length,
-        );
+        _controller.selection = TextSelection.collapsed(offset: display.length);
       },
       onError: (error) {
         setState(() => _isWebSpeechActive = false);
@@ -271,9 +336,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         _isRecording = false;
         _isTranscribing = false;
       });
-      _showSnack(
-        'lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}),
-      );
+      _showSnack('lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}));
     }
   }
 
@@ -414,7 +477,10 @@ class _LexiChatPageState extends State<LexiChatPage>
                         onTap: provider.cycleTtsSpeed,
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
                           child: Text(
                             provider.ttsSpeedLabel,
                             style: TextStyle(
@@ -736,20 +802,22 @@ class _LexiChatPageState extends State<LexiChatPage>
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: (_isWebSpeechActive
-                        ? Colors.blue
-                        : _isTranscribing
+                color:
+                    (_isWebSpeechActive
+                            ? Colors.blue
+                            : _isTranscribing
                             ? Colors.orange
                             : Colors.red)
-                    .withValues(alpha: 0.08),
+                        .withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: (_isWebSpeechActive
-                          ? Colors.blue
-                          : _isTranscribing
+                  color:
+                      (_isWebSpeechActive
+                              ? Colors.blue
+                              : _isTranscribing
                               ? Colors.orange
                               : Colors.red)
-                      .withValues(alpha: 0.2),
+                          .withValues(alpha: 0.2),
                 ),
               ),
               child: Row(
@@ -778,17 +846,19 @@ class _LexiChatPageState extends State<LexiChatPage>
                     _isTranscribing
                         ? 'lexiChat.transcribingStatus'.tr()
                         : _isWebSpeechActive
-                            ? 'lexiChat.webSpeechRecording'.tr()
-                            : 'lexiChat.recordingStatus'.tr(namedArgs: {
-                                'seconds':
-                                    _recordingDuration.inSeconds.toString(),
-                              }),
+                        ? 'lexiChat.webSpeechRecording'.tr()
+                        : 'lexiChat.recordingStatus'.tr(
+                            namedArgs: {
+                              'seconds': _recordingDuration.inSeconds
+                                  .toString(),
+                            },
+                          ),
                     style: TextStyle(
                       color: _isWebSpeechActive
                           ? Colors.blue
                           : _isTranscribing
-                              ? Colors.orange
-                              : AppColors.errorBright,
+                          ? Colors.orange
+                          : AppColors.errorBright,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -921,8 +991,8 @@ class _LexiChatPageState extends State<LexiChatPage>
     final activeColor = _isWebSpeechActive
         ? Colors.blue
         : _isTranscribing
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
 
     Widget button = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -963,6 +1033,13 @@ class _LexiChatPageState extends State<LexiChatPage>
               size: 20,
             ),
     );
+
+    if (ApiConfig.enableDuplexVoice) {
+      return GestureDetector(
+        onTap: () => unawaited(_toggleDuplexVoice()),
+        child: button,
+      );
+    }
 
     if (isWebSpeech) {
       // Web: tap to toggle on/off

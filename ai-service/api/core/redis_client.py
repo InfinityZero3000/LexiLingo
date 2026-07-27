@@ -36,6 +36,13 @@ class RedisClient:
         return value.lower() in {"1", "true", "yes", "on"}
 
     @classmethod
+    def _benchmark_redis_disabled(cls) -> bool:
+        value = os.getenv("BENCHMARK_REDIS_DISABLED")
+        if value is not None and value.strip():
+            return value.lower() in {"1", "true", "yes", "on"}
+        return cls._benchmark_fail_fast()
+
+    @classmethod
     def _effective_max_retries(cls) -> int:
         if cls._benchmark_fail_fast():
             raw = os.getenv("BENCHMARK_REDIS_MAX_RETRIES", "1")
@@ -77,7 +84,7 @@ class RedisClient:
             password=password,
             db=settings.REDIS_DB,
             decode_responses=True,
-            max_connections=10,
+            max_connections=max(10, int(os.getenv("REDIS_MAX_CONNECTIONS", "50"))),
             socket_timeout=socket_timeout,
             socket_connect_timeout=socket_connect_timeout,
             health_check_interval=30,
@@ -111,6 +118,10 @@ class RedisClient:
 
         Raises RuntimeError after retry budget is exhausted.
         """
+        if cls._benchmark_redis_disabled():
+            await cls._reset()
+            raise RuntimeError("Redis disabled for benchmark")
+
         last_exc: Optional[Exception] = None
         max_retries = cls._effective_max_retries()
         for attempt in range(1, max_retries + 1):
@@ -135,6 +146,10 @@ class RedisClient:
     @classmethod
     async def get_instance(cls) -> redis.Redis:
         """Get Redis instance; auto-reconnect up to retry budget when unhealthy."""
+        if cls._benchmark_redis_disabled():
+            await cls._reset()
+            raise RuntimeError("Redis disabled for benchmark")
+
         if cls._instance is None:
             return await cls.reconnect()
 

@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../domain/entities/daily_challenge_entity.dart';
 import '../providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 
 /// Daily Challenges Card for Home Screen
@@ -29,23 +30,34 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Consumer<DailyChallengesProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading && provider.challenges.isEmpty) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  const LottieLoadingWidget.small(),
-                  const SizedBox(height: 12),
-                  Text(
-                    'home.loadingChallenges'.tr(),
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ],
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : AppColors.grey200,
+                width: 2,
               ),
+            ),
+            child: Column(
+              children: [
+                const LottieLoadingWidget.small(),
+                const SizedBox(height: 12),
+                Text(
+                  'home.loadingChallenges'.tr(),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColorRoles.textSecondary(isDark),
+                  ),
+                ),
+              ],
             ),
           );
         }
@@ -54,12 +66,36 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
           return const SizedBox.shrink();
         }
 
-        return Card(
+        final accent = AppColors.purple;
+
+        return Material(
+          color: Colors.transparent,
           child: InkWell(
             onTap: () => _showChallengesSheet(context, provider),
-            borderRadius: BorderRadius.circular(12),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            borderRadius: BorderRadius.circular(20),
+            child: Ink(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.surfaceDarkMuted
+                    : AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDark
+                      ? accent.withValues(alpha: 0.35)
+                      : accent.withValues(alpha: 0.22),
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDark
+                        ? Colors.black.withValues(alpha: 0.3)
+                        : accent.withValues(alpha: 0.12),
+                    blurRadius: 0,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -67,18 +103,20 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(6),
+                        width: 40,
+                        height: 40,
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.purple.shade100,
-                          borderRadius: BorderRadius.circular(6),
+                          color: accent.withValues(alpha: isDark ? 0.22 : 0.14),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(
-                          Icons.star,
-                          color: Colors.purple.shade700,
-                          size: 16,
+                        child: const AppGameIcon(
+                          GameIcon.star,
+                          size: 22,
+                          fallbackColor: AppColors.purple,
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,7 +125,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                               'home.dailyChallenges'.tr(),
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 15,
+                                color: AppColorRoles.textPrimary(isDark),
                               ),
                             ),
                             Text(
@@ -98,8 +136,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                                 },
                               ),
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: Colors.grey,
-                                fontSize: 11,
+                                color: AppColorRoles.textSecondary(isDark),
                               ),
                             ),
                           ],
@@ -108,28 +145,36 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       // XP earned
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 3,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.shade100,
-                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.warning.withValues(
+                            alpha: isDark ? 0.22 : 0.16,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.warning.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.star,
-                              size: 10,
-                              color: Colors.amber.shade800,
+                            const AppGameIcon(
+                              GameIcon.star,
+                              size: 13,
+                              fallbackColor: AppColors.warningDark,
                             ),
-                            const SizedBox(width: 3),
+                            const SizedBox(width: 4),
                             Text(
                               '+${provider.xpEarned} XP',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.amber.shade800,
+                                color: isDark
+                                    ? AppColors.warning
+                                    : AppColors.warningDark,
                               ),
                             ),
                           ],
@@ -137,28 +182,30 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // Progress bar
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
                       value: provider.progress,
-                      backgroundColor: AppColors.grey200,
+                      backgroundColor: isDark
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : AppColors.grey200,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         provider.allCompleted
                             ? AppColors.greenSuccessBright
                             : AppColors.purple,
                       ),
-                      minHeight: 5,
+                      minHeight: 8,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
 
                   // Mini challenge list
                   ...provider.challenges.take(3).map((challenge) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: _buildMiniChallenge(context, challenge, provider),
                     );
                   }),
@@ -166,25 +213,23 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                   // View all button
                   if (provider.challenges.length > 3)
                     Center(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: InkWell(
-                          onTap: () => _showChallengesSheet(context, provider),
-                          borderRadius: BorderRadius.circular(4),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                            child: Text(
-                              'home.viewAllChallenges'.tr(
-                                namedArgs: {
-                                  'count': '${provider.challenges.length}',
-                                },
-                              ),
-                              style: TextStyle(
-                                color: Colors.purple.shade600,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                      child: TextButton(
+                        onPressed: () =>
+                            _showChallengesSheet(context, provider),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(44, 44),
+                        ),
+                        child: Text(
+                          'home.viewAllChallenges'.tr(
+                            namedArgs: {
+                              'count': '${provider.challenges.length}',
+                            },
+                          ),
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.purpleLight
+                                : AppColors.purple,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -204,14 +249,16 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
     DailyChallengesProvider provider,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final categoryColor = _getCategoryColor(challenge.category, isDark: isDark);
+    final textMuted = AppColorRoles.textSecondary(isDark);
     return Row(
       children: [
-        Icon(
+        AppGameIcon(
           _getCategoryIcon(challenge.category),
-          size: 14,
-          color: _getCategoryColor(challenge.category, isDark: isDark),
+          size: 18,
+          fallbackColor: categoryColor,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             challenge.title,
@@ -219,19 +266,24 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
               decoration: challenge.isCompleted
                   ? TextDecoration.lineThrough
                   : null,
-              color: challenge.isCompleted ? Colors.grey : null,
-              fontSize: 13,
+              color: challenge.isCompleted
+                  ? textMuted
+                  : AppColorRoles.textPrimary(isDark),
             ),
           ),
         ),
         if (challenge.isCompleted)
-          Icon(Icons.check_circle, color: Colors.green.shade400, size: 16)
+          AppGameIcon(
+            GameIcon.checkmark,
+            size: 20,
+            fallbackColor: AppColors.greenSuccessBright,
+          )
         else
           Text(
             '${challenge.current}/${challenge.target}',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: Colors.grey, fontSize: 11),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: textMuted,
+            ),
           ),
       ],
     );
@@ -256,34 +308,34 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
       case 'vocabulary':
         return AppColors.purple;
       case 'streak':
-        return AppColors.orange;
+        return AppColors.deepOrange;
       case 'xp':
-        return AppColors.warning;
+        return isDark ? AppColors.warning : AppColors.warningDark;
       case 'voice':
         return Colors.pink;
       case 'social':
         return AppColors.teal;
       default:
-        return Colors.grey;
+        return AppColors.grey500;
     }
   }
 
-  IconData _getCategoryIcon(String category) {
+  GameIcon _getCategoryIcon(String category) {
     switch (category) {
       case 'lesson':
-        return Icons.school_rounded;
+        return GameIcon.lessonBoard;
       case 'vocabulary':
-        return Icons.library_books_rounded;
+        return GameIcon.book;
       case 'streak':
-        return Icons.local_fire_department_rounded;
+        return GameIcon.streakFire;
       case 'xp':
-        return Icons.bolt_rounded;
+        return GameIcon.bolt;
       case 'voice':
-        return Icons.mic_rounded;
+        return GameIcon.microphone;
       case 'social':
-        return Icons.people_rounded;
+        return GameIcon.peoplePair;
       default:
-        return Icons.star_rounded;
+        return GameIcon.star;
     }
   }
 }
@@ -297,11 +349,13 @@ class DailyChallengesSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = AppColors.purple;
 
     return Container(
       decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: isDark ? AppColors.surfaceDark : theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -314,7 +368,7 @@ class DailyChallengesSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey300,
+                color: isDark ? Colors.white.withValues(alpha: 0.2) : AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -324,7 +378,11 @@ class DailyChallengesSheet extends StatelessWidget {
           // Header
           Row(
             children: [
-              Icon(Icons.star, size: 28, color: AppColors.purple),
+              AppGameIcon(
+                GameIcon.star,
+                size: 28,
+                fallbackColor: isDark ? AppColors.purpleLight : accent,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -334,15 +392,16 @@ class DailyChallengesSheet extends StatelessWidget {
                       'home.dailyChallenges'.tr(),
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
+                        color: AppColorRoles.textPrimary(isDark),
                       ),
                     ),
                     Text(
                       'home.completeBonusXp'.tr(
                         namedArgs: {'xp': '${provider.bonusXp}'},
                       ),
-
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: AppColors.purple,
+                        color: isDark ? AppColors.purpleLight : accent,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
@@ -360,11 +419,13 @@ class DailyChallengesSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
                     value: provider.progress,
-                    backgroundColor: AppColors.grey200,
+                    backgroundColor: isDark
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : AppColors.grey200,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       provider.allCompleted
                           ? AppColors.greenSuccessBright
-                          : AppColors.purple,
+                          : accent,
                     ),
                     minHeight: 12,
                   ),
@@ -375,6 +436,7 @@ class DailyChallengesSheet extends StatelessWidget {
                 '${provider.completedCount}/${provider.totalChallenges}',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  color: AppColorRoles.textPrimary(isDark),
                 ),
               ),
             ],
@@ -386,7 +448,7 @@ class DailyChallengesSheet extends StatelessWidget {
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: provider.challenges.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final challenge = provider.challenges[index];
                 return _ChallengeCard(
@@ -405,16 +467,29 @@ class DailyChallengesSheet extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.amber.shade200, Colors.orange.shade200],
+                  colors: isDark
+                      ? [
+                          AppColors.warning.withValues(alpha: 0.3),
+                          AppColors.orange.withValues(alpha: 0.3),
+                        ]
+                      : AppColors.warmGradient
+                          .map((c) => c.withValues(alpha: 0.22))
+                          .toList(),
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: AppColors.orange.withValues(alpha: 0.35),
+                  width: 2,
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.emoji_events,
-                    size: 32,
-                    color: Colors.amber.shade800,
+                  AppGameIcon(
+                    GameIcon.trophy,
+                    size: 36,
+                    fallbackColor: isDark
+                        ? AppColors.warning
+                        : AppColors.warningDark,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -425,25 +500,27 @@ class DailyChallengesSheet extends StatelessWidget {
                           'home.allChallengesComplete'.tr(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: AppColorRoles.textPrimary(isDark),
                           ),
                         ),
                         Text(
                           'home.bonusXpEarned'.tr(
                             namedArgs: {'xp': '${provider.bonusXp}'},
                           ),
-
                           style: TextStyle(
-                            color: Colors.orange.shade800,
+                            color: isDark
+                                ? AppColors.warning
+                                : AppColors.deepOrange,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
-                    Icons.check_circle,
-                    color: AppColors.greenSuccessBright,
+                  const AppGameIcon(
+                    GameIcon.checkmark,
                     size: 32,
+                    fallbackColor: AppColors.greenSuccessBright,
                   ),
                 ],
               ),
@@ -491,37 +568,56 @@ class _ChallengeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
+    final categoryColor = _getCategoryColor(challenge.category, isDark: isDark);
+    final textMuted = AppColorRoles.textSecondary(isDark);
+
+    final completedBg = isDark
+        ? AppColors.greenSuccessBright.withValues(alpha: 0.12)
+        : AppColors.greenSuccessBg;
+    final completedBorder = isDark
+        ? AppColors.greenSuccessBright.withValues(alpha: 0.4)
+        : AppColors.greenSuccessSoft.withValues(alpha: 0.6);
+    final defaultBg = isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight;
+    final defaultBorder = isDark
+        ? Colors.white.withValues(alpha: 0.1)
+        : AppColors.grey200;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: challenge.isCompleted ? Colors.green.shade50 : theme.cardColor,
-        borderRadius: BorderRadius.circular(12),
+        color: challenge.isCompleted ? completedBg : defaultBg,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: challenge.isCompleted
-              ? Colors.green.shade200
-              : AppColors.grey200,
+          color: challenge.isCompleted ? completedBorder : defaultBorder,
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.04),
+            blurRadius: 0,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Icon
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _getCategoryColor(
-                challenge.category,
-                isDark: isDark,
-              ).withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: categoryColor.withValues(alpha: isDark ? 0.25 : 0.16),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
-              child: Icon(
+              child: AppGameIcon(
                 _getCategoryIcon(challenge.category),
-                size: 24,
-                color: _getCategoryColor(challenge.category, isDark: isDark),
+                size: 26,
+                fallbackColor: categoryColor,
               ),
             ),
           ),
@@ -536,6 +632,7 @@ class _ChallengeCard extends StatelessWidget {
                   challenge.title,
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
+                    color: AppColorRoles.textPrimary(isDark),
                     decoration: challenge.isCompleted
                         ? TextDecoration.lineThrough
                         : null,
@@ -545,7 +642,7 @@ class _ChallengeCard extends StatelessWidget {
                 Text(
                   challenge.description,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey,
+                    color: textMuted,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -557,14 +654,13 @@ class _ChallengeCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: challenge.progress,
-                          backgroundColor: AppColors.grey200,
+                          backgroundColor: isDark
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : AppColors.grey200,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             challenge.isCompleted
                                 ? AppColors.greenSuccessBright
-                                : _getCategoryColor(
-                                    challenge.category,
-                                    isDark: isDark,
-                                  ),
+                                : categoryColor,
                           ),
                           minHeight: 6,
                         ),
@@ -573,7 +669,9 @@ class _ChallengeCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       '${challenge.current}/${challenge.target}',
-                      style: theme.textTheme.bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -588,20 +686,34 @@ class _ChallengeCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.amber.shade100,
+                  color: AppColors.warning.withValues(
+                    alpha: isDark ? 0.22 : 0.16,
+                  ),
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.star, size: 12, color: Colors.amber.shade800),
+                    AppGameIcon(
+                      GameIcon.star,
+                      size: 12,
+                      fallbackColor: isDark
+                          ? AppColors.warning
+                          : AppColors.warningDark,
+                    ),
                     const SizedBox(width: 2),
                     Text(
                       '${challenge.xpReward}',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.amber.shade800,
+                        color: isDark
+                            ? AppColors.warning
+                            : AppColors.warningDark,
                       ),
                     ),
                   ],
@@ -610,20 +722,27 @@ class _ChallengeCard extends StatelessWidget {
               const SizedBox(height: 8),
               if (challenge.isCompleted)
                 if (isClaimed)
-                  const Icon(
-                    Icons.check_circle,
-                    color: AppColors.greenSuccessBright,
+                  const AppGameIcon(
+                    GameIcon.checkmark,
                     size: 28,
+                    fallbackColor: AppColors.greenSuccessBright,
                   )
                 else
-                  SizedBox(
-                    height: 28,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
                     child: ElevatedButton(
                       onPressed: onClaim,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.greenSuccessBright,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        textStyle: const TextStyle(fontSize: 11),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        textStyle: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       child: Text('home.claimReward'.tr()),
                     ),
@@ -642,34 +761,34 @@ class _ChallengeCard extends StatelessWidget {
       case 'vocabulary':
         return AppColors.purple;
       case 'streak':
-        return AppColors.orange;
+        return AppColors.deepOrange;
       case 'xp':
-        return AppColors.warning;
+        return isDark ? AppColors.warning : AppColors.warningDark;
       case 'voice':
         return Colors.pink;
       case 'social':
         return AppColors.teal;
       default:
-        return Colors.grey;
+        return AppColors.grey500;
     }
   }
 
-  IconData _getCategoryIcon(String category) {
+  GameIcon _getCategoryIcon(String category) {
     switch (category) {
       case 'lesson':
-        return Icons.school_rounded;
+        return GameIcon.lessonBoard;
       case 'vocabulary':
-        return Icons.library_books_rounded;
+        return GameIcon.book;
       case 'streak':
-        return Icons.local_fire_department_rounded;
+        return GameIcon.streakFire;
       case 'xp':
-        return Icons.bolt_rounded;
+        return GameIcon.bolt;
       case 'voice':
-        return Icons.mic_rounded;
+        return GameIcon.microphone;
       case 'social':
-        return Icons.people_rounded;
+        return GameIcon.peoplePair;
       default:
-        return Icons.star_rounded;
+        return GameIcon.star;
     }
   }
 }

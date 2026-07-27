@@ -6,7 +6,7 @@ Enhanced for roadmap/learning path UI
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from uuid import UUID
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from enum import Enum
 
 
@@ -34,7 +34,8 @@ class LessonCompletionBase(BaseModel):
     lesson_id: str = Field(..., description="UUID of the lesson")
     score: float = Field(..., ge=0, le=100, description="Score achieved (0-100)")
     
-    @validator('score')
+    @field_validator("score")
+    @classmethod
     def validate_score(cls, v):
         if v < 0 or v > 100:
             raise ValueError('Score must be between 0 and 100')
@@ -57,8 +58,7 @@ class LessonCompletionResponse(BaseModel):
     course_progress: float
     message: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProgressSummary(BaseModel):
@@ -71,8 +71,7 @@ class UserProgressSummary(BaseModel):
     longest_streak: int
     achievements_unlocked: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseProgressDetail(BaseModel):
@@ -87,8 +86,7 @@ class CourseProgressDetail(BaseModel):
     last_activity_at: datetime
     estimated_completion_days: Optional[int] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseProgressResponse(BaseModel):
@@ -96,8 +94,7 @@ class CourseProgressResponse(BaseModel):
     course: CourseProgressDetail
     units_progress: list[dict]  # List of unit progress details
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserActivityLog(BaseModel):
@@ -107,8 +104,7 @@ class UserActivityLog(BaseModel):
     xp_earned: int
     time_spent_minutes: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ProgressStatsResponse(BaseModel):
@@ -117,8 +113,7 @@ class ProgressStatsResponse(BaseModel):
     recent_activity: list[UserActivityLog]
     course_progress: list[CourseProgressDetail]
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -139,8 +134,7 @@ class LessonStartResponse(BaseModel):
     lives_remaining: int = 3
     hints_available: int = 3
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AnswerSubmitRequest(BaseModel):
@@ -164,8 +158,7 @@ class AnswerSubmitResponse(BaseModel):
     hints_remaining: int
     current_score: float
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LessonCompleteRequest(BaseModel):
@@ -191,8 +184,7 @@ class LessonCompleteResponse(BaseModel):
     wrong_answers: int
     hints_used: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -221,8 +213,7 @@ class LessonProgressItem(BaseModel):
     icon_url: Optional[str] = None
     background_color: Optional[str] = "#4CAF50"
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UnitProgressRoadmap(BaseModel):
@@ -245,8 +236,7 @@ class UnitProgressRoadmap(BaseModel):
     icon_url: Optional[str] = None
     background_color: Optional[str] = "#2196F3"
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseRoadmapResponse(BaseModel):
@@ -269,6 +259,4 @@ class CourseRoadmapResponse(BaseModel):
     # Roadmap data
     units: List[UnitProgressRoadmap]
     
-    class Config:
-        from_attributes = True
-
+    model_config = ConfigDict(from_attributes=True)

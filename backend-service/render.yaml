@@ -28,6 +28,9 @@ services:
       # AI Service (public production gateway)
       - key: AI_SERVICE_URL
         value: https://api.lexilingo.me/api/v1
+
+      - key: AI_ADMIN_API_KEY
+        sync: false  # Must match ai-service AI_ADMIN_API_KEY
       
       # JWT Secret
       - key: SECRET_KEY

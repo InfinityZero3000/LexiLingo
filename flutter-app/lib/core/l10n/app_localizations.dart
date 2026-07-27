@@ -4,7 +4,7 @@
 //   - 'home.greeting'.tr(namedArgs: {'name': 'An'})
 //   - 'plural.days'.plural(5)
 //   - context.locale  → current Locale
-//   - context.setLocale(Locale('en'))  → change language
+//   - LocaleService.updateAppLocale(context, 'en') → change language
 
 export 'package:easy_localization/easy_localization.dart'
     show EasyLocalization, BuildContextEasyLocalizationExtension;
@@ -37,10 +37,8 @@ class AppLocales {
   };
 
   static String flagCodeOf(String code) => metadata[code]?['flagCode'] ?? 'un';
-  static String flagSvgUrlOf(String code) =>
-      'https://flagcdn.com/${flagCodeOf(code)}.svg';
-  static String flagPngUrlOf(String code) =>
-      'https://flagcdn.com/w320/${flagCodeOf(code)}.png';
+  static String flagAssetOf(String code) =>
+      'assets/flags/${flagCodeOf(code)}.png';
   static String nameOf(String code) => metadata[code]?['name'] ?? code;
   static String nameEnOf(String code) => metadata[code]?['nameEn'] ?? code;
 }
@@ -49,11 +47,6 @@ class AppLocales {
 extension LocaleHelper on BuildContext {
   /// Current language code e.g. 'vi', 'en'
   String get languageCode => locale.languageCode;
-
-  /// Switch app language — updates easy_localization + persists
-  Future<void> switchLocale(String languageCode) async {
-    await setLocale(Locale(languageCode));
-  }
 
   /// Check if current locale matches code
   bool isLocale(String code) => locale.languageCode == code;

@@ -6,7 +6,7 @@ Models to download:
 1. STT: Faster-Whisper (openai/whisper-small)
 2. Context Encoder: sentence-transformers/all-MiniLM-L6-v2
 3. Pronunciation: facebook/hubert-large-ls960-ft
-4. TTS: Piper voices (en_US-lessac-medium)
+4. TTS: Piper voices (en_US-lessac-low)
 5. Vietnamese: vilm/vinallama-7b-chat (optional, lazy load)
 """
 
@@ -96,7 +96,7 @@ def download_hubert():
 def download_piper_voice():
     """Download Piper TTS voice"""
     print("\n" + "="*60)
-    print(" Downloading Piper TTS voice (en_US-lessac-medium)...")
+    print(" Downloading Piper TTS voice (en_US-lessac-low)...")
     print("="*60)
     
     try:
@@ -107,12 +107,12 @@ def download_piper_voice():
         tts_dir = Path("./models/piper")
         tts_dir.mkdir(parents=True, exist_ok=True)
         
-        voice_name = "en_US-lessac-medium"
-        base_url = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium"
+        voice_name = "en_US-lessac-low"
+        base_url = "https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/low"
         
         files = [
-            "en_US-lessac-medium.onnx",
-            "en_US-lessac-medium.onnx.json",
+            "en_US-lessac-low.onnx",
+            "en_US-lessac-low.onnx.json",
         ]
         
         for file in files:
@@ -208,10 +208,10 @@ STT_VAD=true
 STT_LANGUAGE=en
 
 # TTS: Piper
-TTS_MODEL_PATH=./models/piper/en_US-lessac-medium.onnx
-TTS_CONFIG_PATH=./models/piper/en_US-lessac-medium.onnx.json
+TTS_MODEL_PATH=./models/piper/en_US-lessac-low.onnx
+TTS_CONFIG_PATH=./models/piper/en_US-lessac-low.onnx.json
 TTS_SPEAKER_ID=0
-TTS_VOICE=en_US-lessac-medium
+TTS_VOICE=en_US-lessac-low
 
 # Embeddings: Sentence-Transformers
 EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2

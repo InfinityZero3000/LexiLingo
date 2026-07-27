@@ -20,6 +20,9 @@ class ApiConfig {
   static bool get isDev => environment == 'development';
   static bool get isProd => environment == 'production';
 
+  static bool get enableDuplexVoice =>
+      _readEnv('VOICE_DUPLEX_ENABLED')?.trim().toLowerCase() == 'true';
+
   /// Starter rewards require backend routes and a database migration.
   /// Production must opt in only after those dependencies are deployed.
   static bool get enableStarterReward {

@@ -166,6 +166,7 @@ class ScrambleWord {
   final int xpValue;
   final int letterCount;
   final String cefrLevel;
+  final String? vietnameseTranslation;
 
   const ScrambleWord({
     required this.wordId,
@@ -178,6 +179,7 @@ class ScrambleWord {
     this.xpValue = 10,
     this.letterCount = 0,
     this.cefrLevel = 'A1',
+    this.vietnameseTranslation,
   });
 
   factory ScrambleWord.fromJson(Map<String, dynamic> json) {
@@ -203,6 +205,7 @@ class ScrambleWord {
       xpValue: json['xp_value'] as int? ?? 10,
       letterCount: json['letter_count'] as int? ?? word.length,
       cefrLevel: json['cefr_level'] as String? ?? 'A1',
+      vietnameseTranslation: json['vietnamese_translation'] as String?,
     );
   }
 
@@ -217,6 +220,8 @@ class ScrambleWord {
     'xp_value': xpValue,
     'letter_count': letterCount,
     'cefr_level': cefrLevel,
+    if (vietnameseTranslation != null)
+      'vietnamese_translation': vietnameseTranslation,
   };
 
   ScrambleWord copyWith({
@@ -230,6 +235,7 @@ class ScrambleWord {
     int? xpValue,
     int? letterCount,
     String? cefrLevel,
+    String? vietnameseTranslation,
   }) {
     return ScrambleWord(
       wordId: wordId ?? this.wordId,
@@ -242,6 +248,7 @@ class ScrambleWord {
       xpValue: xpValue ?? this.xpValue,
       letterCount: letterCount ?? this.letterCount,
       cefrLevel: cefrLevel ?? this.cefrLevel,
+      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }
@@ -518,6 +525,7 @@ class SpellingBeeWord {
   /// Partial-credit XP.
   final int? xpPartial;
   final int maxReplays;
+  final String? vietnameseTranslation;
 
   const SpellingBeeWord({
     required this.wordId,
@@ -530,6 +538,7 @@ class SpellingBeeWord {
     this.xpFull,
     this.xpPartial,
     this.maxReplays = 3,
+    this.vietnameseTranslation,
   });
 
   factory SpellingBeeWord.fromJson(Map<String, dynamic> json) {
@@ -545,6 +554,7 @@ class SpellingBeeWord {
       xpFull: json['xp_full'] as int?,
       xpPartial: json['xp_partial'] as int?,
       maxReplays: json['max_replays'] as int? ?? 3,
+      vietnameseTranslation: json['vietnamese_translation'] as String?,
     );
   }
 
@@ -559,6 +569,8 @@ class SpellingBeeWord {
     if (xpFull != null) 'xp_full': xpFull,
     if (xpPartial != null) 'xp_partial': xpPartial,
     'max_replays': maxReplays,
+    if (vietnameseTranslation != null)
+      'vietnamese_translation': vietnameseTranslation,
   };
 
   SpellingBeeWord copyWith({
@@ -572,6 +584,7 @@ class SpellingBeeWord {
     int? xpFull,
     int? xpPartial,
     int? maxReplays,
+    String? vietnameseTranslation,
   }) {
     return SpellingBeeWord(
       wordId: wordId ?? this.wordId,
@@ -584,6 +597,7 @@ class SpellingBeeWord {
       xpFull: xpFull ?? this.xpFull,
       xpPartial: xpPartial ?? this.xpPartial,
       maxReplays: maxReplays ?? this.maxReplays,
+      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }
@@ -767,6 +781,7 @@ class HangmanGame {
   final int maxLives;
   final int baseXp;
   final List<String> availableCategories;
+  final String? vietnameseTranslation;
 
   const HangmanGame({
     this.sessionId = '',
@@ -779,6 +794,7 @@ class HangmanGame {
     required this.maxLives,
     required this.baseXp,
     this.availableCategories = const [],
+    this.vietnameseTranslation,
   });
 
   factory HangmanGame.fromJson(Map<String, dynamic> json) {
@@ -799,6 +815,7 @@ class HangmanGame {
               ?.map((e) => e as String)
               .toList() ??
           [],
+      vietnameseTranslation: json['vietnamese_translation'] as String?,
     );
   }
 
@@ -813,6 +830,8 @@ class HangmanGame {
     'max_lives': maxLives,
     'base_xp': baseXp,
     'available_categories': availableCategories,
+    if (vietnameseTranslation != null)
+      'vietnamese_translation': vietnameseTranslation,
   };
 
   HangmanGame copyWith({
@@ -826,6 +845,7 @@ class HangmanGame {
     int? maxLives,
     int? baseXp,
     List<String>? availableCategories,
+    String? vietnameseTranslation,
   }) {
     return HangmanGame(
       sessionId: sessionId ?? this.sessionId,
@@ -838,6 +858,7 @@ class HangmanGame {
       maxLives: maxLives ?? this.maxLives,
       baseXp: baseXp ?? this.baseXp,
       availableCategories: availableCategories ?? this.availableCategories,
+      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }

@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.token_blacklist import TokenBlacklist
 from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
 from app.models.user import User
 
@@ -36,6 +37,11 @@ async def get_current_user(
             return current_user
     """
     token = credentials.credentials
+    if await TokenBlacklist.is_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
     
     # 1) Try local JWT (backward compatibility)
     payload = decode_token(token)
@@ -96,6 +102,8 @@ async def get_current_user_optional(
         return None
     
     token = credentials.credentials
+    if await TokenBlacklist.is_blacklisted(token):
+        return None
     
     # 1) Try local JWT
     payload = decode_token(token)

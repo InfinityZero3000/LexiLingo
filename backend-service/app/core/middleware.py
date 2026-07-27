@@ -26,11 +26,17 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
             "/api/v1/auth/login": 300,          # relaxed — load testing from single IP
             "/api/v1/auth/register": 100,
             "/api/v1/auth/forgot-password": 50,
+            "/api/v1/auth/admin/login": 100,
+            "/api/v1/auth/admin/request-otp": 50,
+            "/api/v1/auth/admin/verify-otp": 100,
         }
     return {
         "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
         "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
         "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
+        "/api/v1/auth/admin/login": 5,
+        "/api/v1/auth/admin/request-otp": 3,
+        "/api/v1/auth/admin/verify-otp": 5,
     }
 
 try:

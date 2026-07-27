@@ -7,7 +7,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.models.course import Course, Unit, Lesson
 from app.models.user import User
@@ -85,7 +85,7 @@ class TestLearningSession:
         existing_attempt = LessonAttempt(
             user_id=test_user.id,
             lesson_id=test_lesson.id,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             total_questions=10,
             lives_remaining=2,
             hints_used=1,
@@ -124,6 +124,37 @@ class TestLearningSession:
         )
         
         assert response.status_code == 404
+
+    async def test_start_lesson_missing_exercises_rejected_in_production(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_course: Course,
+        test_unit: Unit,
+        monkeypatch,
+    ):
+        """Production should not silently serve demo exercises for empty lessons."""
+        lesson = Lesson(
+            course_id=test_course.id,
+            unit_id=test_unit.id,
+            title="Empty Lesson",
+            description="Missing content",
+            order_index=99,
+            lesson_type="vocabulary",
+            content={},
+        )
+        db_session.add(lesson)
+        await db_session.commit()
+        await db_session.refresh(lesson)
+        monkeypatch.setattr("app.routes.learning.settings.APP_ENV", "production")
+
+        response = await async_client.post(
+            f"/api/v1/learning/lessons/{lesson.id}/start",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 409
     
     async def test_submit_answer_correct(
         self,
@@ -320,7 +351,7 @@ class TestLearningSession:
         test_lesson_attempt: LessonAttempt
     ):
         """Test cannot complete already completed lesson"""
-        test_lesson_attempt.finished_at = datetime.utcnow()
+        test_lesson_attempt.finished_at = datetime.now(UTC)
         await db_session.commit()
         
         response = await async_client.post(

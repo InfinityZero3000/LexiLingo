@@ -56,7 +56,7 @@ flutter run
 
 ## 🌳 Branching Strategy
 
-We follow **Git Flow** branching model. See [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) for detailed guidelines.
+We follow **Git Flow** branching model. See [Git Workflow](docs/Report/RPT-011_GIT_WORKFLOW.md) for detailed guidelines.
 
 ### Branch Types
 ```
@@ -160,7 +160,7 @@ class MyClass {
   // Private with underscore
   final String _privateField;
   int _privateCounter = 0;
-  
+
   void _privateMethod() {}
 }
 ```
@@ -197,7 +197,7 @@ const kMaxWords = 100;
 // Main class
 class VocabPage extends StatefulWidget {
   const VocabPage({super.key});
-  
+
   @override
   State<VocabPage> createState() => _VocabPageState();
 }
@@ -205,19 +205,19 @@ class VocabPage extends StatefulWidget {
 // Private class
 class _VocabPageState extends State<VocabPage> {
   // State variables
-  
+
   // Lifecycle methods
   @override
   void initState() {
     super.initState();
   }
-  
+
   // Build method
   @override
   Widget build(BuildContext context) {
     return Container();
   }
-  
+
   // Private methods
   void _handleAction() {}
 }
@@ -311,7 +311,7 @@ class UserProfile extends StatelessWidget {
       ],
     );
   }
-  
+
   Widget _buildHeader() => Container();
   Widget _buildContent() => Container();
   Widget _buildFooter() => Container();
@@ -373,7 +373,7 @@ refactor(core): apply clean architecture
 test(chat): add unit tests for message service
 ```
 
-See [GIT_WORKFLOW.md](./GIT_WORKFLOW.md) for detailed commit guidelines.
+See [Git Workflow](docs/Report/RPT-011_GIT_WORKFLOW.md) for detailed commit guidelines.
 
 ## 🔄 Pull Request Process
 
@@ -445,10 +445,10 @@ test/
 test('should return list of words when repository call is successful', () async {
   // Arrange
   when(mockRepository.getWords()).thenAnswer((_) async => tWordList);
-  
+
   // Act
   final result = await useCase(NoParams());
-  
+
   // Assert
   expect(result, equals(tWordList));
   verify(mockRepository.getWords());
@@ -522,7 +522,7 @@ Thank you for contributing to LexiLingo! Your efforts help make this project bet
 
 ---
 
-**For detailed branching strategy, see:** [GIT_WORKFLOW.md](./GIT_WORKFLOW.md)  
-**For quick reference, see:** [GIT_QUICK_REFERENCE.md](./GIT_QUICK_REFERENCE.md)
+**For detailed branching strategy, see:** [Git Workflow](docs/Report/RPT-011_GIT_WORKFLOW.md)
+**For quick reference, see:** [Git Quick Reference](docs/Report/RPT-012_GIT_QUICK_REFERENCE.md)
 
 **Last Updated:** January 10, 2026

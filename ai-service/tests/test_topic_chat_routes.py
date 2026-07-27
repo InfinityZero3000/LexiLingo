@@ -6,10 +6,12 @@ get_topic_messages_metadata, check_llm_health, and helper functions.
 """
 
 import pytest
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException
 
 from api.routes import topic_chat as topic_route
+from api.services.topic_chat_service import TracecagResult
 
 
 # ─── Shared helpers ────────────────────────────────────────────────────────────
@@ -22,10 +24,16 @@ def _user(user_id: str = "u1") -> MagicMock:
 
 
 def _quota():
-    q = MagicMock()
-    q.rpm_used = 1
-    q.rpm_limit = 60
-    return q
+    return SimpleNamespace(
+        rpm_used=1,
+        rpm_limit=60,
+        rpd_used=1,
+        rpd_limit=1000,
+        tpm_used=10,
+        tpm_limit=60000,
+        tpd_used=10,
+        tpd_limit=1000000,
+    )
 
 
 def _make_db(session_doc=None, msg_docs=None, count=0):
@@ -293,3 +301,44 @@ async def test_check_llm_health_degraded_when_orchestrator_fails():
 
     assert result["status"] == "degraded"
     assert result["trace-cag_ready"] is False
+
+
+@pytest.mark.asyncio
+async def test_send_topic_message_passes_session_prompt_to_tracecag(monkeypatch):
+    session_doc = {
+        "session_id": "sess-1",
+        "user_id": "u1",
+        "session_type": "topic_based",
+        "preferred_llm": "trace-cag",
+        "difficulty_level": "B1",
+        "system_prompt": "You are Sarah, an airport check-in agent.",
+        "kg_seed_concepts": ["concept:travel.airport"],
+    }
+    db = _make_db(
+        session_doc=session_doc,
+        msg_docs=[{"role": "assistant", "content": "Good morning. Passport, please."}],
+    )
+    request_context = MagicMock(headers={})
+    request = topic_route.TopicChatRequest(user_id="u1", message="I need check in.")
+    tracecag = AsyncMock(
+        return_value=TracecagResult(
+            ai_response="Certainly, may I see your passport?",
+            llm_metadata={"provider": "trace-cag"},
+        )
+    )
+
+    monkeypatch.setattr(topic_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
+    monkeypatch.setattr(topic_route, "emit_ai_audit_event", AsyncMock())
+    monkeypatch.setattr(topic_route, "persist_topic_turn", AsyncMock(return_value="ai-1"))
+    monkeypatch.setattr(topic_route, "call_tracecag_with_retry", tracecag)
+
+    await topic_route.send_topic_message(
+        request_context,
+        "sess-1",
+        request,
+        db,
+        AsyncMock(),
+        _user("u1"),
+    )
+
+    assert tracecag.await_args.kwargs["topic_system_prompt"] == session_doc["system_prompt"]

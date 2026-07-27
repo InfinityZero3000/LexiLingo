@@ -183,6 +183,12 @@ def setup_logging(
         )
     
     logger.addHandler(console_handler)
+
+    # HTTP client INFO records include complete request URLs. Some providers
+    # authenticate with a query parameter, so allowing those records to inherit
+    # the root INFO level can disclose credentials in application logs.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
     
     # File handler if specified
     if log_file:

@@ -43,12 +43,15 @@ from app.routes import (
     auth_router,
     users_router,
     courses_router,
+    integrations_router,
     progress_router,
     vocabulary_router,
     gamification_router,
 )
 from app.routes.learning import router as learning_router
-from app.routes.admin import router as admin_router
+from app.routes.admin_courses import router as admin_courses_router
+from app.routes.admin_gamification import router as admin_gamification_router
+from app.routes.admin_system import router as admin_system_router
 from app.routes.content_agent import router as content_agent_router
 from app.routes.notification_campaign import router as notification_campaign_router
 from app.routes.ranking_agent import router as ranking_agent_router
@@ -70,6 +73,9 @@ from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
+from app.routes.learner_state import router as learner_state_router
+from app.routes.mistakes import router as mistakes_router
+from app.routes.well_known import router as well_known_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -117,11 +123,22 @@ async def lifespan(app: FastAPI):
         await RedisClient.connect()
     except Exception as e:
         logger.warning(f"Redis unavailable — rate limiting will use in-memory fallback: {e}")
+
+    if settings.LEARNER_STATE_ENABLED:
+        from app.services.learner_state_outbox import (
+            start_learner_state_outbox_worker,
+        )
+
+        start_learner_state_outbox_worker()
     
     yield
     
     # Shutdown
     logger.info("Shutting down...")
+    if settings.LEARNER_STATE_ENABLED:
+        from app.services.learner_state_outbox import stop_learner_state_outbox_worker
+
+        await stop_learner_state_outbox_worker()
     await RedisClient.close()
     await close_db()
     logger.info("Shutdown complete")
@@ -263,26 +280,66 @@ async def forward_proto_middleware(request: Request, call_next):
 @app.middleware("http")
 async def limit_request_body(request: Request, call_next):
     """Reject requests with bodies larger than MAX_REQUEST_BODY_BYTES."""
+    limit = settings.MAX_REQUEST_BODY_BYTES
+    if request.url.path.startswith(f"{settings.API_V1_PREFIX}/internal/learner-state"):
+        limit = settings.LEARNER_STATE_MAX_BODY_BYTES
     content_length = request.headers.get("content-length")
-    if content_length and int(content_length) > settings.MAX_REQUEST_BODY_BYTES:
+    try:
+        declared_length = int(content_length) if content_length else None
+    except ValueError:
+        return JSONResponse(status_code=400, content={"detail": "Invalid Content-Length"})
+    if declared_length is not None and declared_length > limit:
         return JSONResponse(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             content={"detail": "Request body too large"},
         )
-    return await call_next(request)
+    if request.method not in {"POST", "PUT", "PATCH"}:
+        return await call_next(request)
+
+    class _RequestBodyTooLarge(Exception):
+        pass
+
+    original_receive = request._receive
+    received = 0
+
+    async def limited_receive():
+        nonlocal received
+        message = await original_receive()
+        if message.get("type") == "http.request":
+            received += len(message.get("body", b""))
+            if received > limit:
+                raise _RequestBodyTooLarge
+        return message
+
+    request._receive = limited_receive
+    try:
+        return await call_next(request)
+    except _RequestBodyTooLarge:
+        return JSONResponse(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            content={"detail": "Request body too large"},
+        )
 
 # Include routers
+app.include_router(well_known_router)
 app.include_router(health_router, tags=["Health"])
 app.include_router(auth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["Authentication"])
 app.include_router(users_router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["Users"])
 app.include_router(courses_router, prefix=f"{settings.API_V1_PREFIX}/courses", tags=["Courses"])
+app.include_router(
+    integrations_router,
+    prefix=f"{settings.API_V1_PREFIX}/integrations",
+    tags=["Partner Integrations"],
+)
 app.include_router(course_categories_router, prefix=f"{settings.API_V1_PREFIX}/categories", tags=["Course Categories"])
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
-app.include_router(admin_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_courses_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")
@@ -293,6 +350,7 @@ app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["
 app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
 app.include_router(reminders_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Reminder Preferences"])
 app.include_router(notifications_router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
+app.include_router(mistakes_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Mistakes"])
 
 # Content Features
 app.include_router(youtube_router, prefix=f"{settings.API_V1_PREFIX}", tags=["YouTube"])
@@ -308,6 +366,7 @@ app.include_router(books_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Book
 app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["AI Audit"])
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
+app.include_router(learner_state_router, prefix=f"{settings.API_V1_PREFIX}")
 
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:

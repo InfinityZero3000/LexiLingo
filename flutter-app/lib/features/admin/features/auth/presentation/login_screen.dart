@@ -113,8 +113,8 @@ class LoginScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Image.asset(
-                                      'assets/out-app/LexiLingo-logo.png',
-                                      height: 30,
+                                      'assets/out-app/lexilingo-logo.png',
+                                      height: 22,
                                       fit: BoxFit.contain,
                                     ),
                                     Text(

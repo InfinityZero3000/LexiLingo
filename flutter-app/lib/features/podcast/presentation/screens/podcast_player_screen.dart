@@ -6,6 +6,7 @@ import '../../../../core/services/podcast_audio_handler.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/lottie_loading_widget.dart';
 import '../../../games/data/repositories/games_repository.dart';
+import '../../data/repositories/podcast_repository.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../widgets/audio_player_controls.dart';
 import '../widgets/transcript_panel.dart';
@@ -36,6 +37,7 @@ class PodcastPlayerScreen extends StatefulWidget {
 
 class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   PodcastAudioHandler? _handler;
+  final PodcastRepository _podcastRepository = PodcastRepository();
 
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -185,10 +187,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       );
     }
 
-    final progressRatio = _duration.inMilliseconds > 0
-        ? (_position.inMilliseconds / _duration.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
-
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
@@ -267,42 +265,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Progress bar ──
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progressRatio.toDouble(),
-                minHeight: 4,
-                backgroundColor: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : AppColors.grey200,
-                valueColor: AlwaysStoppedAnimation<Color>(cefrColor),
-              ),
-            ),
-            const SizedBox(height: 6),
-
-            // ── Time labels ──
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _formatDuration(_position),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
-                  ),
-                ),
-                Text(
-                  _formatDuration(_duration),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
             // ── Audio player controls ──
             AudioPlayerControls(
               onPlay: _handler!.play,
@@ -379,9 +341,14 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   Future<void> _generateTranscript() async {
     setState(() => _transcriptLoading = true);
     try {
-      // Placeholder: real implementation would call AI service.
-      await Future<void>.delayed(const Duration(seconds: 1));
-      setState(() => _transcript = null);
+      final transcript = await _podcastRepository.generateTranscript(
+        widget.episode,
+      );
+      if (!mounted) return;
+      setState(() => _transcript = transcript);
+    } catch (e) {
+      debugPrint('PodcastPlayerScreen: failed to generate transcript: $e');
+      if (mounted) setState(() => _transcript = null);
     } finally {
       if (mounted) setState(() => _transcriptLoading = false);
     }
@@ -401,16 +368,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       ),
       child: Icon(Icons.podcasts_rounded, size: 72, color: color),
     );
-  }
-
-  String _formatDuration(Duration d) {
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60);
-    final s = d.inSeconds.remainder(60);
-    if (h > 0) {
-      return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
-    }
-    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
   Color _cefrColor(String level) {

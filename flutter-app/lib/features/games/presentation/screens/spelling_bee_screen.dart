@@ -5,11 +5,20 @@ import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/games/data/services/game_pronunciation_service.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
+
+const _spellingBeePowerUps = [
+  ShopItemEntity.effectMistakeShield,
+  ShopItemEntity.effectTranslateHint,
+  ShopItemEntity.effectSkipToken,
+  ShopItemEntity.effectScoreMultiplier,
+];
 
 /// Spelling Bee game screen.
 ///
@@ -34,6 +43,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
   bool _isCorrect = false;
   bool _isFinishing = false;
   String? _audioErrorMessage;
+  String? _translationReveal;
+  int _scoreMultiplier = 1;
   final Map<String, String> _submittedAnswers = {};
 
   @override
@@ -63,8 +74,33 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
       _answered = false;
       _isCorrect = false;
       _audioErrorMessage = null;
+      _translationReveal = null;
       _inputController.clear();
     });
+  }
+
+  void _onPowerUpUsed(String itemType, Map<String, dynamic> effects) {
+    if (_answered) return;
+    final game = context.read<GamesProvider>().spellingBee;
+    if (game == null) return;
+    final word = game.words[_wordIndex];
+    switch (itemType) {
+      case ShopItemEntity.effectMistakeShield:
+        setState(() => _playsLeft += 1);
+        break;
+      case ShopItemEntity.effectTranslateHint:
+        setState(() => _translationReveal = word.vietnameseTranslation);
+        break;
+      case ShopItemEntity.effectSkipToken:
+        _submittedAnswers[word.wordId] = '';
+        setState(() => _answered = true);
+        Future.delayed(const Duration(milliseconds: 300), _nextWord);
+        break;
+      case ShopItemEntity.effectScoreMultiplier:
+        final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
+        setState(() => _scoreMultiplier = multiplier);
+        break;
+    }
   }
 
   Future<void> _playAudio() async {
@@ -164,7 +200,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
     final game = provider.spellingBee!;
     final xpResult = await provider.completeGame(
       gameType: GameType.spellingBee,
-      score: _correctCount,
+      score: _correctCount * _scoreMultiplier,
       totalQuestions: game.words.length,
       correctAnswers: _correctCount,
       answers: [
@@ -183,7 +219,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
           result: GameResult(
             gameType: GameType.spellingBee,
             cefrLevel: provider.selectedLevel,
-            score: _correctCount,
+            score: _correctCount * _scoreMultiplier,
             totalQuestions: game.words.length,
             correctAnswers: _correctCount,
             xpEarned: xpResult?.xpAwarded ?? 0,
@@ -259,12 +295,52 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                   color: AppColors.primary,
                   minHeight: 4,
                 ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: GamePowerUpTray(
+                    availableTypes: _spellingBeePowerUps,
+                    enabled: !_answered,
+                    onUse: _onPowerUpUsed,
+                  ),
+                ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(24),
                     child: Column(
                       children: [
                         const SizedBox(height: 20),
+                        if (_translationReveal != null)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.purple.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: AppColors.purple.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.translate_rounded,
+                                  size: 16,
+                                  color: AppColors.purple,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _translationReveal!,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         // Audio error banner
                         if (_audioErrorMessage != null)
                           Container(

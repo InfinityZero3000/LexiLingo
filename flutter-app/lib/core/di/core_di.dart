@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
-import 'package:lexilingo_app/core/network/interceptors/logging_interceptor.dart';
 import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
@@ -113,7 +112,6 @@ Future<void> registerCore({required bool skipDatabase}) async {
   sl.registerLazySingleton<ApiClient>(
     () => ApiClient(
       networkInfo: sl<NetworkInfo>(),
-      interceptors: [LoggingInterceptor()],
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
       onUnauthorized: () => _refreshBackendToken(sl<TokenStorage>()),
     ),
@@ -123,7 +121,6 @@ Future<void> registerCore({required bool skipDatabase}) async {
   sl.registerLazySingleton<AiApiClient>(
     () => AiApiClient(
       networkInfo: sl<NetworkInfo>(),
-      interceptors: [LoggingInterceptor()],
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
       onUnauthorized: () => _refreshBackendToken(sl<TokenStorage>()),
     ),

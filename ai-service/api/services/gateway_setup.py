@@ -128,8 +128,9 @@ async def _register_piper(gateway: ModelGateway) -> None:
     
     async def loader():
         config = PiperConfig(
-            model_path=os.getenv("PIPER_MODEL_PATH", "models/piper/en_US-lessac-medium.onnx"),
-            voice=os.getenv("PIPER_VOICE", "en_US-lessac-medium"),
+            model_path=os.getenv("PIPER_MODEL_PATH", "models/piper/en_US-lessac-low.onnx"),
+            voice=os.getenv("PIPER_VOICE", "en_US-lessac-low"),
+            sample_rate=int(os.getenv("PIPER_SAMPLE_RATE", "16000")),
         )
         handler = PiperHandler(config)
         await handler.load()

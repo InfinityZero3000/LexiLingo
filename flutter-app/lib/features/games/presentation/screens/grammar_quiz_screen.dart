@@ -1,14 +1,26 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
+
+const _grammarQuizPowerUps = [
+  ShopItemEntity.effectTimeFreeze,
+  ShopItemEntity.effectExtraTime,
+  ShopItemEntity.effectSkipToken,
+  ShopItemEntity.effectRevealHint,
+  ShopItemEntity.effectLuckyClover,
+  ShopItemEntity.effectScoreMultiplier,
+];
 
 /// Grammar Quiz game screen.
 ///
@@ -33,6 +45,10 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   bool _isFinishing = false;
   String? _feedbackText;
   final Map<String, String> _submittedAnswers = {};
+  final Set<int> _eliminatedIndices = {};
+  bool _luckyCloverActive = false;
+  int _scoreMultiplier = 1;
+  final _random = Random();
 
   // Per-topic correct tracking for mastery message
   final Map<String, int> _topicCorrect = {};
@@ -67,6 +83,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       _selectedIndex = null;
       _answered = false;
       _feedbackText = null;
+      _eliminatedIndices.clear();
     });
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
@@ -80,6 +97,51 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         _handleTimeout();
       }
     });
+  }
+
+  void _onPowerUpUsed(String itemType, Map<String, dynamic> effects) {
+    if (_answered) return;
+    final game = context.read<GamesProvider>().grammarQuiz;
+    if (game == null) return;
+    final q = game.questions[_questionIndex];
+    switch (itemType) {
+      case ShopItemEntity.effectTimeFreeze:
+      case ShopItemEntity.effectExtraTime:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(
+          () => _timeLeft = (_timeLeft + seconds).clamp(
+            0,
+            game.timerSecondsPerQuestion,
+          ),
+        );
+        break;
+      case ShopItemEntity.effectSkipToken:
+        _timer?.cancel();
+        _submittedAnswers[q.id] = '';
+        setState(() => _answered = true);
+        Future.delayed(const Duration(milliseconds: 300), _nextQuestion);
+        break;
+      case ShopItemEntity.effectRevealHint:
+        final wrongIndices = List.generate(q.options.length, (i) => i)
+            .where(
+              (i) =>
+                  q.options[i] != q.correctAnswer &&
+                  !_eliminatedIndices.contains(i),
+            )
+            .toList();
+        wrongIndices.shuffle(_random);
+        setState(() {
+          _eliminatedIndices.addAll(wrongIndices.take(2));
+        });
+        break;
+      case ShopItemEntity.effectLuckyClover:
+        setState(() => _luckyCloverActive = true);
+        break;
+      case ShopItemEntity.effectScoreMultiplier:
+        final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
+        setState(() => _scoreMultiplier = multiplier);
+        break;
+    }
   }
 
   void _handleTimeout() {
@@ -97,11 +159,15 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   }
 
   void _selectAnswer(int index) {
-    if (_answered) return;
+    if (_answered || _eliminatedIndices.contains(index)) return;
     _timer?.cancel();
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
-    final correct = q.options[index] == q.correctAnswer;
+    var correct = q.options[index] == q.correctAnswer;
+    if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
+      correct = true;
+      _luckyCloverActive = false;
+    }
     _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
     _recordTopic(q.topic, correct);
@@ -218,7 +284,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     if (!mounted) return;
     final xpResult = await provider.completeGame(
       gameType: GameType.grammarQuiz,
-      score: _correctCount,
+      score: _correctCount * _scoreMultiplier,
       totalQuestions: game.questions.length,
       correctAnswers: _correctCount,
       answers: [
@@ -237,7 +303,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
           result: GameResult(
             gameType: GameType.grammarQuiz,
             cefrLevel: provider.selectedLevel,
-            score: _correctCount,
+            score: _correctCount * _scoreMultiplier,
             totalQuestions: game.questions.length,
             correctAnswers: _correctCount,
             xpEarned: xpResult?.xpAwarded ?? 0,
@@ -333,6 +399,20 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          GamePowerUpTray(
+                            availableTypes: _grammarQuizPowerUps,
+                            enabled: !_answered,
+                            onUse: _onPowerUpUsed,
+                          ),
+                          if (_luckyCloverActive)
+                            const Padding(
+                              padding: EdgeInsets.only(top: 6),
+                              child: ActivePowerUpBadge(
+                                itemType: ShopItemEntity.effectLuckyClover,
+                                label: 'Lucky Clover Active',
+                              ),
+                            ),
+                          const SizedBox(height: 12),
                           // Topic chip
                           Chip(
                             label: Text(
@@ -390,6 +470,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                           const SizedBox(height: 16),
                           // Answer cards
                           ...List.generate(q.options.length, (i) {
+                            final eliminated = _eliminatedIndices.contains(i);
                             Color bg = Theme.of(context).colorScheme.surface;
                             Color border = Theme.of(
                               context,
@@ -416,9 +497,18 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               bg = AppColors.primary.withValues(alpha: 0.1);
                               border = AppColors.primary;
                               text = AppColors.primary;
+                            } else if (eliminated) {
+                              bg = Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest;
+                              text = Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.4,
+                              );
                             }
                             return GestureDetector(
-                              onTap: () => _selectAnswer(i),
+                              onTap: eliminated ? null : () => _selectAnswer(i),
                               child: AnimatedContainer(
                                 duration: const Duration(milliseconds: 180),
                                 margin: const EdgeInsets.only(bottom: 10),

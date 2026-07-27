@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-import '../../data/models/educational_hints_model.dart';
+import '../../domain/entities/educational_hints.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Educational Hints Card

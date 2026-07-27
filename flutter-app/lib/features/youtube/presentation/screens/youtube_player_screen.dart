@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -269,16 +270,10 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
-          IconButton(
+          AppBackButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-            style: IconButton.styleFrom(
-              backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : AppColors.grey100,
-              foregroundColor: isDark ? Colors.white : AppColors.textDark,
-              padding: const EdgeInsets.all(10),
-            ),
+            color: isDark ? Colors.white : AppColors.textDark,
+            iconSize: 18,
           ),
           const SizedBox(width: 12),
           Expanded(

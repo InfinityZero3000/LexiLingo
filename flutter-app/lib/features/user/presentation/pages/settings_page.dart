@@ -1,8 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
+import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:flutter/services.dart';
-import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -39,62 +39,16 @@ class _SettingsPageState extends State<SettingsPage> {
     if (authProvider.currentUser != null) {
       await context.read<SettingsProvider>().loadSettings(
         authProvider.currentUser!.id,
+        context,
       );
     }
   }
 
   Widget _buildFlagWidget(BuildContext context, String languageCode) {
-    final imageUrl = AppLocales.flagPngUrlOf(languageCode);
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: SizedBox(
-        width: _flagWidth,
-        height: _flagHeight,
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          fadeInDuration: Duration.zero,
-          placeholder: (_, __) => _buildFlagSkeleton(context),
-          errorWidget: (_, __, ___) =>
-              _buildFlagFallback(context, languageCode),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFlagSkeleton(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return LanguageFlag(
+      languageCode: languageCode,
       width: _flagWidth,
       height: _flagHeight,
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.grey700 : AppColors.grey300,
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-
-  Widget _buildFlagFallback(BuildContext context, String languageCode) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final label = AppLocales.flagCodeOf(languageCode).toUpperCase();
-
-    return Container(
-      width: _flagWidth,
-      height: _flagHeight,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(4),
-        color: isDark ? AppColors.grey800 : AppColors.grey200,
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
-        ),
-      ),
     );
   }
 
@@ -105,10 +59,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('settings.title'.tr()),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const AppBackButton(),
       ),
       body: settings.isLoading
           ? const Center(child: LottieLoadingWidget.medium())
@@ -191,6 +142,20 @@ class _SettingsPageState extends State<SettingsPage> {
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
                     context,
+                    icon: Icons.cloud_sync_outlined,
+                    title: 'offlineSync.settingsTitle'.tr(),
+                    subtitle: 'offlineSync.settingsSubtitle'.tr(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildOfflineSyncSection(context),
+                const SizedBox(height: 32),
+                AnimatedListItem(
+                  index: 6,
+                  duration: const Duration(milliseconds: 300),
+                  delayPerItem: const Duration(milliseconds: 50),
+                  child: _buildSectionHeader(
+                    context,
                     icon: Icons.people_outline_rounded,
                     title: 'settings.referral'.tr(),
                     subtitle: 'settings.referral_subtitle'.tr(),
@@ -200,7 +165,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildReferralSection(context),
                 const SizedBox(height: 32),
                 AnimatedListItem(
-                  index: 6,
+                  index: 7,
                   duration: const Duration(milliseconds: 300),
                   delayPerItem: const Duration(milliseconds: 50),
                   child: _buildSectionHeader(
@@ -797,6 +762,72 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildOfflineSyncSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, '/offline-sync'),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.cloud_done_outlined,
+                  color: primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'offlineSync.title'.tr(),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'offlineSync.entrySubtitle'.tr(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColorRoles.textMuted(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildReferralSection(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
@@ -804,7 +835,9 @@ class _SettingsPageState extends State<SettingsPage> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.black.withValues(alpha: 0.06),
         ),
       ),
       child: ListTile(
@@ -816,12 +849,20 @@ class _SettingsPageState extends State<SettingsPage> {
             color: Colors.green.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.card_giftcard_rounded, color: Colors.green, size: 20),
+          child: const Icon(
+            Icons.card_giftcard_rounded,
+            color: Colors.green,
+            size: 20,
+          ),
         ),
-        title: Text('settings.invite_friends'.tr(),
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text('settings.invite_friends_subtitle'.tr(),
-            style: const TextStyle(fontSize: 12)),
+        title: Text(
+          'settings.invite_friends'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          'settings.invite_friends_subtitle'.tr(),
+          style: const TextStyle(fontSize: 12),
+        ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         onTap: () => _showReferralSheet(context),
       ),
@@ -845,21 +886,35 @@ class _SettingsPageState extends State<SettingsPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40, height: 4,
+                width: 40,
+                height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300], borderRadius: BorderRadius.circular(2),
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Icon(Icons.card_giftcard_rounded, size: 48, color: Colors.green),
+              const Icon(
+                Icons.card_giftcard_rounded,
+                size: 48,
+                color: Colors.green,
+              ),
               const SizedBox(height: 12),
-              Text('settings.invite_title'.tr(),
-                  style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center),
+              Text(
+                'settings.invite_title'.tr(),
+                style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 8),
-              Text('settings.invite_desc'.tr(),
-                  style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                  textAlign: TextAlign.center),
+              Text(
+                'settings.invite_desc'.tr(),
+                style: Theme.of(
+                  ctx,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               FutureBuilder<Map<String, dynamic>>(
                 future: settingsProvider.getReferralCode(),
@@ -868,31 +923,48 @@ class _SettingsPageState extends State<SettingsPage> {
                     return const CircularProgressIndicator();
                   }
                   code = snap.data!['referral_code'] as String? ?? '';
-                  final total = (snap.data!['total_referrals'] as num?)?.toInt() ?? 0;
+                  final total =
+                      (snap.data!['total_referrals'] as num?)?.toInt() ?? 0;
                   return Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.green.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                          border: Border.all(
+                            color: Colors.green.withValues(alpha: 0.3),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Text(code ?? '',
-                                style: const TextStyle(
-                                  fontSize: 28, fontWeight: FontWeight.bold,
-                                  letterSpacing: 4, color: Colors.green,
-                                )),
+                            Text(
+                              code ?? '',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 4,
+                                color: Colors.green,
+                              ),
+                            ),
                             const SizedBox(width: 12),
                             IconButton(
-                              icon: const Icon(Icons.copy_rounded, color: Colors.green),
+                              icon: const Icon(
+                                Icons.copy_rounded,
+                                color: Colors.green,
+                              ),
                               onPressed: () {
-                                Clipboard.setData(ClipboardData(text: code ?? ''));
+                                Clipboard.setData(
+                                  ClipboardData(text: code ?? ''),
+                                );
                                 ScaffoldMessenger.of(ctx).showSnackBar(
-                                  SnackBar(content: Text('settings.code_copied'.tr())),
+                                  SnackBar(
+                                    content: Text('settings.code_copied'.tr()),
+                                  ),
                                 );
                               },
                             ),
@@ -901,8 +973,13 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'settings.referral_count'.tr(namedArgs: {'count': total.toString()}),
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        'settings.referral_count'.tr(
+                          namedArgs: {'count': total.toString()},
+                        ),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 13,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       FilledButton.icon(
@@ -955,7 +1032,8 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const LegalPage(type: LegalPageType.privacyPolicy),
+                builder: (_) =>
+                    const LegalPage(type: LegalPageType.privacyPolicy),
               ),
             ),
           ),
@@ -969,7 +1047,8 @@ class _SettingsPageState extends State<SettingsPage> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const LegalPage(type: LegalPageType.termsOfService),
+                builder: (_) =>
+                    const LegalPage(type: LegalPageType.termsOfService),
               ),
             ),
           ),
@@ -979,13 +1058,18 @@ class _SettingsPageState extends State<SettingsPage> {
             builder: (context, snapshot) {
               final version = snapshot.data?.version ?? '—';
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColorRoles.primary(isDark).withValues(alpha: 0.1),
+                        color: AppColorRoles.primary(
+                          isDark,
+                        ).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(

@@ -20,16 +20,16 @@ class _StubProgressRepository implements ProgressRepository {
 
   @override
   Future<Either<Failure, StreakEntity>> getMyStreak() async => Right(
-        StreakEntity(
-          currentStreak: updateResult.currentStreak,
-          longestStreak: updateResult.longestStreak,
-          totalDaysActive: updateResult.totalDaysActive,
-          lastActivityDate: DateTime.now().toIso8601String(),
-          freezeCount: updateResult.freezeCount,
-          isActiveToday: true,
-          streakAtRisk: false,
-        ),
-      );
+    StreakEntity(
+      currentStreak: updateResult.currentStreak,
+      longestStreak: updateResult.longestStreak,
+      totalDaysActive: updateResult.totalDaysActive,
+      lastActivityDate: DateTime.now().toIso8601String(),
+      freezeCount: updateResult.freezeCount,
+      isActiveToday: true,
+      streakAtRisk: false,
+    ),
+  );
 
   @override
   Future<Either<Failure, ProgressStatsEntity>> getMyProgress() async =>
@@ -37,19 +37,17 @@ class _StubProgressRepository implements ProgressRepository {
 
   @override
   Future<Either<Failure, CourseProgressWithUnits>> getCourseProgress(
-          String courseId) async =>
-      throw UnimplementedError();
+    String courseId,
+  ) async => throw UnimplementedError();
 
   @override
   Future<Either<Failure, LessonCompletionResult>> completeLesson({
     required String lessonId,
     required double score,
-  }) async =>
-      throw UnimplementedError();
+  }) async => throw UnimplementedError();
 
   @override
-  Future<Either<Failure, int>> getTotalXp() async =>
-      throw UnimplementedError();
+  Future<Either<Failure, int>> getTotalXp() async => throw UnimplementedError();
 
   @override
   Future<Either<Failure, WeeklyProgressEntity>> getWeeklyProgress() async =>
@@ -73,18 +71,18 @@ class _StubProgressRepository implements ProgressRepository {
 
   @override
   Future<Either<Failure, Map<String, dynamic>>> claimChallengeReward(
-          String challengeId) async =>
-      throw UnimplementedError();
+    String challengeId,
+  ) async => throw UnimplementedError();
 }
 
 StreakUpdateResult _result(int streak) => StreakUpdateResult(
-      currentStreak: streak,
-      longestStreak: streak,
-      totalDaysActive: streak,
-      freezeCount: 0,
-      streakIncreased: true,
-      streakSaved: false,
-    );
+  currentStreak: streak,
+  longestStreak: streak,
+  totalDaysActive: streak,
+  freezeCount: 0,
+  streakIncreased: true,
+  streakSaved: false,
+);
 
 void main() {
   group('StreakProvider.milestoneJustReached', () {
@@ -150,25 +148,25 @@ void main() {
   });
 
   group('StreakEntity.isMilestone', () {
-    StreakEntity _entity(int streak) => StreakEntity(
-          currentStreak: streak,
-          longestStreak: streak,
-          totalDaysActive: streak,
-          lastActivityDate: DateTime.now().toIso8601String(),
-          freezeCount: 0,
-          isActiveToday: true,
-          streakAtRisk: false,
-        );
+    StreakEntity entity(int streak) => StreakEntity(
+      currentStreak: streak,
+      longestStreak: streak,
+      totalDaysActive: streak,
+      lastActivityDate: DateTime.now().toIso8601String(),
+      freezeCount: 0,
+      isActiveToday: true,
+      streakAtRisk: false,
+    );
 
     for (final days in [7, 14, 30, 60, 100, 365]) {
       test('returns true for $days days', () {
-        expect(_entity(days).isMilestone, isTrue);
+        expect(entity(days).isMilestone, isTrue);
       });
     }
 
     for (final days in [1, 6, 8, 29, 31, 101]) {
       test('returns false for $days days', () {
-        expect(_entity(days).isMilestone, isFalse);
+        expect(entity(days).isMilestone, isFalse);
       });
     }
   });

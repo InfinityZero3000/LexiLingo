@@ -9,6 +9,8 @@ from app.models.notification import Notification
 from app.models.rbac import Role
 from app.models.reward_grant import UserRewardGrant
 from app.models.user import User
+from app.crud.gamification import WalletCRUD
+from app.core.cache import build_cache_key
 from app.services.starter_reward_service import StarterRewardService
 from app.core.firebase_auth import get_or_create_user_from_claims
 
@@ -126,6 +128,25 @@ async def test_mark_seen_is_idempotent(db_session, test_user):
         )
     ).scalars().all()
     assert len(grants) == 1
+
+
+async def test_add_gems_invalidates_wallet_cache(db_session, test_user, monkeypatch):
+    deleted = []
+
+    async def fake_delete_cached(key):
+        deleted.append(key)
+
+    monkeypatch.setattr("app.crud.gamification.delete_cached", fake_delete_cached)
+
+    await WalletCRUD.add_gems(
+        db_session,
+        test_user.id,
+        100,
+        source="test",
+        description="test grant",
+    )
+
+    assert deleted == [build_cache_key("wallet", user_id=str(test_user.id))]
 
 
 async def test_first_social_login_receives_reward_only_once(db_session):

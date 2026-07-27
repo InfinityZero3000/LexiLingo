@@ -106,7 +106,7 @@ backend-service/
 │   ├── models/            # SQLAlchemy models
 │   ├── schemas/           # Pydantic schemas
 │   ├── routes/            # API endpoints
-│   └── main.py           
+│   └── main.py
 ├── alembic/               # Database migrations
 ├── tests/                 # Unit tests
 ├── requirements.txt

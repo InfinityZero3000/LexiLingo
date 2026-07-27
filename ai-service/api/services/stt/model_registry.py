@@ -33,6 +33,7 @@ class STTModelRegistry:
             "disabled" if not config.verify_enabled else "unavailable"
         )
         self.vad_status = "fallback"
+        self.vad_fallback_count = 0
         self._vad_factory = SileroVADFactory(config.silero_model_path)
         self._verify_sem = asyncio.Semaphore(config.max_verify_concurrency)
 
@@ -82,6 +83,7 @@ class STTModelRegistry:
     def create_vad(self):
         if self.vad_status == "silero":
             return self._vad_factory.create(self.config)
+        self.vad_fallback_count += 1
         return EnergyEndpointDetector(self.config)
 
     async def create_primary_session(self, language: str):

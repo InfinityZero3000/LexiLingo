@@ -28,6 +28,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) {
@@ -39,6 +40,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       audioBase64: audioBase64,
       enableTts: enableTts,
       learnerLevel: learnerLevel,
+      nativeLanguage: nativeLanguage,
       storyContext: storyContext,
       idempotencyKey: idempotencyKey,
     );
@@ -88,7 +90,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
         );
       }
     } catch (e) {
-      if (_isSessionNotFoundError(e)) {
+      if (_isSessionAccessError(e)) {
         // Let provider handle stale session cleanup and auto-create a new session.
         rethrow;
       }
@@ -108,6 +110,14 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     return msg.contains('status 404') ||
         msg.contains('404') ||
         msg.contains('not found');
+  }
+
+  bool _isSessionAccessError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return _isSessionNotFoundError(error) ||
+        msg.contains('status 403') ||
+        msg.contains('403') ||
+        msg.contains('forbidden');
   }
 
   @override
@@ -137,6 +147,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) {
     return dataSource.sendMessageStream(
@@ -147,6 +158,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       audioBase64: audioBase64,
       enableTts: enableTts,
       learnerLevel: learnerLevel,
+      nativeLanguage: nativeLanguage,
       storyContext: storyContext,
     );
   }

@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/network/api_config.dart';
@@ -144,16 +145,9 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          IconButton(
+          AppBackButton(
             onPressed: _onBackPressed,
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-            style: IconButton.styleFrom(
-              backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white,
-              foregroundColor: isDark ? Colors.white : AppColors.textDark,
-              padding: const EdgeInsets.all(10),
-            ),
+            color: isDark ? Colors.white : AppColors.textDark,
           ),
           const SizedBox(width: 10),
           Expanded(

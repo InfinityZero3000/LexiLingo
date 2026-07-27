@@ -45,7 +45,7 @@ export const UserGrowthChart: React.FC<Props> = ({ data, loading }) => {
           <YAxis tick={{ fontSize: 12 }} />
           <Tooltip 
             labelFormatter={(value) => {
-              const date = new Date(value);
+              const date = new Date(String(value ?? ""));
               return date.toLocaleDateString("vi-VN");
             }}
             formatter={(value) => [Number(value ?? 0).toLocaleString(), ""]}

@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/di/service_locator.dart';
@@ -347,8 +348,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       ),
       child: Row(
         children: [
-          IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: textColor),
+          AppBackButton(
+            icon: Icons.arrow_back_rounded,
+            color: textColor,
             onPressed: () => Navigator.pop(context),
           ),
           Expanded(

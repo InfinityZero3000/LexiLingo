@@ -63,6 +63,7 @@ async def call_tracecag_with_retry(
     conversation_history: list[dict[str, Any]],
     kg_seeds: list[str],
     preferred_llm: str,
+    topic_system_prompt: str | None = None,
     primary_timeout: float = _PRIMARY_TIMEOUT,
     retry_timeout: float = _RETRY_TIMEOUT,
 ) -> TracecagResult:
@@ -82,7 +83,10 @@ async def call_tracecag_with_retry(
                 retrieval_policy="rapid",
                 diagnosis_policy="rules",
                 generation_policy="auto",
+                topic_system_prompt=topic_system_prompt,
                 kg_seed_concepts=kg_seeds or None,
+                # ponytail: topic persona changes output; include prompt in cache key before enabling.
+                cache_policy="off",
             ),
             timeout=primary_timeout,
         )
@@ -116,6 +120,7 @@ async def call_tracecag_with_retry(
                 retrieval_policy="rapid",
                 diagnosis_policy="rules",
                 generation_policy="auto",
+                topic_system_prompt=topic_system_prompt,
             ),
             timeout=retry_timeout,
         )

@@ -215,7 +215,7 @@ services:
    ```bash
    # Cập nhật DATABASE_URL trong .env
    export DATABASE_URL="postgresql://..."
-   
+
    cd backend-service
    alembic upgrade head
    ```
@@ -545,5 +545,5 @@ curl https://your-tunnel-url.trycloudflare.com/health
 - [ ] Setup monitoring
 - [ ] Enable auto-restart
 
-**Estimated setup time:** 2-3 hours  
+**Estimated setup time:** 2-3 hours
 **Result:** $0/month deployment! 🚀

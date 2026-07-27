@@ -447,6 +447,27 @@ server {
         proxy_pass http://ai_upstream;
     }
 
+    location = /api/v1/voice/ticket {
+        limit_req zone=ws_per_ip burst=2 nodelay;
+        limit_conn conn_per_ip 3;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
+    location = /api/v1/voice/stream {
+        limit_req zone=ws_per_ip burst=2 nodelay;
+        limit_conn conn_per_ip 3;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_pass http://ai_upstream;
+    }
+
+    location = /api/v1/voice/ready {
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
     # -------------------------------------------------------------------
     # AI Service admin routes (super-admin only; X-Admin-Key protected)
     # -------------------------------------------------------------------

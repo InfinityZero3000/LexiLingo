@@ -212,6 +212,7 @@ class ErrorCodes {
   static const String authInvalid = 'AUTH_INVALID';
   static const String authExpired = 'AUTH_EXPIRED';
   static const String authMissing = 'AUTH_MISSING';
+  static const String authForbidden = 'AUTH_FORBIDDEN';
   static const String permissionDenied = 'PERMISSION_DENIED';
 
   // Resource Errors

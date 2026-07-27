@@ -1,0 +1,62 @@
+{
+  "schema_version": "lexilingo.voice-gate0.v2",
+  "go": false,
+  "thresholds_ms": {
+    "piper_ttfa_p95": 150.0,
+    "llm_ttft_p95": 300.0
+  },
+  "admitted_latency": {
+    "piper_ttfa": {
+      "samples": 100,
+      "p50_ms": 394.6329794707708,
+      "p95_ms": 613.2596770185046
+    },
+    "llm_ttft": {
+      "samples": 100,
+      "p50_ms": 214.11005899426527,
+      "p95_ms": 321.36348297353834
+    }
+  },
+  "saturation": {
+    "piper": {
+      "1": {
+        "attempts": 1,
+        "accepted": 1,
+        "rejected_busy": 0,
+        "unexpected_errors": 0
+      },
+      "5": {
+        "attempts": 5,
+        "accepted": 1,
+        "rejected_busy": 4,
+        "unexpected_errors": 0
+      },
+      "10": {
+        "attempts": 10,
+        "accepted": 1,
+        "rejected_busy": 9,
+        "unexpected_errors": 0
+      }
+    },
+    "llm": {
+      "1": {
+        "attempts": 1,
+        "accepted": 1,
+        "rejected_busy": 0,
+        "unexpected_errors": 0
+      },
+      "5": {
+        "attempts": 5,
+        "accepted": 5,
+        "rejected_busy": 0,
+        "unexpected_errors": 0
+      },
+      "10": {
+        "attempts": 10,
+        "accepted": 7,
+        "rejected_busy": 3,
+        "unexpected_errors": 0
+      }
+    }
+  }
+}

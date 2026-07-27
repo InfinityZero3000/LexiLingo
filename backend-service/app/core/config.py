@@ -4,12 +4,13 @@ Application configuration
 Using Pydantic settings for type-safe configuration
 """
 
-from typing import List
-from pathlib import Path
 import os
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator, model_validator
+from datetime import UTC, datetime
+from pathlib import Path
+
 from dotenv import load_dotenv
+from pydantic import field_validator, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Get project root directory and load environment files explicitly.
 # Always load .env first, then override with .env.production in production mode.
@@ -22,14 +23,42 @@ if os.getenv("APP_ENV", "").lower() == "production":
 
 class Settings(BaseSettings):
     """Application settings."""
-    
+
     # Application
     APP_NAME: str = "LexiLingo Backend Service"
     APP_ENV: str = "development"
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = False
     PORT: int = 8000
-    
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug_flag(cls, value):
+        """Accept Flutter-style build mode strings used by local env files."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized == "release":
+                return False
+            if normalized == "debug":
+                return True
+        return value
+
+    @field_validator("LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT")
+    @classmethod
+    def validate_previous_token_expiry(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("previous learner-state token expiry must include a timezone")
+        return value.astimezone(UTC)
+
+    @field_validator("LEARNER_STATE_MAX_BODY_BYTES")
+    @classmethod
+    def validate_learner_state_body_limit(cls, value: int) -> int:
+        if value <= 0:
+            raise ValueError("LEARNER_STATE_MAX_BODY_BYTES must be positive")
+        return value
+
     # Database
     DATABASE_URL: str
     DB_ECHO: bool = False
@@ -52,7 +81,7 @@ class Settings(BaseSettings):
         elif url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
-    
+
     # Request limits
     MAX_REQUEST_BODY_BYTES: int = 10 * 1024 * 1024  # 10 MB
 
@@ -65,7 +94,7 @@ class Settings(BaseSettings):
     def effective_max_overflow(self) -> int:
         """Return larger overflow in production."""
         return 50 if self.is_production else self.DB_MAX_OVERFLOW
-    
+
     # Security
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
@@ -73,7 +102,9 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "lexilingo-services"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
+    # Comma-separated SHA-256 hashes of partner API keys.
+    LEXILINGO_PARTNER_API_KEY_HASHES: str = ""
+
     # CORS
     # ENABLE_APP_CORS: explicit override (takes priority over GATEWAY_HANDLES_CORS).
     # GATEWAY_HANDLES_CORS: set true only when an Nginx/Kong gateway sits in front
@@ -82,11 +113,11 @@ class Settings(BaseSettings):
     #   Default false (safe for direct Render/PaaS deployments without a gateway).
     ENABLE_APP_CORS: bool | None = None
     GATEWAY_HANDLES_CORS: bool = False
-    ALLOWED_ORIGINS: str = "https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me"
-    CORS_ALLOW_ORIGIN_REGEX: str = (
-        r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
+    ALLOWED_ORIGINS: str = (
+        "https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me"
     )
-    ALLOWED_HOSTS: List[str] = [
+    CORS_ALLOW_ORIGIN_REGEX: str = r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
+    ALLOWED_HOSTS: list[str] = [
         "api.lexilingo.me",
         "*.lexilingo.me",
         "lexilingo-backend.onrender.com",
@@ -99,15 +130,11 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [host.strip() for host in value.split(",") if host.strip()]
         return value
-    
+
     @property
-    def cors_origins(self) -> List[str]:
+    def cors_origins(self) -> list[str]:
         """Parse ALLOWED_ORIGINS string to list"""
-        return [
-            origin.strip()
-            for origin in self.ALLOWED_ORIGINS.split(",")
-            if origin.strip()
-        ]
+        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",") if origin.strip()]
 
     @model_validator(mode="after")
     def validate_production_security(self):
@@ -124,14 +151,18 @@ class Settings(BaseSettings):
         if self.enable_app_cors:
             origins = self.cors_origins
             local_origins = [
-                origin for origin in origins
-                if "localhost" in origin or "127.0.0.1" in origin
+                origin for origin in origins if "localhost" in origin or "127.0.0.1" in origin
             ]
             if "*" in origins:
-                raise ValueError("Wildcard CORS origins are not allowed with credentials in production")
+                raise ValueError(
+                    "Wildcard CORS origins are not allowed with credentials in production"
+                )
             if local_origins:
                 raise ValueError("Localhost CORS origins are not allowed when APP_ENV=production")
-            if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
+            if (
+                "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX
+                or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX
+            ):
                 raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
         if self.CONTENT_AGENT_ENABLED and not self.CONTENT_AGENT_SERVICE_TOKEN.strip():
@@ -139,8 +170,24 @@ class Settings(BaseSettings):
                 "CONTENT_AGENT_SERVICE_TOKEN is required when the content agent is enabled"
             )
 
+        if self.LEARNER_STATE_ENABLED and not self.LEARNER_STATE_INTERNAL_TOKEN.strip():
+            raise ValueError(
+                "LEARNER_STATE_INTERNAL_TOKEN is required when learner state is enabled"
+            )
+        if self.LEARNER_STATE_ENABLED:
+            if len(self.LEARNER_STATE_INTERNAL_TOKEN) < 32:
+                raise ValueError("LEARNER_STATE_INTERNAL_TOKEN must be at least 32 characters")
+            if not self.LEARNER_STATE_INTERNAL_AUDIENCE.strip():
+                raise ValueError("LEARNER_STATE_INTERNAL_AUDIENCE must not be empty")
+            previous = self.LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS
+            if previous:
+                if previous == self.LEARNER_STATE_INTERNAL_TOKEN:
+                    raise ValueError("current and previous learner-state tokens must differ")
+                if self.LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT is None:
+                    raise ValueError("previous learner-state token requires an expiry")
+
         return self
-    
+
     # Logging
     LOG_LEVEL: str = "INFO"
 
@@ -160,10 +207,21 @@ class Settings(BaseSettings):
     PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
     EMAIL_VERIFICATION_URL_BASE: str = "https://lexilingo.me/verify-email"
     EMAIL_VERIFICATION_URL_BASE_PRODUCTION: str | None = None
-    
+
     # AI Service (optional)
     AI_SERVICE_URL: str = "https://api.lexilingo.me/api/v1"
     AI_AUDIT_INGEST_SECRET: str = ""
+    LEARNER_STATE_ENABLED: bool = False
+    LEARNER_STATE_INTERNAL_TOKEN: str = ""
+    LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS: str = ""
+    LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT: datetime | None = None
+    LEARNER_STATE_INTERNAL_AUDIENCE: str = "lexilingo-backend"
+    LEARNER_STATE_MAX_BODY_BYTES: int = 512 * 1024
+    LEARNER_STATE_OUTBOX_BATCH_SIZE: int = 100
+    LEARNER_STATE_OUTBOX_POLL_MS: int = 100
+    LEARNER_STATE_OUTBOX_LEASE_SECONDS: int = 30
+    LEARNER_STATE_OUTBOX_MAX_ATTEMPTS: int = 10
+    LEARNER_STATE_STATEMENT_TIMEOUT_MS: int = 100
     CONTENT_AGENT_ENABLED: bool = False
     CONTENT_AGENT_SERVICE_TOKEN: str = ""
     CONTENT_AGENT_UPLOAD_TTL_DAYS: int = 7
@@ -189,21 +247,17 @@ class Settings(BaseSettings):
     SUPER_ADMIN_EMAIL_WHITELIST: str = ""
 
     @staticmethod
-    def _parse_email_list(raw_value: str) -> List[str]:
+    def _parse_email_list(raw_value: str) -> list[str]:
         """Normalize a comma-separated email allowlist."""
-        return [
-            email.strip().lower()
-            for email in raw_value.split(",")
-            if email.strip()
-        ]
+        return [email.strip().lower() for email in raw_value.split(",") if email.strip()]
 
     @property
-    def admin_email_whitelist(self) -> List[str]:
+    def admin_email_whitelist(self) -> list[str]:
         """Emails allowed to access the admin application."""
         return self._parse_email_list(self.ADMIN_EMAIL_WHITELIST)
 
     @property
-    def super_admin_email_whitelist(self) -> List[str]:
+    def super_admin_email_whitelist(self) -> list[str]:
         """Emails that should receive super_admin on first Google login."""
         return self._parse_email_list(self.SUPER_ADMIN_EMAIL_WHITELIST)
 
@@ -262,24 +316,22 @@ class Settings(BaseSettings):
         return self.CELERY_RESULT_BACKEND or self.REDIS_URL
 
     # ── External API Keys (Phase 0+ Content Features) ──
-    YOUTUBE_API_KEY: str | None = None           # YouTube Data API v3
-    NEWSAPI_KEY: str | None = None               # NewsAPI.org
-    NEWSDATA_KEY: str | None = None              # NewsData.io (fallback)
-    PODCASTINDEX_KEY: str | None = None          # PodcastIndex.org
-    PODCASTINDEX_SECRET: str | None = None       # PodcastIndex.org secret
+    YOUTUBE_API_KEY: str | None = None  # YouTube Data API v3
+    NEWSAPI_KEY: str | None = None  # NewsAPI.org
+    NEWSDATA_KEY: str | None = None  # NewsData.io (fallback)
+    PODCASTINDEX_KEY: str | None = None  # PodcastIndex.org
+    PODCASTINDEX_SECRET: str | None = None  # PodcastIndex.org secret
     DICTIONARY_API_BASE_URL: str = "https://api.dictionaryapi.dev/api/v2/entries/en"
-    
+
     model_config = SettingsConfigDict(
-        env_file=str(PROJECT_ROOT / ".env"),
-        case_sensitive=True,
-        extra="ignore"
+        env_file=str(PROJECT_ROOT / ".env"), case_sensitive=True, extra="ignore"
     )
-    
+
     @property
     def is_development(self) -> bool:
         """Check if running in development mode."""
         return self.APP_ENV == "development"
-    
+
     @property
     def is_production(self) -> bool:
         """Check if running in production mode."""

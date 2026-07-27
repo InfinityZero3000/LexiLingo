@@ -13,7 +13,7 @@ Báo cáo này trình bày phân tích chi tiết về kiến trúc phần mềm
 ## PHẦN 1: KIẾN TRÚC TỔNG THỂ HỆ THỐNG
 
 ### 1.1 Kiến trúc Client (Flutter App)
-Ứng dụng sử dụng kiến trúc phân chia theo tính năng (**Feature-first Architecture**), kết hợp với Dependency Injection (`get_it`) và State Management thông qua `Provider`. 
+Ứng dụng sử dụng kiến trúc phân chia theo tính năng (**Feature-first Architecture**), kết hợp với Dependency Injection (`get_it`) và State Management thông qua `Provider`.
 Tầng giao tiếp mạng (Network Layer) sử dụng package `http` và `dio`, đi kèm cơ chế tự động chuyển đổi môi trường (Development/Production).
 
 ### 1.2 Kiến trúc Server-side (Microservices-oriented)
@@ -70,7 +70,7 @@ Trang chủ đóng vai trò là "Bộ não" dẫn đường, giúp người dùn
     *   `LexiChatProvider`, `VoiceProvider`, `SpeechRecognitionProvider`.
     *   `VoiceRemoteDataSource`.
 *   **API Endpoints & Dịch vụ:**
-    *   **AI Service endpoints:** 
+    *   **AI Service endpoints:**
         *   `POST /stt/transcribe` (truyền Audio dạng `Uint8List` để nhận diện giọng nói).
         *   `POST /tts/synthesize` (nhận đoạn text từ AI và trả về bytes âm thanh).
     *   **Backend endpoints:**

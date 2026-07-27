@@ -12,6 +12,7 @@ Provides:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import os
 import time
@@ -37,6 +38,7 @@ def _get_httpx_client(provider: str) -> Any:
     if provider not in _HTTPX_CLIENTS:
         import httpx
         _HTTPX_CLIENTS[provider] = httpx.AsyncClient(
+            http2=True,
             limits=httpx.Limits(
                 max_connections=20,
                 max_keepalive_connections=10,
@@ -73,7 +75,6 @@ async def _throttled_post_json(
     provider: str,
     url: str,
     payload: Dict[str, Any],
-    httpx_module: Any,
     headers: Optional[Dict[str, str]] = None,
     timeout: float = 30.0,
     max_retries: int = 3,
@@ -92,65 +93,61 @@ async def _throttled_post_json(
         except ValueError:
             pass
 
-    lock = _PROVIDER_QUEUE_LOCKS.setdefault(provider, asyncio.Lock())
+    state_key = provider
+    if provider == "groq" and headers and headers.get("Authorization"):
+        fingerprint = hashlib.sha256(headers["Authorization"].encode()).hexdigest()[:16]
+        state_key = f"groq:{fingerprint}"
+    lock = _PROVIDER_QUEUE_LOCKS.setdefault(state_key, asyncio.Lock())
     response = None
     retry_after: float = 0.0
 
     for attempt in range(1, max_retries + 1):
-        if _provider_is_disabled(provider):
+        if _provider_is_disabled(state_key):
             logger.warning(f"[llm_throttle] Skipping disabled provider={provider} (quota cooldown active)")
             return response
 
         rpm = _provider_rpm(provider)
         min_interval = 60.0 / max(rpm, 1)
 
-        # --- Step 1: wait for rate-limit window OUTSIDE the lock ---
-        # Poll in ≤1 s increments so env changes (key rotation clearing the
-        # throttle state) are picked up quickly.
+        # Wait outside the lock, then retry admission without consuming an HTTP
+        # retry when another coroutine reserved the next provider slot first.
         while True:
             now = time.monotonic()
-            wait = max(0.0, _PROVIDER_NEXT_REQUEST_AT.get(provider, now) - now)
-            if wait <= 0:
-                break
-            last_log_at = _PROVIDER_LAST_WAIT_LOG_AT.get(provider, 0.0)
-            # Log at most every 10s for long cooldowns to avoid flooding benchmark output.
-            if (now - last_log_at) >= 10.0 or wait <= 3.0:
-                logger.info(
-                    f"[llm_throttle] Waiting {min(wait, 1.0):.2f}s before {provider} request "
-                    f"to stay within {rpm} req/min (remaining {wait:.1f}s)"
+            wait = max(0.0, _PROVIDER_NEXT_REQUEST_AT.get(state_key, now) - now)
+            if wait > 0:
+                last_log_at = _PROVIDER_LAST_WAIT_LOG_AT.get(state_key, 0.0)
+                if (now - last_log_at) >= 10.0 or wait <= 3.0:
+                    logger.info(
+                        f"[llm_throttle] Waiting {min(wait, 1.0):.2f}s before {provider} request "
+                        f"to stay within {rpm} req/min (remaining {wait:.1f}s)"
+                    )
+                    _PROVIDER_LAST_WAIT_LOG_AT[state_key] = now
+                await asyncio.sleep(min(wait, 1.0))
+                continue
+
+            async with lock:
+                now = time.monotonic()
+                if _PROVIDER_NEXT_REQUEST_AT.get(state_key, now) > now:
+                    continue
+
+                client = _get_httpx_client(provider)
+                response = await client.post(url, headers=headers, json=payload, timeout=timeout)
+                _PROVIDER_NEXT_REQUEST_AT[state_key] = time.monotonic() + min_interval
+
+                if response.status_code != 429:
+                    return response
+
+                retry_after = _parse_retry_after_seconds(response.headers.get("Retry-After"))
+                error_text = str(getattr(response, "text", "") or "").lower()
+                if any(marker in error_text for marker in ["tokens per day", "quota", "billing", "resource_exhausted"]):
+                    _disable_provider(state_key, max(retry_after, 300.0))
+                if retry_after <= 0:
+                    retry_after = max(min_interval * 2.0, 15.0)
+                _PROVIDER_NEXT_REQUEST_AT[state_key] = max(
+                    _PROVIDER_NEXT_REQUEST_AT.get(state_key, time.monotonic()),
+                    time.monotonic() + retry_after,
                 )
-                _PROVIDER_LAST_WAIT_LOG_AT[provider] = now
-            await asyncio.sleep(min(wait, 1.0))
-
-        # --- Step 2: acquire lock only for HTTP request + timestamp update ---
-        async with lock:
-            # Re-check inside lock: another coroutine may have fired between our
-            # pre-lock poll and now; if so, skip this attempt and let the outer
-            # while loop wait again.
-            now = time.monotonic()
-            residual = max(0.0, _PROVIDER_NEXT_REQUEST_AT.get(provider, now) - now)
-            if residual > 0:
-                continue  # release lock immediately, re-enter wait loop
-
-            client = _get_httpx_client(provider)
-            response = await client.post(url, headers=headers, json=payload, timeout=timeout)
-
-            _PROVIDER_NEXT_REQUEST_AT[provider] = time.monotonic() + min_interval
-
-            if response.status_code != 429:
-                return response
-
-            retry_after = _parse_retry_after_seconds(response.headers.get("Retry-After"))
-            error_text = str(getattr(response, "text", "") or "").lower()
-            if any(marker in error_text for marker in ["tokens per day", "quota", "billing", "resource_exhausted"]):
-                # Hard quota exhaustion should temporarily trip circuit breaker in benchmark runs.
-                _disable_provider(provider, max(retry_after, 300.0))
-            if retry_after <= 0:
-                retry_after = max(min_interval * 2.0, 15.0)
-            _PROVIDER_NEXT_REQUEST_AT[provider] = max(
-                _PROVIDER_NEXT_REQUEST_AT.get(provider, time.monotonic()),
-                time.monotonic() + retry_after,
-            )
+                break
 
         # --- Step 3: 429 backoff sleep OUTSIDE the lock ---
         # Releasing the lock here lets a rotated key (which clears

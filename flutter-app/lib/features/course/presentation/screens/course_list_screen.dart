@@ -56,137 +56,153 @@ class _CourseListScreenState extends State<CourseListScreen> {
     return Scaffold(
       body: Consumer<CourseProvider>(
         builder: (context, provider, child) {
-          return CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // Modern SliverAppBar with gradient
-              SliverAppBar(
-                expandedHeight: 100,
-                floating: true,
-                pinned: true,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                automaticallyImplyLeading: false,
-                flexibleSpace: FlexibleSpaceBar(
-                  background: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Row(
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  // Modern SliverAppBar with gradient
+                  SliverAppBar(
+                    expandedHeight: 100,
+                    floating: true,
+                    pinned: true,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    automaticallyImplyLeading: false,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: primaryAccent,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.explore,
-                                  color: Theme.of(context).colorScheme.surface,
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'course.discoverCourses'.tr(),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineSmall
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  Text(
-                                    '${provider.courses.length} courses available',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(color: Colors.grey[600]),
-                                  ),
-                                ],
-                              ),
-                              const Spacer(),
-                              Stack(
+                              Row(
                                 children: [
                                   Container(
+                                    padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: provider.hasActiveFilters
-                                          ? primaryAccent
-                                          : primaryAccent.withValues(
-                                              alpha: 0.14),
+                                      color: primaryAccent,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        Icons.tune_rounded,
-                                        color: provider.hasActiveFilters
-                                            ? Colors.white
-                                            : primaryAccent,
-                                      ),
-                                      onPressed: () =>
-                                          _showFilterSheet(context),
-                                      tooltip: 'Filter',
+                                    child: Icon(
+                                      Icons.explore,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                      size: 24,
                                     ),
                                   ),
-                                  if (provider.hasActiveFilters)
-                                    Positioned(
-                                      top: 6,
-                                      right: 6,
-                                      child: Container(
-                                        width: 8,
-                                        height: 8,
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'course.discoverCourses'.tr(),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      Text(
+                                        '${provider.courses.length} courses available',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(color: Colors.grey[600]),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Stack(
+                                    children: [
+                                      Container(
                                         decoration: BoxDecoration(
-                                          color: Colors.amber,
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: Theme.of(context)
-                                                .scaffoldBackgroundColor,
-                                            width: 1.5,
+                                          color: provider.hasActiveFilters
+                                              ? primaryAccent
+                                              : primaryAccent.withValues(
+                                                  alpha: 0.14,
+                                                ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
                                           ),
                                         ),
+                                        child: IconButton(
+                                          icon: Icon(
+                                            Icons.tune_rounded,
+                                            color: provider.hasActiveFilters
+                                                ? Colors.white
+                                                : primaryAccent,
+                                          ),
+                                          onPressed: () =>
+                                              _showFilterSheet(context),
+                                          tooltip: 'Filter',
+                                        ),
                                       ),
-                                    ),
+                                      if (provider.hasActiveFilters)
+                                        Positioned(
+                                          top: 6,
+                                          right: 6,
+                                          child: Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              color: Colors.amber,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(
+                                                color: Theme.of(
+                                                  context,
+                                                ).scaffoldBackgroundColor,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
+                    actions: const [],
                   ),
-                ),
-                actions: const [],
+
+                  // Hero banner below heading
+                  const SliverToBoxAdapter(child: _CourseBanner()),
+
+                  // Content
+                  if ((provider.isLoadingCourses ||
+                          provider.isLoadingCategories) &&
+                      provider.courses.isEmpty &&
+                      provider.categories.isEmpty)
+                    const SliverFillRemaining(
+                      child: Center(child: LottieLoadingWidget.medium()),
+                    )
+                  else if (provider.coursesError != null &&
+                      provider.courses.isEmpty)
+                    SliverFillRemaining(
+                      child: ErrorDisplayWidget.fromMessage(
+                        message: provider.coursesError!,
+                        onRetry: () {
+                          provider.refreshCourses();
+                          provider.loadCategories();
+                        },
+                      ),
+                    )
+                  else if (provider.courses.isEmpty)
+                    SliverFillRemaining(child: EmptyStateWidget.courses())
+                  else
+                    _buildCourseContent(context, provider),
+                ],
               ),
-
-              // Hero banner below heading
-              const SliverToBoxAdapter(child: _CourseBanner()),
-
-              // Content
-              if ((provider.isLoadingCourses || provider.isLoadingCategories) &&
-                  provider.courses.isEmpty &&
-                  provider.categories.isEmpty)
-                const SliverFillRemaining(
-                  child: Center(child: LottieLoadingWidget.medium()),
-                )
-              else if (provider.coursesError != null &&
-                  provider.courses.isEmpty)
-                SliverFillRemaining(
-                  child: ErrorDisplayWidget.fromMessage(
-                    message: provider.coursesError!,
-                    onRetry: () {
-                      provider.refreshCourses();
-                      provider.loadCategories();
-                    },
-                  ),
-                )
-              else if (provider.courses.isEmpty)
-                SliverFillRemaining(
-                  child: EmptyStateWidget.courses(),
-                )
-              else
-                _buildCourseContent(context, provider),
-            ],
+            ),
           );
         },
       ),
@@ -199,9 +215,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
     // Show empty-filtered state when client-side filters result in nothing
     if (displayCourses.isEmpty) {
-      return SliverFillRemaining(
-        child: EmptyStateWidget.searchResults(),
-      );
+      return SliverFillRemaining(child: EmptyStateWidget.searchResults());
     }
 
     final categories = provider.categories;
@@ -249,64 +263,66 @@ class _CourseListScreenState extends State<CourseListScreen> {
       final levelKeys = grouped.keys.toList();
 
       return SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            if (index == levelKeys.length) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: LottieLoadingWidget.small(),
-                ),
-              );
-            }
-            final levelKey = levelKeys[index];
-            final courses = grouped[levelKey]!;
-            return _CategorySection(
-              categoryId: levelKey,
-              title: levelKey,
-              description:
-                  '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
-              icon: _getLevelIcon(levelKey),
-              color: _getLevelColor(levelKey, isDark: isDark),
-              courses: courses,
-              onCourseTap: (course, fallbackThumbnailUrl) =>
-                  _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
-              onSeeAll: null,
+        delegate: SliverChildBuilderDelegate((context, index) {
+          if (index == levelKeys.length) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: LottieLoadingWidget.small(),
+              ),
             );
-          },
-          childCount: levelKeys.length + (provider.isLoadingCourses ? 1 : 0),
-        ),
+          }
+          final levelKey = levelKeys[index];
+          final courses = grouped[levelKey]!;
+          return _CategorySection(
+            categoryId: levelKey,
+            title: levelKey,
+            description:
+                '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
+            icon: _getLevelIcon(levelKey),
+            color: _getLevelColor(levelKey, isDark: isDark),
+            courses: courses,
+            onCourseTap: (course, fallbackThumbnailUrl) =>
+                _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
+            onSeeAll: null,
+          );
+        }, childCount: levelKeys.length + (provider.isLoadingCourses ? 1 : 0)),
       );
     }
 
     return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        if (index == nonEmptyCategorySections.length) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16.0),
-              child: LottieLoadingWidget.small(),
-            ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          if (index == nonEmptyCategorySections.length) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: LottieLoadingWidget.small(),
+              ),
+            );
+          }
+
+          final section = nonEmptyCategorySections[index];
+          final category = section.key;
+          final categoryCourses = section.value;
+
+          return _CategorySection(
+            categoryId: category.id,
+            title: category.name,
+            description:
+                '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
+            icon: _parseCategoryIcon(category.icon ?? 'book'),
+            color: _parseCategoryColor(category.color, isDark: isDark),
+            courses: categoryCourses,
+            onCourseTap: (course, fallbackThumbnailUrl) =>
+                _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
+            onSeeAll: () => _navigateToCategoryDetail(context, category.id),
           );
-        }
-
-        final section = nonEmptyCategorySections[index];
-        final category = section.key;
-        final categoryCourses = section.value;
-
-        return _CategorySection(
-          categoryId: category.id,
-          title: category.name,
-          description:
-              '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
-          icon: _parseCategoryIcon(category.icon ?? 'book'),
-          color: _parseCategoryColor(category.color, isDark: isDark),
-          courses: categoryCourses,
-          onCourseTap: (course, fallbackThumbnailUrl) =>
-              _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
-          onSeeAll: () => _navigateToCategoryDetail(context, category.id),
-        );
-      }, childCount: nonEmptyCategorySections.length + (provider.isLoadingCourses ? 1 : 0)),
+        },
+        childCount:
+            nonEmptyCategorySections.length +
+            (provider.isLoadingCourses ? 1 : 0),
+      ),
     );
   }
 
@@ -948,7 +964,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     ];
     const business = [
       'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
-      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',    // financial charts
+      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80', // financial charts
       'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&q=80', // laptop workspace
     ];
     const conversation = [
@@ -992,7 +1008,7 @@ class _HorizontalCourseCard extends StatelessWidget {
       'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
     ];
     const intermediate = [
-      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80',    // open book pages
+      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80', // open book pages
       'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop on desk
       'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
     ];
@@ -1002,7 +1018,9 @@ class _HorizontalCourseCard extends StatelessWidget {
       'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // office buildings
     ];
 
-    if (tags.contains('ielts') || tags.contains('test-prep') || tags.contains('exam')) {
+    if (tags.contains('ielts') ||
+        tags.contains('test-prep') ||
+        tags.contains('exam')) {
       return ielts[pick % ielts.length];
     }
     if (tags.contains('business') || tags.contains('business-english')) {
@@ -1412,7 +1430,6 @@ class _FilterSheetState extends State<_FilterSheet> {
     _sortOrder = p.sortOrder;
   }
 
-
   bool get _hasAnyFilter =>
       _language != null ||
       _level != null ||
@@ -1423,7 +1440,8 @@ class _FilterSheetState extends State<_FilterSheet> {
   Future<void> _applyFilters() async {
     final provider = context.read<CourseProvider>();
     final serverParamsChanged =
-        _language != provider.selectedLanguage || _level != provider.selectedLevel;
+        _language != provider.selectedLanguage ||
+        _level != provider.selectedLevel;
 
     // Apply client-side filters first (instant)
     provider.setClientFilters(
@@ -1466,8 +1484,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         return Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
@@ -1516,7 +1533,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                             icon: const Icon(Icons.clear_all, size: 18),
                             label: Text('common.clear'.tr()),
                             style: TextButton.styleFrom(
-                                foregroundColor: Colors.red[400]),
+                              foregroundColor: Colors.red[400],
+                            ),
                           ),
                       ],
                     ),
@@ -1554,7 +1572,10 @@ class _FilterSheetState extends State<_FilterSheet> {
                           isSelected: _language == 'English',
                           color: primaryAccent,
                           prefix: _LangBadge(
-                              'EN', primaryAccent, _language == 'English'),
+                            'EN',
+                            primaryAccent,
+                            _language == 'English',
+                          ),
                           onTap: () => setState(() => _language = 'English'),
                         ),
                         _Chip(
@@ -1562,17 +1583,22 @@ class _FilterSheetState extends State<_FilterSheet> {
                           isSelected: _language == 'Spanish',
                           color: AppColors.orange,
                           prefix: _LangBadge(
-                              'ES', AppColors.orange, _language == 'Spanish'),
+                            'ES',
+                            AppColors.orange,
+                            _language == 'Spanish',
+                          ),
                           onTap: () => setState(() => _language = 'Spanish'),
                         ),
                         _Chip(
                           label: 'Vietnamese',
                           isSelected: _language == 'Vietnamese',
                           color: AppColors.errorBright,
-                          prefix: _LangBadge('VI', AppColors.errorBright,
-                              _language == 'Vietnamese'),
-                          onTap: () =>
-                              setState(() => _language = 'Vietnamese'),
+                          prefix: _LangBadge(
+                            'VI',
+                            AppColors.errorBright,
+                            _language == 'Vietnamese',
+                          ),
+                          onTap: () => setState(() => _language = 'Vietnamese'),
                         ),
                       ],
                     ),
@@ -1625,11 +1651,14 @@ class _FilterSheetState extends State<_FilterSheet> {
                               label: cat.name,
                               isSelected: _categorySlug == cat.slug,
                               color: _parseCategoryColor(
-                                  cat.color, isDark: isDark),
+                                cat.color,
+                                isDark: isDark,
+                              ),
                               onTap: () => setState(
-                                  () => _categorySlug = _categorySlug == cat.slug
-                                      ? null
-                                      : cat.slug),
+                                () => _categorySlug = _categorySlug == cat.slug
+                                    ? null
+                                    : cat.slug,
+                              ),
                             ),
                           ),
                         ],
@@ -1651,7 +1680,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                         decoration: BoxDecoration(
                           color: _enrolledOnly
                               ? Colors.amber[700]!.withValues(alpha: 0.12)
@@ -1681,8 +1712,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                                 color: _enrolledOnly
                                     ? Colors.amber[700]
                                     : (isDark
-                                        ? Colors.white70
-                                        : Colors.black87),
+                                          ? Colors.white70
+                                          : Colors.black87),
                               ),
                             ),
                             const Spacer(),
@@ -1691,8 +1722,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                               onChanged: (v) =>
                                   setState(() => _enrolledOnly = v),
                               activeThumbColor: Colors.amber[700],
-                              activeTrackColor:
-                                  Colors.amber[700]!.withValues(alpha: 0.4),
+                              activeTrackColor: Colors.amber[700]!.withValues(
+                                alpha: 0.4,
+                              ),
                             ),
                           ],
                         ),
@@ -1738,12 +1770,17 @@ class _FilterSheetState extends State<_FilterSheet> {
               // Apply button (fixed at bottom)
               Container(
                 padding: EdgeInsets.fromLTRB(
-                    20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
+                  20,
+                  12,
+                  20,
+                  12 + MediaQuery.of(context).padding.bottom,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   border: Border(
                     top: BorderSide(
-                        color: isDark ? Colors.white12 : Colors.black12),
+                      color: isDark ? Colors.white12 : Colors.black12,
+                    ),
                   ),
                 ),
                 child: SizedBox(
@@ -1754,12 +1791,15 @@ class _FilterSheetState extends State<_FilterSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: primaryAccent,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: const Text(
                       'Apply Filters',
                       style: TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                 ),

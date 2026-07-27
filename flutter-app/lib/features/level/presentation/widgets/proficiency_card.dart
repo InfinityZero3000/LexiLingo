@@ -160,12 +160,17 @@ class ProficiencyCard extends StatelessWidget {
               // Action buttons
               Row(
                 children: [
-                  // Share button
+                  // Placement test button
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: GestureDetector(
-                      onTap: () {
-                        // TODO: Implement share proficiency
+                      onTap: () async {
+                        await Navigator.pushNamed(context, '/placement-test');
+                        if (context.mounted) {
+                          await context
+                              .read<ProficiencyProvider>()
+                              .loadProfile();
+                        }
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -184,19 +189,23 @@ class ProficiencyCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.share_rounded,
+                              Icons.quiz_rounded,
                               size: 16,
                               color: isDark ? Colors.white : AppColors.textDark,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              'social.share'.tr(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.textDark,
+                            Flexible(
+                              child: Text(
+                                'assessment.placementTest'.tr(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                  color: isDark
+                                      ? Colors.white
+                                      : AppColors.textDark,
+                                ),
                               ),
                             ),
                           ],
@@ -207,7 +216,7 @@ class ProficiencyCard extends StatelessWidget {
                   const SizedBox(width: 12),
                   // Start Lessons button
                   Expanded(
-                    flex: 3,
+                    flex: 2,
                     child: GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(

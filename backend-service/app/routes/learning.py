@@ -14,6 +14,7 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.cache import build_cache_key, delete_cached
+from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.services.streak_service import update_user_streak
 from app.models.user import User
@@ -117,6 +118,11 @@ async def start_lesson(
     if lesson.content and isinstance(lesson.content, dict) and lesson.content.get("exercises"):
         total_questions = len(lesson.content["exercises"])
     else:
+        if settings.is_production:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "Lesson content is missing exercises",
+            )
         total_questions = len(_generate_demo_exercises(lesson.title))
 
     # Create new attempt
@@ -202,6 +208,11 @@ async def get_lesson_content(
     
     # If no exercises in DB, generate default exercises for demo
     if not exercises:
+        if settings.is_production:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "Lesson content is missing exercises",
+            )
         exercises = _generate_demo_exercises(lesson.title)
     
     return ApiResponse(
@@ -647,7 +658,7 @@ async def _validate_answer(
                 return is_correct, correct_answer, explanation
 
     # Fallback: look up in the dynamic demo exercise set for this lesson
-    if lesson:
+    if lesson and not settings.is_production:
         demo_ex_list = _generate_demo_exercises(lesson.title)
         for demo_ex in demo_ex_list:
             if demo_ex.id == question_id:

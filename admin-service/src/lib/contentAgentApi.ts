@@ -201,6 +201,13 @@ export type ContentAgentJobList = {
   total: number;
 };
 
+export type ContentQaQueue = {
+  reviewable: ContentAgentJob[];
+  failed: ContentAgentJob[];
+  applied: ContentAgentJob[];
+  total: number;
+};
+
 type ApiEnvelope<T> = {
   success?: boolean;
   data?: T;
@@ -295,6 +302,26 @@ export const listContentAgentJobs = async (): Promise<ContentAgentJobList> => {
     jobs,
     total: typeof list.total === "number" ? list.total : jobs.length,
   };
+};
+
+export const buildContentQaQueue = (
+  jobs: readonly ContentAgentJob[],
+): ContentQaQueue => {
+  const reviewable = jobs.filter((job) => job.status === "preview_ready");
+  const failed = jobs.filter((job) => job.status === "failed");
+  const applied = jobs.filter((job) => job.status === "completed");
+
+  return {
+    reviewable,
+    failed,
+    applied,
+    total: jobs.length,
+  };
+};
+
+export const listContentQaQueue = async (): Promise<ContentQaQueue> => {
+  const { jobs } = await listContentAgentJobs();
+  return buildContentQaQueue(jobs);
 };
 
 export const getContentAgentJob = async (

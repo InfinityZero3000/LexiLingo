@@ -2,10 +2,12 @@
 Authentication Routes
 """
 import logging
+import asyncio
+import secrets
 import uuid
 
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,14 +15,18 @@ from sqlalchemy.exc import IntegrityError
 
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core.redis import RedisClient
 from app.core.security import (
     get_password_hash,
     get_password_hash_async,
     create_access_token,
     create_refresh_token,
+    decode_token,
     verify_password_async,
 )
+from app.core.token_blacklist import TokenBlacklist
 from app.services.starter_reward_service import StarterRewardService
 from app.models.user import User, RefreshToken
 from app.services.email_service import EmailService
@@ -129,7 +135,7 @@ async def resend_verification_email(
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
     # Always return 200 to avoid email enumeration
-    if user and not getattr(user, "email_verified", False):
+    if user and not user.is_verified:
         try:
             from app.core.security import create_verification_token
             token = create_verification_token(
@@ -160,6 +166,15 @@ async def login(
         )
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
+    # Local (email/password) accounts must verify their email before a session
+    # is issued. Google/Facebook logins set is_verified from the provider's
+    # own email_verified claim at account-creation time, so this never blocks
+    # OAuth users.
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for a verification link before logging in.",
+        )
 
     user_id = str(user.id)
     username = user.username
@@ -256,7 +271,16 @@ async def refresh_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive"
         )
-    
+
+    # A refresh token issued before email verification (or for an account
+    # that was since unverified) must not keep renewing access forever —
+    # otherwise the 7-day rotation window silently bypasses /login's check.
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for a verification link before logging in.",
+        )
+
     # FIX: Implement token rotation
     db_token.is_used = True
     
@@ -290,7 +314,8 @@ async def get_current_user_via_auth(
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
     request: LogoutRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    authorization: str | None = Header(default=None),
 ):
     """
     Logout user.
@@ -305,6 +330,22 @@ async def logout(
             db_token.is_revoked = True
             db_token.revoked_at = datetime.now(timezone.utc)
             await db.commit()
+
+    if authorization and authorization.lower().startswith("bearer "):
+        access_token = authorization.split(" ", 1)[1].strip()
+        payload = decode_token(access_token)
+        if payload and payload.get("type") == "access":
+            exp = payload.get("exp")
+            expires_at = (
+                datetime.fromtimestamp(exp, timezone.utc)
+                if isinstance(exp, (int, float))
+                else None
+            )
+            await TokenBlacklist.add(
+                access_token,
+                expires_at=expires_at,
+                user_id=str(payload.get("sub") or ""),
+            )
 
     return MessageResponse(
         message="Logged out successfully",
@@ -343,8 +384,6 @@ async def google_login(
         audience = settings.GOOGLE_CLIENT_ID  # None is also accepted below
     
     # Verify Google token with the correct audience
-    import logging
-    logger = logging.getLogger(__name__)
     logger.info(f"Google login attempt: source={request.source}, audience={audience}")
 
     google_info = await verify_google_token(request.id_token, audience=audience)
@@ -423,19 +462,27 @@ async def google_login(
         await db.refresh(user)
     elif not user.has_google_auth:
         # "google" is NOT yet in this user's providers list
-        if request.source != "admin" or not allowlisted_admin_role:
+        is_admin_link = request.source == "admin" and allowlisted_admin_role
+        # Google has verified this email, and it matches an existing local account —
+        # let Google vouch for the email instead of leaving the user locked out
+        # behind an unclicked verification link.
+        can_verify_local_account = user.has_local_auth and email_verified
+
+        if not is_admin_link and not can_verify_local_account:
             if not user.has_local_auth:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Email already registered with a different login method."
                 )
-            # Non-admin Google login for a local-only account: block provider switch
+            # Local account exists but Google hasn't verified this email either —
+            # an unverified claim can't be trusted to unlock it.
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email already registered. Please login with your existing method."
             )
 
-        # Admin source + allowlisted email → link google to this account
+        # Admin-allowlisted link, or Google vouching for a local account's email →
+        # link google to this account.
         user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
@@ -501,9 +548,7 @@ async def facebook_login(
     """
     from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
     from app.core.config import settings
-    import logging
 
-    logger = logging.getLogger(__name__)
     logger.info(f"Facebook (Firebase) login attempt: source={request.source}")
 
     # Verify Firebase ID token
@@ -785,6 +830,12 @@ async def admin_login(
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
 
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for a verification link before logging in.",
+        )
+
     if getattr(user, "role_level", 0) < 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
 
@@ -817,13 +868,119 @@ async def admin_login(
 # Admin passwordless OTP login (kept for backward compatibility)
 # ============================================================================
 
-import random
 import time
 
-# In-memory OTP store: {email: (otp, expires_at)}
-# For production, replace with Redis or a DB table.
+# Dev/test fallback store: {email: (otp, expires_at)}. Production requires Redis.
 _admin_otp_store: dict[str, tuple[str, float]] = {}
 _OTP_TTL_SECONDS = 300  # 5 minutes
+_ADMIN_OTP_KEY_PREFIX = "admin:otp:"
+_ADMIN_OTP_ATTEMPT_PREFIX = "admin:otp-attempts:"
+_ADMIN_OTP_COOLDOWN_PREFIX = "admin:otp-cooldown:"
+_ADMIN_OTP_MAX_ATTEMPTS = 5
+_ADMIN_OTP_COOLDOWN_SECONDS = 60
+_admin_otp_attempts: dict[str, tuple[int, float]] = {}
+_admin_otp_cooldowns: dict[str, float] = {}
+_admin_otp_locks: dict[str, asyncio.Lock] = {}
+
+
+async def _get_admin_otp_redis():
+    redis = await RedisClient.get_instance()
+    if redis is None and settings.is_production:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin OTP storage is unavailable",
+        )
+    return redis
+
+
+async def _store_admin_otp(email: str, otp: str, redis=None) -> None:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        await redis.setex(f"{_ADMIN_OTP_KEY_PREFIX}{email}", _OTP_TTL_SECONDS, otp)
+        return
+    _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
+
+
+async def _claim_admin_otp_cooldown(email: str, redis=None) -> bool:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        claimed = await redis.set(
+            f"{_ADMIN_OTP_COOLDOWN_PREFIX}{email}", "1",
+            ex=_ADMIN_OTP_COOLDOWN_SECONDS, nx=True,
+        )
+        return bool(claimed)
+    now = time.time()
+    if _admin_otp_cooldowns.get(email, 0) > now:
+        return False
+    _admin_otp_cooldowns[email] = now + _ADMIN_OTP_COOLDOWN_SECONDS
+    return True
+
+
+async def _record_admin_otp_failure(email: str, redis=None) -> None:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        key = f"{_ADMIN_OTP_ATTEMPT_PREFIX}{email}"
+        count = await redis.incr(key)
+        if int(count) == 1:
+            await redis.expire(key, _OTP_TTL_SECONDS)
+        return
+    count, expires_at = _admin_otp_attempts.get(email, (0, 0))
+    now = time.time()
+    _admin_otp_attempts[email] = (
+        (count if expires_at > now else 0) + 1,
+        expires_at if expires_at > now else now + _OTP_TTL_SECONDS,
+    )
+
+
+async def _admin_otp_attempts_exhausted(email: str, redis=None) -> bool:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        value = await redis.get(f"{_ADMIN_OTP_ATTEMPT_PREFIX}{email}")
+        return int(value or 0) >= _ADMIN_OTP_MAX_ATTEMPTS
+    count, expires_at = _admin_otp_attempts.get(email, (0, 0))
+    return expires_at > time.time() and count >= _ADMIN_OTP_MAX_ATTEMPTS
+
+
+async def _consume_admin_otp(email: str, otp: str, redis=None) -> bool:
+    redis = redis if redis is not None else await _get_admin_otp_redis()
+    if redis is not None:
+        result = int(await redis.eval(
+            """
+            local attempts = tonumber(redis.call("GET", KEYS[2]) or "0")
+            if attempts >= tonumber(ARGV[2]) then
+                return -1
+            end
+            if redis.call("GET", KEYS[1]) == ARGV[1] then
+                redis.call("DEL", KEYS[1])
+                redis.call("DEL", KEYS[2])
+                return 1
+            end
+            attempts = redis.call("INCR", KEYS[2])
+            if attempts == 1 then
+                redis.call("EXPIRE", KEYS[2], ARGV[3])
+            end
+            return 0
+            """,
+            2,
+            f"{_ADMIN_OTP_KEY_PREFIX}{email}",
+            f"{_ADMIN_OTP_ATTEMPT_PREFIX}{email}",
+            otp,
+            _ADMIN_OTP_MAX_ATTEMPTS,
+            _OTP_TTL_SECONDS,
+        ))
+        return result == 1
+
+    lock = _admin_otp_locks.setdefault(email, asyncio.Lock())
+    async with lock:
+        if await _admin_otp_attempts_exhausted(email, redis):
+            return False
+        stored = _admin_otp_store.get(email)
+        if not stored or stored[1] < time.time() or stored[0] != otp:
+            await _record_admin_otp_failure(email, redis)
+            return False
+        del _admin_otp_store[email]
+        _admin_otp_attempts.pop(email, None)
+        return True
 
 
 @router.post("/admin/request-otp")
@@ -838,6 +995,9 @@ async def admin_request_otp(
     email: str = (body.get("email") or "").strip().lower()
     if not email:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is required")
+    otp_redis = await _get_admin_otp_redis()
+    if not await _claim_admin_otp_cooldown(email, otp_redis):
+        return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
 
     result = await db.execute(
         select(User).where(User.email == email)
@@ -845,9 +1005,9 @@ async def admin_request_otp(
     user = result.scalar_one_or_none()
 
     # Respond the same way whether the user exists or not (anti-enumeration)
-    if user and user.is_active and getattr(user, "role_level", 0) >= 1:
-        otp = str(random.randint(100000, 999999))
-        _admin_otp_store[email] = (otp, time.time() + _OTP_TTL_SECONDS)
+    if user and user.is_active and user.is_verified and getattr(user, "role_level", 0) >= 1:
+        otp = f"{secrets.randbelow(1_000_000):06d}"
+        await _store_admin_otp(email, otp, otp_redis)
 
         try:
             from app.services.email_service import EmailService
@@ -861,8 +1021,6 @@ async def admin_request_otp(
             )
         except Exception as exc:
             logger.warning("Failed to send admin OTP to %s: %s", email, exc)
-            # In dev, log the OTP so you can still test
-            logger.info("DEV OTP for %s: %s", email, otp)
 
     return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
 
@@ -881,19 +1039,15 @@ async def admin_verify_otp(
     if not email or not otp:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and OTP are required")
 
-    stored = _admin_otp_store.get(email)
-    if not stored or stored[1] < time.time() or stored[0] != otp:
+    if not await _consume_admin_otp(email, otp):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP")
-
-    # Consume OTP (one-time use)
-    del _admin_otp_store[email]
 
     result = await db.execute(
         select(User).where(User.email == email)
     )
     user = result.scalar_one_or_none()
 
-    if not user or not user.is_active or getattr(user, "role_level", 0) < 1:
+    if not user or not user.is_active or not user.is_verified or getattr(user, "role_level", 0) < 1:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
     user_id = str(user.id)

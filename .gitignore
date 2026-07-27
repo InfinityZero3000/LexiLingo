@@ -81,10 +81,8 @@ flutter-app/lexilingo-88492-firebase-adminsdk-fbsvc-aa6640bef2.json
 !**/firebase_options.dart.example
 !flutter-app/lib/firebase_options.dart
 
-# Documentation & Model Support (not tracked)
+# Documentation generated outside the model-development repository
 docs/cmd
-model-development
-model-development/*
 
 
 # Environment variables
@@ -157,3 +155,10 @@ default.conf
 .claire/
 .crawl4ai/
 ai-service/.crawl4ai/
+# Sensitive learner-state migration/load artifacts
+**/mastery*.jsonl
+**/mastery*.manifest.json
+**/learner-state-*.csv
+**/learner-state-*.html
+**/checkpoint*.json
+**/quarantine*.jsonl

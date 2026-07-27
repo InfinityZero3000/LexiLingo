@@ -280,6 +280,8 @@ export const uploadBadgeImage = async (file: File): Promise<AdminResponse<{ url:
 // Shop Management
 // ============================================================================
 
+export type ShopItemEffects = Record<string, unknown>;
+
 export type ShopItemType = {
   id: string;
   name: string;
@@ -289,6 +291,7 @@ export type ShopItemType = {
   is_available: boolean;
   stock_quantity?: number | null;
   icon_url?: string | null;
+  effects?: ShopItemEffects | null;
 };
 
 export const listShopItems = async (includeUnavailable = true) =>
@@ -303,17 +306,19 @@ export const createShopItem = async (params: {
   price_gems: number;
   is_available?: boolean;
   stock_quantity?: number;
-}) => {
-  const url = new URL(`${ENV.backendUrl}/admin/shop`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, String(v)); });
-  return apiFetch<AdminResponse<ShopItemType>>(url.toString(), { method: "POST" });
-};
+  icon_url?: string;
+  effects?: ShopItemEffects;
+}) =>
+  apiFetch<AdminResponse<ShopItemType>>(`${ENV.backendUrl}/admin/shop`, {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
 
-export const updateShopItem = async (id: string, params: Partial<ShopItemType>) => {
-  const url = new URL(`${ENV.backendUrl}/admin/shop/${id}`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, String(v)); });
-  return apiFetch<AdminResponse<ShopItemType>>(url.toString(), { method: "PUT" });
-};
+export const updateShopItem = async (id: string, params: Partial<ShopItemType>) =>
+  apiFetch<AdminResponse<ShopItemType>>(`${ENV.backendUrl}/admin/shop/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
 
 export const deleteShopItem = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/shop/${id}`, {

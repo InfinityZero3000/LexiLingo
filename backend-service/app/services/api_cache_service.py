@@ -84,6 +84,7 @@ class APICacheService:
         api_name: str,
         fetch_fn: Callable,
         priority: Priority = Priority.MEDIUM,
+        cost: int = 1,
         redis_ttl: int = 3600,
         db_ttl: int = 86400,
     ) -> CacheResult:
@@ -95,6 +96,7 @@ class APICacheService:
             api_name: API identifier for quota tracking (e.g. "newsapi")
             fetch_fn: Async callable that fetches from external API
             priority: Request priority level (affects quota threshold behavior)
+            cost: Quota units consumed by a cache miss; 0 bypasses quota checks
             redis_ttl: Redis cache time-to-live in seconds
             db_ttl: PostgreSQL "freshness" TTL in seconds
             
@@ -136,48 +138,50 @@ class APICacheService:
                 is_stale=False,
             )
         
-        # ──── Layer 3: Check quota threshold BEFORE calling external API ────
-        quota_status = await QuotaManager.check_status(api_name)
-        
-        # BLOCKED (100%+): NEVER call API
-        if quota_status == QuotaStatus.BLOCKED:
-            logger.warning(f"Quota BLOCKED for {api_name}, serving stale cache")
-            if db_entry is not None:
-                return CacheResult(
-                    data=json.loads(db_entry.data),
-                    source="db_stale",
-                    is_stale=True,
+        if cost > 0:
+            # ──── Layer 3: Check quota threshold BEFORE calling external API ────
+            quota_status = await QuotaManager.check_status(api_name, cost=cost)
+
+            # BLOCKED (100%+): NEVER call API
+            if quota_status == QuotaStatus.BLOCKED:
+                logger.warning("Quota BLOCKED for %s, serving stale cache", api_name)
+                if db_entry is not None:
+                    return CacheResult(
+                        data=json.loads(db_entry.data),
+                        source="db_stale",
+                        is_stale=True,
+                    )
+                raise QuotaExhaustedError(api_name, QuotaManager.get_reset_time())
+
+            # CRITICAL (90-99%): only HIGH priority gets through
+            if quota_status == QuotaStatus.CRITICAL and priority != Priority.HIGH:
+                logger.info(
+                    "Quota CRITICAL for %s, blocking %s priority",
+                    api_name,
+                    priority.value,
                 )
-            raise QuotaExhaustedError(api_name, QuotaManager.get_reset_time())
-        
-        # CRITICAL (90-99%): only HIGH priority gets through
-        if quota_status == QuotaStatus.CRITICAL and priority != Priority.HIGH:
-            logger.info(
-                f"Quota CRITICAL for {api_name}, blocking {priority.value} priority"
-            )
-            if db_entry is not None:
-                return CacheResult(
-                    data=json.loads(db_entry.data),
-                    source="db_stale",
-                    is_stale=True,
+                if db_entry is not None:
+                    return CacheResult(
+                        data=json.loads(db_entry.data),
+                        source="db_stale",
+                        is_stale=True,
+                    )
+                raise QuotaNearLimitError(
+                    api_name,
+                    "CRITICAL",
+                    "Only user-initiated requests allowed at this quota level.",
                 )
-            raise QuotaNearLimitError(
-                api_name, "CRITICAL",
-                "Only user-initiated requests allowed at this quota level."
-            )
-        
-        # WARNING (70-89%): block LOW priority (background/prefetch)
-        if quota_status == QuotaStatus.WARNING and priority == Priority.LOW:
-            logger.info(
-                f"Quota WARNING for {api_name}, blocking LOW priority"
-            )
-            if db_entry is not None:
-                return CacheResult(
-                    data=json.loads(db_entry.data),
-                    source="db_stale",
-                    is_stale=True,
-                )
-            # No cache at all → allow even LOW (user should see something)
+
+            # WARNING (70-89%): block LOW priority (background/prefetch)
+            if quota_status == QuotaStatus.WARNING and priority == Priority.LOW:
+                logger.info("Quota WARNING for %s, blocking LOW priority", api_name)
+                if db_entry is not None:
+                    return CacheResult(
+                        data=json.loads(db_entry.data),
+                        source="db_stale",
+                        is_stale=True,
+                    )
+                # No cache at all → allow even LOW (user should see something)
         
         # ──── Layer 3: Fetch from external API ────
         try:
@@ -195,8 +199,9 @@ class APICacheService:
                 )
             raise
         
-        # Record quota usage
-        await QuotaManager.record_request(api_name)
+        # Record quota usage only for calls that consume upstream quota.
+        if cost > 0:
+            await QuotaManager.record_request(api_name, cost=cost)
         
         # ──── Store in both cache layers ────
         data_json = json.dumps(result, ensure_ascii=False, default=str)

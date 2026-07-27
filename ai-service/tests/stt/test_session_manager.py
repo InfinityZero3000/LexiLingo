@@ -29,6 +29,22 @@ async def test_manager_resume_returns_same_session(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_duplex_session_disables_legacy_final_sink(tmp_path):
+    config = STTConfig(temp_dir=str(tmp_path))
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    legacy_sink = object()
+    manager = SessionManager(config, registry, final_sink=legacy_sink)
+
+    duplex = await manager.create(StartMessage(session_id="duplex", duplex=True))
+    legacy = await manager.create(StartMessage(session_id="legacy"))
+
+    assert duplex.final_sink is None
+    assert legacy.final_sink is legacy_sink
+    await manager.shutdown()
+
+
+@pytest.mark.asyncio
 async def test_manager_rejects_session_over_capacity(tmp_path):
     config = STTConfig(temp_dir=str(tmp_path), max_active_sessions=1)
     registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
@@ -159,3 +175,22 @@ async def test_cancelled_session_start_releases_reservation(tmp_path):
 
     assert not manager.sessions
     assert not manager._pending_sessions
+
+
+@pytest.mark.asyncio
+async def test_idle_session_is_closed_by_manager(tmp_path):
+    config = STTConfig(temp_dir=str(tmp_path), session_idle_timeout_seconds=0)
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    manager = SessionManager(config, registry)
+
+    session = await manager.create(StartMessage(session_id="idle"))
+    session.last_activity = time.monotonic() - 1.0
+
+    now = time.monotonic()
+    for sid, s in list(manager.sessions.items()):
+        if now - s.last_activity > manager.config.session_idle_timeout_seconds:
+            await manager.close(sid, "idle_timeout")
+
+    assert "idle" not in manager.sessions
+    await manager.shutdown()

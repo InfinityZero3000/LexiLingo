@@ -19,12 +19,12 @@ async def seed_shop_items():
         print("=== Seeding Shop Items ===")
         total_seeded = 0
         total_updated = 0
-        
+
         for item in SHOP_CATALOG:
             # Check if item already exists by name
             stmt = select(ShopItem).where(ShopItem.name == item["name"])
             existing = (await session.execute(stmt)).scalar_one_or_none()
-            
+
             if existing:
                 # Update existing item
                 existing.description = item["description"]
@@ -49,7 +49,7 @@ async def seed_shop_items():
                 )
                 session.add(db_item)
                 total_seeded += 1
-                
+
         await session.commit()
         print(f"Shop items: Seeded {total_seeded}, Updated {total_updated}")
 

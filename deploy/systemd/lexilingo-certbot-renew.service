@@ -6,4 +6,4 @@ After=network-online.target docker.service
 [Service]
 Type=oneshot
 WorkingDirectory=/opt/lexilingo
-ExecStart=/usr/bin/certbot renew --quiet --deploy-hook "/opt/lexilingo/scripts/ssl/reload-gateway-after-renew.sh"
+ExecStart=/usr/bin/certbot renew --quiet --webroot -w /opt/lexilingo/gateway/nginx/acme-challenge --deploy-hook /usr/local/sbin/lexilingo-reload-gateway-after-renew

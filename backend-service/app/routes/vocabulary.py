@@ -241,9 +241,11 @@ async def get_user_collection(
                 "accuracy": uv.accuracy
             })
     
-    # Get total count (without filters for simplicity)
-    # In production, add proper count query
-    total = len(user_vocab_list)
+    total = await vocabulary_crud.count_user_vocabulary(
+        db,
+        user_id=current_user.id,
+        status=status_filter,
+    )
     
     return UserVocabularyListResponse(
         items=items_with_vocab,
@@ -490,10 +492,9 @@ async def get_due_vocabulary(
         limit=limit
     )
     
-    # Load vocabulary items
     items_with_vocab = []
     for uv in due_vocab:
-        vocab_item = await vocabulary_crud.get_vocabulary_item(db, uv.vocabulary_id)
+        vocab_item = uv.vocabulary
         if vocab_item:
             items_with_vocab.append({
                 **uv.__dict__,
@@ -540,14 +541,6 @@ async def submit_review(
     - XP awarded
     - Next review date
     """
-    # Verify ownership
-    user_vocab = await vocabulary_crud.get_user_vocabulary(
-        db,
-        user_id=current_user.id,
-        vocabulary_id=uuid.UUID('00000000-0000-0000-0000-000000000000')  # Dummy, we'll fetch by ID
-    )
-    
-    # Actually fetch by user_vocabulary_id and verify user
     from sqlalchemy import select
     from app.models.vocabulary import UserVocabulary
     

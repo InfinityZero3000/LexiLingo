@@ -21,19 +21,19 @@ String getTimeBasedGreeting() {
   }
 }
 
-/// Get game icon based on time of day
-GameIcon getTimeBasedGameIcon() {
+/// Get icon based on time of day
+IconData getTimeBasedIcon() {
   final hour = DateTime.now().hour;
   if (hour < 5) {
-    return GameIcon.moonNight;
+    return Icons.nightlight_round;
   } else if (hour < 12) {
-    return GameIcon.sunMorning;
+    return Icons.wb_sunny_rounded;
   } else if (hour < 18) {
-    return GameIcon.sunsetAfternoon; // Sunset/afternoon
+    return Icons.wb_twilight_rounded;
   } else if (hour < 22) {
-    return GameIcon.moonNight; // Evening
+    return Icons.nightlight_round;
   } else {
-    return GameIcon.moonNight;
+    return Icons.nightlight_round;
   }
 }
 
@@ -76,7 +76,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final greeting = getTimeBasedGreeting();
-    final timeIcon = getTimeBasedGameIcon();
+    final timeIcon = getTimeBasedIcon();
     final iconColor = getTimeBasedIconColor(isDark: isDark);
     final accent = AppColorRoles.primary(isDark);
 
@@ -130,7 +130,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    AppGameIcon(timeIcon, size: 16, fallbackColor: iconColor),
+                    Icon(timeIcon, size: 16, color: iconColor),
                   ],
                 ),
                 const SizedBox(height: 2),
@@ -309,10 +309,10 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
                 children: [
                   Transform.scale(
                     scale: _sparkleAnimation.value,
-                    child: const AppGameIcon(
-                      GameIcon.star,
+                    child: const Icon(
+                      Icons.star_rounded,
                       size: 16,
-                      fallbackColor: AppColors.orange,
+                      color: AppColors.orange,
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -424,10 +424,10 @@ class _NotificationBellState extends State<_NotificationBell>
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  AppGameIcon(
-                    GameIcon.notificationBell,
+                  Icon(
+                    Icons.notifications_rounded,
                     size: 22,
-                    fallbackColor: isDark ? Colors.white : Colors.grey[700],
+                    color: isDark ? Colors.white : Colors.grey[700],
                   ),
                   if (widget.count > 0)
                     Positioned(
@@ -619,10 +619,10 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      AppGameIcon(
-                        GameIcon.calendar,
+                      Icon(
+                        Icons.calendar_month_rounded,
                         size: 14,
-                        fallbackColor: isDark
+                        color: isDark
                             ? AppColors.primaryDarkModeSoft
                             : AppColors.teal,
                       ),
@@ -837,9 +837,7 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   boxShadow: isActive
                       ? [
                           BoxShadow(
-                            color: AppColors.deepOrange.withValues(
-                              alpha: 0.4,
-                            ),
+                            color: AppColors.deepOrange.withValues(alpha: 0.4),
                             blurRadius: 0,
                             offset: const Offset(0, 2),
                           ),

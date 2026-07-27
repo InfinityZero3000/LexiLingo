@@ -522,7 +522,7 @@ class TestContentCRUD:
 
     @pytest.mark.asyncio
     async def test_create_shop_item(self, async_client: AsyncClient, admin_headers):
-        response = await async_client.post("/api/v1/admin/shop", headers=admin_headers, params={
+        response = await async_client.post("/api/v1/admin/shop", headers=admin_headers, json={
             "name": "Test Item",
             "description": "A test item",
             "item_type": "streak_freeze",

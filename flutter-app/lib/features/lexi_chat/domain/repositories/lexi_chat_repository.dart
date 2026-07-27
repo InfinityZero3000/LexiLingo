@@ -17,6 +17,7 @@ abstract class LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   });
@@ -52,6 +53,7 @@ abstract class LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   });
 }

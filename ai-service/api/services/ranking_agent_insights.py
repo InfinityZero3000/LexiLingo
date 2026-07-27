@@ -104,7 +104,7 @@ async def get_ranking_insights(
         return None
 
     api_key, limiter = slot
-    model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
     try:
         prompt = _build_prompt(job_type, artifact)

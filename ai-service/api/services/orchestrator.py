@@ -10,11 +10,48 @@ Responsibilities:
   - Surface health across all sub-services
 """
 
+import asyncio
+import fcntl
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+_kuzu_process_lock_file = None
+
+
+def _get_kg_service_with_process_lock():
+    """Own the shared Kuzu snapshot lock for this process lifetime."""
+    global _kuzu_process_lock_file
+    from api.core.config import settings
+    from api.services.kg_service_v3 import get_kg_service
+
+    lock_path = f"{os.path.abspath(settings.KUZU_DB_PATH)}.init.lock"
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    if _kuzu_process_lock_file is None:
+        lock_file = open(lock_path, "a", encoding="utf-8")
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            lock_file.close()
+            raise RuntimeError(
+                "Kuzu snapshot is already owned; use one worker or a separate KUZU_DB_PATH"
+            ) from exc
+        _kuzu_process_lock_file = lock_file
+    try:
+        return get_kg_service()
+    except BaseException:
+        _release_kg_process_lock()
+        raise
+
+
+def _release_kg_process_lock() -> None:
+    global _kuzu_process_lock_file
+    if _kuzu_process_lock_file is not None:
+        fcntl.flock(_kuzu_process_lock_file.fileno(), fcntl.LOCK_UN)
+        _kuzu_process_lock_file.close()
+        _kuzu_process_lock_file = None
 
 
 class AIOrchestrator:
@@ -65,8 +102,10 @@ class AIOrchestrator:
 
         # 1. Knowledge Graph (cheap, synchronous schema setup)
         try:
-            from api.services.kg_service_v3 import get_kg_service
-            self._kg = get_kg_service()
+            # Kuzu opens files, validates schema and may seed/rebuild the graph.
+            # Those operations are synchronous and can take seconds on a cold
+            # start; never run them on the ASGI event loop.
+            self._kg = await asyncio.to_thread(_get_kg_service_with_process_lock)
             logger.info("AIOrchestrator: KG service ready")
         except Exception as e:
             logger.warning(f"AIOrchestrator: KG service unavailable: {e}")
@@ -100,6 +139,7 @@ class AIOrchestrator:
                 logger.warning(f"AIOrchestrator: gateway shutdown error: {e}")
 
         self._initialized = False
+        _release_kg_process_lock()
         logger.info("AIOrchestrator shutdown")
 
     @property
@@ -189,12 +229,29 @@ class AIOrchestrator:
 # ── Module-level singleton ────────────────────────────────────────────────────
 
 _orchestrator: Optional[AIOrchestrator] = None
+_orchestrator_lock = asyncio.Lock()
+_orchestrator_init_task: Optional[asyncio.Task[AIOrchestrator]] = None
+
+
+async def _initialize_orchestrator() -> AIOrchestrator:
+    global _orchestrator
+    candidate = AIOrchestrator()
+    await candidate.initialize()
+    _orchestrator = candidate
+    return candidate
 
 
 async def get_orchestrator() -> AIOrchestrator:
     """Get or create the global orchestrator instance (auto-initialises)."""
-    global _orchestrator
+    global _orchestrator_init_task
     if _orchestrator is None:
-        _orchestrator = AIOrchestrator()
-        await _orchestrator.initialize()
+        async with _orchestrator_lock:
+            if _orchestrator is None and (
+                _orchestrator_init_task is None or _orchestrator_init_task.done()
+            ):
+                _orchestrator_init_task = asyncio.create_task(
+                    _initialize_orchestrator()
+                )
+        if _orchestrator is None:
+            await asyncio.shield(_orchestrator_init_task)
     return _orchestrator

@@ -12,6 +12,9 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   int sendCalls = 0;
   int streamCalls = 0;
   String? lastIdempotencyKey;
+  String? lastNativeLanguage;
+  String? lastStreamNativeLanguage;
+  Object? pagedError;
   Stream<LexiStreamEvent> Function()? streamFactory;
 
   @override
@@ -39,6 +42,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     int limit = 50,
     String? cursor,
   }) async {
+    if (pagedError != null) throw pagedError!;
     return const LexiMessagesPage(
       messages: [],
       hasMore: false,
@@ -67,11 +71,13 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) async {
     sendCalls += 1;
     lastIdempotencyKey = idempotencyKey;
+    lastNativeLanguage = nativeLanguage;
     return LexiMessage(
       id: 'assistant-$sendCalls',
       role: 'assistant',
@@ -89,9 +95,11 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) {
     streamCalls += 1;
+    lastStreamNativeLanguage = nativeLanguage;
     return streamFactory?.call() ??
         Stream<LexiStreamEvent>.fromIterable([
           const LexiStreamChunk('ok'),
@@ -112,7 +120,10 @@ void main() {
   group('LexiChatProvider', () {
     test('builds web-safe request ids without crypto random', () async {
       final repo = _FakeLexiChatRepository();
-      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
       addTearDown(provider.dispose);
 
       await provider.sendMessage('hello', userId: 'user@example.com');
@@ -132,7 +143,10 @@ void main() {
     test('falls back to non-streaming send when SSE closes empty', () async {
       final repo = _FakeLexiChatRepository()
         ..streamFactory = () => const Stream<LexiStreamEvent>.empty();
-      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
       addTearDown(provider.dispose);
 
       await provider.sendMessageStreaming('hello', userId: 'user-1');
@@ -146,6 +160,48 @@ void main() {
       expect(provider.messages.last.content, 'ok');
     });
 
+    test(
+      'defaults nativeLanguage to vi and forwards setNativeLanguage',
+      () async {
+        final repo = _FakeLexiChatRepository();
+        final provider = LexiChatProvider(
+          repository: repo,
+          aiClient: AiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        expect(provider.nativeLanguage, 'vi');
+
+        await provider.sendMessage('hello', userId: 'user-1');
+        expect(repo.lastNativeLanguage, 'vi');
+
+        provider.setNativeLanguage('ja');
+        expect(provider.nativeLanguage, 'ja');
+
+        await provider.sendMessage('hello again', userId: 'user-1');
+        expect(repo.lastNativeLanguage, 'ja');
+      },
+    );
+
+    test('forwards nativeLanguage to streaming send', () async {
+      final repo = _FakeLexiChatRepository();
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      provider.setNativeLanguage('ko');
+      await provider.sendMessageStreaming('hello', userId: 'user-1');
+
+      expect(repo.lastStreamNativeLanguage, 'ko');
+
+      // Let the constructor's fire-and-forget _loadSavedSessions() finish
+      // before addTearDown disposes the provider (it calls notifyListeners()
+      // on completion, which throws if disposal already happened).
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+
     test('keeps streamed text when SSE has chunks but no done event', () async {
       final repo = _FakeLexiChatRepository()
         ..streamFactory = () => Stream<LexiStreamEvent>.fromIterable([
@@ -153,7 +209,10 @@ void main() {
           const LexiStreamChunk('Hi'),
           const LexiStreamChunk(' there'),
         ]);
-      final provider = LexiChatProvider(repository: repo, aiClient: AiApiClient());
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
       addTearDown(provider.dispose);
 
       await provider.sendMessageStreaming('hello', userId: 'user-1');
@@ -166,6 +225,73 @@ void main() {
       expect(provider.messages.last.role, 'assistant');
       expect(provider.messages.last.content, 'Hi there');
       expect(provider.messages.last.syncStatus, 'synced');
+    });
+
+    test('clears selected session when backend returns forbidden', () async {
+      final repo = _FakeLexiChatRepository()
+        ..pagedError = Exception(
+          'Request /lexi/sessions/old/messages/metadata failed with status 403',
+        );
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      await provider.selectSession(
+        LexiSessionSummary(
+          sessionId: 'old',
+          userId: 'other-user',
+          title: 'Old session',
+          createdAt: DateTime.parse('2026-05-30T00:00:00Z'),
+          updatedAt: DateTime.parse('2026-05-30T00:00:00Z'),
+          messageCount: 1,
+        ),
+      );
+
+      expect(provider.session, isNull);
+      expect(provider.messages, isEmpty);
+      expect(provider.error, contains('another account'));
+    });
+
+    test('assembles one duplex voice turn without duplicate messages', () {
+      final provider = LexiChatProvider(
+        repository: _FakeLexiChatRepository(),
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      provider.handleDuplexVoiceEvent({
+        'type': 'stt.final',
+        'turn_id': 'turn-1',
+        'text': 'Hello',
+      });
+      provider.handleDuplexVoiceEvent({
+        'type': 'stt.final',
+        'turn_id': 'turn-1',
+        'text': 'Hello',
+      });
+      provider.handleDuplexVoiceEvent({
+        'type': 'llm.token',
+        'turn_id': 'turn-1',
+        'text': 'Hi',
+      });
+      provider.handleDuplexVoiceEvent({
+        'type': 'llm.token',
+        'turn_id': 'turn-1',
+        'text': ' there',
+      });
+
+      expect(provider.messages, hasLength(2));
+      expect(provider.messages.first.content, 'Hello');
+      expect(provider.messages.last.content, 'Hi there');
+      expect(provider.isSending, isTrue);
+
+      provider.handleDuplexVoiceEvent({
+        'type': 'turn.done',
+        'turn_id': 'turn-1',
+      });
+      expect(provider.isSending, isFalse);
     });
   });
 }

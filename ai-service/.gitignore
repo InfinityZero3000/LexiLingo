@@ -27,14 +27,19 @@ checkpoints/
 outputs/
 logs/
 temp/
+reports/e2e/
 
 # KuzuDB and data files (generated at runtime)
 data/kuzu_db
 data/kuzu_db/
 data/kuzu_db.wal
+data/kuzu_db.shadow*
+data/*.db.quarantine.*
+data/*.db.rebuild.*
 data/kuzu
 data/kuzu/
 data/kuzu.wal
+data/*.init.lock
 data/kuzu_synced_files.json
 api/data/
 data/backups/

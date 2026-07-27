@@ -1,4 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/features/mistakes/data/mistake_notebook_repository.dart';
+import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.dart';
+
 import '../../data/repositories/news_repository.dart';
 import '../../domain/entities/news_entities.dart';
 
@@ -7,14 +12,21 @@ import '../../domain/entities/news_entities.dart';
 /// Phase 2: News Reading.
 class NewsProvider extends ChangeNotifier {
   final NewsRepository _repository;
+  final MistakeNotebookRepository _mistakeRepository;
 
-  NewsProvider({NewsRepository? repository})
-    : _repository = repository ?? NewsRepository();
+  NewsProvider({
+    NewsRepository? repository,
+    MistakeNotebookRepository? mistakeRepository,
+  }) : _repository = repository ?? NewsRepository(),
+       _mistakeRepository =
+           mistakeRepository ?? const MistakeNotebookRepository();
 
   // ── State ──
   List<NewsArticle> _articles = [];
   List<NewsCategory> _categories = [];
   NewsQuiz? _currentQuiz;
+  String? _currentQuizArticleId;
+  NewsArticle? _currentQuizArticle;
   bool _isLoading = false;
   bool _isLoadingQuiz = false;
   String? _error;
@@ -132,9 +144,11 @@ class NewsProvider extends ChangeNotifier {
   // ── Quiz ──
 
   /// Load quiz for an article.
-  Future<void> loadQuiz(String articleId) async {
+  Future<void> loadQuiz(String articleId, {NewsArticle? article}) async {
     _isLoadingQuiz = true;
     _currentQuiz = null;
+    _currentQuizArticleId = articleId;
+    _currentQuizArticle = article ?? _findArticle(articleId);
     _answers = {};
     _quizSubmitted = false;
     notifyListeners();
@@ -158,6 +172,8 @@ class NewsProvider extends ChangeNotifier {
 
   /// Submit quiz and calculate score.
   void submitQuiz() {
+    if (_quizSubmitted) return;
+    _recordSubmittedMistakes();
     _quizSubmitted = true;
     notifyListeners();
   }
@@ -165,6 +181,8 @@ class NewsProvider extends ChangeNotifier {
   /// Reset quiz state.
   void resetQuiz() {
     _currentQuiz = null;
+    _currentQuizArticleId = null;
+    _currentQuizArticle = null;
     _answers = {};
     _quizSubmitted = false;
     notifyListeners();
@@ -185,5 +203,61 @@ class NewsProvider extends ChangeNotifier {
       debugPrint('Failed to load full article content: $e');
       return null;
     }
+  }
+
+  NewsArticle? _findArticle(String articleId) {
+    for (final article in _articles) {
+      if (article.id == articleId) return article;
+    }
+    return null;
+  }
+
+  void _recordSubmittedMistakes() {
+    final quiz = _currentQuiz;
+    if (quiz == null) return;
+
+    final article = _currentQuizArticle;
+    final sourceId = article?.id ?? _currentQuizArticleId ?? 'news_quiz';
+    final sourceTitle = article?.title ?? 'News quiz';
+
+    for (final question in quiz.questions) {
+      final selectedIndex = _answers[question.id];
+      if (selectedIndex == null || selectedIndex == question.correctIndex) {
+        continue;
+      }
+
+      final selectedAnswer = _optionText(question.options, selectedIndex);
+      final correctAnswer = _optionText(
+        question.options,
+        question.correctIndex,
+      );
+
+      unawaited(
+        _mistakeRepository.saveMistake(
+          MistakeNotebookEntry(
+            id: MistakeNotebookEntry.buildId(
+              sourceType: 'news_quiz',
+              sourceId: sourceId,
+              questionId: '${question.id}:${question.question}',
+              selectedAnswer: selectedAnswer,
+            ),
+            sourceType: 'news_quiz',
+            sourceId: sourceId,
+            sourceTitle: sourceTitle,
+            question: question.question,
+            selectedAnswer: selectedAnswer,
+            correctAnswer: correctAnswer,
+            explanation: question.explanation,
+            skill: question.type.isEmpty ? 'reading' : question.type,
+            createdAt: DateTime.now(),
+          ),
+        ),
+      );
+    }
+  }
+
+  String _optionText(List<String> options, int index) {
+    if (index < 0 || index >= options.length) return '';
+    return options[index];
   }
 }

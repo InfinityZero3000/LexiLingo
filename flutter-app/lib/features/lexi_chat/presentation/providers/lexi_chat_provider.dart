@@ -36,6 +36,7 @@ class LexiChatProvider extends ChangeNotifier {
   final BackgroundSyncQueueService _syncQueue =
       BackgroundSyncQueueService.instance;
   StreamSubscription<SyncQueueItem>? _syncQueueSub;
+  bool _isDisposed = false;
 
   LexiChatProvider({required this.repository, required AiApiClient aiClient})
     : _aiClient = aiClient {
@@ -71,6 +72,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _ttsEnabled = true;
   double _ttsSpeed = 1.0;
   String _learnerLevel = 'B1';
+  String _nativeLanguage = 'vi';
   Timer? _typingStageTimer;
   DateTime? _responseStateStartedAt;
   int _requestSequence = 0;
@@ -114,7 +116,21 @@ class LexiChatProvider extends ChangeNotifier {
         normalized.contains('401');
   }
 
+  bool _isForbiddenSessionError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('forbidden') ||
+        normalized.contains('status 403') ||
+        normalized.contains('403');
+  }
+
   String get learnerLevel => _learnerLevel;
+  String get nativeLanguage => _nativeLanguage;
+
+  @override
+  void notifyListeners() {
+    if (_isDisposed) return;
+    super.notifyListeners();
+  }
 
   // ── Session ────────────────────────────────────────────────────────────────
   Future<void> startSession(String userId) async {
@@ -180,6 +196,7 @@ class LexiChatProvider extends ChangeNotifier {
 
     try {
       await syncSessions(userId);
+      await _removeSessionsForOtherUsers(userId);
 
       if (_sessions.isNotEmpty) {
         await selectSession(_sessions.first);
@@ -276,18 +293,32 @@ class LexiChatProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      if (restoredFromCache) {
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
-
       final err = e.toString().toLowerCase();
       if (err.contains('404') || err.contains('not found')) {
         _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
         await _saveSessions();
         await startSession(summary.userId);
         _error = 'Session expired on server. Started a new one.';
+        return;
+      }
+
+      if (_isForbiddenSessionError(e)) {
+        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
+        await _saveSessions();
+        _session = null;
+        _messages.clear();
+        _isLoadingMoreMessages = false;
+        _hasMoreMessages = false;
+        _nextMessageCursor = null;
+        _error = 'This session belongs to another account. Start a new chat.';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      if (restoredFromCache) {
+        _isLoading = false;
+        notifyListeners();
         return;
       }
 
@@ -384,6 +415,7 @@ class LexiChatProvider extends ChangeNotifier {
         message: text.trim(),
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
+        nativeLanguage: _nativeLanguage,
         idempotencyKey: requestId,
       );
 
@@ -426,6 +458,60 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
+  void handleDuplexVoiceEvent(Map<String, dynamic> event) {
+    final type = event['type'];
+    final turnId = event['turn_id']?.toString();
+    if (turnId == null) return;
+    final userId = 'voice_user_$turnId';
+    final assistantId = 'voice_assistant_$turnId';
+    if (type == 'stt.final') {
+      final text = event['text']?.toString().trim() ?? '';
+      if (text.isEmpty || _messages.any((message) => message.id == userId)) {
+        return;
+      }
+      _messages.addAll([
+        LexiMessage(
+          id: userId,
+          role: 'user',
+          content: text,
+          timestamp: DateTime.now(),
+        ),
+        LexiMessage(
+          id: assistantId,
+          role: 'assistant',
+          content: '',
+          timestamp: DateTime.now(),
+        ),
+      ]);
+      _isSending = true;
+      notifyListeners();
+    } else if (type == 'llm.token') {
+      final index = _messages.indexWhere(
+        (message) => message.id == assistantId,
+      );
+      if (index >= 0) {
+        _messages[index] = _messages[index].copyWith(
+          content: '${_messages[index].content}${event['text'] ?? ''}',
+        );
+        notifyListeners();
+      }
+    } else if (type == 'turn.done') {
+      _isSending = false;
+      if (_session != null) _touchSession(_session!.sessionId, messageDelta: 2);
+      unawaited(_cacheCurrentMessages());
+      notifyListeners();
+    } else if (type == 'voice.error' || type == 'turn.cancelled') {
+      _isSending = false;
+      _messages.removeWhere(
+        (message) => message.id == assistantId && message.content.isEmpty,
+      );
+      _error = type == 'voice.error'
+          ? 'Voice service is temporarily unavailable.'
+          : null;
+      notifyListeners();
+    }
+  }
+
   Future<void> _enqueuePendingLexiMessage({
     required String userId,
     required String sessionId,
@@ -448,6 +534,7 @@ class LexiChatProvider extends ChangeNotifier {
         'input_type': 'text',
         'enable_tts': _ttsEnabled,
         'learner_level': _learnerLevel,
+        'native_language': _nativeLanguage,
       },
     );
   }
@@ -533,6 +620,7 @@ class LexiChatProvider extends ChangeNotifier {
         message: text.trim(),
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
+        nativeLanguage: _nativeLanguage,
       )) {
         switch (event) {
           case LexiStreamThinking():
@@ -570,8 +658,8 @@ class LexiChatProvider extends ChangeNotifier {
               final finalContent = serverText.isNotEmpty
                   ? serverText
                   : (accumulated.isNotEmpty
-                      ? accumulated
-                      : 'Squawk! Something went quiet. Can you ask that again?');
+                        ? accumulated
+                        : 'Squawk! Something went quiet. Can you ask that again?');
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',
@@ -736,6 +824,7 @@ class LexiChatProvider extends ChangeNotifier {
         audioBase64: audioBase64,
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
+        nativeLanguage: _nativeLanguage,
       );
 
       _messages.add(response);
@@ -859,6 +948,12 @@ class LexiChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setNativeLanguage(String language) {
+    if (language.isEmpty || language == _nativeLanguage) return;
+    _nativeLanguage = language;
+    notifyListeners();
+  }
+
   // ── Cleanup ───────────────────────────────────────────────────────────────
   void clearError() {
     _error = null;
@@ -867,6 +962,7 @@ class LexiChatProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _syncQueueSub?.cancel();
     _typingStageTimer?.cancel();
     _ttsPlayer.dispose();
@@ -928,13 +1024,24 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _removeSessionsForOtherUsers(String userId) async {
+    final before = _sessions.length;
+    _sessions.removeWhere((s) => s.userId != userId);
+    if (_sessions.length != before) {
+      await _saveSessions();
+      notifyListeners();
+    }
+  }
+
   Future<void> _loadSavedSessions() async {
+    if (_isDisposed) return;
     _isLoadingSessions = true;
     notifyListeners();
 
     try {
       final rawString = await _secureStorage.read(key: _savedSessionsKey);
       if (rawString == null || rawString.isEmpty) {
+        if (_isDisposed) return;
         _isLoadingSessions = false;
         notifyListeners();
         return;
@@ -954,6 +1061,7 @@ class LexiChatProvider extends ChangeNotifier {
       logWarn(_tag, 'Failed to load saved Lexi sessions: $e');
     }
 
+    if (_isDisposed) return;
     _isLoadingSessions = false;
     notifyListeners();
   }
