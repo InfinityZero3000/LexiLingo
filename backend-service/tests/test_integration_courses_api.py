@@ -42,3 +42,31 @@ async def test_integration_courses_requires_valid_api_key(monkeypatch):
     assert valid.status_code == 200
     assert valid.json()["data"] == []
     get_courses.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_integration_openapi_requires_key_and_excludes_other_routes(monkeypatch):
+    raw_key = "llk_test_partner_secret"
+    monkeypatch.setattr(
+        settings,
+        "LEXILINGO_PARTNER_API_KEY_HASHES",
+        hashlib.sha256(raw_key.encode()).hexdigest(),
+        raising=False,
+    )
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://test",
+    ) as client:
+        missing = await client.get("/api/v1/integrations/openapi.json")
+        valid = await client.get(
+            "/api/v1/integrations/openapi.json",
+            headers={"X-LexiLingo-API-Key": raw_key},
+        )
+
+    assert missing.status_code == 401
+    assert valid.status_code == 200
+    schema = valid.json()
+    assert schema["info"]["title"] == "LexiLingo Partner Integrations API"
+    assert schema["paths"]
+    assert all(path.startswith("/api/v1/integrations/") for path in schema["paths"])
