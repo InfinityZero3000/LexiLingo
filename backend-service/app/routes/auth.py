@@ -114,7 +114,7 @@ async def register(
     try:
         from app.core.security import create_verification_token
         token = create_verification_token(
-            {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
+            {"sub": str(user.id), "email": user.email, "type": "email_verification"},
             expires_minutes=1440,
         )
         await EmailService.send_verification_email(

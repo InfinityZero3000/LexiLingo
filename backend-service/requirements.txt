@@ -47,11 +47,11 @@ trafilatura>=2.1.0
 youtube-transcript-api>=0.6.3
 
 # Redis (async client — used by quota manager and rate limiting)
-redis>=8.0.0,<9.0.0
+redis>=7.4.1,<8.0.0
 
 
 # Background jobs — install without redis extras; redis-py is a direct dep and satisfies the transport at runtime
-kombu>=5.5.2,<5.6
+kombu>=5.5.0,<5.6
 celery>=5.5.3,<5.6
 
 # System metrics (used by admin monitoring endpoints)
@@ -64,7 +64,7 @@ prometheus-fastapi-instrumentator>=7.1.0
 psutil>=6.0.0
 
 # Testing
-pytest>=9.1.1
+pytest>=9.1.0
 pytest-asyncio>=1.4.0
 httpx>=0.27.0
 

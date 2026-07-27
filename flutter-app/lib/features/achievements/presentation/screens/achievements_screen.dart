@@ -440,9 +440,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   void _shareAchievement(AchievementEntity achievement) {
     final text =
-        'I just unlocked "${achievement.name}" on LexiLingo!\n'
+        '🏆 I just unlocked "${achievement.name}" on LexiLingo!\n'
         '${achievement.description}\n\n'
-        'Join me and start learning English today!\n'
+        'Join me and start learning English today! 🌟\n'
         '#LexiLingo #LanguageLearning';
     Share.share(text);
   }
