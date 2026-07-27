@@ -61,7 +61,7 @@ peft>=0.19.1  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (TRACECAG Orchestration)
 langgraph>=1.2.9
-langchain-core>=1.4.9
+langchain-core>=1.5.1
 langchain-community>=0.4.2
 
 # LLaMA.cpp for GGUF model inference (Vietnamese explanation)
