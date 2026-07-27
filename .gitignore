@@ -139,6 +139,11 @@ gateway/nginx/logs/*.log
 default.conf
 scripts/extracted_media
 
+# Large Anki export artifacts
+*.apkg
+*.anki2
+*.colpkg
+
 # Root scripts data pipeline outputs and logs (tracked scripts are preserved)
 /scripts/data-pipeline/*/
 /scripts/data-pipeline/*.json
