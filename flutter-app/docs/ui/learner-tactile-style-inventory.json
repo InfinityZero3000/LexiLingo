@@ -26510,6 +26510,96 @@
       "category": "eligible",
       "group": 1,
       "status": "inventoried"
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/streak_widget.dart::_LargeStreakFireWidgetState::BoxDecoration::0",
+      "path": "lib/features/progress/presentation/widgets/streak_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_LargeStreakFireWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 680,
+      "category": "eligible",
+      "group": 1,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/streak_widget.dart::_LargeStreakFireWidgetState::BoxDecoration::1",
+      "path": "lib/features/progress/presentation/widgets/streak_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_LargeStreakFireWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 697,
+      "category": "eligible",
+      "group": 1,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/user/presentation/pages/settings_page.dart::_SettingsPageState::showDialog::1",
+      "path": "lib/features/user/presentation/pages/settings_page.dart",
+      "entryPoint": "overlay",
+      "symbol": "_SettingsPageState",
+      "callKind": "showDialog",
+      "ordinal": 1,
+      "line": 1218,
+      "category": "eligible",
+      "group": 1,
+      "status": "planned"
+    },
+    {
+      "id": "lib/features/user/presentation/pages/settings_page.dart::_SettingsPageState::BoxDecoration::14",
+      "path": "lib/features/user/presentation/pages/settings_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_SettingsPageState",
+      "callKind": "BoxDecoration",
+      "ordinal": 14,
+      "line": 1155,
+      "category": "eligible",
+      "group": 1,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [

@@ -351,6 +351,25 @@ async def _get_public_url(client: httpx.AsyncClient, url: str, **kwargs) -> http
     raise HTTPException(status_code=400, detail="Too many redirects.")
 
 
+async def _stream_public_url(
+    client: httpx.AsyncClient,
+    url: str,
+    **kwargs,
+) -> httpx.Response:
+    """Open a streaming public URL while validating every redirect target."""
+    current_url = url
+    for _ in range(5):
+        _validate_public_http_url(current_url)
+        request = client.build_request("GET", current_url, **kwargs)
+        response = await client.send(request, stream=True)
+        if response.is_redirect and response.headers.get("location"):
+            current_url = urljoin(current_url, response.headers["location"])
+            await response.aclose()
+            continue
+        return response
+    raise HTTPException(status_code=400, detail="Too many redirects.")
+
+
 def _strip_html_basic(html: str) -> str:
     """Basic HTML to text conversion — fallback when trafilatura is unavailable."""
     import html as html_module

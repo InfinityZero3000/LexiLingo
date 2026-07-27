@@ -453,7 +453,7 @@ if os.path.isdir(_media_dir):
     app.mount("/media", StaticFiles(directory=_media_dir), name="media")
 
 
-@app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 async def root():
     """Root endpoint. Supports HEAD for Render/load-balancer health probes."""
     return {

@@ -15,26 +15,10 @@ import {
   type UserFilters,
   type UserListItem as ApiUserListItem,
 } from '../lib/userManagementApi';
-import UserDetailModal from '../components/user-management/UserDetailModal';import { SectionHeader } from "../components/SectionHeader";import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+import { SectionHeader } from '../components/SectionHeader';
+import UserDetailModal from '../components/user-management/UserDetailModal';
+import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
 import { useAuth } from '../components/AuthProvider';
-
-type UserListItem = ApiUserListItem & {
-  avatar_url: string | null;
-  total_xp: number;
-  streak_days: number;
-};
-
-type UserListItem = ApiUserListItem & {
-  avatar_url: string | null;
-  total_xp: number;
-  streak_days: number;
-};
-
-type UserListItem = ApiUserListItem & {
-  avatar_url: string | null;
-  total_xp: number;
-  streak_days: number;
-};
 
 type UserListItem = ApiUserListItem & {
   avatar_url: string | null;

@@ -11,6 +11,8 @@ Tests cover:
                     _fetch_podcast_search
 """
 
+import hashlib
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
@@ -638,6 +640,9 @@ class TestTranscriptEndpoint:
         assert data["transcript"] == "This is a mock podcast transcript."
         assert data["feed_url"] == "https://example.com/feed.rss"
         assert data["episode_guid"] == "ep001"
+        cache_key = mock_cache.get_or_fetch.await_args.kwargs["cache_key"]
+        assert cache_key.startswith("podcasts:transcript:")
+        assert cache_key != "podcasts:transcript:" + hashlib.md5(b"ep001").hexdigest()[:16]
 
     @pytest.mark.asyncio
     async def test_cache_miss_downloads_and_transcribes(
@@ -662,18 +667,19 @@ class TestTranscriptEndpoint:
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.headers = {"Content-Length": "100"}
-        async def mock_iter_bytes(*args, **kwargs):
+        mock_response.aclose = AsyncMock()
+        async def mock_iter_bytes():
             yield b"mock_audio_data"
-        mock_response.iter_bytes = mock_iter_bytes
-
-        mock_stream = AsyncMock()
-        mock_stream.__aenter__.return_value = mock_response
+        mock_response.aiter_bytes = mock_iter_bytes
 
         mock_transcribe = AsyncMock(return_value={"text": "Hello world from transcript"})
 
         try:
             with patch("app.routes.podcasts.APICacheService") as MockCache, \
-                 patch("httpx.AsyncClient.stream", return_value=mock_stream), \
+                 patch(
+                     "app.routes.podcasts._stream_public_url",
+                     AsyncMock(return_value=mock_response),
+                 ), \
                  patch("app.routes.podcasts.AIServiceClient.transcribe_audio", mock_transcribe):
 
                 mock_cache = AsyncMock()

@@ -1,5 +1,5 @@
 """
-Unit tests for GraphCAG edge routing functions.
+Unit tests for TraceCAG edge routing functions.
 
 Covers:
 - route_after_diagnosis:  A1/A2 + errors → vietnamese_node
@@ -10,7 +10,7 @@ Covers:
 """
 
 import pytest
-from api.services.graph_cag.edges import route_after_diagnosis, route_after_vietnamese
+from api.services.trace_cag.edges import route_after_diagnosis, route_after_vietnamese
 
 
 # ---------------------------------------------------------------------------
@@ -18,7 +18,7 @@ from api.services.graph_cag.edges import route_after_diagnosis, route_after_viet
 # ---------------------------------------------------------------------------
 
 def _state(level: str = "B1", confidence: float = 0.9, errors: list | None = None, native_requested: bool = False) -> dict:
-    """Build a minimal GraphCAGState for routing tests."""
+    """Build a minimal TraceCAGState for routing tests."""
     return {
         "diagnosis_confidence": confidence,
         "learner_profile": {"level": level},
