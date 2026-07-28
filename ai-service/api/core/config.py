@@ -101,6 +101,11 @@ class Settings(BaseSettings):
         "false" if ENVIRONMENT == "production" else "true",
     ).lower() == "true"
 
+    TRACE_CAG_EXTERNAL_ENABLED: bool = False
+    TRACE_CAG_SERVICE_TOKEN_HASH: str = ""
+    TRACE_CAG_PREVIOUS_TOKEN_HASH: str = ""
+    TRACE_CAG_PREVIOUS_TOKEN_VALID_UNTIL: str = ""
+
     # ============================================================
     # Licensed Content ETL
     # ============================================================
