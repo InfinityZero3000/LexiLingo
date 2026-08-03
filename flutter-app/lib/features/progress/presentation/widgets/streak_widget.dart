@@ -62,9 +62,8 @@ class StreakWidget extends StatelessWidget {
               boxShadow: streak.currentStreak >= 3
                   ? [
                       BoxShadow(
-                        color: AppColors.orange.withValues(alpha: 0.45),
-                        blurRadius: 10,
-                        spreadRadius: 1,
+                        color: AppColors.orange.withValues(alpha: 0.30),
+                        blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ]
@@ -82,19 +81,28 @@ class StreakWidget extends StatelessWidget {
                     size: 18,
                   ),
                 const SizedBox(width: 4),
-                Text(
-                  '${streak.currentStreak}',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.surface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                // Scale + fade pop whenever the streak count changes.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, animation) => ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  ),
+                  child: Text(
+                    '${streak.currentStreak}',
+                    key: ValueKey(streak.currentStreak),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
                 if (streak.streakAtRisk) ...[
                   const SizedBox(width: 4),
                   const Icon(
                     Icons.warning_rounded,
-                    color: Colors.yellow,
+                    color: AppColors.warning,
                     size: 16,
                   ),
                 ],
@@ -106,25 +114,25 @@ class StreakWidget extends StatelessWidget {
     );
   }
 
+  /// Same warm hue family as [AppColors.streakGradient], intensity rising
+  /// with streak length — tokens only, no one-off hex literals.
   LinearGradient _getStreakGradient(int streak) {
     if (streak >= 100) {
       return const LinearGradient(
-        colors: [Color(0xFFFF6B00), Color(0xFFFF0000)],
+        colors: [AppColors.deepOrange, AppColors.error],
       );
     } else if (streak >= 30) {
-      return const LinearGradient(
-        colors: [Color(0xFFFF8C00), Color(0xFFFF4500)],
-      );
+      return const LinearGradient(colors: AppColors.streakGradient);
     } else if (streak >= 7) {
       return const LinearGradient(
-        colors: [Color(0xFFFFAA00), Color(0xFFFF6B00)],
+        colors: [AppColors.orange, AppColors.deepOrange],
       );
     } else if (streak >= 1) {
       return const LinearGradient(
-        colors: [Color(0xFFFFCC00), Color(0xFFFF8C00)],
+        colors: [AppColors.accentYellow, AppColors.orange],
       );
     }
-    return LinearGradient(colors: [AppColors.grey400, AppColors.grey500]);
+    return const LinearGradient(colors: [AppColors.grey400, AppColors.grey500]);
   }
 
   void _showStreakDetails(BuildContext context, StreakEntity streak) {

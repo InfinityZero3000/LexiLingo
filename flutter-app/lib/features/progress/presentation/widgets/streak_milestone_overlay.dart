@@ -97,7 +97,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    const fireOrange = Color(0xFFFF6B35);
+    const fireOrange = AppColors.deepOrange;
     final assetPath = _badgeAsset(widget.streakDays);
 
     return GestureDetector(
