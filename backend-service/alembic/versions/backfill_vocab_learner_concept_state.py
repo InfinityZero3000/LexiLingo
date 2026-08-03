@@ -60,7 +60,11 @@ def upgrade() -> None:
     if not rows:
         return
 
-    now = datetime.now(timezone.utc)
+    # This migration writes via raw SQL, bypassing the ORM's TZDateTime
+    # TypeDecorator (app/core/db_types.py) that normally strips tzinfo before
+    # binding — asyncpg rejects timezone-aware datetimes against the
+    # TIMESTAMP WITHOUT TIME ZONE columns these tables actually use.
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     insert_stmt = sa.text(
         """
         INSERT INTO learner_concept_states (
