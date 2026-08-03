@@ -2,7 +2,7 @@
 """Minimal self-check for lexilingo-sentinel.py's decision logic.
 
 No docker/ufw/root required — subprocess calls are monkeypatched.
-Run directly: python3 deploy/scripts/test_lexilingo_sentinel.py
+Run directly: python3 scripts/tests/test_lexilingo_sentinel.py
 """
 
 import importlib.util
@@ -13,7 +13,7 @@ from pathlib import Path
 from unittest import mock
 
 _SPEC = importlib.util.spec_from_file_location(
-    "lexilingo_sentinel", Path(__file__).parent / "lexilingo-sentinel.py"
+    "lexilingo_sentinel", Path(__file__).parent.parent / "lexilingo-sentinel.py"
 )
 sentinel = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(sentinel)
