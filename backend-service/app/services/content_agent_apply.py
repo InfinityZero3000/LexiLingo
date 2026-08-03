@@ -195,6 +195,7 @@ class ContentAgentApplyService:
                         unit_id=unit.id,
                         title=lesson_data.title,
                         description=lesson_data.description,
+                        outcome=lesson_data.outcome,
                         order_index=lesson_data.order_index,
                         lesson_type="vocabulary",
                         pass_threshold=80,

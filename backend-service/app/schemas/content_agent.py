@@ -85,6 +85,17 @@ class SourceSnapshotDescriptor(BaseModel):
     enabled: bool
 
 
+class ContentAgentRecordUpdate(BaseModel):
+    """Admin edit of one generated exercise (and optionally its lesson's
+    outcome) before a content-agent job is approved and applied."""
+
+    question: str | None = Field(default=None, min_length=1)
+    options: list[Any] | None = None
+    correct_answer: str | None = Field(default=None, min_length=1)
+    explanation: str | None = None
+    lesson_outcome: str | None = None
+
+
 class ContentAgentJobCreate(BaseModel):
     levels: list[CEFRLevel] = Field(min_length=1, max_length=6)
     sources: list[str] = Field(default_factory=lambda: ["cefr_j"], min_length=1)
@@ -152,6 +163,8 @@ class ExerciseArtifact(BaseModel):
         "multiple_choice", "true_false", "fill_blank", "translate", "matching", "reorder"
     ]
     ui_type: str
+    phase: Literal["pre_task", "task_cycle", "language_focus"] = "task_cycle"
+    concept_id: str | None = Field(default=None, max_length=255)
     question: str = Field(min_length=1)
     options: list[Any] | None = None
     correct_answer: str = Field(min_length=1)
@@ -195,6 +208,7 @@ class LessonArtifact(BaseModel):
 
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
+    outcome: str | None = None
     order_index: int = Field(ge=0)
     vocabulary: list[VocabularyArtifact] = Field(min_length=1)
     exercises: list[ExerciseArtifact] = Field(min_length=1)

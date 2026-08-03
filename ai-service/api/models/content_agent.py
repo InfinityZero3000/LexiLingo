@@ -221,6 +221,12 @@ class ExerciseArtifact(BaseModel):
         "reorder",
     ]
     ui_type: str = Field(min_length=1, max_length=100)
+    phase: Literal["pre_task", "task_cycle", "language_focus"] = "task_cycle"
+    concept_id: str | None = Field(
+        default=None,
+        max_length=255,
+        description="Stable slug for mastery tracking, e.g. 'grammar:past_simple' or 'vocab:hotel'",
+    )
     question: str = Field(min_length=1)
     options: list[Any] | None = None
     correct_answer: str = Field(min_length=1)
@@ -264,6 +270,9 @@ class LessonArtifact(BaseModel):
 
     title: str = Field(min_length=1, max_length=255)
     description: str | None = None
+    outcome: str | None = Field(
+        default=None, description="Can-do statement: what the learner will be able to do after this mission"
+    )
     order_index: int = Field(ge=0)
     vocabulary: list[VocabularyArtifact] = Field(min_length=1)
     exercises: list[ExerciseArtifact] = Field(min_length=1)

@@ -27,6 +27,7 @@ from api.models.content_agent import (
     SourceSnapshotDescriptor,
     SourceRecordBatch,
 )
+from api.services.content_agent.generator import LLMMissionGenerator
 from api.services.content_agent.planner import InsufficientVocabularyError
 from api.services.content_agent.policies import SourcePolicyError
 from api.services.content_agent.service import (
@@ -100,7 +101,12 @@ async def get_content_agent_service() -> ContentAgentService:
         )
     else:
         _store.set_redis_client(redis)
-    return ContentAgentService(store=_store)
+    generator = (
+        LLMMissionGenerator(api_key=settings.GEMINI_API_KEY)
+        if settings.GEMINI_API_KEY
+        else None
+    )
+    return ContentAgentService(store=_store, generator=generator)
 
 
 @router.post(

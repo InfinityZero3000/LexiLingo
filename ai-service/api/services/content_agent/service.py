@@ -27,6 +27,7 @@ from api.services.content_agent.generator import (
     DeterministicCourseGenerator,
 )
 from api.services.content_agent.planner import plan_curriculum
+from api.services.content_agent.policies import find_missing_production_exercise_lessons
 from api.services.content_agent.store import ContentAgentStore
 from api.services.content_etl.contracts import SourceRecordV2
 from api.services.content_etl.registry import get_source_definition
@@ -125,7 +126,7 @@ class ContentAgentService:
         ]
 
         plan = plan_curriculum(records, request)
-        courses = self.generator.generate_courses(plan, request)
+        courses = await self.generator.generate_courses(plan, request)
         source_counts = Counter(record.source_name for record in records)
         attached_snapshots = await self.store.get_snapshots(job_id)
         attached_by_source = {
@@ -232,6 +233,7 @@ class ContentAgentService:
             warnings.append(
                 f"Rejected {plan.rejected_low_confidence} low-confidence records"
             )
+        blocking_errors = find_missing_production_exercise_lessons(courses)
 
         return ContentAgentArtifact(
             generation_key=generation_key,
@@ -239,6 +241,7 @@ class ContentAgentService:
             courses=courses,
             quality=QualityArtifact(
                 warnings=warnings,
+                blocking_errors=blocking_errors,
                 metrics={
                     "input_records": len(records),
                     "catalog_size": plan.catalog_size,
