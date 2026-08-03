@@ -72,4 +72,4 @@ httpx>=0.27.0
 black>=26.5.1
 isort>=8.0.1
 flake8>=7.3.0
-ruff>=0.14.8
+ruff>=0.16.1
