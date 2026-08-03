@@ -37,6 +37,12 @@ _RUNTIME_KG_SOURCE_FILES = (
     "05_vocabulary_advanced.json",
     "06_tracecag_topic_expansion.json",
     "seed_graph.json",
+    "07_vocabulary_anki.json",
+    "08_cefr_sentences.json",
+    "09_grammar_usage.json",
+    "10_collocations.json",
+    "11_idioms.json",
+    "12_lexical_relations.json",
 )
 
 
@@ -519,7 +525,8 @@ class KnowledgeGraphServiceV3:
             for seed in seed_nodes:
                 result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
-                    "WHERE a.id = $seed RETURN b.id, e.relation, b.level",
+                    "WHERE a.id = $seed RETURN b.id, e.relation, b.level "
+                    "LIMIT 50",
                     {"seed": seed},
                 )
                 while result.has_next():  # type: ignore[union-attr]
@@ -619,10 +626,14 @@ class KnowledgeGraphServiceV3:
                 if depth >= max_hops:
                     continue
 
-                # Expand neighbors
+                # Expand neighbors (LIMIT bounds hub-node fan-out — e.g. common
+                # vocab like "person"/"run" has 200-500+ out-edges but max_nodes
+                # caps the whole traversal at ~10, so anything beyond a small
+                # multiple of that is fetched from Kuzu and thrown away)
                 result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
-                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level",
+                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level "
+                    "LIMIT 50",
                     {"cid": cid},
                 )
                 while result.has_next():  # type: ignore[union-attr]
@@ -860,7 +871,14 @@ class KnowledgeGraphServiceV3:
         return 0
 
     def query_concepts(self, query: str, learner_level: str = "B1", top_k: int = 8) -> List[Dict[str, Any]]:
-        """Lexical + level-aware top-K concept retrieval for prompt grounding."""
+        """Lexical + level-aware top-K concept retrieval for prompt grounding.
+
+        Uses the inverted keyword index built in _build_concept_cache() instead
+        of scanning every concept — at ~15k concepts a full scan measured
+        ~470ms/call, far over the retrieval budget (TRACECAG_RETRIEVE_BUDGET_KG_MS,
+        default 120ms). The index bounds cost to the concepts that actually share
+        a token with the query.
+        """
         normalized = str(query or "").strip().lower()
         if not normalized or top_k <= 0:
             return []
@@ -870,25 +888,25 @@ class KnowledgeGraphServiceV3:
             return []
 
         concepts = self.get_concepts()
-        if not concepts:
+        if not concepts or not self._keyword_index:
+            return []
+
+        token_set = set(tokens)
+        overlap_counts: Dict[str, int] = {}
+        for tok in token_set:
+            for concept_id in self._keyword_index.get(tok, ()):
+                overlap_counts[concept_id] = overlap_counts.get(concept_id, 0) + 1
+        if not overlap_counts:
             return []
 
         CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
         learner_ord = CEFR_ORD.get(str(learner_level or "B1").upper(), 3)
 
         scored: List[Tuple[float, str, Dict[str, str]]] = []
-        token_set = set(tokens)
-        for concept_id, meta in concepts.items():
-            title = str(meta.get("title") or "")
-            keywords = str(meta.get("keywords") or "")
-            haystack = f"{title} {keywords}".lower()
-            if not haystack:
+        for concept_id, overlap in overlap_counts.items():
+            meta = concepts.get(concept_id)
+            if not meta:
                 continue
-
-            overlap = sum(1 for tok in token_set if tok in haystack)
-            if overlap <= 0:
-                continue
-
             level = str(meta.get("level") or "B1").upper()
             diff = abs(CEFR_ORD.get(level, 3) - learner_ord)
             level_boost = 1.0 if diff == 0 else (0.8 if diff == 1 else 0.6)

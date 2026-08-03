@@ -150,6 +150,7 @@ export type ContentAgentExercise = {
   id: string;
   type: string;
   ui_type: string;
+  phase?: "pre_task" | "task_cycle" | "language_focus" | string;
   question: string;
   correct_answer: string;
   options?: unknown;
@@ -160,10 +161,19 @@ export type ContentAgentExercise = {
 
 export type ContentAgentLessonPreview = {
   title: string;
+  outcome?: string | null;
   order_index: number;
   vocabulary: ContentAgentVocabularyItem[];
   exercises: ContentAgentExercise[];
   [key: string]: unknown;
+};
+
+export type ContentAgentRecordUpdate = {
+  question?: string;
+  options?: unknown;
+  correct_answer?: string;
+  explanation?: string;
+  lesson_outcome?: string;
 };
 
 export type ContentAgentUnitPreview = {
@@ -400,6 +410,20 @@ export const applyContentAgentJob = (jobId: string) =>
     }
     return result;
   });
+
+export const updateContentAgentRecord = async (
+  jobId: string,
+  recordId: string,
+  update: ContentAgentRecordUpdate,
+): Promise<ContentAgentPreview> => {
+  const payload = await apiFetch<
+    { artifact: ContentAgentPreview } | ApiEnvelope<{ artifact: ContentAgentPreview }>
+  >(`${jobUrl(jobId, "records")}/${encodeURIComponent(recordId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(update),
+  });
+  return unwrap(payload).artifact;
+};
 
 export const retryContentAgentJob = (jobId: string) =>
   postJobAction(jobId, "retry");

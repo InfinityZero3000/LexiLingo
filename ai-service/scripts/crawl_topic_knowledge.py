@@ -7,8 +7,8 @@ Default mode is non-destructive:
 
 It writes:
     data/topic_graphs.enriched.json
-    data/kg_output/topic_knowledge_prefix.txt
-    data/kg_output/topic_crawl_report.json
+    data/kg_output/topic_crawl/topic_knowledge_prefix.txt
+    data/kg_output/topic_crawl/topic_crawl_report.json
 """
 
 from __future__ import annotations
@@ -33,9 +33,9 @@ DATA_DIR = AI_SERVICE_ROOT / "data"
 DEFAULT_STORIES_PATH = DATA_DIR / "sample_stories.json"
 DEFAULT_TOPIC_GRAPHS_PATH = DATA_DIR / "topic_graphs.json"
 DEFAULT_ENRICHED_PATH = DATA_DIR / "topic_graphs.enriched.json"
-DEFAULT_PREFIX_PATH = DATA_DIR / "kg_output" / "topic_knowledge_prefix.txt"
-DEFAULT_KNOWLEDGE_PREFIX_PATH = DATA_DIR / "kg_output" / "knowledge_prefix.txt"
-DEFAULT_REPORT_PATH = DATA_DIR / "kg_output" / "topic_crawl_report.json"
+DEFAULT_PREFIX_PATH = DATA_DIR / "kg_output" / "topic_crawl" / "topic_knowledge_prefix.txt"
+DEFAULT_KNOWLEDGE_PREFIX_PATH = DATA_DIR / "kg_output" / "topic_crawl" / "knowledge_prefix.txt"
+DEFAULT_REPORT_PATH = DATA_DIR / "kg_output" / "topic_crawl" / "topic_crawl_report.json"
 DEFAULT_QUOTA_STATE_PATH = (
     AI_SERVICE_ROOT / "model-development" / "reports" / "provider_quota_state.json"
 )

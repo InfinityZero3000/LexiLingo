@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
@@ -20,7 +21,9 @@ from app.models.user import User
 from app.schemas.content_agent import (
     ContentAgentJobCreate,
     ContentAgentJobResponse,
+    ContentAgentRecordUpdate,
     ContentAgentUploadResponse,
+    ExerciseArtifact,
     SourceSnapshotDescriptor,
 )
 from app.schemas.response import ApiResponse
@@ -325,6 +328,66 @@ async def get_preview(
             "blocking_errors": job.blocking_errors,
         }
     )
+
+
+@router.patch(
+    "/jobs/{job_id}/records/{record_id}", response_model=ApiResponse[dict]
+)
+async def update_job_record(
+    job_id: uuid.UUID,
+    record_id: str,
+    payload: ContentAgentRecordUpdate,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """Edit one generated exercise (and optionally its lesson's outcome)
+    before the job is approved. Applies to the preview artifact only —
+    `apply` re-reads the same job.artifact, so this edit is what gets
+    published once the admin approves."""
+    job = await _get_job_or_404(db, job_id, lock=True)
+    _require_job_owner(job, admin)
+    if job.status != "preview_ready" or not job.artifact:
+        raise HTTPException(
+            status_code=409, detail="Job has no editable preview artifact"
+        )
+
+    exercise_found: dict | None = None
+    lesson_found: dict | None = None
+    for course in job.artifact.get("courses", []):
+        for unit in course.get("units", []):
+            for lesson in unit.get("lessons", []):
+                for exercise in lesson.get("exercises", []):
+                    if exercise.get("id") == record_id:
+                        exercise_found = exercise
+                        lesson_found = lesson
+                        break
+    if exercise_found is None:
+        raise HTTPException(
+            status_code=404, detail="Exercise record not found in this job"
+        )
+
+    updates = payload.model_dump(exclude_unset=True, exclude={"lesson_outcome"})
+    merged = {**exercise_found, **updates}
+    try:
+        validated = ExerciseArtifact.model_validate(merged)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    exercise_found.update(validated.model_dump(mode="json"))
+
+    if payload.lesson_outcome is not None:
+        lesson_found["outcome"] = payload.lesson_outcome
+
+    flag_modified(job, "artifact")
+    await db.commit()
+    await db.refresh(job)
+    _audit(
+        db,
+        admin=admin,
+        action="edit_record",
+        resource_id=job.id,
+        details={"record_id": record_id},
+    )
+    return ApiResponse(message="Record updated", data={"artifact": job.artifact})
 
 
 @router.post("/jobs/{job_id}/apply", response_model=ApiResponse[dict])

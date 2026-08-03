@@ -8,6 +8,7 @@ from typing import Optional, List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, and_, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
@@ -602,6 +603,23 @@ async def claim_challenge_reward(
     effects_service = ItemEffectsService(db)
     multiplier = await effects_service.get_xp_multiplier(current_user.id)
     boosted_xp = int(xp_reward * multiplier)
+
+    claim = ChallengeRewardClaim(
+        user_id=current_user.id,
+        challenge_id=challenge_id,
+        claim_date=today_start,
+        xp_reward=boosted_xp,
+        gems_reward=gems_reward,
+    )
+    try:
+        async with db.begin_nested():
+            db.add(claim)
+            await db.flush()
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reward already claimed today"
+        )
     
     # Award XP and update numeric level/rank
     from app.services.level_service import calculate_numeric_level
@@ -622,15 +640,6 @@ async def claim_challenge_reward(
             description=f"Challenge completed: {challenge['title']}"
         )
     
-    # Create claim record
-    claim = ChallengeRewardClaim(
-        user_id=current_user.id,
-        challenge_id=challenge_id,
-        claim_date=today_start,
-        xp_reward=boosted_xp,
-        gems_reward=gems_reward,
-    )
-    db.add(claim)
     await db.commit()
     
     # --- Check achievements after claiming challenge ---

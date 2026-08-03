@@ -16,6 +16,7 @@ from app.services.learner_state import (
     _validate_observation,
     apply_observation_event,
     evolve_state,
+    get_due_concepts_for_user,
     get_states_for_concepts,
     ingest_observations,
 )
@@ -152,6 +153,38 @@ async def test_batch_read_deduplicates_and_preserves_requested_order() -> None:
     assert result.states == (first, second)
     session.scalar.assert_awaited_once()
     session.scalars.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_due_concepts_for_user_queries_without_requiring_concept_ids() -> None:
+    due_vocab = SimpleNamespace(concept_id="vocab:hotel")
+    due_grammar = SimpleNamespace(concept_id="grammar:past_simple")
+    scalar_rows = MagicMock()
+    scalar_rows.all.return_value = [due_vocab, due_grammar]
+    session = MagicMock()
+    session.scalars = AsyncMock(return_value=scalar_rows)
+
+    result = await get_due_concepts_for_user(session, uuid4(), now=NOW, limit=10)
+
+    assert result == [due_vocab, due_grammar]
+    session.scalars.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_due_concepts_for_user_clamps_limit_to_batch_max() -> None:
+    scalar_rows = MagicMock()
+    scalar_rows.all.return_value = []
+    session = MagicMock()
+    session.scalars = AsyncMock(return_value=scalar_rows)
+
+    await get_due_concepts_for_user(session, uuid4(), now=NOW, limit=99999)
+
+    session.scalars.assert_awaited_once()
+    executed_statement = session.scalars.await_args.args[0]
+    compiled = executed_statement.compile(
+        dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
+    )
+    assert "LIMIT 100" in str(compiled)
 
 
 def observation(**overrides) -> ObservationInput:

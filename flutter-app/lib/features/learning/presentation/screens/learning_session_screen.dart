@@ -190,6 +190,12 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   ),
                 ),
 
+                // Mission goal (can-do outcome) — shown only at the start of
+                // the lesson so the learner knows what they're working
+                // toward, per TBLT pre-task framing.
+                if (provider.currentExerciseIndex == 0)
+                  _buildOutcomeBanner(context, provider.currentLesson?.outcome),
+
                 // Content
                 Expanded(child: _buildExerciseContent(context, provider)),
 
@@ -198,6 +204,44 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOutcomeBanner(BuildContext context, String? outcome) {
+    if (outcome == null || outcome.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: colorScheme.primaryContainer,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.flag_rounded,
+              size: 20,
+              color: colorScheme.onPrimaryContainer,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                outcome,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onPrimaryContainer,
+                  height: 1.4,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

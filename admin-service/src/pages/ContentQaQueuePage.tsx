@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle, RefreshCw, RotateCcw, XCircle } from "lucide-react";
+import { CheckCircle, Pencil, RefreshCw, RotateCcw, XCircle } from "lucide-react";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
@@ -10,7 +10,10 @@ import {
   getContentAgentPreview,
   listContentQaQueue,
   retryContentAgentJob,
+  updateContentAgentRecord,
+  type ContentAgentExercise,
   type ContentAgentJob,
+  type ContentAgentLessonPreview,
   type ContentAgentPreview,
   type ContentQaQueue,
 } from "../lib/contentAgentApi";
@@ -87,6 +90,16 @@ const JobList = ({
   </div>
 );
 
+type EditForm = {
+  recordId: string;
+  question: string;
+  correctAnswer: string;
+  explanation: string;
+  optionsJson: string;
+  lessonTitle: string;
+  lessonOutcome: string;
+};
+
 export const ContentQaQueuePage = () => {
   const [queue, setQueue] = useState<ContentQaQueue | null>(null);
   const [selected, setSelected] = useState<ContentAgentJob | null>(null);
@@ -94,6 +107,9 @@ export const ContentQaQueuePage = () => {
   const [loading, setLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<EditForm | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const loadQueue = useCallback(async () => {
     setLoading(true);
@@ -166,6 +182,49 @@ export const ContentQaQueuePage = () => {
     }
   };
 
+  const openEdit = (exercise: ContentAgentExercise, lesson: ContentAgentLessonPreview) => {
+    setEditError(null);
+    setEditForm({
+      recordId: exercise.id,
+      question: exercise.question,
+      correctAnswer: exercise.correct_answer,
+      explanation: exercise.explanation || "",
+      optionsJson: exercise.options ? JSON.stringify(exercise.options, null, 2) : "",
+      lessonTitle: lesson.title,
+      lessonOutcome: lesson.outcome || "",
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!selected || !editForm) return;
+    setEditError(null);
+    let options: unknown;
+    if (editForm.optionsJson.trim()) {
+      try {
+        options = JSON.parse(editForm.optionsJson);
+      } catch {
+        setEditError("Options must be valid JSON (e.g. [\"a\", \"b\"]).");
+        return;
+      }
+    }
+    setSavingEdit(true);
+    try {
+      const updated = await updateContentAgentRecord(selected.id, editForm.recordId, {
+        question: editForm.question,
+        correct_answer: editForm.correctAnswer,
+        explanation: editForm.explanation || undefined,
+        options,
+        lesson_outcome: editForm.lessonOutcome || undefined,
+      });
+      setPreview(updated);
+      setEditForm(null);
+    } catch (err: any) {
+      setEditError(err?.message || "Failed to save the edit");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <div className="stack">
       <SectionHeader
@@ -232,6 +291,58 @@ export const ContentQaQueuePage = () => {
               </div>
 
               <div className="panel-inner">
+                <h3>Lessons & exercises</h3>
+                {!preview?.courses?.length ? (
+                  <div className="table-sub">No lesson content in this preview.</div>
+                ) : (
+                  <div className="stack" style={{ gap: 16 }}>
+                    {preview.courses.flatMap((course) =>
+                      course.units.flatMap((unit) =>
+                        unit.lessons.map((lesson) => (
+                          <div key={`${course.title}-${unit.title}-${lesson.title}`} className="panel-inner">
+                            <strong>{lesson.title}</strong>
+                            <div className="table-sub" style={{ marginBottom: 8 }}>
+                              {lesson.outcome ? `Outcome: ${lesson.outcome}` : "No outcome set."}
+                            </div>
+                            <div className="stack" style={{ gap: 6 }}>
+                              {lesson.exercises.map((exercise) => (
+                                <div
+                                  key={exercise.id}
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "flex-start",
+                                    gap: 8,
+                                    borderTop: "1px solid var(--border-soft)",
+                                    paddingTop: 6,
+                                  }}
+                                >
+                                  <div>
+                                    <div className="table-sub">
+                                      {exercise.ui_type}
+                                      {exercise.phase ? ` · ${exercise.phase}` : ""}
+                                    </div>
+                                    <div>{exercise.question}</div>
+                                  </div>
+                                  <button
+                                    className="ghost-button small"
+                                    disabled={selected.status !== "preview_ready"}
+                                    onClick={() => openEdit(exercise, lesson)}
+                                  >
+                                    <Pencil size={14} /> Edit
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )),
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="panel-inner">
                 <h3>Source policy</h3>
                 {!preview?.source_manifest?.length ? (
                   <div className="table-sub">No source manifest attached.</div>
@@ -267,6 +378,66 @@ export const ContentQaQueuePage = () => {
           )}
         </div>
       </div>
+
+      {editForm && (
+        <div className="modal-overlay" onClick={() => setEditForm(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
+            <h3>Edit exercise</h3>
+            <div className="table-sub" style={{ marginBottom: 8 }}>Lesson: {editForm.lessonTitle}</div>
+            {editError && <div className="form-error">{editError}</div>}
+            <div className="stack" style={{ gap: 10 }}>
+              <label>
+                Question
+                <textarea
+                  rows={2}
+                  value={editForm.question}
+                  onChange={(e) => setEditForm({ ...editForm, question: e.target.value })}
+                />
+              </label>
+              <label>
+                Options (JSON, optional)
+                <textarea
+                  rows={3}
+                  placeholder='["option a", "option b"]'
+                  value={editForm.optionsJson}
+                  onChange={(e) => setEditForm({ ...editForm, optionsJson: e.target.value })}
+                />
+              </label>
+              <label>
+                Correct answer
+                <input
+                  value={editForm.correctAnswer}
+                  onChange={(e) => setEditForm({ ...editForm, correctAnswer: e.target.value })}
+                />
+              </label>
+              <label>
+                Explanation (optional)
+                <textarea
+                  rows={2}
+                  value={editForm.explanation}
+                  onChange={(e) => setEditForm({ ...editForm, explanation: e.target.value })}
+                />
+              </label>
+              <label>
+                Lesson outcome (can-do statement)
+                <textarea
+                  rows={2}
+                  value={editForm.lessonOutcome}
+                  onChange={(e) => setEditForm({ ...editForm, lessonOutcome: e.target.value })}
+                />
+              </label>
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button className="ghost-button" onClick={() => setEditForm(null)} disabled={savingEdit}>
+                  Cancel
+                </button>
+                <button className="primary-button" onClick={saveEdit} disabled={savingEdit}>
+                  {savingEdit ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

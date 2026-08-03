@@ -190,6 +190,12 @@ class WalletCRUD:
             user_id,
             commit=commit,
         )
+        result = await db.execute(
+            select(UserWallet)
+            .where(UserWallet.user_id == user_id)
+            .with_for_update()
+        )
+        wallet = result.scalar_one()
         
         wallet.gems += amount
         wallet.total_gems_earned += amount
@@ -317,7 +323,7 @@ class LeaderboardCRUD:
                     LeaderboardEntry.user_id == user_id,
                     LeaderboardEntry.week_start == week_start
                 )
-            )
+            ).with_for_update()
         )
         entry = result.scalar_one_or_none()
 
@@ -345,7 +351,7 @@ class LeaderboardCRUD:
                             LeaderboardEntry.user_id == user_id,
                             LeaderboardEntry.week_start == week_start,
                         )
-                    )
+                    ).with_for_update()
                 )
                 entry = result.scalar_one_or_none()
                 if not entry:
@@ -362,6 +368,12 @@ class LeaderboardCRUD:
     ) -> LeaderboardEntry:
         """Add XP and lessons to user's leaderboard entry"""
         entry = await LeaderboardCRUD.get_or_create_entry(db, user_id)
+        result = await db.execute(
+            select(LeaderboardEntry)
+            .where(LeaderboardEntry.id == entry.id)
+            .with_for_update()
+        )
+        entry = result.scalar_one()
         entry.xp_earned += xp
         entry.lessons_completed += lessons
         await db.commit()

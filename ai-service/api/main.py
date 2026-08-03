@@ -330,6 +330,7 @@ from api.routes import (  # noqa: E402
     ai,
     chat,
     content_agent,
+    integration_trace_cag,
     lexi_chat,
     notification_agent as notification_agent_router,
     ollama_router,
@@ -354,6 +355,7 @@ app.include_router(translate.router, prefix="/api/v1/ai", tags=["Translate"])
 app.include_router(lexi_chat.router, tags=["Lexi Chat"])
 app.include_router(ollama_router.router, prefix="/api/v1", tags=["Ollama"])
 app.include_router(content_agent.router, tags=["Internal Content Agent"])
+app.include_router(integration_trace_cag.router)
 app.include_router(notification_agent_router.router, tags=["Notification Agent"])
 app.include_router(ranking_agent_router.router, tags=["Internal Ranking Agent"])
 

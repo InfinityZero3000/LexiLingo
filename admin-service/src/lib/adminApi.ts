@@ -513,6 +513,7 @@ export type LessonItem = {
   unit_id: string;
   title: string;
   description?: string | null;
+  outcome?: string | null;
   order_index: number;
   lesson_type: string;
   xp_reward: number;
@@ -539,6 +540,7 @@ export const createLesson = async (payload: {
   unit_id: string;
   title: string;
   description?: string;
+  outcome?: string;
   order_index: number;
   lesson_type: string;
   xp_reward?: number;
