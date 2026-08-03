@@ -38,7 +38,7 @@ sentry-sdk[fastapi,sqlalchemy,loguru]>=2.66.1
 httpx>=0.28.1
 
 # RSS Feed Parsing (podcast episodes)
-feedparser>=6.0.12
+feedparser>=6.0.14
 
 # News article full-text extraction
 trafilatura>=2.1.0
