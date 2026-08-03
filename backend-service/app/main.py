@@ -74,6 +74,7 @@ from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
 from app.routes.learner_state import router as learner_state_router
+from app.routes.concepts import router as concepts_router
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
@@ -335,6 +336,7 @@ app.include_router(course_categories_router, prefix=f"{settings.API_V1_PREFIX}/c
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
+app.include_router(concepts_router, prefix=f"{settings.API_V1_PREFIX}/concepts", tags=["Concepts"])
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
 app.include_router(admin_courses_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])

@@ -54,6 +54,7 @@ export const LessonsPage = () => {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    outcome: "",
     order_index: 0,
     lesson_type: "lesson",
     xp_reward: 10,
@@ -65,6 +66,7 @@ export const LessonsPage = () => {
     setForm({
       title: "",
       description: "",
+      outcome: "",
       order_index: lessons.length,
       lesson_type: "lesson",
       xp_reward: 10,
@@ -138,6 +140,7 @@ export const LessonsPage = () => {
     setForm({
       title: lesson.title,
       description: lesson.description || "",
+      outcome: lesson.outcome || "",
       order_index: lesson.order_index,
       lesson_type: lesson.lesson_type,
       xp_reward: lesson.xp_reward,
@@ -339,6 +342,15 @@ export const LessonsPage = () => {
               <label>
                 Mô tả
                 <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </label>
+              <label>
+                Outcome (can-do statement)
+                <textarea
+                  rows={2}
+                  placeholder="Vd: Bạn có thể đặt bàn ăn qua điện thoại bằng tiếng Anh."
+                  value={form.outcome}
+                  onChange={(e) => setForm({ ...form, outcome: e.target.value })}
+                />
               </label>
               <div className="form-row">
                 <label>
