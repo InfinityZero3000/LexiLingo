@@ -1,7 +1,7 @@
 """add lesson outcome (can-do statement) field
 
 Revision ID: add_lesson_outcome
-Revises: challenge_claim_unique
+Revises: wallet_gems_non_negative
 Create Date: 2026-08-03
 """
 
