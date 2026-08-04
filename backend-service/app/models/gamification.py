@@ -5,7 +5,7 @@ Phase 4: Integrated Gamification & Social Features
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Index, UniqueConstraint
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Index, UniqueConstraint, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -100,13 +100,16 @@ class UserWallet(Base):
     """
     
     __tablename__ = "user_wallets"
-    
+    __table_args__ = (
+        CheckConstraint("gems >= 0", name="ck_user_wallets_gems_non_negative"),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(
         GUID(),
         primary_key=True,
         default=uuid.uuid4
     )
-    
+
     user_id: Mapped[uuid.UUID] = mapped_column(
         GUID(),
         ForeignKey("users.id", ondelete="CASCADE"),

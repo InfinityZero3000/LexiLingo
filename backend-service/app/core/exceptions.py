@@ -8,6 +8,7 @@ from fastapi import Request, status, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.core.config import settings
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes, RequestMeta
 
 logger = logging.getLogger(__name__)
@@ -76,7 +77,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         error=ErrorDetail(
             code=ErrorCodes.INTERNAL_ERROR,
             message="An internal server error occurred",
-            details={"type": type(exc).__name__} if not hasattr(exc, "DEBUG") else {"type": type(exc).__name__, "message": str(exc)}
+            details={"type": type(exc).__name__, **({"message": str(exc)} if settings.DEBUG else {})}
         ),
         meta=RequestMeta(
             request_id=getattr(request.state, "request_id", "unknown")
