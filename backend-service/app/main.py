@@ -24,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.database import init_db, close_db
 from app.core.redis import RedisClient
+from app.core.logging_config import RedactSecretsLogFilter, RequestIDLogFilter
 from app.core.middleware import (
     RateLimitMiddleware,
     RequestLoggingMiddleware,
@@ -83,8 +84,14 @@ from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 # Setup logging
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(name)s - %(levelname)s - [%(request_id)s] - %(message)s'
 )
+_root_logger = logging.getLogger()
+_root_logger.addFilter(RequestIDLogFilter())
+_root_logger.addFilter(RedactSecretsLogFilter())
+for _handler in _root_logger.handlers:
+    _handler.addFilter(RequestIDLogFilter())
+    _handler.addFilter(RedactSecretsLogFilter())
 logger = logging.getLogger(__name__)
 
 # Sentry — only active when DSN is configured
