@@ -93,10 +93,15 @@ async def analyze(
         return cached
 
     started = time.monotonic()
+    # Prefix session_id/user_id before they reach ConversationCache/
+    # LearnerProfileCache (keyed globally by raw session_id/user_id with no
+    # tenant separation) — partner-supplied values must never collide with a
+    # live internal session/user's Redis keys. This endpoint only ever reads
+    # those caches, so the prefixed lookups safely miss instead of leaking.
     result = await service.analyze(TraceCAGRequest(
         user_input=body.text,
-        session_id=body.session_id,
-        user_id=body.subject,
+        session_id=f"ext:{body.session_id}",
+        user_id=f"ext:{body.subject}",
         input_type="voice" if body.input_type == "pronunciation" else "text",
         learner_profile=body.learner_snapshot.model_dump(),
         kg_seed_concepts=body.exercise_context.concept_codes,
