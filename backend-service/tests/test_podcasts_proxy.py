@@ -31,30 +31,29 @@ class TestPodcastProxyImage:
         mock_response.status_code = 200
         mock_response.content = b"fake_image_bytes"
         mock_response.headers = {"content-type": "image/png"}
+        mock_response.is_redirect = False
 
         mock_client = AsyncMock()
         mock_client.get.return_value = mock_response
         mock_client_class.return_value.__aenter__.return_value = mock_client
 
         target_url = "https://example.com/artwork.png"
-        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        with patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 443))]):
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 200
         assert response.content == b"fake_image_bytes"
         assert response.headers.get("content-type") == "image/png"
         assert response.headers.get("cache-control") == "public, max-age=86400"
-        mock_client.get.assert_called_once_with(
-            target_url,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Safari/537.36"
-                ),
-                "Accept": "image/webp,image/avif,image/*,*/*;q=0.8",
-            },
-            follow_redirects=True
-        )
+        # safe_get pins the connection to the resolved IP and carries the
+        # original hostname via Host/SNI instead of calling with target_url
+        # directly — see app/core/safe_http.py.
+        mock_client.get.assert_called_once()
+        called_url, called_kwargs = mock_client.get.call_args
+        assert "93.184.216.34" in called_url[0]
+        assert called_kwargs["headers"]["Host"] == "example.com"
+        assert called_kwargs["headers"]["User-Agent"].startswith("Mozilla/5.0")
+        assert called_kwargs["follow_redirects"] is False
 
     @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
@@ -79,13 +78,15 @@ class TestPodcastProxyImage:
     async def test_proxy_image_non_200_response(self, mock_client_class, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 404
+        mock_response.is_redirect = False
 
         mock_client = AsyncMock()
         mock_client.get.return_value = mock_response
         mock_client_class.return_value.__aenter__.return_value = mock_client
 
         target_url = "https://example.com/artwork.png"
-        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        with patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 443))]):
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 404
         assert "Failed to fetch image: HTTP 404" in response.json()["error"]["message"]
@@ -95,7 +96,7 @@ class TestPodcastProxyImage:
         target_url = "ftp://example.com/artwork.png"
         response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
         assert response.status_code == 400
-        assert "Only HTTP/HTTPS image URLs are allowed" in response.json()["error"]["message"]
+        assert "Only public HTTP/HTTPS URLs are allowed" in response.json()["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_proxy_image_ssrf_private_ip(self, no_db_client: AsyncClient):
@@ -108,7 +109,7 @@ class TestPodcastProxyImage:
         ]:
             response = await no_db_client.get(f"{BASE}/proxy/image?url={private_url}")
             assert response.status_code == 400
-            assert "Internal/private URLs are not allowed" in response.json()["error"]["message"]
+            assert "Only public HTTP/HTTPS URLs are allowed" in response.json()["error"]["message"]
 
 class TestPodcastRouteProxiedUrls:
     """Tests that curated, search, and episode routes return proxied URLs."""

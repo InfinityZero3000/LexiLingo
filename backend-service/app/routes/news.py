@@ -13,12 +13,13 @@ import re
 from typing import Optional
 
 import httpx
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import quote, urlparse
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.safe_http import safe_get as _safe_get
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -339,16 +340,13 @@ def _validate_public_http_url(url: str) -> None:
 
 
 async def _get_public_url(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
-    """Fetch a public URL while validating each redirect target."""
-    current_url = url
-    for _ in range(5):
-        _validate_public_http_url(current_url)
-        response = await client.get(current_url, follow_redirects=False, **kwargs)
-        if response.is_redirect and response.headers.get("location"):
-            current_url = urljoin(current_url, response.headers["location"])
-            continue
-        return response
-    raise HTTPException(status_code=400, detail="Too many redirects.")
+    """Fetch a public URL, IP-pinned and revalidated on every redirect hop.
+
+    Delegates to app.core.safe_http.safe_get — see that module for why a
+    plain "resolve, check, then let httpx resolve again to connect" approach
+    (the previous implementation here) is vulnerable to DNS rebinding.
+    """
+    return await _safe_get(client, url, max_redirects=5, **kwargs)
 
 
 def _strip_html_basic(html: str) -> str:
