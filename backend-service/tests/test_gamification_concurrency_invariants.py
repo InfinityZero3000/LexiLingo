@@ -41,7 +41,11 @@ def test_gamification_updates_lock_rows_and_claim_is_idempotent() -> None:
     claim_calls = _function_calls(
         "app/routes/challenges.py", "claim_challenge_reward"
     )
-    assert {"begin_nested", "flush"} <= claim_calls
+    assert {"begin_nested", "flush", "with_for_update"} <= claim_calls
+    bonus_calls = _function_calls(
+        "app/routes/challenges.py", "claim_daily_bonus"
+    )
+    assert {"begin_nested", "flush", "with_for_update"} <= bonus_calls
     migration = (ROOT / "alembic/versions/add_challenge_reward_claim_unique.py").read_text()
     assert "create_unique_constraint" in migration
     assert '["user_id", "challenge_id", "claim_date"]' in migration
