@@ -262,6 +262,33 @@ class TestNewsUrlSafety:
         with pytest.raises(HTTPException):
             await _get_public_url(RedirectClient(), "https://safe.example/image.jpg")
 
+    @pytest.mark.asyncio
+    async def test_stream_rejects_redirect_to_private_url(self, monkeypatch):
+        from app.routes.news import _stream_public_url
+
+        def fake_getaddrinfo(host, *args, **kwargs):
+            address = "127.0.0.1" if host == "127.0.0.1" else "93.184.216.34"
+            return [(None, None, None, "", (address, 443))]
+
+        class RedirectClient:
+            def build_request(self, method, url, **kwargs):
+                return httpx.Request(method, url)
+
+            async def send(self, request, stream=False):
+                return httpx.Response(
+                    302,
+                    headers={"location": "http://127.0.0.1/private"},
+                    request=request,
+                )
+
+        monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)
+
+        with pytest.raises(HTTPException):
+            await _stream_public_url(
+                RedirectClient(),
+                "https://safe.example/audio.mp3",
+            )
+
 
 # ============================================================================
 # Route Tests — GET /news/categories

@@ -107,3 +107,33 @@ class AIServiceClient:
 
         resp.raise_for_status()
         return resp.json() or {}
+
+    async def transcribe_audio(
+        self,
+        *,
+        audio_bytes: bytes,
+        filename: str,
+        language: str = "en",
+        authorization: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Send audio to the AI service for STT transcription."""
+        url = f"{self._base_url}/stt/transcribe"
+        headers = {}
+        if authorization:
+            headers["Authorization"] = authorization
+
+        files = {
+            "audio": (
+                filename or "recording.wav",
+                audio_bytes,
+                "audio/mpeg",
+            )
+        }
+        data = {"language": language}
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
+            resp = await client.post(url, data=data, files=files, headers=headers)
+
+        resp.raise_for_status()
+        return resp.json() or {}
+

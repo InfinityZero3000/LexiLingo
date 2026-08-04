@@ -1,0 +1,6 @@
+# Example Android release signing config
+# Copy to android/key.properties and replace all values.
+storeFile=upload-keystore.jks
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+keyPassword=YOUR_KEY_PASSWORD

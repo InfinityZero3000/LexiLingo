@@ -59,12 +59,17 @@ async def test_integration_openapi_requires_key_and_excludes_other_routes(monkey
         base_url="http://test",
     ) as client:
         missing = await client.get("/api/v1/integrations/openapi.json")
+        invalid = await client.get(
+            "/api/v1/integrations/openapi.json",
+            headers={"X-LexiLingo-API-Key": "wrong_key"},
+        )
         valid = await client.get(
             "/api/v1/integrations/openapi.json",
             headers={"X-LexiLingo-API-Key": raw_key},
         )
 
     assert missing.status_code == 401
+    assert invalid.status_code == 401
     assert valid.status_code == 200
     schema = valid.json()
     assert schema["info"]["title"] == "LexiLingo Partner Integrations API"

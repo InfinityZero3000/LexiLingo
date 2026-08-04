@@ -375,7 +375,10 @@ class StreakDetailsSheet extends StatelessWidget {
 
           // Big streak display
           if (streak.currentStreak >= 7)
-            LargeStreakFireWidget(streakCount: streak.currentStreak, size: 64)
+            LargeStreakFireWidget(
+              icon: _getStreakIcon(streak.streakIcon),
+              size: 64,
+            )
           else
             Icon(
               _getStreakIcon(streak.streakIcon),
@@ -617,46 +620,109 @@ class StreakDetailsSheet extends StatelessWidget {
   }
 }
 
-/// Streak >= 30 gets the more intense Fire loop, >= 7 gets the Flame loop.
-class LargeStreakFireWidget extends StatelessWidget {
-  final int streakCount;
+class LargeStreakFireWidget extends StatefulWidget {
+  final IconData icon;
   final double size;
 
   const LargeStreakFireWidget({
     super.key,
-    required this.streakCount,
+    required this.icon,
     this.size = 64,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final animationSize = size * 1.6;
+  State<LargeStreakFireWidget> createState() => _LargeStreakFireWidgetState();
+}
 
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.35),
-            blurRadius: 24,
-            spreadRadius: 4,
-          ),
-          BoxShadow(
-            color: Colors.red.withValues(alpha: 0.18),
-            blurRadius: 36,
-            spreadRadius: 8,
-          ),
-        ],
-      ),
-      child: streakCount >= 30
-          ? LottieAnimationWidget.fire(
-              width: animationSize,
-              height: animationSize,
-            )
-          : LottieAnimationWidget.flame(
-              width: animationSize,
-              height: animationSize,
+class _LargeStreakFireWidgetState extends State<LargeStreakFireWidget>
+    with TickerProviderStateMixin {
+  late final AnimationController _rotateController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _rotation;
+  late final Animation<double> _scale;
+  late final Animation<double> _glow;
+
+  @override
+  void initState() {
+    super.initState();
+    _rotateController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+
+    _rotation = Tween<double>(begin: -0.04, end: 0.04).animate(
+      CurvedAnimation(parent: _rotateController, curve: Curves.easeInOut),
+    );
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _scale = Tween<double>(begin: 0.96, end: 1.04).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _glow = Tween<double>(begin: 4.0, end: 16.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _rotateController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([_rotateController, _pulseController]),
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scale.value,
+          child: RotationTransition(
+            turns: _rotation,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.orange.withValues(alpha: 0.4),
+                    blurRadius: _glow.value * 2,
+                    spreadRadius: _glow.value / 2,
+                  ),
+                  BoxShadow(
+                    color: Colors.red.withValues(alpha: 0.2),
+                    blurRadius: _glow.value * 3,
+                    spreadRadius: _glow.value,
+                  ),
+                ],
+              ),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+                child: ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Colors.orange, Colors.redAccent],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ).createShader(bounds),
+                  child: Icon(
+                    widget.icon,
+                    color: Colors.white,
+                    size: widget.size,
+                  ),
+                ),
+              ),
             ),
+          ),
+        );
+      },
     );
   }
 }

@@ -19,7 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.safe_http import safe_get as _safe_get
+from app.core.safe_http import safe_get as _safe_get, safe_stream_get as _safe_stream_get
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -347,6 +347,16 @@ async def _get_public_url(client: httpx.AsyncClient, url: str, **kwargs) -> http
     (the previous implementation here) is vulnerable to DNS rebinding.
     """
     return await _safe_get(client, url, max_redirects=5, **kwargs)
+
+
+async def _stream_public_url(
+    client: httpx.AsyncClient,
+    url: str,
+    **kwargs,
+) -> httpx.Response:
+    """Open a streaming public URL, IP-pinned and revalidated on every
+    redirect hop — see _get_public_url / app.core.safe_http for why."""
+    return await _safe_stream_get(client, url, max_redirects=5, **kwargs)
 
 
 def _strip_html_basic(html: str) -> str:

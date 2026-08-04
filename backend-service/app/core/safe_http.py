@@ -70,6 +70,29 @@ def _pin_url(url: str, pinned_ip: str) -> str:
     return urlunparse(parsed._replace(netloc=netloc))
 
 
+def _validate_and_pin(current_url: str, kwargs: dict) -> tuple[str, dict]:
+    """Validate current_url and return (pinned_url, request_kwargs)."""
+    parsed = urlparse(current_url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise _REJECTED
+    host = parsed.hostname.lower()
+    if any(host == prefix or host.startswith(prefix) for prefix in _PRIVATE_HOST_PREFIXES):
+        raise _REJECTED
+    try:
+        pinned_ip = resolve_pinned_ip(host)
+    except (socket.gaierror, ValueError) as exc:
+        raise _REJECTED from exc
+
+    headers = dict(kwargs.get("headers") or {})
+    headers.setdefault("Host", host)
+    extensions = dict(kwargs.get("extensions") or {})
+    if parsed.scheme == "https":
+        extensions.setdefault("sni_hostname", host)
+
+    request_kwargs = {**kwargs, "headers": headers, "extensions": extensions}
+    return _pin_url(current_url, pinned_ip), request_kwargs
+
+
 async def safe_get(
     client: httpx.AsyncClient,
     url: str,
@@ -80,32 +103,35 @@ async def safe_get(
     """GET *url*, validating and IP-pinning every hop (including redirects)."""
     current_url = url
     for _ in range(max_redirects + 1):
-        parsed = urlparse(current_url)
-        if parsed.scheme not in ("http", "https") or not parsed.hostname:
-            raise _REJECTED
-        host = parsed.hostname.lower()
-        if any(host == prefix or host.startswith(prefix) for prefix in _PRIVATE_HOST_PREFIXES):
-            raise _REJECTED
-        try:
-            pinned_ip = resolve_pinned_ip(host)
-        except (socket.gaierror, ValueError) as exc:
-            raise _REJECTED from exc
-
-        headers = dict(kwargs.pop("headers", None) or {})
-        headers.setdefault("Host", host)
-        extensions = dict(kwargs.pop("extensions", None) or {})
-        if parsed.scheme == "https":
-            extensions.setdefault("sni_hostname", host)
-
+        pinned_url, request_kwargs = _validate_and_pin(current_url, kwargs)
         response = await client.get(
-            _pin_url(current_url, pinned_ip),
-            headers=headers,
-            extensions=extensions,
-            follow_redirects=False,
-            **kwargs,
+            pinned_url, follow_redirects=False, **request_kwargs
         )
         if response.is_redirect and response.headers.get("location"):
             current_url = urljoin(current_url, response.headers["location"])
+            continue
+        return response
+    raise HTTPException(status_code=400, detail="Too many redirects.")
+
+
+async def safe_stream_get(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    max_redirects: int = 5,
+    **kwargs,
+) -> httpx.Response:
+    """Like safe_get, but opens a streaming response (client.send(stream=True))
+    instead of buffering the body — callers must consume response.aiter_bytes()
+    and call response.aclose() themselves (a `finally` block)."""
+    current_url = url
+    for _ in range(max_redirects + 1):
+        pinned_url, request_kwargs = _validate_and_pin(current_url, kwargs)
+        request = client.build_request("GET", pinned_url, **request_kwargs)
+        response = await client.send(request, stream=True)
+        if response.is_redirect and response.headers.get("location"):
+            current_url = urljoin(current_url, response.headers["location"])
+            await response.aclose()
             continue
         return response
     raise HTTPException(status_code=400, detail="Too many redirects.")

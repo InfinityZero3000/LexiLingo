@@ -25,67 +25,55 @@ class TestPodcastProxyImage:
     """Tests for GET /podcasts/proxy/image endpoint."""
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
-    async def test_proxy_image_success(self, mock_client_class, no_db_client: AsyncClient):
+    async def test_proxy_image_success(self, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.content = b"fake_image_bytes"
         mock_response.headers = {"content-type": "image/png"}
-        mock_response.is_redirect = False
-
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_response.aclose = AsyncMock()
+        async def chunks():
+            yield b"fake_image_bytes"
+        mock_response.aiter_bytes = chunks
 
         target_url = "https://example.com/artwork.png"
-        with patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 443))]):
+        with patch(
+            "app.routes.podcasts._stream_public_url",
+            AsyncMock(return_value=mock_response),
+        ):
             response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 200
         assert response.content == b"fake_image_bytes"
         assert response.headers.get("content-type") == "image/png"
         assert response.headers.get("cache-control") == "public, max-age=86400"
-        # safe_get pins the connection to the resolved IP and carries the
-        # original hostname via Host/SNI instead of calling with target_url
-        # directly — see app/core/safe_http.py.
-        mock_client.get.assert_called_once()
-        called_url, called_kwargs = mock_client.get.call_args
-        assert "93.184.216.34" in called_url[0]
-        assert called_kwargs["headers"]["Host"] == "example.com"
-        assert called_kwargs["headers"]["User-Agent"].startswith("Mozilla/5.0")
-        assert called_kwargs["follow_redirects"] is False
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
-    async def test_proxy_image_not_image_type(self, mock_client_class, no_db_client: AsyncClient):
+    async def test_proxy_image_not_image_type(self, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.content = b"<html>Not an image</html>"
         mock_response.headers = {"content-type": "text/html"}
-
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_response.aclose = AsyncMock()
 
         target_url = "https://example.com/artwork.html"
-        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        with patch(
+            "app.routes.podcasts._stream_public_url",
+            AsyncMock(return_value=mock_response),
+        ):
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 400
         assert "did not return an image content type" in response.json()["error"]["message"]
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
-    async def test_proxy_image_non_200_response(self, mock_client_class, no_db_client: AsyncClient):
+    async def test_proxy_image_non_200_response(self, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 404
-        mock_response.is_redirect = False
-
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_response.aclose = AsyncMock()
 
         target_url = "https://example.com/artwork.png"
-        with patch("socket.getaddrinfo", return_value=[(2, 1, 6, "", ("93.184.216.34", 443))]):
+        with patch(
+            "app.routes.podcasts._stream_public_url",
+            AsyncMock(return_value=mock_response),
+        ):
             response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 404

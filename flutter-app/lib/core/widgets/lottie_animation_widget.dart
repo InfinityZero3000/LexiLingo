@@ -205,13 +205,6 @@ class LottieAnimationWidget extends StatelessWidget {
               size: sz.shortestSide,
               color: Colors.amber,
             );
-          case LottieAnimation.fire:
-          case LottieAnimation.flame:
-            fallback = Icon(
-              Icons.local_fire_department_rounded,
-              size: sz.shortestSide,
-              color: Colors.orange,
-            );
           default:
             fallback = const SizedBox.shrink();
         }

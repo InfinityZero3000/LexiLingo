@@ -139,7 +139,15 @@ async def lifespan(app: FastAPI):
         )
 
         start_learner_state_outbox_worker()
-    
+
+    # Pre-warm the OpenAPI schema cache so the first request to
+    # /integrations/openapi.json doesn't trigger a concurrent rebuild.
+    try:
+        app.openapi()
+        logger.info("OpenAPI schema cache pre-warmed")
+    except Exception as e:  # pragma: no cover
+        logger.warning(f"Could not pre-warm OpenAPI schema: {e}")
+
     yield
     
     # Shutdown
@@ -330,13 +338,14 @@ async def limit_request_body(request: Request, call_next):
         )
 
 # Partner-only OpenAPI document protected by the same key as integration routes.
+# Schema is pre-warmed at startup; this handler only filters + re-wraps the cache.
 @app.get(
     f"{settings.API_V1_PREFIX}/integrations/openapi.json",
     include_in_schema=False,
     dependencies=[Depends(require_partner_api_key)],
 )
 async def integrations_openapi() -> JSONResponse:
-    full_schema = app.openapi()
+    full_schema = app.openapi()  # always returns cached result after startup
     integration_prefix = f"{settings.API_V1_PREFIX}/integrations/"
     schema = {
         **full_schema,
@@ -344,6 +353,11 @@ async def integrations_openapi() -> JSONResponse:
             **full_schema["info"],
             "title": "LexiLingo Partner Integrations API",
         },
+        # Narrow the server list so partner SDKs point to the integrations
+        # sub-path rather than the full API root.
+        "servers": [
+            {"url": f"{settings.API_V1_PREFIX}/integrations", "description": "Partner Integrations"}
+        ],
         "paths": {
             path: definition
             for path, definition in full_schema.get("paths", {}).items()
@@ -448,7 +462,7 @@ if os.path.isdir(_media_dir):
     app.mount("/media", StaticFiles(directory=_media_dir), name="media")
 
 
-@app.api_route("/", methods=["GET", "HEAD"])
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
 async def root():
     """Root endpoint. Supports HEAD for Render/load-balancer health probes."""
     return {

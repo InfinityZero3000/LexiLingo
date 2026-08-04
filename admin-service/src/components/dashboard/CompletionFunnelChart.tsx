@@ -34,16 +34,16 @@ export const CompletionFunnelChart: React.FC<Props> = ({ data, loading }) => {
   return (
     <div className="chart-container">
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart 
-          data={data} 
+        <BarChart
+          data={data}
           layout="vertical"
           margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis type="number" tick={{ fontSize: 12 }} />
-          <YAxis 
-            type="category" 
-            dataKey="stage" 
+          <YAxis
+            type="category"
+            dataKey="stage"
             tick={{ fontSize: 12 }}
             width={90}
           />
