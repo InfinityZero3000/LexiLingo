@@ -17,9 +17,11 @@ from service.tracecag_service.schemas import TraceCAGResponse
 
 class FakeService:
     calls = 0
+    last_request = None
 
-    async def analyze(self, _request):
+    async def analyze(self, request):
         self.calls += 1
+        self.last_request = request
         return TraceCAGResponse(
             tutor_response="Good answer.",
             corrections=[],
@@ -93,6 +95,30 @@ async def test_success_replay_conflict_and_bounds(app):
     assert service.calls == 1
     assert conflict.status_code == 409
     assert oversized_text.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_session_and_subject_are_namespaced_before_reaching_pipeline(app):
+    """External session_id/subject must never collide with internal Redis
+    keys (ConversationCache/LearnerProfileCache are keyed globally by raw
+    session_id/user_id) — the route must prefix both before they reach the
+    pipeline, regardless of what a partner happens to send."""
+    application, service = app
+    internal_session_id = "session-1"
+    internal_subject = "subject_abcdefghijklmnopqrstuvwxyz123456"
+    async with AsyncClient(transport=ASGITransport(app=application), base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/integrations/trace-cag/v1/analyze",
+            headers={"X-Request-ID": str(uuid4())},
+            json=payload(),
+        )
+
+    assert response.status_code == 200
+    assert service.last_request.session_id == f"ext:{internal_session_id}"
+    assert service.last_request.user_id == f"ext:{internal_subject}"
+    assert not service.last_request.session_id.startswith(internal_session_id + ":")
+    assert service.last_request.session_id != internal_session_id
+    assert service.last_request.user_id != internal_subject
 
 
 @pytest.mark.asyncio
