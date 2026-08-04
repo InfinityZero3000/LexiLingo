@@ -49,9 +49,13 @@ COPY --from=builder /opt/venv /opt/venv
 COPY --from=builder /opt/voice-models /opt/voice-models
 COPY api ./api
 COPY data ./data
+COPY service ./service
 
+# Import the real ASGI entrypoint (not just a submodule) so a missing COPY
+# for any package api.main transitively imports (e.g. service/) fails the
+# build instead of surfacing as a crash loop in production.
 RUN SECRET_KEY=build-time-import-check-not-a-runtime-secret \
-    python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
+    python -c "import defusedxml, typer; from api.services.content_etl.cli import app; import api.main"
 
 RUN mkdir -p /app/models /app/logs /tmp/lexilingo-stt && \
     chown -R appuser:appuser /app /tmp/lexilingo-stt
