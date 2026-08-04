@@ -170,6 +170,18 @@ class Settings(BaseSettings):
                 "CONTENT_AGENT_SERVICE_TOKEN is required when the content agent is enabled"
             )
 
+        if not (self.GOOGLE_CLIENT_ID or "").strip():
+            raise ValueError(
+                "GOOGLE_CLIENT_ID must be set when APP_ENV=production — without it, "
+                "Google login falls back to verifying tokens with no audience "
+                "restriction, accepting a token issued for any Google app."
+            )
+        if not (self.GOOGLE_ADMIN_CLIENT_ID or "").strip():
+            raise ValueError(
+                "GOOGLE_ADMIN_CLIENT_ID must be set when APP_ENV=production "
+                "(required for admin OAuth audience verification)"
+            )
+
         if self.LEARNER_STATE_ENABLED and not self.LEARNER_STATE_INTERNAL_TOKEN.strip():
             raise ValueError(
                 "LEARNER_STATE_INTERNAL_TOKEN is required when learner state is enabled"
