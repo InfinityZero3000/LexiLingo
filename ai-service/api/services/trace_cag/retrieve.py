@@ -136,6 +136,123 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     session_turn = len(state.get("conversation_history", []))
     benchmark_candidates, relevant_ids = _build_benchmark_candidates(state)
 
+    async def _run_vector_stage(max_hits: int, errors: list, confidence: float) -> tuple:
+        """Stage 2: RetrievalServiceV3 (centrality + community ranking), with
+        MiniLM-gateway fallback. Returns its own (vector_hits, evidence_items)
+        rather than mutating the caller's lists — this coroutine is started
+        via asyncio.create_task and runs concurrently with Stage 1 below (its
+        inputs — kg_concepts/kg_expanded/user_input — don't depend on Stage
+        1's output), so sharing mutable lists across both would race."""
+        local_vector_hits: List[Dict[str, Any]] = []
+        local_evidence: List[Dict[str, Any]] = []
+        try:
+            from api.models.v3_schemas import V3PipelineContext
+
+            retrieval_v3 = await _get_retrieval_v3()
+            ctx = V3PipelineContext(
+                user_input=user_input,
+                session_id=state.get("session_id", ""),
+                user_id=state.get("user_id"),
+            )
+            seed_nodes = [
+                c if isinstance(c, str) else c.get("id", "")
+                for c in kg_concepts[:5]
+            ]
+            bundle = await retrieval_v3.retrieve(user_input, seed_nodes, ctx)
+
+            for hit in bundle.vector_hits[:max_hits]:
+                snippet = getattr(hit, "snippet", hit.id)
+                local_vector_hits.append({"text": snippet, "score": hit.score})
+                local_evidence.append({
+                    "item_id": hit.id,
+                    "title": snippet,
+                    "text": f"Concept ({hit.id}): {snippet}",
+                    "kg_depth": 2,
+                    "vec_sim": hit.score,
+                    "turns_ago": session_turn,
+                })
+
+            logger.info(
+                f"[retrieve_node] RetrievalServiceV3: {len(local_vector_hits)} hits "
+                f"(centrality+community ranked)"
+            )
+
+        except Exception as e:
+            logger.warning(
+                f"[retrieve_node] RetrievalServiceV3 unavailable, "
+                f"falling back to MiniLM gateway: {e}"
+            )
+            # ── Fallback: MiniLM gateway ──────────────────────────────────
+            try:
+                from api.services.model_gateway import get_gateway
+
+                gateway = await get_gateway()
+                max_expanded = 10
+                threshold = 0.3
+
+                if retrieval_policy == "rapid" and len(errors) <= 2 and confidence >= 0.7:
+                    max_expanded = 5
+                    threshold = 0.35
+
+                candidate_labels = []
+                for c in kg_concepts:
+                    if isinstance(c, dict):
+                        candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
+                    else:
+                        candidate_labels.append(str(c))
+                for node in kg_expanded[:max_expanded]:
+                    label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
+                    if label.strip() and label not in candidate_labels:
+                        candidate_labels.append(label)
+
+                if candidate_labels:
+                    result = await gateway.invoke(
+                        "minilm", "invoke",
+                        {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+                    )
+                    if result.get("success"):
+                        sim_results = result.get("data", {}).get("results", [])
+                        for r in sim_results:
+                            if r["score"] >= threshold:
+                                local_vector_hits.append({"text": r["text"], "score": r["score"]})
+                                local_evidence.append({
+                                    "text": f"Semantic match: {r['text']}",
+                                    "kg_depth": 2,
+                                    "vec_sim": r["score"],
+                                    "turns_ago": session_turn,
+                                })
+
+                        local_vector_hits = local_vector_hits[:max_hits]
+                        logger.info(f"[retrieve_node] MiniLM fallback: {len(local_vector_hits)} hits")
+            except Exception as e2:
+                logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
+
+        return local_vector_hits, local_evidence
+
+    # Decide + start Stage 2 now (before Stage 1 runs) — the decision only
+    # depends on diagnosis_errors/confidence/policy, all already available,
+    # never on Stage 1's output, so it can run concurrently with Stage 1
+    # instead of waiting for it to finish first.
+    vector_hits: List[Dict[str, Any]] = []
+    stage2_task = None
+    if not benchmark_candidates:
+        _errors = state.get("diagnosis_errors", [])
+        _confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
+        _is_multihop_task = benchmark_task == "multihop_qa"
+
+        _do_vector_search = True
+        _max_hits = 5
+        if retrieval_policy == "rapid":
+            if len(_errors) == 0 and _confidence >= 0.85 and not _is_multihop_task:
+                _do_vector_search = False
+            elif len(_errors) <= 2 and _confidence >= 0.72:
+                _max_hits = 3
+
+        if _do_vector_search:
+            stage2_task = asyncio.create_task(
+                _run_vector_stage(_max_hits, _errors, _confidence)
+            )
+
     # ── Stage 1: Graph-local evidence (cheap) ────────────────────────
     # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
     evidence_items: List[Dict[str, Any]] = []
@@ -179,7 +296,15 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                     pass
             if queried_nodes is None:
                 kg = get_kg_service()
-                queried_nodes = kg.query_concepts(user_input, learner_level=learner_level, top_k=top_k)
+                # query_concepts() is a synchronous, in-memory call with no
+                # await points of its own — running it inline would hold the
+                # event loop for its full duration and starve the Stage 2
+                # task (created above) of any chance to run concurrently.
+                # run_in_executor hands it to a worker thread so Stage 2's
+                # own awaits (network/model calls) can actually interleave.
+                queried_nodes = await asyncio.get_event_loop().run_in_executor(
+                    None, lambda: kg.query_concepts(user_input, learner_level=learner_level, top_k=top_k)
+                )
                 _kg_cache_set(cache_key, queried_nodes)
 
             packed_nodes = _pack_kg_nodes_for_context(queried_nodes, token_budget)
@@ -242,107 +367,24 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             "is_relevant": True,
         })
 
-    # ── Stage 2: RetrievalServiceV3 (centrality + community ranking) ─────
-    vector_hits = []
-    if not benchmark_candidates and _elapsed_ms() <= (kg_budget_ms + vector_budget_ms):
-        errors = state.get("diagnosis_errors", [])
-        confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
-        is_multihop_task = benchmark_task == "multihop_qa"
-
-        do_vector_search = True
-        max_hits = 5
-
-        if retrieval_policy == "rapid":
-            if len(errors) == 0 and confidence >= 0.85 and not is_multihop_task:
-                do_vector_search = False
-            elif len(errors) <= 2 and confidence >= 0.72:
-                max_hits = 3
-
-        if do_vector_search and _elapsed_ms() <= (kg_budget_ms + vector_budget_ms):
-            # ── Primary: RetrievalServiceV3 (centrality + community diversity) ──
-            try:
-                from api.models.v3_schemas import V3PipelineContext
-
-                retrieval_v3 = await _get_retrieval_v3()
-                ctx = V3PipelineContext(
-                    user_input=user_input,
-                    session_id=state.get("session_id", ""),
-                    user_id=state.get("user_id"),
-                )
-                seed_nodes = [
-                    c if isinstance(c, str) else c.get("id", "")
-                    for c in kg_concepts[:5]
-                ]
-                bundle = await retrieval_v3.retrieve(user_input, seed_nodes, ctx)
-
-                for hit in bundle.vector_hits[:max_hits]:
-                    snippet = getattr(hit, "snippet", hit.id)
-                    vector_hits.append({"text": snippet, "score": hit.score})
-                    evidence_items.append({
-                        "item_id": hit.id,
-                        "title": snippet,
-                        "text": f"Concept ({hit.id}): {snippet}",
-                        "kg_depth": 2,
-                        "vec_sim": hit.score,
-                        "turns_ago": session_turn,
-                    })
-
-                logger.info(
-                    f"[retrieve_node] RetrievalServiceV3: {len(vector_hits)} hits "
-                    f"(centrality+community ranked)"
-                )
-
-            except Exception as e:
-                logger.warning(
-                    f"[retrieve_node] RetrievalServiceV3 unavailable, "
-                    f"falling back to MiniLM gateway: {e}"
-                )
-                # ── Fallback: MiniLM gateway ──────────────────────────────────
-                try:
-                    from api.services.model_gateway import get_gateway
-
-                    gateway = await get_gateway()
-                    max_expanded = 10
-                    threshold = 0.3
-
-                    if retrieval_policy == "rapid" and len(errors) <= 2 and confidence >= 0.7:
-                        max_expanded = 5
-                        threshold = 0.35
-
-                    candidate_labels = []
-                    for c in kg_concepts:
-                        if isinstance(c, dict):
-                            candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
-                        else:
-                            candidate_labels.append(str(c))
-                    for node in kg_expanded[:max_expanded]:
-                        label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
-                        if label.strip() and label not in candidate_labels:
-                            candidate_labels.append(label)
-
-                    if candidate_labels:
-                        result = await gateway.invoke(
-                            "minilm", "invoke",
-                            {"task": "similarity", "query": user_input, "candidates": candidate_labels},
-                        )
-                        if result.get("success"):
-                            sim_results = result.get("data", {}).get("results", [])
-                            for r in sim_results:
-                                if r["score"] >= threshold:
-                                    vector_hits.append({"text": r["text"], "score": r["score"]})
-                                    evidence_items.append({
-                                        "text": f"Semantic match: {r['text']}",
-                                        "kg_depth": 2,
-                                        "vec_sim": r["score"],
-                                        "turns_ago": session_turn,
-                                    })
-
-                            vector_hits = vector_hits[:max_hits]
-                            logger.info(f"[retrieve_node] MiniLM fallback: {len(vector_hits)} hits")
-                except Exception as e2:
-                    logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
+    # ── Stage 2 results: the task was already started (in parallel with
+    # Stage 1) before Stage 1 began — await it here, capped to whatever's
+    # left of vector_budget_ms measured from the same retrieve_start clock
+    # Stage 1 uses. If it hasn't finished by then, cancel and treat as
+    # exhausted rather than let one slow stage blow the whole node's budget.
+    if stage2_task is not None:
+        remaining_s = max(0.0, vector_budget_ms / 1000.0 - (time.monotonic() - retrieve_start))
+        try:
+            vector_hits, stage2_evidence = await asyncio.wait_for(stage2_task, timeout=remaining_s)
+            evidence_items.extend(stage2_evidence)
+        except asyncio.TimeoutError:
+            stage2_task.cancel()
+            budget_exhausted = True
+            logger.warning("[retrieve_node] Vector stage exceeded budget, skipping its results")
     elif not benchmark_candidates:
-        budget_exhausted = True
+        # do_vector_search was False (rapid-policy short-circuit) — not a
+        # budget miss, nothing to flag.
+        pass
 
     # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
     # Phân tích xem có nên ép buộc tìm kiếm bên ngoài không (Proactive Dynamic Retrieval)
