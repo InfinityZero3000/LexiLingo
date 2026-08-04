@@ -8,6 +8,15 @@ BASE_PROD_KWARGS = dict(
     SECRET_KEY="a-real-random-secret-key-value",
     DEBUG=False,
     ENABLE_APP_CORS=True,
+    # Settings.model_config reads a local .env file (pydantic-settings
+    # env_file), so any field not pinned here falls back to whatever a
+    # developer's machine-local, gitignored .env happens to contain —
+    # e.g. a local ALLOWED_ORIGINS with http://localhost:5959 for dev.
+    # Pin every field validate_production_security() inspects so this
+    # test's outcome never depends on ambient local config.
+    ALLOWED_ORIGINS="https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me",
+    CONTENT_AGENT_ENABLED=False,
+    LEARNER_STATE_ENABLED=False,
     GOOGLE_CLIENT_ID="client-id",
     GOOGLE_ADMIN_CLIENT_ID="admin-client-id",
 )

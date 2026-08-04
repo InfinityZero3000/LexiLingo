@@ -789,3 +789,61 @@ class TestGetUserDecks:
         with patch("app.crud.vocabulary.vocabulary_crud.get_user_decks", new=AsyncMock(return_value=[mock_deck])):
             response = await client.get(f"{BASE}/decks")
         assert response.status_code == 200
+
+
+class TestGetWordOfDay:
+    """GET /vocabulary/word-of-day — public, no auth.
+
+    Regression coverage for a real production 500: build_cache_key(prefix,
+    **params) was called with a positional date arg instead of a keyword,
+    raising TypeError before the DB was ever touched. No test exercised
+    this route at all, so it shipped and only surfaced live.
+    """
+
+    @pytest.fixture
+    async def word_of_day_client(self):
+        from app.main import app
+        from app.core.database import get_db
+
+        count_result = MagicMock()
+        count_result.scalar_one.return_value = 1
+        item_result = MagicMock()
+        item_result.scalar_one_or_none.return_value = _make_mock_vocab_item()
+
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=[count_result, item_result])
+
+        async def mock_get_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            yield c
+        app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_returns_a_word(self, word_of_day_client):
+        response = await word_of_day_client.get(f"{BASE}/word-of-day")
+        assert response.status_code == 200
+        assert response.json()["word"] == "hello"
+
+    @pytest.mark.asyncio
+    async def test_404_when_no_vocabulary_exists(self):
+        from app.main import app
+        from app.core.database import get_db
+
+        count_result = MagicMock()
+        count_result.scalar_one.return_value = 0
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=count_result)
+
+        async def mock_get_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get(f"{BASE}/word-of-day")
+        app.dependency_overrides.clear()
+        assert response.status_code == 404

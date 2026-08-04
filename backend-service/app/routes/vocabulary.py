@@ -71,7 +71,7 @@ async def get_word_of_day(
     Selection: date.toordinal() % total_count, giving a stable word per calendar day.
     Cached for 24h so repeated calls within the same day hit Redis, not the DB.
     """
-    cache_key = build_cache_key("word_of_day", str(date.today()))
+    cache_key = build_cache_key("word_of_day", date=str(date.today()))
     cached = await get_cached(cache_key)
     if cached:
         return VocabularyItemResponse.model_validate(cached)
