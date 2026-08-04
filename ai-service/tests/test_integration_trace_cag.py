@@ -10,9 +10,25 @@ from httpx import ASGITransport, AsyncClient
 
 from api.core.config import get_settings
 from api.core.integration_service_auth import verify_trace_cag_service_token
+from api.core.redis_client import RedisClient
 from api.routes import integration_trace_cag as route
 from api.services.trace_cag.external_request_cache import ExternalRequestCache
 from service.tracecag_service.schemas import TraceCAGResponse
+
+
+class _FakeRedis:
+    """Minimal get/set stand-in so ExternalRequestCache (Redis-backed) behaves
+    like a real cache within a test instead of the conftest autouse mock,
+    which always reports a miss."""
+
+    def __init__(self) -> None:
+        self.store: dict[str, str] = {}
+
+    async def get(self, key: str):
+        return self.store.get(key)
+
+    async def set(self, key: str, value: str, ex=None):
+        self.store[key] = value
 
 
 class FakeService:
@@ -32,7 +48,10 @@ class FakeService:
 
 
 @pytest.fixture
-def app():
+def app(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(RedisClient, "get_instance", AsyncMock(return_value=_FakeRedis()))
     application = FastAPI()
     application.include_router(route.router)
     service = FakeService()

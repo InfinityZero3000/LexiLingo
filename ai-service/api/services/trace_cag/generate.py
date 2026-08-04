@@ -173,14 +173,22 @@ async def stream_llm_tokens(
     user_input: str,
     max_tokens: int = 512,
     allow_gemini_fallback: bool = True,
+    provider_info: Dict[str, str] | None = None,
 ) -> "AsyncGenerator[str, None]":
     """Stream tokens from Groq (preferred) then Gemini as fallback.
 
     Yields raw text deltas as they arrive from the provider.
     Falls back silently to Gemini if Groq is unavailable or rate-limited.
+
+    If `provider_info` is passed, it is filled in-place with the provider
+    that actually served the tokens (`{"provider": "groq"|"gemini", "model": ...}`)
+    once the generator is exhausted — callers that need to know which
+    provider served the request (e.g. for telemetry/caching) should not
+    guess from env vars, since Groq can fail mid-stream and fall back.
     """
 
     groq_admitted = False
+    groq_model_used = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -189,7 +197,7 @@ async def stream_llm_tokens(
         if _provider_is_disabled("groq"):
             return
         groq_key = await try_acquire_groq_key(estimated_tokens=max_tokens)
-        groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+        groq_model = groq_model_used
         if not groq_key:
             return
         groq_admitted = True
@@ -308,13 +316,24 @@ async def stream_llm_tokens(
     finally:
         await groq_stream.aclose()
 
-    if not got_tokens and not allow_gemini_fallback:
+    if got_tokens:
+        if provider_info is not None:
+            provider_info["provider"] = "groq"
+            provider_info["model"] = groq_model_used
+        return
+
+    if not allow_gemini_fallback:
         if not groq_admitted:
             raise ProviderBusyError("Groq voice capacity exhausted")
         raise RuntimeError("Groq admitted the turn but returned no token")
-    if not got_tokens:
-        async for token in _try_gemini():
-            yield token
+
+    gemini_yielded = False
+    async for token in _try_gemini():
+        gemini_yielded = True
+        yield token
+    if gemini_yielded and provider_info is not None:
+        provider_info["provider"] = "gemini"
+        provider_info["model"] = "gemini-2.0-flash"
 
 
 async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
