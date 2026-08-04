@@ -30,6 +30,7 @@ description = "Test fixture placeholder API keys"
 targetRules = ["generic-api-key", "google-gemini-api-key", "gcp-api-key"]
 paths = [
   '''(^|/)ai-service/tests/test_admin_routes\.py$''',
+  '''(^|/)backend-service/tests/test_logging_config\.py$''',
 ]
 
 # These examples intentionally use non-secret placeholders.
