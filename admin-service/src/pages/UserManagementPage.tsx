@@ -15,7 +15,10 @@ import {
   type UserFilters,
   type UserListItem as ApiUserListItem,
 } from '../lib/userManagementApi';
-import UserDetailModal from '../components/user-management/UserDetailModal';import { SectionHeader } from "../components/SectionHeader";import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+import { getDashboardStats } from '../lib/rbacApi';
+import { SectionHeader } from "../components/SectionHeader";
+import UserDetailModal from '../components/user-management/UserDetailModal';
+import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
 import { useAuth } from '../components/AuthProvider';
 
 type UserListItem = ApiUserListItem & {
@@ -44,6 +47,12 @@ export default function UserManagementPage() {
     queryKey: ['users', filters],
     queryFn: () => getUsers(filters),
     staleTime: 30000, // 30 seconds
+  });
+
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['users-dashboard-stats'],
+    queryFn: getDashboardStats,
+    staleTime: 30000,
   });
   
   // Mutations
@@ -142,10 +151,14 @@ export default function UserManagementPage() {
   
   // Calculate stats
   const users = (data?.users ?? []) as UserListItem[];
-  const activeUsers = users.filter(u => u.is_active).length;
-  const inactiveUsers = users.filter(u => !u.is_active).length;
-  const totalXP = users.reduce((sum, u) => sum + (u.total_xp || 0), 0);
-  const avgXP = users.length ? Math.round(totalXP / users.length) : 0;
+  // Active/inactive counts come from the global dashboard endpoint, not the
+  // current page of `users` — a per-page count would misreport the % of total.
+  const globalTotal = dashboardStats?.dashboard.total_users ?? data?.total ?? 0;
+  const activeUsers = dashboardStats?.dashboard.active_users ?? 0;
+  const inactiveUsers = Math.max(globalTotal - activeUsers, 0);
+  // XP totals are page-local by necessity (no global XP aggregate endpoint exists yet).
+  const pageTotalXP = users.reduce((sum, u) => sum + (u.total_xp || 0), 0);
+  const pageAvgXP = users.length ? Math.round(pageTotalXP / users.length) : 0;
 
   return (
     <div className="stack">
@@ -204,7 +217,7 @@ export default function UserManagementPage() {
             <div>
               <div className="stat-label">Đang hoạt động</div>
               <div className="stat-value">{activeUsers}</div>
-              <div className="stat-meta">{data.total > 0 ? Math.round((activeUsers / data.total) * 100) : 0}% tổng số</div>
+              <div className="stat-meta">{globalTotal > 0 ? Math.round((activeUsers / globalTotal) * 100) : 0}% tổng số</div>
             </div>
           </div>
           
@@ -219,7 +232,7 @@ export default function UserManagementPage() {
             <div>
               <div className="stat-label">Ngừng hoạt động</div>
               <div className="stat-value">{inactiveUsers}</div>
-              <div className="stat-meta">{data.total > 0 ? Math.round((inactiveUsers / data.total) * 100) : 0}% tổng số</div>
+              <div className="stat-meta">{globalTotal > 0 ? Math.round((inactiveUsers / globalTotal) * 100) : 0}% tổng số</div>
             </div>
           </div>
           
@@ -230,9 +243,9 @@ export default function UserManagementPage() {
               </svg>
             </div>
             <div>
-              <div className="stat-label">Trung bình XP</div>
-              <div className="stat-value">{avgXP.toLocaleString()}</div>
-              <div className="stat-meta">Tổng: {totalXP.toLocaleString()} XP</div>
+              <div className="stat-label">Trung bình XP (trang này)</div>
+              <div className="stat-value">{pageAvgXP.toLocaleString()}</div>
+              <div className="stat-meta">Tổng trang này: {pageTotalXP.toLocaleString()} XP</div>
             </div>
           </div>
         </div>

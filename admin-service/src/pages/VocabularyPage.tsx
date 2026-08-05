@@ -13,6 +13,8 @@ import {
 } from "../lib/adminApi";
 import { useI18n } from "../lib/i18n";
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "pronoun", "preposition", "conjunction", "interjection"];
 const LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
@@ -116,6 +118,11 @@ export const VocabularyPage = () => {
   const handleBulkImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("File vượt quá 5 MB.");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     setImporting(true);
     setError(null);
     setImportResult(null);

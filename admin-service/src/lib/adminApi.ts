@@ -24,45 +24,6 @@ const asAdminResponse = <T>(payload: T | AdminResponse<T>): AdminResponse<T> => 
   };
 };
 
-export type AdminUser = {
-  id: string;
-  email: string;
-  username: string;
-  display_name?: string | null;
-  is_active: boolean;
-  is_verified: boolean;
-  role_slug: string;
-  role_level: number;
-  created_at: string;
-  last_login?: string | null;
-};
-
-export type RoleInfo = {
-  id: string;
-  name: string;
-  slug: string;
-  level: number;
-};
-
-export const listUsers = async (search?: string) => {
-  const url = new URL(`${ENV.backendUrl}/admin/users`);
-  url.searchParams.set("limit", "100");
-  url.searchParams.set("offset", "0");
-  if (search) url.searchParams.set("search", search);
-  return apiFetch<AdminResponse<AdminUser[]>>(url.toString());
-};
-
-export const updateUser = async (userId: string, payload: { role_slug?: string; is_active?: boolean; display_name?: string }) => {
-  return apiFetch<AdminResponse<AdminUser>>(`${ENV.backendUrl}/admin/users/${userId}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload)
-  });
-};
-
-export const listRoles = async () => {
-  return apiFetch<AdminResponse<RoleInfo[]>>(`${ENV.backendUrl}/admin/roles`);
-};
-
 // ============================================================================
 // Topic Chat Management (AI Service Admin)
 // ============================================================================
@@ -85,14 +46,8 @@ export type TopicsAdminPayload = {
   total: number;
 };
 
-const aiAdminHeaders = () => ({
-  ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
-});
-
 export const listTopicStoriesAdmin = async () =>
-  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=200`, {
-    headers: aiAdminHeaders(),
-  });
+  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=200`);
 
 export const createTopicStoryAdmin = async (payload: {
   story_id?: string;
@@ -108,7 +63,6 @@ export const createTopicStoryAdmin = async (payload: {
 }) =>
   apiFetch<AdminResponse<TopicItem>>(`${ENV.aiAdminUrl}/topics`, {
     method: "POST",
-    headers: aiAdminHeaders(),
     body: JSON.stringify(payload),
   });
 

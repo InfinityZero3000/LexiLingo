@@ -124,7 +124,7 @@ export const TopicsPage = () => {
       const res = await listTopicStoriesAdmin();
       setTopics(res.data?.topics || []);
     } catch (err: any) {
-      setError(err?.message || "Không tải được topic. Kiểm tra VITE_AI_ADMIN_API_KEY.");
+      setError(err?.message || "Không tải được topic.");
     } finally {
       setLoading(false);
     }

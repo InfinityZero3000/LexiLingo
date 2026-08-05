@@ -8,6 +8,8 @@ import {
 
 type ImportTab = "text" | "json" | "csv";
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 interface ImportResult {
   courses: number;
   units: number;
@@ -367,13 +369,25 @@ export const CourseImportModal = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext === "xlsx") {
+      setParseError("File .xlsx không được hỗ trợ (đây là định dạng binary). Vui lòng xuất sang .csv rồi tải lên lại.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setParseError("File vượt quá 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    setParseError(null);
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const content = ev.target?.result as string;
       setTextInput(content);
 
       // Auto-detect format
-      const ext = file.name.split(".").pop()?.toLowerCase();
       if (ext === "json") setTab("json");
       else if (ext === "csv") setTab("csv");
       else setTab("text");
@@ -421,7 +435,7 @@ export const CourseImportModal = ({
         <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
           <label className="ghost-button small" style={{ cursor: "pointer" }}>
             Tải file lên
-            <input type="file" accept=".txt,.md,.json,.csv,.xlsx" onChange={handleFileUpload} style={{ display: "none" }} />
+            <input type="file" accept=".txt,.md,.json,.csv" onChange={handleFileUpload} style={{ display: "none" }} />
           </label>
           <button className="ghost-button small" onClick={loadSample}>Xem mẫu</button>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
