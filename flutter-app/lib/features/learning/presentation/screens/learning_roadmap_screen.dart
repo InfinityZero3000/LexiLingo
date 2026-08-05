@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -58,11 +59,12 @@ class _NodeLayout {
   }
 
   Color get pathColor {
-    if (lesson.isCompleted) return const Color(0xFF66BB6A);
-    return _ensureRoadmapContrast(
-      baseColor,
-    ).withValues(alpha: lesson.isLocked ? 0.30 : 0.62);
+    if (lesson.isCompleted) return AppColors.greenSuccessBright;
+    return _ensureRoadmapContrast(baseColor);
   }
+
+  /// Solid flat line for ground already covered, dashed for the road ahead.
+  bool get pathSolid => lesson.isCompleted;
 }
 
 class _BannerLayout {
@@ -251,18 +253,25 @@ class _ZigzagRoadmap extends StatelessWidget {
                             layouts.nodes.length,
                             (i) => layouts.nodes[i].pathColor,
                           ),
+                          segmentSolid: List.generate(
+                            layouts.nodes.length,
+                            (i) => layouts.nodes[i].pathSolid,
+                          ),
                           nodeRadius: _kNodeRadius,
                         ),
                       ),
                     ),
                     // ── Unit banners ─────────────────────────
-                    for (final b in layouts.banners)
+                    for (final entry in layouts.banners.asMap().entries)
                       Positioned(
-                        top: b.top,
+                        top: entry.value.top,
                         left: 0,
                         right: 0,
                         height: _kBannerH,
-                        child: _UnitBanner(unit: b.unit),
+                        child: _EntranceFade(
+                          index: entry.key,
+                          child: _UnitBanner(unit: entry.value.unit),
+                        ),
                       ),
                     // ── Lesson nodes ─────────────────────────
                     for (final n in layouts.nodes)
@@ -271,21 +280,24 @@ class _ZigzagRoadmap extends StatelessWidget {
                         top: n.center.dy - _kNodeRadius,
                         width: _kNodeDiameter,
                         height: _kNodeDiameter,
-                        child: _LessonNode(
-                          layout: n,
-                          onTap: n.lesson.isLocked
-                              ? null
-                              : () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => LearningSessionScreen(
-                                        lessonId: n.lesson.lessonId,
-                                        courseId: courseId,
+                        child: _EntranceFade(
+                          index: n.globalIndex,
+                          child: _LessonNode(
+                            layout: n,
+                            onTap: n.lesson.isLocked
+                                ? null
+                                : () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => LearningSessionScreen(
+                                          lessonId: n.lesson.lessonId,
+                                          courseId: courseId,
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
+                                    );
+                                  },
+                          ),
                         ),
                       ),
                     // ── Current lesson label bubble ───────────
@@ -310,8 +322,59 @@ class _ZigzagRoadmap extends StatelessWidget {
       ],
     );
   }
+}
 
+// ─────────────────────────────────────────────────────────────
+// Staggered reveal — fade + rise, used for nodes and banners so the
+// whole road "unlocks" smoothly every time the roadmap (re)loads.
+// ─────────────────────────────────────────────────────────────
 
+class _EntranceFade extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _EntranceFade({required this.index, required this.child});
+
+  @override
+  State<_EntranceFade> createState() => _EntranceFadeState();
+}
+
+class _EntranceFadeState extends State<_EntranceFade>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.12),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    final delay = Duration(milliseconds: 35 * widget.index.clamp(0, 12));
+    Future.delayed(delay, () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -329,26 +392,18 @@ class _LessonNode extends StatefulWidget {
 
 class _LessonNodeState extends State<_LessonNode>
     with SingleTickerProviderStateMixin {
+  // Single forward-looping controller drives both the flat "radar ping"
+  // ring and a subtle breathing scale — no blurred glow, flat-minimal only.
   late final AnimationController _pulse;
-  late final Animation<double> _scale;
-  late final Animation<double> _glow;
 
   @override
   void initState() {
     super.initState();
     _pulse = AnimationController(
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
-    _scale = Tween(
-      begin: 1.0,
-      end: 1.10,
-    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
-    _glow = Tween(
-      begin: 0.3,
-      end: 0.8,
-    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
-    if (widget.layout.lesson.isCurrent) _pulse.repeat(reverse: true);
+    if (widget.layout.lesson.isCurrent) _pulse.repeat();
   }
 
   @override
@@ -367,75 +422,94 @@ class _LessonNodeState extends State<_LessonNode>
       child: AnimatedBuilder(
         animation: _pulse,
         builder: (_, __) {
-          return Transform.scale(
-            scale: lesson.isCurrent ? _scale.value : 1.0,
-            child: Container(
-              width: _kNodeDiameter,
-              height: _kNodeDiameter,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: lesson.isLocked
-                      ? AppColors.grey300
-                      : Colors.white.withValues(alpha: 0.7),
-                  width: 3.5,
-                ),
-                boxShadow: lesson.isLocked
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: color.withValues(
-                            alpha: lesson.isCurrent ? _glow.value : 0.4,
-                          ),
-                          blurRadius: lesson.isCurrent ? 20 : 10,
-                          spreadRadius: lesson.isCurrent ? 3 : 1,
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Main icon
-                  _nodeIcon(lesson),
-                  // Stars badge (top-right)
-                  if (lesson.isCompleted && lesson.starsEarned > 0)
-                    Positioned(
-                      top: 3,
-                      right: 3,
-                      child: _StarsBadge(stars: lesson.starsEarned),
-                    ),
-                  // Lesson number badge (bottom-right)
-                  Positioned(
-                    bottom: 3,
-                    right: 3,
+          final t = _pulse.value; // 0..1 loop
+          final breathe = lesson.isCurrent ? 1.0 + 0.05 * sin(t * pi) : 1.0;
+          return Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              // Flat "radar ping" ring — current lesson only.
+              if (lesson.isCurrent)
+                Opacity(
+                  opacity: (1.0 - t) * 0.5,
+                  child: Transform.scale(
+                    scale: 1.0 + t * 0.55,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 1,
-                      ),
+                      width: _kNodeDiameter,
+                      height: _kNodeDiameter,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.9),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '${lesson.lessonNumber}',
-                        style: TextStyle(
-                          color: AppColors.textDark,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: color, width: 2.5),
                       ),
                     ),
                   ),
-                ],
+                ),
+              Transform.scale(
+                scale: breathe,
+                child: Container(
+                  width: _kNodeDiameter,
+                  height: _kNodeDiameter,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: lesson.isLocked
+                          ? AppColors.grey300
+                          : Colors.white.withValues(alpha: 0.7),
+                      width: 3.5,
+                    ),
+                    boxShadow: lesson.isLocked
+                        ? null
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.14),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Main icon
+                      _nodeIcon(lesson),
+                      // Stars badge (top-right)
+                      if (lesson.isCompleted && lesson.starsEarned > 0)
+                        Positioned(
+                          top: 3,
+                          right: 3,
+                          child: _StarsBadge(stars: lesson.starsEarned),
+                        ),
+                      // Lesson number badge (bottom-right)
+                      Positioned(
+                        bottom: 3,
+                        right: 3,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceLight.withValues(
+                              alpha: 0.9,
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${lesson.lessonNumber}',
+                            style: TextStyle(
+                              color: AppColors.textDark,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           );
         },
       ),
@@ -741,8 +815,6 @@ class _UnitProgressRing extends StatelessWidget {
     );
   }
 }
-
-
 
 // ─────────────────────────────────────────────────────────────
 // Error / empty states

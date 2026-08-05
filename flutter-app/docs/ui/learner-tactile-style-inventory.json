@@ -11704,7 +11704,7 @@
       "symbol": "_LessonNodeState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 375,
+      "line": 440,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -11730,7 +11730,7 @@
       "symbol": "_LessonNodeState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 422,
+      "line": 452,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -11858,7 +11858,7 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 428,
+      "line": 222,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -11884,7 +11884,7 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 553,
+      "line": 472,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -11910,7 +11910,7 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 674,
+      "line": 598,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -26597,6 +26597,58 @@
           "accent": null,
           "fill": null,
           "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/screens/learning_session_screen.dart::_LearningSessionScreenState::BoxDecoration::3",
+      "path": "lib/features/learning/presentation/screens/learning_session_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_LearningSessionScreenState",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 719,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart::_LessonNodeState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_LessonNodeState",
+      "callKind": "BoxDecoration",
+      "ordinal": 2,
+      "line": 492,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
           "intermediateFill": null
         }
       }

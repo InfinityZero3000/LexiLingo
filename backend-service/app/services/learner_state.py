@@ -245,6 +245,33 @@ async def get_states_for_concepts(
     )
 
 
+async def get_due_concepts_for_user(
+    session: AsyncSession,
+    user_id: UUID,
+    *,
+    now: datetime | None = None,
+    limit: int = MAX_BATCH_CONCEPTS,
+) -> list[LearnerConceptState]:
+    """List concepts due for review for a user, across all concept types
+    (vocabulary, grammar, mission) — unlike get_states_for_concepts, the
+    caller does not need to know concept_ids in advance. Uses the existing
+    ix_learner_state_user_due index (user_id, next_review_at)."""
+    now = now or datetime.now(UTC)
+    rows = (
+        await session.scalars(
+            select(LearnerConceptState)
+            .where(
+                LearnerConceptState.user_id == user_id,
+                LearnerConceptState.next_review_at.is_not(None),
+                LearnerConceptState.next_review_at <= now,
+            )
+            .order_by(LearnerConceptState.next_review_at.asc())
+            .limit(min(limit, MAX_BATCH_CONCEPTS))
+        )
+    ).all()
+    return list(rows)
+
+
 async def ingest_observations(
     session: AsyncSession,
     observations: list[ObservationInput],

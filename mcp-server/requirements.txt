@@ -2,7 +2,9 @@
 # Lightweight stdio server for IDE integration — heavy ML models are in ai-service.
 
 # Core MCP
-mcp>=1.0.0
+# Pinned below 2.0 — that release drops the lowlevel Server decorator API
+# (list_tools/call_tool/etc.) this server is written against.
+mcp>=1.0.0,<2.0.0
 
 # HTTP Client
 httpx>=0.26.0

@@ -6,6 +6,7 @@ class LessonContentModel {
   final String id;
   final String title;
   final String? description;
+  final String? outcome;
   final String lessonType;
   final int orderIndex;
   final int xpReward;
@@ -18,6 +19,7 @@ class LessonContentModel {
     required this.id,
     required this.title,
     this.description,
+    this.outcome,
     required this.lessonType,
     required this.orderIndex,
     required this.xpReward,
@@ -32,6 +34,7 @@ class LessonContentModel {
       id: json['id']?.toString() ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
+      outcome: json['outcome'] as String?,
       lessonType: json['lesson_type'] as String? ?? 'lesson',
       orderIndex: json['order_index'] as int? ?? 0,
       xpReward: json['xp_reward'] as int? ?? 10,
@@ -52,6 +55,7 @@ class LessonContentModel {
       id: id,
       title: title,
       description: description,
+      outcome: outcome,
       orderIndex: orderIndex,
       exercises: exercises.map((e) => e.toEntity()).toList(),
       estimatedMinutes: estimatedMinutes,
@@ -65,6 +69,7 @@ class ExerciseModel {
   final String id;
   final String type;
   final String? uiType;
+  final String? phase;
   final String question;
   final List<ExerciseOptionModel>? options;
   final String correctAnswer;
@@ -79,6 +84,7 @@ class ExerciseModel {
     required this.id,
     required this.type,
     this.uiType,
+    this.phase,
     required this.question,
     this.options,
     required this.correctAnswer,
@@ -95,6 +101,7 @@ class ExerciseModel {
       id: json['id']?.toString() ?? '',
       type: json['type'] as String? ?? 'multiple_choice',
       uiType: json['ui_type'] as String?,
+      phase: json['phase'] as String?,
       question: json['question'] as String? ?? '',
       options: (json['options'] as List?)
           ?.map((e) => ExerciseOptionModel.fromJson(e as Map<String, dynamic>))
@@ -115,6 +122,7 @@ class ExerciseModel {
       id: id,
       type: _parseExerciseType(type),
       uiType: uiType,
+      phase: phase,
       question: question,
       options: options?.map((o) => o.text).toList(),
       correctAnswer: correctAnswer,

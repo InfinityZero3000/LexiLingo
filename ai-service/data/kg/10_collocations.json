@@ -1,0 +1,6007 @@
+{
+  "version": "1.0.0",
+  "description": "English collocations from vladvlasov256/opensubs-collocations (CC-BY-4.0).",
+  "concepts": [
+    {
+      "id": "concept:collocation.come-on",
+      "title": "come on",
+      "keywords": "type=VERB+ADP; count=408628; pmi=5.51; npmi=0.582; score=10.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.talk-about",
+      "title": "talk about",
+      "keywords": "type=VERB+ADP; count=115459; pmi=6.58; npmi=0.583; score=9.81",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sit-down",
+      "title": "sit down",
+      "keywords": "type=VERB+ADP; count=43156; pmi=7.9; npmi=0.622; score=9.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shut-up",
+      "title": "shut up",
+      "keywords": "type=VERB+ADP; count=51375; pmi=7.42; npmi=0.596; score=9.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.look-at",
+      "title": "look at",
+      "keywords": "type=VERB+ADP; count=145762; pmi=5.89; npmi=0.538; score=9.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wake-up",
+      "title": "wake up",
+      "keywords": "type=VERB+ADP; count=30205; pmi=7.62; npmi=0.576; score=8.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.calm-down",
+      "title": "calm down",
+      "keywords": "type=VERB+ADP; count=14157; pmi=8.18; npmi=0.571; score=7.88",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pick-up",
+      "title": "pick up",
+      "keywords": "type=VERB+ADP; count=28096; pmi=6.72; npmi=0.504; score=7.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.worry-about",
+      "title": "worry about",
+      "keywords": "type=VERB+ADP; count=29781; pmi=6.6; npmi=0.499; score=7.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hurry-up",
+      "title": "hurry up",
+      "keywords": "type=VERB+ADP; count=21796; pmi=6.6; npmi=0.482; score=6.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.find-out",
+      "title": "find out",
+      "keywords": "type=VERB+ADP; count=51391; pmi=5.32; npmi=0.427; score=6.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.grow-up",
+      "title": "grow up",
+      "keywords": "type=VERB+ADP; count=15345; pmi=6.54; npmi=0.461; score=6.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slow-down",
+      "title": "slow down",
+      "keywords": "type=VERB+ADP; count=6480; pmi=7.49; npmi=0.485; score=6.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.deal-with",
+      "title": "deal with",
+      "keywords": "type=VERB+ADP; count=21026; pmi=5.79; npmi=0.422; score=6.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wait-for",
+      "title": "wait for",
+      "keywords": "type=VERB+ADP; count=54130; pmi=4.72; npmi=0.381; score=6.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.depend-on",
+      "title": "depend on",
+      "keywords": "type=VERB+ADP; count=10180; pmi=6.66; npmi=0.45; score=6.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.talk-to",
+      "title": "talk to",
+      "keywords": "type=VERB+ADP; count=124621; pmi=3.81; npmi=0.341; score=5.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.figure-out",
+      "title": "figure out",
+      "keywords": "type=VERB+ADP; count=12342; pmi=6.15; npmi=0.424; score=5.76",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.piss-off",
+      "title": "piss off",
+      "keywords": "type=VERB+ADP; count=4248; pmi=7.56; npmi=0.471; score=5.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hold-on",
+      "title": "hold on",
+      "keywords": "type=VERB+ADP; count=32618; pmi=4.91; npmi=0.375; score=5.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-out",
+      "title": "get out",
+      "keywords": "type=VERB+ADP; count=107801; pmi=3.74; npmi=0.329; score=5.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-by",
+      "title": "stand by",
+      "keywords": "type=VERB+ADP; count=10442; pmi=6.08; npmi=0.412; score=5.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.look-like",
+      "title": "look like",
+      "keywords": "type=VERB+ADP; count=57433; pmi=4.26; npmi=0.347; score=5.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sound-like",
+      "title": "sound like",
+      "keywords": "type=VERB+ADP; count=15561; pmi=5.58; npmi=0.394; score=5.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.think-about",
+      "title": "think about",
+      "keywords": "type=VERB+ADP; count=59654; pmi=4.21; npmi=0.345; score=5.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.surround-by",
+      "title": "surround by",
+      "keywords": "type=VERB+ADP; count=2620; pmi=7.9; npmi=0.472; score=5.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bump-into",
+      "title": "bump into",
+      "keywords": "type=VERB+ADP; count=1817; pmi=8.55; npmi=0.495; score=5.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.end-up",
+      "title": "end up",
+      "keywords": "type=VERB+ADP; count=15779; pmi=5.36; npmi=0.379; score=5.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rid-of",
+      "title": "rid of",
+      "keywords": "type=VERB+ADP; count=13590; pmi=5.47; npmi=0.381; score=5.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.settle-down",
+      "title": "settle down",
+      "keywords": "type=VERB+ADP; count=3950; pmi=7.07; npmi=0.437; score=5.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.listen-to",
+      "title": "listen to",
+      "keywords": "type=VERB+ADP; count=66283; pmi=3.94; npmi=0.326; score=5.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.care-about",
+      "title": "care about",
+      "keywords": "type=VERB+ADP; count=16866; pmi=5.13; npmi=0.365; score=5.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hang-on",
+      "title": "hang on",
+      "keywords": "type=VERB+ADP; count=15253; pmi=5.23; npmi=0.368; score=5.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.accord-to",
+      "title": "accord to",
+      "keywords": "type=VERB+ADP; count=13018; pmi=5.31; npmi=0.368; score=5.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cut-off",
+      "title": "cut off",
+      "keywords": "type=VERB+ADP; count=6378; pmi=6.14; npmi=0.397; score=5.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.look-for",
+      "title": "look for",
+      "keywords": "type=VERB+ADP; count=69884; pmi=3.73; npmi=0.311; score=5.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.forget-about",
+      "title": "forget about",
+      "keywords": "type=VERB+ADP; count=14137; pmi=5.18; npmi=0.362; score=4.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-along",
+      "title": "come along",
+      "keywords": "type=VERB+ADP; count=10775; pmi=5.42; npmi=0.368; score=4.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.set-up",
+      "title": "set up",
+      "keywords": "type=VERB+ADP; count=10987; pmi=5.36; npmi=0.366; score=4.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-into",
+      "title": "turn into",
+      "keywords": "type=VERB+ADP; count=7126; pmi=5.85; npmi=0.383; score=4.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.go-on",
+      "title": "go on",
+      "keywords": "type=VERB+ADP; count=140982; pmi=3.11; npmi=0.283; score=4.84",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.testify-against",
+      "title": "testify against",
+      "keywords": "type=VERB+ADP; count=771; pmi=9.35; npmi=0.505; score=4.84",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pay-for",
+      "title": "pay for",
+      "keywords": "type=VERB+ADP; count=19546; pmi=4.62; npmi=0.334; score=4.76",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rely-on",
+      "title": "rely on",
+      "keywords": "type=VERB+ADP; count=2774; pmi=6.87; npmi=0.413; score=4.72",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-into",
+      "title": "run into",
+      "keywords": "type=VERB+ADP; count=7137; pmi=5.63; npmi=0.368; score=4.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.screw-up",
+      "title": "screw up",
+      "keywords": "type=VERB+ADP; count=4952; pmi=6.06; npmi=0.383; score=4.7",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.feel-like",
+      "title": "feel like",
+      "keywords": "type=VERB+ADP; count=20455; pmi=4.46; npmi=0.324; score=4.64",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.belong-to",
+      "title": "belong to",
+      "keywords": "type=VERB+ADP; count=16101; pmi=4.69; npmi=0.332; score=4.64",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wipe-out",
+      "title": "wipe out",
+      "keywords": "type=VERB+ADP; count=3155; pmi=6.53; npmi=0.397; score=4.61",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-into",
+      "title": "fall into",
+      "keywords": "type=VERB+ADP; count=4549; pmi=6.02; npmi=0.377; score=4.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-in",
+      "title": "live in",
+      "keywords": "type=VERB+ADP; count=29369; pmi=4.05; npmi=0.306; score=4.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-up",
+      "title": "stand up",
+      "keywords": "type=VERB+ADP; count=11243; pmi=4.92; npmi=0.336; score=4.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tag-along",
+      "title": "tag along",
+      "keywords": "type=VERB+ADP; count=587; pmi=9.31; npmi=0.493; score=4.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bicker-amongst",
+      "title": "bicker amongst",
+      "keywords": "type=VERB+ADP; count=95; pmi=14.8; npmi=0.687; score=4.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.show-up",
+      "title": "show up",
+      "keywords": "type=VERB+ADP; count=14324; pmi=4.61; npmi=0.323; score=4.46",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hang-out",
+      "title": "hang out",
+      "keywords": "type=VERB+ADP; count=7830; pmi=5.22; npmi=0.344; score=4.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mix-up",
+      "title": "mix up",
+      "keywords": "type=VERB+ADP; count=3053; pmi=6.36; npmi=0.385; score=4.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.watch-out",
+      "title": "watch out",
+      "keywords": "type=VERB+ADP; count=12129; pmi=4.74; npmi=0.326; score=4.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sleep-with",
+      "title": "sleep with",
+      "keywords": "type=VERB+ADP; count=12696; pmi=4.7; npmi=0.325; score=4.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-around",
+      "title": "turn around",
+      "keywords": "type=VERB+ADP; count=5085; pmi=5.66; npmi=0.359; score=4.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stumble-onto",
+      "title": "stumble onto",
+      "keywords": "type=VERB+ADP; count=218; pmi=11.55; npmi=0.568; score=4.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pass-through",
+      "title": "pass through",
+      "keywords": "type=VERB+ADP; count=2771; pmi=6.38; npmi=0.383; score=4.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.open-up",
+      "title": "open up",
+      "keywords": "type=VERB+ADP; count=11193; pmi=4.76; npmi=0.325; score=4.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.interfere-with",
+      "title": "interfere with",
+      "keywords": "type=VERB+ADP; count=2478; pmi=6.51; npmi=0.387; score=4.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.clean-up",
+      "title": "clean up",
+      "keywords": "type=VERB+ADP; count=6135; pmi=5.36; npmi=0.346; score=4.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-out",
+      "title": "turn out",
+      "keywords": "type=VERB+ADP; count=12660; pmi=4.61; npmi=0.318; score=4.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hide-behind",
+      "title": "hide behind",
+      "keywords": "type=VERB+ADP; count=1414; pmi=7.31; npmi=0.414; score=4.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.revolve-around",
+      "title": "revolve around",
+      "keywords": "type=VERB+ADP; count=415; pmi=9.69; npmi=0.5; score=4.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.laugh-at",
+      "title": "laugh at",
+      "keywords": "type=VERB+ADP; count=6900; pmi=5.2; npmi=0.339; score=4.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.blow-up",
+      "title": "blow up",
+      "keywords": "type=VERB+ADP; count=6931; pmi=5.18; npmi=0.338; score=4.31",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.suffer-from",
+      "title": "suffer from",
+      "keywords": "type=VERB+ADP; count=3015; pmi=6.16; npmi=0.372; score=4.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.base-on",
+      "title": "base on",
+      "keywords": "type=VERB+ADP; count=5974; pmi=5.33; npmi=0.343; score=4.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.doze-off",
+      "title": "doze off",
+      "keywords": "type=VERB+ADP; count=468; pmi=9.33; npmi=0.485; score=4.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-from",
+      "title": "come from",
+      "keywords": "type=VERB+ADP; count=36225; pmi=3.65; npmi=0.282; score=4.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hold-onto",
+      "title": "hold onto",
+      "keywords": "type=VERB+ADP; count=1114; pmi=7.54; npmi=0.42; score=4.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lighten-up",
+      "title": "lighten up",
+      "keywords": "type=VERB+ADP; count=1125; pmi=7.52; npmi=0.419; score=4.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.agree-with",
+      "title": "agree with",
+      "keywords": "type=VERB+ADP; count=6280; pmi=5.17; npmi=0.334; score=4.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.check-out",
+      "title": "check out",
+      "keywords": "type=VERB+ADP; count=8955; pmi=4.79; npmi=0.32; score=4.2",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fill-with",
+      "title": "fill with",
+      "keywords": "type=VERB+ADP; count=5043; pmi=5.37; npmi=0.34; score=4.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tm-a",
+      "title": "™ ª",
+      "keywords": "type=VERB+ADP; count=113; pmi=13.05; npmi=0.613; score=4.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.obsess-with",
+      "title": "obsess with",
+      "keywords": "type=VERB+ADP; count=1526; pmi=6.87; npmi=0.392; score=4.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.caption-by",
+      "title": "caption by",
+      "keywords": "type=VERB+ADP; count=567; pmi=8.6; npmi=0.454; score=4.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rise-above",
+      "title": "rise above",
+      "keywords": "type=VERB+ADP; count=488; pmi=8.86; npmi=0.462; score=4.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.yell-at",
+      "title": "yell at",
+      "keywords": "type=VERB+ADP; count=3025; pmi=5.89; npmi=0.356; score=4.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stay-with",
+      "title": "stay with",
+      "keywords": "type=VERB+ADP; count=16609; pmi=4.13; npmi=0.293; score=4.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.count-on",
+      "title": "count on",
+      "keywords": "type=VERB+ADP; count=7459; pmi=4.83; npmi=0.317; score=4.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stare-at",
+      "title": "stare at",
+      "keywords": "type=VERB+ADP; count=1262; pmi=7.04; npmi=0.395; score=4.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.go-through",
+      "title": "go through",
+      "keywords": "type=VERB+ADP; count=19836; pmi=3.93; npmi=0.284; score=4.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.take-off",
+      "title": "take off",
+      "keywords": "type=VERB+ADP; count=15882; pmi=4.11; npmi=0.291; score=4.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-into",
+      "title": "walk into",
+      "keywords": "type=VERB+ADP; count=3724; pmi=5.55; npmi=0.342; score=4.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.split-up",
+      "title": "split up",
+      "keywords": "type=VERB+ADP; count=2751; pmi=5.89; npmi=0.353; score=4.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fool-around",
+      "title": "fool around",
+      "keywords": "type=VERB+ADP; count=2077; pmi=6.22; npmi=0.364; score=4.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-in",
+      "title": "fall in",
+      "keywords": "type=VERB+ADP; count=14529; pmi=4.12; npmi=0.289; score=4.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.act-like",
+      "title": "act like",
+      "keywords": "type=VERB+ADP; count=6031; pmi=4.95; npmi=0.318; score=4.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.break-up",
+      "title": "break up",
+      "keywords": "type=VERB+ADP; count=9278; pmi=4.52; npmi=0.303; score=3.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.abide-by",
+      "title": "abide by",
+      "keywords": "type=VERB+ADP; count=602; pmi=8.1; npmi=0.429; score=3.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.transform-into",
+      "title": "transform into",
+      "keywords": "type=VERB+ADP; count=566; pmi=8.2; npmi=0.433; score=3.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lie-down",
+      "title": "lie down",
+      "keywords": "type=VERB+ADP; count=4689; pmi=5.16; npmi=0.324; score=3.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.refer-to",
+      "title": "refer to",
+      "keywords": "type=VERB+ADP; count=4739; pmi=5.15; npmi=0.324; score=3.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hook-up",
+      "title": "hook up",
+      "keywords": "type=VERB+ADP; count=2530; pmi=5.85; npmi=0.349; score=3.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-without",
+      "title": "live without",
+      "keywords": "type=VERB+ADP; count=3154; pmi=5.54; npmi=0.336; score=3.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flirt-with",
+      "title": "flirt with",
+      "keywords": "type=VERB+ADP; count=1343; pmi=6.66; npmi=0.376; score=3.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-with",
+      "title": "live with",
+      "keywords": "type=VERB+ADP; count=14360; pmi=4.03; npmi=0.282; score=3.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.ask-for",
+      "title": "ask for",
+      "keywords": "type=VERB+ADP; count=21455; pmi=3.72; npmi=0.271; score=3.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fascinate-by",
+      "title": "fascinate by",
+      "keywords": "type=VERB+ADP; count=518; pmi=8.26; npmi=0.433; score=3.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lock-up",
+      "title": "lock up",
+      "keywords": "type=VERB+ADP; count=4406; pmi=5.12; npmi=0.32; score=3.88",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.argue-with",
+      "title": "argue with",
+      "keywords": "type=VERB+ADP; count=2605; pmi=5.71; npmi=0.341; score=3.87",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hang-up",
+      "title": "hang up",
+      "keywords": "type=VERB+ADP; count=5851; pmi=4.8; npmi=0.308; score=3.86",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-out",
+      "title": "run out",
+      "keywords": "type=VERB+ADP; count=11220; pmi=4.21; npmi=0.287; score=3.86",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.give-up",
+      "title": "give up",
+      "keywords": "type=VERB+ADP; count=21789; pmi=3.65; npmi=0.267; score=3.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mess-up",
+      "title": "mess up",
+      "keywords": "type=VERB+ADP; count=3678; pmi=5.28; npmi=0.325; score=3.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tie-up",
+      "title": "tie up",
+      "keywords": "type=VERB+ADP; count=3345; pmi=5.38; npmi=0.328; score=3.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.happen-to",
+      "title": "happen to",
+      "keywords": "type=VERB+ADP; count=52204; pmi=3.05; npmi=0.245; score=3.84",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.star-at",
+      "title": "star at",
+      "keywords": "type=VERB+ADP; count=4742; pmi=4.98; npmi=0.313; score=3.83",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.freak-out",
+      "title": "freak out",
+      "keywords": "type=VERB+ADP; count=2578; pmi=5.67; npmi=0.338; score=3.83",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.direct-by",
+      "title": "direct by",
+      "keywords": "type=VERB+ADP; count=1464; pmi=6.4; npmi=0.364; score=3.83",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.insist-on",
+      "title": "insist on",
+      "keywords": "type=VERB+ADP; count=3104; pmi=5.45; npmi=0.33; score=3.83",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.search-for",
+      "title": "search for",
+      "keywords": "type=VERB+ADP; count=5194; pmi=4.87; npmi=0.309; score=3.82",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cope-with",
+      "title": "cope with",
+      "keywords": "type=VERB+ADP; count=1014; pmi=6.94; npmi=0.383; score=3.82",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hang-around",
+      "title": "hang around",
+      "keywords": "type=VERB+ADP; count=2262; pmi=5.8; npmi=0.342; score=3.81",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rip-off",
+      "title": "rip off",
+      "keywords": "type=VERB+ADP; count=1234; pmi=6.62; npmi=0.371; score=3.81",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.prepare-for",
+      "title": "prepare for",
+      "keywords": "type=VERB+ADP; count=5051; pmi=4.88; npmi=0.309; score=3.8",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-ahold",
+      "title": "get ahold",
+      "keywords": "type=VERB+ADP; count=1112; pmi=6.74; npmi=0.375; score=3.79",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.escape-from",
+      "title": "escape from",
+      "keywords": "type=VERB+ADP; count=2858; pmi=5.45; npmi=0.328; score=3.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tamper-with",
+      "title": "tamper with",
+      "keywords": "type=VERB+ADP; count=710; pmi=7.42; npmi=0.398; score=3.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.brag-about",
+      "title": "brag about",
+      "keywords": "type=VERB+ADP; count=852; pmi=7.12; npmi=0.388; score=3.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.catch-up",
+      "title": "catch up",
+      "keywords": "type=VERB+ADP; count=6187; pmi=4.62; npmi=0.298; score=3.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.head-toward",
+      "title": "head toward",
+      "keywords": "type=VERB+ADP; count=602; pmi=7.64; npmi=0.405; score=3.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bend-over",
+      "title": "bend over",
+      "keywords": "type=VERB+ADP; count=908; pmi=6.96; npmi=0.381; score=3.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wander-around",
+      "title": "wander around",
+      "keywords": "type=VERB+ADP; count=691; pmi=7.4; npmi=0.397; score=3.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.look-after",
+      "title": "look after",
+      "keywords": "type=VERB+ADP; count=9715; pmi=4.17; npmi=0.281; score=3.72",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.play-with",
+      "title": "play with",
+      "keywords": "type=VERB+ADP; count=12425; pmi=3.95; npmi=0.273; score=3.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.head-towards",
+      "title": "head towards",
+      "keywords": "type=VERB+ADP; count=743; pmi=7.17; npmi=0.387; score=3.69",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.coope-up",
+      "title": "coope up",
+      "keywords": "type=VERB+ADP; count=436; pmi=8.12; npmi=0.42; score=3.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.communicate-with",
+      "title": "communicate with",
+      "keywords": "type=VERB+ADP; count=1336; pmi=6.28; npmi=0.355; score=3.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-down",
+      "title": "fall down",
+      "keywords": "type=VERB+ADP; count=3912; pmi=4.96; npmi=0.307; score=3.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.concentrate-on",
+      "title": "concentrate on",
+      "keywords": "type=VERB+ADP; count=2217; pmi=5.6; npmi=0.33; score=3.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pull-over",
+      "title": "pull over",
+      "keywords": "type=VERB+ADP; count=3027; pmi=5.25; npmi=0.317; score=3.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hear-about",
+      "title": "hear about",
+      "keywords": "type=VERB+ADP; count=12984; pmi=3.86; npmi=0.268; score=3.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wind-up",
+      "title": "wind up",
+      "keywords": "type=VERB+ADP; count=3275; pmi=5.14; npmi=0.313; score=3.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.vouch-for",
+      "title": "vouch for",
+      "keywords": "type=VERB+ADP; count=820; pmi=6.97; npmi=0.379; score=3.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-through",
+      "title": "walk through",
+      "keywords": "type=VERB+ADP; count=2358; pmi=5.51; npmi=0.326; score=3.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.work-for",
+      "title": "work for",
+      "keywords": "type=VERB+ADP; count=24024; pmi=3.4; npmi=0.251; score=3.65",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lay-down",
+      "title": "lay down",
+      "keywords": "type=VERB+ADP; count=1981; pmi=5.71; npmi=0.333; score=3.65",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.involve-in",
+      "title": "involve in",
+      "keywords": "type=VERB+ADP; count=5235; pmi=4.63; npmi=0.294; score=3.63",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-off",
+      "title": "get off",
+      "keywords": "type=VERB+ADP; count=26310; pmi=3.29; npmi=0.245; score=3.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.smell-like",
+      "title": "smell like",
+      "keywords": "type=VERB+ADP; count=3919; pmi=4.87; npmi=0.301; score=3.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pray-for",
+      "title": "pray for",
+      "keywords": "type=VERB+ADP; count=3587; pmi=4.95; npmi=0.304; score=3.59",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.apologize-for",
+      "title": "apologize for",
+      "keywords": "type=VERB+ADP; count=3169; pmi=5.09; npmi=0.309; score=3.59",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.welcome-back",
+      "title": "welcome back",
+      "keywords": "type=VERB+ADP; count=3417; pmi=4.98; npmi=0.305; score=3.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.break-into",
+      "title": "break into",
+      "keywords": "type=VERB+ADP; count=3211; pmi=5.05; npmi=0.307; score=3.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.accompany-by",
+      "title": "accompany by",
+      "keywords": "type=VERB+ADP; count=728; pmi=7.0; npmi=0.377; score=3.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tidy-up",
+      "title": "tidy up",
+      "keywords": "type=VERB+ADP; count=779; pmi=6.89; npmi=0.373; score=3.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.refrain-from",
+      "title": "refrain from",
+      "keywords": "type=VERB+ADP; count=380; pmi=8.12; npmi=0.416; score=3.56",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.complain-about",
+      "title": "complain about",
+      "keywords": "type=VERB+ADP; count=1561; pmi=5.86; npmi=0.335; score=3.55",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.welcome-aboard",
+      "title": "welcome aboard",
+      "keywords": "type=VERB+ADP; count=420; pmi=7.9; npmi=0.408; score=3.55",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shut-down",
+      "title": "shut down",
+      "keywords": "type=VERB+ADP; count=3698; pmi=4.86; npmi=0.299; score=3.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hang-onto",
+      "title": "hang onto",
+      "keywords": "type=VERB+ADP; count=464; pmi=7.69; npmi=0.4; score=3.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.focus-on",
+      "title": "focus on",
+      "keywords": "type=VERB+ADP; count=2258; pmi=5.38; npmi=0.317; score=3.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rebel-against",
+      "title": "rebel against",
+      "keywords": "type=VERB+ADP; count=326; pmi=8.36; npmi=0.423; score=3.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-on-4f52e253",
+      "title": "-come on",
+      "keywords": "type=VERB+ADP; count=2236; pmi=5.39; npmi=0.317; score=3.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.burst-into",
+      "title": "burst into",
+      "keywords": "type=VERB+ADP; count=596; pmi=7.23; npmi=0.383; score=3.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hack-into",
+      "title": "hack into",
+      "keywords": "type=VERB+ADP; count=497; pmi=7.55; npmi=0.394; score=3.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cheat-on",
+      "title": "cheat on",
+      "keywords": "type=VERB+ADP; count=2918; pmi=5.07; npmi=0.305; score=3.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.loosen-up",
+      "title": "loosen up",
+      "keywords": "type=VERB+ADP; count=714; pmi=6.92; npmi=0.372; score=3.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fight-against",
+      "title": "fight against",
+      "keywords": "type=VERB+ADP; count=1408; pmi=5.92; npmi=0.336; score=3.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.carry-on",
+      "title": "carry on",
+      "keywords": "type=VERB+ADP; count=6009; pmi=4.34; npmi=0.279; score=3.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.believe-in",
+      "title": "believe in",
+      "keywords": "type=VERB+ADP; count=19589; pmi=3.37; npmi=0.243; score=3.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stumble-across",
+      "title": "stumble across",
+      "keywords": "type=VERB+ADP; count=163; pmi=9.81; npmi=0.473; score=3.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.specialize-in",
+      "title": "specialize in",
+      "keywords": "type=VERB+ADP; count=863; pmi=6.52; npmi=0.356; score=3.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-into",
+      "title": "get into",
+      "keywords": "type=VERB+ADP; count=19559; pmi=3.35; npmi=0.242; score=3.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seem-like",
+      "title": "seem like",
+      "keywords": "type=VERB+ADP; count=6980; pmi=4.14; npmi=0.27; score=3.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.behave-like",
+      "title": "behave like",
+      "keywords": "type=VERB+ADP; count=1774; pmi=5.53; npmi=0.319; score=3.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-off",
+      "title": "fall off",
+      "keywords": "type=VERB+ADP; count=3018; pmi=4.93; npmi=0.298; score=3.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.speak-to",
+      "title": "speak to",
+      "keywords": "type=VERB+ADP; count=25684; pmi=3.15; npmi=0.235; score=3.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.choose-between",
+      "title": "choose between",
+      "keywords": "type=VERB+ADP; count=673; pmi=6.83; npmi=0.365; score=3.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.participate-in",
+      "title": "participate in",
+      "keywords": "type=VERB+ADP; count=1242; pmi=5.93; npmi=0.333; score=3.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.freshen-up",
+      "title": "freshen up",
+      "keywords": "type=VERB+ADP; count=462; pmi=7.43; npmi=0.386; score=3.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.argue-amongst",
+      "title": "argue amongst",
+      "keywords": "type=VERB+ADP; count=130; pmi=10.25; npmi=0.486; score=3.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-off",
+      "title": "turn off",
+      "keywords": "type=VERB+ADP; count=4077; pmi=4.56; npmi=0.283; score=3.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.arrive-at",
+      "title": "arrive at",
+      "keywords": "type=VERB+ADP; count=2812; pmi=4.92; npmi=0.296; score=3.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lay-off",
+      "title": "lay off",
+      "keywords": "type=VERB+ADP; count=1492; pmi=5.64; npmi=0.321; score=3.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.compete-with",
+      "title": "compete with",
+      "keywords": "type=VERB+ADP; count=971; pmi=6.18; npmi=0.34; score=3.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chop-off",
+      "title": "chop off",
+      "keywords": "type=VERB+ADP; count=822; pmi=6.42; npmi=0.349; score=3.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.emerge-from",
+      "title": "emerge from",
+      "keywords": "type=VERB+ADP; count=596; pmi=6.92; npmi=0.367; score=3.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-off",
+      "title": "run off",
+      "keywords": "type=VERB+ADP; count=4418; pmi=4.44; npmi=0.278; score=3.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mess-with",
+      "title": "mess with",
+      "keywords": "type=VERB+ADP; count=3447; pmi=4.69; npmi=0.287; score=3.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.steal-from",
+      "title": "steal from",
+      "keywords": "type=VERB+ADP; count=2807; pmi=4.89; npmi=0.294; score=3.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chickene-out",
+      "title": "chickene out",
+      "keywords": "type=VERB+ADP; count=312; pmi=8.04; npmi=0.406; score=3.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-out",
+      "title": "come out",
+      "keywords": "type=VERB+ADP; count=34615; pmi=2.9; npmi=0.222; score=3.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.divide-into",
+      "title": "divide into",
+      "keywords": "type=VERB+ADP; count=478; pmi=7.22; npmi=0.376; score=3.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.derive-from",
+      "title": "derive from",
+      "keywords": "type=VERB+ADP; count=329; pmi=7.89; npmi=0.4; score=3.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-beside",
+      "title": "stand beside",
+      "keywords": "type=VERB+ADP; count=376; pmi=7.63; npmi=0.39; score=3.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dance-with",
+      "title": "dance with",
+      "keywords": "type=VERB+ADP; count=5038; pmi=4.28; npmi=0.271; score=3.33",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dispose-of",
+      "title": "dispose of",
+      "keywords": "type=VERB+ADP; count=1109; pmi=5.9; npmi=0.328; score=3.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seal-off",
+      "title": "seal off",
+      "keywords": "type=VERB+ADP; count=882; pmi=6.22; npmi=0.34; score=3.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.work-out",
+      "title": "work out",
+      "keywords": "type=VERB+ADP; count=13025; pmi=3.46; npmi=0.24; score=3.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.disguise-as",
+      "title": "disguise as",
+      "keywords": "type=VERB+ADP; count=765; pmi=6.32; npmi=0.341; score=3.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.straighten-out",
+      "title": "straighten out",
+      "keywords": "type=VERB+ADP; count=908; pmi=6.08; npmi=0.333; score=3.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-in",
+      "title": "come in",
+      "keywords": "type=VERB+ADP; count=70488; pmi=2.43; npmi=0.203; score=3.26",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.produce-by",
+      "title": "produce by",
+      "keywords": "type=VERB+ADP; count=839; pmi=6.13; npmi=0.334; score=3.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.disagree-with",
+      "title": "disagree with",
+      "keywords": "type=VERB+ADP; count=854; pmi=6.11; npmi=0.333; score=3.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.distinguish-between",
+      "title": "distinguish between",
+      "keywords": "type=VERB+ADP; count=149; pmi=9.36; npmi=0.448; score=3.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conceal-within",
+      "title": "conceal within",
+      "keywords": "type=VERB+ADP; count=136; pmi=9.6; npmi=0.457; score=3.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mess-around",
+      "title": "mess around",
+      "keywords": "type=VERB+ADP; count=1040; pmi=5.82; npmi=0.322; score=3.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pass-away",
+      "title": "pass away",
+      "keywords": "type=VERB+ADP; count=1756; pmi=5.18; npmi=0.299; score=3.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.aim-at",
+      "title": "aim at",
+      "keywords": "type=VERB+ADP; count=1188; pmi=5.63; npmi=0.315; score=3.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conspire-against",
+      "title": "conspire against",
+      "keywords": "type=VERB+ADP; count=138; pmi=9.51; npmi=0.453; score=3.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dress-up",
+      "title": "dress up",
+      "keywords": "type=VERB+ADP; count=3166; pmi=4.55; npmi=0.276; score=3.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-down",
+      "title": "come down",
+      "keywords": "type=VERB+ADP; count=17721; pmi=3.17; npmi=0.227; score=3.2",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-over",
+      "title": "come over",
+      "keywords": "type=VERB+ADP; count=15817; pmi=3.24; npmi=0.229; score=3.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.work-on",
+      "title": "work on",
+      "keywords": "type=VERB+ADP; count=19640; pmi=3.1; npmi=0.224; score=3.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.associate-with",
+      "title": "associate with",
+      "keywords": "type=VERB+ADP; count=1128; pmi=5.65; npmi=0.315; score=3.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.learn-from",
+      "title": "learn from",
+      "keywords": "type=VERB+ADP; count=3116; pmi=4.54; npmi=0.275; score=3.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.jerk-off",
+      "title": "jerk off",
+      "keywords": "type=VERB+ADP; count=878; pmi=5.97; npmi=0.326; score=3.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spread-throughout",
+      "title": "spread throughout",
+      "keywords": "type=VERB+ADP; count=137; pmi=9.45; npmi=0.45; score=3.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.feed-up",
+      "title": "feed up",
+      "keywords": "type=VERB+ADP; count=2245; pmi=4.84; npmi=0.285; score=3.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.enter-into",
+      "title": "enter into",
+      "keywords": "type=VERB+ADP; count=1012; pmi=5.76; npmi=0.318; score=3.17",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pose-as",
+      "title": "pose as",
+      "keywords": "type=VERB+ADP; count=641; pmi=6.39; npmi=0.34; score=3.17",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.consist-of",
+      "title": "consist of",
+      "keywords": "type=VERB+ADP; count=843; pmi=5.97; npmi=0.325; score=3.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slip-through",
+      "title": "slip through",
+      "keywords": "type=VERB+ADP; count=628; pmi=6.38; npmi=0.339; score=3.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spy-on",
+      "title": "spy on",
+      "keywords": "type=VERB+ADP; count=2039; pmi=4.89; npmi=0.286; score=3.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.return-to",
+      "title": "return to",
+      "keywords": "type=VERB+ADP; count=13349; pmi=3.3; npmi=0.229; score=3.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.relate-to",
+      "title": "relate to",
+      "keywords": "type=VERB+ADP; count=2848; pmi=4.55; npmi=0.274; score=3.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rile-up",
+      "title": "rile up",
+      "keywords": "type=VERB+ADP; count=311; pmi=7.52; npmi=0.379; score=3.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sit-beside",
+      "title": "sit beside",
+      "keywords": "type=VERB+ADP; count=348; pmi=7.32; npmi=0.372; score=3.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cause-by",
+      "title": "cause by",
+      "keywords": "type=VERB+ADP; count=1752; pmi=5.04; npmi=0.291; score=3.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.add-up",
+      "title": "add up",
+      "keywords": "type=VERB+ADP; count=1654; pmi=5.1; npmi=0.293; score=3.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.graduate-from",
+      "title": "graduate from",
+      "keywords": "type=VERB+ADP; count=758; pmi=6.07; npmi=0.328; score=3.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.carry-out",
+      "title": "carry out",
+      "keywords": "type=VERB+ADP; count=3234; pmi=4.4; npmi=0.268; score=3.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dig-up",
+      "title": "dig up",
+      "keywords": "type=VERB+ADP; count=1914; pmi=4.93; npmi=0.287; score=3.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.take-over",
+      "title": "take over",
+      "keywords": "type=VERB+ADP; count=10671; pmi=3.43; npmi=0.233; score=3.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sift-through",
+      "title": "sift through",
+      "keywords": "type=VERB+ADP; count=118; pmi=9.63; npmi=0.454; score=3.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.know-about",
+      "title": "know about",
+      "keywords": "type=VERB+ADP; count=35224; pmi=2.68; npmi=0.206; score=3.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hear-from",
+      "title": "hear from",
+      "keywords": "type=VERB+ADP; count=7601; pmi=3.67; npmi=0.241; score=3.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.compare-to",
+      "title": "compare to",
+      "keywords": "type=VERB+ADP; count=3325; pmi=4.36; npmi=0.266; score=3.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sneak-into",
+      "title": "sneak into",
+      "keywords": "type=VERB+ADP; count=526; pmi=6.56; npmi=0.344; score=3.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.involve-with",
+      "title": "involve with",
+      "keywords": "type=VERB+ADP; count=2565; pmi=4.61; npmi=0.275; score=3.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-up",
+      "title": "come up",
+      "keywords": "type=VERB+ADP; count=31009; pmi=2.74; npmi=0.208; score=3.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.occur-to",
+      "title": "occur to",
+      "keywords": "type=VERB+ADP; count=3816; pmi=4.23; npmi=0.261; score=3.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.go-into",
+      "title": "go into",
+      "keywords": "type=VERB+ADP; count=17111; pmi=3.09; npmi=0.22; score=3.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.descend-from",
+      "title": "descend from",
+      "keywords": "type=VERB+ADP; count=478; pmi=6.69; npmi=0.349; score=3.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.burn-down",
+      "title": "burn down",
+      "keywords": "type=VERB+ADP; count=1840; pmi=4.93; npmi=0.286; score=3.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.knock-on",
+      "title": "knock on",
+      "keywords": "type=VERB+ADP; count=4020; pmi=4.16; npmi=0.258; score=3.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.recover-from",
+      "title": "recover from",
+      "keywords": "type=VERB+ADP; count=864; pmi=5.81; npmi=0.317; score=3.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.break-down",
+      "title": "break down",
+      "keywords": "type=VERB+ADP; count=3376; pmi=4.29; npmi=0.262; score=3.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pack-up",
+      "title": "pack up",
+      "keywords": "type=VERB+ADP; count=2049; pmi=4.76; npmi=0.279; score=3.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.buckle-up",
+      "title": "buckle up",
+      "keywords": "type=VERB+ADP; count=516; pmi=6.5; npmi=0.341; score=3.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.drop-by",
+      "title": "drop by",
+      "keywords": "type=VERB+ADP; count=2124; pmi=4.71; npmi=0.277; score=3.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.jump-into",
+      "title": "jump into",
+      "keywords": "type=VERB+ADP; count=1122; pmi=5.43; npmi=0.302; score=3.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.jump-off",
+      "title": "jump off",
+      "keywords": "type=VERB+ADP; count=1343; pmi=5.2; npmi=0.294; score=3.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.edit-by",
+      "title": "edit by",
+      "keywords": "type=VERB+ADP; count=291; pmi=7.42; npmi=0.373; score=3.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.start-with",
+      "title": "start with",
+      "keywords": "type=VERB+ADP; count=9115; pmi=3.46; npmi=0.232; score=3.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.trespass-against",
+      "title": "trespass against",
+      "keywords": "type=VERB+ADP; count=145; pmi=8.9; npmi=0.425; score=3.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wrap-up",
+      "title": "wrap up",
+      "keywords": "type=VERB+ADP; count=1205; pmi=5.31; npmi=0.297; score=3.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.teem-with",
+      "title": "teem with",
+      "keywords": "type=VERB+ADP; count=317; pmi=7.25; npmi=0.366; score=3.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.snoop-around",
+      "title": "snoop around",
+      "keywords": "type=VERB+ADP; count=239; pmi=7.74; npmi=0.383; score=3.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.haunt-by",
+      "title": "haunt by",
+      "keywords": "type=VERB+ADP; count=436; pmi=6.66; npmi=0.344; score=3.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pull-out",
+      "title": "pull out",
+      "keywords": "type=VERB+ADP; count=3802; pmi=4.1; npmi=0.253; score=3.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.render-unto",
+      "title": "render unto",
+      "keywords": "type=VERB+ADP; count=54; pmi=11.7; npmi=0.524; score=3.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tumble-down",
+      "title": "tumble down",
+      "keywords": "type=VERB+ADP; count=267; pmi=7.45; npmi=0.372; score=3.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.work-with",
+      "title": "work with",
+      "keywords": "type=VERB+ADP; count=14227; pmi=3.1; npmi=0.217; score=3.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.contend-with",
+      "title": "contend with",
+      "keywords": "type=VERB+ADP; count=320; pmi=7.12; npmi=0.36; score=3.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.advise-against",
+      "title": "advise against",
+      "keywords": "type=VERB+ADP; count=260; pmi=7.5; npmi=0.373; score=3.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.preside-over",
+      "title": "preside over",
+      "keywords": "type=VERB+ADP; count=188; pmi=8.16; npmi=0.397; score=3.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.interact-with",
+      "title": "interact with",
+      "keywords": "type=VERB+ADP; count=368; pmi=6.89; npmi=0.352; score=3.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cooperate-with",
+      "title": "cooperate with",
+      "keywords": "type=VERB+ADP; count=883; pmi=5.59; npmi=0.305; score=2.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.replace-by",
+      "title": "replace by",
+      "keywords": "type=VERB+ADP; count=701; pmi=5.9; npmi=0.316; score=2.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spread-out",
+      "title": "spread out",
+      "keywords": "type=VERB+ADP; count=1450; pmi=5.0; npmi=0.284; score=2.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flow-through",
+      "title": "flow through",
+      "keywords": "type=VERB+ADP; count=419; pmi=6.63; npmi=0.342; score=2.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lean-towards",
+      "title": "lean towards",
+      "keywords": "type=VERB+ADP; count=109; pmi=9.38; npmi=0.44; score=2.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bogge-down",
+      "title": "bogge down",
+      "keywords": "type=VERB+ADP; count=120; pmi=9.1; npmi=0.43; score=2.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.curl-up",
+      "title": "curl up",
+      "keywords": "type=VERB+ADP; count=467; pmi=6.44; npmi=0.335; score=2.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.inspire-by",
+      "title": "inspire by",
+      "keywords": "type=VERB+ADP; count=470; pmi=6.44; npmi=0.335; score=2.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tap-into",
+      "title": "tap into",
+      "keywords": "type=VERB+ADP; count=532; pmi=6.24; npmi=0.328; score=2.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-across",
+      "title": "come across",
+      "keywords": "type=VERB+ADP; count=2556; pmi=4.37; npmi=0.26; score=2.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.straighten-up",
+      "title": "straighten up",
+      "keywords": "type=VERB+ADP; count=729; pmi=5.77; npmi=0.311; score=2.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.differentiate-between",
+      "title": "differentiate between",
+      "keywords": "type=VERB+ADP; count=63; pmi=10.91; npmi=0.493; score=2.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cordone-off",
+      "title": "cordone off",
+      "keywords": "type=VERB+ADP; count=95; pmi=9.65; npmi=0.448; score=2.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rummage-through",
+      "title": "rummage through",
+      "keywords": "type=VERB+ADP; count=111; pmi=9.25; npmi=0.434; score=2.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.plot-against",
+      "title": "plot against",
+      "keywords": "type=VERB+ADP; count=234; pmi=7.58; npmi=0.375; score=2.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hide-from",
+      "title": "hide from",
+      "keywords": "type=VERB+ADP; count=2258; pmi=4.48; npmi=0.264; score=2.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.acquaint-with",
+      "title": "acquaint with",
+      "keywords": "type=VERB+ADP; count=478; pmi=6.33; npmi=0.33; score=2.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stir-up",
+      "title": "stir up",
+      "keywords": "type=VERB+ADP; count=695; pmi=5.81; npmi=0.311; score=2.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hold-up",
+      "title": "hold up",
+      "keywords": "type=VERB+ADP; count=6574; pmi=3.56; npmi=0.231; score=2.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sneak-up",
+      "title": "sneak up",
+      "keywords": "type=VERB+ADP; count=969; pmi=5.37; npmi=0.295; score=2.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.discriminate-against",
+      "title": "discriminate against",
+      "keywords": "type=VERB+ADP; count=74; pmi=10.34; npmi=0.472; score=2.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chase-after",
+      "title": "chase after",
+      "keywords": "type=VERB+ADP; count=639; pmi=5.88; npmi=0.313; score=2.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pin-down",
+      "title": "pin down",
+      "keywords": "type=VERB+ADP; count=644; pmi=5.87; npmi=0.313; score=2.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.coincide-with",
+      "title": "coincide with",
+      "keywords": "type=VERB+ADP; count=270; pmi=7.24; npmi=0.362; score=2.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.confide-in",
+      "title": "confide in",
+      "keywords": "type=VERB+ADP; count=545; pmi=6.11; npmi=0.322; score=2.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wrap-around",
+      "title": "wrap around",
+      "keywords": "type=VERB+ADP; count=471; pmi=6.32; npmi=0.329; score=2.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lock-onto",
+      "title": "lock onto",
+      "keywords": "type=VERB+ADP; count=240; pmi=7.46; npmi=0.37; score=2.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-along",
+      "title": "get along",
+      "keywords": "type=VERB+ADP; count=5556; pmi=3.67; npmi=0.234; score=2.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.climb-up",
+      "title": "climb up",
+      "keywords": "type=VERB+ADP; count=1208; pmi=5.08; npmi=0.284; score=2.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.speak-with",
+      "title": "speak with",
+      "keywords": "type=VERB+ADP; count=6758; pmi=3.51; npmi=0.228; score=2.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sneak-out",
+      "title": "sneak out",
+      "keywords": "type=VERB+ADP; count=957; pmi=5.35; npmi=0.294; score=2.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bounce-off",
+      "title": "bounce off",
+      "keywords": "type=VERB+ADP; count=407; pmi=6.52; npmi=0.336; score=2.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pay-off",
+      "title": "pay off",
+      "keywords": "type=VERB+ADP; count=2644; pmi=4.26; npmi=0.255; score=2.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mingle-with",
+      "title": "mingle with",
+      "keywords": "type=VERB+ADP; count=420; pmi=6.45; npmi=0.333; score=2.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.begin-with",
+      "title": "begin with",
+      "keywords": "type=VERB+ADP; count=3805; pmi=3.94; npmi=0.243; score=2.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.delve-into",
+      "title": "delve into",
+      "keywords": "type=VERB+ADP; count=127; pmi=8.74; npmi=0.414; score=2.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.vote-for",
+      "title": "vote for",
+      "keywords": "type=VERB+ADP; count=2096; pmi=4.45; npmi=0.261; score=2.88",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fuck-up",
+      "title": "fuck up",
+      "keywords": "type=VERB+ADP; count=7043; pmi=3.45; npmi=0.226; score=2.88",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.connect-with",
+      "title": "connect with",
+      "keywords": "type=VERB+ADP; count=1285; pmi=4.93; npmi=0.278; score=2.87",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.affect-by",
+      "title": "affect by",
+      "keywords": "type=VERB+ADP; count=597; pmi=5.88; npmi=0.311; score=2.87",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stick-around",
+      "title": "stick around",
+      "keywords": "type=VERB+ADP; count=1112; pmi=5.1; npmi=0.283; score=2.87",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sympathize-with",
+      "title": "sympathize with",
+      "keywords": "type=VERB+ADP; count=329; pmi=6.78; npmi=0.344; score=2.87",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fuck-off",
+      "title": "fuck off",
+      "keywords": "type=VERB+ADP; count=3432; pmi=4.0; npmi=0.244; score=2.87",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.think-of",
+      "title": "think of",
+      "keywords": "type=VERB+ADP; count=55646; pmi=2.24; npmi=0.182; score=2.86",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.protest-against",
+      "title": "protest against",
+      "keywords": "type=VERB+ADP; count=184; pmi=7.83; npmi=0.381; score=2.86",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lean-against",
+      "title": "lean against",
+      "keywords": "type=VERB+ADP; count=202; pmi=7.64; npmi=0.374; score=2.86",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.neioiiecaoey-e",
+      "title": "ñèíõðîíèçàöèÿ è",
+      "keywords": "type=VERB+ADP; count=13; pmi=18.86; npmi=0.773; score=2.86",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dispense-with",
+      "title": "dispense with",
+      "keywords": "type=VERB+ADP; count=333; pmi=6.71; npmi=0.34; score=2.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.roll-over",
+      "title": "roll over",
+      "keywords": "type=VERB+ADP; count=1103; pmi=5.08; npmi=0.282; score=2.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.emanate-from",
+      "title": "emanate from",
+      "keywords": "type=VERB+ADP; count=141; pmi=8.37; npmi=0.399; score=2.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spake-unto",
+      "title": "spake unto",
+      "keywords": "type=VERB+ADP; count=26; pmi=14.17; npmi=0.606; score=2.85",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.separate-from",
+      "title": "separate from",
+      "keywords": "type=VERB+ADP; count=903; pmi=5.28; npmi=0.289; score=2.84",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.embark-on",
+      "title": "embark on",
+      "keywords": "type=VERB+ADP; count=416; pmi=6.33; npmi=0.326; score=2.84",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.apply-for",
+      "title": "apply for",
+      "keywords": "type=VERB+ADP; count=1361; pmi=4.82; npmi=0.272; score=2.83",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.overwhelm-by",
+      "title": "overwhelm by",
+      "keywords": "type=VERB+ADP; count=203; pmi=7.55; npmi=0.369; score=2.83",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.invest-in",
+      "title": "invest in",
+      "keywords": "type=VERB+ADP; count=964; pmi=5.18; npmi=0.285; score=2.82",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.track-down",
+      "title": "track down",
+      "keywords": "type=VERB+ADP; count=1040; pmi=5.08; npmi=0.281; score=2.82",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.equip-with",
+      "title": "equip with",
+      "keywords": "type=VERB+ADP; count=484; pmi=6.06; npmi=0.316; score=2.82",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-out",
+      "title": "walk out",
+      "keywords": "type=VERB+ADP; count=4407; pmi=3.72; npmi=0.232; score=2.81",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.leave-without",
+      "title": "leave without",
+      "keywords": "type=VERB+ADP; count=2475; pmi=4.17; npmi=0.248; score=2.8",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.originate-from",
+      "title": "originate from",
+      "keywords": "type=VERB+ADP; count=238; pmi=7.17; npmi=0.355; score=2.8",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sit-on",
+      "title": "sit on",
+      "keywords": "type=VERB+ADP; count=7944; pmi=3.26; npmi=0.216; score=2.79",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.proceed-with",
+      "title": "proceed with",
+      "keywords": "type=VERB+ADP; count=1196; pmi=4.87; npmi=0.273; score=2.79",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.welcome-to",
+      "title": "welcome to",
+      "keywords": "type=VERB+ADP; count=10929; pmi=3.05; npmi=0.208; score=2.79",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.kneel-down",
+      "title": "kneel down",
+      "keywords": "type=VERB+ADP; count=368; pmi=6.42; npmi=0.328; score=2.79",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.deviate-from",
+      "title": "deviate from",
+      "keywords": "type=VERB+ADP; count=165; pmi=7.86; npmi=0.379; score=2.79",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.go-to",
+      "title": "go to",
+      "keywords": "type=VERB+ADP; count=184361; pmi=1.68; npmi=0.159; score=2.78",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.qualify-as",
+      "title": "qualify as",
+      "keywords": "type=VERB+ADP; count=310; pmi=6.67; npmi=0.336; score=2.78",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.worry-bout",
+      "title": "worry 'bout",
+      "keywords": "type=VERB+ADP; count=201; pmi=7.42; npmi=0.363; score=2.78",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pass-by",
+      "title": "pass by",
+      "keywords": "type=VERB+ADP; count=1872; pmi=4.39; npmi=0.255; score=2.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.attach-to",
+      "title": "attach to",
+      "keywords": "type=VERB+ADP; count=1916; pmi=4.37; npmi=0.254; score=2.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.break-through",
+      "title": "break through",
+      "keywords": "type=VERB+ADP; count=1519; pmi=4.6; npmi=0.262; score=2.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.marvel-at",
+      "title": "marvel at",
+      "keywords": "type=VERB+ADP; count=301; pmi=6.69; npmi=0.337; score=2.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.kneel-before",
+      "title": "kneel before",
+      "keywords": "type=VERB+ADP; count=266; pmi=6.9; npmi=0.344; score=2.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conform-by",
+      "title": "conform by",
+      "keywords": "type=VERB+ADP; count=174; pmi=7.69; npmi=0.372; score=2.77",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cry-out",
+      "title": "cry out",
+      "keywords": "type=VERB+ADP; count=2628; pmi=4.07; npmi=0.243; score=2.76",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.consume-by",
+      "title": "consume by",
+      "keywords": "type=VERB+ADP; count=336; pmi=6.48; npmi=0.329; score=2.76",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fight-for",
+      "title": "fight for",
+      "keywords": "type=VERB+ADP; count=6901; pmi=3.31; npmi=0.216; score=2.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.beat-up",
+      "title": "beat up",
+      "keywords": "type=VERB+ADP; count=2846; pmi=3.99; npmi=0.24; score=2.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.negotiate-with",
+      "title": "negotiate with",
+      "keywords": "type=VERB+ADP; count=821; pmi=5.24; npmi=0.284; score=2.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.snuck-into",
+      "title": "snuck into",
+      "keywords": "type=VERB+ADP; count=157; pmi=7.84; npmi=0.377; score=2.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fit-into",
+      "title": "fit into",
+      "keywords": "type=VERB+ADP; count=723; pmi=5.38; npmi=0.289; score=2.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conjure-up",
+      "title": "conjure up",
+      "keywords": "type=VERB+ADP; count=250; pmi=6.94; npmi=0.345; score=2.75",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wander-off",
+      "title": "wander off",
+      "keywords": "type=VERB+ADP; count=450; pmi=6.0; npmi=0.311; score=2.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dine-with",
+      "title": "dine with",
+      "keywords": "type=VERB+ADP; count=440; pmi=6.03; npmi=0.312; score=2.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spread-across",
+      "title": "spread across",
+      "keywords": "type=VERB+ADP; count=198; pmi=7.36; npmi=0.359; score=2.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.abduct-by",
+      "title": "abduct by",
+      "keywords": "type=VERB+ADP; count=255; pmi=6.88; npmi=0.342; score=2.74",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pass-out",
+      "title": "pass out",
+      "keywords": "type=VERB+ADP; count=3153; pmi=3.87; npmi=0.235; score=2.73",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stop-by",
+      "title": "stop by",
+      "keywords": "type=VERB+ADP; count=4423; pmi=3.6; npmi=0.225; score=2.73",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pull-up",
+      "title": "pull up",
+      "keywords": "type=VERB+ADP; count=3188; pmi=3.86; npmi=0.234; score=2.73",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-among",
+      "title": "live among",
+      "keywords": "type=VERB+ADP; count=501; pmi=5.82; npmi=0.304; score=2.73",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.brighten-up",
+      "title": "brighten up",
+      "keywords": "type=VERB+ADP; count=253; pmi=6.87; npmi=0.342; score=2.73",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.grab-onto",
+      "title": "grab onto",
+      "keywords": "type=VERB+ADP; count=169; pmi=7.64; npmi=0.369; score=2.73",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seep-into",
+      "title": "seep into",
+      "keywords": "type=VERB+ADP; count=120; pmi=8.36; npmi=0.394; score=2.72",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fill-out",
+      "title": "fill out",
+      "keywords": "type=VERB+ADP; count=1771; pmi=4.34; npmi=0.251; score=2.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wash-up",
+      "title": "wash up",
+      "keywords": "type=VERB+ADP; count=1454; pmi=4.54; npmi=0.258; score=2.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.remove-from",
+      "title": "remove from",
+      "keywords": "type=VERB+ADP; count=933; pmi=5.01; npmi=0.275; score=2.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slip-into",
+      "title": "slip into",
+      "keywords": "type=VERB+ADP; count=569; pmi=5.62; npmi=0.296; score=2.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.yearn-for",
+      "title": "yearn for",
+      "keywords": "type=VERB+ADP; count=448; pmi=5.93; npmi=0.307; score=2.71",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.smile-at",
+      "title": "smile at",
+      "keywords": "type=VERB+ADP; count=1655; pmi=4.4; npmi=0.253; score=2.7",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crash-into",
+      "title": "crash into",
+      "keywords": "type=VERB+ADP; count=603; pmi=5.52; npmi=0.293; score=2.7",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wait-until",
+      "title": "wait until",
+      "keywords": "type=VERB+ADP; count=1769; pmi=4.33; npmi=0.25; score=2.7",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.keel-over",
+      "title": "keel over",
+      "keywords": "type=VERB+ADP; count=172; pmi=7.52; npmi=0.364; score=2.7",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.confer-with",
+      "title": "confer with",
+      "keywords": "type=VERB+ADP; count=312; pmi=6.46; npmi=0.326; score=2.7",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stay-out",
+      "title": "stay out",
+      "keywords": "type=VERB+ADP; count=6567; pmi=3.27; npmi=0.212; score=2.69",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.move-out",
+      "title": "move out",
+      "keywords": "type=VERB+ADP; count=6459; pmi=3.28; npmi=0.212; score=2.69",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.warm-up",
+      "title": "warm up",
+      "keywords": "type=VERB+ADP; count=1540; pmi=4.45; npmi=0.254; score=2.69",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.snap-out",
+      "title": "snap out",
+      "keywords": "type=VERB+ADP; count=829; pmi=5.11; npmi=0.278; score=2.69",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stay-in",
+      "title": "stay in",
+      "keywords": "type=VERB+ADP; count=13430; pmi=2.81; npmi=0.196; score=2.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.throw-up",
+      "title": "throw up",
+      "keywords": "type=VERB+ADP; count=3024; pmi=3.83; npmi=0.232; score=2.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.plunge-into",
+      "title": "plunge into",
+      "keywords": "type=VERB+ADP; count=197; pmi=7.2; npmi=0.351; score=2.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bury-under",
+      "title": "bury under",
+      "keywords": "type=VERB+ADP; count=349; pmi=6.25; npmi=0.318; score=2.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.latch-onto",
+      "title": "latch onto",
+      "keywords": "type=VERB+ADP; count=48; pmi=10.81; npmi=0.48; score=2.68",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dream-about",
+      "title": "dream about",
+      "keywords": "type=VERB+ADP; count=3166; pmi=3.78; npmi=0.23; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.account-for",
+      "title": "account for",
+      "keywords": "type=VERB+ADP; count=2036; pmi=4.16; npmi=0.243; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.approve-of",
+      "title": "approve of",
+      "keywords": "type=VERB+ADP; count=1415; pmi=4.5; npmi=0.255; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fend-off",
+      "title": "fend off",
+      "keywords": "type=VERB+ADP; count=134; pmi=7.95; npmi=0.378; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wander-through",
+      "title": "wander through",
+      "keywords": "type=VERB+ADP; count=293; pmi=6.49; npmi=0.326; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.travel-through",
+      "title": "travel through",
+      "keywords": "type=VERB+ADP; count=596; pmi=5.48; npmi=0.29; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fantasize-about",
+      "title": "fantasize about",
+      "keywords": "type=VERB+ADP; count=206; pmi=7.09; npmi=0.348; score=2.67",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.put-on",
+      "title": "put on",
+      "keywords": "type=VERB+ADP; count=12174; pmi=2.85; npmi=0.196; score=2.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stick-with",
+      "title": "stick with",
+      "keywords": "type=VERB+ADP; count=3197; pmi=3.77; npmi=0.229; score=2.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sing-along",
+      "title": "sing along",
+      "keywords": "type=VERB+ADP; count=464; pmi=5.78; npmi=0.3; score=2.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fraternize-with",
+      "title": "fraternize with",
+      "keywords": "type=VERB+ADP; count=193; pmi=7.17; npmi=0.35; score=2.66",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.possess-by",
+      "title": "possess by",
+      "keywords": "type=VERB+ADP; count=436; pmi=5.84; npmi=0.302; score=2.65",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.consult-with",
+      "title": "consult with",
+      "keywords": "type=VERB+ADP; count=580; pmi=5.46; npmi=0.289; score=2.65",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.expel-from",
+      "title": "expel from",
+      "keywords": "type=VERB+ADP; count=341; pmi=6.21; npmi=0.315; score=2.65",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shoot-at",
+      "title": "shoot at",
+      "keywords": "type=VERB+ADP; count=3654; pmi=3.63; npmi=0.223; score=2.64",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hurry-up-9cefd7bf",
+      "title": "-hurry up",
+      "keywords": "type=VERB+ADP; count=228; pmi=6.82; npmi=0.337; score=2.64",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bow-down",
+      "title": "bow down",
+      "keywords": "type=VERB+ADP; count=595; pmi=5.41; npmi=0.287; score=2.64",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lean-over",
+      "title": "lean over",
+      "keywords": "type=VERB+ADP; count=373; pmi=6.04; npmi=0.309; score=2.64",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sponsor-by",
+      "title": "sponsor by",
+      "keywords": "type=VERB+ADP; count=277; pmi=6.47; npmi=0.324; score=2.63",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.triumph-over",
+      "title": "triumph over",
+      "keywords": "type=VERB+ADP; count=297; pmi=6.36; npmi=0.32; score=2.63",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-with",
+      "title": "come with",
+      "keywords": "type=VERB+ADP; count=31904; pmi=2.3; npmi=0.175; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hit-by",
+      "title": "hit by",
+      "keywords": "type=VERB+ADP; count=2112; pmi=4.05; npmi=0.238; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.move-into",
+      "title": "move into",
+      "keywords": "type=VERB+ADP; count=2412; pmi=3.93; npmi=0.233; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.put-up",
+      "title": "put up",
+      "keywords": "type=VERB+ADP; count=7454; pmi=3.1; npmi=0.204; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.apologise-for",
+      "title": "apologise for",
+      "keywords": "type=VERB+ADP; count=729; pmi=5.12; npmi=0.275; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hover-over",
+      "title": "hover over",
+      "keywords": "type=VERB+ADP; count=179; pmi=7.21; npmi=0.35; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tame-ni",
+      "title": "tame ni",
+      "keywords": "type=VERB+ADP; count=35; pmi=11.73; npmi=0.511; score=2.62",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rise-up",
+      "title": "rise up",
+      "keywords": "type=VERB+ADP; count=1350; pmi=4.45; npmi=0.251; score=2.61",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.peel-off",
+      "title": "peel off",
+      "keywords": "type=VERB+ADP; count=267; pmi=6.48; npmi=0.323; score=2.61",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stem-from",
+      "title": "stem from",
+      "keywords": "type=VERB+ADP; count=276; pmi=6.43; npmi=0.322; score=2.61",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.set-aside",
+      "title": "set aside",
+      "keywords": "type=VERB+ADP; count=235; pmi=6.7; npmi=0.332; score=2.61",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.attract-to",
+      "title": "attract to",
+      "keywords": "type=VERB+ADP; count=2245; pmi=3.97; npmi=0.234; score=2.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.drop-off",
+      "title": "drop off",
+      "keywords": "type=VERB+ADP; count=1381; pmi=4.41; npmi=0.25; score=2.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-up",
+      "title": "turn up",
+      "keywords": "type=VERB+ADP; count=5175; pmi=3.32; npmi=0.211; score=2.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.switch-off",
+      "title": "switch off",
+      "keywords": "type=VERB+ADP; count=599; pmi=5.32; npmi=0.282; score=2.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.threaten-by",
+      "title": "threaten by",
+      "keywords": "type=VERB+ADP; count=615; pmi=5.28; npmi=0.28; score=2.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.evolve-into",
+      "title": "evolve into",
+      "keywords": "type=VERB+ADP; count=220; pmi=6.79; npmi=0.334; score=2.6",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dwell-on",
+      "title": "dwell on",
+      "keywords": "type=VERB+ADP; count=471; pmi=5.61; npmi=0.292; score=2.59",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lucke-out",
+      "title": "lucke out",
+      "keywords": "type=VERB+ADP; count=137; pmi=7.65; npmi=0.364; score=2.59",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tear-down",
+      "title": "tear down",
+      "keywords": "type=VERB+ADP; count=958; pmi=4.73; npmi=0.26; score=2.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.taste-like",
+      "title": "taste like",
+      "keywords": "type=VERB+ADP; count=1561; pmi=4.25; npmi=0.243; score=2.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.jump-out",
+      "title": "jump out",
+      "keywords": "type=VERB+ADP; count=1867; pmi=4.09; npmi=0.237; score=2.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pry-into",
+      "title": "pry into",
+      "keywords": "type=VERB+ADP; count=165; pmi=7.25; npmi=0.35; score=2.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wander-into",
+      "title": "wander into",
+      "keywords": "type=VERB+ADP; count=336; pmi=6.07; npmi=0.308; score=2.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.nod-off",
+      "title": "nod off",
+      "keywords": "type=VERB+ADP; count=219; pmi=6.75; npmi=0.332; score=2.58",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.throw-out",
+      "title": "throw out",
+      "keywords": "type=VERB+ADP; count=2828; pmi=3.73; npmi=0.224; score=2.57",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shove-off",
+      "title": "shove off",
+      "keywords": "type=VERB+ADP; count=366; pmi=5.91; npmi=0.302; score=2.57",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.move-towards",
+      "title": "move towards",
+      "keywords": "type=VERB+ADP; count=391; pmi=5.82; npmi=0.299; score=2.57",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.go-out",
+      "title": "go out",
+      "keywords": "type=VERB+ADP; count=37988; pmi=2.17; npmi=0.168; score=2.56",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.knock-off",
+      "title": "knock off",
+      "keywords": "type=VERB+ADP; count=986; pmi=4.67; npmi=0.257; score=2.56",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.move-toward",
+      "title": "move toward",
+      "keywords": "type=VERB+ADP; count=297; pmi=6.2; npmi=0.312; score=2.56",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.create-by",
+      "title": "create by",
+      "keywords": "type=VERB+ADP; count=890; pmi=4.78; npmi=0.261; score=2.56",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lash-out",
+      "title": "lash out",
+      "keywords": "type=VERB+ADP; count=297; pmi=6.16; npmi=0.31; score=2.55",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reach-out",
+      "title": "reach out",
+      "keywords": "type=VERB+ADP; count=1865; pmi=4.04; npmi=0.234; score=2.55",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hover-above",
+      "title": "hover above",
+      "keywords": "type=VERB+ADP; count=54; pmi=9.89; npmi=0.443; score=2.55",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.respond-to",
+      "title": "respond to",
+      "keywords": "type=VERB+ADP; count=2301; pmi=3.85; npmi=0.227; score=2.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.liquore-up",
+      "title": "liquore up",
+      "keywords": "type=VERB+ADP; count=105; pmi=8.1; npmi=0.379; score=2.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.intrigue-by",
+      "title": "intrigue by",
+      "keywords": "type=VERB+ADP; count=200; pmi=6.79; npmi=0.332; score=2.54",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sit-in",
+      "title": "sit in",
+      "keywords": "type=VERB+ADP; count=8897; pmi=2.89; npmi=0.193; score=2.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pile-up",
+      "title": "pile up",
+      "keywords": "type=VERB+ADP; count=622; pmi=5.14; npmi=0.273; score=2.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.specialise-in",
+      "title": "specialise in",
+      "keywords": "type=VERB+ADP; count=258; pmi=6.35; npmi=0.316; score=2.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.plug-into",
+      "title": "plug into",
+      "keywords": "type=VERB+ADP; count=288; pmi=6.17; npmi=0.309; score=2.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bring-forth",
+      "title": "bring forth",
+      "keywords": "type=VERB+ADP; count=258; pmi=6.33; npmi=0.315; score=2.53",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flee-from",
+      "title": "flee from",
+      "keywords": "type=VERB+ADP; count=460; pmi=5.49; npmi=0.285; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hide-under",
+      "title": "hide under",
+      "keywords": "type=VERB+ADP; count=508; pmi=5.36; npmi=0.281; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.return-from",
+      "title": "return from",
+      "keywords": "type=VERB+ADP; count=1940; pmi=3.97; npmi=0.231; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.read-about",
+      "title": "read about",
+      "keywords": "type=VERB+ADP; count=3177; pmi=3.56; npmi=0.216; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shack-up",
+      "title": "shack up",
+      "keywords": "type=VERB+ADP; count=339; pmi=5.9; npmi=0.3; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sneak-around",
+      "title": "sneak around",
+      "keywords": "type=VERB+ADP; count=305; pmi=6.07; npmi=0.306; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.glom-onto",
+      "title": "glom onto",
+      "keywords": "type=VERB+ADP; count=22; pmi=13.34; npmi=0.565; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.operate-above",
+      "title": "operate above",
+      "keywords": "type=VERB+ADP; count=108; pmi=7.98; npmi=0.374; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.circulate-among",
+      "title": "circulate among",
+      "keywords": "type=VERB+ADP; count=47; pmi=10.21; npmi=0.453; score=2.52",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slack-off",
+      "title": "slack off",
+      "keywords": "type=VERB+ADP; count=205; pmi=6.67; npmi=0.327; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.engage-in",
+      "title": "engage in",
+      "keywords": "type=VERB+ADP; count=1532; pmi=4.16; npmi=0.237; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dolle-up",
+      "title": "dolle up",
+      "keywords": "type=VERB+ADP; count=112; pmi=7.86; npmi=0.369; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lean-on",
+      "title": "lean on",
+      "keywords": "type=VERB+ADP; count=827; pmi=4.76; npmi=0.259; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rush-into",
+      "title": "rush into",
+      "keywords": "type=VERB+ADP; count=459; pmi=5.47; npmi=0.284; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tangle-up",
+      "title": "tangle up",
+      "keywords": "type=VERB+ADP; count=258; pmi=6.28; npmi=0.313; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rise-from",
+      "title": "rise from",
+      "keywords": "type=VERB+ADP; count=949; pmi=4.62; npmi=0.254; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.belie-v",
+      "title": "belie v",
+      "keywords": "type=VERB+ADP; count=20; pmi=13.79; npmi=0.58; score=2.51",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.withdraw-from",
+      "title": "withdraw from",
+      "keywords": "type=VERB+ADP; count=413; pmi=5.57; npmi=0.287; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lie-to",
+      "title": "lie to",
+      "keywords": "type=VERB+ADP; count=13155; pmi=2.64; npmi=0.183; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-around",
+      "title": "walk around",
+      "keywords": "type=VERB+ADP; count=1280; pmi=4.3; npmi=0.242; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-down",
+      "title": "walk down",
+      "keywords": "type=VERB+ADP; count=2074; pmi=3.87; npmi=0.227; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.attack-by",
+      "title": "attack by",
+      "keywords": "type=VERB+ADP; count=1296; pmi=4.3; npmi=0.242; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sniff-around",
+      "title": "sniff around",
+      "keywords": "type=VERB+ADP; count=243; pmi=6.36; npmi=0.315; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.glare-at",
+      "title": "glare at",
+      "keywords": "type=VERB+ADP; count=207; pmi=6.64; npmi=0.326; score=2.5",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hide-in",
+      "title": "hide in",
+      "keywords": "type=VERB+ADP; count=4466; pmi=3.28; npmi=0.206; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.happen-between",
+      "title": "happen between",
+      "keywords": "type=VERB+ADP; count=1080; pmi=4.46; npmi=0.247; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.beware-of",
+      "title": "beware of",
+      "keywords": "type=VERB+ADP; count=872; pmi=4.68; npmi=0.255; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.influence-by",
+      "title": "influence by",
+      "keywords": "type=VERB+ADP; count=418; pmi=5.54; npmi=0.286; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.scatter-throughout",
+      "title": "scatter throughout",
+      "keywords": "type=VERB+ADP; count=47; pmi=10.1; npmi=0.448; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fixate-on",
+      "title": "fixate on",
+      "keywords": "type=VERB+ADP; count=172; pmi=6.94; npmi=0.336; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.harken-unto",
+      "title": "harken unto",
+      "keywords": "type=VERB+ADP; count=15; pmi=15.45; npmi=0.638; score=2.49",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-up",
+      "title": "get up",
+      "keywords": "type=VERB+ADP; count=35148; pmi=2.13; npmi=0.164; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gaze-at",
+      "title": "gaze at",
+      "keywords": "type=VERB+ADP; count=319; pmi=5.89; npmi=0.298; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stretch-out",
+      "title": "stretch out",
+      "keywords": "type=VERB+ADP; count=651; pmi=4.98; npmi=0.265; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.subtitle-by",
+      "title": "subtitle by",
+      "keywords": "type=VERB+ADP; count=388; pmi=5.61; npmi=0.288; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.benefit-from",
+      "title": "benefit from",
+      "keywords": "type=VERB+ADP; count=526; pmi=5.23; npmi=0.275; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.inhabit-by",
+      "title": "inhabit by",
+      "keywords": "type=VERB+ADP; count=154; pmi=7.11; npmi=0.341; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.roam-around",
+      "title": "roam around",
+      "keywords": "type=VERB+ADP; count=167; pmi=6.96; npmi=0.336; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rub-off",
+      "title": "rub off",
+      "keywords": "type=VERB+ADP; count=373; pmi=5.69; npmi=0.291; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.grab-ahold",
+      "title": "grab ahold",
+      "keywords": "type=VERB+ADP; count=62; pmi=9.24; npmi=0.417; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.infatuate-with",
+      "title": "infatuate with",
+      "keywords": "type=VERB+ADP; count=162; pmi=7.01; npmi=0.338; score=2.48",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gather-around",
+      "title": "gather around",
+      "keywords": "type=VERB+ADP; count=376; pmi=5.64; npmi=0.289; score=2.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.saddle-up",
+      "title": "saddle up",
+      "keywords": "type=VERB+ADP; count=387; pmi=5.61; npmi=0.288; score=2.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.babble-about",
+      "title": "babble about",
+      "keywords": "type=VERB+ADP; count=300; pmi=5.95; npmi=0.3; score=2.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.compete-against",
+      "title": "compete against",
+      "keywords": "type=VERB+ADP; count=119; pmi=7.6; npmi=0.358; score=2.47",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.set-off",
+      "title": "set off",
+      "keywords": "type=VERB+ADP; count=1515; pmi=4.08; npmi=0.233; score=2.46",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.barge-in",
+      "title": "barge in",
+      "keywords": "type=VERB+ADP; count=666; pmi=4.9; npmi=0.262; score=2.46",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.vanish-into",
+      "title": "vanish into",
+      "keywords": "type=VERB+ADP; count=252; pmi=6.21; npmi=0.309; score=2.46",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.revolt-against",
+      "title": "revolt against",
+      "keywords": "type=VERB+ADP; count=90; pmi=8.19; npmi=0.379; score=2.46",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.beam-aboard",
+      "title": "beam aboard",
+      "keywords": "type=VERB+ADP; count=76; pmi=8.61; npmi=0.394; score=2.46",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.make-up",
+      "title": "make up",
+      "keywords": "type=VERB+ADP; count=13578; pmi=2.56; npmi=0.178; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-into",
+      "title": "come into",
+      "keywords": "type=VERB+ADP; count=8010; pmi=2.86; npmi=0.189; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-through",
+      "title": "run through",
+      "keywords": "type=VERB+ADP; count=1553; pmi=4.05; npmi=0.231; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.kick-out",
+      "title": "kick out",
+      "keywords": "type=VERB+ADP; count=1766; pmi=3.93; npmi=0.227; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.agonize-over",
+      "title": "agonize over",
+      "keywords": "type=VERB+ADP; count=69; pmi=8.83; npmi=0.402; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.signify-unto",
+      "title": "signify unto",
+      "keywords": "type=VERB+ADP; count=24; pmi=12.57; npmi=0.535; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.goof-off",
+      "title": "goof off",
+      "keywords": "type=VERB+ADP; count=166; pmi=6.9; npmi=0.333; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tend-toward",
+      "title": "tend toward",
+      "keywords": "type=VERB+ADP; count=61; pmi=9.16; npmi=0.413; score=2.45",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.accuse-of",
+      "title": "accuse of",
+      "keywords": "type=VERB+ADP; count=1660; pmi=3.97; npmi=0.228; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.entitle-to",
+      "title": "entitle to",
+      "keywords": "type=VERB+ADP; count=1250; pmi=4.22; npmi=0.237; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mete-out",
+      "title": "mete out",
+      "keywords": "type=VERB+ADP; count=102; pmi=7.85; npmi=0.366; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.masquerade-as",
+      "title": "masquerade as",
+      "keywords": "type=VERB+ADP; count=162; pmi=6.91; npmi=0.333; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sink-into",
+      "title": "sink into",
+      "keywords": "type=VERB+ADP; count=383; pmi=5.55; npmi=0.284; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.argue-about",
+      "title": "argue about",
+      "keywords": "type=VERB+ADP; count=823; pmi=4.64; npmi=0.252; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wipe-off",
+      "title": "wipe off",
+      "keywords": "type=VERB+ADP; count=456; pmi=5.33; npmi=0.277; score=2.44",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.knock-out",
+      "title": "knock out",
+      "keywords": "type=VERB+ADP; count=1750; pmi=3.91; npmi=0.226; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-through",
+      "title": "come through",
+      "keywords": "type=VERB+ADP; count=5829; pmi=3.02; npmi=0.194; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-out",
+      "title": "fall out",
+      "keywords": "type=VERB+ADP; count=3210; pmi=3.44; npmi=0.209; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.step-into",
+      "title": "step into",
+      "keywords": "type=VERB+ADP; count=897; pmi=4.52; npmi=0.247; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fill-up",
+      "title": "fill up",
+      "keywords": "type=VERB+ADP; count=1459; pmi=4.07; npmi=0.231; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.line-up",
+      "title": "line up",
+      "keywords": "type=VERB+ADP; count=2863; pmi=3.51; npmi=0.212; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.step-onto",
+      "title": "step onto",
+      "keywords": "type=VERB+ADP; count=180; pmi=6.68; npmi=0.324; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slide-down",
+      "title": "slide down",
+      "keywords": "type=VERB+ADP; count=391; pmi=5.51; npmi=0.283; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.swoop-down",
+      "title": "swoop down",
+      "keywords": "type=VERB+ADP; count=135; pmi=7.21; npmi=0.343; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flip-through",
+      "title": "flip through",
+      "keywords": "type=VERB+ADP; count=227; pmi=6.3; npmi=0.311; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.trickle-down",
+      "title": "trickle down",
+      "keywords": "type=VERB+ADP; count=107; pmi=7.69; npmi=0.36; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pore-over",
+      "title": "pore over",
+      "keywords": "type=VERB+ADP; count=124; pmi=7.39; npmi=0.349; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reside-within",
+      "title": "reside within",
+      "keywords": "type=VERB+ADP; count=50; pmi=9.66; npmi=0.43; score=2.43",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-against",
+      "title": "turn against",
+      "keywords": "type=VERB+ADP; count=812; pmi=4.61; npmi=0.25; score=2.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-along",
+      "title": "run along",
+      "keywords": "type=VERB+ADP; count=808; pmi=4.61; npmi=0.25; score=2.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chill-out",
+      "title": "chill out",
+      "keywords": "type=VERB+ADP; count=550; pmi=5.05; npmi=0.266; score=2.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.jot-down",
+      "title": "jot down",
+      "keywords": "type=VERB+ADP; count=109; pmi=7.64; npmi=0.358; score=2.42",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cling-to",
+      "title": "cling to",
+      "keywords": "type=VERB+ADP; count=788; pmi=4.62; npmi=0.25; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.succeed-in",
+      "title": "succeed in",
+      "keywords": "type=VERB+ADP; count=1186; pmi=4.23; npmi=0.236; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cut-out",
+      "title": "cut out",
+      "keywords": "type=VERB+ADP; count=2976; pmi=3.45; npmi=0.208; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.drool-over",
+      "title": "drool over",
+      "keywords": "type=VERB+ADP; count=153; pmi=6.92; npmi=0.332; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.blow-off",
+      "title": "blow off",
+      "keywords": "type=VERB+ADP; count=1191; pmi=4.22; npmi=0.236; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.differ-from",
+      "title": "differ from",
+      "keywords": "type=VERB+ADP; count=201; pmi=6.43; npmi=0.315; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stumble-into",
+      "title": "stumble into",
+      "keywords": "type=VERB+ADP; count=171; pmi=6.72; npmi=0.325; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.recut-into",
+      "title": "recut into",
+      "keywords": "type=VERB+ADP; count=61; pmi=9.0; npmi=0.406; score=2.41",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rip-by",
+      "title": "rip by",
+      "keywords": "type=VERB+ADP; count=525; pmi=5.07; npmi=0.266; score=2.4",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gain-by",
+      "title": "gain by",
+      "keywords": "type=VERB+ADP; count=444; pmi=5.26; npmi=0.272; score=2.4",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bend-down",
+      "title": "bend down",
+      "keywords": "type=VERB+ADP; count=381; pmi=5.47; npmi=0.28; score=2.4",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sit-around",
+      "title": "sit around",
+      "keywords": "type=VERB+ADP; count=1383; pmi=4.07; npmi=0.23; score=2.4",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lean-toward",
+      "title": "lean toward",
+      "keywords": "type=VERB+ADP; count=56; pmi=9.19; npmi=0.412; score=2.4",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.maxe-out",
+      "title": "maxe out",
+      "keywords": "type=VERB+ADP; count=124; pmi=7.3; npmi=0.345; score=2.4",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.diagnose-with",
+      "title": "diagnose with",
+      "keywords": "type=VERB+ADP; count=279; pmi=5.89; npmi=0.295; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dry-up",
+      "title": "dry up",
+      "keywords": "type=VERB+ADP; count=1062; pmi=4.3; npmi=0.238; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.build-up",
+      "title": "build up",
+      "keywords": "type=VERB+ADP; count=1800; pmi=3.83; npmi=0.221; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.care-for",
+      "title": "care for",
+      "keywords": "type=VERB+ADP; count=7259; pmi=2.85; npmi=0.187; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-between",
+      "title": "stand between",
+      "keywords": "type=VERB+ADP; count=592; pmi=4.91; npmi=0.26; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.climb-into",
+      "title": "climb into",
+      "keywords": "type=VERB+ADP; count=376; pmi=5.47; npmi=0.28; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fend-for",
+      "title": "fend for",
+      "keywords": "type=VERB+ADP; count=227; pmi=6.18; npmi=0.305; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.intimidate-by",
+      "title": "intimidate by",
+      "keywords": "type=VERB+ADP; count=189; pmi=6.49; npmi=0.316; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flip-out",
+      "title": "flip out",
+      "keywords": "type=VERB+ADP; count=573; pmi=4.94; npmi=0.261; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.poke-around",
+      "title": "poke around",
+      "keywords": "type=VERB+ADP; count=169; pmi=6.69; npmi=0.323; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.grapple-with",
+      "title": "grapple with",
+      "keywords": "type=VERB+ADP; count=145; pmi=6.95; npmi=0.332; score=2.39",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.write-about",
+      "title": "write about",
+      "keywords": "type=VERB+ADP; count=2991; pmi=3.42; npmi=0.207; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.collide-with",
+      "title": "collide with",
+      "keywords": "type=VERB+ADP; count=236; pmi=6.1; npmi=0.302; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dabble-in",
+      "title": "dabble in",
+      "keywords": "type=VERB+ADP; count=252; pmi=6.0; npmi=0.298; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bail-out",
+      "title": "bail out",
+      "keywords": "type=VERB+ADP; count=581; pmi=4.91; npmi=0.26; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reside-in",
+      "title": "reside in",
+      "keywords": "type=VERB+ADP; count=361; pmi=5.49; npmi=0.28; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.re",
+      "title": "' re",
+      "keywords": "type=VERB+ADP; count=330; pmi=5.62; npmi=0.285; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stretch-across",
+      "title": "stretch across",
+      "keywords": "type=VERB+ADP; count=105; pmi=7.58; npmi=0.354; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.soar-above",
+      "title": "soar above",
+      "keywords": "type=VERB+ADP; count=47; pmi=9.68; npmi=0.429; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.incline-toward",
+      "title": "incline toward",
+      "keywords": "type=VERB+ADP; count=27; pmi=11.71; npmi=0.502; score=2.38",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.appear-before",
+      "title": "appear before",
+      "keywords": "type=VERB+ADP; count=531; pmi=4.98; npmi=0.262; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cover-up",
+      "title": "cover up",
+      "keywords": "type=VERB+ADP; count=1940; pmi=3.73; npmi=0.217; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.step-out",
+      "title": "step out",
+      "keywords": "type=VERB+ADP; count=2092; pmi=3.67; npmi=0.215; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.comply-with",
+      "title": "comply with",
+      "keywords": "type=VERB+ADP; count=250; pmi=5.99; npmi=0.298; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.arise-from",
+      "title": "arise from",
+      "keywords": "type=VERB+ADP; count=288; pmi=5.77; npmi=0.29; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.huddle-up",
+      "title": "huddle up",
+      "keywords": "type=VERB+ADP; count=212; pmi=6.24; npmi=0.306; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chatter-ln",
+      "title": "chatter ln",
+      "keywords": "type=VERB+ADP; count=65; pmi=8.68; npmi=0.393; score=2.37",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dress-like",
+      "title": "dress like",
+      "keywords": "type=VERB+ADP; count=1945; pmi=3.71; npmi=0.216; score=2.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tangle-with",
+      "title": "tangle with",
+      "keywords": "type=VERB+ADP; count=269; pmi=5.85; npmi=0.292; score=2.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.inquire-about",
+      "title": "inquire about",
+      "keywords": "type=VERB+ADP; count=244; pmi=6.0; npmi=0.297; score=2.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.atone-for",
+      "title": "atone for",
+      "keywords": "type=VERB+ADP; count=214; pmi=6.21; npmi=0.305; score=2.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.collaborate-with",
+      "title": "collaborate with",
+      "keywords": "type=VERB+ADP; count=213; pmi=6.21; npmi=0.305; score=2.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hoist-above",
+      "title": "hoist above",
+      "keywords": "type=VERB+ADP; count=42; pmi=9.94; npmi=0.438; score=2.36",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lead-by",
+      "title": "lead by",
+      "keywords": "type=VERB+ADP; count=1182; pmi=4.12; npmi=0.23; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.compensate-for",
+      "title": "compensate for",
+      "keywords": "type=VERB+ADP; count=406; pmi=5.26; npmi=0.271; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mix-with",
+      "title": "mix with",
+      "keywords": "type=VERB+ADP; count=1010; pmi=4.27; npmi=0.236; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.haggle-over",
+      "title": "haggle over",
+      "keywords": "type=VERB+ADP; count=109; pmi=7.39; npmi=0.347; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.contain-within",
+      "title": "contain within",
+      "keywords": "type=VERB+ADP; count=99; pmi=7.61; npmi=0.355; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-beside",
+      "title": "walk beside",
+      "keywords": "type=VERB+ADP; count=166; pmi=6.6; npmi=0.319; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.weirde-out",
+      "title": "weirde out",
+      "keywords": "type=VERB+ADP; count=137; pmi=6.94; npmi=0.331; score=2.35",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.feel-about",
+      "title": "feel about",
+      "keywords": "type=VERB+ADP; count=5910; pmi=2.91; npmi=0.187; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.operate-on",
+      "title": "operate on",
+      "keywords": "type=VERB+ADP; count=963; pmi=4.3; npmi=0.236; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.follow-by",
+      "title": "follow by",
+      "keywords": "type=VERB+ADP; count=1491; pmi=3.9; npmi=0.222; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.write-down",
+      "title": "write down",
+      "keywords": "type=VERB+ADP; count=1742; pmi=3.77; npmi=0.217; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-into",
+      "title": "crawl into",
+      "keywords": "type=VERB+ADP; count=294; pmi=5.68; npmi=0.285; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.judge-by",
+      "title": "judge by",
+      "keywords": "type=VERB+ADP; count=797; pmi=4.47; npmi=0.242; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.arrange-for",
+      "title": "arrange for",
+      "keywords": "type=VERB+ADP; count=1274; pmi=4.03; npmi=0.226; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.construe-as",
+      "title": "construe as",
+      "keywords": "type=VERB+ADP; count=93; pmi=7.72; npmi=0.358; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-across",
+      "title": "run across",
+      "keywords": "type=VERB+ADP; count=510; pmi=4.98; npmi=0.261; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.float-around",
+      "title": "float around",
+      "keywords": "type=VERB+ADP; count=252; pmi=5.91; npmi=0.294; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.capture-by",
+      "title": "capture by",
+      "keywords": "type=VERB+ADP; count=458; pmi=5.09; npmi=0.264; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.barge-into",
+      "title": "barge into",
+      "keywords": "type=VERB+ADP; count=172; pmi=6.52; npmi=0.315; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pull-off",
+      "title": "pull off",
+      "keywords": "type=VERB+ADP; count=1229; pmi=4.06; npmi=0.228; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-across",
+      "title": "walk across",
+      "keywords": "type=VERB+ADP; count=369; pmi=5.37; npmi=0.274; score=2.34",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.swear-to",
+      "title": "swear to",
+      "keywords": "type=VERB+ADP; count=5790; pmi=2.9; npmi=0.186; score=2.33",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-over",
+      "title": "turn over",
+      "keywords": "type=VERB+ADP; count=2208; pmi=3.56; npmi=0.209; score=2.33",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spit-on",
+      "title": "spit on",
+      "keywords": "type=VERB+ADP; count=982; pmi=4.25; npmi=0.234; score=2.33",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.put-down",
+      "title": "put down",
+      "keywords": "type=VERB+ADP; count=3452; pmi=3.23; npmi=0.197; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-through",
+      "title": "get through",
+      "keywords": "type=VERB+ADP; count=8088; pmi=2.7; npmi=0.179; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.swarm-with",
+      "title": "swarm with",
+      "keywords": "type=VERB+ADP; count=305; pmi=5.58; npmi=0.281; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dive-into",
+      "title": "dive into",
+      "keywords": "type=VERB+ADP; count=230; pmi=6.0; npmi=0.296; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reunite-with",
+      "title": "reunite with",
+      "keywords": "type=VERB+ADP; count=243; pmi=5.91; npmi=0.293; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.integrate-into",
+      "title": "integrate into",
+      "keywords": "type=VERB+ADP; count=93; pmi=7.66; npmi=0.356; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.merge-into",
+      "title": "merge into",
+      "keywords": "type=VERB+ADP; count=123; pmi=7.07; npmi=0.334; score=2.32",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hear-of",
+      "title": "hear of",
+      "keywords": "type=VERB+ADP; count=16373; pmi=2.32; npmi=0.165; score=2.31",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.streak-across",
+      "title": "streak across",
+      "keywords": "type=VERB+ADP; count=60; pmi=8.67; npmi=0.391; score=2.31",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pussyfoot-around",
+      "title": "pussyfoot around",
+      "keywords": "type=VERB+ADP; count=41; pmi=9.81; npmi=0.431; score=2.31",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.look-into",
+      "title": "look into",
+      "keywords": "type=VERB+ADP; count=5048; pmi=2.96; npmi=0.187; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.identify-as",
+      "title": "identify as",
+      "keywords": "type=VERB+ADP; count=534; pmi=4.84; npmi=0.254; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.get-down",
+      "title": "get down",
+      "keywords": "type=VERB+ADP; count=16846; pmi=2.31; npmi=0.164; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cheer-up",
+      "title": "cheer up",
+      "keywords": "type=VERB+ADP; count=1113; pmi=4.08; npmi=0.227; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.divvy-up",
+      "title": "divvy up",
+      "keywords": "type=VERB+ADP; count=90; pmi=7.64; npmi=0.354; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.survive-without",
+      "title": "survive without",
+      "keywords": "type=VERB+ADP; count=316; pmi=5.48; npmi=0.277; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.play-along",
+      "title": "play along",
+      "keywords": "type=VERB+ADP; count=715; pmi=4.52; npmi=0.243; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.operate-under",
+      "title": "operate under",
+      "keywords": "type=VERB+ADP; count=167; pmi=6.44; npmi=0.311; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reflect-on",
+      "title": "reflect on",
+      "keywords": "type=VERB+ADP; count=561; pmi=4.78; npmi=0.252; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gawk-at",
+      "title": "gawk at",
+      "keywords": "type=VERB+ADP; count=127; pmi=6.94; npmi=0.329; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.liaise-with",
+      "title": "liaise with",
+      "keywords": "type=VERB+ADP; count=104; pmi=7.34; npmi=0.343; score=2.3",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.thaw-out",
+      "title": "thaw out",
+      "keywords": "type=VERB+ADP; count=209; pmi=6.06; npmi=0.297; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.employ-by",
+      "title": "employ by",
+      "keywords": "type=VERB+ADP; count=242; pmi=5.85; npmi=0.29; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.govern-by",
+      "title": "govern by",
+      "keywords": "type=VERB+ADP; count=177; pmi=6.32; npmi=0.307; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.ease-up",
+      "title": "ease up",
+      "keywords": "type=VERB+ADP; count=608; pmi=4.66; npmi=0.247; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.converse-with",
+      "title": "converse with",
+      "keywords": "type=VERB+ADP; count=185; pmi=6.26; npmi=0.304; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.blather-about",
+      "title": "blather about",
+      "keywords": "type=VERB+ADP; count=117; pmi=7.06; npmi=0.333; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gravitate-towards",
+      "title": "gravitate towards",
+      "keywords": "type=VERB+ADP; count=21; pmi=12.35; npmi=0.521; score=2.29",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.depart-from",
+      "title": "depart from",
+      "keywords": "type=VERB+ADP; count=274; pmi=5.62; npmi=0.281; score=2.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-past",
+      "title": "walk past",
+      "keywords": "type=VERB+ADP; count=413; pmi=5.08; npmi=0.262; score=2.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.meddle-in",
+      "title": "meddle in",
+      "keywords": "type=VERB+ADP; count=376; pmi=5.21; npmi=0.266; score=2.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.runneth-over",
+      "title": "runneth over",
+      "keywords": "type=VERB+ADP; count=67; pmi=8.3; npmi=0.377; score=2.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.precede-by",
+      "title": "precede by",
+      "keywords": "type=VERB+ADP; count=123; pmi=6.95; npmi=0.328; score=2.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.generate-by",
+      "title": "generate by",
+      "keywords": "type=VERB+ADP; count=207; pmi=6.04; npmi=0.296; score=2.28",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.strike-by",
+      "title": "strike by",
+      "keywords": "type=VERB+ADP; count=730; pmi=4.43; npmi=0.238; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.disapprove-of",
+      "title": "disapprove of",
+      "keywords": "type=VERB+ADP; count=286; pmi=5.55; npmi=0.278; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fix-up",
+      "title": "fix up",
+      "keywords": "type=VERB+ADP; count=1562; pmi=3.74; npmi=0.214; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.boil-down",
+      "title": "boil down",
+      "keywords": "type=VERB+ADP; count=289; pmi=5.54; npmi=0.278; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dominate-by",
+      "title": "dominate by",
+      "keywords": "type=VERB+ADP; count=176; pmi=6.29; npmi=0.305; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wreathe-in",
+      "title": "wreathe in",
+      "keywords": "type=VERB+ADP; count=157; pmi=6.48; npmi=0.311; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stave-off",
+      "title": "stave off",
+      "keywords": "type=VERB+ADP; count=54; pmi=8.81; npmi=0.394; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.putrefy-unto",
+      "title": "putrefy unto",
+      "keywords": "type=VERB+ADP; count=14; pmi=14.47; npmi=0.596; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.remodel-due",
+      "title": "remodel due",
+      "keywords": "type=VERB+ADP; count=26; pmi=11.31; npmi=0.483; score=2.27",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.serve-as",
+      "title": "serve as",
+      "keywords": "type=VERB+ADP; count=1059; pmi=4.06; npmi=0.225; score=2.26",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.resign-from",
+      "title": "resign from",
+      "keywords": "type=VERB+ADP; count=307; pmi=5.43; npmi=0.274; score=2.26",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.beg-for",
+      "title": "beg for",
+      "keywords": "type=VERB+ADP; count=1989; pmi=3.53; npmi=0.206; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.settle-for",
+      "title": "settle for",
+      "keywords": "type=VERB+ADP; count=1685; pmi=3.65; npmi=0.21; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sneer-at",
+      "title": "sneer at",
+      "keywords": "type=VERB+ADP; count=118; pmi=6.94; npmi=0.327; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flunk-out",
+      "title": "flunk out",
+      "keywords": "type=VERB+ADP; count=219; pmi=5.89; npmi=0.29; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.thrive-on",
+      "title": "thrive on",
+      "keywords": "type=VERB+ADP; count=282; pmi=5.52; npmi=0.276; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wink-at",
+      "title": "wink at",
+      "keywords": "type=VERB+ADP; count=225; pmi=5.84; npmi=0.288; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.burrow-through",
+      "title": "burrow through",
+      "keywords": "type=VERB+ADP; count=88; pmi=7.55; npmi=0.349; score=2.25",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.disappear-into",
+      "title": "disappear into",
+      "keywords": "type=VERB+ADP; count=466; pmi=4.85; npmi=0.252; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stay-at",
+      "title": "stay at",
+      "keywords": "type=VERB+ADP; count=4641; pmi=2.93; npmi=0.184; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.appeal-to",
+      "title": "appeal to",
+      "keywords": "type=VERB+ADP; count=1509; pmi=3.73; npmi=0.212; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wad-through",
+      "title": "wad through",
+      "keywords": "type=VERB+ADP; count=94; pmi=7.35; npmi=0.341; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seek-out",
+      "title": "seek out",
+      "keywords": "type=VERB+ADP; count=899; pmi=4.17; npmi=0.228; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.riddle-with",
+      "title": "riddle with",
+      "keywords": "type=VERB+ADP; count=369; pmi=5.13; npmi=0.262; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.truss-up",
+      "title": "truss up",
+      "keywords": "type=VERB+ADP; count=98; pmi=7.27; npmi=0.339; score=2.24",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.go-down",
+      "title": "go down",
+      "keywords": "type=VERB+ADP; count=16804; pmi=2.23; npmi=0.159; score=2.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bombard-by",
+      "title": "bombard by",
+      "keywords": "type=VERB+ADP; count=91; pmi=7.38; npmi=0.342; score=2.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.vote-against",
+      "title": "vote against",
+      "keywords": "type=VERB+ADP; count=199; pmi=5.96; npmi=0.291; score=2.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.muddle-through",
+      "title": "muddle through",
+      "keywords": "type=VERB+ADP; count=67; pmi=8.12; npmi=0.368; score=2.23",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.step-on",
+      "title": "step on",
+      "keywords": "type=VERB+ADP; count=2914; pmi=3.19; npmi=0.193; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.appal-by",
+      "title": "appal by",
+      "keywords": "type=VERB+ADP; count=87; pmi=7.48; npmi=0.345; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-towards",
+      "title": "walk towards",
+      "keywords": "type=VERB+ADP; count=207; pmi=5.9; npmi=0.289; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-behind",
+      "title": "stand behind",
+      "keywords": "type=VERB+ADP; count=524; pmi=4.68; npmi=0.246; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.vanish-without",
+      "title": "vanish without",
+      "keywords": "type=VERB+ADP; count=141; pmi=6.51; npmi=0.311; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.converge-on",
+      "title": "converge on",
+      "keywords": "type=VERB+ADP; count=183; pmi=6.07; npmi=0.295; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dub-thee",
+      "title": "dub thee",
+      "keywords": "type=VERB+ADP; count=32; pmi=10.26; npmi=0.444; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dicke-around",
+      "title": "dicke around",
+      "keywords": "type=VERB+ADP; count=51; pmi=8.79; npmi=0.392; score=2.22",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.knock-down",
+      "title": "knock down",
+      "keywords": "type=VERB+ADP; count=875; pmi=4.15; npmi=0.227; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bask-in",
+      "title": "bask in",
+      "keywords": "type=VERB+ADP; count=171; pmi=6.15; npmi=0.297; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.combine-with",
+      "title": "combine with",
+      "keywords": "type=VERB+ADP; count=382; pmi=5.03; npmi=0.258; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.impress-by",
+      "title": "impress by",
+      "keywords": "type=VERB+ADP; count=273; pmi=5.46; npmi=0.273; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pertain-to",
+      "title": "pertain to",
+      "keywords": "type=VERB+ADP; count=381; pmi=5.03; npmi=0.257; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.blurt-out",
+      "title": "blurt out",
+      "keywords": "type=VERB+ADP; count=112; pmi=6.9; npmi=0.324; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.trap-inside",
+      "title": "trap inside",
+      "keywords": "type=VERB+ADP; count=227; pmi=5.73; npmi=0.283; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bradye-down",
+      "title": "bradye down",
+      "keywords": "type=VERB+ADP; count=43; pmi=9.23; npmi=0.407; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.beset-by",
+      "title": "beset by",
+      "keywords": "type=VERB+ADP; count=53; pmi=8.61; npmi=0.385; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.aal-iz",
+      "title": "aal iz",
+      "keywords": "type=VERB+ADP; count=8; pmi=18.52; npmi=0.738; score=2.21",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.walk-along",
+      "title": "walk along",
+      "keywords": "type=VERB+ADP; count=483; pmi=4.73; npmi=0.247; score=2.2",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sober-up",
+      "title": "sober up",
+      "keywords": "type=VERB+ADP; count=315; pmi=5.25; npmi=0.265; score=2.2",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tighten-up",
+      "title": "tighten up",
+      "keywords": "type=VERB+ADP; count=229; pmi=5.69; npmi=0.281; score=2.2",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.ran-into",
+      "title": "ran into",
+      "keywords": "type=VERB+ADP; count=162; pmi=6.23; npmi=0.3; score=2.2",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cross-over",
+      "title": "cross over",
+      "keywords": "type=VERB+ADP; count=717; pmi=4.3; npmi=0.231; score=2.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sum-up",
+      "title": "sum up",
+      "keywords": "type=VERB+ADP; count=409; pmi=4.91; npmi=0.253; score=2.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.liven-up",
+      "title": "liven up",
+      "keywords": "type=VERB+ADP; count=110; pmi=6.88; npmi=0.323; score=2.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.imbue-with",
+      "title": "imbue with",
+      "keywords": "type=VERB+ADP; count=104; pmi=7.0; npmi=0.327; score=2.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.handpicke-by",
+      "title": "handpicke by",
+      "keywords": "type=VERB+ADP; count=56; pmi=8.41; npmi=0.377; score=2.19",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bear-in",
+      "title": "bear in",
+      "keywords": "type=VERB+ADP; count=4235; pmi=2.9; npmi=0.181; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fit-in",
+      "title": "fit in",
+      "keywords": "type=VERB+ADP; count=2124; pmi=3.37; npmi=0.198; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bump-off",
+      "title": "bump off",
+      "keywords": "type=VERB+ADP; count=279; pmi=5.35; npmi=0.268; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-out",
+      "title": "crawl out",
+      "keywords": "type=VERB+ADP; count=560; pmi=4.53; npmi=0.239; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cut-across",
+      "title": "cut across",
+      "keywords": "type=VERB+ADP; count=288; pmi=5.31; npmi=0.267; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-against",
+      "title": "stand against",
+      "keywords": "type=VERB+ADP; count=556; pmi=4.54; npmi=0.239; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conk-out",
+      "title": "conk out",
+      "keywords": "type=VERB+ADP; count=119; pmi=6.69; npmi=0.315; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wallow-in",
+      "title": "wallow in",
+      "keywords": "type=VERB+ADP; count=289; pmi=5.32; npmi=0.267; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stun-by",
+      "title": "stun by",
+      "keywords": "type=VERB+ADP; count=155; pmi=6.25; npmi=0.3; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sew-up",
+      "title": "sew up",
+      "keywords": "type=VERB+ADP; count=315; pmi=5.2; npmi=0.263; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sadden-by",
+      "title": "sadden by",
+      "keywords": "type=VERB+ADP; count=89; pmi=7.27; npmi=0.336; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.set-forth",
+      "title": "set forth",
+      "keywords": "type=VERB+ADP; count=131; pmi=6.54; npmi=0.31; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.screw-around",
+      "title": "screw around",
+      "keywords": "type=VERB+ADP; count=417; pmi=4.85; npmi=0.25; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.piss-off-7e6843f6",
+      "title": "-piss off",
+      "keywords": "type=VERB+ADP; count=37; pmi=9.58; npmi=0.419; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flop-around",
+      "title": "flop around",
+      "keywords": "type=VERB+ADP; count=98; pmi=7.08; npmi=0.33; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.encamp-around",
+      "title": "encamp around",
+      "keywords": "type=VERB+ADP; count=34; pmi=9.87; npmi=0.429; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stampede-towards",
+      "title": "stampede towards",
+      "keywords": "type=VERB+ADP; count=31; pmi=10.17; npmi=0.439; score=2.18",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.compare-with",
+      "title": "compare with",
+      "keywords": "type=VERB+ADP; count=670; pmi=4.33; npmi=0.232; score=2.17",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.adhere-to",
+      "title": "adhere to",
+      "keywords": "type=VERB+ADP; count=341; pmi=5.09; npmi=0.258; score=2.17",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.infect-with",
+      "title": "infect with",
+      "keywords": "type=VERB+ADP; count=413; pmi=4.85; npmi=0.25; score=2.17",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-near",
+      "title": "live near",
+      "keywords": "type=VERB+ADP; count=500; pmi=4.6; npmi=0.24; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.travel-with",
+      "title": "travel with",
+      "keywords": "type=VERB+ADP; count=1481; pmi=3.61; npmi=0.206; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.characterize-by",
+      "title": "characterize by",
+      "keywords": "type=VERB+ADP; count=80; pmi=7.45; npmi=0.342; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lop-off",
+      "title": "lop off",
+      "keywords": "type=VERB+ADP; count=66; pmi=7.86; npmi=0.357; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.prohibit-without",
+      "title": "prohibit without",
+      "keywords": "type=VERB+ADP; count=79; pmi=7.45; npmi=0.342; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.opt-for",
+      "title": "opt for",
+      "keywords": "type=VERB+ADP; count=170; pmi=6.03; npmi=0.292; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.evolve-beyond",
+      "title": "evolve beyond",
+      "keywords": "type=VERB+ADP; count=50; pmi=8.61; npmi=0.384; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.leapt-onto",
+      "title": "leapt onto",
+      "keywords": "type=VERB+ADP; count=23; pmi=11.25; npmi=0.477; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bringeth-forth",
+      "title": "bringeth forth",
+      "keywords": "type=VERB+ADP; count=13; pmi=14.24; npmi=0.584; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shrug-off",
+      "title": "shrug off",
+      "keywords": "type=VERB+ADP; count=70; pmi=7.74; npmi=0.352; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.skim-off",
+      "title": "skim off",
+      "keywords": "type=VERB+ADP; count=98; pmi=7.02; npmi=0.327; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mangle-beyond",
+      "title": "mangle beyond",
+      "keywords": "type=VERB+ADP; count=27; pmi=10.61; npmi=0.454; score=2.16",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.speak-of",
+      "title": "speak of",
+      "keywords": "type=VERB+ADP; count=8145; pmi=2.5; npmi=0.166; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cool-off",
+      "title": "cool off",
+      "keywords": "type=VERB+ADP; count=884; pmi=4.02; npmi=0.22; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hop-for",
+      "title": "hop for",
+      "keywords": "type=VERB+ADP; count=1768; pmi=3.45; npmi=0.199; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.plan-on",
+      "title": "plan on",
+      "keywords": "type=VERB+ADP; count=3660; pmi=2.96; npmi=0.182; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cut-through",
+      "title": "cut through",
+      "keywords": "type=VERB+ADP; count=752; pmi=4.16; npmi=0.225; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.classify-as",
+      "title": "classify as",
+      "keywords": "type=VERB+ADP; count=215; pmi=5.65; npmi=0.278; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.populate-by",
+      "title": "populate by",
+      "keywords": "type=VERB+ADP; count=99; pmi=6.96; npmi=0.324; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lift-up",
+      "title": "lift up",
+      "keywords": "type=VERB+ADP; count=908; pmi=3.99; npmi=0.219; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pounce-on",
+      "title": "pounce on",
+      "keywords": "type=VERB+ADP; count=162; pmi=6.07; npmi=0.293; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.smarten-up",
+      "title": "smarten up",
+      "keywords": "type=VERB+ADP; count=83; pmi=7.33; npmi=0.338; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flathatte-throughout",
+      "title": "flathatte throughout",
+      "keywords": "type=VERB+ADP; count=10; pmi=16.0; npmi=0.646; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.inveigh-against",
+      "title": "inveigh against",
+      "keywords": "type=VERB+ADP; count=20; pmi=11.84; npmi=0.498; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.backpack-across",
+      "title": "backpack across",
+      "keywords": "type=VERB+ADP; count=44; pmi=8.9; npmi=0.393; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stupefy-by",
+      "title": "stupefy by",
+      "keywords": "type=VERB+ADP; count=57; pmi=8.22; npmi=0.369; score=2.15",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sleep-in",
+      "title": "sleep in",
+      "keywords": "type=VERB+ADP; count=6157; pmi=2.64; npmi=0.17; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-back",
+      "title": "stand back",
+      "keywords": "type=VERB+ADP; count=2069; pmi=3.32; npmi=0.194; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bind-by",
+      "title": "bind by",
+      "keywords": "type=VERB+ADP; count=384; pmi=4.85; npmi=0.249; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.infect-by",
+      "title": "infect by",
+      "keywords": "type=VERB+ADP; count=213; pmi=5.64; npmi=0.277; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.manage-without",
+      "title": "manage without",
+      "keywords": "type=VERB+ADP; count=266; pmi=5.33; npmi=0.266; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hobnob-with",
+      "title": "hobnob with",
+      "keywords": "type=VERB+ADP; count=83; pmi=7.31; npmi=0.336; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.multiply-by",
+      "title": "multiply by",
+      "keywords": "type=VERB+ADP; count=160; pmi=6.08; npmi=0.293; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.load-onto",
+      "title": "load onto",
+      "keywords": "type=VERB+ADP; count=87; pmi=7.18; npmi=0.332; score=2.14",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-down",
+      "title": "turn down",
+      "keywords": "type=VERB+ADP; count=2140; pmi=3.28; npmi=0.193; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.embed-in",
+      "title": "embed in",
+      "keywords": "type=VERB+ADP; count=237; pmi=5.46; npmi=0.27; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.oppose-to",
+      "title": "oppose to",
+      "keywords": "type=VERB+ADP; count=1082; pmi=3.8; npmi=0.211; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tip-off",
+      "title": "tip off",
+      "keywords": "type=VERB+ADP; count=383; pmi=4.83; npmi=0.248; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.share-with",
+      "title": "share with",
+      "keywords": "type=VERB+ADP; count=1608; pmi=3.49; npmi=0.2; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rendezvous-with",
+      "title": "rendezvous with",
+      "keywords": "type=VERB+ADP; count=369; pmi=4.88; npmi=0.249; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.repeat-after",
+      "title": "repeat after",
+      "keywords": "type=VERB+ADP; count=326; pmi=5.03; npmi=0.255; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.determine-by",
+      "title": "determine by",
+      "keywords": "type=VERB+ADP; count=277; pmi=5.25; npmi=0.263; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.creep-into",
+      "title": "creep into",
+      "keywords": "type=VERB+ADP; count=256; pmi=5.34; npmi=0.266; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fight-alongside",
+      "title": "fight alongside",
+      "keywords": "type=VERB+ADP; count=79; pmi=7.36; npmi=0.338; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.nominate-for",
+      "title": "nominate for",
+      "keywords": "type=VERB+ADP; count=243; pmi=5.42; npmi=0.269; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.punch-through",
+      "title": "punch through",
+      "keywords": "type=VERB+ADP; count=251; pmi=5.39; npmi=0.268; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.leap-onto",
+      "title": "leap onto",
+      "keywords": "type=VERB+ADP; count=47; pmi=8.63; npmi=0.383; score=2.13",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.occupy-by",
+      "title": "occupy by",
+      "keywords": "type=VERB+ADP; count=234; pmi=5.44; npmi=0.269; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tear-up",
+      "title": "tear up",
+      "keywords": "type=VERB+ADP; count=1142; pmi=3.75; npmi=0.209; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.assign-to",
+      "title": "assign to",
+      "keywords": "type=VERB+ADP; count=1300; pmi=3.63; npmi=0.205; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.strive-for",
+      "title": "strive for",
+      "keywords": "type=VERB+ADP; count=247; pmi=5.37; npmi=0.267; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.comment-on",
+      "title": "comment on",
+      "keywords": "type=VERB+ADP; count=745; pmi=4.12; npmi=0.222; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.quibble-over",
+      "title": "quibble over",
+      "keywords": "type=VERB+ADP; count=70; pmi=7.61; npmi=0.346; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.clash-with",
+      "title": "clash with",
+      "keywords": "type=VERB+ADP; count=203; pmi=5.66; npmi=0.277; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mop-up",
+      "title": "mop up",
+      "keywords": "type=VERB+ADP; count=267; pmi=5.27; npmi=0.263; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sod-off",
+      "title": "sod off",
+      "keywords": "type=VERB+ADP; count=135; pmi=6.31; npmi=0.3; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cram-into",
+      "title": "cram into",
+      "keywords": "type=VERB+ADP; count=90; pmi=7.07; npmi=0.327; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.divide-among",
+      "title": "divide among",
+      "keywords": "type=VERB+ADP; count=55; pmi=8.17; npmi=0.366; score=2.12",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.toy-with",
+      "title": "toy with",
+      "keywords": "type=VERB+ADP; count=785; pmi=4.06; npmi=0.22; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dedicate-to",
+      "title": "dedicate to",
+      "keywords": "type=VERB+ADP; count=911; pmi=3.93; npmi=0.215; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.learn-about",
+      "title": "learn about",
+      "keywords": "type=VERB+ADP; count=1970; pmi=3.3; npmi=0.192; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.drop-out",
+      "title": "drop out",
+      "keywords": "type=VERB+ADP; count=1943; pmi=3.32; npmi=0.193; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.divide-by",
+      "title": "divide by",
+      "keywords": "type=VERB+ADP; count=237; pmi=5.4; npmi=0.267; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.kick-off",
+      "title": "kick off",
+      "keywords": "type=VERB+ADP; count=697; pmi=4.17; npmi=0.224; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.prove-beyond",
+      "title": "prove beyond",
+      "keywords": "type=VERB+ADP; count=124; pmi=6.41; npmi=0.303; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.prowl-around",
+      "title": "prowl around",
+      "keywords": "type=VERB+ADP; count=75; pmi=7.41; npmi=0.339; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.qualify-for",
+      "title": "qualify for",
+      "keywords": "type=VERB+ADP; count=299; pmi=5.09; npmi=0.256; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reminisce-about",
+      "title": "reminisce about",
+      "keywords": "type=VERB+ADP; count=99; pmi=6.82; npmi=0.318; score=2.11",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.die-in",
+      "title": "die in",
+      "keywords": "type=VERB+ADP; count=9002; pmi=2.39; npmi=0.16; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reserve-for",
+      "title": "reserve for",
+      "keywords": "type=VERB+ADP; count=602; pmi=4.28; npmi=0.227; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.peek-through",
+      "title": "peek through",
+      "keywords": "type=VERB+ADP; count=112; pmi=6.58; npmi=0.309; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.choke-on",
+      "title": "choke on",
+      "keywords": "type=VERB+ADP; count=618; pmi=4.27; npmi=0.227; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.motivate-by",
+      "title": "motivate by",
+      "keywords": "type=VERB+ADP; count=109; pmi=6.6; npmi=0.31; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stare-into",
+      "title": "stare into",
+      "keywords": "type=VERB+ADP; count=159; pmi=5.97; npmi=0.287; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pee-on",
+      "title": "pee on",
+      "keywords": "type=VERB+ADP; count=840; pmi=3.97; npmi=0.216; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.descend-onto",
+      "title": "descend onto",
+      "keywords": "type=VERB+ADP; count=40; pmi=8.97; npmi=0.394; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.march-against",
+      "title": "march against",
+      "keywords": "type=VERB+ADP; count=164; pmi=5.93; npmi=0.286; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.porke-around",
+      "title": "porke around",
+      "keywords": "type=VERB+ADP; count=35; pmi=9.4; npmi=0.409; score=2.1",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.swear-by",
+      "title": "swear by",
+      "keywords": "type=VERB+ADP; count=773; pmi=4.03; npmi=0.218; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bring-up",
+      "title": "bring up",
+      "keywords": "type=VERB+ADP; count=4196; pmi=2.79; npmi=0.174; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.elope-with",
+      "title": "elope with",
+      "keywords": "type=VERB+ADP; count=182; pmi=5.73; npmi=0.278; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.indulge-in",
+      "title": "indulge in",
+      "keywords": "type=VERB+ADP; count=390; pmi=4.72; npmi=0.242; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-through",
+      "title": "crawl through",
+      "keywords": "type=VERB+ADP; count=190; pmi=5.67; npmi=0.276; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fade-away",
+      "title": "fade away",
+      "keywords": "type=VERB+ADP; count=184; pmi=5.73; npmi=0.278; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hunt-down",
+      "title": "hunt down",
+      "keywords": "type=VERB+ADP; count=463; pmi=4.54; npmi=0.236; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.drift-along",
+      "title": "drift along",
+      "keywords": "type=VERB+ADP; count=90; pmi=6.95; npmi=0.322; score=2.09",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.apply-to",
+      "title": "apply to",
+      "keywords": "type=VERB+ADP; count=1740; pmi=3.35; npmi=0.193; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tempt-by",
+      "title": "tempt by",
+      "keywords": "type=VERB+ADP; count=183; pmi=5.71; npmi=0.277; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chat-with",
+      "title": "chat with",
+      "keywords": "type=VERB+ADP; count=586; pmi=4.27; npmi=0.226; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.translate-into",
+      "title": "translate into",
+      "keywords": "type=VERB+ADP; count=172; pmi=5.78; npmi=0.28; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dredge-up",
+      "title": "dredge up",
+      "keywords": "type=VERB+ADP; count=85; pmi=7.04; npmi=0.325; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.punke-out",
+      "title": "punke out",
+      "keywords": "type=VERB+ADP; count=60; pmi=7.82; npmi=0.352; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.batten-down",
+      "title": "batten down",
+      "keywords": "type=VERB+ADP; count=52; pmi=8.19; npmi=0.366; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spark-happen",
+      "title": "spark happen-",
+      "keywords": "type=VERB+ADP; count=10; pmi=15.53; npmi=0.627; score=2.08",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.disappear-from",
+      "title": "disappear from",
+      "keywords": "type=VERB+ADP; count=710; pmi=4.07; npmi=0.219; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dream-of",
+      "title": "dream of",
+      "keywords": "type=VERB+ADP; count=5239; pmi=2.64; npmi=0.167; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fight-with",
+      "title": "fight with",
+      "keywords": "type=VERB+ADP; count=3641; pmi=2.85; npmi=0.175; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-for",
+      "title": "fall for",
+      "keywords": "type=VERB+ADP; count=3976; pmi=2.8; npmi=0.174; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lay-out",
+      "title": "lay out",
+      "keywords": "type=VERB+ADP; count=1134; pmi=3.66; npmi=0.204; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.blind-by",
+      "title": "blind by",
+      "keywords": "type=VERB+ADP; count=529; pmi=4.35; npmi=0.228; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rot-in",
+      "title": "rot in",
+      "keywords": "type=VERB+ADP; count=663; pmi=4.14; npmi=0.221; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spin-around",
+      "title": "spin around",
+      "keywords": "type=VERB+ADP; count=198; pmi=5.56; npmi=0.272; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.snuck-out",
+      "title": "snuck out",
+      "keywords": "type=VERB+ADP; count=165; pmi=5.84; npmi=0.281; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.settle-down-f5c9a5f7",
+      "title": "-settle down",
+      "keywords": "type=VERB+ADP; count=36; pmi=9.2; npmi=0.401; score=2.07",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-down",
+      "title": "stand down",
+      "keywords": "type=VERB+ADP; count=1625; pmi=3.37; npmi=0.193; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.arrive-in",
+      "title": "arrive in",
+      "keywords": "type=VERB+ADP; count=2452; pmi=3.08; npmi=0.183; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conspire-with",
+      "title": "conspire with",
+      "keywords": "type=VERB+ADP; count=194; pmi=5.55; npmi=0.271; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.protect-by",
+      "title": "protect by",
+      "keywords": "type=VERB+ADP; count=733; pmi=4.02; npmi=0.216; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.serve-under",
+      "title": "serve under",
+      "keywords": "type=VERB+ADP; count=259; pmi=5.17; npmi=0.257; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.abscond-with",
+      "title": "abscond with",
+      "keywords": "type=VERB+ADP; count=86; pmi=6.94; npmi=0.32; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slam-into",
+      "title": "slam into",
+      "keywords": "type=VERB+ADP; count=179; pmi=5.68; npmi=0.276; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wax-off",
+      "title": "wax off",
+      "keywords": "type=VERB+ADP; count=183; pmi=5.65; npmi=0.275; score=2.06",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.approve-by",
+      "title": "approve by",
+      "keywords": "type=VERB+ADP; count=264; pmi=5.1; npmi=0.255; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.kill-by",
+      "title": "kill by",
+      "keywords": "type=VERB+ADP; count=3009; pmi=2.94; npmi=0.178; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.appear-in",
+      "title": "appear in",
+      "keywords": "type=VERB+ADP; count=1995; pmi=3.21; npmi=0.187; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.attend-to",
+      "title": "attend to",
+      "keywords": "type=VERB+ADP; count=1749; pmi=3.29; npmi=0.19; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.speed-up",
+      "title": "speed up",
+      "keywords": "type=VERB+ADP; count=877; pmi=3.84; npmi=0.21; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.distract-by",
+      "title": "distract by",
+      "keywords": "type=VERB+ADP; count=211; pmi=5.42; npmi=0.266; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-up",
+      "title": "crawl up",
+      "keywords": "type=VERB+ADP; count=502; pmi=4.38; npmi=0.229; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.unfurl",
+      "title": "unfurl *",
+      "keywords": "type=VERB+ADP; count=15; pmi=12.68; npmi=0.524; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bugger-off",
+      "title": "bugger off",
+      "keywords": "type=VERB+ADP; count=192; pmi=5.54; npmi=0.27; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.swam-across",
+      "title": "swam across",
+      "keywords": "type=VERB+ADP; count=35; pmi=9.16; npmi=0.399; score=2.05",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.act-as",
+      "title": "act as",
+      "keywords": "type=VERB+ADP; count=1340; pmi=3.48; npmi=0.197; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.write-by",
+      "title": "write by",
+      "keywords": "type=VERB+ADP; count=1378; pmi=3.45; npmi=0.195; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wrestle-with",
+      "title": "wrestle with",
+      "keywords": "type=VERB+ADP; count=265; pmi=5.07; npmi=0.253; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.slip-out",
+      "title": "slip out",
+      "keywords": "type=VERB+ADP; count=758; pmi=3.96; npmi=0.213; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.climb-down",
+      "title": "climb down",
+      "keywords": "type=VERB+ADP; count=379; pmi=4.64; npmi=0.238; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.quarrel-with",
+      "title": "quarrel with",
+      "keywords": "type=VERB+ADP; count=366; pmi=4.69; npmi=0.239; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.retaliate-against",
+      "title": "retaliate against",
+      "keywords": "type=VERB+ADP; count=44; pmi=8.46; npmi=0.374; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.smartene-up",
+      "title": "smartene up",
+      "keywords": "type=VERB+ADP; count=50; pmi=8.12; npmi=0.362; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pose-for",
+      "title": "pose for",
+      "keywords": "type=VERB+ADP; count=470; pmi=4.42; npmi=0.23; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.taper-off",
+      "title": "taper off",
+      "keywords": "type=VERB+ADP; count=52; pmi=8.02; npmi=0.358; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.speak-ln",
+      "title": "speak ln",
+      "keywords": "type=VERB+ADP; count=158; pmi=5.82; npmi=0.28; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.encumber-by",
+      "title": "encumber by",
+      "keywords": "type=VERB+ADP; count=44; pmi=8.44; npmi=0.373; score=2.04",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.finish-with",
+      "title": "finish with",
+      "keywords": "type=VERB+ADP; count=2344; pmi=3.07; npmi=0.182; score=2.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.show-off",
+      "title": "show off",
+      "keywords": "type=VERB+ADP; count=1842; pmi=3.23; npmi=0.187; score=2.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.round-up",
+      "title": "round up",
+      "keywords": "type=VERB+ADP; count=1243; pmi=3.51; npmi=0.197; score=2.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.smash-into",
+      "title": "smash into",
+      "keywords": "type=VERB+ADP; count=212; pmi=5.35; npmi=0.263; score=2.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mop-around",
+      "title": "mop around",
+      "keywords": "type=VERB+ADP; count=111; pmi=6.37; npmi=0.299; score=2.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.climb-atop",
+      "title": "climb atop",
+      "keywords": "type=VERB+ADP; count=20; pmi=11.14; npmi=0.469; score=2.03",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.mean-by",
+      "title": "mean by",
+      "keywords": "type=VERB+ADP; count=3911; pmi=2.73; npmi=0.169; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.resort-to",
+      "title": "resort to",
+      "keywords": "type=VERB+ADP; count=775; pmi=3.88; npmi=0.21; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.start-over",
+      "title": "start over",
+      "keywords": "type=VERB+ADP; count=1941; pmi=3.18; npmi=0.185; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.listen-up",
+      "title": "listen up",
+      "keywords": "type=VERB+ADP; count=4129; pmi=2.7; npmi=0.168; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-towards",
+      "title": "run towards",
+      "keywords": "type=VERB+ADP; count=232; pmi=5.2; npmi=0.257; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.react-to",
+      "title": "react to",
+      "keywords": "type=VERB+ADP; count=1107; pmi=3.59; npmi=0.199; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.aim-for",
+      "title": "aim for",
+      "keywords": "type=VERB+ADP; count=769; pmi=3.9; npmi=0.211; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gobble-up",
+      "title": "gobble up",
+      "keywords": "type=VERB+ADP; count=151; pmi=5.81; npmi=0.279; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sweep-through",
+      "title": "sweep through",
+      "keywords": "type=VERB+ADP; count=170; pmi=5.65; npmi=0.273; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.infest-with",
+      "title": "infest with",
+      "keywords": "type=VERB+ADP; count=175; pmi=5.59; npmi=0.271; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seduce-by",
+      "title": "seduce by",
+      "keywords": "type=VERB+ADP; count=193; pmi=5.45; npmi=0.266; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.holler-at",
+      "title": "holler at",
+      "keywords": "type=VERB+ADP; count=197; pmi=5.44; npmi=0.266; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.devastate-by",
+      "title": "devastate by",
+      "keywords": "type=VERB+ADP; count=111; pmi=6.32; npmi=0.297; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lust-after",
+      "title": "lust after",
+      "keywords": "type=VERB+ADP; count=128; pmi=6.08; npmi=0.288; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.overrun-by",
+      "title": "overrun by",
+      "keywords": "type=VERB+ADP; count=97; pmi=6.59; npmi=0.307; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hunker-down",
+      "title": "hunker down",
+      "keywords": "type=VERB+ADP; count=34; pmi=9.11; npmi=0.396; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.accelerate-toward",
+      "title": "accelerate toward",
+      "keywords": "type=VERB+ADP; count=26; pmi=10.06; npmi=0.43; score=2.02",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.connect-to",
+      "title": "connect to",
+      "keywords": "type=VERB+ADP; count=1866; pmi=3.19; npmi=0.185; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.convert-into",
+      "title": "convert into",
+      "keywords": "type=VERB+ADP; count=126; pmi=6.08; npmi=0.288; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.din-with",
+      "title": "din with",
+      "keywords": "type=VERB+ADP; count=244; pmi=5.1; npmi=0.253; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.release-from",
+      "title": "release from",
+      "keywords": "type=VERB+ADP; count=648; pmi=4.04; npmi=0.215; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sign-up",
+      "title": "sign up",
+      "keywords": "type=VERB+ADP; count=1735; pmi=3.23; npmi=0.186; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cast-off",
+      "title": "cast off",
+      "keywords": "type=VERB+ADP; count=289; pmi=4.89; npmi=0.246; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.trap-in",
+      "title": "trap in",
+      "keywords": "type=VERB+ADP; count=1749; pmi=3.24; npmi=0.187; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cut-down",
+      "title": "cut down",
+      "keywords": "type=VERB+ADP; count=1270; pmi=3.46; npmi=0.195; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.heat-up",
+      "title": "heat up",
+      "keywords": "type=VERB+ADP; count=722; pmi=3.94; npmi=0.212; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.peer-into",
+      "title": "peer into",
+      "keywords": "type=VERB+ADP; count=96; pmi=6.56; npmi=0.305; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.unaccounte-for",
+      "title": "unaccounte for",
+      "keywords": "type=VERB+ADP; count=71; pmi=7.16; npmi=0.326; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.delay-en",
+      "title": "delay en",
+      "keywords": "type=VERB+ADP; count=35; pmi=8.99; npmi=0.391; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.induct-into",
+      "title": "induct into",
+      "keywords": "type=VERB+ADP; count=35; pmi=8.99; npmi=0.391; score=2.01",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.ward-off",
+      "title": "ward off",
+      "keywords": "type=VERB+ADP; count=213; pmi=5.27; npmi=0.259; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tear-off",
+      "title": "tear off",
+      "keywords": "type=VERB+ADP; count=526; pmi=4.21; npmi=0.221; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cough-up",
+      "title": "cough up",
+      "keywords": "type=VERB+ADP; count=504; pmi=4.27; npmi=0.223; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.subscribe-to",
+      "title": "subscribe to",
+      "keywords": "type=VERB+ADP; count=265; pmi=4.99; npmi=0.249; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.exist-between",
+      "title": "exist between",
+      "keywords": "type=VERB+ADP; count=173; pmi=5.56; npmi=0.269; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.recruit-by",
+      "title": "recruit by",
+      "keywords": "type=VERB+ADP; count=184; pmi=5.46; npmi=0.265; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.besiege-by",
+      "title": "besiege by",
+      "keywords": "type=VERB+ADP; count=61; pmi=7.46; npmi=0.336; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.enthrone-above",
+      "title": "enthrone above",
+      "keywords": "type=VERB+ADP; count=15; pmi=12.38; npmi=0.512; score=2.0",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bury-in",
+      "title": "bury in",
+      "keywords": "type=VERB+ADP; count=1630; pmi=3.26; npmi=0.187; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.move-on",
+      "title": "move on",
+      "keywords": "type=VERB+ADP; count=6822; pmi=2.4; npmi=0.156; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.burn-up",
+      "title": "burn up",
+      "keywords": "type=VERB+ADP; count=1442; pmi=3.35; npmi=0.19; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-in",
+      "title": "stand in",
+      "keywords": "type=VERB+ADP; count=5822; pmi=2.48; npmi=0.159; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-from",
+      "title": "fall from",
+      "keywords": "type=VERB+ADP; count=1708; pmi=3.22; npmi=0.185; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.inflict-on",
+      "title": "inflict on",
+      "keywords": "type=VERB+ADP; count=278; pmi=4.9; npmi=0.245; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stricken-from",
+      "title": "stricken from",
+      "keywords": "type=VERB+ADP; count=112; pmi=6.21; npmi=0.292; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lift-off",
+      "title": "lift off",
+      "keywords": "type=VERB+ADP; count=413; pmi=4.44; npmi=0.229; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stumble-around",
+      "title": "stumble around",
+      "keywords": "type=VERB+ADP; count=106; pmi=6.33; npmi=0.296; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seep-throughout",
+      "title": "seep throughout",
+      "keywords": "type=VERB+ADP; count=18; pmi=11.4; npmi=0.476; score=1.99",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.clear-up",
+      "title": "clear up",
+      "keywords": "type=VERB+ADP; count=1869; pmi=3.15; npmi=0.183; score=1.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.carry-around",
+      "title": "carry around",
+      "keywords": "type=VERB+ADP; count=529; pmi=4.16; npmi=0.218; score=1.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sign-by",
+      "title": "sign by",
+      "keywords": "type=VERB+ADP; count=960; pmi=3.64; npmi=0.2; score=1.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bury-beneath",
+      "title": "bury beneath",
+      "keywords": "type=VERB+ADP; count=53; pmi=7.75; npmi=0.347; score=1.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.maxe-at",
+      "title": "maxe at",
+      "keywords": "type=VERB+ADP; count=80; pmi=6.82; npmi=0.313; score=1.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.republish-without",
+      "title": "republish without",
+      "keywords": "type=VERB+ADP; count=18; pmi=11.36; npmi=0.475; score=1.98",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.deprive-of",
+      "title": "deprive of",
+      "keywords": "type=VERB+ADP; count=363; pmi=4.53; npmi=0.231; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.break-out",
+      "title": "break out",
+      "keywords": "type=VERB+ADP; count=2906; pmi=2.84; npmi=0.171; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fly-over",
+      "title": "fly over",
+      "keywords": "type=VERB+ADP; count=889; pmi=3.69; npmi=0.202; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.use-against",
+      "title": "use against",
+      "keywords": "type=VERB+ADP; count=721; pmi=3.87; npmi=0.208; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.eke-out",
+      "title": "eke out",
+      "keywords": "type=VERB+ADP; count=57; pmi=7.52; npmi=0.338; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.rush-off",
+      "title": "rush off",
+      "keywords": "type=VERB+ADP; count=351; pmi=4.59; npmi=0.234; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.kidnap-by",
+      "title": "kidnap by",
+      "keywords": "type=VERB+ADP; count=296; pmi=4.76; npmi=0.239; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.travel-across",
+      "title": "travel across",
+      "keywords": "type=VERB+ADP; count=134; pmi=5.86; npmi=0.278; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.preoccupy-with",
+      "title": "preoccupy with",
+      "keywords": "type=VERB+ADP; count=116; pmi=6.11; npmi=0.288; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.glance-at",
+      "title": "glance at",
+      "keywords": "type=VERB+ADP; count=210; pmi=5.21; npmi=0.255; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-under",
+      "title": "crawl under",
+      "keywords": "type=VERB+ADP; count=120; pmi=6.03; npmi=0.285; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lucke-into",
+      "title": "lucke into",
+      "keywords": "type=VERB+ADP; count=45; pmi=8.12; npmi=0.359; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.affiliate-with",
+      "title": "affiliate with",
+      "keywords": "type=VERB+ADP; count=123; pmi=6.0; npmi=0.284; score=1.97",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stick-in",
+      "title": "stick in",
+      "keywords": "type=VERB+ADP; count=3216; pmi=2.76; npmi=0.168; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.look-out",
+      "title": "look out",
+      "keywords": "type=VERB+ADP; count=11829; pmi=2.11; npmi=0.145; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bet-on",
+      "title": "bet on",
+      "keywords": "type=VERB+ADP; count=2521; pmi=2.92; npmi=0.174; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.develop-into",
+      "title": "develop into",
+      "keywords": "type=VERB+ADP; count=252; pmi=4.95; npmi=0.246; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.run-over",
+      "title": "run over",
+      "keywords": "type=VERB+ADP; count=1879; pmi=3.1; npmi=0.18; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.forge-by",
+      "title": "forge by",
+      "keywords": "type=VERB+ADP; count=197; pmi=5.25; npmi=0.257; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-with",
+      "title": "crawl with",
+      "keywords": "type=VERB+ADP; count=566; pmi=4.07; npmi=0.215; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.register-under",
+      "title": "register under",
+      "keywords": "type=VERB+ADP; count=110; pmi=6.17; npmi=0.289; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.gaze-into",
+      "title": "gaze into",
+      "keywords": "type=VERB+ADP; count=106; pmi=6.22; npmi=0.291; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hide-among",
+      "title": "hide among",
+      "keywords": "type=VERB+ADP; count=132; pmi=5.85; npmi=0.278; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.seep-through",
+      "title": "seep through",
+      "keywords": "type=VERB+ADP; count=51; pmi=7.75; npmi=0.345; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.conceal-by",
+      "title": "conceal by",
+      "keywords": "type=VERB+ADP; count=160; pmi=5.57; npmi=0.268; score=1.96",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sneak-off",
+      "title": "sneak off",
+      "keywords": "type=VERB+ADP; count=245; pmi=4.96; npmi=0.246; score=1.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.destroy-by",
+      "title": "destroy by",
+      "keywords": "type=VERB+ADP; count=782; pmi=3.76; npmi=0.203; score=1.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.consort-with",
+      "title": "consort with",
+      "keywords": "type=VERB+ADP; count=146; pmi=5.68; npmi=0.272; score=1.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.ravage-by",
+      "title": "ravage by",
+      "keywords": "type=VERB+ADP; count=82; pmi=6.66; npmi=0.307; score=1.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.chew-on",
+      "title": "chew on",
+      "keywords": "type=VERB+ADP; count=553; pmi=4.05; npmi=0.214; score=1.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.cozye-up",
+      "title": "cozye up",
+      "keywords": "type=VERB+ADP; count=43; pmi=8.15; npmi=0.359; score=1.95",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sell-out",
+      "title": "sell out",
+      "keywords": "type=VERB+ADP; count=1626; pmi=3.17; npmi=0.182; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.charge-with",
+      "title": "charge with",
+      "keywords": "type=VERB+ADP; count=1666; pmi=3.15; npmi=0.181; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.come-near",
+      "title": "come near",
+      "keywords": "type=VERB+ADP; count=1447; pmi=3.25; npmi=0.184; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bite-by",
+      "title": "bite by",
+      "keywords": "type=VERB+ADP; count=472; pmi=4.2; npmi=0.218; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.revel-in",
+      "title": "revel in",
+      "keywords": "type=VERB+ADP; count=164; pmi=5.46; npmi=0.263; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.watch-over",
+      "title": "watch over",
+      "keywords": "type=VERB+ADP; count=1516; pmi=3.21; npmi=0.183; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.merge-with",
+      "title": "merge with",
+      "keywords": "type=VERB+ADP; count=199; pmi=5.2; npmi=0.254; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fiddle-with",
+      "title": "fiddle with",
+      "keywords": "type=VERB+ADP; count=212; pmi=5.11; npmi=0.251; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stray-into",
+      "title": "stray into",
+      "keywords": "type=VERB+ADP; count=120; pmi=5.96; npmi=0.281; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.clutter-up",
+      "title": "clutter up",
+      "keywords": "type=VERB+ADP; count=84; pmi=6.58; npmi=0.303; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.urinate-on",
+      "title": "urinate on",
+      "keywords": "type=VERB+ADP; count=149; pmi=5.6; npmi=0.268; score=1.94",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.descend-into",
+      "title": "descend into",
+      "keywords": "type=VERB+ADP; count=114; pmi=6.01; npmi=0.283; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.disappear-without",
+      "title": "disappear without",
+      "keywords": "type=VERB+ADP; count=231; pmi=4.98; npmi=0.246; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.meddle-with",
+      "title": "meddle with",
+      "keywords": "type=VERB+ADP; count=190; pmi=5.23; npmi=0.255; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.narrow-down",
+      "title": "narrow down",
+      "keywords": "type=VERB+ADP; count=183; pmi=5.28; npmi=0.257; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.sweep-across",
+      "title": "sweep across",
+      "keywords": "type=VERB+ADP; count=70; pmi=6.9; npmi=0.314; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.flow-into",
+      "title": "flow into",
+      "keywords": "type=VERB+ADP; count=217; pmi=5.06; npmi=0.249; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.melt-away",
+      "title": "melt away",
+      "keywords": "type=VERB+ADP; count=152; pmi=5.56; npmi=0.267; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.lecha-meartzecha",
+      "title": "lecha meartzecha",
+      "keywords": "type=VERB+ADP; count=4; pmi=25.19; npmi=0.965; score=1.93",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.destine-for",
+      "title": "destine for",
+      "keywords": "type=VERB+ADP; count=290; pmi=4.68; npmi=0.235; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.provide-for",
+      "title": "provide for",
+      "keywords": "type=VERB+ADP; count=906; pmi=3.58; npmi=0.196; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.control-by",
+      "title": "control by",
+      "keywords": "type=VERB+ADP; count=881; pmi=3.59; npmi=0.196; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pour-into",
+      "title": "pour into",
+      "keywords": "type=VERB+ADP; count=228; pmi=4.97; npmi=0.245; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.persist-in",
+      "title": "persist in",
+      "keywords": "type=VERB+ADP; count=228; pmi=4.97; npmi=0.245; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bow-before",
+      "title": "bow before",
+      "keywords": "type=VERB+ADP; count=228; pmi=4.98; npmi=0.246; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.defend-against",
+      "title": "defend against",
+      "keywords": "type=VERB+ADP; count=132; pmi=5.73; npmi=0.272; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spew-out",
+      "title": "spew out",
+      "keywords": "type=VERB+ADP; count=104; pmi=6.14; npmi=0.287; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.crawl-underneath",
+      "title": "crawl underneath",
+      "keywords": "type=VERB+ADP; count=36; pmi=8.5; npmi=0.371; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.hurtle-into",
+      "title": "hurtle into",
+      "keywords": "type=VERB+ADP; count=45; pmi=7.88; npmi=0.349; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.leap-into",
+      "title": "leap into",
+      "keywords": "type=VERB+ADP; count=136; pmi=5.69; npmi=0.271; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.operate-within",
+      "title": "operate within",
+      "keywords": "type=VERB+ADP; count=68; pmi=6.96; npmi=0.316; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.summon-amidst",
+      "title": "summon amidst",
+      "keywords": "type=VERB+ADP; count=17; pmi=11.3; npmi=0.471; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.swum-across",
+      "title": "swum across",
+      "keywords": "type=VERB+ADP; count=19; pmi=10.75; npmi=0.451; score=1.92",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-on",
+      "title": "live on",
+      "keywords": "type=VERB+ADP; count=6216; pmi=2.35; npmi=0.152; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.simmer-down",
+      "title": "simmer down",
+      "keywords": "type=VERB+ADP; count=82; pmi=6.53; npmi=0.3; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.adjourn-until",
+      "title": "adjourn until",
+      "keywords": "type=VERB+ADP; count=61; pmi=7.14; npmi=0.322; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.prey-on",
+      "title": "prey on",
+      "keywords": "type=VERB+ADP; count=385; pmi=4.33; npmi=0.222; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.roll-into",
+      "title": "roll into",
+      "keywords": "type=VERB+ADP; count=414; pmi=4.27; npmi=0.22; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.tick-off",
+      "title": "tick off",
+      "keywords": "type=VERB+ADP; count=179; pmi=5.26; npmi=0.255; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.adopt-by",
+      "title": "adopt by",
+      "keywords": "type=VERB+ADP; count=210; pmi=5.05; npmi=0.248; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.fall-under",
+      "title": "fall under",
+      "keywords": "type=VERB+ADP; count=423; pmi=4.23; npmi=0.219; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.provide-by",
+      "title": "provide by",
+      "keywords": "type=VERB+ADP; count=353; pmi=4.43; npmi=0.226; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spread-through",
+      "title": "spread through",
+      "keywords": "type=VERB+ADP; count=221; pmi=4.98; npmi=0.245; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pave-with",
+      "title": "pave with",
+      "keywords": "type=VERB+ADP; count=130; pmi=5.73; npmi=0.272; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.suspend-from",
+      "title": "suspend from",
+      "keywords": "type=VERB+ADP; count=222; pmi=4.98; npmi=0.245; score=1.91",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.turn-on",
+      "title": "turn on",
+      "keywords": "type=VERB+ADP; count=5346; pmi=2.41; npmi=0.153; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.wash-away",
+      "title": "wash away",
+      "keywords": "type=VERB+ADP; count=321; pmi=4.51; npmi=0.228; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.contribute-to",
+      "title": "contribute to",
+      "keywords": "type=VERB+ADP; count=621; pmi=3.85; npmi=0.205; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.speak-up",
+      "title": "speak up",
+      "keywords": "type=VERB+ADP; count=2854; pmi=2.76; npmi=0.166; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stake-out",
+      "title": "stake out",
+      "keywords": "type=VERB+ADP; count=449; pmi=4.17; npmi=0.216; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.snuggle-up",
+      "title": "snuggle up",
+      "keywords": "type=VERB+ADP; count=99; pmi=6.14; npmi=0.286; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.watch-out-42e92603",
+      "title": "-watch out",
+      "keywords": "type=VERB+ADP; count=125; pmi=5.78; npmi=0.273; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.pursue-by",
+      "title": "pursue by",
+      "keywords": "type=VERB+ADP; count=194; pmi=5.11; npmi=0.249; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.clamp-down",
+      "title": "clamp down",
+      "keywords": "type=VERB+ADP; count=123; pmi=5.8; npmi=0.274; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shape-up",
+      "title": "shape up",
+      "keywords": "type=VERB+ADP; count=611; pmi=3.87; npmi=0.205; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.spill-over",
+      "title": "spill over",
+      "keywords": "type=VERB+ADP; count=210; pmi=5.03; npmi=0.247; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.invent-by",
+      "title": "invent by",
+      "keywords": "type=VERB+ADP; count=253; pmi=4.8; npmi=0.238; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bite-off",
+      "title": "bite off",
+      "keywords": "type=VERB+ADP; count=399; pmi=4.27; npmi=0.22; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.foreclose-on",
+      "title": "foreclose on",
+      "keywords": "type=VERB+ADP; count=87; pmi=6.38; npmi=0.294; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.scrunch-down",
+      "title": "scrunch down",
+      "keywords": "type=VERB+ADP; count=45; pmi=7.83; npmi=0.346; score=1.9",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.live-through",
+      "title": "live through",
+      "keywords": "type=VERB+ADP; count=1034; pmi=3.42; npmi=0.189; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.stand-on",
+      "title": "stand on",
+      "keywords": "type=VERB+ADP; count=4157; pmi=2.53; npmi=0.157; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.remain-in",
+      "title": "remain in",
+      "keywords": "type=VERB+ADP; count=1907; pmi=2.99; npmi=0.174; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.shout-in",
+      "title": "shout in",
+      "keywords": "type=VERB+ADP; count=1776; pmi=3.02; npmi=0.175; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.reek-of",
+      "title": "reek of",
+      "keywords": "type=VERB+ADP; count=241; pmi=4.82; npmi=0.239; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.bring-along",
+      "title": "bring along",
+      "keywords": "type=VERB+ADP; count=525; pmi=3.99; npmi=0.21; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.dwell-within",
+      "title": "dwell within",
+      "keywords": "type=VERB+ADP; count=36; pmi=8.39; npmi=0.366; score=1.89",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.volunteer-for",
+      "title": "volunteer for",
+      "keywords": "type=VERB+ADP; count=636; pmi=3.79; npmi=0.202; score=1.88",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.frighten-by",
+      "title": "frighten by",
+      "keywords": "type=VERB+ADP; count=226; pmi=4.89; npmi=0.241; score=1.88",
+      "level": ""
+    },
+    {
+      "id": "concept:collocation.arrive-from",
+      "title": "arrive from",
+      "keywords": "type=VERB+ADP; count=786; pmi=3.62; npmi=0.196; score=1.88",
+      "level": ""
+    }
+  ],
+  "edges": []
+}

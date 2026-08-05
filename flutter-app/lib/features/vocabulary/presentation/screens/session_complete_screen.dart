@@ -148,22 +148,23 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
 
                   const SizedBox(height: 48),
 
-                  // Stats cards
+                  // Stats cards — staggered reveal + XP/count-up micro-interaction
                   Expanded(
                     child: SingleChildScrollView(
-                      child: Column(
+                      child: StaggeredList(
+                        itemDelay: const Duration(milliseconds: 90),
                         children: [
                           _StatCard(
                             icon: Icons.assignment_turned_in,
                             label: 'flashcard.wordsReviewed'.tr(),
-                            value: '${session.totalCards}',
+                            countTo: session.totalCards,
                             color: AppColors.primary,
                           ),
                           const SizedBox(height: 16),
                           _StatCard(
                             icon: Icons.check_circle,
                             label: 'flashcard.correctAnswers'.tr(),
-                            value: '${session.correctCount}',
+                            countTo: session.correctCount,
                             subtitle: 'flashcard.accuracySubtitle'.tr(
                               namedArgs: {
                                 'percent': accuracy.toStringAsFixed(1),
@@ -175,7 +176,8 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                           _StatCard(
                             icon: Icons.star,
                             label: 'flashcard.xpEarned'.tr(),
-                            value: '+${session.totalXpEarned}',
+                            countTo: session.totalXpEarned,
+                            countPrefix: '+',
                             color: AppColors.accentYellow,
                           ),
                           const SizedBox(height: 16),
@@ -260,17 +262,24 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
 class _StatCard extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
+  final String? value;
+  final int? countTo;
+  final String countPrefix;
   final String? subtitle;
   final Color color;
 
   const _StatCard({
     required this.icon,
     required this.label,
-    required this.value,
+    this.value,
+    this.countTo,
+    this.countPrefix = '',
     this.subtitle,
     required this.color,
-  });
+  }) : assert(
+         value != null || countTo != null,
+         'Provide either a static value or a countTo target.',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -313,14 +322,29 @@ class _StatCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                if (countTo != null)
+                  TweenAnimationBuilder<int>(
+                    tween: IntTween(begin: 0, end: countTo),
+                    duration: const Duration(milliseconds: 900),
+                    curve: Curves.easeOutCubic,
+                    builder: (_, count, __) => Text(
+                      '$countPrefix$count',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                  )
+                else
+                  Text(
+                    value!,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
                   ),
-                ),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(

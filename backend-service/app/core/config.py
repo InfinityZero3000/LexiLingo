@@ -159,15 +159,28 @@ class Settings(BaseSettings):
                 )
             if local_origins:
                 raise ValueError("Localhost CORS origins are not allowed when APP_ENV=production")
-            if (
-                "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX
-                or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX
-            ):
+            # CORS_ALLOW_ORIGIN_REGEX is a regex pattern, so literal dots are
+            # usually escaped ("devtunnels\.ms") — strip backslashes before
+            # substring-matching or this check silently never fires.
+            unescaped_regex = self.CORS_ALLOW_ORIGIN_REGEX.replace("\\", "")
+            if "devtunnels.ms" in unescaped_regex or "github.dev" in unescaped_regex:
                 raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
         if self.CONTENT_AGENT_ENABLED and not self.CONTENT_AGENT_SERVICE_TOKEN.strip():
             raise ValueError(
                 "CONTENT_AGENT_SERVICE_TOKEN is required when the content agent is enabled"
+            )
+
+        if not (self.GOOGLE_CLIENT_ID or "").strip():
+            raise ValueError(
+                "GOOGLE_CLIENT_ID must be set when APP_ENV=production — without it, "
+                "Google login falls back to verifying tokens with no audience "
+                "restriction, accepting a token issued for any Google app."
+            )
+        if not (self.GOOGLE_ADMIN_CLIENT_ID or "").strip():
+            raise ValueError(
+                "GOOGLE_ADMIN_CLIENT_ID must be set when APP_ENV=production "
+                "(required for admin OAuth audience verification)"
             )
 
         if self.LEARNER_STATE_ENABLED and not self.LEARNER_STATE_INTERNAL_TOKEN.strip():

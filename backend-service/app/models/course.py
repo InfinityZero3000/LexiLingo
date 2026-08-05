@@ -143,7 +143,11 @@ class Lesson(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=True)
     order_index: Mapped[int] = mapped_column(Integer, nullable=False)
-    
+
+    # Can-do statement (CEFR action-oriented / TBLT mission outcome), e.g.
+    # "You can order food at a restaurant over the phone."
+    outcome: Mapped[str] = mapped_column(Text, nullable=True)
+
     # Phase 2: Prerequisites and pass requirements
     prerequisites: Mapped[list] = mapped_column(GUIDArray(), nullable=True, default=[])
     pass_threshold: Mapped[int] = mapped_column(Integer, default=80)  # Minimum score to pass (%)

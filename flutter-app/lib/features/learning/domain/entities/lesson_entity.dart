@@ -4,6 +4,7 @@ class LessonEntity {
   final String id;
   final String title;
   final String? description;
+  final String? outcome;
   final int orderIndex;
   final List<Exercise> exercises;
   final int estimatedMinutes;
@@ -13,6 +14,7 @@ class LessonEntity {
     required this.id,
     required this.title,
     this.description,
+    this.outcome,
     required this.orderIndex,
     required this.exercises,
     required this.estimatedMinutes,
@@ -24,6 +26,7 @@ class LessonEntity {
       id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
+      outcome: json['outcome'] as String?,
       orderIndex: json['order_index'] as int,
       exercises:
           (json['exercises'] as List?)
@@ -40,6 +43,7 @@ class LessonEntity {
       'id': id,
       'title': title,
       'description': description,
+      'outcome': outcome,
       'order_index': orderIndex,
       'exercises': exercises.map((e) => e.toJson()).toList(),
       'estimated_minutes': estimatedMinutes,
@@ -64,6 +68,7 @@ class Exercise {
   final String id;
   final ExerciseType type;
   final String? uiType;
+  final String? phase;
   final String question;
   final List<String>? options; // For multiple choice
   final String correctAnswer;
@@ -76,6 +81,7 @@ class Exercise {
     required this.id,
     required this.type,
     this.uiType,
+    this.phase,
     required this.question,
     this.options,
     required this.correctAnswer,
@@ -90,6 +96,7 @@ class Exercise {
       id: json['id'] as String,
       type: _parseExerciseType(json['type'] as String),
       uiType: json['ui_type'] as String?,
+      phase: json['phase'] as String?,
       question: json['question'] as String,
       options: (json['options'] as List?)?.map((e) => e as String).toList(),
       correctAnswer: json['correct_answer'] as String,
@@ -105,6 +112,7 @@ class Exercise {
       'id': id,
       'type': type.name,
       'ui_type': uiType,
+      'phase': phase,
       'question': question,
       'options': options,
       'correct_answer': correctAnswer,

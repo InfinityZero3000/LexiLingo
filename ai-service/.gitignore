@@ -39,6 +39,7 @@ data/*.db.rebuild.*
 data/kuzu
 data/kuzu/
 data/kuzu.wal
+data/kuzu_runtime.db.wal
 data/*.init.lock
 data/kuzu_synced_files.json
 api/data/
@@ -55,21 +56,29 @@ kg_raw/
 
 # Large generated kg_output artifacts (regenerate with generate_tracecag_topic_corpus.py / crawl_topic_knowledge.py)
 data/kg_output/finetune_samples.jsonl
-data/kg_output/tracecag_topic_quadruples.jsonl
-data/kg_output/tracecag_topic_edges.jsonl
-data/kg_output/tracecag_knowledge_prefix.full.txt
+data/kg_output/tracecag_topic_corpus/tracecag_topic_quadruples.jsonl
+data/kg_output/tracecag_topic_corpus/tracecag_topic_edges.jsonl
+data/kg_output/tracecag_topic_corpus/tracecag_knowledge_prefix.full.txt
 data/kg_output/kg_checkpoint*.jsonl
 data/kg_output/preprocessed_dataset.jsonl
 data/kg_output/entity_cards.json
 data/kg_output/quadruples.json
 data/kg_output/nodes.json
 data/kg_output/edges.json
-data/kg_output/topic_crawl_report.json
-data/kg_output/tracecag_topic_corpus_report.json
+data/kg_output/topic_crawl/topic_crawl_report.json
+data/kg_output/tracecag_topic_corpus/tracecag_topic_corpus_report.json
 data/sample_stories.expanded.json
+
+# ConceptNet-derived edges — 18MB+ generated file, deploy via scp not git
+# (regenerate from data/kg_output/hf_import_staging/relations/graph.json)
+data/kg/12_lexical_relations.json
+
+# HF dataset staging/scratch work — not production data, regenerate as needed
+data/kg_output/hf_import_staging/
 
 # Licensed Content ETL — downloaded datasets and immutable snapshots (never commit)
 data/content-etl/
 
 # Crawler cache
 .crawl4ai/
+model-development/

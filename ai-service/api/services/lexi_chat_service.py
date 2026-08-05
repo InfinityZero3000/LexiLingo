@@ -799,6 +799,7 @@ async def stream_lexi_chat(
         # Cache miss: buffer provider tokens, sanitize the complete response,
         # then deliver it as SSE chunks so token-spanning internal markers
         # can never reach the client.
+        provider_info: dict = {}
         try:
             system_prompt, llm_messages = build_generation_prompt(raw_state)
             tokens: list[str] = []
@@ -806,6 +807,7 @@ async def stream_lexi_chat(
                 system_prompt=system_prompt,
                 messages=llm_messages,
                 user_input=user_text,
+                provider_info=provider_info,
             ):
                 tokens.append(token)
             raw_response = "".join(tokens).strip()
@@ -819,8 +821,10 @@ async def stream_lexi_chat(
             lexi_response = SAFE_FIXED_RESPONSE
             model_used = "trace-cag_safe_response"
         else:
-            model_used = f"groq/{os.getenv('GROQ_MODEL', 'llama-3.1-8b-instant')}" \
-                if os.getenv("GROQ_API_KEY") else "gemini-2.0-flash"
+            # Reflects whichever provider actually served the tokens (Groq can
+            # fail mid-stream and fall back to Gemini) instead of guessing from
+            # GROQ_API_KEY's presence, which stays true even when Groq is down.
+            model_used = f"{provider_info.get('provider', 'unknown')}/{provider_info.get('model', 'unknown')}"
 
     if not cache_hit and lexi_response and model_used != "trace-cag_safe_response":
         try:

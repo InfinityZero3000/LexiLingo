@@ -176,11 +176,14 @@ class LessonBase(BaseModel):
     """Base lesson schema."""
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
+    outcome: Optional[str] = Field(
+        None, description="Can-do statement: what the learner will be able to do after this lesson/mission"
+    )
     order_index: int = Field(..., ge=0)
     lesson_type: str = Field(..., description="lesson, practice, review, test, vocabulary, grammar")
     xp_reward: int = Field(default=10, ge=0)
     pass_threshold: int = Field(default=80, ge=0, le=100)
-    
+
     @field_validator("lesson_type")
     @classmethod
     def validate_lesson_type(cls, v):
@@ -200,6 +203,7 @@ class LessonUpdate(BaseModel):
     """Schema for updating a lesson (admin only)."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
+    outcome: Optional[str] = None
     order_index: Optional[int] = Field(None, ge=0)
     lesson_type: Optional[str] = None
     xp_reward: Optional[int] = Field(None, ge=0)

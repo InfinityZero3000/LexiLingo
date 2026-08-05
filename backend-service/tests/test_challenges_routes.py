@@ -296,6 +296,11 @@ class TestClaimChallengeReward:
             mock_session.execute = fake_execute
             mock_session.add = MagicMock()
             mock_session.commit = AsyncMock()
+            mock_session.flush = AsyncMock()
+            nested_cm = AsyncMock()
+            nested_cm.__aenter__.return_value = None
+            nested_cm.__aexit__.return_value = None
+            mock_session.begin_nested = MagicMock(return_value=nested_cm)
             yield mock_session
 
         async def mock_get_current_user():
@@ -419,6 +424,11 @@ class TestClaimDailyBonus:
             mock_session.execute = fake_execute
             mock_session.add = MagicMock()
             mock_session.commit = AsyncMock()
+            mock_session.flush = AsyncMock()
+            nested_cm = AsyncMock()
+            nested_cm.__aenter__.return_value = None
+            nested_cm.__aexit__.return_value = None
+            mock_session.begin_nested = MagicMock(return_value=nested_cm)
             yield mock_session
 
         async def mock_get_current_user():

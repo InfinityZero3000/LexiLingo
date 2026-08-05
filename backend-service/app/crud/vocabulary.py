@@ -3,6 +3,7 @@ Vocabulary CRUD Operations
 Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
+import hashlib
 import math
 import re
 import uuid
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
 
 from app.models.content_agent import LessonVocabularyItem
 from app.models.course import Lesson
+from app.models.learner_state import LearnerConceptState, LearnerObservationEvent
 from app.models.vocabulary import (
     DifficultyLevel,
     PartOfSpeech,
@@ -30,6 +32,18 @@ from app.models.vocabulary import (
     VocabularyReview,
     VocabularyStatus,
 )
+from app.services.learner_state import (
+    ObservationInput,
+    apply_observation_event,
+    ingest_observations,
+)
+
+
+def _vocab_concept_id(word: str) -> str:
+    """Slug convention shared (by duplication, not import) with
+    ai-service's content-agent generator and the vocab->concept-state
+    backfill migration — keep all three in sync if this ever changes."""
+    return f"vocab:{'_'.join(word.strip().lower().split())}"
 from app.services.vocabulary_catalog_policy import (
     VocabularyCandidate,
     canonical_topic,
@@ -601,7 +615,25 @@ class VocabularyCRUD:
             return VocabularyStatus.REVIEWING
         else:
             return VocabularyStatus.LEARNING
-    
+
+    def determine_status_from_mastery(
+        self, mastery_probability: float, attempt_count: int
+    ) -> VocabularyStatus:
+        """
+        Determine vocabulary status from learner_concept_state fields.
+
+        Mastered: mastery_probability >= 0.85 (equivalent intent to the old
+        ease_factor>=2.5 + interval>=21 threshold — high confidence, stable recall)
+        Reviewing: attempt_count >= 3 (equivalent to the old repetitions>=3)
+        Learning: otherwise
+        """
+        if mastery_probability >= 0.85:
+            return VocabularyStatus.MASTERED
+        elif attempt_count >= 3:
+            return VocabularyStatus.REVIEWING
+        else:
+            return VocabularyStatus.LEARNING
+
     async def submit_review(
         self,
         db: AsyncSession,
@@ -610,53 +642,64 @@ class VocabularyCRUD:
         time_spent_ms: int = 0
     ) -> UserVocabulary:
         """
-        Submit a vocabulary review and update SRS parameters.
-        Awards XP based on quality and streak.
+        Submit a vocabulary review.
+
+        Scheduling (next_review_date) and mastery status are driven by the
+        unified learner_concept_state engine (app/services/learner_state.py)
+        — the same BKT+FSRS algorithm used for grammar/mission concepts —
+        applied synchronously in this same transaction (bypassing the async
+        outbox worker) so the response still reflects the update
+        immediately. Legacy SM-2/FSRS columns on UserVocabulary are frozen
+        (no longer written here); they remain as historical data.
         """
-        # Get user vocabulary
+        # Get user vocabulary (eager-load word for concept_id derivation)
         result = await db.execute(
-            select(UserVocabulary).where(UserVocabulary.id == user_vocabulary_id)
+            select(UserVocabulary)
+            .options(joinedload(UserVocabulary.vocabulary))
+            .where(UserVocabulary.id == user_vocabulary_id)
         )
         user_vocab = result.scalar_one()
-        
+
         now = datetime.now(timezone.utc)
+        concept_id = _vocab_concept_id(user_vocab.vocabulary.word)
+        outcome = "correct" if quality >= 3 else "incorrect"
+        event_id = hashlib.sha256(
+            f"{user_vocabulary_id}:{quality}:{now.isoformat()}".encode("utf-8")
+        ).hexdigest()
 
-        # Calculate new SRS parameters
-        new_ease, new_interval, new_reps, next_review = self.calculate_next_review(
-            quality=quality,
-            ease_factor=user_vocab.ease_factor,
-            interval=user_vocab.interval,
-            repetitions=user_vocab.repetitions
+        await ingest_observations(
+            db,
+            [
+                ObservationInput(
+                    event_id=event_id,
+                    user_id=user_vocab.user_id,
+                    concept_id=concept_id,
+                    outcome=outcome,
+                    confidence=max(0.0, min(1.0, quality / 5.0)),
+                    observed_at=now,
+                )
+            ],
+        )
+        event_db_id = await db.scalar(
+            select(LearnerObservationEvent.id).where(
+                LearnerObservationEvent.event_id == event_id
+            )
+        )
+        await apply_observation_event(db, event_db_id, now=now)
+        concept_state = await db.scalar(
+            select(LearnerConceptState).where(
+                LearnerConceptState.user_id == user_vocab.user_id,
+                LearnerConceptState.concept_id == concept_id,
+            )
         )
 
-        fsrs_update = self.calculate_fsrs_review(
-            quality=quality,
-            stability=user_vocab.fsrs_stability,
-            difficulty=user_vocab.fsrs_difficulty,
-            scheduled_days=user_vocab.fsrs_scheduled_days,
-            reps=user_vocab.fsrs_reps,
-            lapses=user_vocab.fsrs_lapses,
-            fsrs_last_review=user_vocab.fsrs_last_review,
-            sm2_last_review=user_vocab.last_reviewed_at,
-            now=now,
-        )
-        
-        # Update user vocabulary
-        user_vocab.ease_factor = new_ease
-        user_vocab.interval = new_interval
-        user_vocab.repetitions = new_reps
-        user_vocab.next_review_date = fsrs_update["next_review_date"] or next_review
+        # Sync UserVocabulary as a read-cache so GET /vocabulary/due (which
+        # queries UserVocabulary.next_review_date) reflects the unified
+        # engine without needing its own query rewrite.
+        user_vocab.next_review_date = concept_state.next_review_at
         user_vocab.last_reviewed_at = now
-        user_vocab.fsrs_stability = fsrs_update["fsrs_stability"]
-        user_vocab.fsrs_difficulty = fsrs_update["fsrs_difficulty"]
-        user_vocab.fsrs_elapsed_days = fsrs_update["fsrs_elapsed_days"]
-        user_vocab.fsrs_scheduled_days = fsrs_update["fsrs_scheduled_days"]
-        user_vocab.fsrs_reps = fsrs_update["fsrs_reps"]
-        user_vocab.fsrs_lapses = fsrs_update["fsrs_lapses"]
-        user_vocab.fsrs_state = fsrs_update["fsrs_state"]
-        user_vocab.fsrs_last_review = fsrs_update["fsrs_last_review"]
         user_vocab.total_reviews += 1
-        
+
         # Update streak and stats
         if quality >= 3:  # Correct answer
             user_vocab.correct_reviews += 1
@@ -665,27 +708,30 @@ class VocabularyCRUD:
                 user_vocab.longest_streak = user_vocab.streak
         else:  # Incorrect answer
             user_vocab.streak = 0
-        
+
         # Update status
-        user_vocab.status = self.determine_status(new_ease, new_interval, new_reps)
-        
+        user_vocab.status = self.determine_status_from_mastery(
+            concept_state.mastery_probability, concept_state.attempt_count
+        )
+
         # Award XP (base: 5, bonus for quality and streak)
         xp_award = 5 + (quality * 2) + min(user_vocab.streak // 5, 10)
         user_vocab.total_xp_earned += xp_award
-        
-        # Create review record
+
+        # Create review record (ease/interval frozen at their last historical
+        # value — no longer recomputed here, kept only for audit continuity)
         review = VocabularyReview(
             user_vocabulary_id=user_vocabulary_id,
             quality=quality,
             time_spent_ms=time_spent_ms,
-            ease_factor_after=new_ease,
-            interval_after=new_interval
+            ease_factor_after=user_vocab.ease_factor,
+            interval_after=user_vocab.interval
         )
-        
+
         db.add(review)
         await db.commit()
         await db.refresh(user_vocab)
-        
+
         return user_vocab
     
     # ===== Statistics =====
