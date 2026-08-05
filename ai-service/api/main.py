@@ -223,7 +223,13 @@ async def lifespan(app: FastAPI):
         )
 
         start_learner_observation_forwarder()
-    
+
+    if settings.CONTENT_ETL_ENABLED:
+        from api.services.content_etl.staleness import run_staleness_loop
+
+        asyncio.create_task(run_staleness_loop())
+        logger.info(" content_etl staleness watch started")
+
     if USE_GATEWAY:
         try:
             from api.services.gateway_setup import setup_gateway
