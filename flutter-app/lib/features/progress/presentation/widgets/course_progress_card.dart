@@ -48,13 +48,13 @@ class CourseProgressCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Row(
                     children: [
-                      Icon(Icons.star, size: 16, color: Colors.amber[700]),
+                      Icon(Icons.star, size: 16, color: AppColors.goldDark),
                       const SizedBox(width: 4),
                       Text(
                         '${courseProgress.totalXpEarned} XP',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Colors.amber[700],
+                          color: AppColors.goldDark,
                         ),
                       ),
                     ],
@@ -84,16 +84,21 @@ class CourseProgressCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progressPercent,
-                      minHeight: 8,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        _getProgressColor(
-                          courseProgress.progressPercentage,
-                          isDark: isDark,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: progressPercent),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOutCubic,
+                      builder: (_, value, __) => LinearProgressIndicator(
+                        value: value,
+                        minHeight: 8,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _getProgressColor(
+                            courseProgress.progressPercentage,
+                            isDark: isDark,
+                          ),
                         ),
                       ),
                     ),

@@ -119,7 +119,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
 
     final bgGradient = isDark
         ? const [Color(0xFF132333), Color(0xFF0F1B26)]
-        : const [Colors.white, Color(0xFFF0F6FB)];
+        : const [AppColors.surfaceLight, Color(0xFFF0F6FB)];
     final primaryColor = AppColorRoles.primary(isDark);
     final textTheme = Theme.of(context).textTheme;
 
@@ -140,7 +140,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
           ),
         ],
         border: Border.all(
-          color: isDark ? const Color(0xFF2E4154) : Colors.white,
+          color: isDark ? const Color(0xFF2E4154) : AppColors.surfaceLight,
           width: 2,
         ),
       ),
@@ -195,7 +195,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                           ),
                           child: const Icon(
                             Icons.redeem_rounded,
-                            color: Colors.white,
+                            color: AppColors.surfaceLight,
                             size: 48,
                           ),
                         ),
@@ -210,7 +210,9 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                     textAlign: TextAlign.center,
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.white : AppColors.textDark,
+                      color: isDark
+                          ? AppColors.surfaceLight
+                          : AppColors.textDark,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -263,7 +265,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(56),
                         backgroundColor: AppColors.orange,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.surfaceLight,
                         elevation: 4,
                         shadowColor: AppColors.orange.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
@@ -277,7 +279,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                                  AppColors.surfaceLight,
                                 ),
                               ),
                             )
@@ -300,7 +302,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                         : () => Navigator.of(context).pop(),
                     style: TextButton.styleFrom(
                       foregroundColor: isDark
-                          ? Colors.white60
+                          ? AppColors.surfaceLight.withValues(alpha: 0.6)
                           : AppColors.textGrey,
                     ),
                     child: Text('common.close'.tr()),
@@ -329,7 +331,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     double scale = 1.0;
 
     if (isActive) {
-      cardBg = isDark ? const Color(0xFF384D63) : Colors.white;
+      cardBg = isDark ? const Color(0xFF384D63) : AppColors.surfaceLight;
       border = Border.all(color: AppColors.orange, width: 2.5);
       scale = 1.05;
     } else if (isClaimed) {
@@ -377,7 +379,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
               color: isActive
                   ? AppColors.orange
                   : isDark
-                  ? Colors.white60
+                  ? AppColors.surfaceLight.withValues(alpha: 0.6)
                   : AppColors.textGrey,
             ),
           ),
@@ -394,7 +396,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
               color: isActive
                   ? AppColors.purpleLight
                   : isDark
-                  ? Colors.white24
+                  ? AppColors.surfaceLight.withValues(alpha: 0.24)
                   : AppColors.textMuted,
               size: 16,
             ),
@@ -405,9 +407,9 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
                 color: isActive
-                    ? (isDark ? Colors.white : AppColors.textDark)
+                    ? (isDark ? AppColors.surfaceLight : AppColors.textDark)
                     : isDark
-                    ? Colors.white30
+                    ? AppColors.surfaceLight.withValues(alpha: 0.3)
                     : AppColors.textMuted,
               ),
             ),

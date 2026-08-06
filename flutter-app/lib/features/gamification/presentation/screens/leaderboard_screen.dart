@@ -147,8 +147,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
             gradient: LinearGradient(
               colors: isMaster
                   ? [
-                      const Color(0xFF5AB6FF).withValues(alpha: 0.35),
-                      const Color(0xFFFFD64F).withValues(alpha: 0.25),
+                      AppColors.masterGradient[0].withValues(alpha: 0.35),
+                      AppColors.masterGradient[1].withValues(alpha: 0.25),
                       Theme.of(context).scaffoldBackgroundColor,
                     ]
                   : [
@@ -326,7 +326,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.grey[700] : Colors.grey[300],
+                  color: isDark ? AppColors.grey700 : AppColors.grey300,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -365,10 +365,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                                     ? ShaderMask(
                                         shaderCallback: (bounds) =>
                                             const LinearGradient(
-                                              colors: [
-                                                Color(0xFF5AB6FF),
-                                                Color(0xFFFFD64F),
-                                              ],
+                                              colors: AppColors.masterGradient,
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ).createShader(bounds),
@@ -377,7 +374,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                                           style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                            color: AppColors.surfaceLight,
                                           ),
                                         ),
                                       )
@@ -702,7 +699,7 @@ class _RankingPanelSkeleton extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final panelColor = isDark
         ? AppColors.surfaceDark.withValues(alpha: 0.72)
-        : Colors.white.withValues(alpha: 0.82);
+        : AppColors.surfaceLight.withValues(alpha: 0.82);
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -711,9 +708,15 @@ class _RankingPanelSkeleton extends StatelessWidget {
           color: panelColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.42)),
-            left: BorderSide(color: Colors.white.withValues(alpha: 0.42)),
-            right: BorderSide(color: Colors.white.withValues(alpha: 0.42)),
+            top: BorderSide(
+              color: AppColors.surfaceLight.withValues(alpha: 0.42),
+            ),
+            left: BorderSide(
+              color: AppColors.surfaceLight.withValues(alpha: 0.42),
+            ),
+            right: BorderSide(
+              color: AppColors.surfaceLight.withValues(alpha: 0.42),
+            ),
           ),
         ),
         child: Column(
@@ -770,7 +773,7 @@ class _RankingRowSkeleton extends StatelessWidget {
       margin: const EdgeInsets.symmetric(vertical: 5),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.34),
+        color: AppColors.surfaceLight.withValues(alpha: 0.34),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -820,7 +823,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: isMaster
-              ? [const Color(0xFF5AB6FF), const Color(0xFFFFD64F)]
+              ? AppColors.masterGradient
               : [color, color.withValues(alpha: 0.7)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -829,7 +832,7 @@ class _LeagueBadgeSmall extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isMaster
-                ? const Color(0xFF5AB6FF).withValues(alpha: 0.3)
+                ? AppColors.masterGradient[0].withValues(alpha: 0.3)
                 : color.withValues(alpha: 0.3),
             blurRadius: 4,
           ),

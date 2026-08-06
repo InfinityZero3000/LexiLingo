@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
 /// Compact rank badge for profile / header display
@@ -46,14 +47,14 @@ class RankBadgeLabelled extends StatelessWidget {
           rank == 'master'
               ? ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                    colors: AppColors.masterGradient,
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ).createShader(bounds),
                   child: Text(
                     rankDisplayNameFor(rank),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -126,7 +127,7 @@ class RankCard extends StatelessWidget {
                   rank == 'master'
                       ? ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                            colors: AppColors.masterGradient,
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ).createShader(bounds),
@@ -135,7 +136,7 @@ class RankCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                           ),
                         )

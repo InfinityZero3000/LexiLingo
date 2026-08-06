@@ -62,27 +62,38 @@ class _WalletScreenState extends State<WalletScreen> {
                               width: 64,
                               height: 64,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.18),
+                                color: AppColors.surfaceLight.withValues(
+                                  alpha: 0.18,
+                                ),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.35),
+                                  color: AppColors.surfaceLight.withValues(
+                                    alpha: 0.35,
+                                  ),
                                   width: 1.5,
                                 ),
                               ),
                               child: const Icon(
                                 Icons.diamond_rounded,
-                                color: Colors.white,
+                                color: AppColors.surfaceLight,
                                 size: 34,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            // Balance
-                            Text(
-                              '${provider.gems}',
-                              style: const TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                            // Balance — animates to the new total on change
+                            // (no key: lets it tween from the old value, not
+                            // reset to 0, so top-ups read as a smooth count).
+                            TweenAnimationBuilder<int>(
+                              tween: IntTween(begin: 0, end: provider.gems),
+                              duration: const Duration(milliseconds: 600),
+                              curve: Curves.easeOutCubic,
+                              builder: (_, value, __) => Text(
+                                '$value',
+                                style: const TextStyle(
+                                  fontSize: 40,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.surfaceLight,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -90,7 +101,9 @@ class _WalletScreenState extends State<WalletScreen> {
                               'gamification.gems'.tr(),
                               style: TextStyle(
                                 fontSize: 13,
-                                color: Colors.white.withValues(alpha: 0.75),
+                                color: AppColors.surfaceLight.withValues(
+                                  alpha: 0.75,
+                                ),
                                 fontWeight: FontWeight.w500,
                                 letterSpacing: 1.2,
                               ),
@@ -139,15 +152,17 @@ class _WalletScreenState extends State<WalletScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFF8B5CF6).withValues(alpha: 0.10),
-                        const Color(0xFF7C3AED).withValues(alpha: 0.05),
+                        AppColors.purpleGradient[0].withValues(alpha: 0.10),
+                        AppColors.purpleGradient[1].withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.25),
+                      color: AppColors.purpleGradient[0].withValues(
+                        alpha: 0.25,
+                      ),
                     ),
                   ),
                   child: Column(
@@ -158,14 +173,14 @@ class _WalletScreenState extends State<WalletScreen> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF8B5CF6,
-                              ).withValues(alpha: 0.18),
+                              color: AppColors.purpleGradient[0].withValues(
+                                alpha: 0.18,
+                              ),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.diamond_rounded,
-                              color: Color(0xFF8B5CF6),
+                              color: AppColors.purpleGradient[0],
                               size: 20,
                             ),
                           ),
@@ -239,12 +254,12 @@ class _WalletScreenState extends State<WalletScreen> {
                           Icon(
                             Icons.receipt_long_outlined,
                             size: 48,
-                            color: Colors.grey[400],
+                            color: AppColors.grey400,
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'gamification.noTransactions'.tr(),
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: AppColors.grey600),
                           ),
                         ],
                       ),
@@ -280,7 +295,10 @@ class _WalletScreenState extends State<WalletScreen> {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+          ), // scrim, not brand color
         ],
       ),
       child: Row(
@@ -309,7 +327,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 ),
                 Text(
                   label,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: AppColors.grey600),
                 ),
               ],
             ),
@@ -324,24 +342,24 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.only(top: 8),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
-            color: Color(0xFF8B5CF6),
+            color: AppColors.purpleGradient[0],
             size: 16,
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+              style: TextStyle(fontSize: 13, color: AppColors.grey700),
             ),
           ),
           Text(
             reward,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF7C3AED),
+              color: AppColors.purpleGradient[1],
             ),
           ),
         ],
@@ -365,7 +383,7 @@ class _TransactionRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
+          bottom: BorderSide(color: AppColors.grey500.withValues(alpha: 0.1)),
         ),
       ),
       child: Row(
@@ -399,7 +417,7 @@ class _TransactionRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _formatDate(transaction.createdAt),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: AppColors.grey500),
                 ),
               ],
             ),

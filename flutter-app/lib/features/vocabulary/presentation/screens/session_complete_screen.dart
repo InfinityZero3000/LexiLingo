@@ -75,6 +75,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                 'animation/Confetti.json',
                 fit: BoxFit.cover,
                 repeat: false,
+                renderCache: RenderCache.raster,
               ),
             ),
           ),

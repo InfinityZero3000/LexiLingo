@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 
 /// Quick Actions - Horizontal scrollable section with circular buttons
@@ -25,7 +24,7 @@ class QuickActionsGrid extends StatelessWidget {
 
     final quickActions = [
       {
-        'icon': GameIcon.video,
+        'icon': Icons.videocam_rounded,
         'label': 'home.youtube',
         'color': isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0],
         'bgColor':

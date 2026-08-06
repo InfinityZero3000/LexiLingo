@@ -164,7 +164,10 @@ class StreakCard extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.local_fire_department, color: Colors.grey),
+                  const Icon(
+                    Icons.local_fire_department,
+                    color: AppColors.grey500,
+                  ),
                   const SizedBox(width: 12),
                   Text('home.startStreakToday'.tr()),
                   const Spacer(),
@@ -240,14 +243,14 @@ class StreakCard extends StatelessWidget {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.shade100,
+                                      color: AppColors.warningBg,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
                                       'home.streakAtRisk'.tr(),
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: Colors.orange.shade800,
+                                        color: AppColors.warningDark,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -273,7 +276,7 @@ class StreakCard extends StatelessWidget {
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: streak.isActiveToday
                                         ? AppColors.greenSuccessBright
-                                        : Colors.grey,
+                                        : AppColors.grey500,
                                   ),
                                 ),
                               ],
@@ -300,7 +303,7 @@ class StreakCard extends StatelessWidget {
                             'home.streakBestLabel'.tr(),
                             style: theme.textTheme.bodySmall?.copyWith(
                               fontSize: 10,
-                              color: Colors.grey,
+                              color: AppColors.grey500,
                             ),
                           ),
                         ],
@@ -406,7 +409,9 @@ class StreakDetailsSheet extends StatelessWidget {
           // Restores remaining count display
           Text(
             'Lượt khôi phục chuỗi còn lại trong tháng: ${streak.restoresRemaining}',
-            style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.grey500,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -442,9 +447,9 @@ class StreakDetailsSheet extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: streak.isActiveToday
-                  ? Colors.green.shade50
+                  ? AppColors.greenSuccessBg
                   : streak.streakAtRisk
-                  ? Colors.orange.shade50
+                  ? AppColors.warningBg
                   : AppColors.grey100,
               borderRadius: BorderRadius.circular(12),
             ),
@@ -460,7 +465,7 @@ class StreakDetailsSheet extends StatelessWidget {
                       ? AppColors.greenSuccessBright
                       : streak.streakAtRisk
                       ? AppColors.orange
-                      : Colors.grey,
+                      : AppColors.grey500,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -472,10 +477,10 @@ class StreakDetailsSheet extends StatelessWidget {
                         : 'home.keepLearningStreak'.tr(),
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: streak.isActiveToday
-                          ? Colors.green.shade800
+                          ? AppColors.greenSuccessDark
                           : streak.streakAtRisk
-                          ? Colors.orange.shade800
-                          : Colors.grey.shade700,
+                          ? AppColors.warningDark
+                          : AppColors.grey700,
                     ),
                   ),
                 ),
@@ -520,7 +525,7 @@ class StreakDetailsSheet extends StatelessWidget {
                       backgroundColor: AppColorRoles.primary(
                         Theme.of(context).brightness == Brightness.dark,
                       ),
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.surfaceLight,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
@@ -534,17 +539,22 @@ class StreakDetailsSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: AppColorRoles.primary(
+                  Theme.of(context).brightness == Brightness.dark,
+                ).withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.blue.shade800),
+                  Icon(Icons.info_outline, color: AppColors.primaryDark),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Bạn có thể khôi phục lại chuỗi ${streak.previousStreak} ngày cũ! Bạn còn ${streak.restoresRemaining} lượt khôi phục trong tháng này.',
-                      style: TextStyle(color: Colors.blue.shade800, fontSize: 12),
+                      style: TextStyle(
+                        color: AppColors.primaryDark,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -567,16 +577,23 @@ class StreakDetailsSheet extends StatelessWidget {
                                   content: Text(
                                     'Đã khôi phục chuỗi thành công!',
                                   ),
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: AppColors.greenSuccessBright,
                                 ),
                               );
                             }
                           },
-                    icon: const Icon(Icons.healing, color: Colors.white),
-                    label: Text('Khôi phục chuỗi (${streak.previousStreak} ngày)'),
+                    icon: const Icon(
+                      Icons.healing,
+                      color: AppColors.surfaceLight,
+                    ),
+                    label: Text(
+                      'Khôi phục chuỗi (${streak.previousStreak} ngày)',
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade600,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColorRoles.primary(
+                        Theme.of(context).brightness == Brightness.dark,
+                      ),
+                      foregroundColor: AppColors.surfaceLight,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -613,7 +630,7 @@ class StreakDetailsSheet extends StatelessWidget {
         ),
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey),
+          style: theme.textTheme.bodySmall?.copyWith(color: AppColors.grey500),
         ),
       ],
     );
@@ -624,11 +641,7 @@ class LargeStreakFireWidget extends StatefulWidget {
   final IconData icon;
   final double size;
 
-  const LargeStreakFireWidget({
-    super.key,
-    required this.icon,
-    this.size = 64,
-  });
+  const LargeStreakFireWidget({super.key, required this.icon, this.size = 64});
 
   @override
   State<LargeStreakFireWidget> createState() => _LargeStreakFireWidgetState();
@@ -689,12 +702,12 @@ class _LargeStreakFireWidgetState extends State<LargeStreakFireWidget>
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.orange.withValues(alpha: 0.4),
+                    color: AppColors.orange.withValues(alpha: 0.4),
                     blurRadius: _glow.value * 2,
                     spreadRadius: _glow.value / 2,
                   ),
                   BoxShadow(
-                    color: Colors.red.withValues(alpha: 0.2),
+                    color: AppColors.errorBright.withValues(alpha: 0.2),
                     blurRadius: _glow.value * 3,
                     spreadRadius: _glow.value,
                   ),
@@ -704,17 +717,17 @@ class _LargeStreakFireWidgetState extends State<LargeStreakFireWidget>
                 padding: const EdgeInsets.all(12),
                 decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                 ),
                 child: ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Colors.orange, Colors.redAccent],
+                    colors: [AppColors.orange, AppColors.errorBright],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ).createShader(bounds),
                   child: Icon(
                     widget.icon,
-                    color: Colors.white,
+                    color: AppColors.surfaceLight,
                     size: widget.size,
                   ),
                 ),
@@ -749,7 +762,7 @@ class StreakBadge extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: streak.currentStreak > 0
-                  ? Colors.orange.shade100
+                  ? AppColors.warningBg
                   : AppColors.grey200,
               borderRadius: BorderRadius.circular(12),
             ),
@@ -759,7 +772,7 @@ class StreakBadge extends StatelessWidget {
                 Icon(
                   _getStreakIcon(streak.streakIcon),
                   color: streak.currentStreak > 0
-                      ? Colors.orange.shade800
+                      ? AppColors.warningDark
                       : AppColors.grey600,
                   size: 14,
                 ),
@@ -770,7 +783,7 @@ class StreakBadge extends StatelessWidget {
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: streak.currentStreak > 0
-                        ? Colors.orange.shade800
+                        ? AppColors.warningDark
                         : AppColors.grey600,
                   ),
                 ),
