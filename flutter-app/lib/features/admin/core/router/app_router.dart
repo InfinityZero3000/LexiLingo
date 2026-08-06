@@ -20,6 +20,11 @@ import '../../features/system_logs/presentation/logs_screen.dart';
 import '../../features/ads/presentation/ads_screen.dart';
 import '../../features/topics/presentation/topics_screen.dart';
 import '../../features/system_settings/presentation/system_settings_screen.dart';
+import '../../features/content_lab/presentation/content_lab_screen.dart';
+import '../../features/content_qa/presentation/content_qa_screen.dart';
+import '../../features/notification_campaign/presentation/notification_campaign_screen.dart';
+import '../../features/ranking_agent/presentation/ranking_agent_screen.dart';
+import '../../features/lesson_exercises/presentation/lesson_exercises_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
 import '../storage/token_storage.dart';
 
@@ -88,6 +93,17 @@ GoRouter createRouter(AuthProvider authProvider) {
                   );
                 },
               ),
+              GoRoute(
+                path: 'lesson/:id',
+                parentNavigatorKey: _rootNavigatorKey,
+                builder: (_, state) {
+                  final args = state.extra as Map<String, dynamic>? ?? {};
+                  return LessonExercisesScreen(
+                    lessonId: state.pathParameters['id']!,
+                    lessonTitle: args['lessonTitle'] ?? 'Lesson',
+                  );
+                },
+              ),
             ],
           ),
           GoRoute(
@@ -101,6 +117,10 @@ GoRouter createRouter(AuthProvider authProvider) {
           GoRoute(
             path: '/grammar',
             builder: (_, __) => const GrammarTestsScreen(),
+          ),
+          GoRoute(
+            path: '/content-lab',
+            builder: (_, __) => const ContentLabScreen(),
           ),
           GoRoute(
             path: '/analytics',
@@ -135,6 +155,18 @@ GoRouter createRouter(AuthProvider authProvider) {
           GoRoute(
             path: '/logs',
             builder: (_, __) => const LogsScreen(),
+          ),
+          GoRoute(
+            path: '/content-qa',
+            builder: (_, __) => const ContentQaScreen(),
+          ),
+          GoRoute(
+            path: '/notification-campaign',
+            builder: (_, __) => const NotificationCampaignScreen(),
+          ),
+          GoRoute(
+            path: '/ranking-agent',
+            builder: (_, __) => const RankingAgentScreen(),
           ),
           GoRoute(
             path: '/system-health',

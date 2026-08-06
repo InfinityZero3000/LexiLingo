@@ -5,7 +5,7 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, Integer, Float, ForeignKey
+from sqlalchemy import String, Boolean, Integer, Float, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -141,6 +141,11 @@ class User(Base):
     
     def __repr__(self) -> str:
         return f"<User {self.username}>"
+
+
+# Every leaderboard read filters on is_active + rank (league) — without this the
+# query is a full table scan over `users`.
+Index("idx_users_active_rank", User.is_active, User.rank)
 
 
 class UserDevice(Base):
