@@ -145,6 +145,15 @@ export const deleteGrammar = async (id: string) =>
     method: "DELETE"
   });
 
+export const bulkImportGrammar = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/grammar/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
+
 // Questions
 export type QuestionItem = {
   id: string;
@@ -179,6 +188,15 @@ export const deleteQuestion = async (id: string) =>
     method: "DELETE"
   });
 
+export const bulkImportQuestions = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/questions/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
+
 // Test exams
 export type TestExam = {
   id: string;
@@ -210,6 +228,15 @@ export const deleteTestExam = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/test-exams/${id}`, {
     method: "DELETE"
   });
+
+export const bulkImportTestExams = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/test-exams/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
 
 // ============================================================================
 // Achievement Management
@@ -393,6 +420,12 @@ export const deleteCourse = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/courses/${id}`, {
     method: "DELETE",
   });
+
+export const bulkImportCourses = async (courses: unknown[]) =>
+  apiFetch<AdminResponse<{ courses: number; units: number; lessons: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/courses/bulk-import`,
+    { method: "POST", body: JSON.stringify({ courses }) }
+  );
 
 // ============================================================================
 // Unit Management
@@ -633,6 +666,15 @@ export const bulkImportVocabulary = async (file: File) => {
   formData.append("file", file);
   return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
     `${ENV.backendUrl}/admin/vocabulary/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
+
+export const extractPdfText = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ text: string }>>(
+    `${ENV.backendUrl}/admin/import/extract-pdf-text`,
     { method: "POST", body: formData }
   );
 };

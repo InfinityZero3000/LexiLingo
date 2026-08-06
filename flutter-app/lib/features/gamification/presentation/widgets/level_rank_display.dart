@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_badge.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 
 /// Combined Level + Rank display widget for profile / home page.
 ///
@@ -79,24 +79,32 @@ class LevelRankDisplay extends StatelessWidget {
             // Top row: Level number + CEFR tag + Rank badge
             Row(
               children: [
-                // Level number
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                // Level number — scale+fade pop whenever the level changes
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, animation) => ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
                   ),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    'gamification.levelShort'.tr(
-                      namedArgs: {'level': '$numericLevel'},
+                  child: Container(
+                    key: ValueKey(numericLevel),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
                     ),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.surface,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'gamification.levelShort'.tr(
+                        namedArgs: {'level': '$numericLevel'},
+                      ),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.surface,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -139,11 +147,16 @@ class LevelRankDisplay extends StatelessWidget {
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(6),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 8,
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      color: colorScheme.primary,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: progress),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOutCubic,
+                      builder: (_, v, __) => LinearProgressIndicator(
+                        value: v,
+                        minHeight: 8,
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        color: colorScheme.primary,
+                      ),
                     ),
                   ),
                 ),
@@ -187,24 +200,10 @@ class LevelRankDisplay extends StatelessWidget {
     );
   }
 
-  static Color _proficiencyColor(String level) {
-    switch (level.toUpperCase()) {
-      case 'A1':
-        return const Color(0xFF4CAF50);
-      case 'A2':
-        return const Color(0xFF8BC34A);
-      case 'B1':
-        return const Color(0xFF2196F3);
-      case 'B2':
-        return const Color(0xFF3F51B5);
-      case 'C1':
-        return const Color(0xFF9C27B0);
-      case 'C2':
-        return AppColors.orange;
-      default:
-        return AppColors.grey500;
-    }
-  }
+  // Reuses the app-wide CEFR palette (A=green, B=blue, C=purple) instead of
+  // a second, slightly different hand-picked color set.
+  static Color _proficiencyColor(String level) =>
+      CefrBadge.colorForLevel(level);
 
   static String _formatNumber(int n) {
     if (n >= 1000) {

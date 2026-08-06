@@ -61,21 +61,24 @@ class ChatProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final result = await createSessionUseCase(userId);
-    result.fold(
-      (failure) {
-        _error = failure.message;
-        _isLoading = false;
-        notifyListeners();
-      },
-      (session) {
-        _currentSession = session;
-        _messages = [];
-        _sessions.insert(0, session);
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+    try {
+      final result = await createSessionUseCase(userId);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+        },
+        (session) {
+          _currentSession = session;
+          _messages = [];
+          _sessions.insert(0, session);
+        },
+      );
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadSessions(String userId) async {
@@ -83,20 +86,23 @@ class ChatProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final result = await getSessionsUseCase(userId);
-    result.fold(
-      (failure) {
-        _error = failure.message;
-        _isLoading = false;
-        notifyListeners();
-      },
-      (sessions) {
-        _sessions = sessions.take(_sessionsPageSize).toList();
-        _hasMoreSessions = sessions.length > _sessionsPageSize;
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
+    try {
+      final result = await getSessionsUseCase(userId);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+        },
+        (sessions) {
+          _sessions = sessions.take(_sessionsPageSize).toList();
+          _hasMoreSessions = sessions.length > _sessionsPageSize;
+        },
+      );
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> loadMoreSessions(String userId) async {
@@ -105,26 +111,29 @@ class ChatProvider extends ChangeNotifier {
     _isLoadingMoreSessions = true;
     notifyListeners();
 
-    final result = await getSessionsUseCase(userId);
-    result.fold(
-      (failure) {
-        _error = failure.message;
-        _isLoadingMoreSessions = false;
-        notifyListeners();
-      },
-      (sessions) {
-        final startIndex = _sessions.length;
-        final endIndex = startIndex + _sessionsPageSize;
-        final newSessions = sessions
-            .skip(startIndex)
-            .take(_sessionsPageSize)
-            .toList();
-        _sessions.addAll(newSessions);
-        _hasMoreSessions = sessions.length > endIndex;
-        _isLoadingMoreSessions = false;
-        notifyListeners();
-      },
-    );
+    try {
+      final result = await getSessionsUseCase(userId);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+        },
+        (sessions) {
+          final startIndex = _sessions.length;
+          final endIndex = startIndex + _sessionsPageSize;
+          final newSessions = sessions
+              .skip(startIndex)
+              .take(_sessionsPageSize)
+              .toList();
+          _sessions.addAll(newSessions);
+          _hasMoreSessions = sessions.length > endIndex;
+        },
+      );
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoadingMoreSessions = false;
+      notifyListeners();
+    }
   }
 
   Future<void> selectSession(ChatSession session) async {
@@ -141,41 +150,46 @@ class ChatProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    final pagedResult = await getPagedChatHistoryUseCase(
-      GetPagedChatHistoryParams(sessionId: sessionId, limit: _messagesPageSize),
-    );
+    try {
+      final pagedResult = await getPagedChatHistoryUseCase(
+        GetPagedChatHistoryParams(
+          sessionId: sessionId,
+          limit: _messagesPageSize,
+        ),
+      );
 
-    pagedResult.fold((_) {}, (page) {
-      _messages = page.messages;
-      _hasMoreMessages = page.hasMore;
-      _nextMessageCursor = page.nextCursor;
+      final pagedSuccess = pagedResult.fold((_) => false, (page) {
+        _messages = page.messages;
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        return true;
+      });
+
+      if (pagedSuccess) {
+        return;
+      }
+
+      final result = await getChatHistoryUseCase(sessionId);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+        },
+        (messages) {
+          // Load only the last N messages initially (most recent)
+          final recentMessages = messages.length > _messagesPageSize
+              ? messages.skip(messages.length - _messagesPageSize).toList()
+              : messages;
+          _messages = recentMessages;
+          _hasMoreMessages = messages.length > _messagesPageSize;
+          _nextMessageCursor = null;
+        },
+      );
+    } catch (e) {
+      _error = e.toString();
+    } finally {
       _isLoading = false;
       notifyListeners();
-    });
-
-    if (!_isLoading) {
-      return;
     }
-
-    final result = await getChatHistoryUseCase(sessionId);
-    result.fold(
-      (failure) {
-        _error = failure.message;
-        _isLoading = false;
-        notifyListeners();
-      },
-      (messages) {
-        // Load only the last N messages initially (most recent)
-        final recentMessages = messages.length > _messagesPageSize
-            ? messages.skip(messages.length - _messagesPageSize).toList()
-            : messages;
-        _messages = recentMessages;
-        _hasMoreMessages = messages.length > _messagesPageSize;
-        _nextMessageCursor = null;
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
   }
 
   Future<void> loadMoreMessages() async {
@@ -188,71 +202,69 @@ class ChatProvider extends ChangeNotifier {
     _isLoadingMoreMessages = true;
     notifyListeners();
 
-    final pagedResult = await getPagedChatHistoryUseCase(
-      GetPagedChatHistoryParams(
-        sessionId: _currentSession!.id,
-        limit: _messagesPageSize,
-        cursor: _nextMessageCursor,
-      ),
-    );
+    try {
+      final pagedResult = await getPagedChatHistoryUseCase(
+        GetPagedChatHistoryParams(
+          sessionId: _currentSession!.id,
+          limit: _messagesPageSize,
+          cursor: _nextMessageCursor,
+        ),
+      );
 
-    final pagedSuccess = pagedResult.fold((_) => false, (page) {
-      if (page.messages.isNotEmpty) {
-        _messages.insertAll(0, page.messages);
+      final pagedSuccess = pagedResult.fold((_) => false, (page) {
+        if (page.messages.isNotEmpty) {
+          _messages.insertAll(0, page.messages);
+        }
+        _hasMoreMessages = page.hasMore;
+        _nextMessageCursor = page.nextCursor;
+        return true;
+      });
+
+      if (pagedSuccess) {
+        return;
       }
-      _hasMoreMessages = page.hasMore;
-      _nextMessageCursor = page.nextCursor;
+
+      final result = await getChatHistoryUseCase(_currentSession!.id);
+      result.fold(
+        (failure) {
+          _error = failure.message;
+        },
+        (allMessages) {
+          // Calculate how many messages to load
+          final currentCount = _messages.length;
+          final totalCount = allMessages.length;
+
+          if (currentCount >= totalCount) {
+            _hasMoreMessages = false;
+            return;
+          }
+
+          // Load older messages (from the beginning)
+          final startIndex = totalCount - currentCount - _messagesPageSize;
+          final endIndex = totalCount - currentCount;
+
+          if (startIndex < 0) {
+            // Load all remaining messages
+            final olderMessages = allMessages.take(endIndex).toList();
+            _messages.insertAll(0, olderMessages);
+            _hasMoreMessages = false;
+          } else {
+            // Load next batch
+            final olderMessages = allMessages
+                .skip(startIndex)
+                .take(_messagesPageSize)
+                .toList();
+            _messages.insertAll(0, olderMessages);
+            _hasMoreMessages = startIndex > 0;
+          }
+        },
+      );
+    } catch (e) {
+      _error = e.toString();
+    } finally {
       _isLoadingMoreMessages = false;
       notifyListeners();
-      return true;
-    });
-
-    if (pagedSuccess) {
-      return;
     }
-
-    final result = await getChatHistoryUseCase(_currentSession!.id);
-    result.fold(
-      (failure) {
-        _error = failure.message;
-        _isLoadingMoreMessages = false;
-        notifyListeners();
-      },
-      (allMessages) {
-        // Calculate how many messages to load
-        final currentCount = _messages.length;
-        final totalCount = allMessages.length;
-
-        if (currentCount >= totalCount) {
-          _hasMoreMessages = false;
-          _isLoadingMoreMessages = false;
-          notifyListeners();
-          return;
-        }
-
-        // Load older messages (from the beginning)
-        final startIndex = totalCount - currentCount - _messagesPageSize;
-        final endIndex = totalCount - currentCount;
-
-        if (startIndex < 0) {
-          // Load all remaining messages
-          final olderMessages = allMessages.take(endIndex).toList();
-          _messages.insertAll(0, olderMessages);
-          _hasMoreMessages = false;
-        } else {
-          // Load next batch
-          final olderMessages = allMessages
-              .skip(startIndex)
-              .take(_messagesPageSize)
-              .toList();
-          _messages.insertAll(0, olderMessages);
-          _hasMoreMessages = startIndex > 0;
-        }
-
-        _isLoadingMoreMessages = false;
-        notifyListeners();
-      },
-    );
   }
 
   Future<void> sendMessage(String content, {required String userId}) async {
@@ -289,26 +301,41 @@ class ChatProvider extends ChangeNotifier {
           .toList(),
     );
 
-    final result = await sendMessageUseCase(params);
-    result.fold(
-      (failure) {
-        final index = _messages.indexWhere((m) => m.id == tempUserMessage.id);
-        if (index != -1) {
-          _messages[index] = tempUserMessage.copyWith(
-            status: MessageStatus.error,
-            error: failure.message,
+    try {
+      final result = await sendMessageUseCase(params);
+      result.fold(
+        (failure) {
+          final index = _messages.indexWhere(
+            (m) => m.id == tempUserMessage.id,
           );
-        }
-        _error = failure.message;
-        _isSending = false;
-        notifyListeners();
-      },
-      (aiMessage) {
-        _messages.removeWhere((m) => m.id.startsWith('temp_'));
-        loadChatHistory(_currentSession!.id);
-        _isSending = false;
-      },
-    );
+          if (index != -1) {
+            _messages[index] = tempUserMessage.copyWith(
+              status: MessageStatus.error,
+              error: failure.message,
+            );
+          }
+          _error = failure.message;
+          _isSending = false;
+          notifyListeners();
+        },
+        (aiMessage) {
+          _messages.removeWhere((m) => m.id.startsWith('temp_'));
+          loadChatHistory(_currentSession!.id);
+          _isSending = false;
+        },
+      );
+    } catch (e) {
+      final index = _messages.indexWhere((m) => m.id == tempUserMessage.id);
+      if (index != -1) {
+        _messages[index] = tempUserMessage.copyWith(
+          status: MessageStatus.error,
+          error: e.toString(),
+        );
+      }
+      _error = e.toString();
+      _isSending = false;
+      notifyListeners();
+    }
   }
 
   void switchModel(AIModel model) {

@@ -282,8 +282,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
             icon: _getLevelIcon(levelKey),
             color: _getLevelColor(levelKey, isDark: isDark),
             courses: courses,
-            onCourseTap: (course, fallbackThumbnailUrl) =>
-                _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
+            onCourseTap: (course, heroTag, fallbackThumbnailUrl) =>
+                _navigateToCourseDetail(
+                  context,
+                  course,
+                  heroTag,
+                  fallbackThumbnailUrl,
+                ),
             onSeeAll: null,
           );
         }, childCount: levelKeys.length + (provider.isLoadingCourses ? 1 : 0)),
@@ -314,8 +319,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
             icon: _parseCategoryIcon(category.icon ?? 'book'),
             color: _parseCategoryColor(category.color, isDark: isDark),
             courses: categoryCourses,
-            onCourseTap: (course, fallbackThumbnailUrl) =>
-                _navigateToCourseDetail(context, course, fallbackThumbnailUrl),
+            onCourseTap: (course, heroTag, fallbackThumbnailUrl) =>
+                _navigateToCourseDetail(
+                  context,
+                  course,
+                  heroTag,
+                  fallbackThumbnailUrl,
+                ),
             onSeeAll: () => _navigateToCategoryDetail(context, category.id),
           );
         },
@@ -329,6 +339,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
   void _navigateToCourseDetail(
     BuildContext context,
     CourseEntity course,
+    String heroTag,
     String fallbackThumbnailUrl,
   ) {
     Navigator.push(
@@ -336,7 +347,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       MaterialPageRoute(
         builder: (context) => CourseDetailScreen(
           courseId: course.id,
-          heroTag: 'discovery-course-image-${course.id}',
+          heroTag: heroTag,
           initialThumbnailUrl: course.thumbnailUrl,
           fallbackThumbnailUrl: fallbackThumbnailUrl,
         ),
@@ -521,7 +532,7 @@ class _CategorySection extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<CourseEntity> courses;
-  final void Function(CourseEntity course, String fallbackThumbnailUrl)
+  final void Function(CourseEntity course, String heroTag, String fallbackThumbnailUrl)
   onCourseTap;
   final VoidCallback? onSeeAll;
 
@@ -604,15 +615,22 @@ class _CategorySection extends StatelessWidget {
             itemCount: courses.length,
             itemBuilder: (context, index) {
               final course = courses[index];
+              // A course can match multiple category tags, so the same
+              // course.id may render in more than one section on this
+              // screen. Scope the tag to this section to keep Hero tags
+              // unique within the route (duplicate tags crash the Hero
+              // flight on navigation).
+              final heroTag = 'discovery-course-image-$categoryId-${course.id}';
               return AnimatedListItem(
                 index: index,
                 duration: const Duration(milliseconds: 300),
                 delayPerItem: const Duration(milliseconds: 80),
                 child: _HorizontalCourseCard(
                   course: course,
+                  heroTag: heroTag,
                   compact: isCompactMobile,
                   onTap: (fallbackThumbnailUrl) =>
-                      onCourseTap(course, fallbackThumbnailUrl),
+                      onCourseTap(course, heroTag, fallbackThumbnailUrl),
                 ),
               );
             },
@@ -629,11 +647,13 @@ class _CategorySection extends StatelessWidget {
 /// Compact card design for horizontal scrolling with enhanced hero images
 class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
+  final String heroTag;
   final bool compact;
   final ValueChanged<String> onTap;
 
   const _HorizontalCourseCard({
     required this.course,
+    required this.heroTag,
     this.compact = false,
     required this.onTap,
   });
@@ -665,7 +685,7 @@ class _HorizontalCourseCard extends StatelessWidget {
             children: [
               // Enhanced Hero Thumbnail with gradient overlay
               Hero(
-                tag: 'discovery-course-image-${course.id}',
+                tag: heroTag,
                 child: ClipRRect(
                   borderRadius: BorderRadius.vertical(
                     top: Radius.circular(cardRadius),

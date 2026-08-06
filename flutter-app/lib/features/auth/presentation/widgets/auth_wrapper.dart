@@ -226,12 +226,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _wasAuthenticated = true;
       _flowResolvedForUserId = null;
       _showOnboarding = false;
-      // Load user settings when authenticated
       final userId = authProvider.currentUser?.id;
-      if (userId != null) {
-        context.read<SettingsProvider>().loadSettings(userId, context);
-      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Load user settings when authenticated
+        if (userId != null) {
+          context.read<SettingsProvider>().loadSettings(userId, context);
+        }
         _resolvePostAuthFlow(authProvider);
       });
     }

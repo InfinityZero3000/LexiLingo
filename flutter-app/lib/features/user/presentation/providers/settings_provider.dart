@@ -114,10 +114,17 @@ class SettingsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    // Read the locally-saved locale before touching settings so we can honour
-    // a language the user picked (e.g. on the welcome screen) even when the
-    // stored settings still carry the entity default ('en').
-    final savedLocale = await LocaleService.getSavedLocale();
+    // Read the app's current active locale before touching settings so we
+    // can honour it even when the stored settings still carry the entity
+    // default ('en'). We read from EasyLocalization's live context rather
+    // than LocaleService.getSavedLocale(): the app boots into 'vi' via
+    // startLocale without ever persisting that choice, so getSavedLocale()
+    // can't tell "never explicitly chosen" apart from "explicitly chose
+    // English" — both normalize to 'en' and silently override the real vi
+    // default the user is looking at.
+    final savedLocale = (context != null && context.mounted)
+        ? LocaleService.normalizeLanguageCode(context.locale.languageCode)
+        : await LocaleService.getSavedLocale();
 
     var shouldPersistMigratedTheme = false;
     try {

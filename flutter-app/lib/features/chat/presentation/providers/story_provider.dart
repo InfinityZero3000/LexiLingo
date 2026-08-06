@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import '../../domain/entities/story.dart';
 import '../../domain/entities/topic_session.dart';
+import '../../domain/entities/topic_stream_event.dart';
 import '../../domain/repositories/story_repository.dart';
 
 /// State management for Story/Topic-based conversation
@@ -378,6 +379,166 @@ class StoryProvider extends ChangeNotifier {
         return true;
       },
     );
+  }
+
+  /// Streaming variant of [sendMessage] — same TraceCAG pipeline and 2-tier
+  /// fallback server-side, delivered as SSE so the AI bubble fills in
+  /// word-by-word instead of popping in all at once. [sendMessage] itself
+  /// is left untouched as a manual fallback path.
+  ///
+  /// Mirrors LexiChatProvider.sendMessageStreaming's recovery behavior: a
+  /// [TopicStreamError] event or a stream that closes before any content
+  /// arrived is safe to silently retry via the non-streaming [sendMessage],
+  /// because the backend only emits those before it persists anything for
+  /// the turn. A stream that closes mid-typing (partial content already
+  /// shown) is instead kept as-is and marked done — retrying then risks a
+  /// duplicated turn if the server actually did finish and persist.
+  Future<bool> sendMessageStreaming({
+    required String userId,
+    required String message,
+  }) async {
+    if (_currentSession == null) {
+      _sessionError = 'No active session';
+      notifyListeners();
+      return false;
+    }
+
+    final sessionId = _currentSession!.sessionId;
+    final requestId = 'user_${DateTime.now().millisecondsSinceEpoch}';
+    final placeholderId = 'ai_${DateTime.now().millisecondsSinceEpoch}';
+
+    _isSendingMessage = true;
+    _sessionError = null;
+    notifyListeners();
+
+    _messages.add(
+      TopicChatMessage(
+        id: requestId,
+        sessionId: sessionId,
+        content: message,
+        isUser: true,
+        timestamp: DateTime.now(),
+      ),
+    );
+    _messages.add(
+      TopicChatMessage(
+        id: placeholderId,
+        sessionId: sessionId,
+        content: '',
+        isUser: false,
+        timestamp: DateTime.now(),
+      ),
+    );
+    notifyListeners();
+
+    var receivedDone = false;
+
+    try {
+      await for (final event in repository.sendTopicMessageStream(
+        sessionId: sessionId,
+        userId: userId,
+        message: message,
+      )) {
+        switch (event) {
+          case TopicStreamThinking():
+            break;
+
+          case TopicStreamChunk(:final text):
+            final idx = _messages.indexWhere((m) => m.id == placeholderId);
+            if (idx != -1) {
+              _messages[idx] = _messages[idx].copyWith(
+                content: _messages[idx].content + text,
+              );
+              notifyListeners();
+            }
+
+          case TopicStreamDone(:final response):
+            receivedDone = true;
+            final idx = _messages.indexWhere((m) => m.id == placeholderId);
+            if (idx != -1) {
+              _messages[idx] = TopicChatMessage(
+                id: response.messageId,
+                sessionId: sessionId,
+                content: response.response,
+                isUser: false,
+                timestamp: DateTime.now(),
+                hints: response.educationalHints,
+                llmMetadata: response.llmMetadata,
+              );
+            }
+
+          case TopicStreamError(:final error):
+            debugPrint('[StoryProvider] stream error event: $error');
+            await _retryMessageWithoutStreaming(
+              message: message,
+              userId: userId,
+              requestId: requestId,
+              placeholderId: placeholderId,
+              reason: error,
+            );
+            return _sessionError == null;
+        }
+      }
+
+      if (!receivedDone) {
+        final idx = _messages.indexWhere((m) => m.id == placeholderId);
+        final partial = idx == -1 ? '' : _messages[idx].content.trim();
+        if (partial.isEmpty) {
+          await _retryMessageWithoutStreaming(
+            message: message,
+            userId: userId,
+            requestId: requestId,
+            placeholderId: placeholderId,
+            reason: 'stream closed before sending a response',
+          );
+          return _sessionError == null;
+        }
+        // Partial content already visible — the server may have finished
+        // and persisted on its side, so don't retry (would risk a
+        // duplicated turn). Keep what streamed in and stop the spinner.
+        debugPrint('[StoryProvider] stream closed without done; kept partial content');
+      }
+    } catch (e) {
+      debugPrint('[StoryProvider] sendMessageStreaming exception: $e');
+      await _retryMessageWithoutStreaming(
+        message: message,
+        userId: userId,
+        requestId: requestId,
+        placeholderId: placeholderId,
+        reason: e.toString(),
+      );
+      return _sessionError == null;
+    }
+
+    _isSendingMessage = false;
+    notifyListeners();
+    return true;
+  }
+
+  bool _isUnauthorizedError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('unauthorized') || normalized.contains('401');
+  }
+
+  Future<void> _retryMessageWithoutStreaming({
+    required String message,
+    required String userId,
+    required String requestId,
+    required String placeholderId,
+    required String reason,
+  }) async {
+    debugPrint('[StoryProvider] retrying without streaming: $reason');
+    _messages.removeWhere((m) => m.id == requestId || m.id == placeholderId);
+    _isSendingMessage = false;
+
+    if (_isUnauthorizedError(reason)) {
+      _sessionError = 'Your login session expired. Please sign in again.';
+      notifyListeners();
+      return;
+    }
+
+    notifyListeners();
+    await sendMessage(userId: userId, message: message);
   }
 
   /// Load existing session messages

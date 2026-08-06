@@ -1,9 +1,7 @@
 import React, { useState } from "react";
 import {
-  createCourse,
-  createUnit,
-  createLesson,
-  type CourseItem,
+  bulkImportCourses,
+  extractPdfText,
 } from "../lib/adminApi";
 
 type ImportTab = "text" | "json" | "csv";
@@ -233,81 +231,42 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-// Import courses via API
+// Import courses via the single-transaction bulk-import endpoint (one
+// request for the whole batch, instead of N+1 createCourse/createUnit/
+// createLesson calls — faster and no partial-import garbage on network
+// errors mid-batch).
 async function importCoursesToAPI(courses: any[]): Promise<ImportResult> {
-  const result: ImportResult = { courses: 0, units: 0, lessons: 0, errors: [] };
+  const payload = courses.map((courseData) => ({
+    title: courseData.title,
+    description: courseData.description || "",
+    language: courseData.language || "en",
+    level: courseData.level || "A1",
+    tags: courseData.tags || [],
+    thumbnail_url: courseData.thumbnail_url || "",
+    is_published: courseData.is_published || false,
+    units: (courseData.units || []).map((unitData: any) => ({
+      title: unitData.title,
+      description: unitData.description || "",
+      background_color: unitData.background_color || undefined,
+      icon_url: unitData.icon_url || undefined,
+      lessons: (unitData.lessons || []).map((lessonData: any) => ({
+        title: lessonData.title,
+        description: lessonData.description || "",
+        lesson_type: lessonData.lesson_type || "lesson",
+        xp_reward: lessonData.xp_reward || 10,
+        pass_threshold: lessonData.pass_threshold || 80,
+      })),
+    })),
+  }));
 
-  for (const courseData of courses) {
-    try {
-      const res = await createCourse({
-        title: courseData.title,
-        description: courseData.description || "",
-        language: courseData.language || "en",
-        level: courseData.level || "A1",
-        tags: courseData.tags || [],
-        thumbnail_url: courseData.thumbnail_url || "",
-        is_published: courseData.is_published || false,
-      });
-
-      const courseId = res.data?.id;
-      if (!courseId) {
-        result.errors.push(`Tạo khóa học "${courseData.title}" thất bại`);
-        continue;
-      }
-      result.courses++;
-
-      // Create units
-      if (courseData.units) {
-        for (let ui = 0; ui < courseData.units.length; ui++) {
-          const unitData = courseData.units[ui];
-          try {
-            const unitRes = await createUnit({
-              course_id: courseId,
-              title: unitData.title,
-              description: unitData.description || "",
-              order_index: ui + 1,
-              background_color: unitData.background_color || "",
-              icon_url: unitData.icon_url || "",
-            });
-
-            const unitId = unitRes.data?.id;
-            if (!unitId) {
-              result.errors.push(`Tạo chương "${unitData.title}" thất bại`);
-              continue;
-            }
-            result.units++;
-
-            // Create lessons
-            if (unitData.lessons) {
-              for (let li = 0; li < unitData.lessons.length; li++) {
-                const lessonData = unitData.lessons[li];
-                try {
-                  await createLesson({
-                    unit_id: unitId,
-                    title: lessonData.title,
-                    description: lessonData.description || "",
-                    order_index: li + 1,
-                    lesson_type: lessonData.lesson_type || "lesson",
-                    xp_reward: lessonData.xp_reward || 10,
-                    pass_threshold: lessonData.pass_threshold || 80,
-                  });
-                  result.lessons++;
-                } catch (err: any) {
-                  result.errors.push(`Bài học "${lessonData.title}": ${err?.message || "lỗi"}`);
-                }
-              }
-            }
-          } catch (err: any) {
-            result.errors.push(`Chương "${unitData.title}": ${err?.message || "lỗi"}`);
-          }
-        }
-      }
-    } catch (err: any) {
-      result.errors.push(`Khóa học "${courseData.title}": ${err?.message || "lỗi"}`);
-    }
-  }
-
-  return result;
+  const res = await bulkImportCourses(payload);
+  const data = res.data;
+  return {
+    courses: data?.courses ?? 0,
+    units: data?.units ?? 0,
+    lessons: data?.lessons ?? 0,
+    errors: data?.errors ?? [],
+  };
 }
 
 export const CourseImportModal = ({
@@ -363,9 +322,27 @@ export const CourseImportModal = ({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext === "pdf") {
+      try {
+        const response = await extractPdfText(file);
+        setTextInput(response.data?.text ?? "");
+        setTab("text");
+        setParseError(null);
+        setPreview(null);
+        setResult(null);
+      } catch (err: any) {
+        setParseError(err?.message || "Không thể trích xuất nội dung PDF");
+        setTextInput("");
+        setPreview(null);
+        setResult(null);
+      }
+      return;
+    }
 
     const reader = new FileReader();
     reader.onload = (ev) => {
@@ -373,7 +350,6 @@ export const CourseImportModal = ({
       setTextInput(content);
 
       // Auto-detect format
-      const ext = file.name.split(".").pop()?.toLowerCase();
       if (ext === "json") setTab("json");
       else if (ext === "csv") setTab("csv");
       else setTab("text");
@@ -421,11 +397,11 @@ export const CourseImportModal = ({
         <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
           <label className="ghost-button small" style={{ cursor: "pointer" }}>
             Tải file lên
-            <input type="file" accept=".txt,.md,.json,.csv,.xlsx" onChange={handleFileUpload} style={{ display: "none" }} />
+            <input type="file" accept=".txt,.md,.json,.csv,.pdf" onChange={handleFileUpload} style={{ display: "none" }} />
           </label>
           <button className="ghost-button small" onClick={loadSample}>Xem mẫu</button>
           <span style={{ fontSize: 12, color: "var(--muted)" }}>
-            Hỗ trợ: .txt, .md, .json, .csv
+            Hỗ trợ: .txt, .md, .json, .csv, .pdf
           </span>
         </div>
 

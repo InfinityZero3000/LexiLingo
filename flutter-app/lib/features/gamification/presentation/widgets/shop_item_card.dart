@@ -89,7 +89,7 @@ class ShopItemCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: item.isOutOfStock
-                              ? Colors.red.withValues(alpha: 0.9)
+                              ? AppColors.errorBright.withValues(alpha: 0.9)
                               : AppColors.orange.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -169,7 +169,7 @@ class ShopItemCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       item.description,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 11, color: AppColors.grey600),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -221,6 +221,8 @@ class ShopItemCard extends StatelessWidget {
                             ? onPurchase
                             : null,
                         child: Container(
+                          constraints: const BoxConstraints(minHeight: 44),
+                          alignment: Alignment.center,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
                             vertical: 6,
@@ -228,7 +230,7 @@ class ShopItemCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: canAfford && !item.isOutOfStock && !isOwned
                                 ? AppColors.greenSuccessBright
-                                : Colors.grey[300],
+                                : AppColors.grey300,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: isLoading
@@ -250,8 +252,8 @@ class ShopItemCard extends StatelessWidget {
                                         canAfford &&
                                             !item.isOutOfStock &&
                                             !isOwned
-                                        ? Colors.white
-                                        : Colors.grey[600],
+                                        ? AppColors.surfaceLight
+                                        : AppColors.grey600,
                                   ),
                                 ),
                         ),
@@ -338,7 +340,11 @@ class ShopItemCard extends StatelessWidget {
       ),
       child: Center(
         child: gameIcon != null
-            ? AppGameIcon(gameIcon, size: 32, fallbackColor: AppColors.surfaceLight)
+            ? AppGameIcon(
+                gameIcon,
+                size: 32,
+                fallbackColor: AppColors.surfaceLight,
+              )
             : Icon(icon, color: AppColors.surfaceLight, size: 32),
       ),
     );
@@ -356,7 +362,7 @@ class ShopItemCard extends StatelessWidget {
       case ShopItemEntity.categorySpecial:
         return AppColors.purple; // Purple
       default:
-        return const Color(0xFF6B7280); // Gray
+        return AppColors.grey500;
     }
   }
 }

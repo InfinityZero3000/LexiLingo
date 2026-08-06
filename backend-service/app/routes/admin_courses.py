@@ -1,9 +1,14 @@
 """Admin routes — courses, units, lessons, vocabulary, grammar, questions, test exams."""
+import csv
+import io
+import json
 from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
-from sqlalchemy import select, func, desc
+from pydantic import BaseModel, Field
+from pypdf import PdfReader
+from sqlalchemy import select, func, desc, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -29,6 +34,11 @@ from app.schemas.content import (
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 require_admin = get_current_admin
+
+
+def _extract_pdf_text(content: bytes) -> str:
+    return "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(content)).pages)
+
 
 @router.get("/courses", response_model=ApiResponse[dict])
 async def list_courses_admin(
@@ -196,6 +206,123 @@ async def delete_course(
         success=True,
         message="Course deleted successfully",
         data={"deleted": True, "course_id": str(course_id)}
+    )
+
+
+class _LessonBulkImportItem(BaseModel):
+    title: str
+    description: Optional[str] = None
+    lesson_type: str = "lesson"
+    xp_reward: int = Field(default=10, ge=0)
+    pass_threshold: int = Field(default=80, ge=0, le=100)
+
+
+class _UnitBulkImportItem(BaseModel):
+    title: str
+    description: Optional[str] = None
+    background_color: Optional[str] = None
+    icon_url: Optional[str] = None
+    lessons: List[_LessonBulkImportItem] = Field(default_factory=list)
+
+
+class _CourseBulkImportItem(BaseModel):
+    title: str
+    description: Optional[str] = None
+    language: str = "en"
+    level: str = "A1"
+    tags: List[str] = Field(default_factory=list)
+    thumbnail_url: Optional[str] = None
+    is_published: bool = False
+    units: List[_UnitBulkImportItem] = Field(default_factory=list)
+
+
+class CourseBulkImportRequest(BaseModel):
+    courses: List[_CourseBulkImportItem]
+
+
+@router.post("/courses/bulk-import", response_model=ApiResponse[dict])
+async def bulk_import_courses(
+    payload: CourseBulkImportRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+) -> ApiResponse[dict]:
+    """
+    Bulk import courses with nested units/lessons — one DB round trip per
+    course instead of the old N+1 client-side loop (createCourse then
+    createUnit then createLesson per item). Each course is wrapped in its
+    own savepoint so one bad course doesn't roll back the others already
+    imported in the same request.
+    """
+    created_courses = 0
+    created_units = 0
+    created_lessons = 0
+    errors: list[str] = []
+
+    for course_data in payload.courses:
+        try:
+            async with db.begin_nested():
+                course = Course(
+                    title=course_data.title,
+                    description=course_data.description,
+                    language=course_data.language,
+                    level=course_data.level,
+                    tags=course_data.tags,
+                    thumbnail_url=course_data.thumbnail_url,
+                    is_published=course_data.is_published,
+                )
+                db.add(course)
+                await db.flush()
+
+                course_total_xp = 0
+                course_total_lessons = 0
+
+                for unit_index, unit_data in enumerate(course_data.units):
+                    unit = Unit(
+                        course_id=course.id,
+                        title=unit_data.title,
+                        description=unit_data.description,
+                        order_index=unit_index,
+                        background_color=unit_data.background_color,
+                        icon_url=unit_data.icon_url,
+                        total_lessons=len(unit_data.lessons),
+                    )
+                    db.add(unit)
+                    await db.flush()
+
+                    for lesson_index, lesson_data in enumerate(unit_data.lessons):
+                        db.add(Lesson(
+                            course_id=course.id,
+                            unit_id=unit.id,
+                            title=lesson_data.title,
+                            description=lesson_data.description,
+                            order_index=lesson_index,
+                            lesson_type=lesson_data.lesson_type,
+                            xp_reward=lesson_data.xp_reward,
+                            pass_threshold=lesson_data.pass_threshold,
+                        ))
+                        course_total_xp += lesson_data.xp_reward
+                        course_total_lessons += 1
+
+                    created_units += 1
+                    created_lessons += len(unit_data.lessons)
+
+                course.total_lessons = course_total_lessons
+                course.total_xp = course_total_xp
+            created_courses += 1
+        except Exception as e:
+            errors.append(f'Course "{course_data.title}": {str(e)}')
+
+    await db.commit()
+
+    return ApiResponse(
+        success=True,
+        message=f"Imported {created_courses} courses, {created_units} units, {created_lessons} lessons",
+        data={
+            "courses": created_courses,
+            "units": created_units,
+            "lessons": created_lessons,
+            "errors": errors[:10],
+        }
     )
 
 
@@ -586,24 +713,27 @@ async def bulk_import_vocabulary(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
-):
+) -> ApiResponse[dict]:
     """
-    Bulk import vocabulary from CSV file.
+    Bulk import vocabulary from CSV or PDF containing CSV-formatted text.
     
     CSV format: word,definition,translation,part_of_speech,pronunciation,difficulty_level
     First row must be headers.
     """
-    import csv
-    import io
-    
-    if not file.filename or not file.filename.endswith(".csv"):
-        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    if not file.filename or not file.filename.lower().endswith((".csv", ".pdf")):
+        raise HTTPException(status_code=400, detail="Only CSV and PDF files are supported")
     
     # Limit CSV file size to 10MB to prevent memory exhaustion
     content = await file.read()
     if len(content) > 10 * 1024 * 1024:
         raise HTTPException(status_code=413, detail="File too large. Maximum 10MB allowed.")
-    text = content.decode("utf-8-sig")  # Handle BOM
+    if file.filename.lower().endswith(".pdf"):
+        try:
+            text = _extract_pdf_text(content)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Invalid PDF file") from exc
+    else:
+        text = content.decode("utf-8-sig")  # Handle BOM
     reader = csv.DictReader(io.StringIO(text))
     
     created = 0
@@ -652,6 +782,27 @@ async def bulk_import_vocabulary(
             "errors": errors[:10],  # Limit error list
         }
     )
+
+
+@router.post("/import/extract-pdf-text", response_model=ApiResponse[dict])
+async def extract_pdf_text(
+    file: UploadFile = File(...),
+    admin_user: User = Depends(require_admin),
+) -> ApiResponse[dict]:
+    """Extract text from a PDF for the existing course text parser."""
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum 10MB allowed.")
+
+    try:
+        text = _extract_pdf_text(content)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Invalid PDF file") from exc
+
+    return ApiResponse(success=True, message="PDF text extracted", data={"text": text})
 
 
 # ============================================================================
@@ -793,6 +944,76 @@ async def delete_grammar_admin(
     return ApiResponse(success=True, message="Grammar deleted", data={"deleted": True, "grammar_id": str(grammar_id)})
 
 
+@router.post("/grammar/bulk-import", response_model=ApiResponse[dict])
+async def bulk_import_grammar(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+) -> ApiResponse[dict]:
+    """
+    Bulk import grammar rules from CSV or PDF containing CSV-formatted text.
+
+    CSV format: title,level,topic,summary,content,tags
+    tags is a ';'-separated list. First row must be headers.
+    """
+    if not file.filename or not file.filename.lower().endswith((".csv", ".pdf")):
+        raise HTTPException(status_code=400, detail="Only CSV and PDF files are supported")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum 10MB allowed.")
+    if file.filename.lower().endswith(".pdf"):
+        try:
+            text = _extract_pdf_text(content)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Invalid PDF file") from exc
+    else:
+        text = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+
+    created = 0
+    skipped = 0
+    errors = []
+
+    for row_num, row in enumerate(reader, start=2):
+        title = (row.get("title") or "").strip()
+        content_text = (row.get("content") or "").strip()
+
+        if not title or not content_text:
+            skipped += 1
+            continue
+
+        existing = await db.scalar(
+            select(func.count()).where(GrammarItem.title == title)
+        )
+        if existing:
+            skipped += 1
+            continue
+
+        try:
+            tags = [t.strip() for t in (row.get("tags") or "").split(";") if t.strip()]
+            item = GrammarItem(
+                title=title,
+                level=(row.get("level") or "A1").strip() or "A1",
+                topic=(row.get("topic") or "").strip() or None,
+                summary=(row.get("summary") or "").strip() or None,
+                content=content_text,
+                tags=tags or None,
+            )
+            db.add(item)
+            created += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+
+    await db.commit()
+
+    return ApiResponse(
+        success=True,
+        message=f"Imported {created} grammar rules, skipped {skipped} duplicates/blank rows",
+        data={"created": created, "skipped": skipped, "errors": errors[:10]}
+    )
+
+
 # ============================================================================
 # Question Bank Admin CRUD
 # ============================================================================
@@ -871,6 +1092,71 @@ async def delete_question_admin(
     await db.delete(item)
     await db.commit()
     return ApiResponse(success=True, message="Question deleted", data={"deleted": True, "question_id": str(question_id)})
+
+
+@router.post("/questions/bulk-import", response_model=ApiResponse[dict])
+async def bulk_import_questions(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+) -> ApiResponse[dict]:
+    """
+    Bulk import questions from CSV or PDF containing CSV-formatted text.
+
+    CSV format: prompt,question_type,difficulty_level,options,answer,explanation,tags
+    options/answer are JSON (quote the cell, e.g. "[""A"",""B""]"). tags is ';'-separated.
+    First row must be headers.
+    """
+    if not file.filename or not file.filename.lower().endswith((".csv", ".pdf")):
+        raise HTTPException(status_code=400, detail="Only CSV and PDF files are supported")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum 10MB allowed.")
+    if file.filename.lower().endswith(".pdf"):
+        try:
+            text = _extract_pdf_text(content)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Invalid PDF file") from exc
+    else:
+        text = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+
+    created = 0
+    skipped = 0
+    errors = []
+
+    for row_num, row in enumerate(reader, start=2):
+        prompt = (row.get("prompt") or "").strip()
+        if not prompt:
+            skipped += 1
+            continue
+
+        try:
+            options_raw = (row.get("options") or "").strip()
+            answer_raw = (row.get("answer") or "").strip()
+            tags = [t.strip() for t in (row.get("tags") or "").split(";") if t.strip()]
+            item = QuestionItem(
+                prompt=prompt,
+                question_type=(row.get("question_type") or "mcq").strip() or "mcq",
+                difficulty_level=(row.get("difficulty_level") or "A1").strip() or "A1",
+                options=json.loads(options_raw) if options_raw else None,
+                answer=json.loads(answer_raw) if answer_raw else None,
+                explanation=(row.get("explanation") or "").strip() or None,
+                tags=tags or None,
+            )
+            db.add(item)
+            created += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+
+    await db.commit()
+
+    return ApiResponse(
+        success=True,
+        message=f"Imported {created} questions, skipped {skipped} blank rows",
+        data={"created": created, "skipped": skipped, "errors": errors[:10]}
+    )
 
 
 # ============================================================================
@@ -954,3 +1240,71 @@ async def delete_test_exam_admin(
     return ApiResponse(success=True, message="Test exam deleted", data={"deleted": True, "test_exam_id": str(test_exam_id)})
 
 
+@router.post("/test-exams/bulk-import", response_model=ApiResponse[dict])
+async def bulk_import_test_exams(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin)
+) -> ApiResponse[dict]:
+    """
+    Bulk import test exams from CSV or PDF containing CSV-formatted text.
+
+    CSV format: title,description,level,duration_minutes,passing_score,question_ids,is_published
+    question_ids is a ';'-separated list of question UUIDs. First row must be headers.
+    """
+    if not file.filename or not file.filename.lower().endswith((".csv", ".pdf")):
+        raise HTTPException(status_code=400, detail="Only CSV and PDF files are supported")
+
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large. Maximum 10MB allowed.")
+    if file.filename.lower().endswith(".pdf"):
+        try:
+            text = _extract_pdf_text(content)
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Invalid PDF file") from exc
+    else:
+        text = content.decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(text))
+
+    created = 0
+    skipped = 0
+    errors = []
+
+    for row_num, row in enumerate(reader, start=2):
+        title = (row.get("title") or "").strip()
+        if not title:
+            skipped += 1
+            continue
+
+        existing = await db.scalar(
+            select(func.count()).where(TestExam.title == title)
+        )
+        if existing:
+            skipped += 1
+            continue
+
+        try:
+            question_ids = [q.strip() for q in (row.get("question_ids") or "").split(";") if q.strip()]
+            published_raw = (row.get("is_published") or "").strip().lower()
+            item = TestExam(
+                title=title,
+                description=(row.get("description") or "").strip() or None,
+                level=(row.get("level") or "A1").strip() or "A1",
+                duration_minutes=int(row.get("duration_minutes") or 20),
+                passing_score=int(row.get("passing_score") or 70),
+                question_ids=question_ids or None,
+                is_published=published_raw in ("true", "1", "yes", "có"),
+            )
+            db.add(item)
+            created += 1
+        except Exception as e:
+            errors.append(f"Row {row_num}: {str(e)}")
+
+    await db.commit()
+
+    return ApiResponse(
+        success=True,
+        message=f"Imported {created} test exams, skipped {skipped} duplicates/blank rows",
+        data={"created": created, "skipped": skipped, "errors": errors[:10]}
+    )

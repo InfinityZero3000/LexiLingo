@@ -570,6 +570,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               'animation/Confetti.json',
               fit: BoxFit.cover,
               repeat: false,
+              renderCache: RenderCache.raster,
             ),
           ),
         ),

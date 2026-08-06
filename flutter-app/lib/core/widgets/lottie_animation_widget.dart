@@ -171,7 +171,8 @@ class LottieAnimationWidget extends StatelessWidget {
       reverse: reverse,
       controller: controller,
       onLoaded: onLoaded,
-      frameRate: FrameRate.max,
+      frameRate: const FrameRate(60),
+      renderCache: RenderCache.raster,
       errorBuilder: (context, error, stackTrace) {
         final sz = Size(width ?? 80, height ?? 80);
         Widget fallback;
@@ -348,6 +349,7 @@ class _StarBurstOverlayState extends State<StarBurstOverlay> {
                   width: 200,
                   height: 200,
                   repeat: false,
+                  renderCache: RenderCache.raster,
                 ),
               ),
             ),

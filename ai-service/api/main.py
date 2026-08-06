@@ -243,6 +243,24 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Failed to initialize gateway: {e}")
 
+    # Warm the TraceCAG orchestrator (KG open + LangGraph compile) and
+    # preload the CRITICAL/preload=True models (Qwen) here, at deploy time.
+    # Without this, both only run lazily on the first /chat/messages or
+    # /health request, which used to make the first real user pay the
+    # multi-second KG/model cold-start cost inside their chat request.
+    try:
+        from api.services.orchestrator import get_orchestrator
+
+        await asyncio.wait_for(
+            asyncio.gather(get_orchestrator(), _run_model_warmup()),
+            timeout=45.0,
+        )
+        logger.info(" AIOrchestrator + models warmed (KG + TraceCAG pipeline + Qwen)")
+    except Exception as e:
+        logger.warning(
+            f"Startup warmup incomplete (KG/pipeline/models); will lazy-init on first request: {e}"
+        )
+
     try:
         from api.services.stt.runtime import start_stt_runtime
 

@@ -328,22 +328,25 @@ class CourseProvider with ChangeNotifier {
     }
     notifyListeners();
 
-    final result = await getCourseDetailUseCase(courseId);
+    try {
+      final result = await getCourseDetailUseCase(courseId);
 
-    result.fold(
-      (failure) {
-        _detailError = _getErrorMessage(failure);
-        _isLoadingDetail = false;
-        notifyListeners();
-      },
-      (detail) {
-        _courseDetail = detail;
-        _detailCache[courseId] = detail;
-        _detailError = null;
-        _isLoadingDetail = false;
-        notifyListeners();
-      },
-    );
+      result.fold(
+        (failure) {
+          _detailError = _getErrorMessage(failure);
+        },
+        (detail) {
+          _courseDetail = detail;
+          _detailCache[courseId] = detail;
+          _detailError = null;
+        },
+      );
+    } catch (e) {
+      _detailError = e.toString();
+    } finally {
+      _isLoadingDetail = false;
+      notifyListeners();
+    }
   }
 
   /// Enroll in a course

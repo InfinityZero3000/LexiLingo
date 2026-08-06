@@ -31,7 +31,12 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
 
   Future<void> _loadEntries() async {
     setState(() => _isLoading = true);
-    final entries = await widget.repository.getEntries();
+    var entries = _entries;
+    try {
+      entries = await widget.repository.getEntries();
+    } catch (_) {
+      entries = const [];
+    }
     if (!mounted) return;
     setState(() {
       _entries = entries;

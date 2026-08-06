@@ -235,7 +235,20 @@ class UnitCRUD:
         db_unit = await UnitCRUD.get_unit(db, unit_id)
         if not db_unit:
             return False
-        
+
+        course = await CourseCRUD.get_course(db, db_unit.course_id)
+        if course is not None:
+            xp_result = await db.execute(
+                select(func.coalesce(func.sum(Lesson.xp_reward), 0)).where(
+                    Lesson.unit_id == unit_id
+                )
+            )
+            unit_xp = xp_result.scalar() or 0
+            course.total_lessons = max(
+                (course.total_lessons or 0) - (db_unit.total_lessons or 0), 0
+            )
+            course.total_xp = max((course.total_xp or 0) - unit_xp, 0)
+
         await db.delete(db_unit)
         await db.commit()
         return True
@@ -274,10 +287,11 @@ class LessonCRUD:
         """Create a new lesson."""
         lesson_dict = lesson.model_dump()
         prerequisites = lesson_dict.pop('prerequisites', [])
-        
+
         # Lesson model requires course_id (NOT NULL), but LessonCreate only has unit_id
         # So we need to get the course_id from the unit
         unit_id = lesson_dict.get('unit_id')
+        unit = None
         if unit_id:
             from sqlalchemy import select
             from app.models.course import Unit as UnitModel
@@ -285,12 +299,23 @@ class LessonCRUD:
             unit = result.scalar_one_or_none()
             if unit:
                 lesson_dict['course_id'] = unit.course_id
-        
+
         db_lesson = Lesson(**lesson_dict)
         if prerequisites:
             db_lesson.prerequisites = prerequisites
-        
+
         db.add(db_lesson)
+
+        # Keep Unit.total_lessons / Course.total_lessons+total_xp in sync —
+        # the admin wizard (unlike seed/content-agent) never touched these,
+        # so lists kept showing "0 lessons" for lessons that saved fine.
+        if unit is not None:
+            unit.total_lessons = (unit.total_lessons or 0) + 1
+            course = await CourseCRUD.get_course(db, unit.course_id)
+            if course is not None:
+                course.total_lessons = (course.total_lessons or 0) + 1
+                course.total_xp = (course.total_xp or 0) + (db_lesson.xp_reward or 0)
+
         await db.commit()
         await db.refresh(db_lesson)
         return db_lesson
@@ -305,22 +330,38 @@ class LessonCRUD:
         db_lesson = await LessonCRUD.get_lesson(db, lesson_id)
         if not db_lesson:
             return None
-        
+
         update_data = lesson_update.model_dump(exclude_unset=True)
+        xp_delta = 0
+        if "xp_reward" in update_data:
+            xp_delta = (update_data["xp_reward"] or 0) - (db_lesson.xp_reward or 0)
         for field, value in update_data.items():
             setattr(db_lesson, field, value)
-        
+
+        if xp_delta:
+            course = await CourseCRUD.get_course(db, db_lesson.course_id)
+            if course is not None:
+                course.total_xp = (course.total_xp or 0) + xp_delta
+
         await db.commit()
         await db.refresh(db_lesson)
         return db_lesson
-    
+
     @staticmethod
     async def delete_lesson(db: AsyncSession, lesson_id: uuid.UUID) -> bool:
         """Delete a lesson."""
         db_lesson = await LessonCRUD.get_lesson(db, lesson_id)
         if not db_lesson:
             return False
-        
+
+        unit = await UnitCRUD.get_unit(db, db_lesson.unit_id)
+        if unit is not None:
+            unit.total_lessons = max((unit.total_lessons or 0) - 1, 0)
+        course = await CourseCRUD.get_course(db, db_lesson.course_id)
+        if course is not None:
+            course.total_lessons = max((course.total_lessons or 0) - 1, 0)
+            course.total_xp = max((course.total_xp or 0) - (db_lesson.xp_reward or 0), 0)
+
         await db.delete(db_lesson)
         await db.commit()
         return True
