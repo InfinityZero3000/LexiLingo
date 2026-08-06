@@ -38,6 +38,7 @@ async def test_lifespan_continues_when_redis_unavailable(monkeypatch: pytest.Mon
 
     ai_main = importlib.import_module("api.main")
     import api.services.tts_service as tts_service
+    import api.services.orchestrator as orchestrator_module
 
     timeouts = []
     real_wait_for = ai_main.asyncio.wait_for
@@ -47,6 +48,11 @@ async def test_lifespan_continues_when_redis_unavailable(monkeypatch: pytest.Mon
         return await real_wait_for(awaitable, timeout)
 
     monkeypatch.setattr(ai_main.asyncio, "wait_for", wait_for)
+    monkeypatch.setattr(
+        orchestrator_module,
+        "get_orchestrator",
+        AsyncMock(return_value=MagicMock()),
+    )
     warmup = MagicMock(side_effect=RuntimeError("piper unavailable"))
     monkeypatch.setattr(
         tts_service,
@@ -73,7 +79,7 @@ async def test_lifespan_continues_when_redis_unavailable(monkeypatch: pytest.Mon
     ai_main.mongodb_manager.disconnect.assert_awaited_once()
     http_client.aclose.assert_awaited_once()
     warmup.assert_called_once_with()
-    assert timeouts == [20.0]
+    assert timeouts == [45.0, 20.0]
 
 
 @pytest.mark.asyncio
