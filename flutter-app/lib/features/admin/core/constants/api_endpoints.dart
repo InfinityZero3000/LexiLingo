@@ -24,10 +24,12 @@ class ApiEndpoints {
   static const String adminLessons = '/admin/lessons';
   static const String adminVocabulary = '/admin/vocabulary';
   static const String adminGrammar = '/admin/grammar';
+  static const String adminQuestions = '/admin/questions';
   static const String adminUsers = '/admin/users';
   static const String adminAchievements = '/admin/achievements';
   static const String adminShop = '/admin/shop';
   static const String adminTestExams = '/admin/test-exams';
+  static const String systemInfo = '/admin/system-info';
 
   // Monitoring — raw JSON (no ApiResponse wrapper)
   static const String monitoringSystem = '/admin/monitoring/system';

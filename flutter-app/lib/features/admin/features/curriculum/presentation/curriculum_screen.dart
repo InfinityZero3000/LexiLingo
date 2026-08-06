@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/curriculum_repository.dart';
 
 class CurriculumScreen extends StatefulWidget {
@@ -18,6 +19,8 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
   bool _loading = true;
   String? _error;
   final _searchCtrl = TextEditingController();
+  String? _level;
+  bool? _published;
 
   @override
   void initState() {
@@ -34,18 +37,67 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
   Future<void> _load([String? search]) async {
     setState(() { _loading = true; _error = null; });
     try {
-      final courses = await _repo.getCourses(search: search);
-      if (mounted) setState(() { _courses = courses; _loading = false; });
+      final courses = await _repo.getCourses(search: search, level: _level, isPublished: _published);
+      if (mounted) {
+        setState(() {
+          _courses = courses;
+          _loading = false;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() { _loading = false; _error = 'Không thể tải danh sách courses.'; });
     }
+  }
+
+  Future<void> _edit([Course? course]) async {
+    final title = TextEditingController(text: course?.title);
+    final description = TextEditingController(text: course?.description);
+    final language = TextEditingController(text: course?.language ?? 'en');
+    final tags = TextEditingController(text: course?.tags.join(', '));
+    final thumbnail = TextEditingController(text: course?.thumbnailUrl);
+    var level = course?.level ?? 'A1';
+    var published = course?.isPublished ?? false;
+    final saved = await showDialog<bool>(context: context, builder: (context) => StatefulBuilder(
+      builder: (context, setDialogState) => AlertDialog(
+        title: Text(course == null ? 'Create course' : 'Edit course'),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: title, autofocus: true, decoration: const InputDecoration(labelText: 'Title *')),
+          TextField(controller: description, maxLines: 3, decoration: const InputDecoration(labelText: 'Description')),
+          TextField(controller: language, decoration: const InputDecoration(labelText: 'Language *')),
+          TextField(controller: tags, decoration: const InputDecoration(labelText: 'Tags (comma separated)')),
+          TextField(controller: thumbnail, decoration: const InputDecoration(labelText: 'Thumbnail URL')),
+          DropdownButtonFormField<String>(initialValue: level, decoration: const InputDecoration(labelText: 'Level'),
+            items: ['A1','A2','B1','B2','C1','C2'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+            onChanged: (v) => level = v!),
+          SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Published'), value: published,
+            onChanged: (v) => setDialogState(() => published = v)),
+        ])),
+        actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, title.text.trim().isNotEmpty), child: const Text('Save'))],
+      ),
+    ));
+    if (saved != true) return;
+    final data = {'title': title.text.trim(), 'description': description.text.trim(), 'language': language.text.trim(), 'level': level, 'tags': tags.text.split(',').map((v) => v.trim()).where((v) => v.isNotEmpty).toList(), 'thumbnail_url': thumbnail.text.trim(), 'is_published': published};
+    try {
+      if (course == null) { await _repo.createCourse(data); } else { await _repo.updateCourse(course.id, data); }
+      await _load(_searchCtrl.text.trim());
+    } catch (_) { if (mounted) setState(() => _error = 'Could not save course.'); }
+  }
+
+  Future<void> _delete(Course course) async {
+    final ok = await showDialog<bool>(context: context, builder: (context) => AlertDialog(title: const Text('Delete course?'),
+      content: Text('Delete “${course.title}”?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+      FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete'))]));
+    if (ok != true) return;
+    try { await _repo.deleteCourse(course.id); await _load(_searchCtrl.text.trim()); }
+    catch (_) { if (mounted) setState(() => _error = 'Could not delete course.'); }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
+      body: RefreshIndicator(onRefresh: () => _load(_searchCtrl.text.trim()), child: CustomScrollView(
         slivers: [
           SliverAppBar(
             pinned: true,
@@ -111,64 +163,23 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       fontSize: 13, color: AppColors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 20),
-                // Stats row
                 Row(children: [
                   Expanded(
                     child: _SmallStat(
-                      label: 'TOTAL LEARNERS',
-                      value: '1.2M',
-                      change: '+12.4% MoM',
-                      icon: Icons.trending_up,
+                      label: 'COURSES SHOWN',
+                      value: '${_courses.length}',
+                      icon: Icons.menu_book_outlined,
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _SmallStat(
-                      label: 'ACTIVE LANGUAGES',
-                      value: '24',
-                      icon: Icons.translate,
+                      label: 'PUBLISHED',
+                      value: '${_courses.where((c) => c.isPublished).length}',
+                      icon: Icons.public,
                     ),
                   ),
                 ]),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.navy,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryBright,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.rocket_launch, color: Colors.white, size: 20),
-                      ),
-                      const SizedBox(width: 14),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('COMPLETION RATE',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.08,
-                                  color: Colors.white38)),
-                          Text('98.2%',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                  letterSpacing: -0.03)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 20),
                 if (_error != null) ...[
                   Container(
@@ -200,7 +211,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: _edit,
                     icon: const Icon(Icons.add, size: 18),
                     label: Text(
                       '+ Create New Course',
@@ -215,14 +226,16 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                   decoration: InputDecoration(
                     hintText: 'Search courses...',
                     prefixIcon: const Icon(Icons.search, color: AppColors.onSurfaceMuted),
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.filter_list, color: AppColors.onSurfaceMuted),
-                      onPressed: () {},
-                    ),
+                    suffixIcon: IconButton(icon: const Icon(Icons.close, color: AppColors.onSurfaceMuted), onPressed: () { _searchCtrl.clear(); _load(); }),
                   ),
                   onSubmitted: _load,
                 ),
                 const SizedBox(height: 16),
+                Wrap(spacing: 8, children: [
+                  DropdownButton<String?>(value: _level, hint: const Text('All levels'), items: [const DropdownMenuItem(value: null, child: Text('All levels')), ...['A1','A2','B1','B2','C1','C2'].map((v) => DropdownMenuItem(value: v, child: Text(v)))], onChanged: (v) { setState(() => _level = v); _load(_searchCtrl.text.trim()); }),
+                  DropdownButton<bool?>(value: _published, hint: const Text('All statuses'), items: const [DropdownMenuItem(value: null, child: Text('All statuses')), DropdownMenuItem(value: true, child: Text('Published')), DropdownMenuItem(value: false, child: Text('Draft'))], onChanged: (v) { setState(() => _published = v); _load(_searchCtrl.text.trim()); }),
+                ]),
+                const SizedBox(height: 8),
                 Text(
                   'Top Performing Courses',
                   style: GoogleFonts.spaceGrotesk(
@@ -233,7 +246,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                 ),
                 const SizedBox(height: 12),
                 if (_loading)
-                  const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  const Column(children: [AdminSkeleton(height: 150), SizedBox(height: 12), AdminSkeleton(height: 150)])
                 else if (_courses.isEmpty)
                   Center(
                     child: Text('No courses found',
@@ -248,13 +261,16 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     itemBuilder: (_, i) => _CourseCard(
                       course: _courses[i],
                       onTap: () => context.push('/curriculum/course/${_courses[i].id}'),
+                      onEdit: () => _edit(_courses[i]),
+                      onDelete: () => _delete(_courses[i]),
+                      onPublish: () async { final c = _courses[i]; c.isPublished ? await _repo.unpublishCourse(c.id) : await _repo.publishCourse(c.id); await _load(_searchCtrl.text.trim()); },
                     ),
                   ),
               ]),
             ),
           ),
         ],
-      ),
+      )),
     );
   }
 }
@@ -262,13 +278,11 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
 class _SmallStat extends StatelessWidget {
   final String label;
   final String value;
-  final String? change;
   final IconData icon;
 
   const _SmallStat({
     required this.label,
     required this.value,
-    this.change,
     required this.icon,
   });
 
@@ -298,12 +312,6 @@ class _SmallStat extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.08,
                   color: AppColors.onSurfaceMuted)),
-          if (change != null)
-            Text(change!,
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.success)),
         ],
       ),
     );
@@ -313,8 +321,11 @@ class _SmallStat extends StatelessWidget {
 class _CourseCard extends StatelessWidget {
   final Course course;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final VoidCallback onPublish;
 
-  const _CourseCard({required this.course, required this.onTap});
+  const _CourseCard({required this.course, required this.onTap, required this.onEdit, required this.onDelete, required this.onPublish});
 
   @override
   Widget build(BuildContext context) {
@@ -364,6 +375,8 @@ class _CourseCard extends StatelessWidget {
                     children: [
                       _LevelBadge(level: course.level),
                       const Spacer(),
+                      PopupMenuButton<String>(onSelected: (v) { if (v == 'edit') onEdit(); if (v == 'publish') onPublish(); if (v == 'delete') onDelete(); },
+                        itemBuilder: (_) => [const PopupMenuItem(value: 'edit', child: Text('Edit')), PopupMenuItem(value: 'publish', child: Text(course.isPublished ? 'Unpublish' : 'Publish')), const PopupMenuItem(value: 'delete', child: Text('Delete'))]),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
@@ -419,7 +432,7 @@ class _CourseCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('85% PROGRESS',
+                            Text('${course.lessonCount} LESSONS · ${course.totalXp} XP',
                                 style: GoogleFonts.spaceGrotesk(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -427,12 +440,7 @@ class _CourseCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
-                              child: const LinearProgressIndicator(
-                                value: 0.85,
-                                backgroundColor: AppColors.surfaceContainerHigh,
-                                valueColor: AlwaysStoppedAnimation(AppColors.primary),
-                                minHeight: 5,
-                              ),
+                              child: LinearProgressIndicator(value: course.isPublished ? 1 : 0, backgroundColor: AppColors.surfaceContainerHigh, valueColor: const AlwaysStoppedAnimation(AppColors.primary), minHeight: 5),
                             ),
                           ],
                         ),
