@@ -5,6 +5,8 @@ import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/network/api_config.dart';
+import '../../../../core/network/sse_line_parser.dart';
+import '../../domain/entities/topic_stream_event.dart';
 import '../models/story_model.dart';
 import '../models/topic_session_model.dart';
 
@@ -187,6 +189,63 @@ class StoryApiDataSource {
     } catch (e) {
       logError(_tag, 'sendTopicMessage error: $e');
       rethrow;
+    }
+  }
+
+  /// Send a message and receive an SSE stream of events, mirroring
+  /// LexiChatDataSource.sendMessageStream. Yields:
+  ///   1. [TopicStreamThinking] — pipeline started
+  ///   2. [TopicStreamChunk]    — one word at a time (typewriter effect)
+  ///   3. [TopicStreamDone]     — full response with hints/metadata
+  ///   4. [TopicStreamError]    — on pipeline failure (may not follow thinking)
+  Stream<TopicStreamEvent> sendTopicMessageStream({
+    required String sessionId,
+    required String userId,
+    required String message,
+  }) async* {
+    logDebug(_tag, 'sendTopicMessageStream sessionId=$sessionId');
+    final body = {
+      'session_id': sessionId,
+      'user_id': userId,
+      'message': message,
+    };
+
+    final rawStream = apiClient.postStream(
+      '/topics/topic-sessions/$sessionId/messages/stream',
+      body: body,
+    );
+
+    await for (final sse in parseSseLines(rawStream)) {
+      switch (sse.event) {
+        case 'thinking':
+          yield const TopicStreamThinking();
+          break;
+        case 'chunk':
+          try {
+            final json = jsonDecode(sse.data) as Map<String, dynamic>;
+            final text = json['text'] as String? ?? '';
+            if (text.isNotEmpty) yield TopicStreamChunk(text);
+          } catch (_) {}
+          break;
+        case 'done':
+          try {
+            final json = jsonDecode(sse.data) as Map<String, dynamic>;
+            yield TopicStreamDone(TopicChatResponse.fromJson(json).toEntity());
+          } catch (e) {
+            logError(_tag, 'sendTopicMessageStream: failed to parse done event: $e');
+          }
+          break;
+        case 'error':
+          try {
+            final json = jsonDecode(sse.data) as Map<String, dynamic>;
+            yield TopicStreamError(json['error'] as String? ?? 'Unknown error');
+          } catch (_) {
+            yield const TopicStreamError('Stream error');
+          }
+          break;
+        default:
+          break;
+      }
     }
   }
 

@@ -14,7 +14,8 @@ import json
 import uuid
 import time
 import logging
-import re
+
+from fastapi.responses import StreamingResponse
 
 from api.utils.cursor import (
     build_pagination,
@@ -54,6 +55,8 @@ from api.services.topic_chat_service import (
     call_tracecag_with_retry,
     persist_topic_turn,
     resolve_kg_seeds,
+    sanitize_topic_response,
+    stream_tracecag_topic_message,
 )
 
 logger = logging.getLogger(__name__)
@@ -107,24 +110,6 @@ def _serialize_topic_message(doc: dict) -> dict:
         "role": doc.get("role", "user"),
         "timestamp": to_iso_timestamp(doc.get("timestamp")),
     }
-
-
-def _sanitize_topic_response(text: str) -> str:
-    """Best-effort cleanup for malformed JSON tails leaked by model outputs."""
-    candidate = (text or "").strip()
-    if not candidate:
-        return candidate
-
-    # Common case: normal sentence followed by broken JSON tail like `],"e":[]}`.
-    last_sentence_end = max(candidate.rfind("."), candidate.rfind("!"), candidate.rfind("?"))
-    if 0 <= last_sentence_end < len(candidate) - 1:
-        tail = candidate[last_sentence_end + 1 :].strip()
-        has_json_punct = any(ch in tail for ch in "{}[]") and ":" in tail
-        long_alpha_tokens = re.findall(r"[A-Za-z]{2,}", tail)
-        if tail and has_json_punct and not long_alpha_tokens:
-            candidate = candidate[: last_sentence_end + 1].strip()
-
-    return candidate
 
 
 async def _ensure_topic_session_owner(
@@ -490,7 +475,7 @@ async def send_topic_message(
             raise HTTPException(status_code=500, detail="No response from AI")
 
         clean_response, parsed_hints = EducationalHintsParser.parse(tracecag_result.ai_response)
-        display_response = _sanitize_topic_response(clean_response or tracecag_result.ai_response)
+        display_response = sanitize_topic_response(clean_response or tracecag_result.ai_response)
 
         ai_message_id = await persist_topic_turn(
             session_id=session_id,
@@ -545,6 +530,93 @@ async def send_topic_message(
             status_code=500,
             detail=f"Failed to send message: {str(e)}"
         )
+
+
+TOPIC_STREAM_QUOTA_TIMEOUT_SEC = _env_float("TOPIC_STREAM_QUOTA_TIMEOUT_SEC", 5.0)
+
+
+@router.post(
+    "/topic-sessions/{session_id}/messages/stream",
+    summary="Send message in topic session — streaming SSE variant",
+)
+async def send_topic_message_stream(
+    request_context: Request,
+    session_id: str,
+    request: TopicChatRequest,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    redis_client = Depends(get_redis),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> StreamingResponse:
+    """
+    Send a message in a topic-based conversation — streaming SSE variant.
+
+    Same pipeline and 2-tier TraceCAG fallback as the JSON endpoint above,
+    just with the response delivered as text/event-stream so the client can
+    show a "thinking" state immediately and the reply word-by-word instead
+    of waiting for the whole turn to finish. See
+    `topic_chat_service.stream_tracecag_topic_message` for the event
+    sequence (thinking/heartbeat/chunk/done/error).
+    """
+    start_time = time.time()
+    request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
+    auth_user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": auth_user_id})
+
+    try:
+        quota = await asyncio.wait_for(
+            enforce_user_quota(
+                current_user.user_id,
+                "topic.send_message",
+                token_cost=default_token_cost_for_endpoint(
+                    "topic.send_message", text=request.message
+                ),
+                fail_closed=True,
+            ),
+            timeout=TOPIC_STREAM_QUOTA_TIMEOUT_SEC,
+        )
+    except asyncio.TimeoutError as exc:
+        logger.error(
+            "Topic /stream quota check timed out after %.1fs",
+            TOPIC_STREAM_QUOTA_TIMEOUT_SEC,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="AI quota service is temporarily unavailable",
+        ) from exc
+
+    repo = TopicChatRepository(db)
+    session = await _ensure_topic_session_owner(session_id, current_user, repo)
+    if session.get("session_type") != "topic_based":
+        raise HTTPException(status_code=400, detail="This endpoint is only for topic-based sessions")
+
+    history = await repo.get_history(session_id, limit=10)
+    kg_seeds = await resolve_kg_seeds(session, redis_client)
+    conversation_history = [
+        {"role": msg.get("role", "user"), "content": msg.get("content", "")}
+        for msg in history
+    ]
+
+    return StreamingResponse(
+        stream_tracecag_topic_message(
+            message=request.message,
+            session_id=session_id,
+            user_id=request.user_id,
+            difficulty_level=session.get("difficulty_level", "B1"),
+            conversation_history=conversation_history,
+            kg_seeds=kg_seeds,
+            topic_system_prompt=session.get("system_prompt"),
+            repo=repo,
+            quota=quota,
+            start_time=start_time,
+            request_id=request_id,
+        ),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.get(

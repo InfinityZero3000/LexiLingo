@@ -190,7 +190,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     final provider = context.read<StoryProvider>();
     final userId = _currentUserId(context);
 
-    final success = await provider.sendMessage(
+    final success = await provider.sendMessageStreaming(
       userId: userId,
       message: message,
     );

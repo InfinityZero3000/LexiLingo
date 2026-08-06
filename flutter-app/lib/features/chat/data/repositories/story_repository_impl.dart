@@ -5,6 +5,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../domain/entities/story.dart';
 import '../../domain/entities/topic_session.dart';
+import '../../domain/entities/topic_stream_event.dart';
 import '../../domain/repositories/story_repository.dart';
 import '../datasources/story_api_data_source.dart';
 // Only the toEntity() extensions are needed here — the model classes
@@ -145,6 +146,19 @@ class StoryRepositoryImpl implements StoryRepository {
       logError(_tag, 'sendTopicMessage error: $e');
       return Left(ServerFailure(e.toString()));
     }
+  }
+
+  @override
+  Stream<TopicStreamEvent> sendTopicMessageStream({
+    required String sessionId,
+    required String userId,
+    required String message,
+  }) {
+    return apiDataSource.sendTopicMessageStream(
+      sessionId: sessionId,
+      userId: userId,
+      message: message,
+    );
   }
 
   @override
