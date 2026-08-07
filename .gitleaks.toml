@@ -30,6 +30,7 @@ description = "Test fixture placeholder API keys"
 targetRules = ["generic-api-key", "google-gemini-api-key", "gcp-api-key"]
 paths = [
   '''(^|/)ai-service/tests/test_admin_routes\.py$''',
+  '''(^|/)backend-service/tests/test_logging_config\.py$''',
 ]
 
 # These examples intentionally use non-secret placeholders.
@@ -45,6 +46,7 @@ regexes = [
 paths = [
   '''(^|/)backend-service/QUICKSTART\.md$''',
   '''(^|/)docs/gateway/API_GATEWAY_FULL_POLICY_SETUP\.md$''',
+  '''(^|/)docs/operations/API_GATEWAY_FULL_POLICY_SETUP\.md$''',
   '''(^|/)gateway/kong/kong\.yml$''',
 ]
 
@@ -64,6 +66,7 @@ commits = [
   "98dc1d63e85c0d01d14f13fd676f2849aba9b28a",
   "3d24c444fa29321445a2f06e9480c31ef00b5244",
   "9f5590bc9fdb50b5074d472bbccb862751a1c2c9",
+  "ad26ae4b3a98023ea19bf24dc20d65a785a6e603",
 ]
 paths = [
   '''(^|/)mcp-server/start_production\.sh$''',
@@ -72,5 +75,7 @@ paths = [
   '''(^|/)backend-service/test_firebase_api\.py$''',
   '''(^|/)scripts/clean-git-history\.sh$''',
   '''(^|/)scripts/start-all\.sh$''',
+  '''(^|/)scripts/data-pipeline/translate_gemini\.py$''',
+  '''(^|/)scripts/data-pipeline/translate_missing_gemini\.py$''',
   '''(^|/)flutter-app/build/web/main\.dart\.js$''',
 ]
