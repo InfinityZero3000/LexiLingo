@@ -266,6 +266,10 @@ class Settings(BaseSettings):
     ADMIN_EMAIL_WHITELIST: str = ""
     SUPER_ADMIN_EMAIL_WHITELIST: str = ""
 
+    # RevenueCat (server-side entitlement verification)
+    REVENUECAT_SECRET_API_KEY: str | None = None
+    REVENUECAT_TIMEOUT_SECONDS: float = 5.0
+
     @staticmethod
     def _parse_email_list(raw_value: str) -> list[str]:
         """Normalize a comma-separated email allowlist."""

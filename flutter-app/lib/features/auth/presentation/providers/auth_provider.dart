@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/deep_link_service.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
@@ -421,6 +422,7 @@ class AuthProvider extends ChangeNotifier {
       await signOutUseCase(NoParams());
       // Clear stored FCM token so it gets re-registered on next login
       await FirebaseMessagingService.instance.clearRegisteredToken();
+      await PurchasesService.instance.logout();
       _user = null;
     } catch (e) {
       debugPrint("Sign out error: $e");

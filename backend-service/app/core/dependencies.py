@@ -243,3 +243,33 @@ def require_permission(resource: str, action: str):
         )
 
     return _check
+
+
+def require_entitlement(entitlement_id: str = "premium"):
+    """
+    Dependency factory: require an active, server-verified entitlement.
+
+    Checks the `user_entitlements` row synced from RevenueCat — never trusts
+    client-reported purchase state. No route uses this yet; it is the
+    primitive ready for whichever route(s) become premium-gated.
+
+    Usage:
+        @router.get("/premium-only", dependencies=[Depends(require_entitlement("premium"))])
+        async def premium_only(...):
+            ...
+    """
+    async def _check(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        from app.services.entitlement_service import EntitlementService
+
+        if await EntitlementService.is_active(db, current_user.id, entitlement_id):
+            return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"Requires an active '{entitlement_id}' entitlement",
+        )
+
+    return _check

@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
+import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
@@ -128,6 +129,9 @@ Future<void> registerCore({required bool skipDatabase}) async {
 
   sl.registerLazySingleton<HealthCheckService>(
     () => HealthCheckService(apiClient: sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<EntitlementService>(
+    () => EntitlementService(apiClient: sl<ApiClient>()),
   );
   sl.registerLazySingleton<QuickSaveVocabularyService>(
     () => QuickSaveVocabularyService(apiClient: sl<ApiClient>()),

@@ -60,6 +60,7 @@ from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
 from app.routes.proficiency import router as proficiency_router
+from app.routes.entitlements import router as entitlements_router
 from app.routes.rbac import router as rbac_router
 from app.routes.admin_ai_proxy import router as admin_ai_proxy_router
 from app.routes.analytics import router as analytics_router
@@ -394,6 +395,7 @@ app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFI
 app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
 app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
+app.include_router(entitlements_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Entitlements"])
 app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
 app.include_router(admin_ai_proxy_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin AI Proxy"])
 app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Analytics"])

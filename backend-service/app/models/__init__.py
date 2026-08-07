@@ -116,6 +116,9 @@ from app.models.learner_state import (
 
 from app.models.partner import PartnerApiKey
 
+# Entitlement models (server-verified premium state)
+from app.models.entitlement import UserEntitlement
+
 __all__ = [
     "PartnerApiKey",
     # User (Phase 1)
@@ -198,4 +201,6 @@ __all__ = [
     "LearnerConceptState",
     "LearnerObservationEvent",
     "LearnerStateProfile",
+    # Entitlements
+    "UserEntitlement",
 ]
