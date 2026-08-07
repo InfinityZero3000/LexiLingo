@@ -6,5 +6,8 @@
         "/Users/nguyenhuuthang/Documents/RepoGitHub/LexiLingo/mcp-server/start.sh"
       ]
     }
+  },
+  "enabledPlugins": {
+    "claude-scientific-writer@claude-scientific-writer": true
   }
 }

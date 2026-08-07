@@ -1140,7 +1140,7 @@
     "viewNotesButton": "Ver notas",
     "practiceMoreButton": "Practicar {concept}",
     "correctionsSection": "Correcciones",
-    "vietnameseHintSection": "Sugerencia en vietnamita",
+    "nativeHintSection": "Sugerencia en idioma nativo",
     "relatedConceptsSection": "Conceptos relacionados"
   },
   "youtube": {

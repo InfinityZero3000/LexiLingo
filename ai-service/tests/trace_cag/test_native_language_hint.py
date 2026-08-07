@@ -28,3 +28,12 @@ def test_predefined_native_hint_unsupported_language_falls_back_to_short_english
 def test_predefined_native_hint_unsupported_language_no_errors():
     hint = nodes._get_predefined_native_hint([], "Thai")
     assert hint == nodes._FALLBACK_NATIVE_NO_ERRORS
+
+
+def test_ask_clarify_hint_uses_learner_language():
+    assert nodes._get_ask_clarify_hint("Japanese") == nodes._ASK_CLARIFY_HINTS["Japanese"]
+
+
+def test_ask_clarify_hint_unsupported_language_falls_back_to_english():
+    hint = nodes._get_ask_clarify_hint("Thai")
+    assert hint == nodes._ASK_CLARIFY_HINT_DEFAULT

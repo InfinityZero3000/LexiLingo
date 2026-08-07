@@ -96,7 +96,7 @@ class LexiChatResponse(BaseModel):
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
     suggested_practice: Optional[LexiSuggestedPractice] = None
-    vietnamese_hint: Optional[str] = None
+    native_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     story_context: Optional[str] = None
     metadata: Dict[str, Any] = {}
@@ -410,7 +410,7 @@ class PipelineResult:
     corrections: List["LexiCorrection"] = field(default_factory=list)
     linked_concepts: List[str] = field(default_factory=list)
     suggested_practice: Optional["LexiSuggestedPractice"] = None
-    vietnamese_hint: Optional[str] = None
+    native_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used: str = "trace-cag"
     story_ctx: Optional[str] = None
@@ -450,7 +450,7 @@ async def run_lexi_pipeline(
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
     suggested_practice: Optional[LexiSuggestedPractice] = None
-    vietnamese_hint: Optional[str] = None
+    native_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used = "trace-cag"
     observation_trace_result: Dict[str, Any] = {}
@@ -492,7 +492,7 @@ async def run_lexi_pipeline(
         suggested_practice = _build_suggested_practice(
             graph_result.get("weak_concepts", []), bool(corrections)
         )
-        vietnamese_hint = graph_result.get("vietnamese_hint")
+        native_hint = graph_result.get("native_hint")
         scores = graph_result.get("scores")
         metadata["pipeline_steps"].append("trace-cag_complete")
         metadata["trace-cag_metadata"] = graph_result.get("metadata", {})
@@ -704,7 +704,7 @@ async def run_lexi_pipeline(
         corrections=corrections,
         linked_concepts=linked_concepts,
         suggested_practice=suggested_practice,
-        vietnamese_hint=vietnamese_hint,
+        native_hint=native_hint,
         scores=scores,
         model_used=model_used,
         story_ctx=story_ctx,
@@ -888,7 +888,7 @@ async def stream_lexi_chat(
     suggested_practice = _build_suggested_practice(
         list(raw_state.get("diagnosis_root_causes") or []), bool(corrections)
     )
-    vietnamese_hint = raw_state.get("vietnamese_hint")
+    native_hint = raw_state.get("native_hint")
     grammar_score = float(raw_state.get("grammar_score") or 0.8)
     fluency_score = float(raw_state.get("fluency_score") or 0.8)
     vocab_level = str(raw_state.get("vocabulary_level") or "B1")
@@ -1072,7 +1072,7 @@ async def stream_lexi_chat(
         "suggested_practice": (
             suggested_practice.model_dump() if suggested_practice else None
         ),
-        "vietnamese_hint": vietnamese_hint,
+        "native_hint": native_hint,
         "scores": scores,
         "story_context": request.story_context,
         "audio_base64": audio_b64,

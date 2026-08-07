@@ -190,7 +190,7 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     topic_system_prompt: Optional[str]
     tutor_response: str
-    vietnamese_hint: Optional[str]
+    native_hint: Optional[str]
     native_explanation_requested: Optional[bool]
     pronunciation_tip: Optional[str]
     strategy: str  # praise, scaffold, socratic, feedback
@@ -323,7 +323,7 @@ def create_initial_state(
         # Response (will be populated by generate_node)
         topic_system_prompt=topic_system_prompt,
         tutor_response="",
-        vietnamese_hint=None,
+        native_hint=None,
         native_explanation_requested=False,
         pronunciation_tip=None,
         strategy="scaffold",

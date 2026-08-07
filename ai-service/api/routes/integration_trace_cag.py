@@ -123,7 +123,7 @@ async def analyze(
         "hints": [
             {"level": index + 1, "text": str(text)[:500]}
             for index, text in enumerate(
-                [result.vietnamese_hint, result.pronunciation_tip][:3]
+                [result.native_hint, result.pronunciation_tip][:3]
             ) if text
         ],
         "feedback": (result.tutor_response or "Analysis complete.")[:2000],

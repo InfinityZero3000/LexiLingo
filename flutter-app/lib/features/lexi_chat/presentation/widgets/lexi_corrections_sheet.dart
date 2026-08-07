@@ -6,19 +6,19 @@ import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.da
 /// Minimalist bottom sheet showing grammar/vocabulary corrections from Lexi.
 class LexiCorrectionsSheet extends StatelessWidget {
   final List<LexiCorrection> corrections;
-  final String? vietnameseHint;
+  final String? nativeHint;
   final List<String> linkedConcepts;
 
   const LexiCorrectionsSheet({
     super.key,
     required this.corrections,
-    this.vietnameseHint,
+    this.nativeHint,
     this.linkedConcepts = const [],
   });
 
   static void show(BuildContext context, LexiMessage message) {
     if (!message.hasCorrections &&
-        message.vietnameseHint == null &&
+        message.nativeHint == null &&
         message.linkedConcepts.isEmpty) {
       return;
     }
@@ -29,7 +29,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => LexiCorrectionsSheet(
         corrections: message.corrections,
-        vietnameseHint: message.vietnameseHint,
+        nativeHint: message.nativeHint,
         linkedConcepts: message.linkedConcepts,
       ),
     );
@@ -106,9 +106,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
                   ...corrections.map((c) => _correctionCard(context, c)),
                   const SizedBox(height: 16),
                 ],
-                // Vietnamese hint
-                if (vietnameseHint != null) ...[
-                  _sectionTitle(context, 'lexiChat.vietnameseHintSection'.tr()),
+                if (nativeHint != null) ...[
+                  _sectionTitle(context, 'lexiChat.nativeHintSection'.tr()),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -134,7 +133,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            vietnameseHint!,
+                            nativeHint!,
                             style: TextStyle(
                               fontSize: 14,
                               height: 1.5,

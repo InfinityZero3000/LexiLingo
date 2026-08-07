@@ -382,8 +382,8 @@
 │  {                                                               │
 │    "text": "Great job! Your sentence is correct. To sound        │
 │             more natural, try 'I enjoy learning English'...",    │
-│    "vietnamese_hint": "Bạn có thể nói: 'I enjoy...' để tự        │
-│                        nhiên hơn" (if A2 or low confidence),     │
+│    "native_hint": "Bạn có thể nói: 'I enjoy...' để tự            │
+│                     nhiên hơn" (if A2 or low confidence),        │
 │    "pronunciation_tip": "Focus on the 'th' sound in 'think'",    │
 │    "score": {                                                    │
 │      "fluency": 0.87,                                            │

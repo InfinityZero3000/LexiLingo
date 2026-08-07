@@ -1269,7 +1269,7 @@
     "viewNotesButton": "View Notes",
     "practiceMoreButton": "Practice {concept}",
     "correctionsSection": "Corrections",
-    "vietnameseHintSection": "Vietnamese Hint",
+    "nativeHintSection": "Native-Language Hint",
     "relatedConceptsSection": "Related Concepts"
   },
   "youtube": {

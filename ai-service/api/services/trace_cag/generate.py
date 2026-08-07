@@ -133,7 +133,7 @@ def build_generation_prompt(
     level = (state.get("learner_profile") or {}).get("level", "B1")
     user_input = str(state.get("user_input") or "")
     context = str(state.get("retrieved_context") or "")
-    vietnamese_hint = state.get("vietnamese_hint")
+    native_hint = state.get("native_hint")
     session_turn = len(state.get("conversation_history") or [])
     prev_overall = state.get("overall_score", 0.5)
     fluency_score = state.get("fluency_score", 0.8)
@@ -174,8 +174,8 @@ def build_generation_prompt(
     else:
         system_prompt += "\nNo errors found — praise the learner's effort!\n"
 
-    if vietnamese_hint:
-        system_prompt += f"\n--- Vietnamese Hint ---\n{vietnamese_hint}\n"
+    if native_hint:
+        system_prompt += f"\n--- Native-Language Hint ---\n{native_hint}\n"
 
     messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
     for msg in (state.get("conversation_history") or [])[-12:]:
@@ -384,7 +384,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     user_input = state.get("user_input", "")
     context = state.get("retrieved_context", "")
     jit_soft_graph = str(state.get("jit_soft_graph") or "").strip()
-    vietnamese_hint = state.get("vietnamese_hint")
+    native_hint = state.get("native_hint")
     benchmark_task = state.get("benchmark_task")
 
     if benchmark_task in {"multihop_qa", "retrieval_qa"}:
@@ -481,8 +481,8 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     else:
         system_prompt += "\nNo errors found — praise the learner's effort!\n"
 
-    if vietnamese_hint:
-        system_prompt += f"\n--- Vietnamese Hint (for reference) ---\n{vietnamese_hint}\n"
+    if native_hint:
+        system_prompt += f"\n--- Native-Language Hint (for reference) ---\n{native_hint}\n"
 
     response = ""
     model_used = "llm_unavailable"

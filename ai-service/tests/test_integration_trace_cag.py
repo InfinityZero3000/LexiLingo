@@ -41,7 +41,7 @@ class FakeService:
         return TraceCAGResponse(
             tutor_response="Good answer.",
             corrections=[],
-            vietnamese_hint="Try the greeting.",
+            native_hint="Try the greeting.",
             action={"type": "continue"},
             metadata={"provider": "test", "model": "trace-cag", "version": "1"},
         )
