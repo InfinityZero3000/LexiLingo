@@ -155,6 +155,39 @@ class TestLearningSession:
         )
 
         assert response.status_code == 409
+
+    async def test_get_lesson_content_preserves_outcome_and_exercise_phase(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_lesson: Lesson,
+    ):
+        test_lesson.outcome = "Can order a meal politely"
+        test_lesson.content = {
+            "exercises": [
+                {
+                    "id": "phase-exercise",
+                    "type": "multiple_choice",
+                    "ui_type": "multiple_choice",
+                    "phase": "pre_task",
+                    "question": "What would you like?",
+                    "options": ["Soup", "Receipt"],
+                    "correct_answer": "Soup",
+                }
+            ]
+        }
+        await db_session.commit()
+
+        response = await async_client.get(
+            f"/api/v1/learning/lessons/{test_lesson.id}/content",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        content = response.json()["data"]
+        assert content["outcome"] == "Can order a meal politely"
+        assert content["exercises"][0]["phase"] == "pre_task"
     
     async def test_submit_answer_correct(
         self,

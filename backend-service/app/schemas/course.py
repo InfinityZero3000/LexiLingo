@@ -5,7 +5,7 @@ Request and response schemas for Course-related endpoints.
 Follows the envelope pattern defined in APP_DEVELOPMENT_PLAN.md.
 """
 
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Literal
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 import uuid
@@ -315,6 +315,7 @@ class Exercise(BaseModel):
     id: str
     type: str = Field(..., description="multiple_choice, true_false, fill_blank, translate, matching, reorder")
     ui_type: Optional[str] = None
+    phase: Optional[Literal["pre_task", "task_cycle", "language_focus"]] = None
     question: str
     options: Optional[List[ExerciseOption]] = None
     correct_answer: str
@@ -339,6 +340,7 @@ class LessonContentResponse(BaseModel):
     id: uuid.UUID
     title: str
     description: Optional[str] = None
+    outcome: Optional[str] = None
     lesson_type: str
     order_index: int
     xp_reward: int

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
@@ -281,8 +282,9 @@ class _ExplanationCard extends StatelessWidget {
 /// Circular blue button that plays TTS audio
 class _CircleAudioBtn extends StatelessWidget {
   final String text;
+  final String? audioUrl;
   final double size;
-  const _CircleAudioBtn({required this.text, this.size = 56});
+  const _CircleAudioBtn({required this.text, this.audioUrl, this.size = 56});
 
   @override
   Widget build(BuildContext context) {
@@ -294,6 +296,7 @@ class _CircleAudioBtn extends StatelessWidget {
       alignment: Alignment.center,
       child: SpeakIconButton(
         text: text,
+        audioUrl: audioUrl,
         size: size * 0.45,
         color: Colors.white,
       ),
@@ -347,7 +350,7 @@ class TrueOrFalseWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Badge('TRUE OR FALSE'),
+          _Badge('lesson.exercise.trueFalseLabel'.tr()),
           const SizedBox(height: 20),
           // Question card
           Container(
@@ -422,7 +425,11 @@ class MultipleChoiceWidget extends StatelessWidget {
   // Renders question; replaces {blank} or ___ with a continuous underline
   Widget _buildQuestion(_ExercisePalette colors) {
     final q = exercise.question;
-    const style = TextStyle(fontSize: 20, fontWeight: FontWeight.w700, height: 1.4);
+    const style = TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+      height: 1.4,
+    );
 
     String? before, after;
     if (q.contains('{blank}')) {
@@ -472,7 +479,7 @@ class MultipleChoiceWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Badge('MULTIPLE CHOICE'),
+          _Badge('lesson.exercise.multipleChoiceLabel'.tr()),
           const SizedBox(height: 20),
           // Question
           Row(
@@ -552,9 +559,12 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
   Widget _buildDashPlaceholder(_ExercisePalette colors) {
     final answer = widget.exercise.correctAnswer.trim();
     // Build "_ _ _" per word, words separated by two spaces
-    final dashes = answer.split(' ').map((w) {
-      return List.generate(w.length.clamp(1, 12), (_) => '_').join(' ');
-    }).join('   ');
+    final dashes = answer
+        .split(' ')
+        .map((w) {
+          return List.generate(w.length.clamp(1, 12), (_) => '_').join(' ');
+        })
+        .join('   ');
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       child: Text(
@@ -656,7 +666,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'FILL IN THE BLANK',
+            'lesson.exercise.fillBlankLabel'.tr(),
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -666,7 +676,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Chọn từ phù hợp nhất để hoàn thành câu.',
+            'lesson.exercise.fillBlankInstruction'.tr(),
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
@@ -703,7 +713,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
               controller: _ctrl,
               enabled: !widget.isAnswered,
               decoration: InputDecoration(
-                hintText: 'Nhập câu trả lời...',
+                hintText: 'lesson.exercise.answerHint'.tr(),
                 filled: true,
                 fillColor: colors.card,
                 border: OutlineInputBorder(
@@ -740,7 +750,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
                 child: Text(
-                  'Xác nhận',
+                  'common.confirm'.tr(),
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -817,7 +827,7 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Sắp xếp câu',
+            'lesson.exercise.arrangeSentenceTitle'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -850,7 +860,7 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
             child: _placed.isEmpty
                 ? Center(
                     child: Text(
-                      'Nhấn vào từ bên dưới để sắp xếp...',
+                      'lesson.exercise.arrangeSentenceInstruction'.tr(),
                       style: TextStyle(fontSize: 13, color: colors.textMuted),
                     ),
                   )
@@ -998,7 +1008,7 @@ class TranslationChoiceWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Chọn bản dịch đúng',
+            'lesson.exercise.translationChoiceTitle'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -1152,7 +1162,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Hoàn thành đoạn hội thoại',
+            'lesson.exercise.dialogueCompletionTitle'.tr(),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -1370,7 +1380,9 @@ class CollocationChoiceWidget extends StatelessWidget {
         children: [
           Text(
             mainWord.isNotEmpty
-                ? 'Chọn cụm từ đi với "$mainWord"'
+                ? 'lesson.exercise.collocationPrompt'.tr(
+                    namedArgs: {'word': mainWord},
+                  )
                 : exercise.question,
             style: TextStyle(
               fontSize: 20,
@@ -1381,7 +1393,7 @@ class CollocationChoiceWidget extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Tìm từ kết hợp chính xác để hoàn thành ý nghĩa.',
+            'lesson.exercise.collocationInstruction'.tr(),
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
@@ -1399,7 +1411,7 @@ class CollocationChoiceWidget extends StatelessWidget {
               child: Column(
                 children: [
                   Text(
-                    'ĐỘNG TỪ CHÍNH',
+                    'lesson.exercise.mainVerb'.tr(),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -1454,7 +1466,9 @@ class CollocationChoiceWidget extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Mẹo: ${exercise.hint!}',
+                      'lesson.exercise.hintLabel'.tr(
+                        namedArgs: {'hint': exercise.hint!},
+                      ),
                       style: TextStyle(
                         fontSize: 13,
                         color: colors.textSecondary,
@@ -1522,7 +1536,7 @@ class _DictationWidgetState extends State<DictationWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Dictation',
+            'lesson.exercise.dictationTitle'.tr(),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -1532,7 +1546,7 @@ class _DictationWidgetState extends State<DictationWidget> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Lắng nghe và điền vào chỗ trống',
+            'lesson.exercise.dictationInstruction'.tr(),
             style: TextStyle(fontSize: 14, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -1541,6 +1555,7 @@ class _DictationWidgetState extends State<DictationWidget> {
           Center(
             child: _CircleAudioBtn(
               text: widget.exercise.correctAnswer,
+              audioUrl: widget.exercise.audioUrl,
               size: 60,
             ),
           ),
@@ -1551,7 +1566,7 @@ class _DictationWidgetState extends State<DictationWidget> {
             enabled: !widget.isAnswered,
             maxLines: 3,
             decoration: InputDecoration(
-              hintText: 'Nhập nội dung bạn nghe được...',
+              hintText: 'lesson.exercise.dictationHint'.tr(),
               hintStyle: TextStyle(color: colors.textMuted),
               filled: true,
               fillColor: colors.card,
@@ -1582,7 +1597,9 @@ class _DictationWidgetState extends State<DictationWidget> {
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  '$_wordCount từ cần điền',
+                  'lesson.exercise.dictationWordCount'.tr(
+                    namedArgs: {'count': '$_wordCount'},
+                  ),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -1609,7 +1626,7 @@ class _DictationWidgetState extends State<DictationWidget> {
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
               child: Text(
-                'Xác nhận',
+                'common.confirm'.tr(),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
@@ -1668,7 +1685,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Chọn câu đúng',
+            'lesson.exercise.grammarCorrectionTitle'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -1677,7 +1694,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Chọn phiên bản chính xác của câu dưới đây:',
+            'lesson.exercise.grammarCorrectionInstruction'.tr(),
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
@@ -1713,7 +1730,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'CÂU SAI',
+                        'lesson.exercise.incorrectSentence'.tr(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -1807,7 +1824,7 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
           controller: _ctrl,
           enabled: !widget.isAnswered,
           decoration: InputDecoration(
-            hintText: 'Viết câu đúng...',
+            hintText: 'lesson.exercise.correctSentenceHint'.tr(),
             filled: true,
             fillColor: colors.card,
             border: OutlineInputBorder(
@@ -1837,7 +1854,7 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
               padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
             ),
             child: Text(
-              'Xác nhận',
+              'common.confirm'.tr(),
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
@@ -1877,7 +1894,7 @@ class ImageBasedChoiceWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Badge('IMAGE CHOICE'),
+          _Badge('lesson.exercise.imageChoiceLabel'.tr()),
           const SizedBox(height: 16),
           Text(
             exercise.question,
@@ -1970,7 +1987,10 @@ class ListeningChoiceWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Badge('LISTENING', icon: Icons.volume_up_rounded),
+          _Badge(
+            'lesson.exercise.listeningLabel'.tr(),
+            icon: Icons.volume_up_rounded,
+          ),
           const SizedBox(height: 16),
           Text(
             exercise.question,
@@ -1992,10 +2012,14 @@ class ListeningChoiceWidget extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _CircleAudioBtn(text: exercise.correctAnswer, size: 56),
+                _CircleAudioBtn(
+                  text: exercise.correctAnswer,
+                  audioUrl: exercise.audioUrl,
+                  size: 56,
+                ),
                 const SizedBox(height: 14),
                 Text(
-                  'TAP TO LISTEN',
+                  'lesson.exercise.tapToListen'.tr(),
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -2077,7 +2101,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Nối cặp từ tương ứng',
+            'lesson.exercise.matchPairsTitle'.tr(),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w800,
@@ -2231,7 +2255,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Chọn một từ tiếng Anh và nghĩa tiếng Việt tương ứng để nối chúng.',
+                    'lesson.exercise.matchPairsInstruction'.tr(),
                     style: TextStyle(
                       fontSize: 12,
                       color: colors.textSecondary,
@@ -2382,7 +2406,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                   ],
                 ),
                 child: Text(
-                  'Đã hiểu rồi!',
+                  'lesson.exercise.understood'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -2443,7 +2467,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
           ),
           const SizedBox(height: 20),
           Text(
-            'What is the meaning?',
+            'lesson.exercise.meaningQuestion'.tr(),
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -2516,7 +2540,7 @@ class _PronunciationPracticeWidgetState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Luyện phát âm',
+            'lesson.exercise.pronunciationTitle'.tr(),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -2526,7 +2550,7 @@ class _PronunciationPracticeWidgetState
           ),
           const SizedBox(height: 6),
           Text(
-            'Nghe và lặp lại câu dưới đây',
+            'lesson.exercise.pronunciationInstruction'.tr(),
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -2541,7 +2565,11 @@ class _PronunciationPracticeWidgetState
             ),
             child: Row(
               children: [
-                _CircleAudioBtn(text: widget.exercise.question, size: 44),
+                _CircleAudioBtn(
+                  text: widget.exercise.question,
+                  audioUrl: widget.exercise.audioUrl,
+                  size: 44,
+                ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
@@ -2641,7 +2669,7 @@ class ReadingComprehensionWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Đọc hiểu',
+            'lesson.exercise.readingTitle'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -2650,7 +2678,7 @@ class ReadingComprehensionWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Đọc đoạn văn sau và trả lời câu hỏi bên dưới.',
+            'lesson.exercise.readingInstruction'.tr(),
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           if (passage.isNotEmpty) ...[
@@ -2778,7 +2806,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
               ),
               const SizedBox(width: 10),
               Text(
-                'VIẾT CÂU NGẮN',
+                'lesson.exercise.shortWritingTitle'.tr(),
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -2824,7 +2852,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
             enabled: !widget.isAnswered,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: 'Nhập câu trả lời của bạn tại đây...',
+              hintText: 'lesson.exercise.shortWritingHint'.tr(),
               hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
               filled: true,
               fillColor: colors.card,
@@ -2859,7 +2887,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
               child: Text(
-                'Kiểm tra',
+                'lesson.checkAnswer'.tr(),
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
@@ -2909,7 +2937,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'LUYỆN NÓI',
+            'lesson.exercise.speakingTitle'.tr(),
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -2920,7 +2948,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Lặp lại câu sau',
+            'lesson.exercise.speakingInstruction'.tr(),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
@@ -2939,7 +2967,11 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
             ),
             child: Column(
               children: [
-                _CircleAudioBtn(text: widget.exercise.question, size: 40),
+                _CircleAudioBtn(
+                  text: widget.exercise.question,
+                  audioUrl: widget.exercise.audioUrl,
+                  size: 40,
+                ),
                 const SizedBox(height: 14),
                 Text(
                   '"${widget.exercise.question}"',
@@ -3072,7 +3104,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Phân loại từ vựng',
+            'lesson.exercise.categorizationTitle'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
@@ -3082,7 +3114,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Nhấn một từ rồi nhấn vào danh mục phù hợp.',
+            'lesson.exercise.categorizationInstruction'.tr(),
             style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
@@ -3125,12 +3157,16 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                       padding: const EdgeInsets.all(14),
                       constraints: const BoxConstraints(minHeight: 72),
                       decoration: BoxDecoration(
-                        color: (_selectedWord != null || isHovered) && !widget.isAnswered
+                        color:
+                            (_selectedWord != null || isHovered) &&
+                                !widget.isAnswered
                             ? colors.primary.withValues(alpha: 0.06)
                             : colors.card,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: (_selectedWord != null || isHovered) && !widget.isAnswered
+                          color:
+                              (_selectedWord != null || isHovered) &&
+                                  !widget.isAnswered
                               ? colors.primary
                               : colors.border,
                           width: 1.5,
@@ -3187,7 +3223,9 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: colors.surface,
-                                          borderRadius: BorderRadius.circular(999),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
                                         ),
                                         child: Text(
                                           w,
@@ -3282,15 +3320,9 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                     data: w,
                     feedback: Material(
                       color: Colors.transparent,
-                      child: Opacity(
-                        opacity: 0.85,
-                        child: cardChild,
-                      ),
+                      child: Opacity(opacity: 0.85, child: cardChild),
                     ),
-                    childWhenDragging: Opacity(
-                      opacity: 0.3,
-                      child: cardChild,
-                    ),
+                    childWhenDragging: Opacity(opacity: 0.3, child: cardChild),
                     child: cardWidget,
                   );
                 }).toList(),

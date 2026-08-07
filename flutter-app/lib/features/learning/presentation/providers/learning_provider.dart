@@ -296,6 +296,11 @@ class LearningProvider with ChangeNotifier {
                 correctAnswer.replaceAll(RegExp(r'[^\w\s]'), '');
       case ExerciseType.translate:
         return _calculateSimilarity(userAnswer, correctAnswer) > 0.7;
+      case ExerciseType.matching:
+        return _normalizeMatchingAnswer(userAnswer) ==
+            _normalizeMatchingAnswer(correctAnswer);
+      case ExerciseType.reorder:
+        return userAnswer == correctAnswer;
       case ExerciseType.speaking:
         return SpeakingAnswerMatcher.evaluate(
           transcript: answer,
@@ -316,11 +321,29 @@ class LearningProvider with ChangeNotifier {
         return 'fill_blank';
       case ExerciseType.translate:
         return 'translation';
+      case ExerciseType.matching:
+        return 'matching';
+      case ExerciseType.reorder:
+        return 'reorder';
       case ExerciseType.listening:
         return 'listening';
       case ExerciseType.speaking:
         return 'speaking';
     }
+  }
+
+  String _normalizeMatchingAnswer(String answer) {
+    final pairs =
+        answer
+            .split(',')
+            .map(
+              (part) => part.split(':').map((value) => value.trim()).toList(),
+            )
+            .where((parts) => parts.length == 2)
+            .map((parts) => '${parts[0]}:${parts[1]}')
+            .toList()
+          ..sort();
+    return pairs.join(',');
   }
 
   double _calculateSimilarity(String s1, String s2) {

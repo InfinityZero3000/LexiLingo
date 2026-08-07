@@ -148,6 +148,10 @@ class ExerciseModel {
         return ExerciseType.fillInBlank;
       case 'translate':
         return ExerciseType.translate;
+      case 'matching':
+        return ExerciseType.matching;
+      case 'reorder':
+        return ExerciseType.reorder;
       case 'listening':
         return ExerciseType.listening;
       case 'speaking':
