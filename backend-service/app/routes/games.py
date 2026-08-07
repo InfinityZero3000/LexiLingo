@@ -36,6 +36,9 @@ from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
 from app.services import check_achievements_for_user
 from app.services.streak_service import update_user_streak
+from app.services.proficiency_service import ProficiencyService
+from app.schemas.proficiency import ExerciseResult, ProficiencyLevel
+from app.routes.proficiency import record_exercise_results_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -1622,6 +1625,34 @@ async def complete_game_session(
         logger.error("Error updating streak on game completion: %s", e, exc_info=True)
     await db.commit()
     await invalidate_cache("leaderboard")
+
+    # CEFR proficiency tracking: one aggregate ExerciseResult per completed
+    # game session. Best-effort — must not fail a session the user already
+    # completed. The `completed_at`/`xp_awarded` guard above is this
+    # route's idempotency boundary, so this only runs once per session.
+    try:
+        level_code = session.cefr_level or current_user.level
+        if level_code in {lvl.value for lvl in ProficiencyLevel}:
+            total = score.total_count or 1
+            await record_exercise_results_for_user(
+                db,
+                current_user,
+                [
+                    ExerciseResult(
+                        exercise_type="game",
+                        skill=ProficiencyService.infer_skill_from_tags(
+                            session.game_type.replace("_", "-").split("-")
+                        ),
+                        difficulty_level=ProficiencyLevel(level_code),
+                        is_correct=score.correct_count >= total,
+                        score=min(100.0, 100.0 * score.correct_count / total),
+                        time_spent_seconds=duration_seconds,
+                    )
+                ],
+                award_xp=False,  # game completion above already awarded XP
+            )
+    except Exception as e:
+        logger.warning("Proficiency update error: %s", e)
 
     try:
         unlocked_achievements = await check_achievements_for_user(

@@ -49,6 +49,9 @@ from app.schemas.progress import (
 from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
 from app.services import check_achievements_for_user
+from app.services.proficiency_service import ProficiencyService
+from app.schemas.proficiency import ExerciseResult, ProficiencyLevel
+from app.routes.proficiency import record_exercise_results_for_user
 from app.crud.progress import ProgressCRUD
 from app.services.level_service import (
     LevelService,
@@ -1086,6 +1089,37 @@ async def complete_lesson(
         logger.warning("Achievement check error: %s", e)
     
     await db.commit()
+
+    # CEFR proficiency tracking: one aggregate ExerciseResult per completed
+    # lesson. Best-effort — a failure here must not fail the lesson the
+    # user just finished. complete_lesson's own "Already completed" guard
+    # above (finished_at check) is the idempotency boundary: this only
+    # runs once per attempt.
+    try:
+        course_result = await db.execute(
+            select(Course).where(Course.id == lesson.course_id)
+        )
+        course = course_result.scalar_one_or_none()
+        if course and course.level in {lvl.value for lvl in ProficiencyLevel}:
+            await record_exercise_results_for_user(
+                db,
+                current_user,
+                [
+                    ExerciseResult(
+                        exercise_type="lesson",
+                        skill=ProficiencyService.infer_skill_from_tags(course.tags),
+                        difficulty_level=ProficiencyLevel(course.level),
+                        is_correct=attempt.passed,
+                        score=float(attempt.score),
+                        time_spent_seconds=attempt.time_spent_ms // 1000,
+                        lesson_id=str(attempt.lesson_id),
+                        course_id=str(lesson.course_id),
+                    )
+                ],
+                award_xp=False,  # lesson completion above already awarded XP
+            )
+    except Exception as e:
+        logger.warning("Proficiency update error: %s", e)
 
     await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))

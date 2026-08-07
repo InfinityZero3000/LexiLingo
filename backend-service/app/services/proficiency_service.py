@@ -59,6 +59,24 @@ class ProficiencyService:
     """Service for calculating and managing user proficiency."""
 
     @staticmethod
+    def infer_skill_from_tags(tags: list[str] | None) -> SkillType:
+        """Best-effort SkillType for content with no explicit skill field
+        (e.g. a course's free-form tags). Defaults to VOCABULARY, the most
+        common content type, when nothing matches."""
+        skill_keywords = {
+            SkillType.GRAMMAR: {"grammar"},
+            SkillType.READING: {"reading"},
+            SkillType.LISTENING: {"listening", "podcast"},
+            SkillType.SPEAKING: {"speaking", "pronunciation", "conversation"},
+            SkillType.WRITING: {"writing"},
+        }
+        normalized = {t.lower() for t in (tags or [])}
+        for skill, keywords in skill_keywords.items():
+            if normalized & keywords:
+                return skill
+        return SkillType.VOCABULARY
+
+    @staticmethod
     def get_level_index(level: ProficiencyLevel) -> int:
         """Get numeric index of level (0 = A1, 5 = C2)."""
         return LEVEL_ORDER.index(level)
