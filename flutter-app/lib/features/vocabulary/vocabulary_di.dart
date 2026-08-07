@@ -9,6 +9,8 @@ import 'package:lexilingo_app/features/vocabulary/domain/usecases/add_to_collect
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/known_words_service.dart';
+import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 
 /// Vocabulary Dependency Injection Setup
 /// Clean Architecture: Dependency inversion principle
@@ -43,6 +45,13 @@ void setupVocabularyDependencies() {
 
   getIt.registerLazySingleton(
     () => AddToCollectionUseCase(getIt<VocabularyRepository>()),
+  );
+
+  getIt.registerLazySingleton(
+    () => KnownWordsService(
+      vocabularyRepository: getIt<VocabularyRepository>(),
+      quickSaveVocabularyService: getIt<QuickSaveVocabularyService>(),
+    ),
   );
 
   // Providers (ChangeNotifier)

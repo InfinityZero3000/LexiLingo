@@ -159,6 +159,8 @@ class AuthRepositoryImpl implements AuthRepository {
     String? nativeLanguage,
     String? targetLanguage,
     String? level,
+    String? goal,
+    String? interest,
     bool? isOnboardingCompleted,
   }) async {
     try {
@@ -168,6 +170,8 @@ class AuthRepositoryImpl implements AuthRepository {
         nativeLanguage: nativeLanguage,
         targetLanguage: targetLanguage,
         level: level,
+        goal: goal,
+        interest: interest,
         isOnboardingCompleted: isOnboardingCompleted,
       );
       return Right(user);

@@ -23,7 +23,6 @@ from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.trace_cag.dependencies import (
-    KG_VERSION_TOKEN,
     dependency_record,
     stable_version_token,
 )
@@ -162,6 +161,10 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                 learner_profile["_learner_state_available"] = not epoch_result.degraded
                 if not epoch_result.degraded:
                     learner_profile["_learner_state_epoch"] = epoch_result.state_epoch
+                    if epoch_result.goal:
+                        learner_profile["goal"] = epoch_result.goal
+                    if epoch_result.interest:
+                        learner_profile["interest"] = epoch_result.interest
                 learner_state_update = {
                     "learner_state_epoch": epoch_result.state_epoch,
                     "learner_state_degraded": epoch_result.degraded,
@@ -363,7 +366,7 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
             },
             "models_used": ["kuzu_kg_bestfirst"],
             "dependency_events": [dependency_record(
-                "kg:tracecag:main", "kg", KG_VERSION_TOKEN, "kuzu"
+                "kg:tracecag:main", "kg", kg.get_kg_content_version(), "kuzu"
             )],
         }
 
@@ -463,14 +466,28 @@ Be encouraging and focus on the most important errors first."""
         # Call local Qwen via ModelGateway (lazy loads if needed).
         # If local Qwen is unavailable (e.g., missing local weights), fall back
         # to Groq (Qwen3) before degrading to rules.
-        result = await gateway.execute_task(
-            "chat",
-            {
-                "message": diagnosis_prompt,
-                "system": "You are an English grammar analyzer. Return only valid JSON.",
-                "max_tokens": 150,
-            },
-        )
+        # execute_task can *raise* (e.g. "Model 'qwen' not registered") instead
+        # of returning {"success": False} for a genuinely unregistered/unavailable
+        # model — normalize that into the same shape so the Groq-fallback branch
+        # below actually runs instead of being skipped straight to rules.
+        try:
+            result = await gateway.execute_task(
+                "chat",
+                {
+                    "message": diagnosis_prompt,
+                    "system": "You are an English grammar analyzer. Return only valid JSON.",
+                    # 150 was too tight for the requested schema (errors array
+                    # with span/type/correction/explanation per item plus
+                    # scores) — a live run against real Groq truncated mid-
+                    # object ("Expecting ',' delimiter") for a single-error
+                    # sentence, silently degrading to the weaker rule-based
+                    # fallback.
+                    "max_tokens": 400,
+                },
+            )
+        except Exception as gateway_exc:
+            logger.warning(f"[diagnose_node] Local gateway unavailable, trying Groq: {gateway_exc}")
+            result = {"success": False, "error": str(gateway_exc)}
         
         # Parse AI response
         errors: List[DiagnosisError] = []
@@ -484,7 +501,7 @@ Be encouraging and focus on the most important errors first."""
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-            groq_key = await get_available_groq_key(estimated_tokens=150)
+            groq_key = await get_available_groq_key(estimated_tokens=400)
             groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"))
             if groq_key:
                 try:
@@ -497,7 +514,7 @@ Be encouraging and focus on the most important errors first."""
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 150, "temperature": 0.0},
+                        payload={"model": groq_model, "messages": messages, "max_tokens": 400, "temperature": 0.0},
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:

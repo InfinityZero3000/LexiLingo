@@ -923,6 +923,7 @@
     "lookingUp": "「{word}」で調べてみると…",
     "noDefinitionFound": "「{word}」の定義が見つかりません。",
     "saveWordToVocabulary": "Word を語彙に保存",
+    "wordAlreadySavedButton": "保存済み",
     "wordAlreadyInCollection": "「{word}」はすでにあなたの語彙に入っています。",
     "wordSaved": "「{word}」を語彙に保存しました。",
     "couldNotSaveWord": "現在この単語を保存できませんでした。"
@@ -1094,6 +1095,7 @@
     "languageNotes": "言語ノート",
     "listenButton": "再生",
     "viewNotesButton": "メモを見る",
+    "practiceMoreButton": "{concept}を練習",
     "correctionsSection": "修正",
     "vietnameseHintSection": "ベトナム語ヒント",
     "relatedConceptsSection": "関連概念"

@@ -18,6 +18,7 @@ from app.models.learner_state import (
     LearnerObservationEvent,
     LearnerStateProfile,
 )
+from app.models.user import User
 
 ALGORITHM_VERSION = "bkt-fsrs-v1"
 LEARNING_RATE = 0.45
@@ -59,6 +60,8 @@ class ObservationInput:
 class BatchStateResult:
     state_epoch: int
     states: tuple[LearnerConceptState, ...]
+    goal: str | None = None
+    interest: str | None = None
 
 
 def _clamp(lower: float, upper: float, value: float) -> float:
@@ -215,20 +218,36 @@ async def get_states_for_concepts(
     *,
     limit: int = MAX_BATCH_CONCEPTS,
 ) -> BatchStateResult:
-    """Read one sparse learner overlay with exactly two bounded SELECTs."""
+    """Read one sparse learner overlay with exactly two bounded SELECTs.
+
+    The first SELECT joins ``users`` so callers needing onboarding
+    preferences (goal/interest) alongside the epoch get them for free —
+    this is a hot, deadline-bounded RPC (ai-service polls it every chat
+    turn), so a separate third round-trip for those two columns would
+    silently break that latency budget.
+    """
     ids = list(dict.fromkeys(concept_ids))
     if len(ids) > limit:
         raise TooManyConceptsError(f"at most {limit} concept IDs are allowed")
     if any(not concept_id or len(concept_id) > 255 for concept_id in ids):
         raise ValueError("concept IDs must contain 1..255 characters")
 
-    epoch = await session.scalar(
-        select(LearnerStateProfile.state_epoch).where(
-            LearnerStateProfile.user_id == user_id
+    profile_row = (
+        await session.execute(
+            select(LearnerStateProfile.state_epoch, User.goal, User.interest)
+            .select_from(User)
+            .outerjoin(LearnerStateProfile, LearnerStateProfile.user_id == User.id)
+            .where(User.id == user_id)
         )
-    )
+    ).first()
+    epoch = profile_row.state_epoch if profile_row else None
+    goal = profile_row.goal if profile_row else None
+    interest = profile_row.interest if profile_row else None
+
     if not ids:
-        return BatchStateResult(state_epoch=int(epoch or 0), states=())
+        return BatchStateResult(
+            state_epoch=int(epoch or 0), states=(), goal=goal, interest=interest
+        )
 
     rows = (
         await session.scalars(
@@ -242,6 +261,8 @@ async def get_states_for_concepts(
     return BatchStateResult(
         state_epoch=int(epoch or 0),
         states=tuple(by_id[concept_id] for concept_id in ids if concept_id in by_id),
+        goal=goal,
+        interest=interest,
     )
 
 
@@ -321,6 +342,34 @@ async def ingest_observations(
     return set((await session.scalars(statement)).all())
 
 
+async def bump_learner_state_epoch(
+    session: AsyncSession,
+    user_id: UUID,
+    now: datetime,
+) -> None:
+    """Advance a learner's cache-invalidation epoch by one.
+
+    Any personalized artifact (TraceCAG cache entries, KG-derived responses)
+    that depends on ``learner:{user_id}:profile`` is versioned off this epoch,
+    so bumping it here is what makes those artifacts refresh instead of
+    silently going stale after learner state changes.
+    """
+    await session.execute(
+        pg_insert(LearnerStateProfile)
+        .values(user_id=user_id, state_epoch=0, updated_at=now)
+        .on_conflict_do_nothing(index_elements=["user_id"])
+    )
+    profile = await session.scalar(
+        select(LearnerStateProfile)
+        .where(LearnerStateProfile.user_id == user_id)
+        .with_for_update()
+    )
+    if profile is None:  # pragma: no cover - defensive database invariant
+        raise RuntimeError("learner state profile row was not created")
+    profile.state_epoch += 1
+    profile.updated_at = now
+
+
 async def apply_observation_event(
     session: AsyncSession,
     event_db_id: UUID,
@@ -377,20 +426,7 @@ async def apply_observation_event(
     )
     _apply_snapshot(state, next_state, now)
 
-    await session.execute(
-        pg_insert(LearnerStateProfile)
-        .values(user_id=event.user_id, state_epoch=0, updated_at=now)
-        .on_conflict_do_nothing(index_elements=["user_id"])
-    )
-    profile = await session.scalar(
-        select(LearnerStateProfile)
-        .where(LearnerStateProfile.user_id == event.user_id)
-        .with_for_update()
-    )
-    if profile is None:  # pragma: no cover - defensive database invariant
-        raise RuntimeError("learner state profile row was not created")
-    profile.state_epoch += 1
-    profile.updated_at = now
+    await bump_learner_state_epoch(session, event.user_id, now)
 
     event.status = "applied"
     event.applied_at = now

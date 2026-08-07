@@ -274,8 +274,22 @@ class LexiChatDataSource {
       audioBase64: data['audio_base64'],
       corrections: corrections,
       linkedConcepts: linkedConcepts,
+      suggestedPractice: _parseSuggestedPractice(data['suggested_practice']),
       vietnameseHint: data['vietnamese_hint'],
       scores: scores,
+    );
+  }
+
+  /// Shared by both the non-streaming and streaming response paths.
+  static LexiSuggestedPractice? _parseSuggestedPractice(dynamic raw) {
+    if (raw is! Map) return null;
+    final conceptId = raw['concept_id']?.toString() ?? '';
+    final prompt = raw['prompt']?.toString() ?? '';
+    if (conceptId.isEmpty || prompt.isEmpty) return null;
+    return LexiSuggestedPractice(
+      conceptId: conceptId,
+      conceptTitle: raw['concept_title']?.toString() ?? conceptId,
+      prompt: prompt,
     );
   }
 
@@ -568,6 +582,9 @@ class LexiChatDataSource {
                   fullText: json['lexi_response'] as String?,
                   corrections: corrections,
                   linkedConcepts: linkedConcepts,
+                  suggestedPractice: _parseSuggestedPractice(
+                    json['suggested_practice'],
+                  ),
                   vietnameseHint: json['vietnamese_hint'] as String?,
                   scores: scores,
                   audioBase64: json['audio_base64'] as String?,

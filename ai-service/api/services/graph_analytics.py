@@ -82,6 +82,16 @@ class GraphAnalyticsService:
     
     # Cache TTL (recompute analytics every N requests)
     CACHE_SIZE = 128
+
+    # ponytail: exact betweenness centrality is O(V*E) (Brandes) and
+    # greedy_modularity_communities is similarly impractical past a few
+    # thousand nodes. Measured against the real production KG (15,129
+    # concepts / 145,387 edges): betweenness + community detection ran
+    # 3.5+ minutes without finishing. Sample/skip above these caps; raise
+    # them (or switch to an incremental/approximate algorithm) if reranking
+    # quality regresses — this is a scale ceiling, not a tuned optimum.
+    BETWEENNESS_SAMPLE_NODE_CAP = 500
+    MAX_COMMUNITY_DETECTION_NODES = 3000
     
     def __init__(self, kg: KnowledgeGraphServiceV3):
         self.kg = kg
@@ -158,7 +168,13 @@ class GraphAnalyticsService:
             degree_cent = {n: 0.0 for n in G.nodes()}
             
         try:
-            betweenness_cent = nx.betweenness_centrality(G)
+            node_count = G.number_of_nodes()
+            if node_count > self.BETWEENNESS_SAMPLE_NODE_CAP:
+                betweenness_cent = nx.betweenness_centrality(
+                    G, k=self.BETWEENNESS_SAMPLE_NODE_CAP, seed=42
+                )
+            else:
+                betweenness_cent = nx.betweenness_centrality(G)
         except Exception:
             betweenness_cent = {n: 0.0 for n in G.nodes()}
             
@@ -215,7 +231,15 @@ class GraphAnalyticsService:
         
         if G.number_of_nodes() == 0:
             return {}
-        
+
+        if G.number_of_nodes() > self.MAX_COMMUNITY_DETECTION_NODES:
+            logger.warning(
+                "Skipping greedy_modularity_communities: %d nodes exceeds cap of %d",
+                G.number_of_nodes(), self.MAX_COMMUNITY_DETECTION_NODES,
+            )
+            self._community_cache = {n: i for i, n in enumerate(G.nodes())}
+            return self._community_cache
+
         # Convert to undirected for community detection
         G_undirected = G.to_undirected()
         

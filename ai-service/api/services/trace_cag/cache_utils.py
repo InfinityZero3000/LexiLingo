@@ -36,7 +36,12 @@ from api.services.trace_cag.l1_state_cache import (
     decide_l1_reuse,
 )
 from api.services.trace_cag.env_helpers import _env_float
-from api.services.trace_cag.dependencies import DependencyEvent, compile_dependency_trace
+from api.services.trace_cag.dependencies import (
+    DependencyEvent,
+    GRAPH_SCHEMA_VERSION,
+    POLICY_SCHEMA_VERSION,
+    compile_dependency_trace,
+)
 from api.services.trace_cag.invalidation import (
     observe_dependency_tokens,
     pop_dependent_artifacts_redis,
@@ -392,8 +397,10 @@ _MEM_BUCKET_MAX_ITEMS = 8
 # v_b = ⟨ν_graph, ν_policy, ν_profile, t_refresh⟩
 # Increment a version constant to invalidate all buckets at startup.
 _MEM_BUCKET_VERSIONS: dict[str, BucketVersionRecord] = {}
-_GRAPH_SCHEMA_VERSION: int = 2   # clean runtime KG; invalidates contaminated buckets
-_POLICY_VERSION: int = 2          # safe chat fallback; invalidates context-leaking entries
+# Aliased from dependencies.py so this hard-gate check and the certificate/
+# reverse-invalidation system below always agree on the current version.
+_GRAPH_SCHEMA_VERSION: int = GRAPH_SCHEMA_VERSION  # clean runtime KG; invalidates contaminated buckets
+_POLICY_VERSION: int = POLICY_SCHEMA_VERSION        # safe chat fallback; invalidates context-leaking entries
 _DEFAULT_BUCKET_TTL: int = 7200   # 2 h: max age of a valid L1 bucket
 
 

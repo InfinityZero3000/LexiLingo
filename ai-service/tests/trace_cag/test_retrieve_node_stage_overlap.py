@@ -75,3 +75,35 @@ async def test_kg_and_vector_stages_run_concurrently_not_sequentially(monkeypatc
     texts = " ".join(item.get("text", "") for item in evidence)
     assert "KG Concept" in texts, "KG-stage evidence missing from result"
     assert "vector evidence" in texts, "Vector-stage evidence missing from result"
+
+
+@pytest.mark.asyncio
+async def test_get_retrieval_v3_dedupes_concurrent_construction(monkeypatch):
+    """RetrievalServiceV3's constructor takes ~170s on the real KG (measured
+    live), so it's warmed as a background task at boot instead of blocking
+    startup — meaning a live request can legitimately race the still-running
+    warmup. The lock in _get_retrieval_v3() must make that request await the
+    same in-flight build rather than starting a second, redundant one."""
+    monkeypatch.setattr(retrieve_mod, "_retrieval_v3_instance", None)
+    monkeypatch.setattr(retrieve_mod, "_retrieval_v3_lock", asyncio.Lock())
+
+    build_calls = 0
+
+    def fake_retrieval_v3_ctor(kg):
+        nonlocal build_calls
+        build_calls += 1
+        time.sleep(STAGE_DELAY_S)
+        return object()
+
+    import api.services.kg_service_v3 as kg_service_mod
+    import api.services.retrieval_service_v3 as retrieval_service_mod
+
+    monkeypatch.setattr(kg_service_mod, "get_kg_service", lambda: object())
+    monkeypatch.setattr(retrieval_service_mod, "RetrievalServiceV3", fake_retrieval_v3_ctor)
+
+    results = await asyncio.gather(
+        *(retrieve_mod._get_retrieval_v3() for _ in range(5))
+    )
+
+    assert build_calls == 1, "concurrent callers built RetrievalServiceV3 more than once"
+    assert len({id(r) for r in results}) == 1, "concurrent callers got different instances"

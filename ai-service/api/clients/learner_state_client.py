@@ -19,6 +19,8 @@ class LearnerStateResult:
     states: dict[str, dict[str, Any]] = field(default_factory=dict)
     degraded: bool = False
     reason: str | None = None
+    goal: str | None = None
+    interest: str | None = None
 
 
 class LearnerStateClient:
@@ -175,6 +177,8 @@ class LearnerStateClient:
                 if isinstance(item, dict) and item.get("concept_id")
             }
             state_epoch = int(payload.get("state_epoch") or 0)
+            goal = payload.get("goal")
+            interest = payload.get("interest")
         except (TypeError, ValueError, KeyError):
             self._record_failure()
             return finish(self._degraded("invalid_response"))
@@ -183,6 +187,8 @@ class LearnerStateClient:
         return finish(LearnerStateResult(
             state_epoch=state_epoch,
             states=states,
+            goal=goal if isinstance(goal, str) else None,
+            interest=interest if isinstance(interest, str) else None,
         ))
 
     async def close(self) -> None:

@@ -6,11 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
+from datetime import UTC, datetime
+
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.crud.user import UserCRUD
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
+from app.services.learner_state import bump_learner_state_epoch
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
     LevelInfoResponse,
@@ -69,6 +72,8 @@ def _serialize_user_response(user: User) -> UserResponse:
         created_at=getattr(user, "created_at"),
         last_login=getattr(user, "last_login", None),
         cefr_level=_safe_str(getattr(user, "cefr_level", None), normalized_level),
+        goal=getattr(user, "goal", None),
+        interest=getattr(user, "interest", None),
         total_xp=_safe_int(getattr(user, "total_xp", None), 0),
         numeric_level=_safe_int(getattr(user, "numeric_level", None), 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
@@ -123,7 +128,10 @@ async def update_current_user_profile(
     
     for field, value in update_dict.items():
         setattr(current_user, field, value)
-        
+
+    if "goal" in update_dict or "interest" in update_dict:
+        await bump_learner_state_epoch(db, current_user.id, datetime.now(UTC))
+
     rank_info = calc_rank(
         numeric_level=current_user.numeric_level or 1,
         proficiency_level=current_user.level or "A1"

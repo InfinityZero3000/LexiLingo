@@ -38,6 +38,11 @@ class User(Base):
     native_language: Mapped[str] = mapped_column(String(10), default="vi")
     target_language: Mapped[str] = mapped_column(String(10), default="en")
     level: Mapped[str] = mapped_column(String(20), default="A1")  # A1, A2, B1, B2, C1, C2
+    # Onboarding preferences — used to personalize chat/course content. Free-form
+    # short slugs from the onboarding UI (e.g. "career", "daily-life"), not enums,
+    # since the option set is expected to evolve independently of this schema.
+    goal: Mapped[str] = mapped_column(String(30), nullable=True)
+    interest: Mapped[str] = mapped_column(String(30), nullable=True)
     total_xp: Mapped[int] = mapped_column(Integer, default=0, nullable=False)  # Total XP earned
     numeric_level: Mapped[int] = mapped_column(Integer, default=1, nullable=False)  # Gamification level (1, 2, 3...)
     rank: Mapped[str] = mapped_column(String(20), default="bronze", nullable=False)  # bronze, silver, gold, platinum, sapphire, ruby, amethyst, master

@@ -191,6 +191,26 @@ class MockProgressRemoteDataSource extends _i1.Mock
           as _i7.Future<Map<String, dynamic>>);
 
   @override
+  _i7.Future<_i4.StreakModel> restoreStreak() =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreStreak, []),
+            returnValue: _i7.Future<_i4.StreakModel>.value(
+              _FakeStreakModel_4(this, Invocation.method(#restoreStreak, [])),
+            ),
+          )
+          as _i7.Future<_i4.StreakModel>);
+
+  @override
+  _i7.Future<Map<String, dynamic>> claimDailyReward() =>
+      (super.noSuchMethod(
+            Invocation.method(#claimDailyReward, []),
+            returnValue: _i7.Future<Map<String, dynamic>>.value(
+              <String, dynamic>{},
+            ),
+          )
+          as _i7.Future<Map<String, dynamic>>);
+
+  @override
   _i7.Future<_i5.DailyChallengesResponseModel> getDailyChallenges() =>
       (super.noSuchMethod(
             Invocation.method(#getDailyChallenges, []),

@@ -598,3 +598,86 @@ async def test_lexi_health_returns_ok():
     assert result["status"] == "ok"
     assert result["service"] == "lexi-chat"
     assert "text-chat" in result["capabilities"]
+
+
+# ─── _build_suggested_practice ───────────────────────────────────────────────
+
+def test_suggested_practice_built_from_the_error_concept_not_a_generic_scan():
+    """Must use the concept diagnose_node traced THIS mistake to, via
+    KnowledgeGraphServiceV3.get_concepts() for the display title — not
+    get_recommended_concepts()'s generic low-mastery scan."""
+    fake_kg = MagicMock()
+    fake_kg.get_concepts.return_value = {
+        "concept:past_simple": {"title": "Past Simple Tense"},
+    }
+    with patch("api.services.kg_service_v3.get_kg_service", lambda: fake_kg):
+        result = svc._build_suggested_practice(
+            ["concept:past_simple", "concept:articles"], has_correction=True
+        )
+
+    assert result is not None
+    assert result.concept_id == "concept:past_simple"
+    assert result.concept_title == "Past Simple Tense"
+    assert "Past Simple Tense" in result.prompt
+
+
+def test_suggested_practice_is_none_without_a_correction():
+    """A clean sentence shouldn't get nagged with a practice suggestion."""
+    result = svc._build_suggested_practice(["concept:past_simple"], has_correction=False)
+    assert result is None
+
+
+def test_suggested_practice_is_none_without_weak_concepts():
+    result = svc._build_suggested_practice([], has_correction=True)
+    assert result is None
+
+
+# ─── _build_session_recap ────────────────────────────────────────────────────
+
+def _make_recap_db(session_doc=None, message_doc=None):
+    db = MagicMock()
+    lexi_sessions = MagicMock()
+    lexi_sessions.find_one = AsyncMock(return_value=session_doc)
+    lexi_messages = MagicMock()
+    lexi_messages.find_one = AsyncMock(return_value=message_doc)
+
+    def _get(name):
+        return {"lexi_sessions": lexi_sessions, "lexi_messages": lexi_messages}[name]
+
+    db.__getitem__.side_effect = _get
+    return db, lexi_sessions, lexi_messages
+
+
+@pytest.mark.asyncio
+async def test_session_recap_uses_last_user_message_from_most_recent_session():
+    db, sessions, messages = _make_recap_db(
+        session_doc={"session_id": "old-session"},
+        message_doc={"content": "I want to talk about my dream job."},
+    )
+
+    recap = await svc._build_session_recap(db, "user-1", "new-session")
+
+    assert recap == "I want to talk about my dream job."
+    sessions.find_one.assert_awaited_once()
+    call_kwargs = sessions.find_one.call_args
+    query = call_kwargs.args[0]
+    assert query["user_id"] == "user-1"
+    assert query["session_id"] == {"$ne": "new-session"}
+
+
+@pytest.mark.asyncio
+async def test_session_recap_is_none_when_no_prior_session_exists():
+    db, _, _ = _make_recap_db(session_doc=None)
+    recap = await svc._build_session_recap(db, "user-1", "new-session")
+    assert recap is None
+
+
+@pytest.mark.asyncio
+async def test_session_recap_truncates_long_messages():
+    db, _, _ = _make_recap_db(
+        session_doc={"session_id": "old-session"},
+        message_doc={"content": "x" * 500},
+    )
+    recap = await svc._build_session_recap(db, "user-1", "new-session")
+    assert recap is not None
+    assert len(recap) == 150
