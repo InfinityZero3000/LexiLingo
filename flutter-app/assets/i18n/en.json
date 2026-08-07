@@ -1052,6 +1052,7 @@
     "lookingUp": "Looking up \"{word}\"…",
     "noDefinitionFound": "No definition found for \"{word}\".",
     "saveWordToVocabulary": "Save Word to Vocabulary",
+    "wordAlreadySavedButton": "Already saved",
     "wordAlreadyInCollection": "\"{word}\" is already in your vocabulary.",
     "wordSaved": "Saved \"{word}\" to vocabulary.",
     "couldNotSaveWord": "Could not save this word right now."
@@ -1223,6 +1224,7 @@
     "languageNotes": "Language Notes",
     "listenButton": "Listen",
     "viewNotesButton": "View Notes",
+    "practiceMoreButton": "Practice {concept}",
     "correctionsSection": "Corrections",
     "vietnameseHintSection": "Vietnamese Hint",
     "relatedConceptsSection": "Related Concepts"

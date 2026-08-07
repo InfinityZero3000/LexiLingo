@@ -7,6 +7,7 @@ class LexiMessage {
   final String? audioBase64;
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
+  final LexiSuggestedPractice? suggestedPractice;
   final String? vietnameseHint;
   final Map<String, dynamic>? scores;
   final String syncStatus; // 'synced' | 'pending_sync'
@@ -20,6 +21,7 @@ class LexiMessage {
     this.audioBase64,
     this.corrections = const [],
     this.linkedConcepts = const [],
+    this.suggestedPractice,
     this.vietnameseHint,
     this.scores,
     this.syncStatus = 'synced',
@@ -40,6 +42,7 @@ class LexiMessage {
     String? audioBase64,
     List<LexiCorrection>? corrections,
     List<String>? linkedConcepts,
+    LexiSuggestedPractice? suggestedPractice,
     String? vietnameseHint,
     Map<String, dynamic>? scores,
     String? syncStatus,
@@ -53,12 +56,27 @@ class LexiMessage {
       audioBase64: audioBase64 ?? this.audioBase64,
       corrections: corrections ?? this.corrections,
       linkedConcepts: linkedConcepts ?? this.linkedConcepts,
+      suggestedPractice: suggestedPractice ?? this.suggestedPractice,
       vietnameseHint: vietnameseHint ?? this.vietnameseHint,
       scores: scores ?? this.scores,
       syncStatus: syncStatus ?? this.syncStatus,
       clientRequestId: clientRequestId ?? this.clientRequestId,
     );
   }
+}
+
+/// A one-tap follow-up practice prompt tied to the concept behind the
+/// mistake just corrected (not a generic "you're weak at X" suggestion).
+class LexiSuggestedPractice {
+  final String conceptId;
+  final String conceptTitle;
+  final String prompt;
+
+  const LexiSuggestedPractice({
+    required this.conceptId,
+    required this.conceptTitle,
+    required this.prompt,
+  });
 }
 
 /// A grammar/vocabulary correction from Lexi.

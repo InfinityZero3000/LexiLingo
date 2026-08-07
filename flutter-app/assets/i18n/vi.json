@@ -1052,6 +1052,7 @@
     "lookingUp": "Đang tra \"{word}\"…",
     "noDefinitionFound": "Không tìm thấy định nghĩa cho \"{word}\".",
     "saveWordToVocabulary": "Lưu từ vào từ vựng",
+    "wordAlreadySavedButton": "Đã lưu",
     "wordAlreadyInCollection": "\"{word}\" đã có trong từ vựng của bạn.",
     "wordSaved": "Đã lưu \"{word}\" vào từ vựng.",
     "couldNotSaveWord": "Không thể lưu từ này ngay bây giờ."
@@ -1223,6 +1224,7 @@
     "languageNotes": "Ghi chú ngôn ngữ",
     "listenButton": "Nghe",
     "viewNotesButton": "Xem ghi chú",
+    "practiceMoreButton": "Luyện thêm '{concept}'",
     "correctionsSection": "Sửa lỗi",
     "vietnameseHintSection": "Gợi ý tiếng Việt",
     "relatedConceptsSection": "Khái niệm liên quan"

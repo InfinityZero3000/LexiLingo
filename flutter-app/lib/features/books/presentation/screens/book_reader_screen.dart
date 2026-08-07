@@ -5,6 +5,7 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/di/service_locator.dart';
+import '../../../../core/services/known_words_service.dart';
 import '../../../../core/services/dictionary_service.dart';
 import '../../../../core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -515,11 +516,24 @@ class _DictionarySheetState extends State<_DictionarySheet> {
   bool _loading = true;
   bool _isSaving = false;
   bool _notFound = false;
+  bool _isAlreadySaved = false;
 
   @override
   void initState() {
     super.initState();
     _fetch();
+    _checkAlreadySaved();
+  }
+
+  /// Without this, a word saved in a previous reading session always shows
+  /// the plain "Save" button again — the sheet had no way to know the
+  /// backend already has it.
+  Future<void> _checkAlreadySaved() async {
+    final known = await sl<KnownWordsService>().getKnownWords();
+    if (!mounted) return;
+    if (known.contains(widget.word.trim().toLowerCase())) {
+      setState(() => _isAlreadySaved = true);
+    }
   }
 
   Future<void> _fetch() async {
@@ -533,7 +547,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
   }
 
   Future<void> _saveWord() async {
-    if (_isSaving) return;
+    if (_isSaving || _isAlreadySaved) return;
 
     setState(() => _isSaving = true);
     try {
@@ -544,6 +558,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
       );
 
       if (!mounted) return;
+      setState(() => _isAlreadySaved = true);
       final message = result.alreadyInCollection
           ? 'bookReader.wordAlreadyInCollection'.tr(
               namedArgs: {'word': result.normalizedWord},
@@ -674,15 +689,24 @@ class _DictionarySheetState extends State<_DictionarySheet> {
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
-            onPressed: _isSaving ? null : _saveWord,
+            onPressed: (_isSaving || _isAlreadySaved) ? null : _saveWord,
             icon: _isSaving
                 ? const SizedBox(
                     width: 14,
                     height: 14,
                     child: LottieLoadingWidget.tiny(),
                   )
-                : const Icon(Icons.bookmark_add_outlined, size: 18),
-            label: Text('bookReader.saveWordToVocabulary'.tr()),
+                : Icon(
+                    _isAlreadySaved
+                        ? Icons.check_circle_rounded
+                        : Icons.bookmark_add_outlined,
+                    size: 18,
+                  ),
+            label: Text(
+              _isAlreadySaved
+                  ? 'bookReader.wordAlreadySavedButton'.tr()
+                  : 'bookReader.saveWordToVocabulary'.tr(),
+            ),
           ),
         ),
         const SizedBox(height: 8),

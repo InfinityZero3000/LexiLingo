@@ -32,6 +32,41 @@ async def test_batch_get_uses_one_request_and_returns_typed_state():
 
 
 @pytest.mark.asyncio
+async def test_batch_get_parses_onboarding_goal_and_interest():
+    response = MagicMock(status_code=200)
+    response.json.return_value = {
+        "state_epoch": 1,
+        "states": [],
+        "goal": "career",
+        "interest": "technology",
+    }
+    response.raise_for_status.return_value = None
+    http = MagicMock()
+    http.post = AsyncMock(return_value=response)
+    client = LearnerStateClient(http_client=http, token="secret", audience="backend")
+
+    result = await client.batch_get("user-1", [], deadline=time.monotonic() + 0.1)
+
+    assert result.goal == "career"
+    assert result.interest == "technology"
+
+
+@pytest.mark.asyncio
+async def test_batch_get_defaults_goal_and_interest_when_absent():
+    response = MagicMock(status_code=200)
+    response.json.return_value = {"state_epoch": 1, "states": []}
+    response.raise_for_status.return_value = None
+    http = MagicMock()
+    http.post = AsyncMock(return_value=response)
+    client = LearnerStateClient(http_client=http, token="secret", audience="backend")
+
+    result = await client.batch_get("user-1", [], deadline=time.monotonic() + 0.1)
+
+    assert result.goal is None
+    assert result.interest is None
+
+
+@pytest.mark.asyncio
 async def test_expired_deadline_degrades_without_http_request():
     http = MagicMock()
     http.post = AsyncMock()

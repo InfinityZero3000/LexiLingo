@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/curriculum_repository.dart';
 
 class UnitsLessonsScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
   List<Lesson> _lessons = [];
   bool _loading = true;
   String? _expandedId;
+  String? _error;
 
   @override
   void initState() {
@@ -32,12 +34,41 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
   }
 
   Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
     try {
       final lessons = await _repo.getLessons(widget.unitId);
       if (mounted) setState(() { _lessons = lessons; _loading = false; });
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() { _loading = false; _error = 'Could not load lessons.'; });
     }
+  }
+
+  Future<void> _edit([Lesson? lesson]) async {
+    final title = TextEditingController(text: lesson?.title);
+    final description = TextEditingController(text: lesson?.description);
+    final outcome = TextEditingController(text: lesson?.outcome);
+    final xp = TextEditingController(text: '${lesson?.xpReward ?? 10}');
+    final threshold = TextEditingController(text: '${lesson?.passThreshold ?? 80}');
+    final minutes = TextEditingController(text: '${lesson?.estimatedMinutes ?? 10}');
+    var type = lesson?.lessonType ?? 'lesson';
+    final saved = await showDialog<bool>(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) => AlertDialog(
+      title: Text(lesson == null ? 'Create lesson' : 'Edit lesson'), content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+        TextField(controller: title, autofocus: true, decoration: const InputDecoration(labelText: 'Title *')),
+        TextField(controller: description, maxLines: 2, decoration: const InputDecoration(labelText: 'Description')),
+        TextField(controller: outcome, maxLines: 2, decoration: const InputDecoration(labelText: 'Outcome')),
+        DropdownButtonFormField<String>(initialValue: type, decoration: const InputDecoration(labelText: 'Type'), items: ['lesson','practice','review','test','vocabulary','grammar'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(), onChanged: (v) => setDialogState(() => type = v!)),
+        Row(children: [Expanded(child: TextField(controller: xp, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'XP'))), const SizedBox(width: 8), Expanded(child: TextField(controller: threshold, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Pass %')))]),
+        TextField(controller: minutes, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutes')),
+      ])), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, title.text.trim().isNotEmpty), child: const Text('Save'))])));
+    if (saved != true) return;
+    final data = {'title': title.text.trim(), 'description': description.text.trim(), 'outcome': outcome.text.trim(), 'lesson_type': type, 'xp_reward': int.tryParse(xp.text) ?? 10, 'pass_threshold': int.tryParse(threshold.text) ?? 80, 'estimated_minutes': int.tryParse(minutes.text) ?? 10, 'order_index': lesson?.orderIndex ?? _lessons.length};
+    try { if (lesson == null) { await _repo.createLesson({...data, 'unit_id': widget.unitId}); } else { await _repo.updateLesson(lesson.id, data); } await _load(); }
+    catch (_) { if (mounted) setState(() => _error = 'Could not save lesson.'); }
+  }
+
+  Future<void> _delete(Lesson lesson) async {
+    final ok = await showDialog<bool>(context: context, builder: (context) => AlertDialog(title: const Text('Delete lesson?'), content: Text('Delete “${lesson.title}”?'), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete'))]));
+    if (ok == true) { try { await _repo.deleteLesson(lesson.id); await _load(); } catch (_) { if (mounted) setState(() => _error = 'Could not delete lesson.'); } }
   }
 
   @override
@@ -55,28 +86,23 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.swap_vert, size: 16, color: AppColors.onSurfaceMuted),
-            label: Text('REORDER',
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.onSurfaceMuted)),
-          ),
+          IconButton(onPressed: _load, icon: const Icon(Icons.refresh), tooltip: 'Refresh'),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Padding(padding: EdgeInsets.all(20), child: Column(children: [AdminSkeleton(height: 100), SizedBox(height: 12), AdminSkeleton(height: 100)]))
           : Column(
               children: [
+                if (_error != null) Padding(padding: const EdgeInsets.fromLTRB(20, 12, 20, 0), child: Row(children: [const Icon(Icons.error_outline, color: AppColors.error), const SizedBox(width: 8), Expanded(child: Text(_error!, style: GoogleFonts.spaceGrotesk(color: AppColors.error))), TextButton(onPressed: _load, child: const Text('Retry'))])),
                 Expanded(
-                  child: ListView.separated(
+                  child: RefreshIndicator(onRefresh: _load, child: ListView.separated(
                     padding: const EdgeInsets.all(20),
                     itemCount: _lessons.length + 1,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       if (i == _lessons.length) {
                         return GestureDetector(
-                          onTap: () {},
+                          onTap: _edit,
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             decoration: BoxDecoration(
@@ -111,9 +137,15 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                         onTap: () => setState(() {
                           _expandedId = isExpanded ? null : lesson.id;
                         }),
+                        onEdit: () => _edit(lesson),
+                        onDelete: () => _delete(lesson),
+                        onManageExercises: () => context.push(
+                          '/curriculum/lesson/${lesson.id}',
+                          extra: {'lessonTitle': lesson.title},
+                        ),
                       );
                     },
-                  ),
+                  )),
                 ),
               ],
             ),
@@ -126,39 +158,19 @@ class _LessonCard extends StatelessWidget {
   final int index;
   final bool isExpanded;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final VoidCallback onManageExercises;
 
   const _LessonCard({
     required this.lesson,
     required this.index,
     required this.isExpanded,
     required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onManageExercises,
   });
-
-  Color get _statusColor {
-    switch (lesson.status.toLowerCase()) {
-      case 'live':
-        return AppColors.success;
-      case 'editing':
-        return AppColors.warning;
-      case 'draft':
-        return AppColors.onSurfaceMuted;
-      default:
-        return AppColors.onSurfaceMuted;
-    }
-  }
-
-  Color get _statusBg {
-    switch (lesson.status.toLowerCase()) {
-      case 'live':
-        return AppColors.successContainer;
-      case 'editing':
-        return AppColors.warningContainer;
-      case 'draft':
-        return AppColors.surfaceContainerHigh;
-      default:
-        return AppColors.surfaceContainerHigh;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,33 +239,36 @@ class _LessonCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: _statusBg,
+                      color: AppColors.primaryContainer,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      lesson.status.toUpperCase(),
+                      lesson.lessonType.toUpperCase(),
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
-                        color: _statusColor,
+                        color: AppColors.primary,
                         letterSpacing: 0.05,
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  if (isExpanded)
-                    Icon(Icons.keyboard_arrow_up,
-                        color: AppColors.onSurfaceMuted, size: 20)
-                  else
-                    Row(
-                      children: [
-                        Icon(Icons.edit_outlined,
-                            color: AppColors.onSurfaceMuted, size: 18),
-                        const SizedBox(width: 8),
-                        Icon(Icons.delete_outline,
-                            color: AppColors.onSurfaceMuted, size: 18),
-                      ],
-                    ),
+                  PopupMenuButton<String>(
+                    onSelected: (v) {
+                      if (v == 'edit') {
+                        onEdit();
+                      } else if (v == 'delete') {
+                        onDelete();
+                      } else {
+                        onManageExercises();
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(value: 'exercises', child: Text('Manage exercises')),
+                      PopupMenuItem(value: 'edit', child: Text('Edit')),
+                      PopupMenuItem(value: 'delete', child: Text('Delete')),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -275,9 +290,9 @@ class _LessonCard extends StatelessWidget {
                                       fontSize: 9, fontWeight: FontWeight.w700,
                                       letterSpacing: 0.08, color: AppColors.onSurfaceMuted)),
                               const SizedBox(height: 8),
-                              _ModuleRow(icon: Icons.play_circle_outline, label: 'Intro Video (8:45)'),
+                              _ModuleRow(icon: Icons.fitness_center, label: '${lesson.totalExercises} exercises'),
                               const SizedBox(height: 6),
-                              _ModuleRow(icon: Icons.description_outlined, label: 'Grammar Cheat Sheet'),
+                              _ModuleRow(icon: Icons.schedule, label: '${lesson.estimatedMinutes} minutes'),
                             ],
                           ),
                         ),
@@ -293,7 +308,7 @@ class _LessonCard extends StatelessWidget {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Text('Difficulty',
+                                  Text('${lesson.xpReward} XP',
                                       style: GoogleFonts.spaceGrotesk(
                                           fontSize: 12, color: AppColors.onSurfaceVariant)),
                                   const SizedBox(width: 4),
@@ -303,7 +318,7 @@ class _LessonCard extends StatelessWidget {
                                       color: AppColors.warningContainer,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: Text('MODERATE',
+                                    child: Text('${lesson.passThreshold}% PASS',
                                         style: GoogleFonts.spaceGrotesk(
                                             fontSize: 9,
                                             fontWeight: FontWeight.w700,
@@ -314,8 +329,8 @@ class _LessonCard extends StatelessWidget {
                               const SizedBox(height: 6),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
-                                child: const LinearProgressIndicator(
-                                  value: 0.6,
+                                child: LinearProgressIndicator(
+                                  value: lesson.passThreshold.clamp(0, 100) / 100,
                                   backgroundColor: AppColors.surfaceContainerHigh,
                                   valueColor: AlwaysStoppedAnimation(AppColors.warning),
                                   minHeight: 5,

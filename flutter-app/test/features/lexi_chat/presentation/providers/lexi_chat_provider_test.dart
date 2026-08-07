@@ -16,6 +16,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   String? lastStreamNativeLanguage;
   Object? pagedError;
   Stream<LexiStreamEvent> Function()? streamFactory;
+  LexiSuggestedPractice? nextSuggestedPractice;
 
   @override
   Future<LexiSession> createSession({required String userId}) async {
@@ -62,6 +63,8 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     required String title,
   }) async {}
 
+  List<LexiCorrection> nextCorrections = const [];
+
   @override
   Future<LexiMessage> sendMessage({
     required String userId,
@@ -83,6 +86,8 @@ class _FakeLexiChatRepository implements LexiChatRepository {
       role: 'assistant',
       content: 'ok',
       timestamp: DateTime.parse('2026-05-30T00:00:01Z'),
+      suggestedPractice: nextSuggestedPractice,
+      corrections: nextCorrections,
     );
   }
 
@@ -292,6 +297,78 @@ void main() {
         'turn_id': 'turn-1',
       });
       expect(provider.isSending, isFalse);
+    });
+
+    test('carries suggestedPractice from the repository through to the '
+        'appended message unchanged', () async {
+      final repo = _FakeLexiChatRepository()
+        ..nextSuggestedPractice = const LexiSuggestedPractice(
+          conceptId: 'concept:past_simple',
+          conceptTitle: 'Past Simple Tense',
+          prompt: "Cho tôi thêm 1 câu ví dụ để luyện tập 'Past Simple Tense'.",
+        );
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      await provider.sendMessage('I go to school yesterday.');
+
+      final assistantMessage = provider.messages.last;
+      expect(assistantMessage.suggestedPractice, isNotNull);
+      expect(
+        assistantMessage.suggestedPractice!.conceptTitle,
+        'Past Simple Tense',
+      );
+    });
+
+    test('attaches the response corrections onto the user\'s own message, '
+        'not only onto Lexi\'s reply', () async {
+      final repo = _FakeLexiChatRepository()
+        ..nextCorrections = const [
+          LexiCorrection(
+            errorSpan: 'go',
+            correction: 'went',
+            errorType: 'verb_tense',
+            explanation: 'Past tense required',
+          ),
+        ];
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      await provider.sendMessage('I go to school yesterday.');
+
+      final userMessage = provider.messages.firstWhere((m) => m.isUser);
+      expect(userMessage.hasCorrections, isTrue);
+      expect(userMessage.corrections.single.errorSpan, 'go');
+    });
+
+    test('syncTtsWithGlobalSound follows the app-wide Sound setting until '
+        'the user explicitly toggles Lexi TTS themselves', () {
+      final provider = LexiChatProvider(
+        repository: _FakeLexiChatRepository(),
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      expect(provider.ttsEnabled, isTrue);
+
+      provider.syncTtsWithGlobalSound(false);
+      expect(provider.ttsEnabled, isFalse);
+
+      provider.syncTtsWithGlobalSound(true);
+      expect(provider.ttsEnabled, isTrue);
+
+      provider.toggleTts();
+      expect(provider.ttsEnabled, isFalse);
+
+      // After an explicit user toggle, the global setting no longer wins.
+      provider.syncTtsWithGlobalSound(true);
+      expect(provider.ttsEnabled, isFalse);
     });
   });
 }

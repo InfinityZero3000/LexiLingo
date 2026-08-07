@@ -268,9 +268,9 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
           children: [
             Text(
               'Weekly Overview',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
@@ -283,9 +283,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.surfaceDarkMuted
-                    : AppColors.grey100,
+                color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey100,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TabBar(
@@ -296,7 +294,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                   color: primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                labelColor: Colors.white,
+                labelColor: AppColors.surfaceLight,
                 unselectedLabelColor: AppColorRoles.textMuted(isDark),
                 labelStyle: const TextStyle(
                   fontSize: 12,

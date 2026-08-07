@@ -31,6 +31,8 @@ class UserUpdate(BaseModel):
     target_language: Optional[str] = None
     level: Optional[str] = None
     cefr_level: Optional[str] = None
+    goal: Optional[str] = None
+    interest: Optional[str] = None
     is_onboarding_completed: Optional[bool] = None
 
 
@@ -46,6 +48,8 @@ class UserResponse(UserBase):
     
     # Level & Rank fields
     cefr_level: str = "A1"
+    goal: Optional[str] = None
+    interest: Optional[str] = None
     total_xp: int = 0
     numeric_level: int = 1
     rank: str = "bronze"

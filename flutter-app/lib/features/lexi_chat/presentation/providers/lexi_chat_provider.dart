@@ -70,6 +70,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isRestoringSession = false;
   String? _error;
   bool _ttsEnabled = true;
+  bool _ttsExplicitlySet = false;
   double _ttsSpeed = 1.0;
   String _learnerLevel = 'B1';
   String _nativeLanguage = 'vi';
@@ -421,7 +422,14 @@ class LexiChatProvider extends ChangeNotifier {
 
       final idx = _messages.indexWhere((m) => m.id == requestId);
       if (idx != -1) {
-        _messages[idx] = _messages[idx].copyWith(syncStatus: 'synced');
+        // The correction data describes what THIS message got wrong, so it
+        // belongs on the user's own bubble (highlighted in place) as well as
+        // on Lexi's reply — not only on the reply, whose prose may not even
+        // repeat the original wrong phrase verbatim.
+        _messages[idx] = _messages[idx].copyWith(
+          syncStatus: 'synced',
+          corrections: response.corrections,
+        );
       }
 
       _messages.add(response);
@@ -644,6 +652,7 @@ class LexiChatProvider extends ChangeNotifier {
             :final fullText,
             :final corrections,
             :final linkedConcepts,
+            :final suggestedPractice,
             :final vietnameseHint,
             :final scores,
             :final audioBase64,
@@ -668,17 +677,21 @@ class LexiChatProvider extends ChangeNotifier {
                 audioBase64: audioBase64,
                 corrections: corrections,
                 linkedConcepts: linkedConcepts,
+                suggestedPractice: suggestedPractice,
                 vietnameseHint: vietnameseHint,
                 scores: scores,
                 syncStatus: 'synced',
               );
             }
 
-            // Mark user message as synced
+            // Mark user message as synced, and carry corrections onto it too
+            // (see the non-streaming path for why: they describe what THIS
+            // message got wrong, so they belong on the user's own bubble).
             final userIdx = _messages.indexWhere((m) => m.id == requestId);
             if (userIdx != -1) {
               _messages[userIdx] = _messages[userIdx].copyWith(
                 syncStatus: 'synced',
+                corrections: corrections,
               );
             }
 
@@ -922,7 +935,21 @@ class LexiChatProvider extends ChangeNotifier {
 
   // ── Settings ──────────────────────────────────────────────────────────────
   void toggleTts() {
+    _ttsExplicitlySet = true;
     _ttsEnabled = !_ttsEnabled;
+    if (!_ttsEnabled) {
+      _ttsPlayer.stop();
+    }
+    notifyListeners();
+  }
+
+  /// Defaults Lexi's TTS to the app-wide Sound setting so a user who muted
+  /// sound globally isn't surprised by Lexi speaking anyway. Only applies
+  /// before the user has explicitly toggled Lexi's own TTS button — once
+  /// they have, their in-chat choice always wins.
+  void syncTtsWithGlobalSound(bool soundEnabled) {
+    if (_ttsExplicitlySet || _ttsEnabled == soundEnabled) return;
+    _ttsEnabled = soundEnabled;
     if (!_ttsEnabled) {
       _ttsPlayer.stop();
     }
@@ -1126,6 +1153,13 @@ class LexiChatProvider extends ChangeNotifier {
               'audio_base64': m.audioBase64,
               'vietnamese_hint': m.vietnameseHint,
               'linked_concepts': m.linkedConcepts,
+              'suggested_practice': m.suggestedPractice == null
+                  ? null
+                  : {
+                      'concept_id': m.suggestedPractice!.conceptId,
+                      'concept_title': m.suggestedPractice!.conceptTitle,
+                      'prompt': m.suggestedPractice!.prompt,
+                    },
               'scores': m.scores,
               'sync_status': m.syncStatus,
               'client_request_id': m.clientRequestId,
@@ -1193,6 +1227,21 @@ class _CachedChatPage {
         linkedConcepts: (m['linked_concepts'] as List<dynamic>? ?? const [])
             .map((e) => e.toString())
             .toList(),
+        suggestedPractice: m['suggested_practice'] is Map
+            ? LexiSuggestedPractice(
+                conceptId:
+                    (m['suggested_practice'] as Map)['concept_id']
+                        ?.toString() ??
+                    '',
+                conceptTitle:
+                    (m['suggested_practice'] as Map)['concept_title']
+                        ?.toString() ??
+                    '',
+                prompt:
+                    (m['suggested_practice'] as Map)['prompt']?.toString() ??
+                    '',
+              )
+            : null,
         vietnameseHint: m['vietnamese_hint']?.toString(),
         scores: m['scores'] is Map
             ? Map<String, dynamic>.from(m['scores'] as Map)

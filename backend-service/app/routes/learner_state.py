@@ -72,6 +72,8 @@ async def batch_get_learner_state(
             LearnerConceptStateResponse.model_validate(row, from_attributes=True)
             for row in result.states
         ],
+        goal=result.goal,
+        interest=result.interest,
     )
 
 

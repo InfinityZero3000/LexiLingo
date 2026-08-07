@@ -48,15 +48,30 @@ _FUSION_GAMMA = 0.2   # Recency bonus weight
 _RECENCY_LAMBDA = 0.01  # Decay rate for recency bonus
 
 _retrieval_v3_instance = None
+_retrieval_v3_lock = asyncio.Lock()
 
 
 async def _get_retrieval_v3():
-    """Lazy singleton for RetrievalServiceV3 (centrality + community ranking)."""
+    """Lazy singleton for RetrievalServiceV3 (centrality + community ranking).
+
+    The constructor synchronously builds the NetworkX graph, computes
+    centrality, and pre-warms concept embeddings — measured at 169.5s on the
+    real production KG (15,129 concepts / 145,387 edges). Building it inline
+    would block the event loop for that long on whichever request hits it
+    first; ``asyncio.to_thread`` keeps this call safe both from a boot-time
+    warmup (see AIOrchestrator.initialize) and from a live request in the
+    rare case warmup was skipped. The lock ensures a live request racing a
+    still-running background warmup awaits the same in-flight build instead
+    of starting a second, redundant 169.5s construction.
+    """
     global _retrieval_v3_instance
-    if _retrieval_v3_instance is None:
-        from api.services.kg_service_v3 import get_kg_service
-        from api.services.retrieval_service_v3 import RetrievalServiceV3
-        _retrieval_v3_instance = RetrievalServiceV3(get_kg_service())
+    if _retrieval_v3_instance is not None:
+        return _retrieval_v3_instance
+    async with _retrieval_v3_lock:
+        if _retrieval_v3_instance is None:
+            from api.services.kg_service_v3 import get_kg_service
+            from api.services.retrieval_service_v3 import RetrievalServiceV3
+            _retrieval_v3_instance = await asyncio.to_thread(RetrievalServiceV3, get_kg_service())
     return _retrieval_v3_instance
 
 

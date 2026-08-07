@@ -45,10 +45,8 @@ class LeagueCeremonyScreen extends StatefulWidget {
           type: type,
           onContinue: onContinue,
         ),
-        transitionsBuilder: (_, anim, __, child) => FadeTransition(
-          opacity: anim,
-          child: child,
-        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
     );
   }
@@ -147,7 +145,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
   Color _onColor(Color background) {
     return background.computeLuminance() > 0.5
         ? AppColors.textDark
-        : Colors.white;
+        : AppColors.surfaceLight;
   }
 
   @override
@@ -193,7 +191,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                 numberOfParticles: 18,
                 gravity: 0.25,
                 shouldLoop: false,
-                colors: [leagueColor, Colors.white, AppColors.gold],
+                colors: [leagueColor, AppColors.surfaceLight, AppColors.gold],
               ),
             ),
 
@@ -300,7 +298,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                         style: const TextStyle(
                           fontSize: 36,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: AppColors.surfaceLight,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -317,7 +315,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
-                        color: Colors.white.withValues(alpha: 0.72),
+                        color: AppColors.surfaceLight.withValues(alpha: 0.72),
                         height: 1.5,
                       ),
                     ),
@@ -338,7 +336,11 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                               end: Alignment.bottomCenter,
                               colors: [
                                 leagueColor,
-                                Color.lerp(leagueColor, Colors.black, 0.25)!,
+                                Color.lerp(
+                                  leagueColor,
+                                  Colors.black,
+                                  0.25,
+                                )!, // darken, not a token
                               ],
                             ),
                             boxShadow: [

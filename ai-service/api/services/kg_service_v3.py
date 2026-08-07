@@ -11,6 +11,7 @@ Singleton pattern ensures the database is created once and reused.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 import os
@@ -26,6 +27,7 @@ from api.services.kg_data_loader import (
     merge_knowledge_payload,
     sync_knowledge_files,
 )
+from api.services.trace_cag.dependencies import KG_VERSION_TOKEN
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,11 @@ class KnowledgeGraphServiceV3:
             raise RuntimeError("Benchmark KG mode is forbidden in production")
         self._recovery_attempted = False
         self._lock = asyncio.Lock()
+        # Content-derived token for TRACE-CAG's kg:tracecag:main dependency
+        # (see _sync_external_knowledge). Stable across restarts when no
+        # source file changed; falls back to the static schema token when
+        # sync is skipped (e.g. TRACECAG_KG_SKIP_SYNC, benchmark mode).
+        self._kg_content_version: str = KG_VERSION_TOKEN
 
         # ── In-memory caches (Phase 1) ─────────────────────────────────────
         # _concepts_cache: None = cold (not yet built); Dict = warm
@@ -318,6 +325,28 @@ class KnowledgeGraphServiceV3:
             cache_path,
             forbidden_concept_prefixes=() if self._allow_benchmark else ("concept:benchmark.",),
         )
+        self._kg_content_version = self._compute_kg_content_version(cache_path)
+
+    def _compute_kg_content_version(self, cache_path: str) -> str:
+        """Stable fingerprint of the currently loaded KG source files.
+
+        `sync_knowledge_files` only rewrites `cache_path` when a merge
+        actually changed the graph, so hashing it gives the same token
+        across restarts with unchanged content and a different token the
+        moment a source file really changes — this is what lets TRACE-CAG's
+        `kg:tracecag:main` dependency (see nodes_v2.kg_expand_node) detect a
+        real KG mutation instead of a hardcoded constant that never varies.
+        """
+        try:
+            with open(cache_path, "rb") as fh:
+                digest = hashlib.sha256(fh.read()).hexdigest()[:16]
+            return f"kg_content_v{digest}"
+        except OSError:
+            return KG_VERSION_TOKEN
+
+    def get_kg_content_version(self) -> str:
+        """Current KG content token for dependency/certificate tracking."""
+        return self._kg_content_version
 
     def get_concepts(self) -> Dict[str, Dict[str, str]]:
         # Return warm in-memory cache if available (Phase 1 optimisation).

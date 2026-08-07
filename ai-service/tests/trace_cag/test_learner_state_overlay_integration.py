@@ -100,6 +100,56 @@ async def test_input_merges_learner_epoch_into_profile_cache_version(monkeypatch
 
 
 @pytest.mark.asyncio
+async def test_input_merges_onboarding_goal_and_interest_into_profile(monkeypatch):
+    """The onboarding goal/interest ride the same epoch pull as mastery data,
+    so a chat turn immediately sees them without a separate sync mechanism."""
+    from api.core import redis_client
+
+    monkeypatch.setattr(nodes_v2.settings, "LEARNER_STATE_MODE", "read")
+    monkeypatch.setattr(nodes_v2.settings, "LEARNER_STATE_DEADLINE_MS", 40)
+    monkeypatch.setattr(
+        redis_client.RedisClient, "_benchmark_redis_disabled", lambda: False
+    )
+    monkeypatch.setattr(
+        redis_client.RedisClient,
+        "get_instance",
+        AsyncMock(return_value=MagicMock()),
+    )
+    monkeypatch.setattr(
+        redis_client.LearnerProfileCache,
+        "get_profile",
+        AsyncMock(return_value={"level": "B2", "common_errors": []}),
+    )
+    monkeypatch.setattr(
+        redis_client.ConversationCache,
+        "get_history",
+        AsyncMock(return_value=[]),
+    )
+    client = MagicMock()
+    client.batch_get = AsyncMock(
+        return_value=LearnerStateResult(
+            state_epoch=17, goal="career", interest="technology"
+        )
+    )
+    monkeypatch.setattr(
+        "api.clients.learner_state_client.get_learner_state_client", lambda: client
+    )
+
+    result = await nodes_v2.input_node(
+        {
+            "user_input": "Explain this sentence",
+            "user_id": "user-1",
+            "session_id": "session-1",
+            "learner_profile": {"level": "B1"},
+        }
+    )
+
+    profile = result["learner_profile"]
+    assert profile["goal"] == "career"
+    assert profile["interest"] == "technology"
+
+
+@pytest.mark.asyncio
 async def test_input_fetches_epoch_even_when_redis_is_unavailable(monkeypatch):
     from api.core import redis_client
 

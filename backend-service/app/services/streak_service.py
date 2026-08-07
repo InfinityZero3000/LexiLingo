@@ -30,7 +30,7 @@ async def update_user_streak(db: AsyncSession, user_id: UUID) -> tuple[Streak, b
     - (streak, streak_increased, streak_saved, unlocked_achievements)
     """
     result = await db.execute(
-        select(Streak).where(Streak.user_id == user_id)
+        select(Streak).where(Streak.user_id == user_id).with_for_update()
     )
     streak = result.scalar_one_or_none()
     

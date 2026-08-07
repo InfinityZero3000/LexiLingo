@@ -1,282 +1,207 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
+import '../../../shared/widgets/staggered_entrance.dart';
 
 class GrammarTestsScreen extends StatefulWidget {
   const GrammarTestsScreen({super.key});
-
   @override
   State<GrammarTestsScreen> createState() => _GrammarTestsScreenState();
 }
 
 class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
-  List<Map<String, dynamic>> _modules = [];
+  List<Map<String, dynamic>> _rules = [];
   bool _loading = true;
+  String? _error;
+  String _search = '';
+  String? _level;
+  static const _levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+  List<Map<String, dynamic>> get _filtered => _rules.where((rule) {
+        final query = _search.toLowerCase();
+        final matchesText = (rule['title'] ?? '').toString().toLowerCase().contains(query) ||
+            (rule['topic'] ?? '').toString().toLowerCase().contains(query);
+        return matchesText && (_level == null || '${rule['level'] ?? rule['cefr_level']}' == _level);
+      }).toList();
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
+  void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
     try {
-      final resp = await ApiClient.instance.get('/admin/test-exams', params: {'page': 1, 'page_size': 10});
-      final data = resp['data'];
-      final list = data is Map ? data['exams'] ?? data['items'] ?? [] : data ?? [];
-      if (mounted) setState(() { _modules = List<Map<String, dynamic>>.from(list); _loading = false; });
-    } catch (_) {
+      final response = await ApiClient.instance.get(ApiEndpoints.adminGrammar, params: {'limit': 100, 'offset': 0});
+      final data = response['data'];
+      final list = data is Map ? data['items'] ?? data['grammar'] ?? [] : data ?? [];
+      if (mounted) setState(() => _rules = List<Map<String, dynamic>>.from(list));
+    } catch (error) {
+      if (mounted) setState(() => _error = 'Could not load grammar rules.\n$error');
+    } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  void _showForm([Map<String, dynamic>? rule]) => showModalBottomSheet<void>(
+        context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+        builder: (_) => _GrammarForm(rule: rule, onSaved: _load),
+      );
+
+  Future<void> _delete(Map<String, dynamic> rule) async {
+    final confirmed = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
+      title: Text('Delete grammar rule?', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+      content: Text('${rule['title']}', style: GoogleFonts.spaceGrotesk()),
+      actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete'))],
+    ));
+    if (confirmed != true) return;
+    try { await ApiClient.instance.delete('${ApiEndpoints.adminGrammar}/${rule['id']}'); await _load(); }
+    catch (error) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $error'))); }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final rules = _filtered;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
-          onPressed: AdminShell.openDrawer,
-        ),
-        title: Text('Grammar & Tests',
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        backgroundColor: AppColors.background,
+        leading: IconButton(icon: const Icon(Icons.menu_rounded), onPressed: AdminShell.openDrawer),
+        title: Text('Grammar', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        actions: [IconButton(onPressed: _load, tooltip: 'Refresh', icon: const Icon(Icons.refresh_outlined))],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Deploy linguistic rules, monitor assessment accuracy, and manage adaptive test modules.',
-              style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurfaceVariant),
-            ),
-            const SizedBox(height: 20),
-            // Rule Engine Status
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryBright,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Rule Engine Status',
-                            style: GoogleFonts.spaceGrotesk(
-                                fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.check_circle, color: Colors.greenAccent, size: 14),
-                            const SizedBox(width: 4),
-                            Text('V3.4 DEPLOYED ACTIVE',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white60)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  OutlinedButton(
-                    onPressed: () {},
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.white54),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    ),
-                    child: Text('PUSH NEW UPDATE',
-                        style: GoogleFonts.spaceGrotesk(fontSize: 10, fontWeight: FontWeight.w700)),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Stats
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.4,
-              children: const [
-                _GrammarStat(label: 'AVG. ACCURACY', value: '94.2%', icon: Icons.gps_fixed_outlined),
-                _GrammarStat(label: 'ACTIVE TESTS', value: '1,204', icon: Icons.quiz_outlined),
-                _GrammarStat(label: 'ERR MARGIN', value: '1.4%', icon: Icons.warning_amber_outlined),
-                _GrammarStat(label: 'AI ADAPTIVITY', value: 'High', icon: Icons.psychology_outlined),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Test Modules',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'Search modules...',
-                      prefixIcon: Icon(Icons.search, size: 18, color: AppColors.onSurfaceMuted),
-                      isDense: true,
-                    ),
-                    style: GoogleFonts.spaceGrotesk(fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (_loading)
-              const Center(child: CircularProgressIndicator(color: AppColors.primary))
-            else if (_modules.isEmpty)
-              ..._defaultModules.map(_buildModuleCard)
-            else
-              ..._modules.map(_buildModuleCard),
-          ],
+      body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Row(children: [
+            Expanded(child: TextField(onChanged: (value) => setState(() => _search = value), style: GoogleFonts.spaceGrotesk(), decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search rules…'))),
+            const SizedBox(width: 8),
+            SizedBox(width: 92, child: DropdownButtonFormField<String>(initialValue: _level, decoration: const InputDecoration(hintText: 'Level'), items: [const DropdownMenuItem<String>(value: null, child: Text('All')), ..._levels.map((v) => DropdownMenuItem(value: v, child: Text(v)))], onChanged: (v) => setState(() => _level = v))),
+          ]),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryBright,
-        onPressed: () {},
-        child: const Icon(Icons.add, color: Colors.white),
+        Expanded(child: _loading
+            ? ListView(padding: const EdgeInsets.all(16), children: const [SectionCardSkeleton(contentHeight: 100), SizedBox(height: 12), SectionCardSkeleton(contentHeight: 100)])
+            : _error != null
+                ? _GrammarMessage(message: _error!, action: _load)
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    child: rules.isEmpty
+                        ? ListView(physics: const AlwaysScrollableScrollPhysics(), children: [const SizedBox(height: 180), _GrammarMessage(message: _search.isEmpty && _level == null ? 'No grammar rules yet' : 'No matching rules')])
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.fromLTRB(16, 0, 16, 96), itemCount: rules.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            itemBuilder: (_, index) => StaggeredEntrance(index: index, child: _ruleCard(rules[index])),
+                          ),
+                  )),
+      ]),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showForm(), backgroundColor: AppColors.primaryBright, foregroundColor: AppColors.surface,
+        icon: const Icon(Icons.add), label: Text('New rule', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
       ),
     );
   }
 
-  static final _defaultModules = [
-    {'title': 'Verb Conjugation V4', 'description': 'Deep dive into irregular past participles and subjunctive moods.', 'level': 'ADVANCED'},
-    {'title': 'Sentence Architect', 'description': 'Mastering complex clause structures and rhetorical devices.', 'level': 'INTERMEDIATE'},
-    {'title': 'Foundation Syntax', 'description': 'Core subject-verb-object relationships for 12 key languages.', 'level': 'BEGINNER'},
-  ];
+  Widget _ruleCard(Map<String, dynamic> rule) => Material(
+    color: AppColors.surface, borderRadius: BorderRadius.circular(14),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(14), onTap: () => _showForm(rule),
+      child: Padding(padding: const EdgeInsets.all(16), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(width: 44, height: 44, alignment: Alignment.center, decoration: BoxDecoration(color: AppColors.primaryContainer, borderRadius: BorderRadius.circular(10)), child: Text('${rule['level'] ?? rule['cefr_level'] ?? '?'}', style: GoogleFonts.spaceGrotesk(color: AppColors.primary, fontWeight: FontWeight.w700))),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('${rule['title'] ?? 'Untitled'}', style: GoogleFonts.spaceGrotesk(fontSize: 15, fontWeight: FontWeight.w700)),
+          if ((rule['topic'] ?? '').toString().isNotEmpty) Text('${rule['topic']}', style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.primary)),
+          if ((rule['summary'] ?? '').toString().isNotEmpty) Padding(padding: const EdgeInsets.only(top: 4), child: Text('${rule['summary']}', maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted))),
+        ])),
+        SizedBox(width: 44, height: 44, child: IconButton(tooltip: 'Delete', onPressed: () => _delete(rule), icon: const Icon(Icons.delete_outline, color: AppColors.error))),
+      ])),
+    ),
+  );
+}
 
-  Widget _buildModuleCard(Map<String, dynamic> m) {
-    final level = m['level'] ?? m['cefr_level'] ?? 'INTERMEDIATE';
-    final levelColor = level == 'ADVANCED'
-        ? AppColors.error
-        : level == 'BEGINNER'
-            ? AppColors.success
-            : AppColors.warning;
-    final levelBg = level == 'ADVANCED'
-        ? AppColors.errorContainer
-        : level == 'BEGINNER'
-            ? AppColors.successContainer
-            : AppColors.warningContainer;
+class _GrammarForm extends StatefulWidget {
+  final Map<String, dynamic>? rule;
+  final Future<void> Function() onSaved;
+  const _GrammarForm({this.rule, required this.onSaved});
+  @override
+  State<_GrammarForm> createState() => _GrammarFormState();
+}
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppColors.navy,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(Icons.menu_book_outlined,
-                      color: Colors.white24, size: 40),
-                ),
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: levelBg,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(level,
-                        style: GoogleFonts.spaceGrotesk(
-                            fontSize: 9, fontWeight: FontWeight.w700, color: levelColor)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(m['title'] ?? '',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-                const SizedBox(height: 4),
-                Text(m['description'] ?? '',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12, color: AppColors.onSurfaceMuted),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    const Icon(Icons.more_vert, size: 16, color: AppColors.onSurfaceMuted),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+class _GrammarFormState extends State<_GrammarForm> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _title, _topic, _summary, _content, _tags;
+  late String _level;
+  bool _saving = false;
+  static const _levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+  @override
+  void initState() {
+    super.initState();
+    final rule = widget.rule ?? {};
+    _title = TextEditingController(text: '${rule['title'] ?? ''}');
+    _topic = TextEditingController(text: '${rule['topic'] ?? ''}');
+    _summary = TextEditingController(text: '${rule['summary'] ?? ''}');
+    _content = TextEditingController(text: '${rule['content'] ?? ''}');
+    _tags = TextEditingController(text: (rule['tags'] is List ? (rule['tags'] as List).join(', ') : rule['tags'] ?? '').toString());
+    _level = '${rule['level'] ?? rule['cefr_level'] ?? 'A1'}';
+  }
+
+  @override
+  void dispose() { _title.dispose(); _topic.dispose(); _summary.dispose(); _content.dispose(); _tags.dispose(); super.dispose(); }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    final payload = {
+      'title': _title.text.trim(), 'level': _level, 'topic': _topic.text.trim(),
+      'summary': _summary.text.trim(), 'content': _content.text.trim(),
+      'tags': _tags.text.split(',').map((v) => v.trim()).where((v) => v.isNotEmpty).toList(),
+    };
+    try {
+      final id = widget.rule?['id'];
+      if (id == null) { await ApiClient.instance.post(ApiEndpoints.adminGrammar, data: payload); }
+      else { await ApiClient.instance.put('${ApiEndpoints.adminGrammar}/$id', data: payload); }
+      await widget.onSaved();
+      if (mounted) Navigator.pop(context);
+    } catch (error) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save failed: $error'))); }
+    finally { if (mounted) setState(() => _saving = false); }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    InputDecoration decoration(String label) => InputDecoration(labelText: label);
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Material(
+        color: AppColors.surface, borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        child: SafeArea(top: false, child: SingleChildScrollView(padding: const EdgeInsets.all(20), child: Form(key: _formKey, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(widget.rule == null ? 'New grammar rule' : 'Edit grammar rule', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 16),
+          TextFormField(controller: _title, decoration: decoration('Title *'), validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(initialValue: _level, decoration: decoration('Level'), items: _levels.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(), onChanged: (v) => setState(() => _level = v!)),
+          const SizedBox(height: 12),
+          TextFormField(controller: _topic, decoration: decoration('Topic')),
+          const SizedBox(height: 12),
+          TextFormField(controller: _summary, decoration: decoration('Summary')),
+          const SizedBox(height: 12),
+          TextFormField(controller: _content, decoration: decoration('Content *'), minLines: 3, maxLines: 6, validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null),
+          const SizedBox(height: 12),
+          TextFormField(controller: _tags, decoration: decoration('Tags (comma separated)')),
+          const SizedBox(height: 20),
+          SizedBox(width: double.infinity, height: 48, child: FilledButton(onPressed: _saving ? null : _save, child: _saving ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)) : Text(widget.rule == null ? 'Create' : 'Update'))),
+        ])))),
       ),
     );
   }
 }
 
-class _GrammarStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _GrammarStat({required this.label, required this.value, required this.icon});
-
+class _GrammarMessage extends StatelessWidget {
+  final String message;
+  final Future<void> Function()? action;
+  const _GrammarMessage({required this.message, this.action});
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: AppColors.primary, size: 15),
-          ),
-          const SizedBox(height: 6),
-          Text(label,
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 9, fontWeight: FontWeight.w700,
-                  letterSpacing: 0.08, color: AppColors.onSurfaceMuted)),
-          Text(value,
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 22, fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface, letterSpacing: -0.02)),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.rule_folder_outlined, size: 42, color: AppColors.onSurfaceMuted), const SizedBox(height: 12), Text(message, textAlign: TextAlign.center, style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted)), if (action != null) ...[const SizedBox(height: 12), OutlinedButton(onPressed: action, child: const Text('Try again'))]])));
 }

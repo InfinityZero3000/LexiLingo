@@ -923,6 +923,7 @@
     "lookingUp": "Recherche de \"{word}\"…",
     "noDefinitionFound": "Aucune définition trouvée pour « {word} ».",
     "saveWordToVocabulary": "Enregistrer le mot dans le vocabulaire",
+    "wordAlreadySavedButton": "Déjà enregistré",
     "wordAlreadyInCollection": "\"{word}\" fait déjà partie de votre vocabulaire.",
     "wordSaved": "\"{word}\" enregistré dans le vocabulaire.",
     "couldNotSaveWord": "Impossible d'enregistrer ce mot pour le moment."
@@ -1094,6 +1095,7 @@
     "languageNotes": "Notes de langue",
     "listenButton": "Écouter",
     "viewNotesButton": "Voir notes",
+    "practiceMoreButton": "Pratiquer {concept}",
     "correctionsSection": "Corrections",
     "vietnameseHintSection": "Indice en vietnamien",
     "relatedConceptsSection": "Concepts liés"

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
 
 class AdminManagementScreen extends StatefulWidget {
   const AdminManagementScreen({super.key});
@@ -14,6 +16,7 @@ class AdminManagementScreen extends StatefulWidget {
 class _AdminManagementScreenState extends State<AdminManagementScreen> {
   List<Map<String, dynamic>> _admins = [];
   bool _loading = true;
+  String? _error;
   String _search = '';
 
   @override
@@ -25,21 +28,25 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final resp = await ApiClient.instance.get('/admin/users', params: {
-        'page': 1,
-        'page_size': 50,
-        'role': 'admin',
-      });
-      final data = resp['data'];
-      final list = data is Map ? data['users'] ?? data['items'] ?? [] : data ?? [];
+      final responses = await Future.wait([
+        ApiClient.instance.get(ApiEndpoints.adminUsers,
+            params: {'page': 1, 'page_size': 100, 'role': 1}),
+        ApiClient.instance.get(ApiEndpoints.adminUsers,
+            params: {'page': 1, 'page_size': 100, 'role': 2}),
+      ]);
+      final list = responses.expand((resp) {
+        final data = resp['data'];
+        return data is Map ? data['users'] ?? data['items'] ?? [] : data ?? [];
+      }).toList();
       if (mounted) {
         setState(() {
           _admins = List<Map<String, dynamic>>.from(list);
+          _error = null;
           _loading = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() { _error = 'Could not load admins.'; _loading = false; });
     }
   }
 
@@ -57,16 +64,35 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
       (admin['role_level'] as num?)?.toInt() ??
       (admin['role_slug'] == 'super_admin' ? 2 : 1);
 
+  Future<bool> _confirm(String title, String message) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
   Future<void> _changeRole(Map<String, dynamic> admin, int newLevel) async {
     final id = admin['id']?.toString() ?? '';
     if (id.isEmpty) return;
+    final name = admin['display_name'] ?? admin['email'] ?? 'this admin';
+    final label = newLevel == 2 ? 'Super Admin' : 'Admin';
+    final ok = await _confirm('Change role?', 'Set $name\'s role to $label?');
+    if (!ok) return;
     try {
-      await ApiClient.instance.put('/admin/users/$id/role', data: {'role_level': newLevel});
-      _load();
-    } catch (e) {
+      await ApiClient.instance.put('${ApiEndpoints.adminUsers}/$id/role', data: {'level': newLevel});
+      await _load();
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e', style: GoogleFonts.spaceGrotesk())),
+          SnackBar(content: Text('Could not change role.', style: GoogleFonts.spaceGrotesk())),
         );
       }
     }
@@ -76,16 +102,103 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     final id = admin['id']?.toString() ?? '';
     final isActive = (admin['is_active'] as bool?) ?? true;
     if (id.isEmpty) return;
+    final name = admin['display_name'] ?? admin['email'] ?? 'this admin';
+    final ok = await _confirm(
+      isActive ? 'Deactivate account?' : 'Activate account?',
+      isActive
+          ? 'Deactivate $name\'s account? They will not be able to sign in until reactivated.'
+          : 'Reactivate $name\'s account?',
+    );
+    if (!ok) return;
     try {
-      await ApiClient.instance.put('/admin/users/$id/status', data: {'is_active': !isActive});
-      _load();
-    } catch (e) {
+      await ApiClient.instance.put('${ApiEndpoints.adminUsers}/$id/status', data: {'is_active': !isActive});
+      await _load();
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e', style: GoogleFonts.spaceGrotesk())),
+          SnackBar(content: Text('Could not update status.', style: GoogleFonts.spaceGrotesk())),
         );
       }
     }
+  }
+
+  Future<void> _showAddAdmin() async {
+    final emailController = TextEditingController();
+    var roleLevel = 1;
+    var adding = false;
+    String? dialogError;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Add Admin', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Existing user email'),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<int>(
+              initialValue: roleLevel,
+              decoration: const InputDecoration(labelText: 'Role'),
+              items: const [
+                DropdownMenuItem(value: 1, child: Text('Admin')),
+                DropdownMenuItem(value: 2, child: Text('Super Admin')),
+              ],
+              onChanged: adding ? null : (value) => roleLevel = value ?? 1,
+            ),
+            if (dialogError != null) ...[
+              const SizedBox(height: 12),
+              Text(dialogError!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.error)),
+            ],
+          ]),
+          actions: [
+            TextButton(onPressed: adding ? null : () => Navigator.pop(dialogContext), child: const Text('Cancel')),
+            SizedBox(
+              height: 44,
+              child: FilledButton(
+                onPressed: adding ? null : () async {
+                  final email = emailController.text.trim();
+                  if (email.isEmpty) return;
+                  setDialogState(() { adding = true; dialogError = null; });
+                  try {
+                    final response = await ApiClient.instance.get(ApiEndpoints.adminUsers,
+                        params: {'search': email, 'page_size': 10});
+                    final data = response['data'];
+                    final users = data is Map ? data['users'] as List? ?? [] : const [];
+                    Map? target;
+                    for (final user in users.cast<Map>()) {
+                      if (user['email']?.toString().toLowerCase() == email.toLowerCase()) {
+                        target = user;
+                        break;
+                      }
+                    }
+                    if (target == null) throw Exception('User not found. They must register first.');
+                    await ApiClient.instance.put(
+                      '${ApiEndpoints.adminUsers}/${target['id']}/role',
+                      data: {'level': roleLevel},
+                    );
+                    if (dialogContext.mounted) Navigator.pop(dialogContext);
+                    await _load();
+                  } catch (e) {
+                    final message = e.toString().startsWith('Exception: ')
+                        ? e.toString().replaceFirst('Exception: ', '')
+                        : 'Could not add admin.';
+                    if (dialogContext.mounted) setDialogState(() { dialogError = message; adding = false; });
+                  }
+                },
+                child: adding
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Text('Add'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    emailController.dispose();
   }
 
   @override
@@ -117,6 +230,11 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                     color: Colors.white, letterSpacing: 0.5)),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddAdmin,
+        icon: const Icon(Icons.person_add_alt_1),
+        label: Text('Add Admin', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
       ),
       body: Column(
         children: [
@@ -155,12 +273,19 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: AdminSkeleton(height: 220, borderRadius: 16),
+                  )
+                : _error != null
+                    ? _ErrorState(message: _error!, onRetry: _load)
                 : list.isEmpty
                     ? Center(
                         child: Text('No admins found',
                             style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted)))
-                    : ListView.separated(
+                    : RefreshIndicator(
+                        onRefresh: _load,
+                        child: ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                         itemCount: list.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 8),
@@ -169,6 +294,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                           roleLevel: _roleLevel(list[i]),
                           onChangeRole: (lvl) => _changeRole(list[i], lvl),
                           onToggleStatus: () => _toggleStatus(list[i]),
+                        ),
                         ),
                       ),
           ),
@@ -217,6 +343,10 @@ class _AdminCard extends StatelessWidget {
     final name = (admin['display_name'] ?? admin['username'] ?? 'Unknown').toString();
     final email = (admin['email'] ?? '').toString();
     final isActive = (admin['is_active'] as bool?) ?? true;
+    final provider = admin['provider'] is List
+        ? (admin['provider'] as List).join(', ')
+        : (admin['provider'] ?? '—').toString();
+    final lastLogin = (admin['last_login'] ?? '').toString();
     final initials = name.split(' ').take(2).map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').join();
     final isSuperAdmin = roleLevel >= 2;
 
@@ -288,6 +418,16 @@ class _AdminCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          Row(children: [
+            const Icon(Icons.login, size: 14, color: AppColors.onSurfaceMuted),
+            const SizedBox(width: 6),
+            Expanded(child: Text(
+              lastLogin.isEmpty ? 'Never signed in' : 'Last login ${lastLogin.split('T').first}',
+              style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted),
+            )),
+            Text(provider, style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted)),
+          ]),
+          const SizedBox(height: 12),
           const Divider(height: 1, color: AppColors.outline),
           const SizedBox(height: 10),
           Row(
@@ -339,7 +479,7 @@ class _ActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: const EdgeInsets.symmetric(vertical: 13),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -354,4 +494,27 @@ class _ActionButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+            const SizedBox(height: 12),
+            Text('Could not load admins', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(message, textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
+            const SizedBox(height: 16),
+            SizedBox(height: 44, child: OutlinedButton(onPressed: onRetry, child: const Text('Retry'))),
+          ]),
+        ),
+      );
 }

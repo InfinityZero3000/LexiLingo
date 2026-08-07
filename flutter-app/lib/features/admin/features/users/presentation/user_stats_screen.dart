@@ -1,694 +1,188 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
+import '../../../shared/widgets/stat_card.dart';
+import '../../auth/presentation/auth_provider.dart';
 import '../data/users_repository.dart';
 
 class UserStatsScreen extends StatefulWidget {
   final String userId;
   const UserStatsScreen({super.key, required this.userId});
-
   @override
   State<UserStatsScreen> createState() => _UserStatsScreenState();
 }
 
 class _UserStatsScreenState extends State<UserStatsScreen> {
   final _repo = UsersRepository();
-  Map<String, dynamic>? _data;
-  bool _loading = true;
-  bool _saving = false;
-
-  final _levelCtrl = TextEditingController();
-  final _gemsCtrl = TextEditingController();
-  String _selectedLeague = 'Platinum Division';
+  Map<String, dynamic>? _user;
+  List<Map<String, dynamic>> _activity = [];
+  bool _loading = true, _acting = false;
+  String? _error;
 
   @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  @override
-  void dispose() {
-    _levelCtrl.dispose();
-    _gemsCtrl.dispose();
-    super.dispose();
-  }
+  void initState() { super.initState(); _load(); }
 
   Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
     try {
-      final data = await _repo.getUserStats(widget.userId);
-      if (mounted) {
-        setState(() {
-          _data = data;
-          _levelCtrl.text = (data['numeric_level'] ?? 1).toString();
-          _gemsCtrl.text = (data['gems'] ?? data['total_xp'] ?? 0).toString();
-          _loading = false;
-        });
-      }
+      final results = await Future.wait([_repo.getUserStats(widget.userId), _repo.getUserActivity(widget.userId)]);
+      if (mounted) setState(() { _user = results[0] as Map<String, dynamic>; _activity = results[1] as List<Map<String, dynamic>>; _loading = false; });
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() { _loading = false; _error = 'Không thể tải chi tiết người dùng.'; });
     }
   }
 
-  Future<void> _toggleBlock() async {
-    final isActive = _data?['is_active'] == true;
-    try {
-      if (isActive) {
-        await _repo.blockUser(widget.userId);
-      } else {
-        await _repo.unblockUser(widget.userId);
-      }
-      await _load();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isActive ? 'User đã bị block' : 'User đã được unblock',
-                style: GoogleFonts.spaceGrotesk()),
-            backgroundColor: isActive ? AppColors.error : AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Thao tác thất bại', style: GoogleFonts.spaceGrotesk()),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    try {
-      await _repo.updateUser(widget.userId, {
-        'numeric_level': int.tryParse(_levelCtrl.text) ?? 1,
-        'gems': int.tryParse(_gemsCtrl.text) ?? 0,
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Changes saved', style: GoogleFonts.spaceGrotesk()),
-            backgroundColor: AppColors.success,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save', style: GoogleFonts.spaceGrotesk()),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-    if (mounted) setState(() => _saving = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        leading: AppBackButton(
-          icon: Icons.arrow_back,
-          color: AppColors.onSurface,
-          onPressed: () => context.pop(),
-        ),
+  Future<bool> _confirm(String title, String message) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
         actions: [
-          OutlinedButton(
-            onPressed: _loading ? null : _toggleBlock,
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(
-                color: _data?['is_active'] == true ? AppColors.error : AppColors.success,
-              ),
-              foregroundColor: _data?['is_active'] == true ? AppColors.error : AppColors.success,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            ),
-            child: Text(
-              _data?['is_active'] == true ? 'Block' : 'Unblock',
-              style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600),
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            onPressed: _saving ? null : _save,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBright,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            ),
-            child: _saving
-                ? const SizedBox(
-                    width: 14,
-                    height: 14,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                : Text('Save Changes',
-                    style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700)),
-          ),
-          const SizedBox(width: 12),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xác nhận')),
         ],
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  // Breadcrumb
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'USER MANAGEMENT > PROFILE > GAMIFICATION',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.08,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Adjust User Stats',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
-                        letterSpacing: -0.02,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Profile card
-                  _StatCard(
-                    child: Column(
-                      children: [
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.primary, width: 2.5),
-                              ),
-                              child: CircleAvatar(
-                                radius: 38,
-                                backgroundColor: AppColors.primaryContainer,
-                                backgroundImage: _data?['avatar_url'] != null
-                                    ? NetworkImage(_data!['avatar_url'])
-                                    : null,
-                                child: _data?['avatar_url'] == null
-                                    ? Text(
-                                        (_data?['display_name'] ?? 'A')[0].toUpperCase(),
-                                        style: GoogleFonts.spaceGrotesk(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.primary),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 24,
-                                height: 24,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryBright,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                                child: const Icon(Icons.verified, color: Colors.white, size: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _data?['display_name'] ?? 'Admin User',
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onSurface),
-                        ),
-                        Text(
-                          _data?['email'] ?? '',
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 13, color: AppColors.onSurfaceMuted),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _ProfileMeta(
-                              label: 'USER ID',
-                              value: '#LX-${widget.userId.substring(0, 5).toUpperCase()}',
-                            ),
-                            const SizedBox(width: 24),
-                            _ProfileMeta(
-                              label: 'STATUS',
-                              value: _data?['is_active'] == true ? 'ACTIVE' : 'INACTIVE',
-                              valueColor: _data?['is_active'] == true
-                                  ? AppColors.success
-                                  : AppColors.error,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Current Level
-                  _StatCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryContainer,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(Icons.military_tech_outlined,
-                                  color: AppColors.primary, size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Text('Current Level',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.onSurface)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _levelCtrl.text,
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
-                                    letterSpacing: -0.03),
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('UPDATE',
-                                    style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.08,
-                                        color: AppColors.onSurfaceMuted)),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  width: 80,
-                                  child: TextField(
-                                    controller: _levelCtrl,
-                                    keyboardType: TextInputType.number,
-                                    style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                                    decoration: const InputDecoration(
-                                      contentPadding:
-                                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                      isDense: true,
-                                    ),
-                                    onChanged: (_) => setState(() {}),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: const LinearProgressIndicator(
-                            value: 0.75,
-                            backgroundColor: AppColors.surfaceContainerHigh,
-                            valueColor: AlwaysStoppedAnimation(AppColors.primary),
-                            minHeight: 6,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text('75% TO NEXT LEVEL',
-                            style: GoogleFonts.spaceGrotesk(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.05,
-                                color: AppColors.onSurfaceMuted)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Total Gems
-                  _StatCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryContainer,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(Icons.diamond_outlined,
-                                  color: AppColors.primary, size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Text('Total Gems',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.onSurface)),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _gemsCtrl.text,
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.primary,
-                                    letterSpacing: -0.03),
-                              ),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('ADJUST',
-                                    style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.08,
-                                        color: AppColors.onSurfaceMuted)),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  width: 90,
-                                  child: TextField(
-                                    controller: _gemsCtrl,
-                                    keyboardType: TextInputType.number,
-                                    style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                                    decoration: const InputDecoration(
-                                      contentPadding:
-                                          EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                      isDense: true,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  final v = int.tryParse(_gemsCtrl.text) ?? 0;
-                                  _gemsCtrl.text = (v + 100).toString();
-                                },
-                                child: Text('+ 100',
-                                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  final v = int.tryParse(_gemsCtrl.text) ?? 0;
-                                  _gemsCtrl.text = (v + 500).toString();
-                                },
-                                child: Text('+ 500',
-                                    style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600)),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Rank Placement
-                  _StatCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryContainer,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Icon(Icons.leaderboard_outlined,
-                                  color: AppColors.primary, size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Text('Rank Placement',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 16, fontWeight: FontWeight.w700,
-                                    color: AppColors.onSurface)),
-                            const Spacer(),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryBright,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text('TOP 3%',
-                                  style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: AppColors.primary),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('CURRENT RANK',
-                                        style: GoogleFonts.spaceGrotesk(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w700,
-                                            letterSpacing: 0.08,
-                                            color: AppColors.onSurfaceMuted)),
-                                    Text(
-                                      (_data?['rank'] ?? 'Platinum IV').toString().toUpperCase(),
-                                      style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.onSurface),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('CHANGE LEAGUE',
-                                      style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.08,
-                                          color: AppColors.onSurfaceMuted)),
-                                  const SizedBox(height: 4),
-                                  DropdownButtonFormField<String>(
-                                    initialValue: _selectedLeague,
-                                    decoration: const InputDecoration(isDense: true),
-                                    style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 13, color: AppColors.onSurface),
-                                    items: const [
-                                      'Bronze Division', 'Silver Division',
-                                      'Gold Division', 'Platinum Division',
-                                      'Diamond Division',
-                                    ]
-                                        .map((l) => DropdownMenuItem(value: l, child: Text(l)))
-                                        .toList(),
-                                    onChanged: (v) =>
-                                        setState(() => _selectedLeague = v ?? _selectedLeague),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Active Achievement Tracks
-                  _StatCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Active Achievement Tracks',
-                            style: GoogleFonts.spaceGrotesk(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.onSurface)),
-                        const SizedBox(height: 16),
-                        _AchievementRow(
-                          icon: Icons.local_fire_department_outlined,
-                          label: 'Streak Master',
-                          progress: 88,
-                          total: 100,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
     );
+    return ok ?? false;
   }
-}
 
-class _StatCard extends StatelessWidget {
-  final Widget child;
-  const _StatCard({required this.child});
+  Future<void> _setActive() async {
+    final next = _user?['is_active'] != true;
+    final name = _user?['display_name'] ?? _user?['email'] ?? 'người dùng này';
+    final ok = await _confirm(
+      next ? 'Kích hoạt tài khoản?' : 'Tạm dừng tài khoản?',
+      next
+          ? 'Kích hoạt lại tài khoản của $name?'
+          : 'Tạm dừng tài khoản của $name? Người dùng sẽ không thể đăng nhập cho đến khi được kích hoạt lại.',
+    );
+    if (!ok) return;
+    setState(() => _acting = true);
+    try { await _repo.setUserActive(widget.userId, next); await _load(); _notice(next ? 'Đã kích hoạt tài khoản' : 'Đã tạm dừng tài khoản', false); }
+    catch (_) { _notice('Không thể cập nhật trạng thái', true); }
+    if (mounted) setState(() => _acting = false);
+  }
+
+  Future<void> _setRole(int level) async {
+    final name = _user?['display_name'] ?? _user?['email'] ?? 'người dùng này';
+    final ok = await _confirm('Đổi vai trò?', 'Đổi vai trò của $name thành "${_roleLabel(level)}"?');
+    if (!ok) return;
+    setState(() => _acting = true);
+    try { await _repo.updateRole(widget.userId, level); await _load(); _notice('Đã cập nhật vai trò', false); }
+    catch (_) { _notice('Chỉ Super Admin mới có thể đổi vai trò', true); }
+    if (mounted) setState(() => _acting = false);
+  }
+
+  void _notice(String text, bool error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text, style: GoogleFonts.spaceGrotesk()),
+      backgroundColor: error ? AppColors.error : AppColors.success, behavior: SnackBarBehavior.floating));
+  }
+
+  String _date(dynamic value) {
+    final date = DateTime.tryParse(value?.toString() ?? '')?.toLocal();
+    return date == null ? 'Chưa có' : '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: AppColors.background,
+    appBar: AppBar(
+      leading: AppBackButton(icon: Icons.arrow_back, color: AppColors.onSurface, onPressed: context.pop),
+      title: Text('Chi tiết người dùng', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+    ),
+    body: RefreshIndicator(onRefresh: _load, child: _loading
+      ? ListView(padding: const EdgeInsets.all(16), children: const [SectionCardSkeleton(contentHeight: 160), SizedBox(height: 12), SectionCardSkeleton(contentHeight: 240)])
+      : _error != null ? ListView(children: [SizedBox(height: 360, child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Text(_error!), const SizedBox(height: 12), ElevatedButton(onPressed: _load, child: const Text('Thử lại'))])))])
+      : ListView(padding: const EdgeInsets.fromLTRB(16, 12, 16, 64), children: [
+          _profile(), const SizedBox(height: 12), _metrics(), const SizedBox(height: 12), _account(), const SizedBox(height: 12), _activities(),
+        ])),
+  );
+
+  Widget _profile() => Container(
+    padding: const EdgeInsets.all(20), decoration: _box(),
+    child: Column(children: [
+      CircleAvatar(radius: 38, backgroundColor: AppColors.primaryContainer,
+        backgroundImage: _user?['avatar_url'] == null ? null : NetworkImage(_user!['avatar_url']),
+        child: _user?['avatar_url'] == null ? Text((_user?['display_name'] ?? _user?['email'] ?? '?')[0].toUpperCase(),
+          style: GoogleFonts.spaceGrotesk(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.primary)) : null),
+      const SizedBox(height: 10),
+      Text(_user?['display_name'] ?? _user?['username'] ?? 'Người dùng', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)),
+      Text(_user?['email'] ?? '', style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted)),
+      const SizedBox(height: 12),
+      Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: [
+        _pill(_user?['is_verified'] == true ? 'Đã xác minh' : 'Chưa xác minh', _user?['is_verified'] == true ? AppColors.success : AppColors.warning),
+        _pill(_user?['is_active'] == true ? 'Hoạt động' : 'Tạm dừng', _user?['is_active'] == true ? AppColors.success : AppColors.onSurfaceMuted),
+        _pill(_roleLabel(_user?['role_level'] ?? 0), AppColors.primary),
+      ]),
+    ]),
+  );
+
+  Widget _metrics() => GridView.count(
+    shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), crossAxisCount: 2,
+    mainAxisSpacing: 10, crossAxisSpacing: 10, childAspectRatio: 1.35,
+    children: [
+      StatCard(label: 'Tổng XP', value: '${_user?['total_xp'] ?? 0}', icon: Icons.star_outline),
+      StatCard(label: 'Khóa học', value: '${_user?['courses_completed'] ?? 0}/${_user?['courses_enrolled'] ?? 0}', icon: Icons.school_outlined),
+      StatCard(label: 'Bài học', value: '${_user?['lessons_completed'] ?? 0}', icon: Icons.menu_book_outlined),
+      StatCard(label: 'Ngày hoạt động', value: '${_user?['daily_activities'] ?? 0}', icon: Icons.calendar_today_outlined),
+    ],
+  );
+
+  Widget _account() {
+    final isSuperAdmin = context.watch<AuthProvider>().isSuperAdmin;
+    final maxLevel = isSuperAdmin ? 2 : 1;
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-      ),
-      child: child,
+    padding: const EdgeInsets.all(16), decoration: _box(), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Tài khoản & quyền', style: GoogleFonts.spaceGrotesk(fontSize: 17, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 12),
+      _line('Ngày tham gia', _date(_user?['created_at'])),
+      _line('Đăng nhập cuối', _date(_user?['last_login'])),
+      _line('Nhà cung cấp', ((_user?['provider'] as List?) ?? const ['local']).join(', ')),
+      const Divider(height: 28),
+      Text('Thay đổi vai trò', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600)),
+      const SizedBox(height: 8),
+      Wrap(spacing: 8, runSpacing: 8, children: List.generate(maxLevel + 1, (level) => SizedBox(height: 44, child: OutlinedButton(
+        onPressed: _acting || _user?['role_level'] == level ? null : () => _setRole(level), child: Text(_roleLabel(level)),
+      )))),
+      const SizedBox(height: 12),
+      SizedBox(width: double.infinity, height: 48, child: ElevatedButton.icon(
+        onPressed: _acting ? null : _setActive,
+        style: ElevatedButton.styleFrom(backgroundColor: _user?['is_active'] == true ? AppColors.error : AppColors.success),
+        icon: Icon(_user?['is_active'] == true ? Icons.pause_circle_outline : Icons.check_circle_outline),
+        label: Text(_user?['is_active'] == true ? 'Tạm dừng tài khoản' : 'Kích hoạt tài khoản'),
+      )),
+    ]),
     );
   }
-}
 
-class _ProfileMeta extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color? valueColor;
+  Widget _activities() => Container(
+    padding: const EdgeInsets.all(16), decoration: _box(), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('Hoạt động gần đây', style: GoogleFonts.spaceGrotesk(fontSize: 17, fontWeight: FontWeight.w700)),
+      const SizedBox(height: 8),
+      if (_activity.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 24), child: Center(child: Text('Chưa có hoạt động', style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted))))
+      else ..._activity.map((item) => ListTile(
+        contentPadding: EdgeInsets.zero, minLeadingWidth: 44,
+        leading: CircleAvatar(backgroundColor: AppColors.primaryContainer, child: Icon(item['activity_type'] == 'lesson_completed' ? Icons.menu_book : Icons.bolt, color: AppColors.primary)),
+        title: Text(item['description'] ?? '', style: GoogleFonts.spaceGrotesk(fontSize: 13, fontWeight: FontWeight.w600)),
+        subtitle: Text(_date(item['activity_date']), style: GoogleFonts.spaceGrotesk(fontSize: 12)),
+        trailing: (item['xp_earned'] ?? 0) > 0 ? Text('+${item['xp_earned']} XP', style: GoogleFonts.spaceGrotesk(color: AppColors.primary, fontWeight: FontWeight.w700)) : null,
+      )),
+    ]),
+  );
 
-  const _ProfileMeta({required this.label, required this.value, this.valueColor});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(label,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.08,
-                color: AppColors.onSurfaceMuted)),
-        const SizedBox(height: 2),
-        Text(value,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: valueColor ?? AppColors.onSurface)),
-      ],
-    );
-  }
-}
-
-class _AchievementRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int progress;
-  final int total;
-
-  const _AchievementRow({
-    required this.icon,
-    required this.label,
-    required this.progress,
-    required this.total,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: AppColors.primary, size: 22),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(label,
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.onSurface)),
-                  Text('$progress/$total',
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primary)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress / total,
-                  backgroundColor: AppColors.surfaceContainerHigh,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                  minHeight: 5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Icon(Icons.edit_outlined, size: 18, color: AppColors.onSurfaceMuted),
-      ],
-    );
-  }
+  BoxDecoration _box() => BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.outlineVariant));
+  Widget _pill(String text, Color color) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(20)),
+    child: Text(text, style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700, color: color)));
+  Widget _line(String label, String value) => Padding(padding: const EdgeInsets.symmetric(vertical: 7), child: Row(children: [
+    Expanded(child: Text(label, style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted))),
+    Flexible(child: Text(value, textAlign: TextAlign.end, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600))),
+  ]));
+  String _roleLabel(int level) => const ['User', 'Admin', 'Super Admin'][level.clamp(0, 2)];
 }

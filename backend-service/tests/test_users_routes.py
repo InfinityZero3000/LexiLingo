@@ -39,6 +39,8 @@ def _make_mock_user(user_id: str = "550e8400-e29b-41d4-a716-446655440001"):
     user.is_verified = True
     user.level = "A1"
     user.cefr_level = "A1"
+    user.goal = None
+    user.interest = None
     user.native_language = "vi"
     user.target_language = "en"
     user.total_xp = 100
@@ -189,6 +191,29 @@ class TestUpdateCurrentUserProfile:
         client, _, _, _ = auth_client
         response = await client.put(f"{BASE}/me", json={"native_language": "fr"})
         assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_update_goal_and_interest_bumps_learner_state_epoch(self, auth_client):
+        """Onboarding goal/interest must invalidate personalized AI caches —
+        that's what bumping the shared learner-state epoch achieves."""
+        client, _, _, mock_user = auth_client
+        with patch("app.routes.users.bump_learner_state_epoch", new=AsyncMock()) as mock_bump:
+            response = await client.put(
+                f"{BASE}/me", json={"goal": "career", "interest": "technology"}
+            )
+        assert response.status_code == 200
+        assert mock_user.goal == "career"
+        assert mock_user.interest == "technology"
+        mock_bump.assert_awaited_once()
+        assert mock_bump.await_args.args[1] == mock_user.id
+
+    @pytest.mark.asyncio
+    async def test_update_without_goal_or_interest_skips_epoch_bump(self, auth_client):
+        client, _, _, _ = auth_client
+        with patch("app.routes.users.bump_learner_state_epoch", new=AsyncMock()) as mock_bump:
+            response = await client.put(f"{BASE}/me", json={"display_name": "New Name"})
+        assert response.status_code == 200
+        mock_bump.assert_not_awaited()
 
 
 # ============================================================================

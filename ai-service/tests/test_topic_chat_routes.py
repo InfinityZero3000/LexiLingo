@@ -80,22 +80,22 @@ def test_normalize_preferred_llm_other():
     assert topic_route._normalize_preferred_llm("ollama") == "ollama"
 
 
-# ─── _sanitize_topic_response ─────────────────────────────────────────────────
+# ─── sanitize_topic_response ─────────────────────────────────────────────────
 
 def test_sanitize_topic_response_clean_sentence():
     text = "Hello! How are you?"
-    assert topic_route._sanitize_topic_response(text) == text
+    assert topic_route.sanitize_topic_response(text) == text
 
 
 def test_sanitize_topic_response_strips_json_tail():
     text = 'Good practice! ],"e":[]}'
-    result = topic_route._sanitize_topic_response(text)
+    result = topic_route.sanitize_topic_response(text)
     assert result == "Good practice!"
 
 
 def test_sanitize_topic_response_empty():
-    assert topic_route._sanitize_topic_response("") == ""
-    assert topic_route._sanitize_topic_response(None) == ""
+    assert topic_route.sanitize_topic_response("") == ""
+    assert topic_route.sanitize_topic_response(None) == ""
 
 
 # ─── list_stories ─────────────────────────────────────────────────────────────
@@ -342,3 +342,68 @@ async def test_send_topic_message_passes_session_prompt_to_tracecag(monkeypatch)
     )
 
     assert tracecag.await_args.kwargs["topic_system_prompt"] == session_doc["system_prompt"]
+
+
+@pytest.mark.asyncio
+async def test_send_topic_message_stream_passes_session_context_and_returns_sse(monkeypatch):
+    session_doc = {
+        "session_id": "sess-1",
+        "user_id": "u1",
+        "session_type": "topic_based",
+        "preferred_llm": "trace-cag",
+        "difficulty_level": "B1",
+        "system_prompt": "You are Sarah, an airport check-in agent.",
+        "kg_seed_concepts": ["concept:travel.airport"],
+    }
+    db = _make_db(
+        session_doc=session_doc,
+        msg_docs=[{"role": "assistant", "content": "Good morning. Passport, please."}],
+    )
+    request_context = MagicMock(headers={})
+    request = topic_route.TopicChatRequest(user_id="u1", message="I need check in.")
+
+    async def fake_stream(**kwargs):
+        yield "event: thinking\ndata: {}\n\n"
+
+    stream_mock = MagicMock(side_effect=fake_stream)
+
+    monkeypatch.setattr(topic_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
+    monkeypatch.setattr(topic_route, "stream_tracecag_topic_message", stream_mock)
+
+    response = await topic_route.send_topic_message_stream(
+        request_context,
+        "sess-1",
+        request,
+        db,
+        AsyncMock(),
+        _user("u1"),
+    )
+
+    assert response.media_type == "text/event-stream"
+    stream_mock.assert_called_once()
+    kwargs = stream_mock.call_args.kwargs
+    assert kwargs["topic_system_prompt"] == session_doc["system_prompt"]
+    assert kwargs["kg_seeds"] == session_doc["kg_seed_concepts"]
+    assert kwargs["difficulty_level"] == "B1"
+    assert kwargs["message"] == "I need check in."
+
+
+@pytest.mark.asyncio
+async def test_send_topic_message_stream_rejects_non_topic_session(monkeypatch):
+    session_doc = {
+        "session_id": "sess-1",
+        "user_id": "u1",
+        "session_type": "lexi",
+    }
+    db = _make_db(session_doc=session_doc)
+    request_context = MagicMock(headers={})
+    request = topic_route.TopicChatRequest(user_id="u1", message="hi")
+
+    monkeypatch.setattr(topic_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
+
+    with pytest.raises(HTTPException) as exc:
+        await topic_route.send_topic_message_stream(
+            request_context, "sess-1", request, db, AsyncMock(), _user("u1"),
+        )
+
+    assert exc.value.status_code == 400

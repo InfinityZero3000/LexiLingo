@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart';
@@ -77,6 +78,9 @@ class _LexiChatPageState extends State<LexiChatPage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
       provider.setNativeLanguage(_nativeLanguage);
+      provider.syncTtsWithGlobalSound(
+        context.read<SettingsProvider>().soundEnabled,
+      );
       unawaited(
         provider.restoreLatestSession(_userId).catchError((Object error) {
           debugPrint('restoreLatestSession failed: $error');
@@ -759,6 +763,8 @@ class _LexiChatPageState extends State<LexiChatPage>
                         message.linkedConcepts.isNotEmpty)
                     ? () => LexiCorrectionsSheet.show(context, message)
                     : null,
+                onSuggestedPracticeTap: (practice) =>
+                    _sendQuickReply(practice.prompt),
               ),
             );
           },

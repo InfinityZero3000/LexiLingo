@@ -57,14 +57,39 @@ _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
 )
 
 
+def _personalization_hint(state: Dict[str, Any]) -> str:
+    learner_profile = state.get("learner_profile") or {}
+    goal = str(learner_profile.get("goal") or "").strip()
+    interest = str(learner_profile.get("interest") or "").strip()
+    hint = ""
+    if goal or interest:
+        if goal and interest:
+            who = f"is learning for {goal} and is into {interest}"
+        else:
+            who = f"is learning for {goal}" if goal else f"is into {interest}"
+        hint += f"The learner {who} — use examples from that when it fits naturally.\n"
+
+    recap = str(learner_profile.get("session_recap") or "").strip()
+    if recap:
+        hint += (
+            f'This is the learner\'s first message in a new conversation. Last '
+            f'time, they said: "{recap}" — if it feels natural, briefly '
+            f"acknowledge picking back up; don't force it if this message is "
+            f"on a completely different topic.\n"
+        )
+    return hint
+
+
 def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str) -> str:
     topic_prompt = str(state.get("topic_system_prompt") or "").strip()
+    personalization = _personalization_hint(state)
     if topic_prompt:
         return (
             f"{topic_prompt}\n\n"
             "--- TraceCAG Turn Guidance ---\n"
             f"The learner's current CEFR level is: {level}\n"
             f"Difficulty setting for this turn: {difficulty}\n"
+            f"{personalization}"
         )
 
     return (
@@ -74,6 +99,7 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
         "Gently correct mistakes with encouraging context.\n"
         f"The learner's current CEFR level is: {level}\n"
         f"Difficulty setting for this turn: {difficulty}\n"
+        f"{personalization}"
     )
 
 

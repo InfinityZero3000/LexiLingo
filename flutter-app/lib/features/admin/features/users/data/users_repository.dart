@@ -1,55 +1,49 @@
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 
 class AdminUserItem {
-  final String id;
-  final String email;
-  final String displayName;
-  final String? avatarUrl;
-  final String status;
-  final String level;
-  final String roleSlug;
-  final int totalXp;
-  final int numericLevel;
-  final String rank;
+  final String id, email, displayName, roleSlug, level, rank;
+  final String? avatarUrl, createdAt, lastLogin;
+  final bool isActive, isVerified;
+  final int roleLevel, totalXp, numericLevel, streakDays;
 
   const AdminUserItem({
     required this.id,
     required this.email,
     required this.displayName,
-    this.avatarUrl,
-    required this.status,
-    required this.level,
     required this.roleSlug,
+    required this.level,
+    required this.rank,
+    this.avatarUrl,
+    this.createdAt,
+    this.lastLogin,
+    required this.isActive,
+    required this.isVerified,
+    required this.roleLevel,
     required this.totalXp,
     required this.numericLevel,
-    required this.rank,
+    required this.streakDays,
   });
 
-  factory AdminUserItem.fromJson(Map<String, dynamic> j) => AdminUserItem(
-        id: j['id']?.toString() ?? '',
-        email: j['email'] ?? '',
-        displayName: j['display_name'] ?? j['username'] ?? '',
-        avatarUrl: j['avatar_url'],
-        status: j['is_active'] == true ? 'active' : 'inactive',
-        level: j['cefr_level'] ?? j['level'] ?? 'A1',
-        roleSlug: j['role_slug'] ?? 'user',
-        totalXp: j['total_xp'] ?? 0,
-        numericLevel: j['numeric_level'] ?? 1,
-        rank: j['rank'] ?? 'bronze',
+  factory AdminUserItem.fromJson(Map<String, dynamic> json) => AdminUserItem(
+        id: json['id']?.toString() ?? '',
+        email: json['email'] ?? '',
+        displayName: json['display_name'] ?? json['username'] ?? '',
+        avatarUrl: json['avatar_url'],
+        isActive: json['is_active'] == true,
+        isVerified: json['is_verified'] == true,
+        roleSlug: json['role_slug'] ?? 'user',
+        roleLevel: json['role_level'] ?? 0,
+        totalXp: json['total_xp'] ?? 0,
+        numericLevel: json['numeric_level'] ?? 1,
+        rank: json['rank'] ?? 'bronze',
+        level: json['cefr_level'] ?? 'A1',
+        streakDays: json['streak_days'] ?? 0,
+        createdAt: json['created_at']?.toString(),
+        lastLogin: json['last_login']?.toString(),
       );
 
-  String get statusDisplay {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return 'ACTIVE';
-      case 'inactive':
-        return 'IDLE';
-      case 'blocked':
-        return 'BLOCKED';
-      default:
-        return status.toUpperCase();
-    }
-  }
+  String get roleLabel => const ['User', 'Admin', 'Super Admin'][roleLevel.clamp(0, 2)];
 }
 
 class UsersRepository {
@@ -58,37 +52,49 @@ class UsersRepository {
   Future<Map<String, dynamic>> getUsers({
     int page = 1,
     String? search,
-    String? status,
+    int? role,
+    bool? isActive,
   }) async {
-    final resp = await _api.get('/admin/users', params: {
+    final response = await _api.get(ApiEndpoints.adminUsers, params: {
       'page': page,
       'page_size': 20,
-      if (search != null && search.isNotEmpty) 'search': search,
-      if (status != null) 'status': status,
+      if (search?.isNotEmpty == true) 'search': search,
+      if (role != null) 'role': role,
+      if (isActive != null) 'is_active': isActive,
     });
-    final data = resp['data'] as Map<String, dynamic>?;
+    final data = response['data'] as Map<String, dynamic>? ?? {};
     return {
-      'users': ((data?['users'] as List?) ?? [])
-          .map((e) => AdminUserItem.fromJson(e))
+      'users': ((data['users'] as List?) ?? [])
+          .map((item) => AdminUserItem.fromJson(item as Map<String, dynamic>))
           .toList(),
-      'total': data?['total'] ?? 0,
+      'total': data['total'] ?? 0,
+      'total_pages': data['total_pages'] ?? 1,
     };
   }
 
   Future<Map<String, dynamic>> getUserStats(String userId) async {
-    final resp = await _api.get('/admin/users/$userId');
-    return resp['data'] as Map<String, dynamic>? ?? {};
+    final response = await _api.get('${ApiEndpoints.adminUsers}/$userId');
+    return response['data'] as Map<String, dynamic>? ?? {};
   }
 
-  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
-    await _api.put('/admin/users/$userId', data: data);
+  Future<List<Map<String, dynamic>>> getUserActivity(String userId) async {
+    final response = await _api.get('${ApiEndpoints.adminUsers}/$userId/activity');
+    return ((response['data'] as List?) ?? []).cast<Map<String, dynamic>>();
   }
 
-  Future<void> blockUser(String userId) async {
-    await _api.put('/admin/users/$userId/status', data: {'is_active': false});
-  }
+  Future<void> updateUser(String userId, Map<String, dynamic> data) =>
+      _api.put('${ApiEndpoints.adminUsers}/$userId', data: data);
 
-  Future<void> unblockUser(String userId) async {
-    await _api.put('/admin/users/$userId/status', data: {'is_active': true});
-  }
+  Future<void> updateRole(String userId, int level) =>
+      _api.put('${ApiEndpoints.adminUsers}/$userId/role', data: {'level': level});
+
+  Future<void> setUserActive(String userId, bool isActive) => _api.put(
+        '${ApiEndpoints.adminUsers}/$userId/status',
+        data: {'is_active': isActive},
+      );
+
+  Future<void> bulkAction(Iterable<String> userIds, String action) => _api.post(
+        '${ApiEndpoints.adminUsers}/bulk-action',
+        data: {'user_ids': userIds.toList(), 'action': action},
+      );
 }

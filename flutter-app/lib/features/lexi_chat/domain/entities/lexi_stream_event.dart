@@ -24,6 +24,7 @@ class LexiStreamDone extends LexiStreamEvent {
   final String? fullText;
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
+  final LexiSuggestedPractice? suggestedPractice;
   final String? vietnameseHint;
   final Map<String, dynamic>? scores;
   final String? audioBase64;
@@ -36,6 +37,7 @@ class LexiStreamDone extends LexiStreamEvent {
     this.fullText,
     required this.corrections,
     required this.linkedConcepts,
+    this.suggestedPractice,
     this.vietnameseHint,
     this.scores,
     this.audioBase64,

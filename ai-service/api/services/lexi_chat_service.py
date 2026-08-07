@@ -78,6 +78,14 @@ class LexiCorrection(BaseModel):
     explanation: str = ""
 
 
+class LexiSuggestedPractice(BaseModel):
+    """A one-tap follow-up practice prompt tied to the concept behind the
+    mistake just made (not a generic weak-spot scan)."""
+    concept_id: str
+    concept_title: str
+    prompt: str
+
+
 class LexiChatResponse(BaseModel):
     """Structured response from Lexi."""
     success: bool = True
@@ -87,6 +95,7 @@ class LexiChatResponse(BaseModel):
     audio_base64: Optional[str] = None
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
+    suggested_practice: Optional[LexiSuggestedPractice] = None
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     story_context: Optional[str] = None
@@ -122,6 +131,79 @@ class LexiSessionSummary(BaseModel):
 class LexiSessionListResponse(BaseModel):
     success: bool = True
     sessions: List[LexiSessionSummary] = []
+
+
+async def _build_session_recap(
+    db: AsyncIOMotorDatabase,
+    user_id: str,
+    current_session_id: str,
+) -> Optional[str]:
+    """A short reminder of what the learner was talking about last time,
+    fed into the system prompt so Lexi can open a fresh session like it
+    remembers them — mirrors what a human tutor would naturally do.
+
+    Only meaningful on a genuinely fresh conversation (empty history), so
+    callers should skip this for any session that already has turns.
+    """
+    try:
+        last_session = await db["lexi_sessions"].find_one(
+            {
+                "user_id": user_id,
+                "session_id": {"$ne": current_session_id},
+                "message_count": {"$gt": 0},
+            },
+            sort=[("updated_at", -1)],
+        )
+        if not last_session:
+            return None
+
+        last_user_message = await db["lexi_messages"].find_one(
+            {"session_id": last_session["session_id"], "role": "user"},
+            sort=[("timestamp", -1)],
+        )
+        if not last_user_message:
+            return None
+
+        content = str(last_user_message.get("content") or "").strip()
+        if not content:
+            return None
+        return content[:150]
+    except Exception as exc:
+        # warning, not debug: this is a purely optional enhancement, but a
+        # silent debug-level swallow here would hide a real bug (wrong
+        # field name, schema drift) with zero production visibility.
+        logger.warning("[lexi_chat] session recap lookup failed: %s", exc)
+        return None
+
+
+def _build_suggested_practice(
+    weak_concepts: List[str],
+    has_correction: bool,
+) -> Optional[LexiSuggestedPractice]:
+    """One-tap practice follow-up tied to the concept behind *this turn's*
+    mistake — not a generic "you're weak at X" scan (that's what
+    KnowledgeGraphServiceV3.get_recommended_concepts() does, and it has no
+    idea what the learner just got wrong). Only offered when there actually
+    was a correction this turn, so a clean sentence doesn't get nagged.
+    """
+    if not has_correction or not weak_concepts:
+        return None
+    try:
+        from api.services.kg_service_v3 import get_kg_service
+
+        concept_id = str(weak_concepts[0])
+        meta = get_kg_service().get_concepts().get(concept_id, {})
+        title = str(meta.get("title") or concept_id)
+        return LexiSuggestedPractice(
+            concept_id=concept_id,
+            concept_title=title,
+            prompt=f"Cho tôi thêm 1 câu ví dụ để luyện tập '{title}'.",
+        )
+    except Exception as exc:
+        # warning, not debug: same reasoning as _build_session_recap above —
+        # this must stay visible in production logs, not silently vanish.
+        logger.warning("[lexi_chat] suggested_practice lookup failed: %s", exc)
+        return None
 
 
 def idempotency_request_hash(request: "LexiChatRequest") -> str:
@@ -327,6 +409,7 @@ class PipelineResult:
     session_id: str
     corrections: List["LexiCorrection"] = field(default_factory=list)
     linked_concepts: List[str] = field(default_factory=list)
+    suggested_practice: Optional["LexiSuggestedPractice"] = None
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used: str = "trace-cag"
@@ -366,6 +449,7 @@ async def run_lexi_pipeline(
     lexi_response = ""
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
+    suggested_practice: Optional[LexiSuggestedPractice] = None
     vietnamese_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used = "trace-cag"
@@ -375,7 +459,16 @@ async def run_lexi_pipeline(
         from api.services.orchestrator import get_orchestrator
         from api.utils.languages import iso_to_language_name
 
+        # Run concurrently with orchestrator warmup — this Mongo lookup must
+        # never add its own latency to the hot path the rest of this diff is
+        # busy keeping non-blocking.
+        recap_task = (
+            asyncio.ensure_future(_build_session_recap(db, request.user_id, session_id))
+            if not history
+            else None
+        )
         orchestrator = await get_orchestrator()
+        session_recap = await recap_task if recap_task else None
         graph_result = await orchestrator.process(
             user_input=user_text,
             session_id=session_id,
@@ -383,6 +476,7 @@ async def run_lexi_pipeline(
             learner_profile={
                 "level": request.learner_level,
                 "native_language": iso_to_language_name(request.native_language),
+                **({"session_recap": session_recap} if session_recap else {}),
             },
             conversation_history=history,
         )
@@ -395,6 +489,9 @@ async def run_lexi_pipeline(
                 explanation=c.get("explanation", ""),
             ))
         linked_concepts = graph_result.get("linked_concepts", [])
+        suggested_practice = _build_suggested_practice(
+            graph_result.get("weak_concepts", []), bool(corrections)
+        )
         vietnamese_hint = graph_result.get("vietnamese_hint")
         scores = graph_result.get("scores")
         metadata["pipeline_steps"].append("trace-cag_complete")
@@ -606,6 +703,7 @@ async def run_lexi_pipeline(
         session_id=session_id,
         corrections=corrections,
         linked_concepts=linked_concepts,
+        suggested_practice=suggested_practice,
         vietnamese_hint=vietnamese_hint,
         scores=scores,
         model_used=model_used,
@@ -703,6 +801,13 @@ async def stream_lexi_chat(
     #    a task so we can keep pinging while it initialises.
     try:
         orch_task = asyncio.create_task(get_orchestrator())
+        # Started alongside orchestrator warmup (not after) — this Mongo
+        # lookup must never add its own latency to the streaming hot path.
+        recap_task = (
+            asyncio.create_task(_build_session_recap(db, request.user_id, session_id))
+            if not history
+            else None
+        )
         loop = asyncio.get_running_loop()
         orch_deadline = loop.time() + 45.0  # Reduced from 60s: total must fit within Cloudflare's 100s proxy timeout
         while not orch_task.done():
@@ -722,6 +827,7 @@ async def stream_lexi_chat(
             except Exception:
                 break
         orchestrator = await orch_task
+        session_recap = await recap_task if recap_task else None
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
                 user_input=user_text,
@@ -730,6 +836,7 @@ async def stream_lexi_chat(
                 learner_profile={
                     "level": request.learner_level,
                     "native_language": iso_to_language_name(request.native_language),
+                    **({"session_recap": session_recap} if session_recap else {}),
                 },
                 conversation_history=history,
             )
@@ -778,6 +885,9 @@ async def stream_lexi_chat(
         for e in diag_errors
     ]
     linked_concepts = list(raw_state.get("kg_seed_concepts") or [])
+    suggested_practice = _build_suggested_practice(
+        list(raw_state.get("diagnosis_root_causes") or []), bool(corrections)
+    )
     vietnamese_hint = raw_state.get("vietnamese_hint")
     grammar_score = float(raw_state.get("grammar_score") or 0.8)
     fluency_score = float(raw_state.get("fluency_score") or 0.8)
@@ -959,6 +1069,9 @@ async def stream_lexi_chat(
             for c in corrections
         ],
         "linked_concepts": linked_concepts,
+        "suggested_practice": (
+            suggested_practice.model_dump() if suggested_practice else None
+        ),
         "vietnamese_hint": vietnamese_hint,
         "scores": scores,
         "story_context": request.story_context,

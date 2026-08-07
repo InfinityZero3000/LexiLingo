@@ -192,34 +192,44 @@ async def _send_message_impl(
 
         await _ensure_chat_session_owner(msg_req.session_id, current_user, db)
 
-        try:
-            history_cursor = db["chat_messages"].find(
-                {"session_id": msg_req.session_id}
-            ).sort("timestamp", -1).limit(10)
-            history_docs = await history_cursor.to_list(length=10)
-        except Exception as exc:
-            if not _is_cosmos_order_by_index_error(exc):
-                raise
-            history_docs = await db["chat_messages"].find(
-                {"session_id": msg_req.session_id}
-            ).limit(10).to_list(length=10)
-        history_docs.reverse()
-        conversation_history = _build_conversation_history(history_docs)
-
-        # Resolve real learner level from Redis profile (don't hardcode B1).
-        learner_profile: Dict[str, Any] = {"level": "B1"}
-        if msg_req.user_id:
+        async def _fetch_history_docs() -> List[Dict[str, Any]]:
             try:
-                import asyncio as _asyncio
+                cursor = db["chat_messages"].find(
+                    {"session_id": msg_req.session_id}
+                ).sort("timestamp", -1).limit(10)
+                docs = await cursor.to_list(length=10)
+            except Exception as exc:
+                if not _is_cosmos_order_by_index_error(exc):
+                    raise
+                docs = await db["chat_messages"].find(
+                    {"session_id": msg_req.session_id}
+                ).limit(10).to_list(length=10)
+            docs.reverse()
+            return docs
+
+        async def _fetch_learner_profile() -> Dict[str, Any]:
+            # Resolve real learner level from Redis profile (don't hardcode B1).
+            profile: Dict[str, Any] = {"level": "B1"}
+            if not msg_req.user_id:
+                return profile
+            try:
                 from api.core.redis_client import LearnerProfileCache, RedisClient
-                _redis = await _asyncio.wait_for(RedisClient.get_instance(), timeout=1.5)
-                _cached = await _asyncio.wait_for(
+                _redis = await asyncio.wait_for(RedisClient.get_instance(), timeout=1.5)
+                _cached = await asyncio.wait_for(
                     LearnerProfileCache(_redis).get_profile(msg_req.user_id), timeout=1.5
                 )
                 if _cached:
-                    learner_profile = {**learner_profile, **_cached}
+                    profile = {**profile, **_cached}
             except Exception as _lp_err:
                 logger.debug("Learner profile Redis lookup skipped: %s", _lp_err)
+            return profile
+
+        # Independent lookups (Mongo history, Redis profile) — run concurrently
+        # instead of paying their latency back-to-back on the request path.
+        history_docs, learner_profile = await asyncio.gather(
+            _fetch_history_docs(), _fetch_learner_profile()
+        )
+        conversation_history = _build_conversation_history(history_docs)
 
         # 1. Save user message (fire-and-forget — don't block the AI call)
         user_message = {

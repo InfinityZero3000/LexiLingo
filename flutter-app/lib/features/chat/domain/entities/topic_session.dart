@@ -113,6 +113,26 @@ class TopicChatMessage {
   }
 
   bool get hasHints => hints?.hasAnyHints ?? false;
+
+  TopicChatMessage copyWith({
+    String? id,
+    String? sessionId,
+    String? content,
+    bool? isUser,
+    DateTime? timestamp,
+    EducationalHints? hints,
+    LlmMetadata? llmMetadata,
+  }) {
+    return TopicChatMessage(
+      id: id ?? this.id,
+      sessionId: sessionId ?? this.sessionId,
+      content: content ?? this.content,
+      isUser: isUser ?? this.isUser,
+      timestamp: timestamp ?? this.timestamp,
+      hints: hints ?? this.hints,
+      llmMetadata: llmMetadata ?? this.llmMetadata,
+    );
+  }
 }
 
 /// Cursor-based page result for topic chat messages.

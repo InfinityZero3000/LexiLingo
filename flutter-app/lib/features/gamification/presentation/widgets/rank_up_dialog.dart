@@ -8,11 +8,7 @@ class RankUpDialog extends StatefulWidget {
   final String newRank;
   final String oldRank;
 
-  const RankUpDialog({
-    super.key,
-    required this.newRank,
-    required this.oldRank,
-  });
+  const RankUpDialog({super.key, required this.newRank, required this.oldRank});
 
   /// Show the rank-up celebration as a modal flow.
   static Future<void> show(
@@ -22,7 +18,7 @@ class RankUpDialog extends StatefulWidget {
   }) {
     // Prevent duplicated / overlapping dialogs if rank doesn't change
     if (newRank.toLowerCase() == oldRank.toLowerCase()) return Future.value();
-    
+
     return showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -165,8 +161,12 @@ class _RankUpDialogState extends State<RankUpDialog>
                                   children: [
                                     _RankUpMessage(
                                       palette: palette,
-                                      oldRankName: rankDisplayNameFor(widget.oldRank),
-                                      newRankName: rankDisplayNameFor(widget.newRank),
+                                      oldRankName: rankDisplayNameFor(
+                                        widget.oldRank,
+                                      ),
+                                      newRankName: rankDisplayNameFor(
+                                        widget.newRank,
+                                      ),
                                     ),
                                     SizedBox(height: compact ? 24 : 36),
                                     _ContinueButton(
@@ -312,26 +312,26 @@ class _HeaderCopy extends StatelessWidget {
           'Rank Up!',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: palette.primary,
-                fontSize: compact ? 36 : 46,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1.0,
-                shadows: [
-                  Shadow(
-                    color: palette.primary.withValues(alpha: 0.3),
-                    blurRadius: 24,
-                  ),
-                ],
+            color: palette.primary,
+            fontSize: compact ? 36 : 46,
+            fontWeight: FontWeight.w900,
+            letterSpacing: -1.0,
+            shadows: [
+              Shadow(
+                color: palette.primary.withValues(alpha: 0.3),
+                blurRadius: 24,
               ),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'You have reached $rankName',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: palette.onSurfaceVariant,
-                fontWeight: FontWeight.w700,
-              ),
+            color: palette.onSurfaceVariant,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ],
     );
@@ -437,11 +437,7 @@ class _RankUpMessage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.auto_awesome_rounded,
-            color: palette.primary,
-            size: 32,
-          ),
+          Icon(Icons.auto_awesome_rounded, color: palette.primary, size: 32),
           const SizedBox(height: 12),
           RichText(
             textAlign: TextAlign.center,
@@ -478,10 +474,7 @@ class _ContinueButton extends StatelessWidget {
   final _RankUpPalette palette;
   final VoidCallback onPressed;
 
-  const _ContinueButton({
-    required this.palette,
-    required this.onPressed,
-  });
+  const _ContinueButton({required this.palette, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +483,7 @@ class _ContinueButton extends StatelessWidget {
       child: FilledButton(
         style: FilledButton.styleFrom(
           backgroundColor: palette.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.surfaceLight,
           padding: const EdgeInsets.symmetric(vertical: 20),
           elevation: 4,
           shadowColor: palette.primary.withValues(alpha: 0.4),

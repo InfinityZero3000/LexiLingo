@@ -906,12 +906,13 @@ async def claim_daily_reward(
     streak.last_reward_claim_date = today
     await db.commit()
     await db.refresh(streak)
-    
+
     # Invalidate cache
     uid = str(current_user.id)
     await delete_cached(build_cache_key("progress_streak", user_id=uid))
     await delete_cached(build_cache_key("progress_me", user_id=uid))
-    
+    await delete_cached(build_cache_key("wallet", user_id=uid))
+
     response_data = {
         'gems_awarded': reward_gems,
         'total_gems': wallet.gems,

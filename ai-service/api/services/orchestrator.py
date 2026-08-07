@@ -62,9 +62,11 @@ class AIOrchestrator:
       1. KnowledgeGraphServiceV3   — KuzuDB schema + concept seeding
       2. ModelGateway              — lazy model registry + auto-unload scheduler
       3. TraceCAGPipeline          — LangGraph StateGraph compile
+      4. RetrievalServiceV3        — graph analytics + concept embeddings
+                                      (backgrounded — see initialize())
 
-    All three are singletons managed by their own modules; the Orchestrator
-    holds references for health aggregation only (no ownership).
+    All are singletons managed by their own modules; the Orchestrator holds
+    references for health aggregation only (no ownership).
     """
 
     _instance: Optional["AIOrchestrator"] = None
@@ -75,6 +77,7 @@ class AIOrchestrator:
         self._pipeline = None   # TraceCAGPipeline
         self._gateway = None    # ModelGateway
         self._kg = None         # KnowledgeGraphServiceV3
+        self._retrieval_warmup_task: Optional[asyncio.Task] = None
 
         # Cumulative stats
         self._total_requests: int = 0
@@ -127,8 +130,53 @@ class AIOrchestrator:
             logger.error(f"AIOrchestrator: TraceCAG pipeline failed: {e}")
             raise
 
+        # 4. RetrievalServiceV3 (graph analytics + concept embeddings) and the
+        # JIT GLiNER entity-extraction model — retrieve_node's other two lazy
+        # singletons. Measured on the real production KG: RetrievalServiceV3's
+        # constructor alone takes 170-480s (NetworkX centrality + embedding-
+        # model cold load + ~15K concept embeddings), and GLiNER's cold load
+        # adds another ~15s — neither runs during boot today, so retrieve_node
+        # builds them lazily on whichever request hits it first, and that
+        # user pays the full cost inline.
+        #
+        # Fired as a background task, NOT awaited: awaiting it here would
+        # make this whole method (and the `asyncio.wait_for(..., timeout=45)`
+        # in main.py's lifespan that calls it) take minutes, blowing past the
+        # Docker HEALTHCHECK start-period (60s) and risking the container
+        # being killed before it ever finishes warming. A live request that
+        # arrives before this finishes still only pays each cost once — both
+        # singletons already have their own lock (_get_retrieval_v3's lock;
+        # JITGraphService._model_lock) that makes a racing request await the
+        # same in-flight build instead of starting a duplicate.
+        self._retrieval_warmup_task = asyncio.create_task(self._warm_retrieval_stack())
+        self._retrieval_warmup_task.add_done_callback(self._log_retrieval_warmup)
+
         self._initialized = True
-        logger.info("AIOrchestrator ready (kg + gateway + trace-cag)")
+        logger.info("AIOrchestrator ready (kg + gateway + trace-cag; retrieval stack warming in background)")
+
+    @staticmethod
+    async def _warm_retrieval_stack() -> None:
+        from api.services.trace_cag.retrieve import _get_retrieval_v3
+
+        await _get_retrieval_v3()
+
+        from api.services.jit_graph_service import get_jit_graph_service
+
+        jit_cfg = get_jit_graph_service()._load_config()
+        if jit_cfg.enabled:
+            await get_jit_graph_service()._ensure_gliner_model(jit_cfg.model_name)
+
+    @staticmethod
+    def _log_retrieval_warmup(task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc:
+            logger.warning(f"AIOrchestrator: retrieval-stack background warmup failed: {exc}")
+        else:
+            logger.info(
+                "AIOrchestrator: retrieval stack (graph analytics + embeddings + GLiNER) warmed"
+            )
 
     async def shutdown(self) -> None:
         """Gracefully release resources."""

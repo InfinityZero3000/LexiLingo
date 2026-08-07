@@ -15,6 +15,7 @@ from app.services.learner_state import (
     TooManyConceptsError,
     _validate_observation,
     apply_observation_event,
+    bump_learner_state_epoch,
     evolve_state,
     get_due_concepts_for_user,
     get_states_for_concepts,
@@ -118,7 +119,7 @@ def test_observation_requires_server_contract_event_id_and_bounded_concept() -> 
 @pytest.mark.asyncio
 async def test_batch_read_rejects_unbounded_input_before_database_access() -> None:
     session = MagicMock()
-    session.scalar = AsyncMock()
+    session.execute = AsyncMock()
     session.scalars = AsyncMock()
 
     with pytest.raises(TooManyConceptsError, match="at most 2"):
@@ -129,7 +130,7 @@ async def test_batch_read_rejects_unbounded_input_before_database_access() -> No
             limit=2,
         )
 
-    session.scalar.assert_not_awaited()
+    session.execute.assert_not_awaited()
     session.scalars.assert_not_awaited()
 
 
@@ -139,8 +140,11 @@ async def test_batch_read_deduplicates_and_preserves_requested_order() -> None:
     second = SimpleNamespace(concept_id="concept:second")
     scalar_rows = MagicMock()
     scalar_rows.all.return_value = [second, first]
+    profile_row = SimpleNamespace(state_epoch=7, goal="career", interest="technology")
+    execute_result = MagicMock()
+    execute_result.first.return_value = profile_row
     session = MagicMock()
-    session.scalar = AsyncMock(return_value=7)
+    session.execute = AsyncMock(return_value=execute_result)
     session.scalars = AsyncMock(return_value=scalar_rows)
 
     result = await get_states_for_concepts(
@@ -151,8 +155,60 @@ async def test_batch_read_deduplicates_and_preserves_requested_order() -> None:
 
     assert result.state_epoch == 7
     assert result.states == (first, second)
-    session.scalar.assert_awaited_once()
+    assert result.goal == "career"
+    assert result.interest == "technology"
+    session.execute.assert_awaited_once()
     session.scalars.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_batch_read_defaults_epoch_and_preferences_when_user_has_no_profile_row() -> None:
+    """A user who has never had a mastery event AND never set goal/interest
+    still gets a valid response, not a crash — the LEFT OUTER JOIN must
+    tolerate a missing LearnerStateProfile row."""
+    execute_result = MagicMock()
+    execute_result.first.return_value = None
+    session = MagicMock()
+    session.execute = AsyncMock(return_value=execute_result)
+    session.scalars = AsyncMock()
+
+    result = await get_states_for_concepts(session, uuid4(), [])
+
+    assert result.state_epoch == 0
+    assert result.goal is None
+    assert result.interest is None
+    assert result.states == ()
+
+
+@pytest.mark.asyncio
+async def test_batch_read_epoch_query_is_a_single_outer_join_not_two_selects() -> None:
+    """Regression lock for the "exactly two bounded SELECTs" contract: the
+    epoch/goal/interest lookup must be ONE joined query, not the epoch alone
+    plus a second query for goal/interest bolted on by a caller."""
+    execute_result = MagicMock()
+    execute_result.first.return_value = SimpleNamespace(
+        state_epoch=0, goal=None, interest=None
+    )
+    captured = []
+
+    async def execute_spy(statement):
+        captured.append(statement)
+        return execute_result
+
+    session = MagicMock()
+    session.execute = execute_spy
+
+    await get_states_for_concepts(session, uuid4(), [])
+
+    assert len(captured) == 1
+    sql = str(
+        captured[0].compile(
+            dialect=postgresql.dialect(), compile_kwargs={"literal_binds": False}
+        )
+    )
+    assert "LEFT OUTER JOIN learner_state_profiles" in sql
+    assert "users.goal" in sql
+    assert "users.interest" in sql
 
 
 @pytest.mark.asyncio
@@ -292,6 +348,57 @@ async def test_apply_atomically_updates_state_epoch_and_event() -> None:
     assert event.last_error_code is None
     assert session.execute.await_count == 2
     session.flush.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_bump_learner_state_epoch_increments_existing_profile() -> None:
+    """Non-mastery personalization changes (e.g. onboarding goal/interest)
+    reuse this same epoch so their dependent cache entries invalidate too."""
+    user_id = uuid4()
+    profile = SimpleNamespace(state_epoch=3, updated_at=NOW - timedelta(days=1))
+    session = MagicMock()
+    session.execute = AsyncMock()
+    session.scalar = AsyncMock(return_value=profile)
+
+    await bump_learner_state_epoch(session, user_id, NOW)
+
+    assert profile.state_epoch == 4
+    assert profile.updated_at == NOW
+    session.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_bump_learner_state_epoch_upsert_has_correct_conflict_target() -> None:
+    """Cold-start regression lock: a user with NO prior LearnerStateProfile
+    row (never had a mastery event, first-ever goal/interest update) must
+    still get a row created by the upsert before the following SELECT can
+    find and increment it. Mocking session.scalar to return a canned
+    profile (as the test above does) can't distinguish "row already
+    existed" from "row was just created" — this asserts the INSERT
+    statement's shape instead, since that's what actually guarantees the
+    row exists either way."""
+    user_id = uuid4()
+    captured = []
+
+    async def execute_spy(statement):
+        captured.append(statement)
+
+    session = MagicMock()
+    session.execute = execute_spy
+    session.scalar = AsyncMock(
+        return_value=SimpleNamespace(state_epoch=0, updated_at=NOW)
+    )
+
+    await bump_learner_state_epoch(session, user_id, NOW)
+
+    assert len(captured) == 1
+    sql = str(
+        captured[0].compile(
+            dialect=postgresql.dialect(), compile_kwargs={"literal_binds": False}
+        )
+    )
+    assert "INSERT INTO learner_state_profiles" in sql
+    assert "ON CONFLICT (user_id) DO NOTHING" in sql
 
 
 @pytest.mark.asyncio

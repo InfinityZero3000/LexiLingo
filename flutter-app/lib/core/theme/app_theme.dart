@@ -257,6 +257,14 @@ class AppColors {
     Color(0xFFFF9F0A),
     Color(0xFFFF5722),
   ];
+
+  /// Master league prestige gradient (sky-blue → gold) — the only
+  /// two-hue exception to the "≤30° apart" rule, reserved for the
+  /// top rank tier. Was duplicated as inline hex in 3 widgets.
+  static const List<Color> masterGradient = [
+    Color(0xFF5AB6FF),
+    Color(0xFFFFD64F),
+  ];
 }
 
 class AppColorRoles {

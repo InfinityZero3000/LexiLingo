@@ -356,6 +356,43 @@ async def get_wallet_history(
 # Leaderboard Endpoints
 # ============================================================================
 
+async def _personalize_leaderboard(
+    db: AsyncSession,
+    base_data: dict,
+    current_user: User,
+    normalized_league: str,
+) -> dict:
+    """Stamp a shared (per-league, not per-user) cached payload with this viewer's rank/flags."""
+    data = dict(base_data)
+    entries = [dict(e) for e in data.get("entries", [])]
+    current_user_id = str(current_user.id)
+    current_user_rank = None
+
+    for entry in entries:
+        entry["is_current_user"] = str(entry.get("user_id")) == current_user_id
+        if entry["is_current_user"]:
+            current_user_rank = entry["rank"]
+
+    if current_user_rank is None and normalized_league == (current_user.rank or "bronze").lower():
+        current_user_rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
+        current_entry = await LeaderboardCRUD.get_or_create_entry(db, current_user.id)
+        entries.append({
+            "rank": current_user_rank or len(entries) + 1,
+            "user_id": current_user_id,
+            "username": current_user.username,
+            "display_name": current_user.display_name,
+            "avatar_url": current_user.avatar_url,
+            "user_rank": current_user.rank,
+            "xp_earned": current_entry.xp_earned,
+            "lessons_completed": current_entry.lessons_completed,
+            "is_current_user": True,
+        })
+
+    data["entries"] = entries
+    data["current_user_rank"] = current_user_rank
+    return data
+
+
 @router.get("/leaderboard", response_model=ApiResponse[LeaderboardResponse])
 async def get_leaderboard(
     response: Response,
@@ -365,38 +402,39 @@ async def get_leaderboard(
 ):
     """
     Get weekly leaderboard for specific league.
-    
+
     Returns top players in the league with XP earned this week.
     """
     normalized_league = league.lower().strip()
-    await LeaderboardCRUD.sync_current_week_entries_to_user_rank(db)
 
-    cache_key = build_cache_key("leaderboard", league=normalized_league, user_id=str(current_user.id))
+    # Cache key is per-league only (not per-user): the standings are identical for
+    # every viewer, only is_current_user/current_user_rank differ, which are stamped
+    # on after the cache read. Keying by user_id previously made every request a
+    # guaranteed cache miss under real traffic — each user hit the DB every time.
+    cache_key = build_cache_key("leaderboard", league=normalized_league)
     cached = await get_cached(cache_key)
-    cached_entries = cached.get("entries", []) if isinstance(cached, dict) else []
     cached_matches_rank = (
         isinstance(cached, dict)
         and str(cached.get("league", "")).lower() == normalized_league
-        and all(
-            str(entry.get("user_rank", "")).lower() == normalized_league
-            for entry in cached_entries
-            if isinstance(entry, dict)
-        )
     )
     if cached and cached_matches_rank:
+        leaderboard_data = await _personalize_leaderboard(db, cached, current_user, normalized_league)
         response.headers["X-Cache-Version"] = compute_cache_version(cached)
         response.headers["X-Cache-Source"] = "redis"
         return ApiResponse(
             success=True,
             message="Leaderboard retrieved successfully",
-            data=cached
+            data=leaderboard_data
         )
-    
+
+    # Full-table league sync only needs to run once per cache window now that the
+    # cache is shared, not on every single request.
+    await LeaderboardCRUD.sync_current_week_entries_to_user_rank(db)
+
     entries = await LeaderboardCRUD.get_leaderboard(db, league)
     week_start, week_end = LeaderboardCRUD.get_current_week_range()
-    
+
     leaderboard_entries = []
-    current_user_rank = None
     total_participants = await LeaderboardCRUD.count_rank_participants(
         db,
         normalized_league,
@@ -410,10 +448,6 @@ async def get_leaderboard(
         total_participants = fallback_total
         fallback_ranks = LeaderboardCRUD.rank_scores([0] * len(fallback_users))
         for rank, user in zip(fallback_ranks, fallback_users):
-            is_current = user.id == current_user.id
-            if is_current:
-                current_user_rank = rank
-
             leaderboard_entries.append(LeaderboardUserEntry(
                 rank=rank,
                 user_id=user.id,
@@ -423,7 +457,7 @@ async def get_leaderboard(
                 user_rank=user.rank,
                 xp_earned=0,
                 lessons_completed=0,
-                is_current_user=is_current,
+                is_current_user=False,
             ))
 
     weekly_scores = [
@@ -432,10 +466,6 @@ async def get_leaderboard(
     ]
     weekly_ranks = LeaderboardCRUD.rank_scores(weekly_scores)
     for rank, (entry, user) in zip(weekly_ranks, entries):
-        is_current = user.id == current_user.id
-        if is_current:
-            current_user_rank = rank
-
         xp = entry.xp_earned if entry is not None else 0
         lessons = entry.lessons_completed if entry is not None else 0
 
@@ -448,50 +478,27 @@ async def get_leaderboard(
             user_rank=user.rank,
             xp_earned=xp,
             lessons_completed=lessons,
-            is_current_user=is_current
+            is_current_user=False,
         ))
 
-    if normalized_league == (current_user.rank or "bronze").lower():
-        current_user_rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
-        if not any(entry.user_id == current_user.id for entry in leaderboard_entries):
-            current_entry = await LeaderboardCRUD.get_or_create_entry(
-                db,
-                current_user.id,
-            )
-            leaderboard_entries.append(LeaderboardUserEntry(
-                rank=current_user_rank or len(leaderboard_entries) + 1,
-                user_id=current_user.id,
-                username=current_user.username,
-                display_name=current_user.display_name,
-                avatar_url=current_user.avatar_url,
-                user_rank=current_user.rank,
-                xp_earned=current_entry.xp_earned,
-                lessons_completed=current_entry.lessons_completed,
-                is_current_user=True,
-            ))
-
-    if not current_user_rank and total_participants > 0:
-        current_user_rank = next(
-            (entry.rank for entry in leaderboard_entries if entry.user_id == current_user.id),
-            None,
-        )
-    
     leaderboard_data = LeaderboardResponse(
         league=normalized_league,
         week_start=week_start,
         week_end=week_end,
         entries=leaderboard_entries,
-        current_user_rank=current_user_rank,
+        current_user_rank=None,
         total_participants=total_participants
     ).model_dump(mode="json")
     await set_cached(cache_key, leaderboard_data, ttl=30)
+
+    personalized_data = await _personalize_leaderboard(db, leaderboard_data, current_user, normalized_league)
     response.headers["X-Cache-Version"] = compute_cache_version(leaderboard_data)
     response.headers["X-Cache-Source"] = "origin"
-    
+
     return ApiResponse(
         success=True,
         message="Leaderboard retrieved successfully",
-        data=leaderboard_data
+        data=personalized_data
     )
 
 

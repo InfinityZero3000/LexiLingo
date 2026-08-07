@@ -51,14 +51,8 @@ def resolve_pinned_ip(host: str) -> str:
     for info in infos:
         candidate = info[4][0]
         parsed = ip_address(candidate)
-        if not (
-            parsed.is_private
-            or parsed.is_loopback
-            or parsed.is_link_local
-            or parsed.is_reserved
-            or parsed.is_multicast
-            or parsed.is_unspecified
-        ):
+        # is_global alone still admits multicast ranges (224.0.0.0/4, ff00::/8).
+        if parsed.is_global and not parsed.is_multicast:
             return candidate
     raise ValueError(f"No public address resolved for host: {host}")
 

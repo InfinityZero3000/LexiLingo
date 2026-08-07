@@ -20,10 +20,12 @@ class UserVocabularyModel extends UserVocabularyEntity {
     super.totalXpEarned,
     super.notes,
     required super.addedAt,
+    super.word,
   });
 
   /// Create from JSON (API response)
   factory UserVocabularyModel.fromJson(Map<String, dynamic> json) {
+    final vocabularyItem = json['vocabulary'] as Map<String, dynamic>?;
     return UserVocabularyModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
@@ -43,6 +45,7 @@ class UserVocabularyModel extends UserVocabularyEntity {
       totalXpEarned: (json['total_xp_earned'] as int?) ?? 0,
       notes: json['notes'] as String?,
       addedAt: DateTime.parse(json['added_at'] as String),
+      word: vocabularyItem?['word'] as String?,
     );
   }
 
@@ -87,6 +90,7 @@ class UserVocabularyModel extends UserVocabularyEntity {
       totalXpEarned: totalXpEarned,
       notes: notes,
       addedAt: addedAt,
+      word: word,
     );
   }
 

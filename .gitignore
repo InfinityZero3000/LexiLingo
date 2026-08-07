@@ -6,6 +6,9 @@
 # OS
 *.DS_Store
 
+# Local Redis snapshot (created by running redis-server for local dev/testing)
+dump.rdb
+
 # Sensitive files - NEVER commit these!
 # Firebase credentials
 **/firebase_options.dart

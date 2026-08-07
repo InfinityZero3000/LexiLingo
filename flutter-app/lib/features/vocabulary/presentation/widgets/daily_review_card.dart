@@ -32,15 +32,21 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
   }
 
   Future<void> _loadDueCount() async {
-    final result = await vocab_di
-        .getIt<VocabularyRepository>()
-        .getVocabularyStats();
+    var dueCount = 0;
+    try {
+      final result = await vocab_di
+          .getIt<VocabularyRepository>()
+          .getVocabularyStats();
+      dueCount = result.fold(
+        (failure) => 0,
+        (stats) => stats['due_for_review'] as int? ?? 0,
+      );
+    } catch (_) {
+      dueCount = 0;
+    }
     if (mounted) {
       setState(() {
-        _dueCount = result.fold(
-          (failure) => 0,
-          (stats) => stats['due_for_review'] as int? ?? 0,
-        );
+        _dueCount = dueCount;
         _isLoading = false;
       });
     }

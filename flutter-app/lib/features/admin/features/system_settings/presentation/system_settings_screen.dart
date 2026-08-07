@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
 
 class SystemSettingsScreen extends StatefulWidget {
   const SystemSettingsScreen({super.key});
@@ -17,9 +19,15 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   bool _saving = false;
 
   late TextEditingController _appNameCtrl;
+  late TextEditingController _tokenExpiryCtrl;
+  late TextEditingController _refreshDaysCtrl;
+  late TextEditingController _aiUrlCtrl;
+  late TextEditingController _corsCtrl;
+  String? _error;
   String _logLevel = 'INFO';
   bool _debugMode = false;
-  int _tokenExpiry = 3600;
+  int _tokenExpiry = 30;
+  int _refreshDays = 7;
 
   static const _logLevels = ['DEBUG', 'INFO', 'WARNING', 'ERROR'];
 
@@ -27,43 +35,79 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   void initState() {
     super.initState();
     _appNameCtrl = TextEditingController();
+    _tokenExpiryCtrl = TextEditingController();
+    _refreshDaysCtrl = TextEditingController();
+    _aiUrlCtrl = TextEditingController();
+    _corsCtrl = TextEditingController();
     _load();
   }
 
   @override
   void dispose() {
     _appNameCtrl.dispose();
+    _tokenExpiryCtrl.dispose();
+    _refreshDaysCtrl.dispose();
+    _aiUrlCtrl.dispose();
+    _corsCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final resp = await ApiClient.instance.get('/admin/system-info');
+      final resp = await ApiClient.instance.get(ApiEndpoints.systemInfo);
       final data = resp['data'] ?? resp;
       if (mounted) {
         setState(() {
           _config = data as Map<String, dynamic>?;
           _appNameCtrl.text = (_config?['app_name'] ?? 'LexiLingo').toString();
           _logLevel = (_config?['log_level'] ?? 'INFO').toString();
-          _debugMode = (_config?['debug_mode'] as bool?) ?? false;
-          _tokenExpiry = (_config?['token_expiration'] as num?)?.toInt() ?? 3600;
+          _debugMode = (_config?['debug'] as bool?) ?? false;
+          _tokenExpiry = (_config?['token_expire_minutes'] as num?)?.toInt() ?? 30;
+          _refreshDays = (_config?['refresh_token_days'] as num?)?.toInt() ?? 7;
+          _tokenExpiryCtrl.text = _tokenExpiry.toString();
+          _refreshDaysCtrl.text = _refreshDays.toString();
+          _aiUrlCtrl.text = (_config?['ai_service_url'] ?? '').toString();
+          final origins = _config?['cors_origins'];
+          _corsCtrl.text = origins is List ? origins.join(', ') : (origins ?? '').toString();
+          _error = null;
           _loading = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) setState(() { _error = 'Could not load settings.'; _loading = false; });
     }
   }
 
   Future<void> _save() async {
+    final tokenExpiry = int.tryParse(_tokenExpiryCtrl.text.trim());
+    final refreshDays = int.tryParse(_refreshDaysCtrl.text.trim());
+    if (_appNameCtrl.text.trim().isEmpty ||
+        tokenExpiry == null ||
+        tokenExpiry <= 0 ||
+        refreshDays == null ||
+        refreshDays <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('App name is required and expiry values must be positive.',
+              style: GoogleFonts.spaceGrotesk()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    _tokenExpiry = tokenExpiry;
+    _refreshDays = refreshDays;
     setState(() => _saving = true);
     try {
-      await ApiClient.instance.put('/admin/system-info', data: {
+      await ApiClient.instance.put(ApiEndpoints.systemInfo, data: {
         'app_name': _appNameCtrl.text.trim(),
         'log_level': _logLevel,
-        'debug_mode': _debugMode,
-        'token_expiration': _tokenExpiry,
+        'debug': _debugMode,
+        'token_expire_minutes': _tokenExpiry,
+        'refresh_token_days': _refreshDays,
+        'ai_service_url': _aiUrlCtrl.text.trim(),
+        'cors_origins': _corsCtrl.text.trim(),
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -73,11 +117,11 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Save failed: $e', style: GoogleFonts.spaceGrotesk()),
+            content: Text('Save failed.', style: GoogleFonts.spaceGrotesk()),
             backgroundColor: AppColors.error,
           ),
         );
@@ -108,8 +152,16 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: AdminSkeleton(height: 320, borderRadius: 16),
+            )
+          : _error != null && _config == null
+              ? _SettingsError(message: _error!, onRetry: _load)
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,9 +187,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                           decoration: const InputDecoration(isDense: true),
                         ),
                         const SizedBox(height: 16),
-                        _infoRow('Version', (_config?['version'] ?? '—').toString()),
+                        _infoRow('API prefix', (_config?['api_prefix'] ?? '—').toString()),
                         const SizedBox(height: 8),
-                        _infoRow('Environment', (_config?['environment'] ?? 'production').toString()),
+                        _infoRow('Environment', (_config?['app_env'] ?? '—').toString()),
                       ],
                     ),
                   ),
@@ -176,21 +228,45 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                     label: 'AUTHENTICATION',
                     child: Column(
                       children: [
-                        _fieldLabel('Token Expiry (seconds)'),
+                        _fieldLabel('Access Token Expiry (minutes)'),
                         const SizedBox(height: 6),
                         TextField(
                           keyboardType: TextInputType.number,
-                          controller: TextEditingController(text: _tokenExpiry.toString()),
+                          controller: _tokenExpiryCtrl,
                           onChanged: (v) => _tokenExpiry = int.tryParse(v) ?? _tokenExpiry,
                           style: GoogleFonts.spaceGrotesk(fontSize: 14),
                           decoration: const InputDecoration(isDense: true),
                         ),
                         const SizedBox(height: 8),
-                        Text('Current: ${(_tokenExpiry / 3600).toStringAsFixed(1)} hours',
+                        Text('Current: $_tokenExpiry minutes',
                             style: GoogleFonts.spaceGrotesk(
                                 fontSize: 11, color: AppColors.onSurfaceMuted)),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  _card(
+                    label: 'SERVICES & SECURITY',
+                    child: Column(children: [
+                      _fieldLabel('Refresh Token Expiry (days)'),
+                      const SizedBox(height: 6),
+                      TextField(controller: _refreshDaysCtrl, keyboardType: TextInputType.number,
+                          onChanged: (v) => _refreshDays = int.tryParse(v) ?? _refreshDays,
+                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                          decoration: const InputDecoration(isDense: true)),
+                      const SizedBox(height: 16),
+                      _fieldLabel('AI Service URL'),
+                      const SizedBox(height: 6),
+                      TextField(controller: _aiUrlCtrl, keyboardType: TextInputType.url,
+                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                          decoration: const InputDecoration(isDense: true)),
+                      const SizedBox(height: 16),
+                      _fieldLabel('Allowed CORS Origins'),
+                      const SizedBox(height: 6),
+                      TextField(controller: _corsCtrl, maxLines: 2,
+                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                          decoration: const InputDecoration(isDense: true)),
+                    ]),
                   ),
                   const SizedBox(height: 32),
 
@@ -214,6 +290,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
     );
@@ -281,4 +358,24 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.primary),
         ],
       );
+}
+
+class _SettingsError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _SettingsError({required this.message, required this.onRetry});
+  @override
+  Widget build(BuildContext context) => Center(child: Padding(
+    padding: const EdgeInsets.all(24),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+      const SizedBox(height: 12),
+      Text('Could not load settings', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+      const SizedBox(height: 4),
+      Text(message, textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
+      const SizedBox(height: 16),
+      SizedBox(height: 44, child: OutlinedButton(onPressed: onRetry, child: const Text('Retry'))),
+    ]),
+  ));
 }
