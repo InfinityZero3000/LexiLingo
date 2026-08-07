@@ -14,6 +14,8 @@ import {
 import { ENV } from "../lib/env";
 import { useI18n } from "../lib/i18n";
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 const CATEGORIES = [
   "lessons", "streak", "vocabulary", "xp", "quiz", "course",
   "voice", "level", "special", "skill", "social", "milestone",
@@ -304,6 +306,11 @@ export const AchievementsPage = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("File vượt quá 5 MB.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     setUploading(true);
     try {
       const res = await uploadBadgeImage(file);
@@ -460,7 +467,7 @@ export const AchievementsPage = () => {
                       <input
                         ref={fileInputRef}
                         type="file"
-                        accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                        accept="image/png,image/jpeg,image/webp"
                         style={{ display: "none" }}
                         onChange={handleFileUpload}
                       />

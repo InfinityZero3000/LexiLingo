@@ -6,6 +6,8 @@ import {
 
 type ImportTab = "text" | "json" | "csv";
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 interface ImportResult {
   courses: number;
   units: number;
@@ -327,12 +329,23 @@ export const CourseImportModal = ({
     if (!file) return;
 
     const ext = file.name.split(".").pop()?.toLowerCase();
+    if (ext === "xlsx") {
+      setParseError("File .xlsx không được hỗ trợ (đây là định dạng binary). Vui lòng xuất sang .csv rồi tải lên lại.");
+      e.target.value = "";
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setParseError("File vượt quá 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    setParseError(null);
+
     if (ext === "pdf") {
       try {
         const response = await extractPdfText(file);
         setTextInput(response.data?.text ?? "");
         setTab("text");
-        setParseError(null);
         setPreview(null);
         setResult(null);
       } catch (err: any) {

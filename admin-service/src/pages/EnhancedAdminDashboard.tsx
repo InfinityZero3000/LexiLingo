@@ -19,31 +19,31 @@ export const EnhancedAdminDashboard = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
-  const { data: statsData, isLoading: statsLoading } = useQuery({
+  const { data: statsData, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ["dashboard", "stats"],
     queryFn: getDashboardStats,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: userGrowthData, isLoading: growthLoading } = useQuery({
+  const { data: userGrowthData, isLoading: growthLoading, error: growthError } = useQuery({
     queryKey: ["dashboard", "user-growth", 30],
     queryFn: () => getUserGrowth(30),
     staleTime: 10 * 60 * 1000, // 10 minutes cache
   });
 
-  const { data: engagementData, isLoading: engagementLoading } = useQuery({
+  const { data: engagementData, isLoading: engagementLoading, error: engagementError } = useQuery({
     queryKey: ["dashboard", "engagement", 12],
     queryFn: () => getEngagement(12),
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: popularityData, isLoading: popularityLoading } = useQuery({
+  const { data: popularityData, isLoading: popularityLoading, error: popularityError } = useQuery({
     queryKey: ["dashboard", "course-popularity"],
     queryFn: getCoursePopularity,
     staleTime: 15 * 60 * 1000, // 15 minutes cache
   });
 
-  const { data: funnelData, isLoading: funnelLoading } = useQuery({
+  const { data: funnelData, isLoading: funnelLoading, error: funnelError } = useQuery({
     queryKey: ["dashboard", "completion-funnel"],
     queryFn: getCompletionFunnel,
     staleTime: 15 * 60 * 1000,
@@ -79,6 +79,7 @@ export const EnhancedAdminDashboard = () => {
           label={t.dashboard.achievements}
           value={statsLoading ? "--" : String(stats?.total_achievements ?? "--")}
           trend={statsLoading ? undefined : `${stats?.total_unlocks ?? 0} ${t.dashboard.unlocked}`}
+          note={statsError ? t.common.loadFailed : undefined}
           accent="orange"
         />
       </div>
@@ -90,9 +91,10 @@ export const EnhancedAdminDashboard = () => {
             title={t.dashboard.userGrowth}
             description={t.dashboard.userGrowthDesc}
           />
-          <UserGrowthChart 
-            data={userGrowthData?.data ?? []} 
+          <UserGrowthChart
+            data={userGrowthData?.data ?? []}
             loading={growthLoading}
+            error={!!growthError}
           />
         </div>
 
@@ -101,9 +103,10 @@ export const EnhancedAdminDashboard = () => {
             title={t.dashboard.engagement}
             description={t.dashboard.engagementDesc}
           />
-          <EngagementChart 
-            data={engagementData?.data ?? []} 
+          <EngagementChart
+            data={engagementData?.data ?? []}
             loading={engagementLoading}
+            error={!!engagementError}
           />
         </div>
       </div>
@@ -115,9 +118,10 @@ export const EnhancedAdminDashboard = () => {
             title={t.dashboard.popularCourses}
             description={t.dashboard.popularCoursesDesc}
           />
-          <CoursePopularityChart 
-            data={popularityData?.data ?? []} 
+          <CoursePopularityChart
+            data={popularityData?.data ?? []}
             loading={popularityLoading}
+            error={!!popularityError}
           />
         </div>
 
@@ -126,9 +130,10 @@ export const EnhancedAdminDashboard = () => {
             title={t.dashboard.courseFunnel}
             description={t.dashboard.courseFunnelDesc}
           />
-          <CompletionFunnelChart 
-            data={funnelData?.data ?? []} 
+          <CompletionFunnelChart
+            data={funnelData?.data ?? []}
             loading={funnelLoading}
+            error={!!funnelError}
           />
         </div>
       </div>

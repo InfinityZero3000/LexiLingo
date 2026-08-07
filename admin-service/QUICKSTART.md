@@ -8,14 +8,16 @@ Use one of the following production env profiles:
   - `VITE_USE_GATEWAY=true`
   - `VITE_BACKEND_URL=https://api.lexilingo.me/api/v1`
   - `VITE_AI_URL=https://api.lexilingo.me/api/v1`
-  - `VITE_AI_ADMIN_URL=https://api.lexilingo.me/api/v1/ai-admin`
   - `VITE_API_KEY=REPLACE_WITH_KONG_ADMIN_WEB_KEY`
-  - `VITE_AI_ADMIN_API_KEY=REPLACE_WITH_AI_ADMIN_API_KEY`
 
 - Direct service mode (fallback): `admin-service/.env.production.direct.example`
   - `VITE_USE_GATEWAY=false`
   - Keep direct Render/Cloudflare URLs
-  - Fill `VITE_AI_ADMIN_API_KEY` so AI settings page can call `/admin/config`
+
+AI topic/config admin operations go through backend-service's JWT-gated
+`/admin/ai-proxy` routes, which inject the ai-service admin key server-side
+(`AI_ADMIN_API_KEY` in backend-service's own env) — no admin key is ever
+shipped to the browser.
 
 ## Build Without Local npm (Docker)
 
