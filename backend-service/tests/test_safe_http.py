@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import HTTPException
 
+from app.core.logging_config import set_request_id
 from app.core.safe_http import resolve_pinned_ip, safe_get
 
 
@@ -66,6 +67,38 @@ async def test_safe_get_pins_connection_to_resolved_ip_and_sets_sni():
     assert kwargs["headers"]["Host"] == "example.com"
     assert kwargs["extensions"]["sni_hostname"] == "example.com"
     assert kwargs["follow_redirects"] is False
+
+
+@pytest.mark.asyncio
+async def test_safe_get_propagates_request_id_header():
+    client = MagicMock()
+    ok_response = MagicMock()
+    ok_response.is_redirect = False
+    client.get = AsyncMock(return_value=ok_response)
+
+    set_request_id("req-abc-123")
+    try:
+        with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
+            await safe_get(client, "https://example.com/article")
+    finally:
+        set_request_id("-")
+
+    _, kwargs = client.get.call_args
+    assert kwargs["headers"]["X-Request-ID"] == "req-abc-123"
+
+
+@pytest.mark.asyncio
+async def test_safe_get_omits_request_id_header_when_unset():
+    client = MagicMock()
+    ok_response = MagicMock()
+    ok_response.is_redirect = False
+    client.get = AsyncMock(return_value=ok_response)
+
+    with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
+        await safe_get(client, "https://example.com/article")
+
+    _, kwargs = client.get.call_args
+    assert "X-Request-ID" not in kwargs["headers"]
 
 
 @pytest.mark.asyncio

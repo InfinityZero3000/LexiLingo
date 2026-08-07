@@ -27,6 +27,8 @@ from urllib.parse import urljoin, urlparse, urlunparse
 import httpx
 from fastapi import HTTPException, status
 
+from app.core.logging_config import get_request_id
+
 _PRIVATE_HOST_PREFIXES = (
     "localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
     "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
@@ -79,6 +81,9 @@ def _validate_and_pin(current_url: str, kwargs: dict) -> tuple[str, dict]:
 
     headers = dict(kwargs.get("headers") or {})
     headers.setdefault("Host", host)
+    request_id = get_request_id()
+    if request_id != "-":
+        headers.setdefault("X-Request-ID", request_id)
     extensions = dict(kwargs.get("extensions") or {})
     if parsed.scheme == "https":
         extensions.setdefault("sni_hostname", host)

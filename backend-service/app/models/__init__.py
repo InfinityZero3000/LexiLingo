@@ -114,7 +114,10 @@ from app.models.learner_state import (
     LearnerStateProfile,
 )
 
+from app.models.partner import PartnerApiKey
+
 __all__ = [
+    "PartnerApiKey",
     # User (Phase 1)
     "User",
     "UserDevice",

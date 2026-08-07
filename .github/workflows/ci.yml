@@ -142,6 +142,78 @@ jobs:
           path: backend-service/coverage.xml
 
   # ──────────────────────────────────────────────
+  # Backend — Alembic migration chain must build from an empty database.
+  # Separate from the `backend` job's test-DB setup (which uses
+  # scripts/create_tables.py for speed) — this is a regression gate on the
+  # migration chain itself. See BACKEND_AUDIT_REPORT.md finding #3.
+  # ──────────────────────────────────────────────
+  backend-migrations:
+    name: Backend Migrations Build-From-Clean
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend-service
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: lexilingo
+          POSTGRES_PASSWORD: lexilingo_pass
+          POSTGRES_DB: lexilingo_migrations
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lexilingo -d lexilingo_migrations"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PYTHONPATH: .
+      DATABASE_URL: postgresql+asyncpg://lexilingo:lexilingo_pass@127.0.0.1:5432/lexilingo_migrations
+      SECRET_KEY: ci-secret-key-not-for-production
+      APP_ENV: testing
+      DEBUG: "False"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend-service/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Wait for PostgreSQL
+        run: |
+          for attempt in $(seq 1 30); do
+            status="$(docker inspect --format='{{.State.Health.Status}}' ${{ job.services.postgres.id }})"
+            if [ "$status" = "healthy" ]; then
+              echo "PostgreSQL is ready"
+              exit 0
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "PostgreSQL not ready after retries (last status: $status)" >&2
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: alembic upgrade head (from empty database)
+        run: alembic upgrade head
+
+      - name: alembic downgrade one revision, then upgrade head again
+        run: |
+          alembic downgrade -1
+          alembic upgrade head
+
+  # ──────────────────────────────────────────────
   # AI service — focused lint, import, and STT tests
   # ──────────────────────────────────────────────
   ai:

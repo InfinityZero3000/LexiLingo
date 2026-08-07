@@ -102,8 +102,6 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "lexilingo-services"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    # Comma-separated SHA-256 hashes of partner API keys.
-    LEXILINGO_PARTNER_API_KEY_HASHES: str = ""
 
     # CORS
     # ENABLE_APP_CORS: explicit override (takes priority over GATEWAY_HANDLES_CORS).
@@ -198,6 +196,15 @@ class Settings(BaseSettings):
                     raise ValueError("current and previous learner-state tokens must differ")
                 if self.LEARNER_STATE_INTERNAL_TOKEN_PREVIOUS_EXPIRES_AT is None:
                     raise ValueError("previous learner-state token requires an expiry")
+
+        if self.FIREBASE_CREDENTIALS_FILE:
+            resolved = (PROJECT_ROOT / self.FIREBASE_CREDENTIALS_FILE).resolve()
+            if PROJECT_ROOT.resolve() in resolved.parents or resolved == PROJECT_ROOT.resolve():
+                raise ValueError(
+                    "FIREBASE_CREDENTIALS_FILE must not point inside the project source "
+                    "tree in production — use a runtime secret mount and an absolute path "
+                    "outside the repo (e.g. /run/secrets/firebase.json)"
+                )
 
         return self
 

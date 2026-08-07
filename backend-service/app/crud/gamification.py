@@ -145,11 +145,17 @@ class WalletCRUD:
             )
             if commit:
                 try:
-                    db.add(wallet)
+                    # Savepoint, not a bare commit/rollback: a caller may
+                    # already have other pending work in this transaction
+                    # (e.g. an idempotency-grant insert) that a full
+                    # rollback on a concurrent wallet-creation race would
+                    # otherwise silently discard.
+                    async with db.begin_nested():
+                        db.add(wallet)
+                        await db.flush()
                     await db.commit()
                     await db.refresh(wallet)
                 except IntegrityError:
-                    await db.rollback()
                     result = await db.execute(
                         select(UserWallet).where(
                             UserWallet.user_id == user_id

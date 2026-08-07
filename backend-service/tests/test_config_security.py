@@ -19,6 +19,7 @@ BASE_PROD_KWARGS = dict(
     LEARNER_STATE_ENABLED=False,
     GOOGLE_CLIENT_ID="client-id",
     GOOGLE_ADMIN_CLIENT_ID="admin-client-id",
+    FIREBASE_CREDENTIALS_FILE=None,
 )
 
 
@@ -46,4 +47,27 @@ def test_clean_production_cors_regex_is_accepted():
         **BASE_PROD_KWARGS,
         CORS_ALLOW_ORIGIN_REGEX=r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?",
     )
+    assert settings.is_production
+
+
+_CLEAN_CORS_REGEX = r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
+
+
+def test_firebase_credentials_file_inside_repo_is_rejected():
+    kwargs = {
+        **BASE_PROD_KWARGS,
+        "CORS_ALLOW_ORIGIN_REGEX": _CLEAN_CORS_REGEX,
+        "FIREBASE_CREDENTIALS_FILE": "./firebase-service-account.json",
+    }
+    with pytest.raises(ValueError, match="FIREBASE_CREDENTIALS_FILE"):
+        Settings(**kwargs)
+
+
+def test_firebase_credentials_file_outside_repo_is_accepted():
+    kwargs = {
+        **BASE_PROD_KWARGS,
+        "CORS_ALLOW_ORIGIN_REGEX": _CLEAN_CORS_REGEX,
+        "FIREBASE_CREDENTIALS_FILE": "/run/secrets/firebase.json",
+    }
+    settings = Settings(**kwargs)
     assert settings.is_production

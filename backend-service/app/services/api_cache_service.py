@@ -11,8 +11,10 @@ Serves stale data when quota is exhausted rather than failing.
 Phase 0 Infrastructure: Required by all content features.
 """
 
+import asyncio
 import json
 import logging
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable, Optional
@@ -75,6 +77,14 @@ class APICacheService:
             # Add X-Data-Freshness header to response
     """
     
+    # ponytail: bounded lease, not a full distributed lock — if the holder
+    # crashes the lease just expires after LEASE_TTL_SECONDS and the next
+    # caller re-fetches; upgrade to a renewing lock if fetches start
+    # exceeding this window.
+    LEASE_TTL_SECONDS = 30
+    LEASE_WAIT_ATTEMPTS = 8
+    LEASE_WAIT_INTERVAL_SECONDS = 0.5
+
     def __init__(self, db: AsyncSession):
         self.db = db
     
@@ -184,38 +194,123 @@ class APICacheService:
                 # No cache at all → allow even LOW (user should see something)
         
         # ──── Layer 3: Fetch from external API ────
+        # Acquire a short lease so concurrent requests/replicas for the same
+        # cache_key don't all call the upstream API at once. If another
+        # request holds the lease, poll the cache briefly for its result
+        # instead of fetching ourselves.
+        lease_key = f"api-lease:{cache_key}"
+        lease_token = uuid.uuid4().hex
+        have_lease = await self._acquire_lease(lease_key, lease_token)
+
+        if not have_lease:
+            # Poll for the holder's result for up to the lease's own TTL,
+            # periodically retrying to acquire it ourselves. A short,
+            # fixed wait budget here (independent of LEASE_TTL_SECONDS)
+            # would make every waiter give up and stampede the upstream
+            # API in lock-step whenever a fetch legitimately runs longer
+            # than that budget — exactly the pattern the lease exists to
+            # prevent.
+            max_attempts = max(1, int(self.LEASE_TTL_SECONDS / self.LEASE_WAIT_INTERVAL_SECONDS))
+            for _ in range(max_attempts):
+                waited = await self._wait_for_lease_result(redis_key, cache_key, attempts=1)
+                if waited is not None:
+                    return waited
+                have_lease = await self._acquire_lease(lease_key, lease_token)
+                if have_lease:
+                    break
+            # Lease holder never populated the cache and the lease window
+            # fully elapsed without us acquiring it (Redis unavailable, or
+            # a holder that keeps renewing) — fall through and fetch
+            # anyway rather than hang the request indefinitely.
+
         try:
-            logger.info(f"Cache MISS, fetching from {api_name}: {cache_key}")
-            result = await fetch_fn()
-        except Exception as e:
-            # API call failed → try stale cache as last resort
-            logger.error(f"API call failed for {api_name}: {e}")
-            if db_entry is not None:
-                logger.info(f"Serving stale cache after API failure: {cache_key}")
-                return CacheResult(
-                    data=json.loads(db_entry.data),
-                    source="db_stale",
-                    is_stale=True,
-                )
-            raise
-        
-        # Record quota usage only for calls that consume upstream quota.
-        if cost > 0:
-            await QuotaManager.record_request(api_name, cost=cost)
-        
-        # ──── Store in both cache layers ────
-        data_json = json.dumps(result, ensure_ascii=False, default=str)
-        
-        # Warm Redis
-        await self._warm_redis(redis_key, data_json, redis_ttl)
-        
-        # Upsert into PostgreSQL
-        await self._upsert_db_entry(cache_key, api_name, data_json)
-        
-        return CacheResult(data=result, source="api", is_stale=False)
+            try:
+                logger.info(f"Cache MISS, fetching from {api_name}: {cache_key}")
+                result = await fetch_fn()
+            except Exception as e:
+                # API call failed → try stale cache as last resort
+                logger.error(f"API call failed for {api_name}: {e}")
+                if db_entry is not None:
+                    logger.info(f"Serving stale cache after API failure: {cache_key}")
+                    return CacheResult(
+                        data=json.loads(db_entry.data),
+                        source="db_stale",
+                        is_stale=True,
+                    )
+                raise
+
+            # Record quota usage only for calls that consume upstream quota.
+            if cost > 0:
+                await QuotaManager.record_request(api_name, cost=cost)
+
+            # ──── Store in both cache layers ────
+            data_json = json.dumps(result, ensure_ascii=False, default=str)
+
+            # Warm Redis
+            await self._warm_redis(redis_key, data_json, redis_ttl)
+
+            # Upsert into PostgreSQL
+            await self._upsert_db_entry(cache_key, api_name, data_json)
+
+            return CacheResult(data=result, source="api", is_stale=False)
+        finally:
+            if have_lease:
+                await self._release_lease(lease_key, lease_token)
     
     # ──── Private helpers ────
-    
+
+    async def _acquire_lease(self, lease_key: str, token: str) -> bool:
+        """Try to claim the fetch lease. False if Redis is down or another
+        caller already holds it — never blocks the caller from proceeding."""
+        redis = await RedisClient.get_instance()
+        if redis is None:
+            return False
+        try:
+            return bool(
+                await redis.set(lease_key, token, nx=True, px=self.LEASE_TTL_SECONDS * 1000)
+            )
+        except Exception as e:
+            logger.warning(f"Redis lease acquire error for {lease_key}: {e}")
+            return False
+
+    # Compare-and-delete must be atomic: a separate GET-then-DEL can delete
+    # a *different* caller's lease if ours expired and was reclaimed in the
+    # gap between the two round trips.
+    _RELEASE_SCRIPT = (
+        "if redis.call('get', KEYS[1]) == ARGV[1] then "
+        "return redis.call('del', KEYS[1]) "
+        "else return 0 end"
+    )
+
+    async def _release_lease(self, lease_key: str, token: str) -> None:
+        """Release the lease only if we still hold it (token match)."""
+        redis = await RedisClient.get_instance()
+        if redis is None:
+            return
+        try:
+            await redis.eval(self._RELEASE_SCRIPT, 1, lease_key, token)
+        except Exception as e:
+            logger.warning(f"Redis lease release error for {lease_key}: {e}")
+
+    async def _wait_for_lease_result(
+        self, redis_key: str, cache_key: str, attempts: int | None = None
+    ) -> Optional[CacheResult]:
+        """Poll Redis briefly for a result populated by the lease holder."""
+        redis = await RedisClient.get_instance()
+        if redis is None:
+            return None
+        for _ in range(self.LEASE_WAIT_ATTEMPTS if attempts is None else attempts):
+            await asyncio.sleep(self.LEASE_WAIT_INTERVAL_SECONDS)
+            try:
+                cached = await redis.get(redis_key)
+            except Exception as e:
+                logger.warning(f"Redis read error while waiting on lease for {cache_key}: {e}")
+                return None
+            if cached is not None:
+                logger.debug(f"Cache HIT (redis, after lease wait): {cache_key}")
+                return CacheResult(data=json.loads(cached), source="redis", is_stale=False)
+        return None
+
     async def _get_db_entry(self, cache_key: str) -> Optional[APICacheEntry]:
         """Fetch cache entry from PostgreSQL."""
         try:

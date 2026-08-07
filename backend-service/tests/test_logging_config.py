@@ -48,9 +48,12 @@ def test_redact_secrets_log_filter_mutates_record():
 
 def test_request_id_log_filter_injects_current_id():
     set_request_id("req-123")
-    record = _make_record("hello")
-    RequestIDLogFilter().filter(record)
-    assert record.request_id == "req-123"
+    try:
+        record = _make_record("hello")
+        RequestIDLogFilter().filter(record)
+        assert record.request_id == "req-123"
+    finally:
+        set_request_id("-")
 
 
 if __name__ == "__main__":
