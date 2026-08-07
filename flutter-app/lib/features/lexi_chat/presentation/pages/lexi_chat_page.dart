@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
@@ -77,7 +78,6 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
-      provider.setNativeLanguage(_nativeLanguage);
       provider.syncTtsWithGlobalSound(
         context.read<SettingsProvider>().soundEnabled,
       );
@@ -91,6 +91,16 @@ class _LexiChatPageState extends State<LexiChatPage>
     _scrollController.addListener(_handleTopReached);
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Runs after initState and again whenever the active locale changes
+    // (e.g. switched in Settings while this page stays alive under the
+    // bottom-nav IndexedStack), keeping Lexi's native-language hint in
+    // sync with whatever the UI is currently displaying.
+    context.read<LexiChatProvider>().setNativeLanguage(_nativeLanguage);
+  }
+
   String get _userId {
     try {
       return Provider.of<AuthProvider>(context, listen: false).user?.id ??
@@ -100,17 +110,8 @@ class _LexiChatPageState extends State<LexiChatPage>
     }
   }
 
-  String get _nativeLanguage {
-    try {
-      return Provider.of<AuthProvider>(
-            context,
-            listen: false,
-          ).user?.nativeLanguage ??
-          'vi';
-    } catch (_) {
-      return 'vi';
-    }
-  }
+  String get _nativeLanguage =>
+      LocaleService.normalizeLanguageCode(context.locale.languageCode);
 
   @override
   void dispose() {
@@ -759,7 +760,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                     : null,
                 onShowCorrections:
                     (message.hasCorrections ||
-                        message.vietnameseHint != null ||
+                        message.nativeHint != null ||
                         message.linkedConcepts.isNotEmpty)
                     ? () => LexiCorrectionsSheet.show(context, message)
                     : null,

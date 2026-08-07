@@ -1269,7 +1269,7 @@
     "viewNotesButton": "Xem ghi chú",
     "practiceMoreButton": "Luyện thêm '{concept}'",
     "correctionsSection": "Sửa lỗi",
-    "vietnameseHintSection": "Gợi ý tiếng Việt",
+    "nativeHintSection": "Gợi ý ngôn ngữ mẹ đẻ",
     "relatedConceptsSection": "Khái niệm liên quan"
   },
   "youtube": {

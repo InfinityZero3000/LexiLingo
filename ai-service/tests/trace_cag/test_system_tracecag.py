@@ -454,7 +454,7 @@ def print_trace(trace: PipelineTrace):
             "cache_hit", "path", "kg_seed_concepts", "kg_expanded_nodes",
             "diagnosis_errors", "diagnosis_intent", "diagnosis_confidence",
             "vector_hits", "retrieved_context", "tutor_response",
-            "vietnamese_hint", "strategy", "models_used",
+            "native_hint", "strategy", "models_used",
         ]
         for k in interesting_keys:
             if k in node.output:
@@ -723,7 +723,7 @@ async def test_scenario_vietnamese_path_a1():
     node_names = [n.name for n in nodes]
     trace.add_check("has_response", bool(result.get("tutor_response")))
     trace.add_check("vietnamese_ran", "vietnamese_node" in node_names, f"nodes: {node_names}")
-    trace.add_check("has_vietnamese_hint", result.get("vietnamese_hint") is not None)
+    trace.add_check("has_native_hint", result.get("native_hint") is not None)
     trace.add_check("retrieve_after_vn", "retrieve_node" in node_names)
     trace.add_check("generate_ran", "generate_node" in node_names)
 

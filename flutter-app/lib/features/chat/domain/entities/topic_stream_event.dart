@@ -2,7 +2,7 @@ import 'topic_session.dart';
 
 /// SSE events for streaming topic/story chat — mirrors [LexiStreamEvent]'s
 /// shape (see lexi_chat feature) but carries only what topic chat needs:
-/// no audio/corrections/vietnamese_hint, since the backend response for
+/// no audio/corrections/native_hint, since the backend response for
 /// this feature never has them.
 sealed class TopicStreamEvent {
   const TopicStreamEvent();

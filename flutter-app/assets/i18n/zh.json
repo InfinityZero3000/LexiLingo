@@ -1140,7 +1140,7 @@
     "viewNotesButton": "查看笔记",
     "practiceMoreButton": "练习 {concept}",
     "correctionsSection": "纠错",
-    "vietnameseHintSection": "越南语提示",
+    "nativeHintSection": "母语提示",
     "relatedConceptsSection": "相关概念"
   },
   "youtube": {

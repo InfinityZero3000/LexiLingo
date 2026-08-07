@@ -275,7 +275,7 @@ class LexiChatDataSource {
       corrections: corrections,
       linkedConcepts: linkedConcepts,
       suggestedPractice: _parseSuggestedPractice(data['suggested_practice']),
-      vietnameseHint: data['vietnamese_hint'],
+      nativeHint: data['native_hint'],
       scores: scores,
     );
   }
@@ -585,7 +585,7 @@ class LexiChatDataSource {
                   suggestedPractice: _parseSuggestedPractice(
                     json['suggested_practice'],
                   ),
-                  vietnameseHint: json['vietnamese_hint'] as String?,
+                  nativeHint: json['native_hint'] as String?,
                   scores: scores,
                   audioBase64: json['audio_base64'] as String?,
                   storyContext: json['story_context'] as String?,

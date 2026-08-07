@@ -841,14 +841,14 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[vietnamese_node] Hint via {models_used} in {latency_ms}ms")
         return {
-            "vietnamese_hint": native_hint,
+            "native_hint": native_hint,
             "models_used": models_used,
         }
 
     except Exception as e:
         logger.error(f"[vietnamese_node] Error: {e}")
         return {
-            "vietnamese_hint": _get_predefined_native_hint(errors, native_language),
+            "native_hint": _get_predefined_native_hint(errors, native_language),
             "models_used": ["native_fallback"],
         }
 
@@ -911,6 +911,23 @@ def _get_predefined_native_hint(errors: list, native_language: str) -> str:
 
     error_type = errors[0].get("type", "").lower()
     return explanations.get(error_type, explanations["_default"])
+
+
+_ASK_CLARIFY_HINTS: Dict[str, str] = {
+    "Vietnamese": "Mình cần thêm thông tin: bạn muốn sửa câu, giải thích ngữ pháp, hay tạo bài tập?",
+    "Japanese": "もう少し情報が必要です。文の訂正、文法の説明、練習問題の作成のどれがいいですか?",
+    "Korean": "조금 더 알려주세요: 문장 교정, 문법 설명, 연습 문제 중 무엇을 원하시나요?",
+    "Chinese": "我需要更多信息:你想要句子修正、语法讲解,还是练习题?",
+}
+_ASK_CLARIFY_HINT_DEFAULT = (
+    "I need a bit more info: would you like a sentence correction, "
+    "a grammar explanation, or a practice exercise?"
+)
+
+
+def _get_ask_clarify_hint(native_language: str) -> str:
+    """Clarification hint in the learner's configured language (falls back to English)."""
+    return _ASK_CLARIFY_HINTS.get(native_language, _ASK_CLARIFY_HINT_DEFAULT)
 
 
 # ============================================================
@@ -986,11 +1003,13 @@ async def ask_clarify_node(state: TraceCAGState) -> Dict[str, Any]:
     logger.info("[ask_clarify_node] Generating clarification question...")
 
     user_input = state.get("user_input", "")
-    level = state.get("learner_profile", {}).get("level", "B1")
-    
+    learner_profile = state.get("learner_profile", {})
+    level = learner_profile.get("level", "B1")
+    native_language = learner_profile.get("native_language", "Vietnamese")
+
     try:
         gateway = await get_gateway()
-        
+
         clarify_prompt = f"""A {level} level English learner said: "{user_input}"
 
 I'm not sure what they need. Generate a friendly clarification question asking if they want:
@@ -1021,11 +1040,11 @@ Keep it short and friendly (1-2 sentences)."""
                 "Please let me know!"
             )
         
-        vietnamese_hint = "Mình cần thêm thông tin: bạn muốn sửa câu, giải thích ngữ pháp, hay tạo bài tập?"
-        
+        native_hint = _get_ask_clarify_hint(native_language)
+
         return {
             "tutor_response": response,
-            "vietnamese_hint": vietnamese_hint,
+            "native_hint": native_hint,
             "strategy": "ask",
             "next_action": "ask",
             "path": "fast",
@@ -1036,7 +1055,7 @@ Keep it short and friendly (1-2 sentences)."""
         logger.error(f"[ask_clarify_node] Error: {e}")
         return {
             "tutor_response": "Could you please clarify what you'd like help with?",
-            "vietnamese_hint": "Bạn muốn được giúp đỡ điều gì ạ?",
+            "native_hint": _get_ask_clarify_hint(native_language),
             "strategy": "ask",
             "next_action": "ask",
             "path": "fast",

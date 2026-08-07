@@ -653,7 +653,7 @@ class LexiChatProvider extends ChangeNotifier {
             :final corrections,
             :final linkedConcepts,
             :final suggestedPractice,
-            :final vietnameseHint,
+            :final nativeHint,
             :final scores,
             :final audioBase64,
           ):
@@ -678,7 +678,7 @@ class LexiChatProvider extends ChangeNotifier {
                 corrections: corrections,
                 linkedConcepts: linkedConcepts,
                 suggestedPractice: suggestedPractice,
-                vietnameseHint: vietnameseHint,
+                nativeHint: nativeHint,
                 scores: scores,
                 syncStatus: 'synced',
               );
@@ -1151,7 +1151,7 @@ class LexiChatProvider extends ChangeNotifier {
               'content': m.content,
               'timestamp': m.timestamp.toIso8601String(),
               'audio_base64': m.audioBase64,
-              'vietnamese_hint': m.vietnameseHint,
+              'native_hint': m.nativeHint,
               'linked_concepts': m.linkedConcepts,
               'suggested_practice': m.suggestedPractice == null
                   ? null
@@ -1242,7 +1242,7 @@ class _CachedChatPage {
                     '',
               )
             : null,
-        vietnameseHint: m['vietnamese_hint']?.toString(),
+        nativeHint: m['native_hint']?.toString(),
         scores: m['scores'] is Map
             ? Map<String, dynamic>.from(m['scores'] as Map)
             : null,

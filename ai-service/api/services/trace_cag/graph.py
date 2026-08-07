@@ -298,7 +298,7 @@ class TraceCAGPipeline:
             # next" suggestion should be built from.
             "weak_concepts": state.get("diagnosis_root_causes", []),
             "action_plan": state.get("action_plan", []),
-            "vietnamese_hint": state.get("vietnamese_hint"),
+            "native_hint": state.get("native_hint"),
             "pronunciation_tip": state.get("pronunciation_tip"),
             "scores": {
                 "fluency": fluency,

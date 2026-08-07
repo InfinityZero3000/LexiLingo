@@ -75,7 +75,7 @@ class TraceCAGResponse:
     corrections: list[dict[str, Any]] = field(default_factory=list)
     linked_concepts: list[Any] = field(default_factory=list)
     action_plan: list[dict[str, Any]] = field(default_factory=list)
-    vietnamese_hint: str | None = None
+    native_hint: str | None = None
     pronunciation_tip: str | None = None
     scores: dict[str, Any] = field(default_factory=dict)
     action: dict[str, Any] = field(default_factory=dict)
@@ -106,7 +106,7 @@ class TraceCAGResponse:
             "corrections",
             "linked_concepts",
             "action_plan",
-            "vietnamese_hint",
+            "native_hint",
             "pronunciation_tip",
             "scores",
             "action",
@@ -130,7 +130,7 @@ class TraceCAGResponse:
             corrections=deepcopy(data.get("corrections") or []),
             linked_concepts=deepcopy(data.get("linked_concepts") or data.get("kg_seed_concepts") or []),
             action_plan=deepcopy(data.get("action_plan") or []),
-            vietnamese_hint=data.get("vietnamese_hint"),
+            native_hint=data.get("native_hint"),
             pronunciation_tip=data.get("pronunciation_tip"),
             scores=deepcopy(data.get("scores") or {}),
             action=deepcopy(data.get("action") or {}),
@@ -154,7 +154,7 @@ class TraceCAGResponse:
             "corrections": deepcopy(self.corrections),
             "linked_concepts": deepcopy(self.linked_concepts),
             "action_plan": deepcopy(self.action_plan),
-            "vietnamese_hint": self.vietnamese_hint,
+            "native_hint": self.native_hint,
             "pronunciation_tip": self.pronunciation_tip,
             "scores": deepcopy(self.scores),
             "action": deepcopy(self.action),

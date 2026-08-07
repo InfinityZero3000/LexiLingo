@@ -8,7 +8,7 @@ class LexiMessage {
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
   final LexiSuggestedPractice? suggestedPractice;
-  final String? vietnameseHint;
+  final String? nativeHint;
   final Map<String, dynamic>? scores;
   final String syncStatus; // 'synced' | 'pending_sync'
   final String? clientRequestId;
@@ -22,7 +22,7 @@ class LexiMessage {
     this.corrections = const [],
     this.linkedConcepts = const [],
     this.suggestedPractice,
-    this.vietnameseHint,
+    this.nativeHint,
     this.scores,
     this.syncStatus = 'synced',
     this.clientRequestId,
@@ -43,7 +43,7 @@ class LexiMessage {
     List<LexiCorrection>? corrections,
     List<String>? linkedConcepts,
     LexiSuggestedPractice? suggestedPractice,
-    String? vietnameseHint,
+    String? nativeHint,
     Map<String, dynamic>? scores,
     String? syncStatus,
     String? clientRequestId,
@@ -57,7 +57,7 @@ class LexiMessage {
       corrections: corrections ?? this.corrections,
       linkedConcepts: linkedConcepts ?? this.linkedConcepts,
       suggestedPractice: suggestedPractice ?? this.suggestedPractice,
-      vietnameseHint: vietnameseHint ?? this.vietnameseHint,
+      nativeHint: nativeHint ?? this.nativeHint,
       scores: scores ?? this.scores,
       syncStatus: syncStatus ?? this.syncStatus,
       clientRequestId: clientRequestId ?? this.clientRequestId,
