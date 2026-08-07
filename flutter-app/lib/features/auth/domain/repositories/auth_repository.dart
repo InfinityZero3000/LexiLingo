@@ -38,6 +38,8 @@ abstract class AuthRepository {
     String? nativeLanguage,
     String? targetLanguage,
     String? level,
+    String? goal,
+    String? interest,
     bool? isOnboardingCompleted,
   });
 

@@ -541,6 +541,8 @@ class AuthProvider extends ChangeNotifier {
     final result = await authRepository.updateProfile(
       displayName: displayName,
       level: selectedLevel,
+      goal: payload['goal'] as String?,
+      interest: payload['interest'] as String?,
       nativeLanguage: nativeLanguage ?? 'vi',
       targetLanguage: 'en',
       isOnboardingCompleted: true,

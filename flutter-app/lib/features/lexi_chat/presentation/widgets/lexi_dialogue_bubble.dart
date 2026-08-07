@@ -15,6 +15,7 @@ class LexiDialogueBubble extends StatelessWidget {
   final LexiMessage message;
   final VoidCallback? onPlayAudio;
   final VoidCallback? onShowCorrections;
+  final ValueChanged<LexiSuggestedPractice>? onSuggestedPracticeTap;
   final String? lexiAvatarUrl;
 
   const LexiDialogueBubble({
@@ -22,6 +23,7 @@ class LexiDialogueBubble extends StatelessWidget {
     required this.message,
     this.onPlayAudio,
     this.onShowCorrections,
+    this.onSuggestedPracticeTap,
     this.lexiAvatarUrl,
   });
 
@@ -112,7 +114,9 @@ class LexiDialogueBubble extends StatelessWidget {
               // Message text
               _buildLexiMessageContent(context, isDark),
               // Action buttons row
-              if (message.hasAudio || onShowCorrections != null)
+              if (message.hasAudio ||
+                  onShowCorrections != null ||
+                  message.suggestedPractice != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Wrap(
@@ -133,6 +137,21 @@ class LexiDialogueBubble extends StatelessWidget {
                           label: 'lexiChat.viewNotesButton'.tr(),
                           onTap: onShowCorrections,
                           color: AppColors.accentYellow,
+                        ),
+                      if (message.suggestedPractice != null &&
+                          onSuggestedPracticeTap != null)
+                        _buildActionChip(
+                          context,
+                          icon: Icons.fitness_center_rounded,
+                          label: 'lexiChat.practiceMoreButton'.tr(
+                            namedArgs: {
+                              'concept': message.suggestedPractice!.conceptTitle,
+                            },
+                          ),
+                          onTap: () => onSuggestedPracticeTap!(
+                            message.suggestedPractice!,
+                          ),
+                          color: AppColors.accentMint,
                         ),
                     ],
                   ),
@@ -215,15 +234,7 @@ class LexiDialogueBubble extends StatelessWidget {
             sourceType: 'lexi_chat',
             sourceReference: message.id,
             contextSentence: message.content,
-            child: Text(
-              message.content,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: Theme.of(context).colorScheme.surface,
-                letterSpacing: -0.1,
-              ),
-            ),
+            child: _buildUserMessageContent(context),
           ),
         ),
         if (message.isPendingSync)
@@ -250,6 +261,82 @@ class LexiDialogueBubble extends StatelessWidget {
           ),
       ],
     );
+  }
+
+  /// The plain-text fast path when there's nothing to correct; otherwise
+  /// the mistake is struck through right where the user typed it, tappable
+  /// to open the same corrections sheet as the "View notes" chip.
+  Widget _buildUserMessageContent(BuildContext context) {
+    final baseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.5,
+      color: Theme.of(context).colorScheme.surface,
+      letterSpacing: -0.1,
+    );
+
+    if (message.corrections.isEmpty) {
+      return Text(message.content, style: baseStyle);
+    }
+
+    return Text.rich(
+      TextSpan(
+        style: baseStyle,
+        children: _buildCorrectedSpans(baseStyle),
+      ),
+    );
+  }
+
+  List<InlineSpan> _buildCorrectedSpans(TextStyle baseStyle) {
+    final content = message.content;
+
+    // First non-overlapping occurrence of each correction's errorSpan —
+    // errorSpan is a literal substring of what the user typed (unlike
+    // Lexi's own generated reply, which may not repeat it verbatim), so
+    // plain case-insensitive substring search is reliable here.
+    final matches = <(int start, int end, LexiCorrection correction)>[];
+    for (final correction in message.corrections) {
+      final errorSpan = correction.errorSpan.trim();
+      if (errorSpan.isEmpty) continue;
+      final start = content.toLowerCase().indexOf(errorSpan.toLowerCase());
+      if (start == -1) continue;
+      final end = start + errorSpan.length;
+      final overlaps = matches.any((m) => start < m.$2 && end > m.$1);
+      if (!overlaps) matches.add((start, end, correction));
+    }
+
+    if (matches.isEmpty) return [TextSpan(text: content)];
+    matches.sort((a, b) => a.$1.compareTo(b.$1));
+
+    final spans = <InlineSpan>[];
+    var cursor = 0;
+    for (final (start, end, _) in matches) {
+      if (start > cursor) {
+        spans.add(TextSpan(text: content.substring(cursor, start)));
+      }
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.baseline,
+          baseline: TextBaseline.alphabetic,
+          child: GestureDetector(
+            onTap: onShowCorrections,
+            child: Text(
+              content.substring(start, end),
+              style: baseStyle.copyWith(
+                decoration: TextDecoration.lineThrough,
+                decorationColor: AppColors.errorBright,
+                decorationThickness: 2,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      );
+      cursor = end;
+    }
+    if (cursor < content.length) {
+      spans.add(TextSpan(text: content.substring(cursor)));
+    }
+    return spans;
   }
 
   Widget _buildActionChip(

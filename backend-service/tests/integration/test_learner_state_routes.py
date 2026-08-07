@@ -129,7 +129,11 @@ async def test_batch_get_adapts_repository_result_to_wire_response(monkeypatch) 
         state_version=2,
         algorithm_version="bkt-fsrs-v1",
     )
-    repository = AsyncMock(return_value=SimpleNamespace(state_epoch=7, states=[state]))
+    repository = AsyncMock(
+        return_value=SimpleNamespace(
+            state_epoch=7, states=[state], goal=None, interest=None
+        )
+    )
     monkeypatch.setattr(learner_state_routes, "get_states_for_concepts", repository)
 
     response = await learner_state_routes.batch_get_learner_state(
@@ -143,6 +147,32 @@ async def test_batch_get_adapts_repository_result_to_wire_response(monkeypatch) 
     repository.assert_awaited_once_with(repository.call_args.args[0], user_id, ["concept:a"])
     assert response.state_epoch == 7
     assert [item.concept_id for item in response.states] == ["concept:a"]
+    assert response.goal is None
+    assert response.interest is None
+
+
+@pytest.mark.asyncio
+async def test_batch_get_includes_onboarding_goal_and_interest(monkeypatch) -> None:
+    """Goal/interest ride the same low-latency pull ai-service already uses
+    for mastery epochs — get_states_for_concepts now joins them in with the
+    epoch query itself (see its docstring: "exactly two bounded SELECTs"),
+    so this route makes no separate query for them."""
+    user_id = uuid4()
+    repository = AsyncMock(
+        return_value=SimpleNamespace(
+            state_epoch=1, states=[], goal="career", interest="technology"
+        )
+    )
+    monkeypatch.setattr(learner_state_routes, "get_states_for_concepts", repository)
+
+    response = await learner_state_routes.batch_get_learner_state(
+        LearnerStateBatchGetRequest(user_id=user_id, concept_ids=[]),
+        _caller="ai-service",
+        db=AsyncMock(),
+    )
+
+    assert response.goal == "career"
+    assert response.interest == "technology"
 
 
 @pytest.mark.asyncio

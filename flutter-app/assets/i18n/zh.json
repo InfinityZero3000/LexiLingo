@@ -923,6 +923,7 @@
     "lookingUp": "查找“{word}”...",
     "noDefinitionFound": "未找到“{word}”的定义。",
     "saveWordToVocabulary": "将单词保存到词汇表",
+    "wordAlreadySavedButton": "已保存",
     "wordAlreadyInCollection": "“{word}”已经在你的词汇中了。",
     "wordSaved": "已将“{word}”保存到词汇表中。",
     "couldNotSaveWord": "目前无法保存该词。"
@@ -1094,6 +1095,7 @@
     "languageNotes": "语言注释",
     "listenButton": "聆听",
     "viewNotesButton": "查看笔记",
+    "practiceMoreButton": "练习 {concept}",
     "correctionsSection": "纠错",
     "vietnameseHintSection": "越南语提示",
     "relatedConceptsSection": "相关概念"

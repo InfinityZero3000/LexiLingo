@@ -45,6 +45,8 @@ class LearnerConceptStateResponse(BaseModel):
 class LearnerStateBatchGetResponse(BaseModel):
     state_epoch: int
     states: list[LearnerConceptStateResponse]
+    goal: str | None = None
+    interest: str | None = None
 
 
 class LearnerObservationRequest(BaseModel):

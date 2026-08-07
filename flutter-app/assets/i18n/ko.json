@@ -923,6 +923,7 @@
     "lookingUp": "'{word}'을(를) 찾는 중…",
     "noDefinitionFound": "\"{word}\"에 대한 정의를 찾을 수 없습니다.",
     "saveWordToVocabulary": "단어를 어휘에 저장",
+    "wordAlreadySavedButton": "이미 저장됨",
     "wordAlreadyInCollection": "\"{word}\"은(는) 이미 귀하의 어휘에 있습니다.",
     "wordSaved": "\"{word}\"을(를) 어휘에 저장했습니다.",
     "couldNotSaveWord": "지금은 이 단어를 저장할 수 없습니다."
@@ -1094,6 +1095,7 @@
     "languageNotes": "언어 참고사항",
     "listenButton": "듣기",
     "viewNotesButton": "노트 보기",
+    "practiceMoreButton": "{concept} 연습하기",
     "correctionsSection": "수정",
     "vietnameseHintSection": "베트남어 힌트",
     "relatedConceptsSection": "관련 개념"

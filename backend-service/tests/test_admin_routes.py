@@ -6,6 +6,7 @@ Testing admin CRUD operations for courses, units, lessons, vocabulary, achieveme
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from app.models.course import Course, Unit, Lesson
@@ -242,6 +243,64 @@ class TestAdminVocabulary:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_bulk_import_vocabulary_from_pdf(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+    ):
+        csv_text = "word,definition,translation\npdfword,From PDF,Từ PDF"
+        with patch("app.routes.admin_courses._extract_pdf_text", return_value=csv_text):
+            response = await async_client.post(
+                "/api/v1/admin/vocabulary/bulk-import",
+                headers=admin_headers,
+                files={"file": ("vocabulary.pdf", b"pdf", "application/pdf")},
+            )
+
+        assert response.status_code == 200
+        assert response.json()["data"]["created"] == 1
+
+    def test_extract_pdf_text_joins_pages(self):
+        from app.routes.admin_courses import _extract_pdf_text
+
+        pages = [MagicMock(), MagicMock()]
+        pages[0].extract_text.return_value = "page one"
+        pages[1].extract_text.return_value = "page two"
+        with patch("app.routes.admin_courses.PdfReader") as reader:
+            reader.return_value.pages = pages
+            assert _extract_pdf_text(b"pdf") == "page one\npage two"
+
+    @pytest.mark.asyncio
+    async def test_extract_pdf_text(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+    ):
+        with patch("app.routes.admin_courses._extract_pdf_text", return_value="# PDF Course"):
+            response = await async_client.post(
+                "/api/v1/admin/import/extract-pdf-text",
+                headers=admin_headers,
+                files={"file": ("course.pdf", b"pdf", "application/pdf")},
+            )
+
+        assert response.status_code == 200
+        assert response.json()["data"] == {"text": "# PDF Course"}
+
+    @pytest.mark.asyncio
+    async def test_extract_pdf_text_rejects_non_pdf(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+    ):
+        response = await async_client.post(
+            "/api/v1/admin/import/extract-pdf-text",
+            headers=admin_headers,
+            files={"file": ("course.txt", b"text", "text/plain")},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["error"]["message"] == "Only PDF files are supported"
 
 
 class TestAdminContentLab:

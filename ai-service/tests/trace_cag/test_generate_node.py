@@ -311,3 +311,62 @@ class TestGenerateNode:
         assert captured_payloads[0]["model"] == "llama-3.1-8b-instant"
         assert "You are Sarah, an airport check-in agent." in system_prompt
         assert "You are Lexi" not in system_prompt
+
+
+class TestPersonalizationHint:
+    """_build_base_system_prompt should fold onboarding goal/interest into
+    both the default Lexi prompt and the topic-chat prompt."""
+
+    def test_no_hint_when_profile_has_no_goal_or_interest(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt({"learner_profile": {"level": "B1"}}, "B1", "standard")
+        assert "learning for" not in prompt and "into" not in prompt
+
+    def test_hint_appears_in_default_lexi_prompt(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {"learner_profile": {"level": "B1", "goal": "career", "interest": "technology"}},
+            "B1",
+            "standard",
+        )
+        assert "career" in prompt
+        assert "technology" in prompt
+
+    def test_hint_appears_in_topic_prompt_branch(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "topic_system_prompt": "You are Sarah, an airport check-in agent.",
+                "learner_profile": {"level": "B1", "goal": "travel"},
+            },
+            "B1",
+            "standard",
+        )
+        assert "You are Sarah, an airport check-in agent." in prompt
+        assert "travel" in prompt
+
+    def test_session_recap_appears_when_returning_after_a_gap(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "learner_profile": {
+                    "level": "B1",
+                    "session_recap": "I want to talk about my dream job.",
+                }
+            },
+            "B1",
+            "standard",
+        )
+        assert "I want to talk about my dream job." in prompt
+
+    def test_no_recap_line_on_a_continuing_conversation(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {"learner_profile": {"level": "B1"}}, "B1", "standard"
+        )
+        assert "Last time" not in prompt

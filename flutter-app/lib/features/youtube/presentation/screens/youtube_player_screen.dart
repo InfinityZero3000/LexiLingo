@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/services/known_words_service.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
@@ -1037,6 +1038,18 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       videoId: widget.videoId,
       contextSentence: widget.contextSentence,
     );
+    _checkAlreadySaved();
+  }
+
+  /// Words saved in a previous session must still read as "already saved"
+  /// here — otherwise this sheet always starts from a blank slate even
+  /// though the backend already has the word in the user's collection.
+  Future<void> _checkAlreadySaved() async {
+    final known = await sl<KnownWordsService>().getKnownWords();
+    if (!mounted) return;
+    if (known.contains(widget.word.trim().toLowerCase())) {
+      setState(() => _isSavedWord = true);
+    }
   }
 
   Future<void> _quickSave(WordTranslation t) async {

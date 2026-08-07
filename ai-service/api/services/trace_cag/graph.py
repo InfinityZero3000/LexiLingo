@@ -292,6 +292,11 @@ class TraceCAGPipeline:
                 for err in errors
             ],
             "linked_concepts": state.get("kg_seed_concepts", []),
+            # Concept IDs diagnose_node traced the *actual grammar errors* back
+            # to (distinct from linked_concepts, which are just topic-keyword
+            # seeds from the raw input) — the precise signal a "practice this
+            # next" suggestion should be built from.
+            "weak_concepts": state.get("diagnosis_root_causes", []),
             "action_plan": state.get("action_plan", []),
             "vietnamese_hint": state.get("vietnamese_hint"),
             "pronunciation_tip": state.get("pronunciation_tip"),
