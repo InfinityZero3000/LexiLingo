@@ -16,6 +16,7 @@ class QuestionType(str, Enum):
     TRUE_FALSE = "true_false"
     FILL_BLANK = "fill_blank"
     MATCHING = "matching"
+    REORDER = "reorder"
     LISTENING = "listening"
     SPEAKING = "speaking"
     TRANSLATION = "translation"

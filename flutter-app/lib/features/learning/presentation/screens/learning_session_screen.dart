@@ -33,12 +33,14 @@ class LearningSessionScreen extends StatefulWidget {
 class _LearningSessionScreenState extends State<LearningSessionScreen> {
   bool _wasAnswered = false;
   bool _wasCompleted = false;
+  LearningProvider? _provider;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<LearningProvider>();
+      if (!mounted) return;
+      final provider = _provider = context.read<LearningProvider>();
       provider.startLesson(widget.courseId, widget.lessonId);
       provider.addListener(_onProviderChange);
     });
@@ -46,7 +48,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
   @override
   void dispose() {
-    context.read<LearningProvider>().removeListener(_onProviderChange);
+    _provider?.removeListener(_onProviderChange);
     super.dispose();
   }
 
@@ -190,6 +192,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   ),
                 ),
 
+                _buildPhaseIndicator(context, provider.currentExercise?.phase),
+
                 // Mission goal (can-do outcome) — shown only at the start of
                 // the lesson so the learner knows what they're working
                 // toward, per TBLT pre-task framing.
@@ -204,6 +208,41 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhaseIndicator(BuildContext context, String? phase) {
+    final key = switch (phase) {
+      'pre_task' => 'lesson.phasePreTask',
+      'task_cycle' => 'lesson.phaseTaskCycle',
+      'language_focus' => 'lesson.phaseLanguageFocus',
+      _ => null,
+    };
+    if (key == null) return const SizedBox.shrink();
+
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Semantics(
+          label: key.tr(),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: colorScheme.secondaryContainer,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              key.tr(),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colorScheme.onSecondaryContainer,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -551,7 +590,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       if (!mounted) return;
       final streakProvider = context.read<StreakProvider>();
       await streakProvider.updateStreak();
-      if (!mounted) return;
+      if (!context.mounted) return;
       if (streakProvider.milestoneJustReached) {
         await StreakMilestoneOverlay.show(
           context,

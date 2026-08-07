@@ -11858,7 +11858,7 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 222,
+      "line": 234,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -11884,7 +11884,7 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 472,
+      "line": 261,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -11910,7 +11910,7 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 598,
+      "line": 511,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -26608,7 +26608,33 @@
       "symbol": "_LearningSessionScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 3,
-      "line": 719,
+      "line": 637,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/screens/learning_session_screen.dart::_LearningSessionScreenState::BoxDecoration::4",
+      "path": "lib/features/learning/presentation/screens/learning_session_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_LearningSessionScreenState",
+      "callKind": "BoxDecoration",
+      "ordinal": 4,
+      "line": 758,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",

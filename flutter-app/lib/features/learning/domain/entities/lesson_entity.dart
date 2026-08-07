@@ -58,6 +58,8 @@ enum ExerciseType {
   trueFalse,
   fillInBlank,
   translate,
+  matching,
+  reorder,
   listening,
   speaking,
 }
@@ -137,6 +139,10 @@ class Exercise {
       case 'translate':
       case 'translation':
         return ExerciseType.translate;
+      case 'matching':
+        return ExerciseType.matching;
+      case 'reorder':
+        return ExerciseType.reorder;
       case 'listening':
         return ExerciseType.listening;
       case 'speaking':
