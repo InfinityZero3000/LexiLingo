@@ -48,7 +48,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Queries
-  const { data: user, isLoading } = useQuery<UserDetailView>({
+  const { data: user, isLoading, error, refetch } = useQuery<UserDetailView>({
     queryKey: ['user-detail', userId],
     queryFn: () => getUserDetail(userId) as Promise<UserDetailView>,
   });
@@ -188,8 +188,20 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     );
   }
   
-  if (!user) {
-    return null;
+  if (error || !user) {
+    return (
+      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="modal-content" style={{ maxWidth: 400, textAlign: 'center' }}>
+          <p style={{ color: 'var(--danger, #e11d48)' }}>
+            {error instanceof Error ? error.message : 'Không tải được thông tin người dùng.'}
+          </p>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 16 }}>
+            <button className="btn-secondary" onClick={() => refetch()}>Thử lại</button>
+            <button className="ghost-button" onClick={onClose}>Đóng</button>
+          </div>
+        </div>
+      </div>
+    );
   }
   
   return (

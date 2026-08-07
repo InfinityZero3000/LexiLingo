@@ -8,7 +8,6 @@ function _adminHeaders(accessToken?: string): Record<string, string> {
   return {
     ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     ...(ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : {}),
-    ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
   };
 }
 
