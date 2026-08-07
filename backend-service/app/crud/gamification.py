@@ -213,12 +213,14 @@ class WalletCRUD:
         if commit:
             await db.commit()
             await db.refresh(wallet)
+            await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         else:
             await db.flush()
-        await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
-        
+            # commit=False: caller owns the outer transaction and must
+            # invalidate the wallet cache itself after that transaction commits.
+
         return wallet, transaction
-    
+
     @staticmethod
     async def spend_gems(
         db: AsyncSession,
@@ -263,12 +265,14 @@ class WalletCRUD:
         if commit:
             await db.commit()
             await db.refresh(wallet)
+            await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         else:
             await db.flush()
-        await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
-        
+            # commit=False: caller owns the outer transaction and must
+            # invalidate the wallet cache itself after that transaction commits.
+
         return wallet, transaction
-    
+
     @staticmethod
     async def get_transactions(
         db: AsyncSession,
