@@ -1,7 +1,7 @@
 """add user entitlements table
 
 Revision ID: 74b24453f92f
-Revises: f70a61a5ce3d
+Revises: add_partner_api_keys
 Create Date: 2026-08-08 00:42:22.630820
 
 """
@@ -15,7 +15,7 @@ from app.core.db_types import GUID, TZDateTime
 
 # revision identifiers, used by Alembic.
 revision: str = '74b24453f92f'
-down_revision: Union[str, None] = 'f70a61a5ce3d'
+down_revision: Union[str, None] = 'add_partner_api_keys'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
