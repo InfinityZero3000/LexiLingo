@@ -361,9 +361,10 @@ async def record_exercise_results_for_user(
     """
     Record exercise results and update proficiency scores.
 
-    Shared by the manual `/record-exercises` route and every real
-    completion flow (lesson, game, content quiz) so the CEFR profile moves
-    from actual activity, not just from an explicit client call. Commits
+    Shared by the manual `/record-exercises` route and real completion
+    flows (lesson, game — content-quiz completion has no submit endpoint
+    yet) so the CEFR profile moves from actual activity, not just from an
+    explicit client call. Commits
     its own transaction — call after the caller's own completion write has
     already committed.
 
@@ -517,7 +518,12 @@ async def record_exercise_results_for_user(
         current_user.total_xp = new_xp
         current_user.numeric_level = calculate_numeric_level(new_xp)
 
-        # Recalculate and update rank
+    if level_changed or award_xp:
+        # Rank depends on proficiency_level (current_user.level, just synced
+        # above) — recalculate whenever that changed, even when award_xp is
+        # False and no XP moved. Otherwise a lesson/game completion that
+        # levels up CEFR leaves the rank badge computed against the old
+        # level until the user's next XP-earning event.
         rank_info = calculate_rank(
             numeric_level=current_user.numeric_level or 1,
             proficiency_level=current_user.level,
@@ -549,8 +555,8 @@ async def record_exercise_results(
     Record exercise results and update proficiency scores.
 
     Manual client-triggered entry point. Real completion flows (lesson,
-    game, content quiz) call `record_exercise_results_for_user` directly
-    instead of hitting this route.
+    game) call `record_exercise_results_for_user` directly instead of
+    hitting this route.
     """
     return await record_exercise_results_for_user(db, current_user, results)
 

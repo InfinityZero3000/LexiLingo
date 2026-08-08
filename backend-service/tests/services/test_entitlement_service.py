@@ -5,11 +5,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+from app.core.config import settings
 from app.core.database import Base
 from app.models.entitlement import UserEntitlement
 from app.models.user import User
 from app.services.entitlement_service import EntitlementService
-from app.services.revenuecat_client import RevenueCatUnavailableError
+from app.services.revenuecat_client import RevenueCatClient, RevenueCatUnavailableError
 
 
 @pytest.fixture
@@ -133,3 +134,15 @@ async def test_sync_upserts_single_row_per_user_entitlement(db_session, test_use
     rows = result.scalars().all()
     assert len(rows) == 1
     assert rows[0].product_id == "yearly_premium"
+
+
+async def test_missing_secret_key_is_degraded_not_a_500(db_session, test_user, monkeypatch):
+    """REVENUECAT_SECRET_API_KEY is unset in every environment today — this
+    must degrade gracefully, not raise an unhandled exception through the
+    /entitlements/sync route on every login."""
+    monkeypatch.setattr(settings, "REVENUECAT_SECRET_API_KEY", None)
+
+    row, degraded = await EntitlementService.sync(db_session, test_user.id, client=RevenueCatClient())
+
+    assert degraded is True
+    assert row is None

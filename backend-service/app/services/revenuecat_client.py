@@ -20,10 +20,8 @@ class RevenueCatClient:
     _BASE_URL = "https://api.revenuecat.com/v1"
 
     def __init__(self) -> None:
-        if not settings.REVENUECAT_SECRET_API_KEY:
-            raise RuntimeError("REVENUECAT_SECRET_API_KEY is not configured")
         self._headers = {
-            "Authorization": f"Bearer {settings.REVENUECAT_SECRET_API_KEY}",
+            "Authorization": f"Bearer {settings.REVENUECAT_SECRET_API_KEY or ''}",
         }
         self._timeout = httpx.Timeout(settings.REVENUECAT_TIMEOUT_SECONDS)
 
@@ -31,9 +29,14 @@ class RevenueCatClient:
         """Return RevenueCat's `entitlements` map for one subscriber.
 
         An unknown subscriber (never purchased) returns `{}`, not an error.
-        Raises `RevenueCatUnavailableError` on timeout/transport/5xx so the
-        caller can fail closed on new grants while preserving prior state.
+        Raises `RevenueCatUnavailableError` on missing config, timeout,
+        transport failure, or any non-2xx/404 response, so the caller
+        always has one degraded-mode branch to handle rather than a mix of
+        exception types leaking through as unhandled 500s.
         """
+        if not settings.REVENUECAT_SECRET_API_KEY:
+            raise RevenueCatUnavailableError("REVENUECAT_SECRET_API_KEY is not configured")
+
         async with httpx.AsyncClient(timeout=self._timeout) as client:
             try:
                 response = await client.get(
@@ -45,11 +48,10 @@ class RevenueCatClient:
 
         if response.status_code == 404:
             return {}
-        if response.status_code >= 500:
+        if response.status_code != 200:
             raise RevenueCatUnavailableError(
                 f"RevenueCat returned {response.status_code}"
             )
-        response.raise_for_status()
 
         payload = response.json()
         subscriber = payload.get("subscriber", {})

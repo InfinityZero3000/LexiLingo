@@ -38,8 +38,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool _preAuthFlowResolved = false;
   String? _flowResolvedForUserId;
   // Tracks the last user we linked to RevenueCat + synced entitlements for,
-  // so this only fires once per login (mirrors _flowResolvedForUserId).
+  // so this only fires once per login (mirrors _flowResolvedForUserId). Only
+  // set after a successful sync — a failed attempt must retry on the next
+  // rebuild, not be silently skipped for the rest of the session.
   String? _entitlementSyncedForUserId;
+  bool _isSyncingEntitlements = false;
   PreAuthAnswers? _pendingPreAuthAnswers;
 
   static const String _preAuthAnswersKey = 'pre_auth_answers_pending';
@@ -110,12 +113,21 @@ class _AuthWrapperState extends State<AuthWrapper> {
   /// otherwise tracks an anonymous device ID the backend can't look up.
   Future<void> _syncEntitlements(AuthProvider authProvider) async {
     final userId = authProvider.currentUser?.id;
-    if (userId == null || _entitlementSyncedForUserId == userId) {
+    if (userId == null ||
+        _entitlementSyncedForUserId == userId ||
+        _isSyncingEntitlements) {
       return;
     }
-    _entitlementSyncedForUserId = userId;
-    await PurchasesService.instance.identifyUser(userId);
-    await di.sl<EntitlementService>().sync();
+    _isSyncingEntitlements = true;
+    try {
+      await PurchasesService.instance.identifyUser(userId);
+      final active = await di.sl<EntitlementService>().sync();
+      if (active != null) {
+        _entitlementSyncedForUserId = userId;
+      }
+    } finally {
+      _isSyncingEntitlements = false;
+    }
   }
 
   Future<void> _resolvePostAuthFlow(AuthProvider authProvider) async {

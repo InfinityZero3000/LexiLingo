@@ -10,7 +10,10 @@ class EntitlementService {
 
   EntitlementService({required this.apiClient});
 
-  Future<bool> sync({String entitlementId = 'premium'}) async {
+  /// Returns whether the entitlement is active, or `null` if the sync
+  /// request itself failed (network/server error) — callers that need to
+  /// retry on failure should treat `null` distinctly from `false`.
+  Future<bool?> sync({String entitlementId = 'premium'}) async {
     try {
       final data = await apiClient.post(
         '/entitlements/sync?entitlement_id=$entitlementId',
@@ -18,7 +21,7 @@ class EntitlementService {
       return data['active'] == true;
     } catch (e) {
       debugPrint('EntitlementService.sync error: $e');
-      return false;
+      return null;
     }
   }
 
