@@ -9,6 +9,9 @@ import 'package:lexilingo_app/features/user/presentation/providers/settings_prov
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
+import 'package:lexilingo_app/core/di/injection_container.dart' as di;
+import 'package:lexilingo_app/core/services/entitlement_service.dart';
+import 'package:lexilingo_app/core/services/purchases_service.dart';
 import '../providers/auth_provider.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../pages/login_page.dart';
@@ -34,6 +37,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool _isShowingRegister = false;
   bool _preAuthFlowResolved = false;
   String? _flowResolvedForUserId;
+  // Tracks the last user we linked to RevenueCat + synced entitlements for,
+  // so this only fires once per login (mirrors _flowResolvedForUserId).
+  String? _entitlementSyncedForUserId;
   PreAuthAnswers? _pendingPreAuthAnswers;
 
   static const String _preAuthAnswersKey = 'pre_auth_answers_pending';
@@ -97,6 +103,19 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _isShowingRegister = true;
       _preAuthFlowResolved = true;
     });
+  }
+
+  /// Links RevenueCat's app_user_id to our backend user_id and pulls
+  /// server-verified entitlement state, once per login. RevenueCat's SDK
+  /// otherwise tracks an anonymous device ID the backend can't look up.
+  Future<void> _syncEntitlements(AuthProvider authProvider) async {
+    final userId = authProvider.currentUser?.id;
+    if (userId == null || _entitlementSyncedForUserId == userId) {
+      return;
+    }
+    _entitlementSyncedForUserId = userId;
+    await PurchasesService.instance.identifyUser(userId);
+    await di.sl<EntitlementService>().sync();
   }
 
   Future<void> _resolvePostAuthFlow(AuthProvider authProvider) async {
@@ -233,6 +252,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           context.read<SettingsProvider>().loadSettings(userId, context);
         }
         _resolvePostAuthFlow(authProvider);
+        _syncEntitlements(authProvider);
       });
     }
 
@@ -241,6 +261,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _wasAuthenticated = false;
       _showOnboarding = false;
       _flowResolvedForUserId = null;
+      _entitlementSyncedForUserId = null;
       _preAuthFlowResolved = false;
       _showPreAuthWelcome = false;
       _showPreAuthQuestions = false;
@@ -250,6 +271,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (authProvider.isAuthenticated && !_isResolvingFlow) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _resolvePostAuthFlow(authProvider);
+        _syncEntitlements(authProvider);
       });
     }
 
