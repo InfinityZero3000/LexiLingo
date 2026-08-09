@@ -44,7 +44,7 @@ from tests.seed_proficiency_data import seed as seed_proficiency_data
 
 DB_URL = app_settings.DATABASE_URL
 BASE = "/api/v1/proficiency"
-TARGET_EMAIL = "nhthang312@gmail.com"
+TARGET_EMAIL = "nhthang2077@gmail.com"
 CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
 

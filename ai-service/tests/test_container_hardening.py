@@ -95,7 +95,7 @@ def test_e2e_compose_matches_production_security_boundary():
 
     redis = services["redis"]
     assert "@sha256:" in redis["image"]
-    assert redis["ports"] == ["127.0.0.1:6379:6379"]
+    assert redis["ports"] == ["127.0.0.1:${AI_E2E_REDIS_PORT:-16379}:6379"]
     assert "--requirepass" in redis["command"]
     assert "REDIS_PASSWORD" in redis["environment"]
     assert "REDIS_PASSWORD" in str(redis["healthcheck"]["test"])
