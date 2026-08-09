@@ -144,7 +144,7 @@ services:
     expose:
       - "8000"
     volumes:
-      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+      - ./backend-service/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\""]
       interval: 30s
@@ -186,7 +186,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+      - ./backend-service/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
     logging:
       driver: json-file
       options:
