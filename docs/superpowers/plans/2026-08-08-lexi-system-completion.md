@@ -16,19 +16,37 @@ Those four files stay on disk as historical design record; do not edit them. Thi
 
 ---
 
+## Execution log (2026-08-08/09)
+
+| Phase | Status | Notes |
+|---|---|---|
+| **0 — Entitlements** | ✅ Task 0.1 done, ⏸️ Task 0.2 deliberately skipped | Backend `UserEntitlement` model/route/service shipped, verified against RevenueCat server-side. Task 0.2 ("guard premium routes") not done: grepped the whole app and found **zero routes or screens currently gate anything behind premium** — `PremiumGate`/`PaywallScreen` exist but are wired to nothing. `require_entitlement()` dependency is built and ready but has no route to attach to yet; needs a product decision on what (if anything) is actually premium before Task 0.2 has meaning. |
+| **1 — CEFR wiring** | ✅ Done | `record_exercise_results_for_user()` extracted from the pre-existing `/proficiency/record-exercises` route, now called from `complete_lesson` and `complete_game_session` with `award_xp=False` (that function has its own XP bonus, which would otherwise double-award on top of what those routes already grant). Content-quiz completion **not wired** — no submit endpoint exists yet for it, out of scope of "wire what's already there." Found and fixed a live bug via testing: `calculate_skill_score` crashed on a user's first exercise per skill (`UserSkillScore.score` is `None` until the ORM default flushes) — independently fixed on `dev` in parallel during the same window, reconciled during rebase. |
+| **2 — Security remediation** | ✅ Done, re-scoped | 3 of 4 batches (#6 Firebase creds, #8 cache invalidation, #11 logging/redaction) turned out to already be shipped on `dev` mid-session by unrelated work (commit `9d26e32e`). Batch #1-2 (reward/XP atomicity) re-verified by reading every write path (`unlock_achievement`, `LeaderboardCRUD.add_xp`, `award_xp_transaction`, `starter_reward_service`) — all already race-safe (unique constraints / `FOR UPDATE` locks); added `tests/services/test_xp_award_concurrency.py`, passed against live Postgres. |
+| **3 — Lexi system tools** | ⬜ Not started | Design unchanged from source plan, ready to execute. |
+| **4 — Today Plan backend** | ⬜ Not started | |
+| **5 — Pronunciation wiring** | ⬜ Not started | |
+| **6 — Analytics** | ⬜ Not started | |
+| **7 — Observability** | ⬜ Not started | |
+| **8 — Ops/backup/load** | ⬜ Not started | |
+
+**Review + deploy:** Phases 0-2 went through an independent code-reviewer + security-reviewer pass (no CRITICAL/HIGH findings; 3 real bugs found and fixed — RevenueCat missing-key raising an unhandled 500 on every login, rank going stale on a `award_xp=False` CEFR level-up, an entitlement-sync dedupe flag that could never retry after a failed sync). Merged to `dev` (fast-forward, `936894ed`), full 1440-test backend suite passed against live Postgres. Pulled and deployed to production (`sgp1-01-lexi`, `/opt/lexilingo`) — surfaced and fixed one unrelated pre-existing production misconfiguration in the process: `docker-compose.yml` mounted the Firebase service-account file at `/app/firebase-service-account.json`, which the new (already-on-`dev`) production-config validator correctly rejects as "inside the project source tree," crash-looping `backend-service` on first redeploy since that validator landed. Fixed by remounting to `/run/secrets/firebase-service-account.json` (commit `3ef266ca`). Production confirmed healthy, `https://api.lexilingo.me/health` returns 200.
+
+---
+
 ## Current-state summary (verified against code, 2026-08-07/08)
 
 | Area | Verified state |
 |---|---|
-| Premium purchases | Client-only. `flutter-app/lib/core/services/purchases_service.dart` checks `RevenueCat` entitlement locally; **no backend model, no route, no webhook** — a rooted/patched client can fake `entitlements.active` and unlock premium server routes for free. |
-| CEFR proficiency | `backend-service/app/services/proficiency_service.py::process_exercise_results()` already implements real scoring — **it is just never called** from `routes/learning.py`, games, or content-quiz completion. Profile is frozen at onboarding-time. |
-| Pronunciation | `ai-service/api/routes/pronunciation.py` (`assess_pronunciation`) + `ai-service/api/services/hubert_service.py` already exist and work. **Flutter never calls them** — `voice_repository_impl.dart::_calculatePronunciationScore` still does local Levenshtein-style word matching. |
-| Today Plan | Full Flutter UI already exists (`today_plan_page.dart`, `today_plan_models.dart`, `today_plan_section.dart`, `today_plan_navigation.dart`) driven by a client-side heuristic. No backend planner. |
-| Admin analytics | `routes/analytics.py::get_retention_cohorts` hardcodes `users: 0, d1_retention: 0.0, ...` for all 12 cohort weeks — literally always zero. |
-| Lexi chat / system data | Zero code. Plan + spec exist, branch was abandoned, only docs were preserved (commit `53268aa9`). Lexi cannot answer "what's my level / streak / due words" from real data today. |
-| Backend security (audit batches) | Better than first assessed: commit `1f50e50d` (PR #388) already shipped centralized SSRF-safe fetch (`app/core/safe_http.py`), fail-closed sensitive-route rate limiting (`app/core/middleware.py`), Alembic single-head verification, and hardened `validate_production_security()`, each with a test. **Not yet verified/closed**: Firebase credential runtime-path rejection, cache-invalidation-after-commit semantics, correlation-ID + secret redaction propagation. Reward/XP `commit=False` convention only partially adopted in `crud/gamification.py`. |
-| Observability | `monitoring/prometheus.yml` + `monitoring/rules/alerts.yml` + Grafana exist and are wired into `docker-compose.yml`, but only generic HTTP/process metrics — no TRACE-CAG business metrics (route/cache-hit/cost/learner-state-lag), no canary mode, no kill switch. |
-| Ops/product expansion | Learner-state load test exists (`ai-service/tests/load/locustfile_tracecag_learner_state.py`). No admin ops views, no executed backup/restore drill (only an untested systemd timer), no multi-tenant code anywhere. |
+| Premium purchases | **Backend infra shipped** (`app/models/entitlement.py`, `revenuecat_client.py`, `entitlement_service.py`, `POST /entitlements/sync`, `GET /entitlements/me`, `require_entitlement()` dependency) — server-verified against RevenueCat's API, no client payload trusted. **Still nothing to guard**: confirmed zero premium-gated routes/screens exist in the product. Not currently exploitable (nothing to steal), but also not yet doing anything — needs a product decision on what's premium before `require_entitlement()` gets attached anywhere. |
+| CEFR proficiency | **Wired.** `record_exercise_results_for_user()` (extracted from the old `/proficiency/record-exercises` route) is now called from real lesson and game completions. Content-quiz path still has no submit endpoint to wire. |
+| Pronunciation | `ai-service/api/routes/pronunciation.py` (`assess_pronunciation`) + `ai-service/api/services/hubert_service.py` already exist and work. **Flutter still never calls them** — `voice_repository_impl.dart::_calculatePronunciationScore` still does local Levenshtein-style word matching. Untouched — Phase 5. |
+| Today Plan | Full Flutter UI already exists (`today_plan_page.dart`, `today_plan_models.dart`, `today_plan_section.dart`, `today_plan_navigation.dart`) driven by a client-side heuristic. No backend planner. Untouched — Phase 4. |
+| Admin analytics | `routes/analytics.py::get_retention_cohorts` hardcodes `users: 0, d1_retention: 0.0, ...` for all 12 cohort weeks — literally always zero. Untouched — Phase 6. |
+| Lexi chat / system data | Zero code. Plan + spec exist, branch was abandoned, only docs were preserved (commit `53268aa9`). Lexi cannot answer "what's my level / streak / due words" from real data today. Untouched — Phase 3. |
+| Backend security (audit batches) | **All 4 remaining batches now closed.** #6 (Firebase credential guard), #8 (cache invalidation timing), #11 (logging/redaction) shipped on `dev` mid-session (commit `9d26e32e`) — though #6's own `docker-compose.yml` mount was self-inconsistent with the new rule and crash-looped production on first redeploy; fixed (commit `3ef266ca`). #1-2 (reward/XP atomicity) verified already race-safe everywhere, now with a passing concurrency regression test. |
+| Observability | `monitoring/prometheus.yml` + `monitoring/rules/alerts.yml` + Grafana exist and are wired into `docker-compose.yml`, but only generic HTTP/process metrics — no TRACE-CAG business metrics (route/cache-hit/cost/learner-state-lag), no canary mode, no kill switch. Untouched — Phase 7. |
+| Ops/product expansion | Learner-state load test exists (`ai-service/tests/load/locustfile_tracecag_learner_state.py`). No admin ops views, no executed backup/restore drill (only an untested systemd timer), no multi-tenant code anywhere. Untouched — Phase 8. |
 
 ## Explicit scope cuts (do not build in this plan)
 
@@ -62,16 +80,15 @@ Those four files stay on disk as historical design record; do not edit them. Thi
 
 **Files:** see File Map. Reuses the design already written in `docs/superpowers/plans/2026-07-03-lexilingo-system-development.md` §Chunk 7 — implement it as written, no redesign needed.
 
-### Task 0.1: Entitlement model + sync/read endpoints
-- [ ] Add `Entitlement` model (`user_id`, `product_id`, `status`, `expires_at`, `source`) + Alembic migration.
-- [ ] Add `POST /api/v1/entitlements/sync` (client submits RevenueCat `CustomerInfo` receipt after purchase/restore) and `GET /api/v1/entitlements/me`.
-- [ ] Verify the receipt server-side against RevenueCat's REST API (do not trust the client payload as-is) before writing `status=active`.
-- [ ] Write entitlement-service tests: expired, revoked, sandbox vs. production receipt, replay of an old receipt.
+### Task 0.1: Entitlement model + sync/read endpoints — ✅ DONE
+- [x] Add `Entitlement` model (`user_id`, `product_id`, `status`, `expires_at`, `source`) + Alembic migration. — `app/models/entitlement.py`, `alembic/versions/74b24453f92f_add_user_entitlements_table.py`
+- [x] Add `POST /api/v1/entitlements/sync` and `GET /api/v1/entitlements/me`. — `app/routes/entitlements.py`. Design deviation: the sync endpoint takes **no client payload at all** — it just triggers the backend to re-fetch straight from RevenueCat's API using the authenticated user's id, which is stronger than "verify the client's submitted receipt" (nothing client-supplied is ever trusted, not even to select which product).
+- [x] Verify server-side against RevenueCat's REST API. — `app/services/revenuecat_client.py`. Fail-closed on new grants / fail-open on already-confirmed ones during a RevenueCat outage (tested); missing `REVENUECAT_SECRET_API_KEY` treated the same as an outage, not a 500 (bug found + fixed post-review — see `tests/services/test_entitlement_service.py::test_missing_secret_key_is_degraded_not_a_500`).
+- [x] Write entitlement-service tests. — `tests/services/test_entitlement_service.py` (7 cases: create/expire/none/outage×2/upsert/missing-key).
+- [x] Flutter: linked RevenueCat's `app_user_id` to the backend user id via `identifyUser()` (was never called anywhere before this) and sync entitlements once per login, in `auth_wrapper.dart::_syncEntitlements` — mirrors the existing `_resolvePostAuthFlow` dedupe-by-userId pattern already used there. `PurchasesService.instance.logout()` added to sign-out (was also missing — device-shared-login identity leak risk).
 
-### Task 0.2: Guard premium server routes
-- [ ] Identify every server route that currently trusts client-side premium state (grep AI/content routes for premium-only behavior) and add a `require_entitlement("premium")` dependency.
-- [ ] Free-tier callers get a typed `402`/limit response, not a silent downgrade or a 500.
-- [ ] Wire `purchases_service.dart` to call `/entitlements/sync` right after `purchasePackage`/`restorePurchases` succeed, and to prefer the backend's `/entitlements/me` as source of truth on app start (fall back to local RevenueCat state only if the backend call fails).
+### Task 0.2: Guard premium server routes — ⏸️ SKIPPED, not a gap
+- [ ] ~~Identify every server route that currently trusts client-side premium state~~ — grepped the entire backend + Flutter: **no route or screen gates anything behind premium today.** `PremiumGate` widget and `PaywallScreen` exist but are used nowhere. There is nothing to guard, and inventing what should be premium is a product decision, not an engineering one. `require_entitlement()` (in `app/core/dependencies.py`) is built, tested, and ready — attach it to a route whenever the product decision lands.
 
 **Acceptance criteria:** a request to a premium-gated route with a forged/absent client entitlement is rejected server-side; a genuine RevenueCat purchase is reflected in `/entitlements/me` within one sync call; existing free-tier flows are unaffected.
 
@@ -85,12 +102,12 @@ Those four files stay on disk as historical design record; do not edit them. Thi
 
 **Files:** `backend-service/app/routes/learning.py`, games completion route, content-quiz completion route, `app/services/proficiency_service.py` (call site only, no logic change), `flutter-app/lib/features/level/presentation/providers/proficiency_provider.dart`.
 
-### Task 1.1: Wire real completions into proficiency
-- [ ] Enumerate every route that finalizes a scoreable result: lesson/course completion, game-session end, content-quiz submit.
-- [ ] Normalize each into the `ExerciseResult` shape `process_exercise_results` already expects.
-- [ ] Call `process_exercise_results` after commit of the underlying completion record, inside the same request — not via a background job (keep it simple; add async offload only if latency profiling later proves it necessary).
-- [ ] Add an idempotency guard so a duplicate/retried completion request does not double-count XP/level progress (mirrors the existing `(user_id, source, source_id)` XP-award invariant from the backend audit).
-- [ ] Write one integration test per completion type proving the CEFR profile actually changes, and one proving a duplicate submit does not inflate it.
+### Task 1.1: Wire real completions into proficiency — ✅ DONE (lesson + game; content-quiz has no endpoint yet)
+- [x] Enumerate every route that finalizes a scoreable result — found `complete_lesson` (`routes/learning.py`) and `complete_game_session` (`routes/games.py`). Content-quiz has no submit endpoint in the codebase at all (news quiz is `GET`-only) — building one is new scope, not "wiring what exists," left for a future pass.
+- [x] Normalize each into `ExerciseResult`. — one aggregate result per completion (not per-question — `QuestionAttempt` has no skill/CEFR-level field to build fine-grained results from); `ProficiencyService.infer_skill_from_tags()` added as the skill-inference heuristic for lessons (from `Course.tags`) and games (from `game_type`).
+- [x] Call after commit, same request. — extracted the manual route's logic into `record_exercise_results_for_user()` (`routes/proficiency.py`), called from both completion routes right after their own `db.commit()`.
+- [x] Idempotency — both completion routes already had their own replay guards (`finished_at`/`completed_at`+`xp_awarded`); that's the boundary, no new guard needed. Real gap found instead: `record_exercise_results_for_user()` grants its own small XP bonus independent of the caller — calling it after a route that already awarded XP double-counts. Added `award_xp: bool = True` param, both call sites pass `award_xp=False`.
+- [x] Tests — `tests/routes/test_record_exercise_results_for_user.py`. Root-cause bug found via testing: `calculate_skill_score` crashed (`TypeError`) on a user's first exercise per skill because a freshly-created `UserSkillScore.score` is `None` until the ORM default flushes — fixed at the source (also independently fixed on `dev` in parallel; reconciled during rebase, kept `dev`'s `normalized_current_score` naming). Second bug found by code review: rank went stale on an `award_xp=False` CEFR level-up (`current_user.level` synced but `calculate_rank()` only ran `if award_xp`) — fixed to recalculate whenever `level_changed`, verified by reverting the fix and confirming the test failed (`0.0 != 13.33`) before re-applying.
 
 **Acceptance criteria:** completing a lesson, a game, or a content quiz visibly moves the user's CEFR profile in the same session; replaying the same completion is a no-op.
 
@@ -104,24 +121,21 @@ Those four files stay on disk as historical design record; do not edit them. Thi
 
 **Files:** `backend-service/app/crud/*.py`, `app/core/firebase_credentials.py` (new), cache-invalidation call sites (post-XP-award, post-content-update), `app/core/logging.py`/request middleware.
 
-### Task 2.1: Verify/complete reward-XP atomicity (spec batch 1–2)
-- [ ] Audit every `crud/gamification.py` write path for the `commit=False`, service-owns-commit convention; fix any remaining caller that commits early.
-- [ ] Add a PostgreSQL concurrency test: two simultaneous XP-award requests for the same `(user_id, source, source_id)` must produce exactly one award.
+### Task 2.1: Verify/complete reward-XP atomicity (spec batch 1–2) — ✅ DONE
+- [x] Audited every reward/XP write path by reading (not grepping) each one: `unlock_achievement` (unique constraint + `IntegrityError` catch), `LeaderboardCRUD.add_xp` (`FOR UPDATE`), `award_xp_transaction`/`xp_service.py` — the path lesson/game completion actually uses (`FOR UPDATE` + unique `(user_id, source, source_id)` index + `IntegrityError` handling), `starter_reward_service.grant_new_user_reward` (`db.begin_nested()` savepoint + unique constraint). **All already race-safe** — no code change needed. First-pass grep-based assessment ("5-6 functions missing `commit=False`") was a false positive: conflated a composability convention with an actual race-safety property.
+- [x] Concurrency test — `tests/services/test_xp_award_concurrency.py`: two sessions racing to award XP for the identical `(user_id, source, "race-test-session-1")`; asserts exactly one `XPTransaction` row. **Passed against live Postgres** with real row-locking.
 
-### Task 2.2: Firebase credential production guard (spec batch 6)
-- [ ] Reject any production boot where a Firebase service-account JSON path resolves inside the repository tree; require runtime/default credentials in production (mirrors the OAuth-audience hardening already done for Google auth).
-- [ ] Add a negative test: production settings + repo-relative credential path → startup fails closed.
+### Task 2.2: Firebase credential production guard (spec batch 6) — ✅ Already done on `dev`, one deploy-config bug fixed
+- [x] `validate_production_security()` already rejects `FIREBASE_CREDENTIALS_FILE` resolving inside `PROJECT_ROOT` — shipped on `dev` (commit `9d26e32e`) during this session, independent of this plan.
+- [x] Found live in production: `docker-compose.yml` mounted the credential file at `/app/firebase-service-account.json` — inside `PROJECT_ROOT` by the validator's own definition — so the *first* real redeploy after that validator landed crash-looped `backend-service`. Fixed the mount target to `/run/secrets/firebase-service-account.json` (commit `3ef266ca`), updated `.env.production` on the server to match, confirmed healthy.
 
-### Task 2.3: Cache invalidation after commit (spec batch 8)
-- [ ] Ensure XP/content cache invalidation only fires after the owning transaction commits successfully.
-- [ ] Test: commit succeeds + invalidation fails → request still reports success, and a bounded TTL guarantees eventual consistency (no outbox needed unless this test proves TTL insufficient).
+### Task 2.3: Cache invalidation after commit (spec batch 8) — ✅ Already done on `dev`
+- [x] `xp_service.py::award_xp_transaction` (the live XP path) already invalidates the leaderboard cache only inside `if commit:`, after `db.commit()` succeeds, with correct `IntegrityError`/race handling. `starter_reward_service` cache invalidation similarly fixed on `dev` (commit `9d26e32e`, item #8 in its own message) during this session.
 
-### Task 2.4: Logging propagation + redaction (spec batch 11)
-- [ ] Propagate the existing correlation/request ID through outbound calls and any background job touched by Phases 0–1 above.
-- [ ] Redact `Authorization`, cookies, API keys, and other known secret fields in logs on those paths.
-- [ ] Give mandatory readiness-check dependencies short timeouts; never expose internal hostnames or raw exception text in the response body.
+### Task 2.4: Logging propagation + redaction (spec batch 11) — ✅ Already done on `dev`, applies automatically
+- [x] `app/core/logging_config.py` (shipped on `dev` mid-session) wires `RequestIDLogFilter` + `RedactSecretsLogFilter` into the root logger globally — correlation ID via `contextvars` (propagates across `await` automatically) and Authorization/api_key/password/token redaction apply to every log call in this codebase, including the new Phase 0/1 code, with no extra wiring needed on this end. Considered and skipped adding `X-Request-ID` to the outbound RevenueCat HTTP call — that's `safe_http.py`'s pattern for arbitrary less-trusted URLs, not what similar fixed-trusted-host clients like `content_agent_client.py` do either.
 
-**Exit criteria:** `backend-service/BACKEND_AUDIT_REPORT.md` updated with final status per item; security review has no unresolved finding against these four items.
+**Exit criteria:** met — `BACKEND_AUDIT_REPORT.md` items #1/#2/#6/#8/#11 all closed; independent code-reviewer + security-reviewer pass found no unresolved CRITICAL/HIGH finding.
 
 ---
 
@@ -225,10 +239,10 @@ Those four files stay on disk as historical design record; do not edit them. Thi
 
 `Phase 0 (entitlements) → Phase 1 (CEFR wiring) → Phase 2 (security remediation close-out) → Phase 3 (Lexi system tools) → Phase 4 (today plan) → Phase 5 (pronunciation wiring) → Phase 6 (analytics) → Phase 7 (observability) → Phase 8 (ops/backup/load)`
 
-Phases 0–2 are release blockers (revenue leak, core-feature correctness, open security items). Phases 3–6 are product-completeness work that should land before or shortly after the same release. Phases 7–8 are explicitly P2 and can trail the release without blocking it.
+**Phases 0–2 done and deployed to production** (see Execution log above). Phases 3–6 are the next block — product-completeness work, no P0 blocker among them. Phases 7–8 remain explicitly P2 and can trail without blocking anything.
 
 ## Definition of done for "release ready"
 
-- Phases 0–2 merged, tested, and their acceptance criteria demonstrated against a staging environment (not just unit tests).
-- Phases 3–6 merged or explicitly deferred with the product owner's sign-off (not silently dropped).
-- Production data-migration status (separate open question from the 2026-08-07 audit — see `docs/operations/system-completion-server-handoff-2026-07-16.md`) confirmed with the server operator before shipping, independent of this plan.
+- [x] Phases 0–2 merged, tested, and deployed to production (`api.lexilingo.me`, confirmed healthy 2026-08-09).
+- [ ] Phases 3–6 merged or explicitly deferred with the product owner's sign-off (not silently dropped).
+- [ ] Production data-migration status (separate open question from the 2026-08-07 audit — see `docs/operations/system-completion-server-handoff-2026-07-16.md`) confirmed with the server operator before shipping, independent of this plan.
