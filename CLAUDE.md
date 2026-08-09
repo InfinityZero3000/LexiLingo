@@ -21,8 +21,7 @@ Language learning app (Duolingo-style). Stack:
 
 | File | Purpose |
 |------|---------|
-| `backend-service/scripts/seed_courses.py` | Production seed (idempotent, one-shot) |
-| `backend-service/scripts/seed_data.py` | Master seed entry point |
+| `backend-service/scripts/seed_courses_directly.py` | Courses & exercises seed (calls `app.routes.admin.seed_sample_data` directly) |
 | `flutter-app/lib/features/learning/presentation/screens/learning_roadmap_screen.dart` | Duolingo-style zigzag roadmap |
 | `ai-service/api/services/trace_cag/` | TRACE-CAG multi-hop reasoning pipeline |
 
@@ -48,8 +47,10 @@ cd ai-service && source venv/bin/activate   # python3.12
 ## Seed Run Order
 
 ```
-seed_data.py → seed_courses.py → seed_analytics.py → seed_demo_data.py → seed_questions.py
+seed_courses_directly.py → seed_analytics.py → seed_demo_data.py → seed_questions.py
 ```
+
+`seed_data.py` and `seed_courses.py` no longer exist in the repo (removed from git tracking in `0fcd9547`, 2026-03-12) — `seed_courses_directly.py` is their replacement.
 
 Expected DB state after full seed: 109 users, 1614 daily activities, 98 questions.
 
