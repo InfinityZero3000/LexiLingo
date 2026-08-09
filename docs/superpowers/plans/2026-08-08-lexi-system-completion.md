@@ -4,13 +4,13 @@
 
 **Goal:** Close every product/security gap found by the 2026-08-07 release-readiness audit, so the app can ship without a known revenue-bypass, a core feature (CEFR progress) that never updates from real activity, or a chat assistant that cannot answer basic "how am I doing" questions.
 
-**Supersedes / consolidates:**
+**Supersedes / consolidates** (source files deleted 2026-08-09 after folding their content in here — see git history for the originals if needed):
 - `docs/superpowers/plans/2026-07-28-lexi-system-tools.md` + `specs/2026-07-28-lexi-system-tools-design.md` (never implemented — reused here as Phase 3, content unchanged, folded in for single-file tracking)
 - `docs/superpowers/plans/2026-07-03-lexilingo-system-development.md` (Phases 4/6/7/8 never implemented — reused here as Phases 0/1/4/6)
 - `docs/superpowers/plans/2026-07-16-system-completion-roadmap.md` (Phase 5/7 — reused here as Phases 7/8, rescoped)
 - `docs/superpowers/specs/2026-08-03-backend-audit-remediation-design.md` (remaining batches — reused here as Phase 2)
 
-Those four files stay on disk as historical design record; do not edit them. This file is the single source of truth for what is still outstanding and in what order to build it.
+This file is the single source of truth for what is still outstanding and in what order to build it.
 
 **Tech Stack:** Flutter (Provider, Clean Architecture), FastAPI + SQLAlchemy async (PostgreSQL), Python AI service (LangGraph/TraceCAG, HuBERT), Redis, RevenueCat (`purchases_flutter`), Alembic, pytest, `flutter test`.
 
