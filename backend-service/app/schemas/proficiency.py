@@ -217,6 +217,9 @@ class ExerciseResult(BaseModel):
     # Optional context
     lesson_id: Optional[str] = None
     course_id: Optional[str] = None
+    submitted_answer: Optional[str] = None
+    correct_answer: Optional[str] = None
+    concept_id: Optional[str] = None
 
 
 class UpdateProficiencyRequest(BaseModel):

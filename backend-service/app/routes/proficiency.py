@@ -44,6 +44,8 @@ from app.schemas.proficiency import (
 from app.services.proficiency_service import ProficiencyService
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank
 from app.services.level_service import calculate_numeric_level
+from app.services.learner_error_service import record_learner_error
+from app.clients.ai_service_client import diagnose_error
 
 
 router = APIRouter(prefix="/proficiency", tags=["proficiency"])
@@ -386,6 +388,35 @@ async def record_exercise_results(
         await db.commit()
         await db.refresh(profile)
     
+    for exercise in results:
+        if not exercise.is_correct:
+            error_type = None
+            if exercise.submitted_answer:
+                error_type = await diagnose_error(
+                    exercise.submitted_answer,
+                    level=(
+                        exercise.difficulty_level.value
+                        if exercise.difficulty_level
+                        else None
+                    ),
+                )
+            await record_learner_error(
+                db,
+                user_id=current_user.id,
+                source="exercise",
+                is_correct=False,
+                skill=exercise.skill.value,
+                error_type=error_type,
+                submitted_answer=exercise.submitted_answer,
+                correct_answer=exercise.correct_answer,
+                context={
+                    "lesson_id": exercise.lesson_id,
+                    "course_id": exercise.course_id,
+                    "exercise_type": exercise.exercise_type,
+                    "concept_id": exercise.concept_id,
+                },
+            )
+
     # Record individual exercise attempts
     for exercise in results:
         attempt = ExerciseAttempt(

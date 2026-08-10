@@ -64,6 +64,7 @@ from app.models.content import (
     QuestionItem,
     TestExam,
 )
+from app.models.user_grammar_item import UserGrammarItem
 
 # RBAC models
 from app.models.rbac import (
@@ -103,6 +104,9 @@ from app.models.ranking_agent import RankingAgentJob
 
 # Notification Campaign Agent models
 from app.models.notification_campaign import NotificationCampaignJob
+
+# Durable learner error history
+from app.models.learner_error import LearnerError
 
 __all__ = [
     # User (Phase 1)
@@ -152,6 +156,7 @@ __all__ = [
     "LevelAssessmentTest",
     # Content lab
     "GrammarItem",
+    "UserGrammarItem",
     "QuestionItem",
     "TestExam",
     # RBAC
@@ -179,4 +184,6 @@ __all__ = [
     "RankingAgentJob",
     # Notification Campaign Agent
     "NotificationCampaignJob",
+    # Learner error history
+    "LearnerError",
 ]
