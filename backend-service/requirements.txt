@@ -42,7 +42,7 @@ httpx>=0.28.1
 feedparser>=6.0.14
 
 # News article full-text extraction
-trafilatura>=2.1.0
+trafilatura>=2.2.0
 
 # YouTube captions (no OAuth needed — uses public transcript endpoints)
 youtube-transcript-api>=0.6.3
