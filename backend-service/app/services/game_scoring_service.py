@@ -33,6 +33,7 @@ class GameScore:
     raw_xp: int
     penalties: int
     final_base_xp: int
+    incorrect_ids: frozenset[str]
 
 
 def _normalize_answer(value: Any) -> str:
@@ -109,6 +110,7 @@ def score_game(
 
     correct_count = 0
     raw_xp = 0
+    incorrect_ids: set[str] = set()
     for item_id, expected in expected_by_id.items():
         submitted = submitted_by_id.get(item_id)
         is_correct = (
@@ -118,6 +120,8 @@ def score_game(
         if is_correct:
             correct_count += 1
             raw_xp += int(expected["xp_value"])
+        else:
+            incorrect_ids.add(item_id)
 
     penalties = hint_penalty if game_type == "hangman" and correct_count else 0
     final_base_xp = max(0, raw_xp - penalties)
@@ -128,4 +132,5 @@ def score_game(
         raw_xp=raw_xp,
         penalties=penalties,
         final_base_xp=final_base_xp,
+        incorrect_ids=frozenset(incorrect_ids),
     )

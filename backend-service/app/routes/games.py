@@ -32,7 +32,6 @@ from app.schemas.games import (
 )
 from app.services.game_scoring_service import (
     GameScoringError,
-    _normalize_answer,
     score_game,
 )
 from app.services.learner_error_service import record_learner_error
@@ -1591,9 +1590,10 @@ async def complete_game_session(
 
     submitted_by_id = {answer.id.strip(): answer.answer for answer in body.answers}
     for expected in expected_items:
-        submitted_answer = submitted_by_id[str(expected["id"]).strip()]
-        expected_answer = expected["answer"]
-        if _normalize_answer(submitted_answer) != _normalize_answer(expected_answer):
+        item_id = str(expected["id"]).strip()
+        if item_id in score.incorrect_ids:
+            submitted_answer = submitted_by_id[item_id]
+            expected_answer = expected["answer"]
             await record_learner_error(
                 db,
                 user_id=current_user.id,

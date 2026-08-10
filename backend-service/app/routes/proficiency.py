@@ -9,6 +9,7 @@ Provides endpoints for:
 5. Placement test for initial proficiency determination
 """
 
+import asyncio
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -388,34 +389,42 @@ async def record_exercise_results(
         await db.commit()
         await db.refresh(profile)
     
-    for exercise in results:
-        if not exercise.is_correct:
-            error_type = None
-            if exercise.submitted_answer:
-                error_type = await diagnose_error(
-                    exercise.submitted_answer,
-                    level=(
-                        exercise.difficulty_level.value
-                        if exercise.difficulty_level
-                        else None
-                    ),
-                )
-            await record_learner_error(
-                db,
-                user_id=current_user.id,
-                source="exercise",
-                is_correct=False,
-                skill=exercise.skill.value,
-                error_type=error_type,
-                submitted_answer=exercise.submitted_answer,
-                correct_answer=exercise.correct_answer,
-                context={
-                    "lesson_id": exercise.lesson_id,
-                    "course_id": exercise.course_id,
-                    "exercise_type": exercise.exercise_type,
-                    "concept_id": exercise.concept_id,
-                },
-            )
+    async def _diagnose_or_none(exercise: ExerciseResult) -> Optional[str]:
+        if not exercise.submitted_answer:
+            return None
+        return await diagnose_error(
+            exercise.submitted_answer,
+            level=(
+                exercise.difficulty_level.value
+                if exercise.difficulty_level
+                else None
+            ),
+        )
+
+    # Diagnosis calls are independent network I/O — run them concurrently so a
+    # batch of wrong exercises doesn't pay the ai-service timeout N times over.
+    incorrect_exercises = [exercise for exercise in results if not exercise.is_correct]
+    diagnosed_error_types = await asyncio.gather(
+        *(_diagnose_or_none(exercise) for exercise in incorrect_exercises)
+    )
+
+    for exercise, error_type in zip(incorrect_exercises, diagnosed_error_types):
+        await record_learner_error(
+            db,
+            user_id=current_user.id,
+            source="exercise",
+            is_correct=False,
+            skill=exercise.skill.value,
+            error_type=error_type,
+            submitted_answer=exercise.submitted_answer,
+            correct_answer=exercise.correct_answer,
+            context={
+                "lesson_id": exercise.lesson_id,
+                "course_id": exercise.course_id,
+                "exercise_type": exercise.exercise_type,
+                "concept_id": exercise.concept_id,
+            },
+        )
 
     # Record individual exercise attempts
     for exercise in results:
