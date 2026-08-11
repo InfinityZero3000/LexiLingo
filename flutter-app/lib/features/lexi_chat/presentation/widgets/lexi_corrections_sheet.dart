@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/chat/presentation/helpers/chat_mistake_recorder.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 
 /// Minimalist bottom sheet showing grammar/vocabulary corrections from Lexi.
@@ -8,10 +9,12 @@ class LexiCorrectionsSheet extends StatelessWidget {
   final List<LexiCorrection> corrections;
   final String? nativeHint;
   final List<String> linkedConcepts;
+  final String messageId;
 
   const LexiCorrectionsSheet({
     super.key,
     required this.corrections,
+    required this.messageId,
     this.nativeHint,
     this.linkedConcepts = const [],
   });
@@ -29,10 +32,26 @@ class LexiCorrectionsSheet extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => LexiCorrectionsSheet(
         corrections: message.corrections,
+        messageId: message.id,
         nativeHint: message.nativeHint,
         linkedConcepts: message.linkedConcepts,
       ),
     );
+  }
+
+  Future<void> _saveMistake(BuildContext context, LexiCorrection c) async {
+    await const ChatMistakeRecorder().recordGrammarCorrection(
+      sourceType: 'lexi_chat',
+      sourceId: messageId,
+      original: c.errorSpan,
+      corrected: c.correction,
+      explanation: c.explanation,
+      skill: c.errorType,
+    );
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('lexiChat.savedToMistakes'.tr())));
   }
 
   @override
@@ -410,6 +429,18 @@ class LexiCorrectionsSheet extends StatelessWidget {
                   ),
                   borderColor: AppColors.greenSuccess.withValues(alpha: 0.2),
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+              InkWell(
+                onTap: () => _saveMistake(context, correction),
+                borderRadius: BorderRadius.circular(6),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 8, top: 2),
+                  child: Icon(
+                    Icons.bookmark_add_outlined,
+                    size: 18,
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                  ),
                 ),
               ),
             ],

@@ -1,10 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/chat/presentation/widgets/markdown_message_content.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
+import 'package:lexilingo_app/features/voice/presentation/widgets/pronunciation_score_card.dart';
 
 /// Minimalist dialogue bubble for Lexi chat.
 ///
@@ -15,6 +16,7 @@ class LexiDialogueBubble extends StatelessWidget {
   final LexiMessage message;
   final VoidCallback? onPlayAudio;
   final VoidCallback? onShowCorrections;
+  final VoidCallback? onPronunciationScoreTap;
   final ValueChanged<LexiSuggestedPractice>? onSuggestedPracticeTap;
   final String? lexiAvatarUrl;
 
@@ -23,6 +25,7 @@ class LexiDialogueBubble extends StatelessWidget {
     required this.message,
     this.onPlayAudio,
     this.onShowCorrections,
+    this.onPronunciationScoreTap,
     this.onSuggestedPracticeTap,
     this.lexiAvatarUrl,
   });
@@ -179,37 +182,12 @@ class LexiDialogueBubble extends StatelessWidget {
       sourceType: 'lexi_chat',
       sourceReference: message.id,
       contextSentence: message.content,
-      child: MarkdownBody(
-        data: message.content,
+      child: MarkdownMessageContent(
+        content: message.content,
+        isDark: isDark,
         selectable: false,
-        styleSheet: MarkdownStyleSheet.fromTheme(Theme.of(context)).copyWith(
-          p: baseTextStyle,
-          listBullet: baseTextStyle.copyWith(
-            fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : AppColors.textDark,
-          ),
-          strong: baseTextStyle.copyWith(
-            fontWeight: FontWeight.w700,
-            backgroundColor: highlightColor,
-          ),
-          em: baseTextStyle.copyWith(
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.w600,
-            backgroundColor: highlightColor,
-          ),
-          a: baseTextStyle.copyWith(
-            color: AppColorRoles.primary(isDark),
-            decoration: TextDecoration.underline,
-          ),
-        ),
-        onTapLink: (text, href, title) async {
-          if (href == null || href.isEmpty) return;
-          final uri = Uri.tryParse(href);
-          if (uri == null) return;
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-        },
+        baseTextStyle: baseTextStyle,
+        highlightColor: highlightColor,
       ),
     );
   }
@@ -257,6 +235,14 @@ class LexiDialogueBubble extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        if (message.pronunciationScore != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: _PronunciationScoreChip(
+              score: message.pronunciationScore!,
+              onTap: onPronunciationScoreTap,
             ),
           ),
       ],
@@ -373,6 +359,74 @@ class LexiDialogueBubble extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: chipColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact score pill under a voice message — tap to see the full
+/// [PronunciationScoreCard] breakdown in a sheet, without letting the big
+/// card dominate the chat feed on every voice turn.
+class _PronunciationScoreChip extends StatelessWidget {
+  final PronunciationScore score;
+  final VoidCallback? onTap;
+
+  const _PronunciationScoreChip({required this.score, this.onTap});
+
+  Color _scoreColor() {
+    if (score.overallScore >= 90) return AppColors.greenSuccessBright;
+    if (score.overallScore >= 70) return AppColors.warning;
+    if (score.overallScore >= 50) return AppColors.orange;
+    return AppColors.errorBright;
+  }
+
+  void _showDetails(BuildContext context) {
+    onTap?.call();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: PronunciationScoreCard(score: score),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _scoreColor();
+
+    return InkWell(
+      onTap: () => _showDetails(context),
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.mic_rounded, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              'lexiChat.pronunciationScoreLabel'.tr(
+                namedArgs: {'score': '${score.overallScore}'},
+              ),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
               ),
             ),
           ],

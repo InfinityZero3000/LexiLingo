@@ -160,25 +160,21 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
         ],
       ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (val) => setState(() => _searchQuery = val),
-        textAlignVertical: TextAlignVertical.center,
-        style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: 'storySelection.searchHint'.tr(),
-          hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
-          prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? accent : theme.primaryColor,
+      child: Center(
+        child: TextField(
+          controller: _searchController,
+          onChanged: (val) => setState(() => _searchQuery = val),
+          textAlignVertical: TextAlignVertical.center,
+          style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
+          decoration: InputDecoration(
+            hintText: 'storySelection.searchHint'.tr(),
+            hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
+            prefixIcon: Icon(
+              Icons.search,
+              color: isDark ? accent : theme.primaryColor,
+            ),
+            border: InputBorder.none,
           ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 44,
-            minHeight: 44,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(top: 0, bottom: 0, right: 16),
         ),
       ),
     );

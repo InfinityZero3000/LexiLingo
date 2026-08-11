@@ -2,17 +2,33 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
+import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
+import '../../../achievements/presentation/providers/achievement_provider.dart';
+import '../../../achievements/presentation/widgets/achievement_unlock_overlay.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../home/presentation/widgets/home_page/today_plan_data.dart';
 import '../../../lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
+import '../../../level/domain/entities/proficiency_entity.dart';
+import '../../../level/presentation/providers/proficiency_provider.dart';
+import '../../../practice/presentation/widgets/practice_lab_models.dart';
+import '../../../practice/presentation/widgets/practice_lab_navigation.dart';
+import '../../../progress/presentation/providers/progress_provider.dart';
+import '../../../progress/presentation/providers/streak_provider.dart';
+import '../../../voice/presentation/screens/voice_practice_screen.dart';
 import '../../domain/entities/story.dart';
 import '../../domain/entities/topic_session.dart';
+import '../helpers/chat_mistake_recorder.dart';
 import '../providers/story_provider.dart';
 import '../widgets/educational_hints_widgets.dart';
+import '../widgets/markdown_message_content.dart';
+import '../widgets/session_summary_dialog.dart';
 
 /// Topic-Based Chat Page - Enhanced Version (Phase 3)
 class TopicChatPage extends StatefulWidget {
@@ -35,11 +51,49 @@ class _TopicChatPageState extends State<TopicChatPage> {
   String _taskBannerDetail = '';
   double? _taskBannerProgress;
   Timer? _autoHideTimer;
+  StreamSubscription<QuickSaveVocabularyResult>? _savedWordsSubscription;
+  int? _dueVocabularyCount;
+  bool _srsReminderDismissed = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_handleTopReached);
+    // The save sheet only reports "dismissed", not "saved vs cancelled" —
+    // listen to the service's own success stream instead so the session
+    // summary only counts words that were actually saved.
+    _savedWordsSubscription = sl<QuickSaveVocabularyService>().savedWords.listen((
+      _,
+    ) {
+      if (mounted) context.read<StoryProvider>().recordWordSaved();
+    });
+    // ProficiencyProvider isn't auto-loaded on app start (unlike
+    // StreakProvider), so the AppBar level badge needs its own fetch.
+    final proficiency = context.read<ProficiencyProvider>();
+    unawaited(
+      proficiency.loadProfile().then((_) {
+        if (!mounted) return;
+        final streak = context.read<StreakProvider>().currentStreak;
+        if (streak > 0 || proficiency.levelCode.isNotEmpty) {
+          trackProductEvent(
+            'chat_status_badge_shown',
+            source: 'topic_chat',
+            properties: {'streak': streak, 'level': proficiency.levelCode},
+          );
+        }
+      }),
+    );
+    fetchDueVocabularyCount().then((count) {
+      if (!mounted) return;
+      setState(() => _dueVocabularyCount = count);
+      if ((count ?? 0) > 0) {
+        trackProductEvent(
+          'srs_reminder_shown',
+          source: 'topic_chat',
+          properties: {'due_count': count},
+        );
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _openTopicAndWarmContext();
     });
@@ -48,6 +102,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   @override
   void dispose() {
     _autoHideTimer?.cancel();
+    _savedWordsSubscription?.cancel();
     _scrollController.removeListener(_handleTopReached);
     _controller.dispose();
     _scrollController.dispose();
@@ -241,6 +296,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
                   if (provider.currentSession != null)
                     _StoryContextHeader(session: provider.currentSession!),
 
+                  // 1.5 SRS due-review reminder
+                  if (!_srsReminderDismissed &&
+                      (_dueVocabularyCount ?? 0) > 0)
+                    _buildSrsReminderBanner(isDark),
+
                   // 2. Messages list
                   Expanded(
                     child: provider.messages.isEmpty
@@ -261,7 +321,23 @@ class _TopicChatPageState extends State<TopicChatPage> {
                             itemCount: provider.messages.length,
                             itemBuilder: (context, index) {
                               final message = provider.messages[index];
-                              return _TopicMessageBubble(message: message);
+                              final isLast =
+                                  index == provider.messages.length - 1;
+                              final suggestion =
+                                  isLast &&
+                                      !message.isUser &&
+                                      !provider.isSendingMessage
+                                  ? message.hints?.nextSuggestion
+                                  : null;
+                              return _TopicMessageBubble(
+                                message: message,
+                                nextSuggestion:
+                                    (suggestion != null &&
+                                        suggestion.isNotEmpty)
+                                    ? suggestion
+                                    : null,
+                                onSuggestionTap: _sendMessage,
+                              );
                             },
                           ),
                   ),
@@ -358,6 +434,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
         ],
       ),
       actions: [
+        const _ChatStatusBadge(),
         IconButton(
           icon: const Icon(Icons.menu_book_outlined),
           onPressed: _showVocabularyPreview,
@@ -365,7 +442,14 @@ class _TopicChatPageState extends State<TopicChatPage> {
         ),
         IconButton(
           icon: const Icon(Icons.exit_to_app_outlined),
-          onPressed: _confirmEndSession,
+          onPressed: () {
+            trackProductEvent(
+              'session_end_tapped',
+              source: 'topic_chat',
+              properties: {'story_id': widget.story.storyId},
+            );
+            _confirmEndSession();
+          },
           tooltip: 'topicChat.endSessionTooltip'.tr(),
         ),
       ],
@@ -392,6 +476,68 @@ class _TopicChatPageState extends State<TopicChatPage> {
       default:
         return Icons.chat_bubble;
     }
+  }
+
+  Widget _buildSrsReminderBanner(bool isDark) {
+    final accent = AppColorRoles.primary(isDark);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            trackProductEvent(
+              'srs_reminder_tapped',
+              source: 'topic_chat',
+              properties: {'due_count': _dueVocabularyCount},
+            );
+            Navigator.of(context).pushNamed('/vocabulary/review');
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: accent.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.style_rounded, size: 18, color: accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'topicChat.srsReminderMessage'.tr(
+                      namedArgs: {'count': '$_dueVocabularyCount'},
+                    ),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    trackProductEvent(
+                      'srs_reminder_dismissed',
+                      source: 'topic_chat',
+                      properties: {'due_count': _dueVocabularyCount},
+                    );
+                    setState(() => _srsReminderDismissed = true);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(Icons.close_rounded, size: 16, color: accent),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildSuggestedPrompts(bool isDark) {
@@ -667,13 +813,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
             child: Text('topicChat.cancelButton'.tr()),
           ),
           ElevatedButton(
-            onPressed: () {
-              final provider = context.read<StoryProvider>();
-              provider.endSession();
-              provider.clearActiveSession();
-              Navigator.pop(context); // Close dialog
-              Navigator.pop(context); // Go back to story selection
-            },
+            onPressed: () => _endSessionAndShowSummary(context),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.errorBright,
               shape: RoundedRectangleBorder(
@@ -682,6 +822,117 @@ class _TopicChatPageState extends State<TopicChatPage> {
             ),
             child: Text('topicChat.endSessionButton'.tr()),
           ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _endSessionAndShowSummary(BuildContext dialogContext) async {
+    final provider = context.read<StoryProvider>();
+    final mistakesSaved = provider.mistakesSavedThisSession;
+    final wordsSaved = provider.wordsSavedThisSession;
+    final streak = context.read<StreakProvider>().currentStreak;
+
+    Navigator.pop(dialogContext); // Close the confirm dialog
+
+    provider.endSession();
+    provider.clearActiveSession();
+
+    final progressProvider = context.read<ProgressProvider>();
+    await progressProvider.fetchMyProgress();
+    if (!mounted) return;
+
+    trackProductEvent(
+      'session_summary_shown',
+      source: 'topic_chat',
+      properties: {
+        'story_id': widget.story.storyId,
+        'mistakes_saved': mistakesSaved,
+        'words_saved': wordsSaved,
+        'streak': streak,
+        'total_xp': progressProvider.summary?.totalXp,
+      },
+    );
+    await SessionSummaryDialog.show(
+      context,
+      mistakesSaved: mistakesSaved,
+      wordsSaved: wordsSaved,
+      currentStreak: streak,
+      totalXp: progressProvider.summary?.totalXp,
+    );
+    if (!mounted) return;
+
+    final achievementProvider = context.read<AchievementProvider>();
+    final newlyUnlocked = await achievementProvider.checkAchievements();
+    if (newlyUnlocked.isNotEmpty && mounted) {
+      await AchievementUnlockOverlay.show(
+        context,
+        achievements: newlyUnlocked,
+        onDismiss: achievementProvider.clearRecentlyUnlocked,
+      );
+    }
+    if (!mounted) return;
+
+    Navigator.pop(context); // Go back to story selection
+  }
+}
+
+/// Compact streak / CEFR-level indicator shown in the chat AppBar so the
+/// learner has some sense of standing progress without leaving the chat.
+class _ChatStatusBadge extends StatelessWidget {
+  const _ChatStatusBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AppColorRoles.primary(isDark);
+    final streak = context.watch<StreakProvider>().currentStreak;
+    final levelCode = context.watch<ProficiencyProvider>().levelCode;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (streak > 0) ...[
+            Icon(
+              Icons.local_fire_department_rounded,
+              size: 16,
+              color: AppColors.orange,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              '$streak',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: AppColors.orange,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          if (levelCode.isNotEmpty)
+            Tooltip(
+              message: 'topicChat.levelBadgeTooltip'.tr(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  levelCode,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -790,8 +1041,14 @@ class _StoryContextHeader extends StatelessWidget {
 /// Topic message bubble widget
 class _TopicMessageBubble extends StatelessWidget {
   final TopicChatMessage message;
+  final String? nextSuggestion;
+  final void Function(String)? onSuggestionTap;
 
-  const _TopicMessageBubble({required this.message});
+  const _TopicMessageBubble({
+    required this.message,
+    this.nextSuggestion,
+    this.onSuggestionTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -870,7 +1127,12 @@ class _TopicMessageBubble extends StatelessWidget {
                     sourceType: 'topic_chat',
                     sourceReference: message.id,
                     contextSentence: message.displayContent,
-                    child: Text(message.displayContent, style: bubbleTextStyle),
+                    child: isUser
+                        ? Text(message.displayContent, style: bubbleTextStyle)
+                        : MarkdownMessageContent(
+                            content: message.displayContent,
+                            isDark: isDark,
+                          ),
                   ),
                 ),
               ),
@@ -879,7 +1141,102 @@ class _TopicMessageBubble extends StatelessWidget {
           if (!isUser && message.hints != null && message.hints!.hasAnyHints)
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 36),
-              child: EducationalHintsCard(hints: message.hints!),
+              child: EducationalHintsCard(
+                hints: message.hints!,
+                onSaveMistake: (correction) async {
+                  trackProductEvent(
+                    'mistake_save_tapped',
+                    source: 'topic_chat',
+                    properties: {
+                      'message_id': message.id,
+                      'error_type': correction.errorType,
+                    },
+                  );
+                  await const ChatMistakeRecorder().recordGrammarCorrection(
+                    sourceType: 'topic_chat',
+                    sourceId: message.sessionId,
+                    original: correction.original,
+                    corrected: correction.corrected,
+                    explanation: correction.explanation,
+                    skill: correction.errorType ?? 'grammar',
+                  );
+                  if (!context.mounted) return;
+                  context.read<StoryProvider>().recordMistakeSaved();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('topicChat.savedToMistakes'.tr())),
+                  );
+                },
+                onSaveWord: (hint) {
+                  trackProductEvent(
+                    'vocabulary_save_tapped',
+                    source: 'topic_chat',
+                    properties: {
+                      'message_id': message.id,
+                      'surface': 'hint',
+                    },
+                  );
+                  showQuickSaveWordSheet(
+                    context,
+                    word: hint.term,
+                    sourceType: 'topic_chat',
+                    sourceReference: message.sessionId,
+                    contextSentence: hint.example,
+                    definition: hint.definition,
+                    partOfSpeech: hint.partOfSpeech,
+                  );
+                },
+                onPracticeGrammar: (correction) {
+                  trackProductEvent(
+                    'grammar_practice_tapped',
+                    source: 'topic_chat',
+                    properties: {'error_type': correction.errorType},
+                  );
+                  openPracticeLabItem(
+                    context,
+                    buildPracticeLabItems().firstWhere(
+                      (item) => item.skill == SkillType.grammar,
+                    ),
+                  );
+                },
+                onPracticePronunciation: (hint) {
+                  trackProductEvent(
+                    'vocabulary_pronunciation_practice_tapped',
+                    source: 'topic_chat',
+                    properties: {'message_id': message.id},
+                  );
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => VoicePracticeScreen(
+                        initialPhrase: hint.example?.trim().isNotEmpty == true
+                            ? hint.example!
+                            : hint.term,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          if (!isUser && nextSuggestion != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8, left: 36),
+              child: ActionChip(
+                avatar: Icon(
+                  Icons.reply,
+                  size: 16,
+                  color: AppColorRoles.primary(isDark),
+                ),
+                label: Text(nextSuggestion!, style: TextStyle(fontSize: 12)),
+                onPressed: () => onSuggestionTap?.call(nextSuggestion!),
+                backgroundColor: isDark
+                    ? AppColors.surfaceDarkInk
+                    : AppColors.surfaceLight,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: AppColorRoles.primary(isDark).withValues(alpha: 0.3),
+                  ),
+                ),
+              ),
             ),
         ],
       ),
@@ -1000,15 +1357,22 @@ class VocabularyPreviewSheet extends StatelessWidget {
                   trailing: IconButton(
                     tooltip: 'Save to Vocabulary',
                     icon: const Icon(Icons.bookmark_add_outlined),
-                    onPressed: () => showQuickSaveWordSheet(
-                      context,
-                      word: item.term,
-                      sourceType: 'topic_chat_preview',
-                      sourceReference: sourceReference,
-                      contextSentence: item.exampleInStory,
-                      definition: item.definition,
-                      partOfSpeech: item.partOfSpeech,
-                    ),
+                    onPressed: () {
+                      trackProductEvent(
+                        'vocabulary_save_tapped',
+                        source: 'topic_chat',
+                        properties: {'surface': 'vocabulary_preview'},
+                      );
+                      showQuickSaveWordSheet(
+                        context,
+                        word: item.term,
+                        sourceType: 'topic_chat_preview',
+                        sourceReference: sourceReference,
+                        contextSentence: item.exampleInStory,
+                        definition: item.definition,
+                        partOfSpeech: item.partOfSpeech,
+                      );
+                    },
                   ),
                 );
               },

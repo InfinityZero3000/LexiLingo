@@ -9,7 +9,29 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 class EducationalHintsCard extends StatelessWidget {
   final EducationalHints hints;
 
-  const EducationalHintsCard({super.key, required this.hints});
+  /// Called with a correction when the learner taps "save" on it — the
+  /// caller owns persistence (e.g. into the Mistake Notebook).
+  final void Function(GrammarCorrection correction)? onSaveMistake;
+
+  /// Called with a vocabulary hint when the learner taps "save" on it.
+  final void Function(VocabularyHint hint)? onSaveWord;
+
+  /// Called when the learner taps "Practice this" on a grammar correction —
+  /// routes to a real practice destination, not just a chat reply.
+  final void Function(GrammarCorrection correction)? onPracticeGrammar;
+
+  /// Called when the learner taps the mic on a vocabulary hint — opens
+  /// pronunciation practice for that word/example.
+  final void Function(VocabularyHint hint)? onPracticePronunciation;
+
+  const EducationalHintsCard({
+    super.key,
+    required this.hints,
+    this.onSaveMistake,
+    this.onSaveWord,
+    this.onPracticeGrammar,
+    this.onPracticePronunciation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,13 +45,27 @@ class EducationalHintsCard extends StatelessWidget {
           // Grammar corrections
           if (hints.grammarCorrections.isNotEmpty)
             ...hints.grammarCorrections.map(
-              (correction) => GrammarCorrectionBadge(correction: correction),
+              (correction) => GrammarCorrectionBadge(
+                correction: correction,
+                onSave: onSaveMistake == null
+                    ? null
+                    : () => onSaveMistake!(correction),
+                onPractice: onPracticeGrammar == null
+                    ? null
+                    : () => onPracticeGrammar!(correction),
+              ),
             ),
 
           // Vocabulary hints
           if (hints.vocabularyHints.isNotEmpty)
             ...hints.vocabularyHints.map(
-              (hint) => VocabularyHintCard(hint: hint),
+              (hint) => VocabularyHintCard(
+                hint: hint,
+                onSave: onSaveWord == null ? null : () => onSaveWord!(hint),
+                onPracticePronunciation: onPracticePronunciation == null
+                    ? null
+                    : () => onPracticePronunciation!(hint),
+              ),
             ),
 
           // Encouragement
@@ -68,8 +104,15 @@ class EducationalHintsCard extends StatelessWidget {
 /// Shows original error and corrected version
 class GrammarCorrectionBadge extends StatelessWidget {
   final GrammarCorrection correction;
+  final VoidCallback? onSave;
+  final VoidCallback? onPractice;
 
-  const GrammarCorrectionBadge({super.key, required this.correction});
+  const GrammarCorrectionBadge({
+    super.key,
+    required this.correction,
+    this.onSave,
+    this.onPractice,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +161,21 @@ class GrammarCorrectionBadge extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (onSave != null) ...[
+                const Spacer(),
+                InkWell(
+                  onTap: onSave,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      size: 16,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 8),
@@ -226,6 +284,26 @@ class GrammarCorrectionBadge extends StatelessWidget {
                 ),
               ),
             ),
+
+          if (onPractice != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: ActionChip(
+                avatar: Icon(
+                  Icons.fitness_center_rounded,
+                  size: 14,
+                  color: Colors.orange.shade700,
+                ),
+                label: Text(
+                  'chat.practiceThisAction'.tr(),
+                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                ),
+                onPressed: onPractice,
+                backgroundColor: Colors.orange.shade100,
+                side: BorderSide.none,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
         ],
       ),
     );
@@ -236,8 +314,15 @@ class GrammarCorrectionBadge extends StatelessWidget {
 /// Shows vocabulary definition and example
 class VocabularyHintCard extends StatelessWidget {
   final VocabularyHint hint;
+  final VoidCallback? onSave;
+  final VoidCallback? onPracticePronunciation;
 
-  const VocabularyHintCard({super.key, required this.hint});
+  const VocabularyHintCard({
+    super.key,
+    required this.hint,
+    this.onSave,
+    this.onPracticePronunciation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -303,6 +388,32 @@ class VocabularyHintCard extends StatelessWidget {
                   child: Text(
                     hint.pronunciation!,
                     style: TextStyle(fontSize: 11, color: Colors.blue.shade600),
+                  ),
+                ),
+              if (onPracticePronunciation != null)
+                InkWell(
+                  onTap: onPracticePronunciation,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: Icon(
+                      Icons.mic_rounded,
+                      size: 16,
+                      color: Colors.blue.shade700,
+                    ),
+                  ),
+                ),
+              if (onSave != null)
+                InkWell(
+                  onTap: onSave,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 6),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      size: 16,
+                      color: Colors.blue.shade700,
+                    ),
                   ),
                 ),
             ],

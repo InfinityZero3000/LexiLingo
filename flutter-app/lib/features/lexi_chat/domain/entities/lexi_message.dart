@@ -1,3 +1,5 @@
+import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
+
 /// Domain entity for a single message in Lexi chat.
 class LexiMessage {
   final String id;
@@ -13,6 +15,11 @@ class LexiMessage {
   final String syncStatus; // 'synced' | 'pending_sync'
   final String? clientRequestId;
 
+  /// Set on the learner's own message when it was sent by voice — the STT
+  /// transcript is used as the reference text, so this scores how clearly
+  /// they pronounced what they said, not whether it was "correct."
+  final PronunciationScore? pronunciationScore;
+
   const LexiMessage({
     required this.id,
     required this.role,
@@ -26,6 +33,7 @@ class LexiMessage {
     this.scores,
     this.syncStatus = 'synced',
     this.clientRequestId,
+    this.pronunciationScore,
   });
 
   bool get isUser => role == 'user';
@@ -47,6 +55,7 @@ class LexiMessage {
     Map<String, dynamic>? scores,
     String? syncStatus,
     String? clientRequestId,
+    PronunciationScore? pronunciationScore,
   }) {
     return LexiMessage(
       id: id ?? this.id,
@@ -61,6 +70,7 @@ class LexiMessage {
       scores: scores ?? this.scores,
       syncStatus: syncStatus ?? this.syncStatus,
       clientRequestId: clientRequestId ?? this.clientRequestId,
+      pronunciationScore: pronunciationScore ?? this.pronunciationScore,
     );
   }
 }

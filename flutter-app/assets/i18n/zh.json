@@ -224,10 +224,11 @@
       "vocabularyCheckSubtitle": "Check if any words are due for review.",
       "vocabularyDueSubtitle": "{count} words are waiting for review.",
       "vocabularyDoneSubtitle": "You're caught up on vocabulary today.",
-      "vocabularyMeta": "SRS",
+      "vocabularyMeta": "闪卡",
       "courseFallbackTitle": "Choose a course",
       "courseFallbackSubtitle": "Pick a CEFR path and start your first lesson.",
       "courseSubtitle": "Continue your {level} learning path.",
+      "courseDoneSubtitle": "You've completed this course. Nice work!",
       "courseMeta": "Course",
       "courseProgress": "{percent}% done",
       "skillFallbackTitle": "Practice speaking",
@@ -468,7 +469,8 @@
     "preparing": "正在准备...",
     "processingVoice": "正在处理您的声音...",
     "grammarCorrection": "语法纠正",
-    "correctionRule": "规则：{rule}"
+    "correctionRule": "规则：{rule}",
+    "practiceThisAction": "练习"
   },
   "achievements": {
     "title": "成就",
@@ -1100,7 +1102,18 @@
     "endSessionButton": "结束会议",
     "contextReadyBadgeLabel": "上下文就绪",
     "keyVocabularyTitle": "关键词汇",
-    "swipeToCloseHint": "滑动关闭"
+    "swipeToCloseHint": "滑动关闭",
+    "savedToMistakes": "已保存到错题本",
+    "sessionSummaryTitle": "对话完成！",
+    "sessionSummarySubtitle": "这是你本次学到的内容。",
+    "sessionSummaryEmptySubtitle": "聊得开心！下次保存一个纠正或新单词，就能在这里跟踪你的进度。",
+    "mistakesCorrectedLabel": "已纠正",
+    "newWordsLabel": "新单词",
+    "streakStat": "连续 {count} 天",
+    "xpStat": "{count} 经验值",
+    "sessionSummaryDone": "完成",
+    "levelBadgeTooltip": "你当前的等级",
+    "srsReminderMessage": "有 {count} 个单词到期需要复习 — 点击复习"
   },
   "lexiChat": {
     "title": "莱克西",
@@ -1135,7 +1148,9 @@
     "quickReply3": "给我一个日常对话挑战。",
     "correctionLabel": "更正",
     "pendingSync": "待同步",
+    "pronunciationScoreLabel": "发音：{score}",
     "languageNotes": "语言注释",
+    "savedToMistakes": "已保存到错题本",
     "listenButton": "聆听",
     "viewNotesButton": "查看笔记",
     "practiceMoreButton": "练习 {concept}",

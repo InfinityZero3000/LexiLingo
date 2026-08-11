@@ -7,7 +7,7 @@ import re
 import time
 import uuid
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Callable, Coroutine
 
@@ -108,6 +108,10 @@ async def resolve_kg_seeds(
 class TracecagResult:
     ai_response: str
     llm_metadata: dict[str, Any]
+    diagnosis_errors: list[dict[str, Any]] = field(default_factory=list)
+    # Full graph state, kept only for persist_trace_observations (concept_ids
+    # + diagnosis_errors) — not for display/response building.
+    trace_result: dict[str, Any] = field(default_factory=dict)
 
 
 async def call_tracecag_with_retry(
@@ -156,7 +160,12 @@ async def call_tracecag_with_retry(
             "fallback_used": preferred_llm != "trace-cag",
         }
         logger.info("Topic chat response via TraceCAG")
-        return TracecagResult(ai_response=ai_response, llm_metadata=llm_metadata)
+        return TracecagResult(
+            ai_response=ai_response,
+            llm_metadata=llm_metadata,
+            diagnosis_errors=list(graph_result.get("diagnosis_errors") or []),
+            trace_result=graph_result,
+        )
 
     except Exception as graph_err:
         logger.error("TraceCAG failed for topic chat (primary): %s", graph_err)
@@ -190,7 +199,12 @@ async def call_tracecag_with_retry(
             "fallback_used": True,
             "retry_mode": "trace-cag_degraded",
         }
-        return TracecagResult(ai_response=ai_response, llm_metadata=llm_metadata)
+        return TracecagResult(
+            ai_response=ai_response,
+            llm_metadata=llm_metadata,
+            diagnosis_errors=list(retry_result.get("diagnosis_errors") or []),
+            trace_result=retry_result,
+        )
 
     except Exception as retry_err:
         logger.error("TraceCAG failed for topic chat (degraded retry): %s", retry_err)
@@ -385,6 +399,12 @@ async def stream_tracecag_topic_message(
         }
 
     clean_response, parsed_hints = EducationalHintsParser.parse(ai_response)
+    if raw_state is not None:
+        parsed_hints = EducationalHintsParser.merge_diagnosis_errors(
+            parsed_hints, raw_state.get("diagnosis_errors")
+        )
+        from api.core.redis_client import record_learner_errors
+        await record_learner_errors(user_id, raw_state.get("diagnosis_errors"))
     display_response = sanitize_topic_response(clean_response or ai_response)
 
     educational_hints_dict = None
@@ -401,6 +421,22 @@ async def stream_tracecag_topic_message(
         ai_response=display_response,
         repo=repo,
     )
+
+    if raw_state is not None:
+        try:
+            from api.services.learner_observation_spool import persist_trace_observations
+
+            await persist_trace_observations(
+                user_id=user_id,
+                session_id=session_id,
+                turn_id=ai_message_id,
+                trace_result=raw_state,
+            )
+        except Exception as observation_err:
+            logger.error(
+                "Topic learner observation durability degraded: %s",
+                type(observation_err).__name__,
+            )
 
     processing_time = int((time.time() - start_time) * 1000)
 

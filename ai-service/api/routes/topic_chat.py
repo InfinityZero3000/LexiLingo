@@ -475,6 +475,11 @@ async def send_topic_message(
             raise HTTPException(status_code=500, detail="No response from AI")
 
         clean_response, parsed_hints = EducationalHintsParser.parse(tracecag_result.ai_response)
+        parsed_hints = EducationalHintsParser.merge_diagnosis_errors(
+            parsed_hints, tracecag_result.diagnosis_errors
+        )
+        from api.core.redis_client import record_learner_errors
+        await record_learner_errors(request.user_id, tracecag_result.diagnosis_errors)
         display_response = sanitize_topic_response(clean_response or tracecag_result.ai_response)
 
         ai_message_id = await persist_topic_turn(
@@ -484,7 +489,23 @@ async def send_topic_message(
             ai_response=display_response,
             repo=repo,
         )
-        
+
+        if tracecag_result.trace_result:
+            try:
+                from api.services.learner_observation_spool import persist_trace_observations
+
+                await persist_trace_observations(
+                    user_id=request.user_id,
+                    session_id=session_id,
+                    turn_id=ai_message_id,
+                    trace_result=tracecag_result.trace_result,
+                )
+            except Exception as observation_err:
+                logger.error(
+                    "Topic learner observation durability degraded: %s",
+                    type(observation_err).__name__,
+                )
+
         processing_time = int((time.time() - start_time) * 1000)
         
         # Convert parsed hints to dict for API response

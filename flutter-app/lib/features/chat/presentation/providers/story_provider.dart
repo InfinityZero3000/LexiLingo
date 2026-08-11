@@ -39,6 +39,8 @@ class StoryProvider extends ChangeNotifier {
   String? _nextMessageCursor;
   final int _messagesPageSize = 20;
   String? _sessionError;
+  int _mistakesSavedThisSession = 0;
+  int _wordsSavedThisSession = 0;
 
   // Getters
   List<StoryListItem> get stories => _stories;
@@ -57,6 +59,21 @@ class StoryProvider extends ChangeNotifier {
   bool get hasMoreMessages => _hasMoreMessages;
   String? get sessionError => _sessionError;
   bool get hasActiveSession => _currentSession != null;
+  int get mistakesSavedThisSession => _mistakesSavedThisSession;
+  int get wordsSavedThisSession => _wordsSavedThisSession;
+
+  /// Called when the learner saves a correction card into the Mistake
+  /// Notebook — tracked so the end-of-session summary can show it.
+  void recordMistakeSaved() {
+    _mistakesSavedThisSession++;
+    notifyListeners();
+  }
+
+  /// Called when the learner saves a vocabulary hint card as a new word.
+  void recordWordSaved() {
+    _wordsSavedThisSession++;
+    notifyListeners();
+  }
 
   /// Get filtered stories based on current filters
   List<StoryListItem> get filteredStories {
@@ -292,6 +309,8 @@ class StoryProvider extends ChangeNotifier {
         _nextMessageCursor = page.nextCursor;
         _isLoadingMoreMessages = false;
         _isLoading = false;
+        _mistakesSavedThisSession = 0;
+        _wordsSavedThisSession = 0;
         notifyListeners();
         return true;
       });
@@ -320,6 +339,8 @@ class StoryProvider extends ChangeNotifier {
     _hasMoreMessages = true;
     _nextMessageCursor = null;
     _sessionError = null;
+    _mistakesSavedThisSession = 0;
+    _wordsSavedThisSession = 0;
     notifyListeners();
   }
 
@@ -622,6 +643,8 @@ class StoryProvider extends ChangeNotifier {
     _messages = [];
     _currentStoryDetails = null;
     _sessionError = null;
+    _mistakesSavedThisSession = 0;
+    _wordsSavedThisSession = 0;
     notifyListeners();
   }
 

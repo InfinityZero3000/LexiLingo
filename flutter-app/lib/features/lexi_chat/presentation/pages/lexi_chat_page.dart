@@ -7,12 +7,14 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_data.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
@@ -20,6 +22,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialo
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corrections_sheet.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
+import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
 
 /// Lexi Chat Page — Minimalist design with clean conversation UI.
 ///
@@ -66,6 +69,8 @@ class _LexiChatPageState extends State<LexiChatPage>
       _isDuplexVoiceActive;
 
   int _lastMessageCount = 0;
+  int? _dueVocabularyCount;
+  bool _srsReminderDismissed = false;
   List<String> get _quickReplies => [
     'lexiChat.quickReply1'.tr(),
     'lexiChat.quickReply2'.tr(),
@@ -89,6 +94,17 @@ class _LexiChatPageState extends State<LexiChatPage>
     });
 
     _scrollController.addListener(_handleTopReached);
+    fetchDueVocabularyCount().then((count) {
+      if (!mounted) return;
+      setState(() => _dueVocabularyCount = count);
+      if ((count ?? 0) > 0) {
+        trackProductEvent(
+          'srs_reminder_shown',
+          source: 'lexi_chat',
+          properties: {'due_count': count},
+        );
+      }
+    });
   }
 
   @override
@@ -314,10 +330,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       }
       final bytes = await file.readAsBytes();
 
-      if (!mounted) {
-        setState(() => _isTranscribing = false);
-        return;
-      }
+      if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
       final transcript = await chatProvider.transcribeAudio(bytes);
       if (!mounted) return;
@@ -335,6 +348,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
       if (!mounted) return;
       await _sendMessage();
+      unawaited(_assessAndAttachPronunciation(bytes, transcript));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -343,6 +357,52 @@ class _LexiChatPageState extends State<LexiChatPage>
       });
       _showSnack('lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}));
     }
+  }
+
+  /// Scores pronunciation on the audio the learner just sent, using the STT
+  /// transcript itself as the reference text — this is a live speech-quality
+  /// signal (did they say the words clearly), not a "was this correct"
+  /// check, so it works for free-form conversation instead of only
+  /// read-aloud drills. Fire-and-forget: never blocks or fails the send.
+  Future<void> _assessAndAttachPronunciation(
+    Uint8List bytes,
+    String transcript,
+  ) async {
+    if (transcript.trim().isEmpty) return;
+
+    final result = await sl<AssessPronunciationUseCase>()(
+      AssessPronunciationParams(
+        audioData: bytes,
+        filename: 'lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+        targetText: transcript,
+        language: 'en',
+      ),
+    );
+    if (!mounted) return;
+
+    result.fold(
+      (_) {}, // Assessment is a bonus signal — silently skip on failure.
+      (score) {
+        final chatProvider = context.read<LexiChatProvider>();
+        LexiMessage? lastUserMessage;
+        for (final message in chatProvider.messages.reversed) {
+          if (message.isUser) {
+            lastUserMessage = message;
+            break;
+          }
+        }
+        if (lastUserMessage == null) return;
+        chatProvider.attachPronunciationScore(lastUserMessage.id, score);
+        trackProductEvent(
+          'pronunciation_score_shown',
+          source: 'lexi_chat',
+          properties: {
+            'message_id': lastUserMessage.id,
+            'score': score.overallScore,
+          },
+        );
+      },
+    );
   }
 
   void _showSnack(String msg) {
@@ -379,9 +439,73 @@ class _LexiChatPageState extends State<LexiChatPage>
           child: Column(
             children: [
               _buildHeader(isDark),
+              if (!_srsReminderDismissed && (_dueVocabularyCount ?? 0) > 0)
+                _buildSrsReminderBanner(isDark),
               Expanded(child: _buildMessageList(isDark)),
               _buildInputBar(isDark),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSrsReminderBanner(bool isDark) {
+    final accent = AppColorRoles.primary(isDark);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () {
+            trackProductEvent(
+              'srs_reminder_tapped',
+              source: 'lexi_chat',
+              properties: {'due_count': _dueVocabularyCount},
+            );
+            Navigator.of(context).pushNamed('/vocabulary/review');
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: accent.withValues(alpha: 0.25)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.style_rounded, size: 18, color: accent),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'topicChat.srsReminderMessage'.tr(
+                      namedArgs: {'count': '$_dueVocabularyCount'},
+                    ),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: accent,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    trackProductEvent(
+                      'srs_reminder_dismissed',
+                      source: 'lexi_chat',
+                      properties: {'due_count': _dueVocabularyCount},
+                    );
+                    setState(() => _srsReminderDismissed = true);
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(Icons.close_rounded, size: 16, color: accent),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -764,6 +888,16 @@ class _LexiChatPageState extends State<LexiChatPage>
                         message.linkedConcepts.isNotEmpty)
                     ? () => LexiCorrectionsSheet.show(context, message)
                     : null,
+                onPronunciationScoreTap: message.pronunciationScore == null
+                    ? null
+                    : () => trackProductEvent(
+                        'pronunciation_score_tapped',
+                        source: 'lexi_chat',
+                        properties: {
+                          'message_id': message.id,
+                          'score': message.pronunciationScore!.overallScore,
+                        },
+                      ),
                 onSuggestedPracticeTap: (practice) =>
                     _sendQuickReply(practice.prompt),
               ),

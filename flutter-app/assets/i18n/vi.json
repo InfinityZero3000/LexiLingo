@@ -185,10 +185,11 @@
       "vocabularyCheckSubtitle": "Kiểm tra xem có từ nào đến hạn ôn không.",
       "vocabularyDueSubtitle": "{count} từ đang chờ ôn tập.",
       "vocabularyDoneSubtitle": "Hôm nay bạn đã ôn xong từ vựng.",
-      "vocabularyMeta": "SRS",
+      "vocabularyMeta": "Flashcard",
       "courseFallbackTitle": "Chọn một khóa học",
       "courseFallbackSubtitle": "Chọn lộ trình CEFR và bắt đầu bài đầu tiên.",
       "courseSubtitle": "Tiếp tục lộ trình {level} của bạn.",
+      "courseDoneSubtitle": "Bạn đã hoàn thành khóa học này. Làm tốt lắm!",
       "courseMeta": "Khóa học",
       "courseProgress": "Đã học {percent}%",
       "skillFallbackTitle": "Luyện nói",
@@ -468,7 +469,8 @@
     "preparing": "Đang chuẩn bị...",
     "processingVoice": "Đang xử lý giọng nói...",
     "grammarCorrection": "Sửa ngữ pháp",
-    "correctionRule": "Quy tắc: {rule}"
+    "correctionRule": "Quy tắc: {rule}",
+    "practiceThisAction": "Luyện tập"
   },
   "achievements": {
     "title": "Thành tựu",
@@ -1229,7 +1231,18 @@
     "endSessionButton": "Kết thúc phiên",
     "contextReadyBadgeLabel": "Ngữ cảnh sẵn sàng",
     "keyVocabularyTitle": "Từ vựng chính",
-    "swipeToCloseHint": "Vuốt để đóng"
+    "swipeToCloseHint": "Vuốt để đóng",
+    "savedToMistakes": "Đã lưu vào Sổ tay lỗi sai",
+    "sessionSummaryTitle": "Hoàn thành phiên trò chuyện!",
+    "sessionSummarySubtitle": "Đây là những gì bạn học được trong phiên này.",
+    "sessionSummaryEmptySubtitle": "Trò chuyện vui vẻ! Lần sau hãy lưu một lỗi sửa hoặc một từ mới để theo dõi tiến trình ở đây nhé.",
+    "mistakesCorrectedLabel": "Lỗi đã sửa",
+    "newWordsLabel": "Từ mới",
+    "streakStat": "Chuỗi {count} ngày",
+    "xpStat": "{count} XP",
+    "sessionSummaryDone": "Xong",
+    "levelBadgeTooltip": "Trình độ hiện tại của bạn",
+    "srsReminderMessage": "{count} từ đến hạn ôn tập — chạm để ôn ngay"
   },
   "lexiChat": {
     "title": "Lexi",
@@ -1264,7 +1277,9 @@
     "quickReply3": "Hãy cho mình một thử thách hội thoại hàng ngày.",
     "correctionLabel": "Sửa lỗi",
     "pendingSync": "Đang đồng bộ",
+    "pronunciationScoreLabel": "Phát âm: {score}",
     "languageNotes": "Ghi chú ngôn ngữ",
+    "savedToMistakes": "Đã lưu vào Sổ tay lỗi sai",
     "listenButton": "Nghe",
     "viewNotesButton": "Xem ghi chú",
     "practiceMoreButton": "Luyện thêm '{concept}'",

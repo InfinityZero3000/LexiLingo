@@ -26678,6 +26678,302 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/features/chat/presentation/pages/topic_chat_page.dart::_TopicMessageBubble::MaterialPageRoute::0",
+      "path": "lib/features/chat/presentation/pages/topic_chat_page.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_TopicMessageBubble",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 1208,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/chat/presentation/pages/topic_chat_page.dart::_TopicChatPageState::BoxDecoration::6",
+      "path": "lib/features/chat/presentation/pages/topic_chat_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_TopicChatPageState",
+      "callKind": "BoxDecoration",
+      "ordinal": 6,
+      "line": 771,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/pages/topic_chat_page.dart::_ChatStatusBadge::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/pages/topic_chat_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_ChatStatusBadge",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 922,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/session_summary_dialog.dart::SessionSummaryDialog::showDialog::0",
+      "path": "lib/features/chat/presentation/widgets/session_summary_dialog.dart",
+      "entryPoint": "overlay",
+      "symbol": "SessionSummaryDialog",
+      "callKind": "showDialog",
+      "ordinal": 0,
+      "line": 31,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/session_summary_dialog.dart::_StatChip::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/widgets/session_summary_dialog.dart",
+      "entryPoint": "surface",
+      "symbol": "_StatChip",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 247,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::ChatChartElementBuilder::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_chart_block.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatChartElementBuilder",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 25,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::_ChatChartCard::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_chart_block.dart",
+      "entryPoint": "surface",
+      "symbol": "_ChatChartCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 45,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::_ChatChartCard::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/widgets/chat_chart_block.dart",
+      "entryPoint": "surface",
+      "symbol": "_ChatChartCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 84,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::_Legend::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/widgets/chat_chart_block.dart",
+      "entryPoint": "surface",
+      "symbol": "_Legend",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 154,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/pages/lexi_chat_page.dart::_LexiChatPageState::BoxDecoration::11",
+      "path": "lib/features/lexi_chat/presentation/pages/lexi_chat_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_LexiChatPageState",
+      "callKind": "BoxDecoration",
+      "ordinal": 11,
+      "line": 1142,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart::_PronunciationScoreChip::showModalBottomSheet::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart",
+      "entryPoint": "overlay",
+      "symbol": "_PronunciationScoreChip",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 389,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart::_PronunciationScoreChip::Card::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart",
+      "entryPoint": "surface",
+      "symbol": "_PronunciationScoreChip",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 397,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart::_PronunciationScoreChip::BoxDecoration::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart",
+      "entryPoint": "surface",
+      "symbol": "_PronunciationScoreChip",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 413,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [

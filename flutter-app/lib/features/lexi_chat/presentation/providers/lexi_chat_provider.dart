@@ -13,6 +13,7 @@ import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.da
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
+import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 
 const _tag = 'LexiChatProvider';
 
@@ -53,6 +54,16 @@ class LexiChatProvider extends ChangeNotifier {
       timeout: AppConstants.aiOperationTimeout,
     );
     return (result['text'] as String? ?? '').trim();
+  }
+
+  /// Attaches a pronunciation score to a message once assessment finishes —
+  /// separate call from sending so a slow/failed assessment never blocks or
+  /// breaks message delivery.
+  void attachPronunciationScore(String messageId, PronunciationScore score) {
+    final idx = _messages.indexWhere((m) => m.id == messageId);
+    if (idx == -1) return;
+    _messages[idx] = _messages[idx].copyWith(pronunciationScore: score);
+    notifyListeners();
   }
 
   // ── State ──────────────────────────────────────────────────────────────────

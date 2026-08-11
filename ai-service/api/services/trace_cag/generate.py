@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import time
+from collections import Counter
 from typing import Any, AsyncGenerator, Dict, List
 
 from api.services.trace_cag.state import TraceCAGState
@@ -77,6 +78,54 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
             f"acknowledge picking back up; don't force it if this message is "
             f"on a completely different topic.\n"
         )
+
+    # Durable (Postgres learner_concept_states, no TTL) signal takes priority
+    # over the Redis rolling cache: does the concept THIS turn's diagnosis
+    # just touched also have a persistent track record of low mastery across
+    # ALL past sessions? Populated by _load_learner_concept_overlay — empty
+    # whenever LEARNER_STATE_MODE is "off", so this safely no-ops until the
+    # feature is enabled.
+    concept_states = state.get("learner_concept_states") or {}
+    root_causes = state.get("diagnosis_root_causes") or []
+    struggling_concept = None
+    for concept_id in root_causes:
+        info = concept_states.get(str(concept_id))
+        if not isinstance(info, dict):
+            continue
+        error_count = int(info.get("error_count") or 0)
+        mastery = info.get("mastery_probability")
+        mastery = float(mastery) if mastery is not None else 1.0
+        if error_count >= 2 and mastery < 0.55:
+            struggling_concept = str(concept_id)
+            break
+
+    if struggling_concept:
+        readable = (
+            struggling_concept.split(":")[-1].replace(".", " ").replace("_", " ").strip()
+        )
+        if readable:
+            hint += (
+                f"This learner has a persistent track record of struggling with "
+                f"'{readable}' across past sessions, and just made a related error "
+                "again. If a natural opportunity comes up, reinforce it gently with "
+                "a short example — don't call it out as a repeated failure.\n"
+            )
+    else:
+        # Fallback: Redis rolling cache (last ~20 diagnosed errors, 7-day
+        # window — see LearnerProfileCache). Less precise (not tied to this
+        # turn's concept) but still useful when the durable store has no
+        # opinion yet (feature just enabled, or this concept never recorded).
+        common_errors = learner_profile.get("common_errors") or []
+        if common_errors:
+            top_error, _count = Counter(common_errors).most_common(1)[0]
+            readable = top_error.replace("_", " ").strip()
+            if readable:
+                hint += (
+                    f"This learner has repeatedly struggled with '{readable}' across "
+                    "recent turns. If a natural opportunity comes up in this reply, "
+                    "gently reinforce it with a short example — don't call it out as "
+                    "a repeated failure or force it into an unrelated message.\n"
+                )
     return hint
 
 
@@ -100,7 +149,20 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
         f"The learner's current CEFR level is: {level}\n"
         f"Difficulty setting for this turn: {difficulty}\n"
         f"{personalization}"
+        f"{_RICH_FORMATTING_HINT}"
     )
+
+
+_RICH_FORMATTING_HINT = (
+    "\nWhen it genuinely helps — comparing two grammar forms/tenses/words, or "
+    "summarizing multiple facts — use a markdown table (`| Col | Col |`) instead of "
+    "prose. Skip the table for short answers where it wouldn't add clarity.\n"
+    "For numeric data (scores, progress, counts), you may add ONE fenced "
+    '```chart block right after your sentence, containing only compact JSON: '
+    '{"type":"bar|line|pie","title":"...","labels":["A","B"],'
+    '"series":[{"name":"...","values":[1,2]}]}. Omit it unless there\'s real '
+    "data to plot — never invent numbers.\n"
+)
 
 
 def _compute_difficulty_ramp(session_turn: int, overall_score: float) -> str:

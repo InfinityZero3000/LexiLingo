@@ -103,20 +103,25 @@ class EducationalHintsParser:
     2. JSON format: structured JSON output
     """
     
-    # Regex patterns for bracket format
+    # Regex patterns for bracket format.
+    # The model doesn't always emit the exact emoji from the prompt (e.g. 📜 instead
+    # of 📘), so match on the marker keyword instead of a hardcoded emoji glyph.
+    _EMOJI_PREFIX = r'[^\w\[\]]{0,2}\s*'
+
     TIP_PATTERN = re.compile(
-        r'\[💡\s*(?:Tip|Mẹo)?:?\s*([^\]]+)\]',
+        r'\[' + _EMOJI_PREFIX + r'(?:Tip|Mẹo):?\s*([^\]]+)\]',
         re.IGNORECASE | re.UNICODE
     )
-    
+
     VOCAB_PATTERN = re.compile(
-        r"\[📘\s*['\"]?([^'\"]+)['\"]?\s*(?:means?|nghĩa là)?\s*([^\]]+)\]",
+        r"\[" + _EMOJI_PREFIX + r"['\"]?([^'\"\[\]]+)['\"]?\s*(?:means?|nghĩa là)\s*([^\]]+)\]",
         re.IGNORECASE | re.UNICODE
     )
-    
-    # Alternative vocab pattern for simpler format
+
+    # Alternative vocab pattern for simpler format (no explicit "means").
+    # Excludes Tip brackets so a generic emoji doesn't get miscategorized as vocab.
     VOCAB_PATTERN_SIMPLE = re.compile(
-        r"\[📘\s*([^\]]+)\]",
+        r"\[" + _EMOJI_PREFIX + r"(?!(?:Tip|Mẹo)\b)([^\]]+)\]",
         re.IGNORECASE | re.UNICODE
     )
     
@@ -144,6 +149,54 @@ class EducationalHintsParser:
         ],
     }
     
+    @classmethod
+    def merge_diagnosis_errors(
+        cls,
+        hints: Optional[EducationalHints],
+        diagnosis_errors: Optional[List[dict]],
+    ) -> Optional[EducationalHints]:
+        """
+        Supplement grammar_corrections with the pipeline's own structured
+        diagnosis (state["diagnosis_errors"]) — computed independently of
+        whether the model remembered to format a [Tip] bracket. Skips any
+        correction that already has the same "corrected" text so a bracket
+        tip and its underlying diagnosis don't both show up as duplicate cards.
+        """
+        if not diagnosis_errors:
+            return hints
+        existing = {
+            gc.corrected.strip().lower()
+            for gc in (hints.grammar_corrections if hints else [])
+            if gc.corrected
+        }
+        added: List[GrammarCorrection] = []
+        for err in diagnosis_errors:
+            corrected = str(err.get("correction") or "").strip()
+            if not corrected or corrected.lower() in existing:
+                continue
+            raw_type = str(err.get("type") or "").strip().lower()
+            try:
+                error_type = GrammarErrorType(raw_type)
+            except ValueError:
+                error_type = cls._detect_error_type(
+                    f"{raw_type} {err.get('explanation', '')}"
+                )
+            added.append(GrammarCorrection(
+                original=str(err.get("span") or ""),
+                corrected=corrected,
+                explanation=str(err.get("explanation") or ""),
+                error_type=error_type,
+                rule=raw_type or None,
+            ))
+            existing.add(corrected.lower())
+
+        if not added:
+            return hints
+        if hints is None:
+            hints = EducationalHints()
+        hints.grammar_corrections.extend(added)
+        return hints
+
     @classmethod
     def parse(cls, response: str) -> Tuple[str, Optional[EducationalHints]]:
         """

@@ -60,6 +60,86 @@ void main() {
       expect(snapshot.tasks[4].destination, TodayPlanDestination.lexi);
       expect(snapshot.nextTask, snapshot.tasks[1]);
     });
+
+    test(
+      'shows a completed course as done instead of the "choose a course" '
+      'fallback when every enrolled course is already finished',
+      () {
+        final snapshot = buildTodayPlanSnapshot(
+          dueVocabularyCount: 0,
+          enrolledCourses: [_course(progress: 1.0)],
+          weakestSkills: const [],
+          challenges: const [],
+        );
+
+        final courseTask = snapshot.tasks[1];
+        expect(courseTask.title, 'A2 Daily English'); // not the fallback copy
+        expect(courseTask.isCompleted, isTrue);
+        expect(courseTask.progress, 1.0);
+      },
+    );
+
+    test(
+      'still falls back to "choose a course" when nothing is enrolled at all',
+      () {
+        final snapshot = buildTodayPlanSnapshot(
+          dueVocabularyCount: 0,
+          enrolledCourses: const [],
+          weakestSkills: const [],
+          challenges: const [],
+        );
+
+        final courseTask = snapshot.tasks[1];
+        expect(courseTask.destination, TodayPlanDestination.courseList);
+        expect(courseTask.isCompleted, isFalse);
+      },
+    );
+  });
+
+  group('TodayPlanSnapshot.visibleTasks', () {
+    test('shows pending tasks first so a finished task never bumps a '
+        'pending one out of the space-constrained home card', () {
+      // Vocabulary (0), skill (2) and challenge (3) are already done; course
+      // (1, no enrolled course -> "pick a course" fallback) and conversation
+      // (4, never completes) are still pending. A fixed take(3) would show
+      // vocab/course/skill and hide challenge/conversation even though two
+      // of those three are already done and course/conversation are not.
+      final snapshot = buildTodayPlanSnapshot(
+        dueVocabularyCount: 0,
+        enrolledCourses: const [],
+        weakestSkills: [_skill(SkillType.listening, score: 95)],
+        challenges: [_challenge(category: 'vocabulary', current: 3, target: 3)],
+      );
+
+      expect(snapshot.tasks[0].isCompleted, isTrue); // vocabulary
+      expect(snapshot.tasks[1].isCompleted, isFalse); // course
+      expect(snapshot.tasks[2].isCompleted, isTrue); // skill
+      expect(snapshot.tasks[3].isCompleted, isTrue); // challenge
+      expect(snapshot.tasks[4].isCompleted, isFalse); // conversation
+
+      final visible = snapshot.visibleTasks();
+
+      expect(visible.map((t) => t.type), [
+        TodayPlanTaskType.course,
+        TodayPlanTaskType.conversation,
+        TodayPlanTaskType.vocabulary,
+      ]);
+    });
+
+    test('keeps original order when nothing is completed yet', () {
+      final snapshot = buildTodayPlanSnapshot(
+        dueVocabularyCount: 4,
+        enrolledCourses: const [],
+        weakestSkills: const [],
+        challenges: const [],
+      );
+
+      expect(snapshot.visibleTasks().map((t) => t.type), [
+        TodayPlanTaskType.vocabulary,
+        TodayPlanTaskType.course,
+        TodayPlanTaskType.skill,
+      ]);
+    });
   });
 }
 

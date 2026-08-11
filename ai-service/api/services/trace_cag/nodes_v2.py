@@ -545,15 +545,21 @@ Be encouraging and focus on the most important errors first."""
                 else:
                     ai_data = ai_response
                 
-                # Extract errors
+                # Extract errors — small fallback models sometimes hallucinate a
+                # generic span (e.g. "the sentence") instead of quoting the
+                # actual offending text, so drop anything that isn't really
+                # part of what the user typed.
                 for err in ai_data.get("errors", []):
+                    span = err.get("span", "")
+                    if not span or span.lower() not in user_text.lower():
+                        continue
                     errors.append(DiagnosisError(
-                        span=err.get("span", ""),
+                        span=span,
                         type=err.get("type", "unknown"),
                         correction=err.get("correction", ""),
                         explanation=err.get("explanation", ""),
                     ))
-                    
+
                     # Map to KG concept
                     error_type = err.get("type", "").lower()
                     concept_map = {

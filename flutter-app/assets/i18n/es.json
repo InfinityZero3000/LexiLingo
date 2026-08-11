@@ -224,10 +224,11 @@
       "vocabularyCheckSubtitle": "Check if any words are due for review.",
       "vocabularyDueSubtitle": "{count} words are waiting for review.",
       "vocabularyDoneSubtitle": "You're caught up on vocabulary today.",
-      "vocabularyMeta": "SRS",
+      "vocabularyMeta": "Tarjetas de memoria",
       "courseFallbackTitle": "Choose a course",
       "courseFallbackSubtitle": "Pick a CEFR path and start your first lesson.",
       "courseSubtitle": "Continue your {level} learning path.",
+      "courseDoneSubtitle": "You've completed this course. Nice work!",
       "courseMeta": "Course",
       "courseProgress": "{percent}% done",
       "skillFallbackTitle": "Practice speaking",
@@ -468,7 +469,8 @@
     "preparing": "Preparante...",
     "processingVoice": "Procesando tu voz...",
     "grammarCorrection": "Corrección gramatical",
-    "correctionRule": "Regla: {rule}"
+    "correctionRule": "Regla: {rule}",
+    "practiceThisAction": "Practicar"
   },
   "achievements": {
     "title": "Logros",
@@ -1100,7 +1102,18 @@
     "endSessionButton": "Finalizar sesión",
     "contextReadyBadgeLabel": "Listo para el contexto",
     "keyVocabularyTitle": "Vocabulario clave",
-    "swipeToCloseHint": "Desliza para cerrar"
+    "swipeToCloseHint": "Desliza para cerrar",
+    "savedToMistakes": "Guardado en tu cuaderno de errores",
+    "sessionSummaryTitle": "¡Sesión completada!",
+    "sessionSummarySubtitle": "Esto es lo que aprendiste en esta sesión.",
+    "sessionSummaryEmptySubtitle": "¡Buena charla! La próxima vez, guarda una corrección o una palabra nueva para seguir tu progreso aquí.",
+    "mistakesCorrectedLabel": "Correcciones",
+    "newWordsLabel": "Palabras nuevas",
+    "streakStat": "Racha de {count} días",
+    "xpStat": "{count} XP",
+    "sessionSummaryDone": "Listo",
+    "levelBadgeTooltip": "Tu nivel actual",
+    "srsReminderMessage": "Tienes {count} palabras pendientes de repaso — toca para repasarlas"
   },
   "lexiChat": {
     "title": "Lexi",
@@ -1135,7 +1148,9 @@
     "quickReply3": "Dame un desafío de conversación diario.",
     "correctionLabel": "Corrección",
     "pendingSync": "Sincronización pendiente",
+    "pronunciationScoreLabel": "Pronunciación: {score}",
     "languageNotes": "Notas de idioma",
+    "savedToMistakes": "Guardado en tu cuaderno de errores",
     "listenButton": "Escuchar",
     "viewNotesButton": "Ver notas",
     "practiceMoreButton": "Practicar {concept}",

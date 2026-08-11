@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_models.dart';
 import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
 
 void openTodayPlanTask(BuildContext context, TodayPlanTask task) {
+  trackProductEvent(
+    'task_tapped',
+    source: 'today_plan',
+    properties: {
+      'task_type': task.type.name,
+      'destination': task.destination.name,
+      'completed': task.isCompleted,
+    },
+  );
   switch (task.destination) {
     case TodayPlanDestination.vocabularyReview:
       Navigator.of(context).pushNamed('/vocabulary/review');

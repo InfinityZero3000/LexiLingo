@@ -370,3 +370,94 @@ class TestPersonalizationHint:
             {"learner_profile": {"level": "B1"}}, "B1", "standard"
         )
         assert "Last time" not in prompt
+
+    def test_no_common_errors_hint_when_cache_is_empty(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {"learner_profile": {"level": "B1", "common_errors": []}}, "B1", "standard"
+        )
+        assert "repeatedly struggled" not in prompt
+
+    def test_common_errors_hint_uses_the_most_frequent_recent_type(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "learner_profile": {
+                    "level": "B1",
+                    # lpush order (most recent first); "tense_error" is the
+                    # most frequent even though it's not first in the list.
+                    "common_errors": [
+                        "article_error", "tense_error", "tense_error", "tense_error",
+                    ],
+                }
+            },
+            "B1",
+            "standard",
+        )
+        assert "repeatedly struggled" in prompt
+        assert "tense error" in prompt
+
+    def test_durable_concept_state_hint_takes_priority_over_redis_cache(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "learner_profile": {
+                    "level": "B1",
+                    "common_errors": ["article_error"],  # would fire alone
+                },
+                "diagnosis_root_causes": ["concept:grammar.tenses"],
+                "learner_concept_states": {
+                    "concept:grammar.tenses": {
+                        "error_count": 3,
+                        "mastery_probability": 0.3,
+                    }
+                },
+            },
+            "B1",
+            "standard",
+        )
+        assert "persistent track record" in prompt
+        assert "tenses" in prompt
+        # Only one hint fires per turn — Postgres wins, Redis fallback is skipped.
+        assert "article error" not in prompt
+
+    def test_durable_concept_state_ignored_when_mastery_is_fine(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "learner_profile": {"level": "B1"},
+                "diagnosis_root_causes": ["concept:grammar.tenses"],
+                "learner_concept_states": {
+                    "concept:grammar.tenses": {
+                        "error_count": 1,
+                        "mastery_probability": 0.9,
+                    }
+                },
+            },
+            "B1",
+            "standard",
+        )
+        assert "persistent track record" not in prompt
+
+    def test_falls_back_to_redis_cache_when_concept_state_missing(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "learner_profile": {
+                    "level": "B1",
+                    "common_errors": ["article_error"],
+                },
+                "diagnosis_root_causes": ["concept:grammar.tenses"],
+                "learner_concept_states": {},  # LEARNER_STATE_MODE=off shape
+            },
+            "B1",
+            "standard",
+        )
+        assert "persistent track record" not in prompt
+        assert "repeatedly struggled" in prompt
+        assert "article error" in prompt

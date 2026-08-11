@@ -72,7 +72,7 @@ class LegalPage extends StatelessWidget {
     _Section(
       title: '7. Contact',
       body:
-          'For privacy inquiries, contact us at privacy@lexilingo.app. We will respond within 30 days.',
+          'For privacy inquiries, contact us at nhthang312@gmail.com. We will respond within 30 days.',
     ),
   ];
 

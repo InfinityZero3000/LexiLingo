@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_messages_p
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
+import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 
 class _FakeLexiChatRepository implements LexiChatRepository {
   int createSessionCalls = 0;
@@ -369,6 +370,68 @@ void main() {
       // After an explicit user toggle, the global setting no longer wins.
       provider.syncTtsWithGlobalSound(true);
       expect(provider.ttsEnabled, isFalse);
+    });
+
+    test(
+      'attachPronunciationScore updates only the matching message',
+      () async {
+        final provider = LexiChatProvider(
+          repository: _FakeLexiChatRepository(),
+          aiClient: AiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        await provider.sendMessage('hello', userId: 'user-1');
+        final userMessage = provider.messages.firstWhere((m) => m.isUser);
+        final assistantMessage = provider.messages.firstWhere(
+          (m) => m.isLexi,
+        );
+        const score = PronunciationScore(
+          overallScore: 82,
+          accuracyScore: 80,
+          fluencyScore: 85,
+          completenessScore: 90,
+          userTranscript: 'hello',
+          targetText: 'hello',
+        );
+
+        provider.attachPronunciationScore(userMessage.id, score);
+
+        expect(
+          provider.messages
+              .firstWhere((m) => m.id == userMessage.id)
+              .pronunciationScore,
+          score,
+        );
+        expect(
+          provider.messages
+              .firstWhere((m) => m.id == assistantMessage.id)
+              .pronunciationScore,
+          isNull,
+        );
+      },
+    );
+
+    test('attachPronunciationScore is a no-op for an unknown message id', () {
+      final provider = LexiChatProvider(
+        repository: _FakeLexiChatRepository(),
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      const score = PronunciationScore(
+        overallScore: 82,
+        accuracyScore: 80,
+        fluencyScore: 85,
+        completenessScore: 90,
+        userTranscript: 'hello',
+        targetText: 'hello',
+      );
+
+      expect(
+        () => provider.attachPronunciationScore('missing-id', score),
+        returnsNormally,
+      );
     });
   });
 }

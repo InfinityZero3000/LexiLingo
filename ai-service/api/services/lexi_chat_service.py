@@ -875,6 +875,8 @@ async def stream_lexi_chat(
 
     # Extract corrections / concepts / scores from pipeline state
     diag_errors = list(raw_state.get("diagnosis_errors") or [])
+    from api.core.redis_client import record_learner_errors
+    await record_learner_errors(request.user_id, diag_errors)
     corrections = [
         LexiCorrection(
             error_span=str(e.get("span") or ""),

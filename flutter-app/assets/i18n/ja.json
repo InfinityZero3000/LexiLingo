@@ -224,10 +224,11 @@
       "vocabularyCheckSubtitle": "Check if any words are due for review.",
       "vocabularyDueSubtitle": "{count} words are waiting for review.",
       "vocabularyDoneSubtitle": "You're caught up on vocabulary today.",
-      "vocabularyMeta": "SRS",
+      "vocabularyMeta": "フラッシュカード",
       "courseFallbackTitle": "Choose a course",
       "courseFallbackSubtitle": "Pick a CEFR path and start your first lesson.",
       "courseSubtitle": "Continue your {level} learning path.",
+      "courseDoneSubtitle": "You've completed this course. Nice work!",
       "courseMeta": "Course",
       "courseProgress": "{percent}% done",
       "skillFallbackTitle": "Practice speaking",
@@ -468,7 +469,8 @@
     "preparing": "準備中...",
     "processingVoice": "音声を処理しています...",
     "grammarCorrection": "文法修正",
-    "correctionRule": "ルール: {rule}"
+    "correctionRule": "ルール: {rule}",
+    "practiceThisAction": "練習する"
   },
   "achievements": {
     "title": "業績",
@@ -1100,7 +1102,18 @@
     "endSessionButton": "セッションの終了",
     "contextReadyBadgeLabel": "コンテキストの準備完了",
     "keyVocabularyTitle": "重要な語彙",
-    "swipeToCloseHint": "スワイプして閉じます"
+    "swipeToCloseHint": "スワイプして閉じます",
+    "savedToMistakes": "間違いノートに保存しました",
+    "sessionSummaryTitle": "セッション完了！",
+    "sessionSummarySubtitle": "今回のセッションで学んだ内容です。",
+    "sessionSummaryEmptySubtitle": "楽しい会話でした！次回は訂正や新しい単語を保存すると、ここで進捗を確認できます。",
+    "mistakesCorrectedLabel": "修正した間違い",
+    "newWordsLabel": "新しい単語",
+    "streakStat": "{count}日連続",
+    "xpStat": "{count} XP",
+    "sessionSummaryDone": "完了",
+    "levelBadgeTooltip": "現在のレベル",
+    "srsReminderMessage": "復習が必要な単語が{count}個あります — タップして復習"
   },
   "lexiChat": {
     "title": "レクシー",
@@ -1135,7 +1148,9 @@
     "quickReply3": "日常会話にチャレンジしてみませんか。",
     "correctionLabel": "修正",
     "pendingSync": "同期保留中",
+    "pronunciationScoreLabel": "発音：{score}",
     "languageNotes": "言語ノート",
+    "savedToMistakes": "間違いノートに保存しました",
     "listenButton": "再生",
     "viewNotesButton": "メモを見る",
     "practiceMoreButton": "{concept}を練習",

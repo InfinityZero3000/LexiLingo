@@ -224,10 +224,11 @@
       "vocabularyCheckSubtitle": "Check if any words are due for review.",
       "vocabularyDueSubtitle": "{count} words are waiting for review.",
       "vocabularyDoneSubtitle": "You're caught up on vocabulary today.",
-      "vocabularyMeta": "SRS",
+      "vocabularyMeta": "Cartes mémoire",
       "courseFallbackTitle": "Choose a course",
       "courseFallbackSubtitle": "Pick a CEFR path and start your first lesson.",
       "courseSubtitle": "Continue your {level} learning path.",
+      "courseDoneSubtitle": "You've completed this course. Nice work!",
       "courseMeta": "Course",
       "courseProgress": "{percent}% done",
       "skillFallbackTitle": "Practice speaking",
@@ -468,7 +469,8 @@
     "preparing": "Préparation...",
     "processingVoice": "Traiter votre voix...",
     "grammarCorrection": "Correction de grammaire",
-    "correctionRule": "Règle : {rule}"
+    "correctionRule": "Règle : {rule}",
+    "practiceThisAction": "S'entraîner"
   },
   "achievements": {
     "title": "Récompenses",
@@ -1100,7 +1102,18 @@
     "endSessionButton": "Fin de session",
     "contextReadyBadgeLabel": "Prêt pour le contexte",
     "keyVocabularyTitle": "Vocabulaire clé",
-    "swipeToCloseHint": "Glissez pour fermer"
+    "swipeToCloseHint": "Glissez pour fermer",
+    "savedToMistakes": "Enregistré dans votre carnet d'erreurs",
+    "sessionSummaryTitle": "Session terminée !",
+    "sessionSummarySubtitle": "Voici ce que vous avez appris pendant cette session.",
+    "sessionSummaryEmptySubtitle": "Belle conversation ! La prochaine fois, enregistrez une correction ou un nouveau mot pour suivre vos progrès ici.",
+    "mistakesCorrectedLabel": "Corrections",
+    "newWordsLabel": "Nouveaux mots",
+    "streakStat": "Série de {count} jours",
+    "xpStat": "{count} XP",
+    "sessionSummaryDone": "Terminé",
+    "levelBadgeTooltip": "Votre niveau actuel",
+    "srsReminderMessage": "{count} mots sont à réviser — appuyez pour les réviser"
   },
   "lexiChat": {
     "title": "Lexi",
@@ -1135,7 +1148,9 @@
     "quickReply3": "Donnez-moi un défi de conversation quotidien.",
     "correctionLabel": "Correction",
     "pendingSync": "Synchronisation en attente",
+    "pronunciationScoreLabel": "Prononciation : {score}",
     "languageNotes": "Notes de langue",
+    "savedToMistakes": "Enregistré dans votre carnet d'erreurs",
     "listenButton": "Écouter",
     "viewNotesButton": "Voir notes",
     "practiceMoreButton": "Pratiquer {concept}",
