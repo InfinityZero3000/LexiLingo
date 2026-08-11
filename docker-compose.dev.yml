@@ -46,7 +46,7 @@ services:
     mem_limit: 768m
     memswap_limit: 768m
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@lexilingo.me}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-nhthang312@gmail.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?Set PGADMIN_DEFAULT_PASSWORD in .env}
       PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
       PGADMIN_CONFIG_LOGIN_BANNER: "'LexiLingo Database Management'"
