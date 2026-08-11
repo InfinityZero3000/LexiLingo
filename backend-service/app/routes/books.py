@@ -13,7 +13,7 @@ import hashlib
 import logging
 import re
 from typing import Optional
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Response
@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.safe_http import safe_get
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -672,25 +673,13 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     """
     Proxy book cover images from Gutenberg or Open Library to bypass browser CORS.
     """
-    try:
-        parsed_url = urlparse(url)
-        if parsed_url.netloc not in ALLOWED_PROXY_DOMAINS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Domain not allowed for proxying."
-            )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid URL."
-        )
-        
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
-            resp = await client.get(
-                url, 
+            resp = await safe_get(
+                client,
+                url,
+                allowed_hosts=ALLOWED_PROXY_DOMAINS,
                 headers={"User-Agent": "LexiLingo/1.0 (English learning app; cover-proxy)"},
-                follow_redirects=True
             )
             if resp.status_code != 200:
                 raise HTTPException(
@@ -704,6 +693,8 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                     "Cache-Control": "public, max-age=86400",  # Cache for 24h
                 }
             )
+        except HTTPException:
+            raise
         except httpx.RequestError as e:
             logger.error("HTTP request error proxying image %s: %s", url, e)
             raise HTTPException(
@@ -723,25 +714,13 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
     """
     Proxy book plain-text content from Gutenberg to bypass browser CORS.
     """
-    try:
-        parsed_url = urlparse(url)
-        if parsed_url.netloc not in ALLOWED_PROXY_DOMAINS:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Domain not allowed for proxying."
-            )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid URL."
-        )
-        
     async with httpx.AsyncClient(timeout=15.0) as client:
         try:
-            resp = await client.get(
-                url, 
+            resp = await safe_get(
+                client,
+                url,
+                allowed_hosts=ALLOWED_PROXY_DOMAINS,
                 headers={"User-Agent": "LexiLingo/1.0 (English learning app; text-proxy)"},
-                follow_redirects=True
             )
             if resp.status_code != 200:
                 raise HTTPException(
@@ -758,6 +737,8 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
                     "Cache-Control": "public, max-age=86400",  # Cache for 24h
                 }
             )
+        except HTTPException:
+            raise
         except httpx.RequestError as e:
             logger.error("HTTP request error proxying text %s: %s", url, e)
             raise HTTPException(

@@ -8,8 +8,10 @@ import asyncio
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any
-from jose import JWTError, jwt
+
+import anyio
 import bcrypt
+from jose import JWTError, jwt
 
 from app.core.config import settings
 
@@ -23,13 +25,6 @@ def _verify_password_sync(plain_password: str, hashed_password: str) -> bool:
         )
     except (ValueError, TypeError):
         return False
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify plain password against hashed password (sync wrapper for non-async callers)."""
-    if not hashed_password:
-        return False
-    return _verify_password_sync(plain_password, hashed_password)
 
 
 async def verify_password_async(plain_password: str, hashed_password: str) -> bool:
@@ -224,10 +219,12 @@ async def verify_google_token(id_token: str, audience: str | None = None) -> Opt
         from google.auth.transport import requests
         
         # Verify the token
-        idinfo = google_id_token.verify_oauth2_token(
-            id_token,
-            requests.Request(),
-            audience=audience
+        idinfo = await anyio.to_thread.run_sync(
+            lambda: google_id_token.verify_oauth2_token(
+                id_token,
+                requests.Request(),
+                audience=audience,
+            )
         )
         
         logger.info(f"Google token verified successfully for email={idinfo.get('email')}")

@@ -401,6 +401,76 @@ class VocabularyCRUD:
             )
         )
         return result.scalar_one()
+
+    async def bulk_add_to_collection(
+        self,
+        db: AsyncSession,
+        user_id: uuid.UUID,
+        vocabulary_ids: List[uuid.UUID],
+    ) -> List[UserVocabulary]:
+        """Add existing vocabulary items with one upsert and one commit."""
+        unique_ids = list(dict.fromkeys(vocabulary_ids))
+        if not unique_ids:
+            return []
+
+        valid_ids = list(
+            (
+                await db.scalars(
+                    select(VocabularyItem.id).where(VocabularyItem.id.in_(unique_ids))
+                )
+            ).all()
+        )
+        if not valid_ids:
+            return []
+
+        now = datetime.now(timezone.utc)
+        next_review = now + timedelta(days=1)
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "user_id": user_id,
+                "vocabulary_id": vocabulary_id,
+                "status": VocabularyStatus.LEARNING,
+                "ease_factor": 2.5,
+                "interval": 1,
+                "repetitions": 0,
+                "next_review_date": next_review,
+                "fsrs_stability": 0.0,
+                "fsrs_difficulty": 0.0,
+                "fsrs_elapsed_days": 0,
+                "fsrs_scheduled_days": 0,
+                "fsrs_reps": 0,
+                "fsrs_lapses": 0,
+                "fsrs_state": 0,
+                "added_at": now,
+                "total_reviews": 0,
+                "correct_reviews": 0,
+                "streak": 0,
+                "longest_streak": 0,
+                "total_xp_earned": 0,
+            }
+            for vocabulary_id in valid_ids
+        ]
+        await db.execute(
+            pg_insert(UserVocabulary)
+            .values(rows)
+            .on_conflict_do_nothing(index_elements=["user_id", "vocabulary_id"])
+        )
+        result = await db.execute(
+            select(UserVocabulary).where(
+                UserVocabulary.user_id == user_id,
+                UserVocabulary.vocabulary_id.in_(valid_ids),
+            )
+        )
+        by_vocabulary_id = {
+            item.vocabulary_id: item for item in result.scalars().all()
+        }
+        await db.commit()
+        return [
+            by_vocabulary_id[vocabulary_id]
+            for vocabulary_id in vocabulary_ids
+            if vocabulary_id in by_vocabulary_id
+        ]
     
     async def get_due_vocabulary(
         self,

@@ -5,22 +5,29 @@ from __future__ import annotations
 import asyncio
 
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 
 
 @celery_app.task(name="app.tasks.content_prefetch_schedule.prefetch_news")
 def prefetch_news_task() -> dict:
-    return asyncio.run(_run_news())
+    return asyncio.run(_with_db_cleanup(_run_news()))
 
 
 @celery_app.task(name="app.tasks.content_prefetch_schedule.prefetch_youtube")
 def prefetch_youtube_task() -> dict:
-    return asyncio.run(_run_youtube())
+    return asyncio.run(_with_db_cleanup(_run_youtube()))
 
 
 @celery_app.task(name="app.tasks.content_prefetch_schedule.prefetch_podcasts")
 def prefetch_podcasts_task() -> dict:
-    return asyncio.run(_run_podcasts())
+    return asyncio.run(_with_db_cleanup(_run_podcasts()))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _run_news() -> dict:

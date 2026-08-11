@@ -1,16 +1,30 @@
 import socket
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from fastapi import HTTPException
 
 from app.core.logging_config import set_request_id
-from app.core.safe_http import resolve_pinned_ip, safe_get
+from app.core.safe_http import MAX_RESPONSE_BYTES, resolve_pinned_ip, safe_get
 
 
 def _addrinfo(ip: str):
     family = socket.AF_INET6 if ":" in ip else socket.AF_INET
     return [(family, socket.SOCK_STREAM, 6, "", (ip, 443))]
+
+
+def _client_for(response: httpx.Response) -> MagicMock:
+    client = MagicMock()
+    client.build_request.return_value = response.request
+    client.send = AsyncMock(return_value=response)
+    return client
+
+
+class _ChunkedStream(httpx.AsyncByteStream):
+    async def __aiter__(self):
+        yield b"12345"
+        yield b"6"
 
 
 def test_resolve_pinned_ip_returns_public_address():
@@ -52,29 +66,28 @@ async def test_safe_get_rejects_private_host_prefix_without_dns_lookup():
 
 @pytest.mark.asyncio
 async def test_safe_get_pins_connection_to_resolved_ip_and_sets_sni():
-    client = MagicMock()
-    ok_response = MagicMock()
-    ok_response.is_redirect = False
-    client.get = AsyncMock(return_value=ok_response)
+    request = httpx.Request("GET", "https://93.184.216.34/article")
+    ok_response = httpx.Response(200, content=b"ok", request=request)
+    client = _client_for(ok_response)
 
     with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
         response = await safe_get(client, "https://example.com/article")
 
     assert response is ok_response
-    called_url, kwargs = client.get.call_args
-    assert "93.184.216.34" in called_url[0]
-    assert "example.com" not in called_url[0]
+    method, called_url = client.build_request.call_args.args
+    kwargs = client.build_request.call_args.kwargs
+    assert method == "GET"
+    assert "93.184.216.34" in called_url
+    assert "example.com" not in called_url
     assert kwargs["headers"]["Host"] == "example.com"
     assert kwargs["extensions"]["sni_hostname"] == "example.com"
-    assert kwargs["follow_redirects"] is False
+    client.send.assert_awaited_once_with(request, stream=True)
 
 
 @pytest.mark.asyncio
 async def test_safe_get_propagates_request_id_header():
-    client = MagicMock()
-    ok_response = MagicMock()
-    ok_response.is_redirect = False
-    client.get = AsyncMock(return_value=ok_response)
+    request = httpx.Request("GET", "https://93.184.216.34/article")
+    client = _client_for(httpx.Response(200, content=b"ok", request=request))
 
     set_request_id("req-abc-123")
     try:
@@ -83,31 +96,31 @@ async def test_safe_get_propagates_request_id_header():
     finally:
         set_request_id("-")
 
-    _, kwargs = client.get.call_args
+    kwargs = client.build_request.call_args.kwargs
     assert kwargs["headers"]["X-Request-ID"] == "req-abc-123"
 
 
 @pytest.mark.asyncio
 async def test_safe_get_omits_request_id_header_when_unset():
-    client = MagicMock()
-    ok_response = MagicMock()
-    ok_response.is_redirect = False
-    client.get = AsyncMock(return_value=ok_response)
+    request = httpx.Request("GET", "https://93.184.216.34/article")
+    client = _client_for(httpx.Response(200, content=b"ok", request=request))
 
     with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
         await safe_get(client, "https://example.com/article")
 
-    _, kwargs = client.get.call_args
+    kwargs = client.build_request.call_args.kwargs
     assert "X-Request-ID" not in kwargs["headers"]
 
 
 @pytest.mark.asyncio
 async def test_safe_get_revalidates_on_redirect_to_private_target():
-    client = MagicMock()
-    redirect_response = MagicMock()
-    redirect_response.is_redirect = True
-    redirect_response.headers = {"location": "http://169.254.169.254/latest/meta-data/"}
-    client.get = AsyncMock(return_value=redirect_response)
+    request = httpx.Request("GET", "https://93.184.216.34/redirect")
+    redirect_response = httpx.Response(
+        302,
+        headers={"location": "http://169.254.169.254/latest/meta-data/"},
+        request=request,
+    )
+    client = _client_for(redirect_response)
 
     with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
         with pytest.raises(HTTPException):
@@ -116,16 +129,74 @@ async def test_safe_get_revalidates_on_redirect_to_private_target():
 
 @pytest.mark.asyncio
 async def test_safe_get_caps_redirect_count():
-    client = MagicMock()
-    redirect_response = MagicMock()
-    redirect_response.is_redirect = True
-    redirect_response.headers = {"location": "https://example.com/next"}
-    client.get = AsyncMock(return_value=redirect_response)
+    request = httpx.Request("GET", "https://93.184.216.34/loop")
+    redirect_response = httpx.Response(
+        302,
+        headers={"location": "https://example.com/next"},
+        request=request,
+    )
+    client = _client_for(redirect_response)
 
     with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
         with pytest.raises(HTTPException) as exc_info:
             await safe_get(client, "https://example.com/loop", max_redirects=2)
     assert "redirects" in exc_info.value.detail.lower()
+
+
+@pytest.mark.asyncio
+async def test_safe_get_revalidates_redirect_against_allowlist():
+    request = httpx.Request("GET", "https://93.184.216.34/redirect")
+    client = _client_for(
+        httpx.Response(
+            302,
+            headers={"location": "https://evil.example/payload"},
+            request=request,
+        )
+    )
+
+    with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
+        with pytest.raises(HTTPException) as exc_info:
+            await safe_get(
+                client,
+                "https://example.com/redirect",
+                allowed_hosts={"example.com"},
+            )
+
+    assert exc_info.value.status_code == 400
+    assert client.send.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_safe_get_rejects_oversized_content_length_before_reading():
+    request = httpx.Request("GET", "https://93.184.216.34/large")
+    client = _client_for(
+        httpx.Response(
+            200,
+            headers={"content-length": str(MAX_RESPONSE_BYTES + 1)},
+            content=b"ignored",
+            request=request,
+        )
+    )
+
+    with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
+        with pytest.raises(HTTPException) as exc_info:
+            await safe_get(client, "https://example.com/large")
+
+    assert exc_info.value.status_code == 413
+
+
+@pytest.mark.asyncio
+async def test_safe_get_aborts_stream_when_body_exceeds_limit():
+    request = httpx.Request("GET", "https://93.184.216.34/chunked")
+    response = httpx.Response(200, stream=_ChunkedStream(), request=request)
+    client = _client_for(response)
+
+    with patch("socket.getaddrinfo", return_value=_addrinfo("93.184.216.34")):
+        with pytest.raises(HTTPException) as exc_info:
+            await safe_get(client, "https://example.com/chunked", max_response_bytes=5)
+
+    assert exc_info.value.status_code == 413
+    assert response.is_closed
 
 
 @pytest.mark.network

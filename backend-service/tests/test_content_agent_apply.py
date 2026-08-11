@@ -2,7 +2,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import event, func, select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -256,3 +256,34 @@ async def test_apply_deduplicates_unicode_normalized_vocabulary(content_agent_db
     ) == 8
     await content_agent_db.refresh(existing)
     assert existing.definition == "Curated definition"
+
+
+async def test_apply_bulk_inserts_lesson_memberships_without_selects(content_agent_db):
+    upload = _upload()
+    job = ContentAgentJob(
+        requested_by_id=None,
+        upload_id=upload.id,
+        status="preview_ready",
+        request_hash="c" * 64,
+        revision=1,
+        config={},
+        progress={"stage": "preview_ready", "percent": 100},
+        artifact=_artifact(),
+    )
+    content_agent_db.add_all([upload, job])
+    await content_agent_db.commit()
+    statements: list[str] = []
+
+    def capture_membership_sql(_conn, _cursor, statement, *_args):
+        if "lesson_vocabulary_items" in statement:
+            statements.append(statement)
+
+    engine = content_agent_db.bind.sync_engine
+    event.listen(engine, "before_cursor_execute", capture_membership_sql)
+    try:
+        await ContentAgentApplyService.apply(content_agent_db, job.id)
+    finally:
+        event.remove(engine, "before_cursor_execute", capture_membership_sql)
+
+    assert sum(statement.lstrip().upper().startswith("INSERT") for statement in statements) == 1
+    assert not any(statement.lstrip().upper().startswith("SELECT") for statement in statements)

@@ -547,9 +547,13 @@ class TestAdminSeed:
     async def test_seed_data(
         self,
         async_client: AsyncClient,
-        admin_headers: dict
+        admin_headers: dict,
+        monkeypatch,
     ):
         """Test seeding sample data"""
+        from app.routes import admin_system
+
+        monkeypatch.setattr(admin_system.settings, "APP_ENV", "development")
         response = await async_client.post(
             "/api/v1/admin/seed",
             headers=admin_headers
@@ -560,3 +564,21 @@ class TestAdminSeed:
         assert data["success"] is True
         assert "achievements" in data["data"]
         assert "shop_items" in data["data"]
+
+    @pytest.mark.asyncio
+    async def test_seed_data_hidden_outside_development(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        monkeypatch,
+    ):
+        from app.routes import admin_system
+
+        monkeypatch.setattr(admin_system.settings, "APP_ENV", "production")
+
+        response = await async_client.post(
+            "/api/v1/admin/seed",
+            headers=admin_headers,
+        )
+
+        assert response.status_code == 404

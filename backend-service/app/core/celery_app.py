@@ -25,6 +25,7 @@ if Celery is not None:
         include=[
             "app.tasks.content_agent",
             "app.tasks.content_prefetch_schedule",
+            "app.tasks.learner_state",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
             "app.tasks.streak_reminders",
@@ -59,6 +60,10 @@ if Celery is not None:
         "cleanup-expired-content-agent-uploads": {
             "task": "app.tasks.content_agent.cleanup_expired_content_agent_uploads",
             "schedule": crontab(hour=3, minute=15),
+        },
+        "cleanup-learner-observations": {
+            "task": "app.tasks.learner_state.cleanup_learner_observations",
+            "schedule": crontab(hour=2, minute=30),
         },
         "auto-league-reset": {
             "task": "app.tasks.ranking_agent.auto_league_reset",
@@ -101,6 +106,10 @@ else:
                             "app.tasks.content_agent."
                             "cleanup_expired_content_agent_uploads"
                         ),
+                        "schedule": 86400,
+                    },
+                    "cleanup-learner-observations": {
+                        "task": "app.tasks.learner_state.cleanup_learner_observations",
                         "schedule": 86400,
                     },
                     "auto-league-reset": {

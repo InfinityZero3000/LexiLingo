@@ -460,7 +460,10 @@ class TestBulkAddToCollection:
     async def test_returns_empty_list_when_no_valid_ids(self, auth_client):
         client, _, _, _ = auth_client
         # All IDs are invalid (not found), so they are skipped
-        with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=None)):
+        with patch(
+            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
+            new=AsyncMock(return_value=[]),
+        ):
             response = await client.post(
                 f"{BASE}/collection/bulk",
                 json={"vocabulary_ids": [VOCAB_ID]},
@@ -471,10 +474,11 @@ class TestBulkAddToCollection:
     @pytest.mark.asyncio
     async def test_bulk_adds_valid_items(self, auth_client):
         client, _, _, _ = auth_client
-        mock_item = _make_mock_vocab_item()
         mock_user_vocab = _make_mock_user_vocab()
-        with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=mock_item)), \
-             patch("app.crud.vocabulary.vocabulary_crud.add_to_collection", new=AsyncMock(return_value=mock_user_vocab)):
+        with patch(
+            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
+            new=AsyncMock(return_value=[mock_user_vocab]),
+        ):
             response = await client.post(
                 f"{BASE}/collection/bulk",
                 json={"vocabulary_ids": [VOCAB_ID]},
@@ -486,6 +490,15 @@ class TestBulkAddToCollection:
     async def test_missing_body_returns_422(self, auth_client):
         client, _, _, _ = auth_client
         response = await client.post(f"{BASE}/collection/bulk", json={})
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_rejects_more_than_200_ids(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.post(
+            f"{BASE}/collection/bulk",
+            json={"vocabulary_ids": [str(uuid.uuid4()) for _ in range(201)]},
+        )
         assert response.status_code == 422
 
 

@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 from app.services.reminder_service import ReminderService
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,14 @@ logger = logging.getLogger(__name__)
 @celery_app.task(name="app.tasks.reminders.scan_fsrs_reminders")
 def scan_fsrs_reminders() -> dict:
     """Scan due reminder preferences and dispatch configured channels."""
-    return asyncio.run(_scan_fsrs_reminders())
+    return asyncio.run(_with_db_cleanup(_scan_fsrs_reminders()))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _scan_fsrs_reminders() -> dict:

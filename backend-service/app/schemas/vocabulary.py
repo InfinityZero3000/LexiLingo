@@ -286,4 +286,6 @@ class VocabularySearchParams(BaseModel):
 
 class VocabularyBulkAddRequest(BaseModel):
     """Schema for bulk adding vocabulary from lesson"""
-    vocabulary_ids: List[uuid.UUID] = Field(..., description="List of vocabulary IDs to add")
+    vocabulary_ids: List[uuid.UUID] = Field(
+        ..., max_length=200, description="List of vocabulary IDs to add"
+    )

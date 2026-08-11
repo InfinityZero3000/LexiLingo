@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 import httpx
 
@@ -41,13 +41,35 @@ async def diagnose_error(text: str, level: str | None = None) -> str | None:
 
 
 class AIServiceClient:
+    _shared_client: ClassVar[httpx.AsyncClient | None] = None
+
     def __init__(
         self,
         base_url: Optional[str] = None,
         timeout_seconds: float = 15.0,
+        client: httpx.AsyncClient | None = None,
     ) -> None:
         self._base_url = (base_url or settings.AI_SERVICE_URL).rstrip("/")
         self._timeout = httpx.Timeout(timeout_seconds)
+        self._client = client
+
+    @classmethod
+    def start(cls) -> None:
+        if cls._shared_client is None or cls._shared_client.is_closed:
+            cls._shared_client = httpx.AsyncClient()
+
+    @classmethod
+    async def close(cls) -> None:
+        if cls._shared_client is not None:
+            await cls._shared_client.aclose()
+            cls._shared_client = None
+
+    def _http(self) -> httpx.AsyncClient:
+        if self._client is not None:
+            return self._client
+        self.start()
+        assert self._shared_client is not None
+        return self._shared_client
 
     async def chat(self, payload: AIChatRequest) -> AIChatResponse:
         """Send a chat request to the AI service.
@@ -57,8 +79,11 @@ class AIServiceClient:
         """
         url = f"{self._base_url}/chat/respond"
 
-        async with httpx.AsyncClient(timeout=self._timeout) as client:
-            resp = await client.post(url, json=payload.model_dump())
+        resp = await self._http().post(
+            url,
+            json=payload.model_dump(),
+            timeout=self._timeout,
+        )
 
         # Prefer raising here; caller can translate to API error envelope.
         resp.raise_for_status()
@@ -92,12 +117,23 @@ class AIServiceClient:
         headers = {"X-Admin-Key": api_key} if api_key else {}
 
         try:
-            async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_seconds)) as client:
-                resp = await client.get(url, params=params, headers=headers)
+            resp = await self._http().get(
+                url,
+                params=params,
+                headers=headers,
+                timeout=httpx.Timeout(timeout_seconds),
+            )
             if resp.status_code == 200:
                 return resp.json()
-        except Exception:
-            pass
+            logger.warning(
+                "AI translation returned HTTP %s",
+                resp.status_code,
+            )
+        except Exception as exc:
+            logger.warning(
+                "AI translation failed (%s)",
+                type(exc).__name__,
+            )
 
         return {"translation": "", "phonetic": "", "part_of_speech": ""}
 
@@ -124,8 +160,13 @@ class AIServiceClient:
         }
         data = {"target_text": target_text}
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(60.0)) as client:
-            resp = await client.post(url, data=data, files=files, headers=headers)
+        resp = await self._http().post(
+            url,
+            data=data,
+            files=files,
+            headers=headers,
+            timeout=httpx.Timeout(60.0),
+        )
 
         resp.raise_for_status()
         return resp.json() or {}
@@ -153,9 +194,13 @@ class AIServiceClient:
         }
         data = {"language": language}
 
-        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
-            resp = await client.post(url, data=data, files=files, headers=headers)
+        resp = await self._http().post(
+            url,
+            data=data,
+            files=files,
+            headers=headers,
+            timeout=httpx.Timeout(120.0),
+        )
 
         resp.raise_for_status()
         return resp.json() or {}
-

@@ -77,15 +77,6 @@ async def save_refresh_token(db: AsyncSession, user_id: uuid.UUID, token: str) -
     await db.commit()
 
 
-async def revoke_refresh_token(db: AsyncSession, token: str) -> None:
-    result = await db.execute(select(RefreshToken).where(RefreshToken.token == token))
-    db_token = result.scalar_one_or_none()
-    if db_token:
-        db_token.is_revoked = True
-        db_token.revoked_at = datetime.now(timezone.utc)
-        await db.commit()
-
-
 def issue_token_pair(user_id: str) -> tuple[str, str]:
     """Return (access_token, refresh_token) for a given user_id string."""
     return (

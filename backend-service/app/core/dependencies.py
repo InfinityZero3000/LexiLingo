@@ -5,9 +5,10 @@ Reusable dependencies for authentication, authorization, and RBAC
 """
 
 import uuid
-from typing import Optional, List, Callable
-from functools import wraps
-from fastapi import Depends, HTTPException, status, Request
+from typing import Optional
+
+import anyio
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -59,7 +60,7 @@ async def get_current_user(
             pass  # Invalid UUID format, try Firebase next
 
     # 2) Try Firebase ID token
-    claims = verify_firebase_token(token)
+    claims = await anyio.to_thread.run_sync(verify_firebase_token, token)
     if claims:
         try:
             user = await get_or_create_user_from_claims(db, claims)
@@ -121,7 +122,7 @@ async def get_current_user_optional(
             pass  # Invalid UUID format, try Firebase next
 
     # 2) Try Firebase ID token
-    claims = verify_firebase_token(token)
+    claims = await anyio.to_thread.run_sync(verify_firebase_token, token)
     if claims:
         try:
             user = await get_or_create_user_from_claims(db, claims)
@@ -140,29 +141,7 @@ async def get_current_user_optional(
     return None
 
 
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    """
-    Get current active user (for routes that require active users only).
-    """
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    return current_user
-
-
 # ── RBAC Guards ───────────────────────────────────────────
-
-def _get_user_role_slug(user: User) -> str:
-    """Get the role slug for a user. Defaults to 'user' if no role assigned."""
-    if hasattr(user, "role_slug"):
-        return user.role_slug
-    if user.role and hasattr(user.role, "slug"):
-        return user.role.slug
-    return "user"
 
 
 def _get_user_role_level(user: User) -> int:
@@ -193,7 +172,6 @@ async def get_current_admin(
         )
     return current_user
 
-
 async def get_current_super_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
@@ -212,64 +190,3 @@ async def get_current_super_admin(
             detail="Super admin privileges required",
         )
     return current_user
-
-
-def require_permission(resource: str, action: str):
-    """
-    Dependency factory: require a specific permission.
-    
-    Usage:
-        @router.post("/courses", dependencies=[Depends(require_permission("courses", "create"))])
-        async def create_course(...):
-            ...
-    """
-    async def _check(
-        current_user: User = Depends(get_current_user),
-    ) -> User:
-        # Super admin bypasses all permission checks
-        if _get_user_role_level(current_user) >= 2:
-            return current_user
-
-        # Check role permissions
-        if current_user.role:
-            for rp in (current_user.role.permissions or []):
-                perm = rp.permission
-                if perm and perm.resource == resource and perm.action == action:
-                    return current_user
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Permission denied: {resource}:{action}",
-        )
-
-    return _check
-
-
-def require_entitlement(entitlement_id: str = "premium"):
-    """
-    Dependency factory: require an active, server-verified entitlement.
-
-    Checks the `user_entitlements` row synced from RevenueCat — never trusts
-    client-reported purchase state. No route uses this yet; it is the
-    primitive ready for whichever route(s) become premium-gated.
-
-    Usage:
-        @router.get("/premium-only", dependencies=[Depends(require_entitlement("premium"))])
-        async def premium_only(...):
-            ...
-    """
-    async def _check(
-        current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db),
-    ) -> User:
-        from app.services.entitlement_service import EntitlementService
-
-        if await EntitlementService.is_active(db, current_user.id, entitlement_id):
-            return current_user
-
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Requires an active '{entitlement_id}' entitlement",
-        )
-
-    return _check
