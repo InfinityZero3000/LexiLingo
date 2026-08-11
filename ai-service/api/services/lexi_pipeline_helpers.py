@@ -9,6 +9,10 @@ from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
+_INTERNAL_CONTEXT_FALLBACK = (
+    "Squawk! I couldn't form a safe reply just now. Please try again."
+)
+
 
 def _normalize_markdown_for_lexi(text: str) -> str:
     """Normalize malformed markdown emphasis markers produced by model output."""
@@ -65,6 +69,9 @@ def sanitize_lexi_response(text: str) -> str:
         return "Squawk! I lost my words for a second. Could you ask that again?"
 
     cleaned = re.sub(r"<think\b[^>]*>[\s\S]*?</think>", "", cleaned, flags=re.IGNORECASE)
+
+    if re.search(r"\bconcept:[a-z0-9_.:-]+", cleaned, flags=re.IGNORECASE):
+        return _INTERNAL_CONTEXT_FALLBACK
 
     cleaned = re.sub(
         r"\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*",

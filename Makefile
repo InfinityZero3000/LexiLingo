@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 
-APP_DIR := lexilingo_app
+APP_DIR := flutter-app
 FLUTTER ?= flutter
 DART ?= dart
 

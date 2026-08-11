@@ -144,6 +144,34 @@ class PodcastRepository {
         .toList();
   }
 
+  /// Generate or load a cached learner transcript for [episode].
+  Future<String?> generateTranscript(PodcastEpisode episode) async {
+    final cacheKey = 'podcast:transcript:${episode.guid}';
+
+    final data = await _cache.getOrFetch(
+      key: cacheKey,
+      type: 'podcast',
+      fetchFn: () async {
+        final uri = Uri.parse('$_baseUrl/transcript');
+        final response = await _client.post(
+          uri,
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'feed_url': episode.feedUrl,
+            'episode_guid': episode.guid,
+            'audio_url': episode.audioUrl,
+          }),
+        );
+        _checkResponse(response, uri);
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      },
+    );
+
+    final transcript = data?['transcript'] as String?;
+    if (transcript == null || transcript.trim().isEmpty) return null;
+    return transcript.trim();
+  }
+
   // ──── Listening History (SQLite via LocalCacheService) ────
 
   /// Get listening history for a specific episode from local SQLite cache.

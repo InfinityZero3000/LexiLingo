@@ -104,7 +104,7 @@ class TutorResponseV3(BaseModel):
     action_plan: List[ActionPlanItem] = Field(default_factory=list)
     confidence: float = 0.0
     metadata: TutorResponseMeta
-    vietnamese_hint: Optional[str] = None
+    native_hint: Optional[str] = None
     pronunciation_tip: Optional[str] = None
     diagnosis: Optional[DiagnosisV3] = None
     retrieval: Optional[RetrievalBundleV3] = None

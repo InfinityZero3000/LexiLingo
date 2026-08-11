@@ -59,19 +59,6 @@ class AudioPlayerControls extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── Drag handle ──
-          Container(
-            width: 36,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 14),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : AppColors.grey300,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-
           // ── Episode title ──
           Text(
             episodeTitle,

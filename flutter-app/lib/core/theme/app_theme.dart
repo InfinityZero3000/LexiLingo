@@ -5,11 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 /// Applies CJK font fallbacks to every style in a [TextTheme].
 /// Lexend has no Chinese/Japanese/Korean glyphs; these fallbacks prevent □ boxes.
 TextTheme _withCjkFallback(TextTheme base) {
-  const fallbacks = [
-    'Noto Sans SC', // Chinese Simplified
-    'Noto Sans JP', // Japanese
-    'Noto Sans KR', // Korean
-  ];
+  const fallbacks = ['NotoSansCJK'];
   return TextTheme(
     displayLarge: base.displayLarge?.copyWith(fontFamilyFallback: fallbacks),
     displayMedium: base.displayMedium?.copyWith(fontFamilyFallback: fallbacks),
@@ -260,6 +256,14 @@ class AppColors {
   static const List<Color> streakGradient = [
     Color(0xFFFF9F0A),
     Color(0xFFFF5722),
+  ];
+
+  /// Master league prestige gradient (sky-blue → gold) — the only
+  /// two-hue exception to the "≤30° apart" rule, reserved for the
+  /// top rank tier. Was duplicated as inline hex in 3 widgets.
+  static const List<Color> masterGradient = [
+    Color(0xFF5AB6FF),
+    Color(0xFFFFD64F),
   ];
 }
 

@@ -1,5 +1,5 @@
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from uuid import UUID
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,6 +9,10 @@ from app.core.cache import build_cache_key, delete_cached
 from app.services import check_achievements_for_user
 
 logger = logging.getLogger(__name__)
+
+
+def _utc_today() -> date:
+    return datetime.now(timezone.utc).date()
 
 async def update_user_streak(db: AsyncSession, user_id: UUID) -> tuple[Streak, bool, bool, list]:
     """
@@ -26,11 +30,11 @@ async def update_user_streak(db: AsyncSession, user_id: UUID) -> tuple[Streak, b
     - (streak, streak_increased, streak_saved, unlocked_achievements)
     """
     result = await db.execute(
-        select(Streak).where(Streak.user_id == user_id)
+        select(Streak).where(Streak.user_id == user_id).with_for_update()
     )
     streak = result.scalar_one_or_none()
     
-    today = date.today()
+    today = _utc_today()
     streak_increased = False
     streak_saved = False
     

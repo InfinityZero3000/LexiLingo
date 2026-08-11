@@ -11,13 +11,22 @@ export type EngagementData = {
 type Props = {
   data: EngagementData[];
   loading?: boolean;
+  error?: boolean;
 };
 
-export const EngagementChart: React.FC<Props> = ({ data, loading }) => {
+export const EngagementChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
     return (
       <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="loading-text">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="loading-text">Không tải được dữ liệu.</div>
       </div>
     );
   }

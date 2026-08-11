@@ -56,6 +56,19 @@ docker-compose*.yml
 Dockerfile*
 .dockerignore
 
+# Local/prod env files: runtime config comes from docker-compose's env_file/
+# environment, not a file baked into the image. A stray real .env here would
+# be read by pydantic-settings (Settings.model_config.env_file) and silently
+# shadow it if the compose-provided vars were ever unset.
+.env
+.env.local
+.env.production
+.env.production.secrets
+.env.production.secrets.*
+.env.*.local
+!.env.example
+!.env.test.example
+
 # Docs
 *.md
 docs/

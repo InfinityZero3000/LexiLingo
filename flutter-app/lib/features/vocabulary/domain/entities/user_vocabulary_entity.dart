@@ -19,6 +19,7 @@ class UserVocabularyEntity {
   final int? totalXpEarned;
   final String? notes;
   final DateTime addedAt;
+  final String? word;
 
   const UserVocabularyEntity({
     required this.id,
@@ -37,5 +38,6 @@ class UserVocabularyEntity {
     this.totalXpEarned,
     this.notes,
     required this.addedAt,
+    this.word,
   });
 }

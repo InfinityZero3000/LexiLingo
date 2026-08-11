@@ -71,23 +71,23 @@ Quá trình tính toán diễn ra theo các bước sau, thường được trig
 def calculate_proficiency(user_id):
     # 1. Fetch raw data
     exercises = fetch_last_90_days_exercises(user_id)
-    
+
     # 2. Phân loại theo Skill
     skill_buckets = group_by_skill(exercises)
-    
+
     # 3. Tính điểm từng Skill (Tích hợp Difficulty Multiplier)
     skill_scores = {}
     for skill, exercises in skill_buckets:
         accuracy = calculate_weighted_accuracy(exercises) # Ưu tiên bài làm gần đây
         volume_penalty = apply_volume_curve(len(exercises))
         skill_scores[skill] = base_score * accuracy * volume_penalty * difficulty
-        
+
     # 4. Tính Overall Score (áp dụng Weights)
     overall_score = sum(skill_scores[k] * SKILL_WEIGHTS[k] for k in skills)
-    
+
     # 5. Xác định Level
     current_level = map_score_to_cefr(overall_score, total_exercises, skill_scores)
-    
+
     return ProficiencyProfile(current_level, overall_score, skill_scores)
 ```
 
@@ -124,4 +124,4 @@ Dữ liệu này được TRACECAG dùng để:
 
 ---
 
-*Tham khảo: [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md), [RPT-025](RPT-025_GAMIFICATION_XP_SYSTEM.md)*
+*Tham khảo: [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md), [RPT-025](RPT-025_GAMIFICATION_XP_SYSTEM.md)*

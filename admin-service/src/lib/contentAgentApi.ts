@@ -150,6 +150,7 @@ export type ContentAgentExercise = {
   id: string;
   type: string;
   ui_type: string;
+  phase?: "pre_task" | "task_cycle" | "language_focus" | string;
   question: string;
   correct_answer: string;
   options?: unknown;
@@ -160,10 +161,19 @@ export type ContentAgentExercise = {
 
 export type ContentAgentLessonPreview = {
   title: string;
+  outcome?: string | null;
   order_index: number;
   vocabulary: ContentAgentVocabularyItem[];
   exercises: ContentAgentExercise[];
   [key: string]: unknown;
+};
+
+export type ContentAgentRecordUpdate = {
+  question?: string;
+  options?: unknown;
+  correct_answer?: string;
+  explanation?: string;
+  lesson_outcome?: string;
 };
 
 export type ContentAgentUnitPreview = {
@@ -198,6 +208,13 @@ export type ContentAgentPreview = {
 
 export type ContentAgentJobList = {
   jobs: ContentAgentJob[];
+  total: number;
+};
+
+export type ContentQaQueue = {
+  reviewable: ContentAgentJob[];
+  failed: ContentAgentJob[];
+  applied: ContentAgentJob[];
   total: number;
 };
 
@@ -297,6 +314,26 @@ export const listContentAgentJobs = async (): Promise<ContentAgentJobList> => {
   };
 };
 
+export const buildContentQaQueue = (
+  jobs: readonly ContentAgentJob[],
+): ContentQaQueue => {
+  const reviewable = jobs.filter((job) => job.status === "preview_ready");
+  const failed = jobs.filter((job) => job.status === "failed");
+  const applied = jobs.filter((job) => job.status === "completed");
+
+  return {
+    reviewable,
+    failed,
+    applied,
+    total: jobs.length,
+  };
+};
+
+export const listContentQaQueue = async (): Promise<ContentQaQueue> => {
+  const { jobs } = await listContentAgentJobs();
+  return buildContentQaQueue(jobs);
+};
+
 export const getContentAgentJob = async (
   jobId: string,
 ): Promise<ContentAgentJob> => {
@@ -373,6 +410,20 @@ export const applyContentAgentJob = (jobId: string) =>
     }
     return result;
   });
+
+export const updateContentAgentRecord = async (
+  jobId: string,
+  recordId: string,
+  update: ContentAgentRecordUpdate,
+): Promise<ContentAgentPreview> => {
+  const payload = await apiFetch<
+    { artifact: ContentAgentPreview } | ApiEnvelope<{ artifact: ContentAgentPreview }>
+  >(`${jobUrl(jobId, "records")}/${encodeURIComponent(recordId)}`, {
+    method: "PATCH",
+    body: JSON.stringify(update),
+  });
+  return unwrap(payload).artifact;
+};
 
 export const retryContentAgentJob = (jobId: string) =>
   postJobAction(jobId, "retry");

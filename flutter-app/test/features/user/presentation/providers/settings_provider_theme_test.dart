@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/services/theme_preference_store.dart';
@@ -32,6 +33,8 @@ class _FakeSettingsRepository implements SettingsRepository {
   Settings loadedSettings;
   Either<Failure, void> updateResult = const Right(null);
   Completer<Either<Failure, void>>? updateCompleter;
+  final List<Completer<Either<Failure, void>>> updateCompleters = [];
+  final List<Settings> updatedSettings = [];
   Settings? lastUpdatedSettings;
 
   _FakeSettingsRepository({required this.loadedSettings});
@@ -44,6 +47,8 @@ class _FakeSettingsRepository implements SettingsRepository {
   @override
   Future<Either<Failure, void>> updateSettings(Settings settings) {
     lastUpdatedSettings = settings;
+    updatedSettings.add(settings);
+    if (updateCompleters.isNotEmpty) return updateCompleters.removeAt(0).future;
     return updateCompleter?.future ?? Future.value(updateResult);
   }
 
@@ -191,11 +196,7 @@ void main() {
     await EasyLocalization.ensureInitialized();
     final preferences = await SharedPreferences.getInstance();
     final repository = _FakeSettingsRepository(
-      loadedSettings: const Settings(
-        id: 1,
-        userId: 'user-1',
-        language: 'vi',
-      ),
+      loadedSettings: const Settings(id: 1, userId: 'user-1', language: 'vi'),
     );
     repository.updateCompleter = Completer<Either<Failure, void>>();
     final provider = SettingsProvider(
@@ -209,11 +210,7 @@ void main() {
     late BuildContext localeContext;
     await tester.pumpWidget(
       EasyLocalization(
-        supportedLocales: const [
-          Locale('vi'),
-          Locale('en'),
-          Locale('fr'),
-        ],
+        supportedLocales: const [Locale('vi'), Locale('en'), Locale('fr')],
         path: 'assets/i18n',
         fallbackLocale: const Locale('en'),
         startLocale: const Locale('vi'),
@@ -248,6 +245,118 @@ void main() {
 
     repository.updateCompleter!.complete(const Right(null));
     await update;
+  });
+
+  testWidgets('initial settings load synchronizes the effective locale', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await EasyLocalization.ensureInitialized();
+    final preferences = await SharedPreferences.getInstance();
+    final provider = SettingsProvider(
+      repository: _FakeSettingsRepository(
+        loadedSettings: const Settings(id: 1, userId: 'user-1', language: 'ja'),
+      ),
+      notificationService: _FakeNotificationService(),
+      themePreferenceStore: ThemePreferenceStore(preferences),
+      apiClient: ApiClient(enableLogging: false),
+    );
+    late BuildContext localeContext;
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [Locale('en'), Locale('ja')],
+        path: 'assets/i18n',
+        fallbackLocale: const Locale('en'),
+        startLocale: const Locale('en'),
+        useOnlyLangCode: true,
+        assetLoader: const _TestLocalizationLoader(),
+        child: Builder(
+          builder: (context) => MaterialApp(
+            locale: context.locale,
+            supportedLocales: context.supportedLocales,
+            localizationsDelegates: context.localizationDelegates,
+            home: Builder(
+              builder: (context) {
+                localeContext = context;
+                return Text(context.tr('languageCode'));
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await provider.loadSettings('user-1', localeContext);
+    await tester.pumpAndSettle();
+
+    expect(localeContext.locale, const Locale('ja'));
+    expect(find.text('ja'), findsOneWidget);
+    expect(await LocaleService.getSavedLocale(), 'ja');
+  });
+
+  testWidgets('stale language failure cannot roll back a newer selection', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await EasyLocalization.ensureInitialized();
+    final preferences = await SharedPreferences.getInstance();
+    final firstWrite = Completer<Either<Failure, void>>();
+    final secondWrite = Completer<Either<Failure, void>>();
+    final repository = _FakeSettingsRepository(
+      loadedSettings: const Settings(id: 1, userId: 'user-1', language: 'vi'),
+    )..updateCompleters.addAll([firstWrite, secondWrite]);
+    final provider = SettingsProvider(
+      repository: repository,
+      notificationService: _FakeNotificationService(),
+      themePreferenceStore: ThemePreferenceStore(preferences),
+      apiClient: ApiClient(enableLogging: false),
+    );
+    await provider.loadSettings('user-1');
+    late BuildContext localeContext;
+    await tester.pumpWidget(
+      EasyLocalization(
+        supportedLocales: const [Locale('vi'), Locale('ja'), Locale('en')],
+        path: 'assets/i18n',
+        fallbackLocale: const Locale('en'),
+        startLocale: const Locale('vi'),
+        useOnlyLangCode: true,
+        assetLoader: const _TestLocalizationLoader(),
+        child: Builder(
+          builder: (context) => MaterialApp(
+            locale: context.locale,
+            supportedLocales: context.supportedLocales,
+            localizationsDelegates: context.localizationDelegates,
+            home: Builder(
+              builder: (context) {
+                localeContext = context;
+                return Text(context.tr('languageCode'));
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final japanese = provider.updateLanguage('ja', localeContext);
+    await tester.pumpAndSettle();
+    final english = provider.updateLanguage('en', localeContext);
+    await tester.pumpAndSettle();
+    firstWrite.complete(Left(CacheFailure('stale write failed')));
+    await tester.pumpAndSettle();
+    secondWrite.complete(const Right(null));
+    await Future.wait([japanese, english]);
+    await tester.pumpAndSettle();
+
+    expect(provider.language, 'en');
+    expect(localeContext.locale, const Locale('en'));
+    expect(find.text('en'), findsOneWidget);
+    expect(await LocaleService.getSavedLocale(), 'en');
+    expect(repository.updatedSettings.map((value) => value.language), [
+      'ja',
+      'en',
+    ]);
   });
 
   test('serializes rapid theme persistence in selection order', () async {

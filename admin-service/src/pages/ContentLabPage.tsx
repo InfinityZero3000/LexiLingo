@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { DataTable } from "../components/DataTable";
 import {
   type GrammarItem,
   type QuestionItem,
   type TestExam,
+  bulkImportGrammar,
+  bulkImportQuestions,
+  bulkImportTestExams,
   createGrammar,
   createQuestion,
   createTestExam,
@@ -13,8 +16,13 @@ import {
   deleteTestExam,
   listGrammar,
   listQuestions,
-  listTestExams
+  listTestExams,
+  updateGrammar,
+  updateQuestion,
+  updateTestExam
 } from "../lib/adminApi";
+
+type BulkImportResult = { created: number; skipped: number; errors: string[] };
 
 const tabs = [
   { key: "grammar", label: "Ngữ pháp" },
@@ -31,6 +39,16 @@ export const ContentLabPage = () => {
   const [tests, setTests] = useState<TestExam[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [editingGrammarId, setEditingGrammarId] = useState<string | null>(null);
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
+  const [editingTestId, setEditingTestId] = useState<string | null>(null);
+
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<BulkImportResult | null>(null);
+  const grammarFileRef = useRef<HTMLInputElement>(null);
+  const questionFileRef = useRef<HTMLInputElement>(null);
+  const testFileRef = useRef<HTMLInputElement>(null);
 
   const [grammarForm, setGrammarForm] = useState({
     title: "",
@@ -78,28 +96,97 @@ export const ContentLabPage = () => {
     void loadAll();
   }, []);
 
+  const handleBulkImport = async (
+    file: File | undefined,
+    importFn: (file: File) => Promise<{ data?: BulkImportResult | null }>,
+    fileRef: React.RefObject<HTMLInputElement | null>
+  ) => {
+    if (!file) return;
+    setImporting(true);
+    setError(null);
+    setImportResult(null);
+    try {
+      const res = await importFn(file);
+      setImportResult(res.data || null);
+      await loadAll();
+    } catch (err: any) {
+      setError(err?.message || "Import thất bại");
+    } finally {
+      setImporting(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const handleEditGrammar = (row: GrammarItem) => {
+    setEditingGrammarId(row.id);
+    setGrammarForm({
+      title: row.title,
+      level: row.level,
+      topic: row.topic || "",
+      summary: row.summary || "",
+      content: row.content,
+      tags: (row.tags || []).join(", ")
+    });
+  };
+
+  const handleCancelGrammar = () => {
+    setEditingGrammarId(null);
+    setGrammarForm({ title: "", level: "A1", topic: "", summary: "", content: "", tags: "" });
+  };
+
   const handleCreateGrammar = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      await createGrammar({
+      const payload = {
         title: grammarForm.title,
         level: grammarForm.level,
         topic: grammarForm.topic || undefined,
         summary: grammarForm.summary || undefined,
         content: grammarForm.content,
         tags: grammarForm.tags.split(",").map((t) => t.trim()).filter(Boolean)
-      });
-      setGrammarForm({ title: "", level: "A1", topic: "", summary: "", content: "", tags: "" });
+      };
+      if (editingGrammarId) {
+        await updateGrammar(editingGrammarId, payload);
+      } else {
+        await createGrammar(payload);
+      }
+      handleCancelGrammar();
       await loadAll();
     } catch (err: any) {
-      setError(err?.message || "Tạo grammar thất bại");
+      setError(err?.message || (editingGrammarId ? "Cập nhật grammar thất bại" : "Tạo grammar thất bại"));
     }
+  };
+
+  const handleEditQuestion = (row: QuestionItem) => {
+    setEditingQuestionId(row.id);
+    setQuestionForm({
+      prompt: row.prompt,
+      question_type: row.question_type,
+      difficulty_level: row.difficulty_level,
+      options: row.options ? JSON.stringify(row.options) : "",
+      answer: row.answer !== null && row.answer !== undefined ? JSON.stringify(row.answer) : "",
+      explanation: row.explanation || "",
+      tags: (row.tags || []).join(", ")
+    });
+  };
+
+  const handleCancelQuestion = () => {
+    setEditingQuestionId(null);
+    setQuestionForm({
+      prompt: "",
+      question_type: "mcq",
+      difficulty_level: "A1",
+      options: "",
+      answer: "",
+      explanation: "",
+      tags: ""
+    });
   };
 
   const handleCreateQuestion = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      await createQuestion({
+      const payload = {
         prompt: questionForm.prompt,
         question_type: questionForm.question_type,
         difficulty_level: questionForm.difficulty_level,
@@ -107,26 +194,49 @@ export const ContentLabPage = () => {
         answer: questionForm.answer ? JSON.parse(questionForm.answer) : undefined,
         explanation: questionForm.explanation || undefined,
         tags: questionForm.tags.split(",").map((t) => t.trim()).filter(Boolean)
-      });
-      setQuestionForm({
-        prompt: "",
-        question_type: "mcq",
-        difficulty_level: "A1",
-        options: "",
-        answer: "",
-        explanation: "",
-        tags: ""
-      });
+      };
+      if (editingQuestionId) {
+        await updateQuestion(editingQuestionId, payload);
+      } else {
+        await createQuestion(payload);
+      }
+      handleCancelQuestion();
       await loadAll();
     } catch (err: any) {
-      setError(err?.message || "Tạo question thất bại");
+      setError(err?.message || (editingQuestionId ? "Cập nhật question thất bại" : "Tạo question thất bại"));
     }
+  };
+
+  const handleEditTest = (row: TestExam) => {
+    setEditingTestId(row.id);
+    setTestForm({
+      title: row.title,
+      description: row.description || "",
+      level: row.level,
+      duration_minutes: row.duration_minutes,
+      passing_score: row.passing_score,
+      question_ids: (row.question_ids || []).join(", "),
+      is_published: row.is_published
+    });
+  };
+
+  const handleCancelTest = () => {
+    setEditingTestId(null);
+    setTestForm({
+      title: "",
+      description: "",
+      level: "A1",
+      duration_minutes: 20,
+      passing_score: 70,
+      question_ids: "",
+      is_published: false
+    });
   };
 
   const handleCreateTest = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      await createTestExam({
+      const payload = {
         title: testForm.title,
         description: testForm.description || undefined,
         level: testForm.level,
@@ -136,19 +246,16 @@ export const ContentLabPage = () => {
           ? testForm.question_ids.split(",").map((id) => id.trim()).filter(Boolean)
           : undefined,
         is_published: testForm.is_published
-      });
-      setTestForm({
-        title: "",
-        description: "",
-        level: "A1",
-        duration_minutes: 20,
-        passing_score: 70,
-        question_ids: "",
-        is_published: false
-      });
+      };
+      if (editingTestId) {
+        await updateTestExam(editingTestId, payload);
+      } else {
+        await createTestExam(payload);
+      }
+      handleCancelTest();
       await loadAll();
     } catch (err: any) {
-      setError(err?.message || "Tạo test exam thất bại");
+      setError(err?.message || (editingTestId ? "Cập nhật test exam thất bại" : "Tạo test exam thất bại"));
     }
   };
 
@@ -168,11 +275,33 @@ export const ContentLabPage = () => {
       </div>
       {error && <div className="form-error">{error}</div>}
       {loading && <div className="loading">Đang tải dữ liệu...</div>}
+      {importResult && (
+        <div className="panel" style={{ padding: "12px 16px", background: "#f0fdf4" }}>
+          <strong>Import hoàn tất:</strong> {importResult.created} tạo mới, {importResult.skipped} bỏ qua
+          {importResult.errors.length > 0 && (
+            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "#b91c1c" }}>
+              {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
 
       {tab === "grammar" && (
         <div className="grid-2">
           <div className="panel-inner">
-            <SectionHeader title="Grammar list" />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <SectionHeader title="Grammar list" />
+              <input
+                type="file"
+                accept=".csv,.pdf"
+                ref={grammarFileRef}
+                onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportGrammar, grammarFileRef)}
+                style={{ display: "none" }}
+              />
+              <button className="ghost-button small" onClick={() => grammarFileRef.current?.click()} disabled={importing}>
+                {importing ? "Đang import..." : "Import CSV/PDF"}
+              </button>
+            </div>
             <DataTable
               columns={[
                 {
@@ -192,12 +321,17 @@ export const ContentLabPage = () => {
                 {
                   header: "Action",
                   render: (row) => (
-                    <button className="ghost-button small danger" onClick={() => {
-                      if (!confirm("Xóa grammar rule này?")) return;
-                      deleteGrammar(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
-                    }}>
-                      Xóa
-                    </button>
+                    <>
+                      <button className="ghost-button small" onClick={() => handleEditGrammar(row)}>
+                        Sửa
+                      </button>
+                      <button className="ghost-button small danger" onClick={() => {
+                        if (!confirm("Xóa grammar rule này?")) return;
+                        deleteGrammar(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                      }}>
+                        Xóa
+                      </button>
+                    </>
                   ),
                   align: "right"
                 }
@@ -206,7 +340,7 @@ export const ContentLabPage = () => {
             />
           </div>
           <div className="panel-inner">
-            <SectionHeader title="Tạo Grammar" />
+            <SectionHeader title={editingGrammarId ? "Sửa Grammar" : "Tạo Grammar"} />
             <form className="form" onSubmit={handleCreateGrammar}>
               <label>
                 Tiêu đề
@@ -238,7 +372,12 @@ export const ContentLabPage = () => {
                 Tags (csv)
                 <input value={grammarForm.tags} onChange={(e) => setGrammarForm({ ...grammarForm, tags: e.target.value })} />
               </label>
-              <button className="primary-button" type="submit">Tạo</button>
+              <div className="form-row">
+                <button className="primary-button" type="submit">{editingGrammarId ? "Cập nhật" : "Tạo"}</button>
+                {editingGrammarId && (
+                  <button className="ghost-button" type="button" onClick={handleCancelGrammar}>Huỷ</button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -247,7 +386,19 @@ export const ContentLabPage = () => {
       {tab === "questions" && (
         <div className="grid-2">
           <div className="panel-inner">
-            <SectionHeader title="Question bank" />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <SectionHeader title="Question bank" />
+              <input
+                type="file"
+                accept=".csv,.pdf"
+                ref={questionFileRef}
+                onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportQuestions, questionFileRef)}
+                style={{ display: "none" }}
+              />
+              <button className="ghost-button small" onClick={() => questionFileRef.current?.click()} disabled={importing}>
+                {importing ? "Đang import..." : "Import CSV/PDF"}
+              </button>
+            </div>
             <DataTable
               columns={[
                 {
@@ -267,12 +418,17 @@ export const ContentLabPage = () => {
                 {
                   header: "Action",
                   render: (row) => (
-                    <button className="ghost-button small danger" onClick={() => {
-                      if (!confirm("Xóa câu hỏi này?")) return;
-                      deleteQuestion(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
-                    }}>
-                      Xóa
-                    </button>
+                    <>
+                      <button className="ghost-button small" onClick={() => handleEditQuestion(row)}>
+                        Sửa
+                      </button>
+                      <button className="ghost-button small danger" onClick={() => {
+                        if (!confirm("Xóa câu hỏi này?")) return;
+                        deleteQuestion(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                      }}>
+                        Xóa
+                      </button>
+                    </>
                   ),
                   align: "right"
                 }
@@ -281,7 +437,7 @@ export const ContentLabPage = () => {
             />
           </div>
           <div className="panel-inner">
-            <SectionHeader title="Tạo Question" />
+            <SectionHeader title={editingQuestionId ? "Sửa Question" : "Tạo Question"} />
             <form className="form" onSubmit={handleCreateQuestion}>
               <label>
                 Prompt
@@ -321,7 +477,12 @@ export const ContentLabPage = () => {
                 Tags (csv)
                 <input value={questionForm.tags} onChange={(e) => setQuestionForm({ ...questionForm, tags: e.target.value })} />
               </label>
-              <button className="primary-button" type="submit">Tạo</button>
+              <div className="form-row">
+                <button className="primary-button" type="submit">{editingQuestionId ? "Cập nhật" : "Tạo"}</button>
+                {editingQuestionId && (
+                  <button className="ghost-button" type="button" onClick={handleCancelQuestion}>Huỷ</button>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -330,7 +491,19 @@ export const ContentLabPage = () => {
       {tab === "tests" && (
         <div className="grid-2">
           <div className="panel-inner">
-            <SectionHeader title="Test exams" />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <SectionHeader title="Test exams" />
+              <input
+                type="file"
+                accept=".csv,.pdf"
+                ref={testFileRef}
+                onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportTestExams, testFileRef)}
+                style={{ display: "none" }}
+              />
+              <button className="ghost-button small" onClick={() => testFileRef.current?.click()} disabled={importing}>
+                {importing ? "Đang import..." : "Import CSV/PDF"}
+              </button>
+            </div>
             <DataTable
               columns={[
                 {
@@ -350,12 +523,17 @@ export const ContentLabPage = () => {
                 {
                   header: "Action",
                   render: (row) => (
-                    <button className="ghost-button small danger" onClick={() => {
-                      if (!confirm("Xóa bài test này?")) return;
-                      deleteTestExam(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
-                    }}>
-                      Xóa
-                    </button>
+                    <>
+                      <button className="ghost-button small" onClick={() => handleEditTest(row)}>
+                        Sửa
+                      </button>
+                      <button className="ghost-button small danger" onClick={() => {
+                        if (!confirm("Xóa bài test này?")) return;
+                        deleteTestExam(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                      }}>
+                        Xóa
+                      </button>
+                    </>
                   ),
                   align: "right"
                 }
@@ -364,7 +542,7 @@ export const ContentLabPage = () => {
             />
           </div>
           <div className="panel-inner">
-            <SectionHeader title="Tạo Test Exam" />
+            <SectionHeader title={editingTestId ? "Sửa Test Exam" : "Tạo Test Exam"} />
             <form className="form" onSubmit={handleCreateTest}>
               <label>
                 Title
@@ -417,7 +595,12 @@ export const ContentLabPage = () => {
                 />
                 Publish
               </label>
-              <button className="primary-button" type="submit">Tạo</button>
+              <div className="form-row">
+                <button className="primary-button" type="submit">{editingTestId ? "Cập nhật" : "Tạo"}</button>
+                {editingTestId && (
+                  <button className="ghost-button" type="button" onClick={handleCancelTest}>Huỷ</button>
+                )}
+              </div>
             </form>
           </div>
         </div>

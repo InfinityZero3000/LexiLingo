@@ -212,7 +212,7 @@ class TestRouteAfterVietnamese:
 
     def test_routes_to_retrieve_regardless_of_state(self):
         full_state = _state("A1", confidence=0.9, errors=[_SAMPLE_ERROR])
-        full_state["vietnamese_hint"] = "Bạn cần dùng thì quá khứ đơn."
+        full_state["native_hint"] = "Bạn cần dùng thì quá khứ đơn."
         assert route_after_vietnamese(full_state) == "retrieve_node"
 
     def test_routes_to_retrieve_with_empty_state(self):

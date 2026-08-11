@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 
@@ -26,11 +26,13 @@ class PreAuthAnswers {
 class PreAuthQuestionsPage extends StatefulWidget {
   final void Function(PreAuthAnswers answers) onComplete;
   final VoidCallback onBack;
+  final VoidCallback? onLogin;
 
   const PreAuthQuestionsPage({
     super.key,
     required this.onComplete,
     required this.onBack,
+    this.onLogin,
   });
 
   @override
@@ -131,120 +133,125 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Top bar
-                Row(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    IconButton(
-                      onPressed: _goBack,
-                      icon: Icon(
-                        Icons.arrow_back_rounded,
-                        color: isDark ? Colors.white : AppColors.textDark,
-                      ),
+                    // Top bar
+                    Row(
+                      children: [
+                        IconButton(
+                          onPressed: _goBack,
+                          icon: Icon(
+                            Icons.arrow_back_rounded,
+                            color: isDark ? Colors.white : AppColors.textDark,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'preAuth.quickSetup'.tr(),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : AppColors.textDark,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          '${_currentPage + 1}/$_totalPages',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: isDark
+                                ? Colors.white60
+                                : AppColors.textSlate,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const LanguageSwitcherButton(),
+                      ],
                     ),
-                    Expanded(
-                      child: Text(
-                        'preAuth.quickSetup'.tr(),
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColors.textDark,
+                    const SizedBox(height: 10),
+                    // Progress bar
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: (_currentPage + 1) / _totalPages,
+                        minHeight: 6,
+                        backgroundColor: isDark
+                            ? AppColors.slate800
+                            : AppColors.slate200,
+                        valueColor: const AlwaysStoppedAnimation(
+                          AppColors.accentMint,
                         ),
                       ),
                     ),
-                    Text(
-                      '${_currentPage + 1}/$_totalPages',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: isDark ? Colors.white60 : AppColors.textSlate,
+                    const SizedBox(height: 20),
+                    // Pages
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(),
+                        onPageChanged: (index) {
+                          setState(() => _currentPage = index);
+                        },
+                        children: [
+                          _buildNameStep(context, isDark, theme),
+                          _buildLanguageStep(context, isDark, theme),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const LanguageSwitcherButton(),
+                    const SizedBox(height: 12),
+                    // Continue button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _goNext,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentMint,
+                          foregroundColor: AppColors.accentMintDark,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          _currentPage < _totalPages - 1
+                              ? 'preAuth.continue'.tr()
+                              : 'preAuth.createMyAccount'.tr(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (_currentPage == _totalPages - 1) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: TextButton(
+                          onPressed: widget.onLogin,
+                          child: Text(
+                            'auth.alreadyHaveAccount'.tr(),
+                            style: TextStyle(
+                              color: isDark
+                                  ? Colors.white60
+                                  : AppColors.textSlate,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 10),
-                // Progress bar
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: (_currentPage + 1) / _totalPages,
-                    minHeight: 6,
-                    backgroundColor: isDark
-                        ? AppColors.slate800
-                        : AppColors.slate200,
-                    valueColor: const AlwaysStoppedAnimation(
-                      AppColors.accentMint,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Pages
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: (index) {
-                      setState(() => _currentPage = index);
-                    },
-                    children: [
-                      _buildNameStep(context, isDark, theme),
-                      _buildLanguageStep(context, isDark, theme),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Continue button
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: ElevatedButton(
-                    onPressed: _goNext,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentMint,
-                      foregroundColor: AppColors.accentMintDark,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      _currentPage < _totalPages - 1
-                          ? 'preAuth.continue'.tr()
-                          : 'preAuth.createMyAccount'.tr(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                if (_currentPage == _totalPages - 1) ...[
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: TextButton(
-                      onPressed: () => widget.onComplete(
-                        PreAuthAnswers(
-                          name: _nameController.text.trim(),
-                          nativeLanguage: _selectedLanguage,
-                        ),
-                      ),
-                      child: Text(
-                        'auth.alreadyHaveAccount'.tr(),
-                        style: TextStyle(
-                          color: isDark ? Colors.white60 : AppColors.textSlate,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),
@@ -467,25 +474,6 @@ class _LanguageOptionIcon extends StatelessWidget {
       return const Icon(Icons.public, size: 20);
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(999),
-      child: SizedBox(
-        width: 24,
-        height: 24,
-        child: CachedNetworkImage(
-          imageUrl: AppLocales.flagPngUrlOf(code),
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 100),
-          placeholder: (context, _) => DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.accentMint.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(999),
-            ),
-          ),
-          errorWidget: (_, __, ___) =>
-              const Icon(Icons.flag_outlined, size: 20),
-        ),
-      ),
-    );
+    return LanguageFlag(languageCode: code, width: 24, height: 24);
   }
 }

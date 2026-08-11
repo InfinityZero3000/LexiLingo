@@ -7,7 +7,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import UTC, datetime
 
 from app.models.course import Course, Unit, Lesson
 from app.models.user import User
@@ -85,7 +85,7 @@ class TestLearningSession:
         existing_attempt = LessonAttempt(
             user_id=test_user.id,
             lesson_id=test_lesson.id,
-            started_at=datetime.utcnow(),
+            started_at=datetime.now(UTC),
             total_questions=10,
             lives_remaining=2,
             hints_used=1,
@@ -124,6 +124,70 @@ class TestLearningSession:
         )
         
         assert response.status_code == 404
+
+    async def test_start_lesson_missing_exercises_rejected_in_production(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_course: Course,
+        test_unit: Unit,
+        monkeypatch,
+    ):
+        """Production should not silently serve demo exercises for empty lessons."""
+        lesson = Lesson(
+            course_id=test_course.id,
+            unit_id=test_unit.id,
+            title="Empty Lesson",
+            description="Missing content",
+            order_index=99,
+            lesson_type="vocabulary",
+            content={},
+        )
+        db_session.add(lesson)
+        await db_session.commit()
+        await db_session.refresh(lesson)
+        monkeypatch.setattr("app.routes.learning.settings.APP_ENV", "production")
+
+        response = await async_client.post(
+            f"/api/v1/learning/lessons/{lesson.id}/start",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 409
+
+    async def test_get_lesson_content_preserves_outcome_and_exercise_phase(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_lesson: Lesson,
+    ):
+        test_lesson.outcome = "Can order a meal politely"
+        test_lesson.content = {
+            "exercises": [
+                {
+                    "id": "phase-exercise",
+                    "type": "multiple_choice",
+                    "ui_type": "multiple_choice",
+                    "phase": "pre_task",
+                    "question": "What would you like?",
+                    "options": ["Soup", "Receipt"],
+                    "correct_answer": "Soup",
+                }
+            ]
+        }
+        await db_session.commit()
+
+        response = await async_client.get(
+            f"/api/v1/learning/lessons/{test_lesson.id}/content",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        content = response.json()["data"]
+        assert content["outcome"] == "Can order a meal politely"
+        assert content["exercises"][0]["phase"] == "pre_task"
     
     async def test_submit_answer_correct(
         self,
@@ -320,7 +384,7 @@ class TestLearningSession:
         test_lesson_attempt: LessonAttempt
     ):
         """Test cannot complete already completed lesson"""
-        test_lesson_attempt.finished_at = datetime.utcnow()
+        test_lesson_attempt.finished_at = datetime.now(UTC)
         await db_session.commit()
         
         response = await async_client.post(

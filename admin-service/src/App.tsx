@@ -5,12 +5,12 @@ import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
 import { AppShell, NavItem } from "./components/AppShell";
-import { ConfigLock } from "./components/ConfigLock";
 import {
   LayoutDashboard, Users, BookOpen, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
-  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell
+  Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell,
+  ClipboardCheck, Gauge
 } from "lucide-react";
 
 // Lazy-loaded components
@@ -31,9 +31,11 @@ const AdsPage = lazy(() => import("./pages/AdsPage").then(m => ({ default: m.Ads
 const LogsPage = lazy(() => import("./pages/LogsPage").then(m => ({ default: m.LogsPage })));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage").then(m => ({ default: m.MonitoringPage })));
 const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ default: m.ContentLabPage })));
+const ContentQaQueuePage = lazy(() => import("./pages/ContentQaQueuePage").then(m => ({ default: m.ContentQaQueuePage })));
 const DatabasePage = lazy(() => import("./pages/DatabasePage").then(m => ({ default: m.DatabasePage })));
 const AiModelsPage = lazy(() => import("./pages/AiModelsPage").then(m => ({ default: m.AiModelsPage })));
 const ContentAnalyticsPage = lazy(() => import("./pages/ContentAnalyticsPage").then(m => ({ default: m.ContentAnalyticsPage })));
+const AiQualityDashboardPage = lazy(() => import("./pages/AiQualityDashboardPage").then(m => ({ default: m.AiQualityDashboardPage })));
 const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
 const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage").then(m => ({ default: m.AdminManagementPage })));
 const AiChatSettingsPage = lazy(() => import("./pages/AiChatSettingsPage").then(m => ({ default: m.AiChatSettingsPage })));
@@ -60,7 +62,9 @@ const AppRoutes = () => {
     { to: "/admin/lessons", label: t.nav.lessons, icon: <FileText size={18} /> },
     { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} /> },
     { to: "/admin/content-lab", label: t.nav.grammarTest, icon: <PenTool size={18} /> },
+    { to: "/admin/content-qa", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} /> },
     { to: "/admin/content-analytics", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} /> },
+    { to: "/admin/ai-quality", label: t.nav.aiQuality, icon: <Gauge size={18} /> },
     { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} /> },
     { to: "/admin/achievements", label: t.nav.achievements, icon: <Trophy size={18} /> },
     { to: "/admin/shop", label: t.nav.shop, icon: <ShoppingBag size={18} /> },
@@ -104,7 +108,9 @@ const AppRoutes = () => {
               <Route path="/admin/lessons" element={<LessonsPage />} />
               <Route path="/admin/topics" element={<TopicsPage />} />
               <Route path="/admin/content-lab" element={<ContentLabPage />} />
+              <Route path="/admin/content-qa" element={<ContentQaQueuePage />} />
               <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
+              <Route path="/admin/ai-quality" element={<AiQualityDashboardPage />} />
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
               <Route path="/admin/achievements" element={<AchievementsPage />} />
               <Route path="/admin/shop" element={<ShopPage />} />
@@ -113,16 +119,16 @@ const AppRoutes = () => {
               <Route path="/admin/ads" element={<AdsPage />} />
               <Route path="/admin/logs" element={<LogsPage />} />
               <Route path="/admin/monitoring" element={<MonitoringPage />} />
-              <Route path="/admin/settings" element={<ConfigLock><SystemSettingsPage /></ConfigLock>} />
+              <Route path="/admin/settings" element={<SystemSettingsPage />} />
             </Route>
           </Route>
 
           <Route element={<RequireRole allowed={["super_admin"]} />}>
             <Route element={<AppShell title={t.appShell.superAdmin} role="super_admin" navItems={superNav} />}>
               <Route path="/super" element={<SuperAdminDashboard />} />
-              <Route path="/super/admins" element={<ConfigLock><AdminManagementPage /></ConfigLock>} />
-              <Route path="/super/ai-chat" element={<ConfigLock><AiChatSettingsPage /></ConfigLock>} />
-              <Route path="/super/db" element={<ConfigLock><DatabasePage /></ConfigLock>} />
+              <Route path="/super/admins" element={<AdminManagementPage />} />
+              <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
+              <Route path="/super/db" element={<DatabasePage />} />
               <Route path="/super/ai-models" element={<AiModelsPage />} />
             </Route>
           </Route>

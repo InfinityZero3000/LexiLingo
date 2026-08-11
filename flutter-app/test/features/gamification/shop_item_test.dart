@@ -46,4 +46,22 @@ void main() {
       expect(item.category, ShopItemEntity.categoryPowerUps);
     }
   });
+
+  test('maps all in-game power-up item types into power ups category', () {
+    for (final type in ShopItemEntity.gamePowerUpEffectTypes) {
+      final item = ShopItemEntity.fromJson({
+        'id': type,
+        'name': type,
+        'description': type,
+        'item_type': type,
+        'price_gems': 15,
+      });
+      expect(
+        item.category,
+        ShopItemEntity.categoryPowerUps,
+        reason: '$type should map to categoryPowerUps',
+      );
+      expect(item.effectType, type);
+    }
+  });
 }

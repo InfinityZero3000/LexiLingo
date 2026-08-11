@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import '../providers/notification_provider.dart';
 import '../widgets/empty_notification_widget.dart';
 import '../../domain/entities/notification_entity.dart';
+import '../../domain/services/notification_navigation_service.dart';
 
 /// Notifications Page
 /// Displays all notifications grouped by date with real-time updates
@@ -46,18 +47,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     if (Navigator.canPop(context))
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          size: 20,
-                        ),
+                      AppBackButton(
+                        icon: Icons.arrow_back_ios_new_rounded,
                         onPressed: () => Navigator.pop(context),
                         tooltip: 'notifications.tooltipBack'.tr(),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
-                        ),
+                        iconSize: 20,
                       ),
                     Container(
                       padding: const EdgeInsets.all(10),
@@ -401,29 +395,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       provider.markAsRead(notification.id);
     }
 
-    // Navigate based on notification type
-    final route = notification.route;
-    if (route != null && route == '/vocabulary/review') {
-      AppNavigationService.openRoute(route);
-      return;
-    }
-
-    switch (notification.type) {
-      case NotificationType.streakReminder:
-      case NotificationType.lessonReminder:
-      case NotificationType.vocabularyReviewReminder:
-        // Could navigate to home or learning screen
-        break;
-      case NotificationType.achievement:
-        // Could navigate to achievements screen
-        break;
-      case NotificationType.newContent:
-        // Could navigate to courses screen
-        break;
-      default:
-        // Just mark as read
-        break;
-    }
+    NotificationNavigationService.open(notification);
   }
 
   IconData _getIconData(String? identifier) {

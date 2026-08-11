@@ -8,13 +8,18 @@ import {
   getUsers,
   updateUserStatus,
   bulkUserAction,
+  permanentlyDeleteUser,
   getUserDetail,
   getRoleLabel,
   getRoleColor,
   type UserFilters,
   type UserListItem as ApiUserListItem,
 } from '../lib/userManagementApi';
-import UserDetailModal from '../components/user-management/UserDetailModal';import { SectionHeader } from "../components/SectionHeader";import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+import { getDashboardStats } from '../lib/rbacApi';
+import { SectionHeader } from '../components/SectionHeader';
+import UserDetailModal from '../components/user-management/UserDetailModal';
+import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
+import { useAuth } from '../components/AuthProvider';
 
 type UserListItem = ApiUserListItem & {
   avatar_url: string | null;
@@ -24,7 +29,8 @@ type UserListItem = ApiUserListItem & {
 
 export default function UserManagementPage() {
   const queryClient = useQueryClient();
-  
+  const { user: currentAdmin, role } = useAuth();
+
   // State
   const [filters, setFilters] = useState<UserFilters>({
     page: 1,
@@ -41,6 +47,12 @@ export default function UserManagementPage() {
     queryKey: ['users', filters],
     queryFn: () => getUsers(filters),
     staleTime: 30000, // 30 seconds
+  });
+
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['users-dashboard-stats'],
+    queryFn: getDashboardStats,
+    staleTime: 30000,
   });
   
   // Mutations
@@ -59,7 +71,14 @@ export default function UserManagementPage() {
       setSelectedUsers(new Set());
     },
   });
-  
+
+  const deleteMutation = useMutation({
+    mutationFn: permanentlyDeleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+
   // Handlers
   const handleFilterChange = (newFilters: Partial<UserFilters>) => {
     setFilters((prev) => ({ ...prev, ...newFilters, page: 1 }));
@@ -111,6 +130,12 @@ export default function UserManagementPage() {
   const handleViewDetail = (userId: string) => {
     setDetailModalUserId(userId);
   };
+
+  const handlePermanentDelete = (userId: string, email: string) => {
+    if (confirm(`Xóa vĩnh viễn tài khoản "${email}"? Toàn bộ dữ liệu của người dùng sẽ bị xóa và KHÔNG THỂ hoàn tác.`)) {
+      deleteMutation.mutate(userId);
+    }
+  };
   
   // Render
   if (error) {
@@ -126,10 +151,14 @@ export default function UserManagementPage() {
   
   // Calculate stats
   const users = (data?.users ?? []) as UserListItem[];
-  const activeUsers = users.filter(u => u.is_active).length;
-  const inactiveUsers = users.filter(u => !u.is_active).length;
-  const totalXP = users.reduce((sum, u) => sum + (u.total_xp || 0), 0);
-  const avgXP = users.length ? Math.round(totalXP / users.length) : 0;
+  // Active/inactive counts come from the global dashboard endpoint, not the
+  // current page of `users` — a per-page count would misreport the % of total.
+  const globalTotal = dashboardStats?.dashboard.total_users ?? data?.total ?? 0;
+  const activeUsers = dashboardStats?.dashboard.active_users ?? 0;
+  const inactiveUsers = Math.max(globalTotal - activeUsers, 0);
+  // XP totals are page-local by necessity (no global XP aggregate endpoint exists yet).
+  const pageTotalXP = users.reduce((sum, u) => sum + (u.total_xp || 0), 0);
+  const pageAvgXP = users.length ? Math.round(pageTotalXP / users.length) : 0;
 
   return (
     <div className="stack">
@@ -188,7 +217,7 @@ export default function UserManagementPage() {
             <div>
               <div className="stat-label">Đang hoạt động</div>
               <div className="stat-value">{activeUsers}</div>
-              <div className="stat-meta">{data.total > 0 ? Math.round((activeUsers / data.total) * 100) : 0}% tổng số</div>
+              <div className="stat-meta">{globalTotal > 0 ? Math.round((activeUsers / globalTotal) * 100) : 0}% tổng số</div>
             </div>
           </div>
           
@@ -203,7 +232,7 @@ export default function UserManagementPage() {
             <div>
               <div className="stat-label">Ngừng hoạt động</div>
               <div className="stat-value">{inactiveUsers}</div>
-              <div className="stat-meta">{data.total > 0 ? Math.round((inactiveUsers / data.total) * 100) : 0}% tổng số</div>
+              <div className="stat-meta">{globalTotal > 0 ? Math.round((inactiveUsers / globalTotal) * 100) : 0}% tổng số</div>
             </div>
           </div>
           
@@ -214,9 +243,9 @@ export default function UserManagementPage() {
               </svg>
             </div>
             <div>
-              <div className="stat-label">Trung bình XP</div>
-              <div className="stat-value">{avgXP.toLocaleString()}</div>
-              <div className="stat-meta">Tổng: {totalXP.toLocaleString()} XP</div>
+              <div className="stat-label">Trung bình XP (trang này)</div>
+              <div className="stat-value">{pageAvgXP.toLocaleString()}</div>
+              <div className="stat-meta">Tổng trang này: {pageTotalXP.toLocaleString()} XP</div>
             </div>
           </div>
         </div>
@@ -266,13 +295,9 @@ export default function UserManagementPage() {
                     </td>
                     <td style={{ padding: '16px' }}>
                       <div className="cluster" style={{ gap: 12, alignItems: 'center' }}>
-                        {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--line)' }} />
-                        ) : (
-                          <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
-                            {user.email[0].toUpperCase()}
-                          </div>
-                        )}
+                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
+                          {(user.display_name || user.email)[0].toUpperCase()}
+                        </div>
                         <div>
                           <div className="table-title">{user.display_name || user.email.split('@')[0]}</div>
                           <div className="table-sub">{user.email}</div>
@@ -349,6 +374,22 @@ export default function UserManagementPage() {
                             </svg>
                           )}
                         </button>
+                        {role === 'super_admin' && user.id !== currentAdmin?.id && user.role_level < 2 && (
+                          <button
+                            onClick={() => handlePermanentDelete(user.id, user.email)}
+                            disabled={deleteMutation.isPending}
+                            className="icon-button"
+                            title="Xóa vĩnh viễn"
+                            style={{ width: 32, height: 32, color: '#dc2626', opacity: deleteMutation.isPending ? 0.5 : 1 }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/>
+                              <line x1="10" y1="11" x2="10" y2="17"/>
+                              <line x1="14" y1="11" x2="14" y2="17"/>
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

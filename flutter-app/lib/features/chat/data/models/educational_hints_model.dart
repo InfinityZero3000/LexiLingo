@@ -2,6 +2,8 @@
 /// Provides grammar corrections and vocabulary hints from AI responses
 library;
 
+import '../../domain/entities/educational_hints.dart' as entities;
+
 /// Grammar correction from AI
 class GrammarCorrection {
   final String original;
@@ -161,4 +163,46 @@ class LlmMetadata {
     'latency_ms': latencyMs,
     'fallback_used': fallbackUsed,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Domain entity mappers — see story_model.dart for rationale.
+// ---------------------------------------------------------------------------
+
+extension GrammarCorrectionToEntity on GrammarCorrection {
+  entities.GrammarCorrection toEntity() => entities.GrammarCorrection(
+    original: original,
+    corrected: corrected,
+    explanation: explanation,
+    errorType: errorType,
+    rule: rule,
+  );
+}
+
+extension VocabularyHintToEntity on VocabularyHint {
+  entities.VocabularyHint toEntity() => entities.VocabularyHint(
+    term: term,
+    definition: definition,
+    example: example,
+    partOfSpeech: partOfSpeech,
+    pronunciation: pronunciation,
+  );
+}
+
+extension EducationalHintsToEntity on EducationalHints {
+  entities.EducationalHints toEntity() => entities.EducationalHints(
+    grammarCorrections: grammarCorrections.map((g) => g.toEntity()).toList(),
+    vocabularyHints: vocabularyHints.map((v) => v.toEntity()).toList(),
+    encouragement: encouragement,
+    nextSuggestion: nextSuggestion,
+  );
+}
+
+extension LlmMetadataToEntity on LlmMetadata {
+  entities.LlmMetadata toEntity() => entities.LlmMetadata(
+    provider: provider,
+    model: model,
+    latencyMs: latencyMs,
+    fallbackUsed: fallbackUsed,
+  );
 }

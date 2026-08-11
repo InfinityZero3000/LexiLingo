@@ -19,8 +19,8 @@
 
 <br/>
 
-> *Most language apps give you the same lesson regardless of who you are.* 
-> *LexiLingo builds a live knowledge graph of your concept gaps, diagnoses errors in real time,* 
+> *Most language apps give you the same lesson regardless of who you are.*
+> *LexiLingo builds a live knowledge graph of your concept gaps, diagnoses errors in real time,*
 > *and generates personalized explanations — not templates.*
 
 <br/>

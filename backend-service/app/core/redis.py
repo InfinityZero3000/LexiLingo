@@ -6,12 +6,20 @@ Used for token blacklist, caching, and session management.
 """
 
 import logging
+import re
 from typing import Optional
 import redis.asyncio as redis
 
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
+_CREDENTIALS_IN_URL = re.compile(r"//[^@/]*@")
+
+
+def _redact_url(url: str) -> str:
+    """Strip embedded user:password from a connection URL before logging."""
+    return _CREDENTIALS_IN_URL.sub("//***@", url)
 
 
 class RedisClient:
@@ -61,7 +69,7 @@ class RedisClient:
             # Test connection
             await cls._instance.ping()
             cls._connected = True
-            logger.info(f"Redis connected: {url}")
+            logger.info(f"Redis connected: {_redact_url(url)}")
         except redis.ConnectionError as e:
             logger.warning(f"Redis connection failed: {e}. Token blacklist will be disabled.")
             cls._instance = None

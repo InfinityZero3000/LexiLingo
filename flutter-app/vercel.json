@@ -11,76 +11,12 @@
   ],
   "headers": [
     {
-      "source": "/main.dart.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Cloudflare-CDN-Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/flutter_bootstrap.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Cloudflare-CDN-Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/flutter_service_worker.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Cloudflare-CDN-Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/version.json",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "CDN-Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Cloudflare-CDN-Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
       "source": "/(.*)",
       "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        },
         {
           "key": "Cross-Origin-Opener-Policy",
           "value": "same-origin-allow-popups"
@@ -88,32 +24,6 @@
         {
           "key": "Cross-Origin-Embedder-Policy",
           "value": "unsafe-none"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.+\\.(?:js|wasm|ttf|woff|woff2|eot|png|jpg|jpeg|gif|svg|ico))",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/assets/assets/i18n/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
         }
       ]
     }

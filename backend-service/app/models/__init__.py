@@ -81,6 +81,9 @@ from app.models.reward_grant import UserRewardGrant
 # Reminder models
 from app.models.reminder import ReminderDelivery, UserReminderPreference
 
+# Mistake notebook models
+from app.models.mistake import MistakeNotebookEntry
+
 # API Cache (Phase 0 — Infrastructure)
 from app.models.api_cache import APICacheEntry
 
@@ -108,7 +111,20 @@ from app.models.notification_campaign import NotificationCampaignJob
 # Durable learner error history
 from app.models.learner_error import LearnerError
 
+# Sparse learner-state and durable observation outbox
+from app.models.learner_state import (
+    LearnerConceptState,
+    LearnerObservationEvent,
+    LearnerStateProfile,
+)
+
+from app.models.partner import PartnerApiKey
+
+# Entitlement models (server-verified premium state)
+from app.models.entitlement import UserEntitlement
+
 __all__ = [
+    "PartnerApiKey",
     # User (Phase 1)
     "User",
     "UserDevice",
@@ -169,6 +185,8 @@ __all__ = [
     # Reminder
     "ReminderDelivery",
     "UserReminderPreference",
+    # Mistake notebook
+    "MistakeNotebookEntry",
     # API Cache (Phase 0)
     "APICacheEntry",
     # Games (Phase 3)
@@ -186,4 +204,10 @@ __all__ = [
     "NotificationCampaignJob",
     # Learner error history
     "LearnerError",
+    # Learner state
+    "LearnerConceptState",
+    "LearnerObservationEvent",
+    "LearnerStateProfile",
+    # Entitlements
+    "UserEntitlement",
 ]

@@ -27,6 +27,30 @@ class SyncQueueItem {
   final DateTime nextRetryAt;
 }
 
+class SyncQueueSummary {
+  const SyncQueueSummary({
+    required this.persistentQueueAvailable,
+    required this.readyCount,
+    required this.scheduledCount,
+    required this.retryingCount,
+    required this.totalCount,
+  });
+
+  final bool persistentQueueAvailable;
+  final int readyCount;
+  final int scheduledCount;
+  final int retryingCount;
+  final int totalCount;
+
+  static const unsupported = SyncQueueSummary(
+    persistentQueueAvailable: false,
+    readyCount: 0,
+    scheduledCount: 0,
+    retryingCount: 0,
+    totalCount: 0,
+  );
+}
+
 /// Persistent background sync queue with exponential backoff.
 class BackgroundSyncQueueService {
   BackgroundSyncQueueService._();
@@ -99,6 +123,36 @@ class BackgroundSyncQueueService {
         .toList();
   }
 
+  Future<SyncQueueSummary> getSummary({required String userScope}) async {
+    if (!_supportsPersistentQueue) {
+      return SyncQueueSummary.unsupported;
+    }
+
+    final db = await DatabaseHelper.instance.database;
+    final now = DateTime.now().toIso8601String();
+    final rows = await db.rawQuery(
+      '''
+SELECT
+  COUNT(*) as total_count,
+  SUM(CASE WHEN next_retry_at <= ? THEN 1 ELSE 0 END) as ready_count,
+  SUM(CASE WHEN next_retry_at > ? THEN 1 ELSE 0 END) as scheduled_count,
+  SUM(CASE WHEN retry_count > 0 THEN 1 ELSE 0 END) as retrying_count
+FROM $tableName
+WHERE user_scope = ?
+''',
+      [now, now, userScope],
+    );
+
+    final row = rows.isEmpty ? const <String, Object?>{} : rows.first;
+    return SyncQueueSummary(
+      persistentQueueAvailable: true,
+      readyCount: _readCount(row['ready_count']),
+      scheduledCount: _readCount(row['scheduled_count']),
+      retryingCount: _readCount(row['retrying_count']),
+      totalCount: _readCount(row['total_count']),
+    );
+  }
+
   Future<void> processPending({
     required String userScope,
     required Future<void> Function(SyncQueueItem item) processor,
@@ -161,6 +215,12 @@ class BackgroundSyncQueueService {
     final factor = pow(2, retryCount.clamp(0, 8)).toInt();
     final backoff = min(maxSeconds, baseSeconds * factor);
     return DateTime.now().add(Duration(seconds: backoff));
+  }
+
+  int _readCount(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 
   static Future<void> createTable(Database db) async {

@@ -2,6 +2,20 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/services/local_cache_service.dart';
 import '../../domain/entities/proficiency_entity.dart';
 
+List<Map<String, int>> buildPlacementAnswerPayload(Map<String, int> answers) {
+  final payload = <Map<String, int>>[];
+
+  for (final entry in answers.entries) {
+    final questionId = int.tryParse(entry.key);
+    if (questionId == null) continue;
+
+    payload.add({'question_id': questionId, 'selected_option': entry.value});
+  }
+
+  payload.sort((a, b) => a['question_id']!.compareTo(b['question_id']!));
+  return payload;
+}
+
 /// Data source for proficiency assessment API calls
 class ProficiencyDataSource {
   final ApiClient _apiClient;
@@ -67,7 +81,7 @@ class ProficiencyDataSource {
   }) async {
     return await _apiClient.post(
       '/proficiency/placement-test/submit',
-      body: {'answers': answers, 'time_taken_seconds': timeTakenSeconds},
+      body: {'answers': buildPlacementAnswerPayload(answers)},
     );
   }
 }

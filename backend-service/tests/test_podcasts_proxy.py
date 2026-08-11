@@ -25,67 +25,56 @@ class TestPodcastProxyImage:
     """Tests for GET /podcasts/proxy/image endpoint."""
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
-    async def test_proxy_image_success(self, mock_client_class, no_db_client: AsyncClient):
+    async def test_proxy_image_success(self, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.content = b"fake_image_bytes"
         mock_response.headers = {"content-type": "image/png"}
-
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_response.aclose = AsyncMock()
+        async def chunks():
+            yield b"fake_image_bytes"
+        mock_response.aiter_bytes = chunks
 
         target_url = "https://example.com/artwork.png"
-        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        with patch(
+            "app.routes.podcasts._stream_public_url",
+            AsyncMock(return_value=mock_response),
+        ):
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 200
         assert response.content == b"fake_image_bytes"
         assert response.headers.get("content-type") == "image/png"
         assert response.headers.get("cache-control") == "public, max-age=86400"
-        mock_client.get.assert_called_once_with(
-            target_url,
-            headers={
-                "User-Agent": (
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Chrome/120.0.0.0 Safari/537.36"
-                ),
-                "Accept": "image/webp,image/avif,image/*,*/*;q=0.8",
-            },
-            follow_redirects=True
-        )
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
-    async def test_proxy_image_not_image_type(self, mock_client_class, no_db_client: AsyncClient):
+    async def test_proxy_image_not_image_type(self, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 200
-        mock_response.content = b"<html>Not an image</html>"
         mock_response.headers = {"content-type": "text/html"}
-
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_response.aclose = AsyncMock()
 
         target_url = "https://example.com/artwork.html"
-        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        with patch(
+            "app.routes.podcasts._stream_public_url",
+            AsyncMock(return_value=mock_response),
+        ):
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 400
         assert "did not return an image content type" in response.json()["error"]["message"]
 
     @pytest.mark.asyncio
-    @patch("httpx.AsyncClient")
-    async def test_proxy_image_non_200_response(self, mock_client_class, no_db_client: AsyncClient):
+    async def test_proxy_image_non_200_response(self, no_db_client: AsyncClient):
         mock_response = MagicMock()
         mock_response.status_code = 404
-
-        mock_client = AsyncMock()
-        mock_client.get.return_value = mock_response
-        mock_client_class.return_value.__aenter__.return_value = mock_client
+        mock_response.aclose = AsyncMock()
 
         target_url = "https://example.com/artwork.png"
-        response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
+        with patch(
+            "app.routes.podcasts._stream_public_url",
+            AsyncMock(return_value=mock_response),
+        ):
+            response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
         assert response.status_code == 404
         assert "Failed to fetch image: HTTP 404" in response.json()["error"]["message"]
@@ -95,7 +84,7 @@ class TestPodcastProxyImage:
         target_url = "ftp://example.com/artwork.png"
         response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
         assert response.status_code == 400
-        assert "Only HTTP/HTTPS image URLs are allowed" in response.json()["error"]["message"]
+        assert "Only public HTTP/HTTPS URLs are allowed" in response.json()["error"]["message"]
 
     @pytest.mark.asyncio
     async def test_proxy_image_ssrf_private_ip(self, no_db_client: AsyncClient):
@@ -108,7 +97,7 @@ class TestPodcastProxyImage:
         ]:
             response = await no_db_client.get(f"{BASE}/proxy/image?url={private_url}")
             assert response.status_code == 400
-            assert "Internal/private URLs are not allowed" in response.json()["error"]["message"]
+            assert "Only public HTTP/HTTPS URLs are allowed" in response.json()["error"]["message"]
 
 class TestPodcastRouteProxiedUrls:
     """Tests that curated, search, and episode routes return proxied URLs."""

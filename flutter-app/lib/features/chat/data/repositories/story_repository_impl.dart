@@ -3,10 +3,26 @@ import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../domain/entities/story.dart';
+import '../../domain/entities/topic_session.dart';
+import '../../domain/entities/topic_stream_event.dart';
 import '../../domain/repositories/story_repository.dart';
 import '../datasources/story_api_data_source.dart';
-import '../models/story_model.dart';
-import '../models/topic_session_model.dart';
+// Only the toEntity() extensions are needed here — the model classes
+// themselves would collide with the same-named domain entities above.
+import '../models/story_model.dart'
+    hide
+        Story,
+        StoryListItem,
+        DifficultyLevel,
+        LocalizedTitle,
+        VocabularyItem,
+        GrammarPoint,
+        RolePersona,
+        ContextDescription,
+        ConversationFlow;
+import '../models/topic_session_model.dart'
+    hide TopicSession, TopicChatResponse, TopicChatMessage, TopicMessagesPageResult;
 
 const _tag = 'StoryRepositoryImpl';
 
@@ -28,7 +44,7 @@ class StoryRepositoryImpl implements StoryRepository {
         difficultyLevel: difficultyLevel,
         limit: limit,
       );
-      return Right(stories);
+      return Right(stories.map((s) => s.toEntity()).toList());
     } on ServerException catch (e) {
       logError(_tag, 'getStories server error: $e');
       return Left(ServerFailure(e.message));
@@ -42,7 +58,7 @@ class StoryRepositoryImpl implements StoryRepository {
   Future<Either<Failure, Story>> getStoryDetails(String storyId) async {
     try {
       final story = await apiDataSource.getStoryDetails(storyId);
-      return Right(story);
+      return Right(story.toEntity());
     } on ServerException catch (e) {
       logError(_tag, 'getStoryDetails server error: $e');
       return Left(ServerFailure(e.message));
@@ -100,7 +116,7 @@ class StoryRepositoryImpl implements StoryRepository {
         sessionTitle: sessionTitle,
         preferredLlm: preferredLlm,
       );
-      return Right(session);
+      return Right(session.toEntity());
     } on ServerException catch (e) {
       logError(_tag, 'startTopicSession server error: $e');
       return Left(ServerFailure(e.message));
@@ -122,7 +138,7 @@ class StoryRepositoryImpl implements StoryRepository {
         userId: userId,
         message: message,
       );
-      return Right(response);
+      return Right(response.toEntity());
     } on ServerException catch (e) {
       logError(_tag, 'sendTopicMessage server error: $e');
       return Left(ServerFailure(e.message));
@@ -133,12 +149,25 @@ class StoryRepositoryImpl implements StoryRepository {
   }
 
   @override
+  Stream<TopicStreamEvent> sendTopicMessageStream({
+    required String sessionId,
+    required String userId,
+    required String message,
+  }) {
+    return apiDataSource.sendTopicMessageStream(
+      sessionId: sessionId,
+      userId: userId,
+      message: message,
+    );
+  }
+
+  @override
   Future<Either<Failure, TopicSession>> getTopicSession(
     String sessionId,
   ) async {
     try {
       final session = await apiDataSource.getTopicSession(sessionId);
-      return Right(session);
+      return Right(session.toEntity());
     } on ServerException catch (e) {
       logError(_tag, 'getTopicSession server error: $e');
       return Left(ServerFailure(e.message));
@@ -154,7 +183,7 @@ class StoryRepositoryImpl implements StoryRepository {
   ) async {
     try {
       final messages = await apiDataSource.getTopicMessages(sessionId);
-      return Right(messages);
+      return Right(messages.map((m) => m.toEntity()).toList());
     } on ServerException catch (e) {
       logError(_tag, 'getTopicMessages server error: $e');
       return Left(ServerFailure(e.message));
@@ -200,7 +229,7 @@ class StoryRepositoryImpl implements StoryRepository {
         limit: limit,
         cursor: cursor,
       );
-      return Right(page);
+      return Right(page.toEntity());
     } on ServerException catch (e) {
       logError(_tag, 'getTopicMessagesPaged server error: $e');
       return Left(ServerFailure(e.message));

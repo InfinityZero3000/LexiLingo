@@ -24,7 +24,7 @@ class ApiClient {
     String? baseUrl,
     List<ApiInterceptor>? interceptors,
     NetworkInfo? networkInfo,
-    bool enableLogging = true,
+    bool enableLogging = false,
     Future<Map<String, String>> Function()? authHeaderProvider,
     Future<bool> Function()? onUnauthorized,
   }) : _client = client ?? http.Client(),

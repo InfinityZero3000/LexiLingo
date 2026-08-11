@@ -11,10 +11,10 @@ Singleton pattern ensures the database is created once and reused.
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 import os
-import shutil
 import time
 import re
 
@@ -27,8 +27,29 @@ from api.services.kg_data_loader import (
     merge_knowledge_payload,
     sync_knowledge_files,
 )
+from api.services.trace_cag.dependencies import KG_VERSION_TOKEN
 
 logger = logging.getLogger(__name__)
+
+_RUNTIME_KG_SOURCE_FILES = (
+    "01_grammar_gaps.json",
+    "02_functional_language.json",
+    "03_errors_vietnamese.json",
+    "04_writing_phonology.json",
+    "05_vocabulary_advanced.json",
+    "06_tracecag_topic_expansion.json",
+    "seed_graph.json",
+    "07_vocabulary_anki.json",
+    "08_cefr_sentences.json",
+    "09_grammar_usage.json",
+    "10_collocations.json",
+    "11_idioms.json",
+    "12_lexical_relations.json",
+)
+
+
+def _env_enabled(name: str) -> bool:
+    return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
 
 # ── Singleton instance ────────────────────────────────────────────────────────
 _kg_instance: Optional["KnowledgeGraphServiceV3"] = None
@@ -50,8 +71,17 @@ class KnowledgeGraphServiceV3:
             os.path.dirname(__file__), "..", "..", "data", "kuzu"
         )
         self._db_path = os.path.abspath(db_path)
+        self._strict_snapshot = _env_enabled("TRACECAG_KG_STRICT_SNAPSHOT")
+        self._allow_benchmark = _env_enabled("TRACECAG_KG_ALLOW_BENCHMARK")
+        if self._allow_benchmark and settings.ENVIRONMENT.strip().lower() == "production":
+            raise RuntimeError("Benchmark KG mode is forbidden in production")
         self._recovery_attempted = False
         self._lock = asyncio.Lock()
+        # Content-derived token for TRACE-CAG's kg:tracecag:main dependency
+        # (see _sync_external_knowledge). Stable across restarts when no
+        # source file changed; falls back to the static schema token when
+        # sync is skipped (e.g. TRACECAG_KG_SKIP_SYNC, benchmark mode).
+        self._kg_content_version: str = KG_VERSION_TOKEN
 
         # ── In-memory caches (Phase 1) ─────────────────────────────────────
         # _concepts_cache: None = cold (not yet built); Dict = warm
@@ -78,7 +108,12 @@ class KnowledgeGraphServiceV3:
             self._ensure_schema()
             
             # Only seed if this is a fresh database
-            if needs_seed or self.get_concept_count() == 0:
+            concept_count = self.get_concept_count()
+            if self._strict_snapshot and (needs_seed or concept_count == 0):
+                raise RuntimeError(
+                    f"Benchmark strict snapshot is missing or empty: {self._db_path}"
+                )
+            if needs_seed or concept_count == 0:
                 logger.info("[KG] Seeding default knowledge graph...")
                 self._seed_default_graph()
                 # Clear synced files metadata cache on fresh database
@@ -97,32 +132,37 @@ class KnowledgeGraphServiceV3:
             if os.getenv("TRACECAG_KG_SKIP_SYNC", "").lower() not in {"1", "true", "yes", "on"}:
                 self._sync_external_knowledge()
 
+            self._assert_runtime_namespace()
+
             # Warm in-memory caches after all DB writes are done.
             self._build_concept_cache()
         except Exception as e:
+            if self._strict_snapshot:
+                logger.error("[KG] Strict snapshot initialization failed: %s", e)
+                raise
+            if not self._is_corruption_error(e):
+                logger.error("[KG] Initialization failed without verified corruption: %s", e)
+                raise
             logger.warning(f"[KG] DB may be corrupted, rebuilding: {e}")
             self._hard_rebuild_db(reason=str(e))
 
     def _hard_rebuild_db(self, reason: str = "unknown") -> None:
         """Rebuild Kuzu DB from scratch when corruption is detected."""
+        if self._strict_snapshot:
+            raise RuntimeError(f"KG rebuild disabled for benchmark strict snapshot: {reason}")
         logger.warning("[KG] Hard rebuild triggered: %s", reason)
-        if os.path.isdir(self._db_path):
+        ts = int(time.time() * 1000)
+        quarantine = f"{self._db_path}.corrupt.{ts}"
+        suffix = 1
+        while os.path.exists(quarantine):
+            quarantine = f"{self._db_path}.corrupt.{ts}.{suffix}"
+            suffix += 1
+        if os.path.exists(self._db_path):
             if "lock" in reason.lower():
                 logger.error("[KG] DB locked, cannot rebuild safely: %s", self._db_path)
                 raise RuntimeError(reason)
-            ts = int(time.time() * 1000)
-            quarantine = f"{self._db_path}.corrupt.{ts}"
-            suffix = 1
-            while os.path.exists(quarantine):
-                quarantine = f"{self._db_path}.corrupt.{ts}.{suffix}"
-                suffix += 1
-            try:
-                os.rename(self._db_path, quarantine)
-                logger.warning("[KG] Quarantined corrupted DB to %s", quarantine)
-            except Exception:
-                shutil.rmtree(self._db_path, ignore_errors=True)
-        elif os.path.exists(self._db_path):
-            os.remove(self._db_path)
+            os.rename(self._db_path, quarantine)
+            logger.warning("[KG] Quarantined corrupted DB to %s", quarantine)
 
         # Current Kuzu Python releases use a database file at ``_db_path``.
         # Creating a directory with that name makes the subsequent open fail
@@ -131,17 +171,14 @@ class KnowledgeGraphServiceV3:
         # Clear synced files metadata cache on rebuild
         cache_path = self._db_path + "_synced_files.json"
         if os.path.exists(cache_path):
-            try:
-                os.remove(cache_path)
-            except Exception as _exc:
-                logger.debug("[kg_service_v3] ignored: %s", _exc)
-                pass
+            os.rename(cache_path, f"{quarantine}_synced_files.json")
         self._db = kuzu.Database(self._db_path)
         self._conn = kuzu.Connection(self._db)
         self._ensure_schema()
         self._seed_default_graph()
         if os.getenv("TRACECAG_KG_SKIP_SYNC", "").lower() not in {"1", "true", "yes", "on"}:
             self._sync_external_knowledge()
+        self._assert_runtime_namespace()
         self._build_concept_cache()
         self._recovery_attempted = True
 
@@ -151,11 +188,15 @@ class KnowledgeGraphServiceV3:
             "reading past the end of the file" in text
             or "corrupt" in text
             or "checksum" in text
-            or "invalid" in text
         )
 
-    def _recover_and_retry(self, op_name: str) -> bool:
+    def _recover_and_retry(self, op_name: str, exc: Exception) -> bool:
+        if self._strict_snapshot:
+            logger.error("[KG] Recovery disabled for benchmark strict snapshot: %s", op_name)
+            return False
         if self._recovery_attempted:
+            return False
+        if not self._is_corruption_error(exc):
             return False
         try:
             logger.warning("[KG] Attempting one-time recovery for %s", op_name)
@@ -217,9 +258,41 @@ class KnowledgeGraphServiceV3:
 
     def _kg_data_dir(self) -> str:
         """Return path to the domain-specific KG data directory (data/kg/)."""
+        configured = os.getenv("KG_DATA_DIR", "").strip()
+        if configured:
+            return os.path.abspath(configured)
         return os.path.abspath(
             os.path.join(os.path.dirname(__file__), "..", "..", "data", "kg")
         )
+
+    def _assert_runtime_namespace(self) -> None:
+        if self._allow_benchmark:
+            return
+        result = self._conn.execute(
+            "MATCH (c:Concept) WHERE c.id STARTS WITH 'concept:benchmark.' RETURN count(c)"
+        )
+        count = int(result.get_next()[0]) if result is not None and result.has_next() else 0
+        if count:
+            raise RuntimeError(
+                f"Production KG contains {count} forbidden benchmark concepts; rebuild required"
+            )
+
+    async def assert_runtime_namespace(self) -> None:
+        """Validate the runtime namespace through the serialized Kuzu executor."""
+        if self._allow_benchmark:
+            return
+        def _count_forbidden() -> int:
+            result = self._conn.execute(
+                "MATCH (c:Concept) WHERE c.id STARTS WITH 'concept:benchmark.' RETURN count(c)"
+            )
+            return int(result.get_next()[0]) if result is not None and result.has_next() else 0
+
+        async with self._lock:
+            count = await asyncio.to_thread(_count_forbidden)
+        if count:
+            raise RuntimeError(
+                f"Production KG contains {count} forbidden benchmark concepts; rebuild required"
+            )
 
     def _sync_external_knowledge(self) -> None:
         """Load all knowledge JSON files into KuzuDB (non-destructive MERGE).
@@ -236,11 +309,44 @@ class KnowledgeGraphServiceV3:
 
         kg_dir = self._kg_data_dir()
         if os.path.isdir(kg_dir):
-            for fname in sorted(os.listdir(kg_dir)):
-                if fname.endswith(".json"):
-                    paths.append(os.path.join(kg_dir, fname))
+            filenames = (
+                sorted(name for name in os.listdir(kg_dir) if name.endswith(".json"))
+                if self._allow_benchmark
+                else _RUNTIME_KG_SOURCE_FILES
+            )
+            for fname in filenames:
+                path = os.path.join(kg_dir, fname)
+                if os.path.isfile(path):
+                    paths.append(path)
 
-        sync_knowledge_files(self._conn, paths, cache_path)
+        sync_knowledge_files(
+            self._conn,
+            paths,
+            cache_path,
+            forbidden_concept_prefixes=() if self._allow_benchmark else ("concept:benchmark.",),
+        )
+        self._kg_content_version = self._compute_kg_content_version(cache_path)
+
+    def _compute_kg_content_version(self, cache_path: str) -> str:
+        """Stable fingerprint of the currently loaded KG source files.
+
+        `sync_knowledge_files` only rewrites `cache_path` when a merge
+        actually changed the graph, so hashing it gives the same token
+        across restarts with unchanged content and a different token the
+        moment a source file really changes — this is what lets TRACE-CAG's
+        `kg:tracecag:main` dependency (see nodes_v2.kg_expand_node) detect a
+        real KG mutation instead of a hardcoded constant that never varies.
+        """
+        try:
+            with open(cache_path, "rb") as fh:
+                digest = hashlib.sha256(fh.read()).hexdigest()[:16]
+            return f"kg_content_v{digest}"
+        except OSError:
+            return KG_VERSION_TOKEN
+
+    def get_kg_content_version(self) -> str:
+        """Current KG content token for dependency/certificate tracking."""
+        return self._kg_content_version
 
     def get_concepts(self) -> Dict[str, Dict[str, str]]:
         # Return warm in-memory cache if available (Phase 1 optimisation).
@@ -258,7 +364,7 @@ class KnowledgeGraphServiceV3:
                     "level": row[3] or "B1",
                 }
         except Exception as exc:
-            if self._is_corruption_error(exc) and self._recover_and_retry("get_concepts"):
+            if self._recover_and_retry("get_concepts", exc):
                 return self.get_concepts()
             return concepts
         return concepts
@@ -448,7 +554,8 @@ class KnowledgeGraphServiceV3:
             for seed in seed_nodes:
                 result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
-                    "WHERE a.id = $seed RETURN b.id, e.relation, b.level",
+                    "WHERE a.id = $seed RETURN b.id, e.relation, b.level "
+                    "LIMIT 50",
                     {"seed": seed},
                 )
                 while result.has_next():  # type: ignore[union-attr]
@@ -459,7 +566,7 @@ class KnowledgeGraphServiceV3:
                     ))
                     paths.append(KGPath(nodes=[seed, row[0]], edges=[row[1]]))
         except Exception as exc:
-            if self._is_corruption_error(exc) and self._recover_and_retry("expand"):
+            if self._recover_and_retry("expand", exc):
                 return await self.expand(seed_nodes=seed_nodes, hops=hops)
             return KGHits(seed_nodes=seed_nodes, expanded_nodes=[], paths=[])
 
@@ -548,10 +655,14 @@ class KnowledgeGraphServiceV3:
                 if depth >= max_hops:
                     continue
 
-                # Expand neighbors
+                # Expand neighbors (LIMIT bounds hub-node fan-out — e.g. common
+                # vocab like "person"/"run" has 200-500+ out-edges but max_nodes
+                # caps the whole traversal at ~10, so anything beyond a small
+                # multiple of that is fetched from Kuzu and thrown away)
                 result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
-                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level",
+                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level "
+                    "LIMIT 50",
                     {"cid": cid},
                 )
                 while result.has_next():  # type: ignore[union-attr]
@@ -562,7 +673,7 @@ class KnowledgeGraphServiceV3:
                         w = ped_weight(neighbor_level)
                         heapq.heappush(frontier, (-w, depth + 1, neighbor_id, cid, edge_rel))
         except Exception as e:
-            if self._is_corruption_error(e) and self._recover_and_retry("expand_best_first"):
+            if self._recover_and_retry("expand_best_first", e):
                 return await self.expand_best_first(
                     seed_nodes=seed_nodes,
                     learner_level=learner_level,
@@ -606,6 +717,8 @@ class KnowledgeGraphServiceV3:
     ) -> None:
         if not user_id or not linked_concepts:
             return None
+        if not settings.KUZU_USER_MASTERY_WRITES_ENABLED:
+            return None
 
         # Ensure user node exists
         try:
@@ -613,6 +726,7 @@ class KnowledgeGraphServiceV3:
         except Exception:
             return None
 
+        mutated = False
         for concept_id in linked_concepts:
             # Simple mastery update: decrease on errors, increase otherwise
             delta = -0.05 if error_types else 0.03
@@ -625,10 +739,17 @@ class KnowledgeGraphServiceV3:
                     "ON MATCH SET m.score = min(1.0, max(0.0, m.score + $delta))",
                     {"uid": user_id, "cid": concept_id, "score": 0.5, "delta": delta},
                 )
+                mutated = True
             except Exception as _exc:
                 logger.debug("[kg_service_v3] ignored: %s", _exc)
                 continue
 
+        if mutated:
+            from api.services.trace_cag.cache_utils import invalidate_dependency
+
+            await invalidate_dependency(
+                f"learner:{user_id}:profile", f"mastery:{time.time_ns()}"
+            )
         return None
 
     async def get_user_mastery(self, user_id: str) -> Dict[str, float]:
@@ -779,7 +900,14 @@ class KnowledgeGraphServiceV3:
         return 0
 
     def query_concepts(self, query: str, learner_level: str = "B1", top_k: int = 8) -> List[Dict[str, Any]]:
-        """Lexical + level-aware top-K concept retrieval for prompt grounding."""
+        """Lexical + level-aware top-K concept retrieval for prompt grounding.
+
+        Uses the inverted keyword index built in _build_concept_cache() instead
+        of scanning every concept — at ~15k concepts a full scan measured
+        ~470ms/call, far over the retrieval budget (TRACECAG_RETRIEVE_BUDGET_KG_MS,
+        default 120ms). The index bounds cost to the concepts that actually share
+        a token with the query.
+        """
         normalized = str(query or "").strip().lower()
         if not normalized or top_k <= 0:
             return []
@@ -789,25 +917,25 @@ class KnowledgeGraphServiceV3:
             return []
 
         concepts = self.get_concepts()
-        if not concepts:
+        if not concepts or not self._keyword_index:
+            return []
+
+        token_set = set(tokens)
+        overlap_counts: Dict[str, int] = {}
+        for tok in token_set:
+            for concept_id in self._keyword_index.get(tok, ()):
+                overlap_counts[concept_id] = overlap_counts.get(concept_id, 0) + 1
+        if not overlap_counts:
             return []
 
         CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
         learner_ord = CEFR_ORD.get(str(learner_level or "B1").upper(), 3)
 
         scored: List[Tuple[float, str, Dict[str, str]]] = []
-        token_set = set(tokens)
-        for concept_id, meta in concepts.items():
-            title = str(meta.get("title") or "")
-            keywords = str(meta.get("keywords") or "")
-            haystack = f"{title} {keywords}".lower()
-            if not haystack:
+        for concept_id, overlap in overlap_counts.items():
+            meta = concepts.get(concept_id)
+            if not meta:
                 continue
-
-            overlap = sum(1 for tok in token_set if tok in haystack)
-            if overlap <= 0:
-                continue
-
             level = str(meta.get("level") or "B1").upper()
             diff = abs(CEFR_ORD.get(level, 3) - learner_ord)
             level_boost = 1.0 if diff == 0 else (0.8 if diff == 1 else 0.6)

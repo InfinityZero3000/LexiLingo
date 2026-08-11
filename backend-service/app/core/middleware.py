@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.schemas.common import ErrorResponse, ErrorDetail, RequestMeta, ErrorCodes
+from app.core.logging_config import set_request_id
 
 logger = logging.getLogger(__name__)
 
@@ -26,11 +27,17 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
             "/api/v1/auth/login": 300,          # relaxed — load testing from single IP
             "/api/v1/auth/register": 100,
             "/api/v1/auth/forgot-password": 50,
+            "/api/v1/auth/admin/login": 100,
+            "/api/v1/auth/admin/request-otp": 50,
+            "/api/v1/auth/admin/verify-otp": 100,
         }
     return {
         "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
         "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
         "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
+        "/api/v1/auth/admin/login": 5,
+        "/api/v1/auth/admin/request-otp": 3,
+        "/api/v1/auth/admin/verify-otp": 5,
     }
 
 try:
@@ -38,6 +45,43 @@ try:
     _STRICT_RATE_LIMITS: Dict[str, int] = _build_strict_limits(_settings.is_development)
 except Exception:
     _STRICT_RATE_LIMITS = _build_strict_limits(False)
+
+
+# ── Sensitive routes: fail CLOSED (503) instead of falling back to
+# per-process memory counting when the distributed (Redis) limiter is
+# unavailable. A per-process fallback across N worker replicas means an
+# attacker can get up to N× the intended limit during a Redis outage —
+# acceptable for ordinary traffic, not for brute-force-able auth/reward
+# endpoints. (method, path) exact matches, plus prefix matches for
+# path-parameterized/wildcard routes.
+_SENSITIVE_ROUTES_EXACT = {
+    ("POST", "/api/v1/auth/login"),
+    ("POST", "/api/v1/auth/register"),
+    ("POST", "/api/v1/auth/forgot-password"),
+    ("POST", "/api/v1/auth/admin/login"),
+    ("POST", "/api/v1/auth/admin/request-otp"),
+    ("POST", "/api/v1/auth/admin/verify-otp"),
+    ("POST", "/api/v1/xp/award"),
+    ("POST", "/api/v1/challenges/daily/bonus/claim"),
+}
+_SENSITIVE_ROUTE_PREFIXES = (
+    ("POST", "/api/v1/challenges/daily/"),  # /{challenge_id}/claim
+    ("GET", "/api/v1/integrations/"),
+)
+
+
+def _is_sensitive_route(method: str, path: str) -> bool:
+    if (method, path) in _SENSITIVE_ROUTES_EXACT:
+        return True
+    return any(
+        method == prefix_method and path.startswith(prefix)
+        for prefix_method, prefix in _SENSITIVE_ROUTE_PREFIXES
+    )
+
+
+class _RedisUnavailable(Exception):
+    """Raised internally to distinguish a real Redis failure from a normal
+    rate-limit rejection — never silently treated as 'allowed'."""
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -110,8 +154,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
             return current <= limit, current
         except Exception as exc:
-            logger.debug(f"Redis rate-limit pipeline error: {exc}")
-            return True, 0  # fail-open
+            raise _RedisUnavailable(str(exc)) from exc
 
     async def _check_redis(self, client_ip: str, path: str):
         """
@@ -233,10 +276,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_ip = self._client_ip(request)
 
         path = request.url.path
+        method = request.method
 
-        # Try Redis first, fallback to memory
+        # Try Redis first, fallback to memory — except for sensitive routes,
+        # which fail closed instead: a per-process memory fallback across
+        # multiple worker replicas effectively multiplies the intended limit.
         result = await self._check_redis(client_ip, path)
         if result is None:
+            if _is_sensitive_route(method, path):
+                logger.error(
+                    f"Distributed rate limiter unavailable for sensitive route "
+                    f"{method} {path} — failing closed."
+                )
+                return self._unavailable_response()
             result = self._check_memory(client_ip, path)
 
         allowed, min_remaining, hr_remaining = result
@@ -253,6 +305,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         response.headers["X-RateLimit-Limit-Hour"] = str(self.requests_per_hour)
         response.headers["X-RateLimit-Remaining-Hour"] = str(hr_remaining)
         return response
+
+    def _unavailable_response(self) -> JSONResponse:
+        """503 for sensitive routes when the distributed limiter can't be reached."""
+        error_response = ErrorResponse(
+            error=ErrorDetail(
+                code=ErrorCodes.RATE_LIMITED,
+                message="Service temporarily unavailable. Please try again shortly.",
+                details={"retry_after_seconds": 5},
+            )
+        )
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content=error_response.model_dump(mode="json"),
+            headers={"Retry-After": "5"},
+        )
 
     def _rate_limit_response(self, message: str) -> JSONResponse:
         """Return standardized rate limit error response."""
@@ -355,7 +422,8 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
         
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
-        
+        set_request_id(request_id)
+
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         
@@ -383,4 +451,21 @@ class PrivateNetworkAccessMiddleware(BaseHTTPMiddleware):
         if has_pna_header or request.method == "OPTIONS":
             response.headers["Access-Control-Allow-Private-Network"] = "true"
         
+        return response
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware to add defense-in-depth secure security headers to all responses.
+    """
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; frame-ancestors 'none'; object-src 'none';"
+        )
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response

@@ -102,173 +102,180 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           // Use the courses loaded for this category
           final categoryCourses = provider.courses;
 
-          return CustomScrollView(
-            slivers: [
-              // App Bar with category info
-              SliverAppBar(
-                expandedHeight: 200,
-                pinned: true,
-                backgroundColor: categoryColor,
-                foregroundColor: Colors.white,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    category.name,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.surface,
-                      fontWeight: FontWeight.bold,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black45,
-                          offset: Offset(0, 1),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                  ),
-                  background: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          categoryColor,
-                          categoryColor.withValues(alpha: 0.7),
-                        ],
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        categoryIcon,
-                        size: 80,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surface.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Course count info with view toggle and sort
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: AppColorRoles.textSecondary(isDark),
-                              ),
-                        ),
-                      ),
-                      // Sort dropdown
-                      PopupMenuButton<CourseSortOption>(
-                        icon: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _sortOption.icon,
-                              size: 18,
-                              color: AppColorRoles.textSecondary(isDark),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_drop_down,
-                              size: 18,
-                              color: AppColorRoles.textSecondary(isDark),
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: CustomScrollView(
+                slivers: [
+                  // App Bar with category info
+                  SliverAppBar(
+                    expandedHeight: 200,
+                    pinned: true,
+                    backgroundColor: categoryColor,
+                    foregroundColor: Colors.white,
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(
+                        category.name,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.surface,
+                          fontWeight: FontWeight.bold,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black45,
+                              offset: Offset(0, 1),
+                              blurRadius: 4,
                             ),
                           ],
                         ),
-                        onSelected: (option) {
-                          setState(() => _sortOption = option);
-                        },
-                        itemBuilder: (context) =>
-                            CourseSortOption.values.map((option) {
-                              return PopupMenuItem(
-                                value: option,
-                                child: Row(
-                                  children: [
-                                    Icon(option.icon, size: 18),
-                                    const SizedBox(width: 8),
-                                    Text(option.label),
-                                    if (option == _sortOption) ...[
-                                      const Spacer(),
-                                      const Icon(
-                                        Icons.check,
-                                        size: 18,
-                                        color: AppColors.greenSuccessBright,
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              );
-                            }).toList(),
                       ),
-                      const SizedBox(width: 8),
-                      // View toggle
-                      IconButton(
-                        icon: Icon(
-                          _isGridView ? Icons.view_list : Icons.grid_view,
-                          color: AppColorRoles.textSecondary(isDark),
+                      background: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              categoryColor,
+                              categoryColor.withValues(alpha: 0.7),
+                            ],
+                          ),
                         ),
-                        onPressed: () {
-                          setState(() => _isGridView = !_isGridView);
-                        },
-                        tooltip: _isGridView ? 'List view' : 'Grid view',
+                        child: Center(
+                          child: Icon(
+                            categoryIcon,
+                            size: 80,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surface.withValues(alpha: 0.3),
+                          ),
+                        ),
                       ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Course list
-              if (provider.isLoadingCourses && categoryCourses.isEmpty)
-                SliverFillRemaining(
-                  child: SkeletonList(
-                    itemCount: 5,
-                    padding: const EdgeInsets.all(16),
-                  ),
-                )
-              else if (provider.coursesError != null && categoryCourses.isEmpty)
-                SliverFillRemaining(
-                  child: ErrorDisplayWidget.fromMessage(
-                    message: provider.coursesError!,
-                    onRetry: () =>
-                        provider.loadCoursesByCategory(widget.categoryId),
-                  ),
-                )
-              else if (categoryCourses.isEmpty)
-                SliverFillRemaining(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.folder_open,
-                          size: 64,
-                          color: AppColorRoles.textMuted(isDark),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'course.noCourses'.tr(),
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(
-                                color: AppColorRoles.textSecondary(isDark),
-                              ),
-                        ),
-                      ],
                     ),
                   ),
-                )
-              else
-                // Grid or List view with sorted courses and staggered animation
-                _isGridView
-                    ? _buildCourseGrid(_sortCourses(categoryCourses))
-                    : _buildCourseList(_sortCourses(categoryCourses)),
-            ],
+
+                  // Course count info with view toggle and sort
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: AppColorRoles.textSecondary(isDark),
+                                  ),
+                            ),
+                          ),
+                          // Sort dropdown
+                          PopupMenuButton<CourseSortOption>(
+                            icon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _sortOption.icon,
+                                  size: 18,
+                                  color: AppColorRoles.textSecondary(isDark),
+                                ),
+                                const SizedBox(width: 4),
+                                Icon(
+                                  Icons.arrow_drop_down,
+                                  size: 18,
+                                  color: AppColorRoles.textSecondary(isDark),
+                                ),
+                              ],
+                            ),
+                            onSelected: (option) {
+                              setState(() => _sortOption = option);
+                            },
+                            itemBuilder: (context) =>
+                                CourseSortOption.values.map((option) {
+                                  return PopupMenuItem(
+                                    value: option,
+                                    child: Row(
+                                      children: [
+                                        Icon(option.icon, size: 18),
+                                        const SizedBox(width: 8),
+                                        Text(option.label),
+                                        if (option == _sortOption) ...[
+                                          const Spacer(),
+                                          const Icon(
+                                            Icons.check,
+                                            size: 18,
+                                            color: AppColors.greenSuccessBright,
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                          const SizedBox(width: 8),
+                          // View toggle
+                          IconButton(
+                            icon: Icon(
+                              _isGridView ? Icons.view_list : Icons.grid_view,
+                              color: AppColorRoles.textSecondary(isDark),
+                            ),
+                            onPressed: () {
+                              setState(() => _isGridView = !_isGridView);
+                            },
+                            tooltip: _isGridView ? 'List view' : 'Grid view',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Course list
+                  if (provider.isLoadingCourses && categoryCourses.isEmpty)
+                    SliverFillRemaining(
+                      child: SkeletonList(
+                        itemCount: 5,
+                        padding: const EdgeInsets.all(16),
+                      ),
+                    )
+                  else if (provider.coursesError != null &&
+                      categoryCourses.isEmpty)
+                    SliverFillRemaining(
+                      child: ErrorDisplayWidget.fromMessage(
+                        message: provider.coursesError!,
+                        onRetry: () =>
+                            provider.loadCoursesByCategory(widget.categoryId),
+                      ),
+                    )
+                  else if (categoryCourses.isEmpty)
+                    SliverFillRemaining(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.folder_open,
+                              size: 64,
+                              color: AppColorRoles.textMuted(isDark),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'course.noCourses'.tr(),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    color: AppColorRoles.textSecondary(isDark),
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    // Grid or List view with sorted courses and staggered animation
+                    _isGridView
+                        ? _buildCourseGrid(_sortCourses(categoryCourses))
+                        : _buildCourseList(_sortCourses(categoryCourses)),
+                ],
+              ),
+            ),
           );
         },
       ),
@@ -298,28 +305,39 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 
   /// Build grid view of courses
   Widget _buildCourseGrid(List<CourseEntity> courses) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.75,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        delegate: SliverChildBuilderDelegate((context, index) {
-          final course = courses[index];
-          return AnimatedListItem(
-            index: index,
-            duration: const Duration(milliseconds: 300),
-            delayPerItem: const Duration(milliseconds: 50),
-            child: _CourseGridCard(
-              course: course,
-              onTap: () => _navigateToCourseDetail(context, course),
+    return SliverLayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.crossAxisExtent;
+        final crossAxisCount = width >= 1000
+            ? 4
+            : width >= 680
+            ? 3
+            : 2;
+
+        return SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: 0.75,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
             ),
-          );
-        }, childCount: courses.length),
-      ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final course = courses[index];
+              return AnimatedListItem(
+                index: index,
+                duration: const Duration(milliseconds: 300),
+                delayPerItem: const Duration(milliseconds: 50),
+                child: _CourseGridCard(
+                  course: course,
+                  onTap: () => _navigateToCourseDetail(context, course),
+                ),
+              );
+            }, childCount: courses.length),
+          ),
+        );
+      },
     );
   }
 

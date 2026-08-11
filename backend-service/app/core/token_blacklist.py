@@ -60,7 +60,7 @@ class TokenBlacklist:
                 # Add buffer to ensure blacklist outlives token
                 ttl_seconds = max(ttl_seconds + 60, 60)
             else:
-                ttl_seconds = settings.TOKEN_BLACKLIST_EXPIRE_HOURS * 3600
+                ttl_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
             
             # Use token hash as key (first 16 chars) for efficiency
             token_key = cls._get_key(token)

@@ -198,6 +198,48 @@ class TestGenerateNode:
             assert len(result["tutor_response"]) > 0
 
     @pytest.mark.asyncio
+    async def test_provider_outage_returns_safe_uncached_response(self, monkeypatch):
+        """Normal chat must never expose or cache raw retrieval evidence."""
+        import api.services.trace_cag.generate as generate
+
+        leaked_context = (
+            "Concept (concept:benchmark.tell): Tell Concept "
+            "(concept:benchmark.lobban): Lobban Concept"
+        )
+        write_cache = AsyncMock()
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.setenv("TRACECAG_ENABLE_LOCAL_LLAMA_KV", "false")
+        monkeypatch.setattr(
+            "api.core.groq_key_pool.get_available_groq_key",
+            AsyncMock(return_value=None),
+        )
+        monkeypatch.setattr(generate, "_throttled_post_json", AsyncMock(return_value=None))
+        monkeypatch.setattr(generate, "_write_cache_entry", write_cache)
+
+        result = await generate.generate_node(
+            {
+                "user_input": "Hello",
+                "session_id": "session-1",
+                "learner_profile": {"level": "B1"},
+                "conversation_history": [],
+                "diagnosis_errors": [],
+                "diagnosis_intent": "correct",
+                "retrieved_context": leaked_context,
+                "retrieval_trace": [],
+                "grammar_score": 0.8,
+                "fluency_score": 0.8,
+                "vocabulary_level": "B1",
+                "cache_policy": "on",
+            }
+        )
+
+        response = result["tutor_response"]
+        assert response == generate.SAFE_TUTOR_FALLBACK
+        assert "concept:benchmark" not in response
+        assert "Lobban" not in response
+        write_cache.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_generate_tracks_models_used(self, state_with_errors, mock_model_gateway):
         """Test that models_used is tracked."""
         mock_model_gateway.execute_task.return_value = {
@@ -214,3 +256,117 @@ class TestGenerateNode:
             result = await generate_node(state_with_errors)
 
             assert "models_used" in result
+
+    @pytest.mark.asyncio
+    async def test_generate_uses_topic_system_prompt(self, monkeypatch):
+        from unittest.mock import AsyncMock, MagicMock
+
+        captured_payloads = []
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {
+            "choices": [{"message": {"content": "May I see your passport?"}}],
+            "usage": {"total_tokens": 50},
+        }
+
+        async def fake_post_json(**kwargs):
+            captured_payloads.append(kwargs["payload"])
+            return mock_resp
+
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+        monkeypatch.delenv("GROQ_MODEL", raising=False)
+        monkeypatch.setattr(
+            "api.core.groq_key_pool.get_available_groq_key",
+            AsyncMock(return_value="groq-key"),
+        )
+        monkeypatch.setattr(
+            "api.core.groq_key_pool.record_groq_key_usage",
+            AsyncMock(),
+        )
+        monkeypatch.setattr(
+            "api.services.trace_cag.generate._throttled_post_json",
+            fake_post_json,
+        )
+
+        from api.services.trace_cag.generate import generate_node
+
+        await generate_node(
+            {
+                "user_input": "I need check in.",
+                "session_id": "sess-1",
+                "learner_profile": {"level": "A2"},
+                "conversation_history": [],
+                "diagnosis_errors": [],
+                "diagnosis_intent": "correct",
+                "fluency_score": 0.9,
+                "grammar_score": 0.9,
+                "vocabulary_level": "A2",
+                "retrieved_context": "",
+                "topic_system_prompt": "You are Sarah, an airport check-in agent.",
+                "cache_policy": "off",
+            }
+        )
+
+        system_prompt = captured_payloads[0]["messages"][0]["content"]
+        assert captured_payloads[0]["model"] == "llama-3.1-8b-instant"
+        assert "You are Sarah, an airport check-in agent." in system_prompt
+        assert "You are Lexi" not in system_prompt
+
+
+class TestPersonalizationHint:
+    """_build_base_system_prompt should fold onboarding goal/interest into
+    both the default Lexi prompt and the topic-chat prompt."""
+
+    def test_no_hint_when_profile_has_no_goal_or_interest(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt({"learner_profile": {"level": "B1"}}, "B1", "standard")
+        assert "learning for" not in prompt and "into" not in prompt
+
+    def test_hint_appears_in_default_lexi_prompt(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {"learner_profile": {"level": "B1", "goal": "career", "interest": "technology"}},
+            "B1",
+            "standard",
+        )
+        assert "career" in prompt
+        assert "technology" in prompt
+
+    def test_hint_appears_in_topic_prompt_branch(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "topic_system_prompt": "You are Sarah, an airport check-in agent.",
+                "learner_profile": {"level": "B1", "goal": "travel"},
+            },
+            "B1",
+            "standard",
+        )
+        assert "You are Sarah, an airport check-in agent." in prompt
+        assert "travel" in prompt
+
+    def test_session_recap_appears_when_returning_after_a_gap(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {
+                "learner_profile": {
+                    "level": "B1",
+                    "session_recap": "I want to talk about my dream job.",
+                }
+            },
+            "B1",
+            "standard",
+        )
+        assert "I want to talk about my dream job." in prompt
+
+    def test_no_recap_line_on_a_continuing_conversation(self):
+        from api.services.trace_cag.generate import _build_base_system_prompt
+
+        prompt = _build_base_system_prompt(
+            {"learner_profile": {"level": "B1"}}, "B1", "standard"
+        )
+        assert "Last time" not in prompt

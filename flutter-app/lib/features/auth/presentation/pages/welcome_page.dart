@@ -62,7 +62,7 @@ class _WelcomePageState extends State<WelcomePage>
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
-                      vertical: 8,
+                      vertical: 12,
                     ),
                     child: Row(
                       children: [
@@ -88,7 +88,7 @@ class _WelcomePageState extends State<WelcomePage>
                           child: Center(
                             child: Image.asset(
                               'assets/out-app/lexilingo-logo.png',
-                              height: 28,
+                              height: 40,
                               fit: BoxFit.contain,
                             ),
                           ),
@@ -104,9 +104,12 @@ class _WelcomePageState extends State<WelcomePage>
                         children: [
                           AspectRatio(
                             aspectRatio: 1,
-                            child: Image.asset(
-                              'assets/out-app/banner-start.png',
-                              fit: BoxFit.contain,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: Image.asset(
+                                'assets/out-app/banner-start.png',
+                                fit: BoxFit.contain,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),

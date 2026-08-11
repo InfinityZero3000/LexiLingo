@@ -173,6 +173,8 @@ class AuthBackendDataSource {
     String? nativeLanguage,
     String? targetLanguage,
     String? level,
+    String? goal,
+    String? interest,
     bool? isOnboardingCompleted,
   }) async {
     final envelope = await apiClient.putEnvelope<Map<String, dynamic>>(
@@ -183,6 +185,8 @@ class AuthBackendDataSource {
         if (nativeLanguage != null) 'native_language': nativeLanguage,
         if (targetLanguage != null) 'target_language': targetLanguage,
         if (level != null) 'level': level,
+        if (goal != null) 'goal': goal,
+        if (interest != null) 'interest': interest,
         if (isOnboardingCompleted != null)
           'is_onboarding_completed': isOnboardingCompleted,
       },

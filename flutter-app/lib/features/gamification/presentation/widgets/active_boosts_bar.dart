@@ -98,10 +98,7 @@ class _BoostPillState extends State<_BoostPill> {
       decoration: BoxDecoration(
         color: boostColor.withValues(alpha: isDark ? 0.18 : 0.10),
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(
-          color: boostColor.withValues(alpha: 0.4),
-          width: 1,
-        ),
+        border: Border.all(color: boostColor.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -153,10 +150,11 @@ class _BoostPillState extends State<_BoostPill> {
     return '${m}m ${s}s';
   }
 
+  // 0xFF137FEC was a literal duplicate of AppColors.primary.
   Color _colorForEffect(String effectType) => switch (effectType) {
-    ShopItemEntity.effectDoubleXP => const Color(0xFFFF9500),
-    ShopItemEntity.effectStreakFreeze => const Color(0xFF137FEC),
-    ShopItemEntity.effectUnlimitedHearts => const Color(0xFFE53E3E),
+    ShopItemEntity.effectDoubleXP => AppColors.orange,
+    ShopItemEntity.effectStreakFreeze => AppColors.primary,
+    ShopItemEntity.effectUnlimitedHearts => AppColors.errorBright,
     ShopItemEntity.effectHintRefill => AppColors.cefrC,
     _ => AppColors.grey500,
   };

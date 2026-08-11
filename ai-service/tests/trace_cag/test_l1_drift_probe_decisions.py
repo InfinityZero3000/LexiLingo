@@ -31,6 +31,8 @@ def _request(
         answer_target=answer_target,
         relation_hints=relations,
         evidence_hash="",
+        policy_version="policy_v1",
+        kg_version="kg_v1",
     )
 
 
@@ -55,7 +57,9 @@ def _candidate(
         answer_target=answer_target,
         relation_hints=relations,
         evidence_hash="",
-        created_at=time.monotonic(),
+        policy_version="policy_v1",
+        kg_version="kg_v1",
+        created_at=time.time(),
         ttl=3600,
     )
 
@@ -186,7 +190,7 @@ def test_expected_patch_drift_probes_are_l1_patch(current, candidate):
                 answer_target="place",
                 relations={"birth"},
             ),
-            "answer_target_mismatch",
+            "mismatch:answer_target",
         ),
         (
             _request(
@@ -203,7 +207,7 @@ def test_expected_patch_drift_probes_are_l1_patch(current, candidate):
                 answer_target="person",
                 relations={"family"},
             ),
-            "relation_mismatch",
+            "mismatch:relation_path",
         ),
         (
             _request(
@@ -220,7 +224,7 @@ def test_expected_patch_drift_probes_are_l1_patch(current, candidate):
                 answer_target="entity",
                 relations={"education"},
             ),
-            "answer_target_mismatch",
+            "mismatch:answer_target",
         ),
         (
             _request(
@@ -239,7 +243,7 @@ def test_expected_patch_drift_probes_are_l1_patch(current, candidate):
                 relations={"creator"},
                 level="B1",
             ),
-            "level_mismatch",
+            "mismatch:level",
         ),
     ],
 )

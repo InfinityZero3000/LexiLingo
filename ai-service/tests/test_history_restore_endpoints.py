@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -7,12 +7,16 @@ from fastapi import HTTPException
 from api.routes import chat as chat_route
 from api.routes import lexi_chat as lexi_route
 from api.routes import topic_chat as topic_route
+from api.services import lexi_chat_service as lexi_svc
 from api.core.auth import AuthenticatedUser
 
 
 @pytest.fixture
 def mock_chat_db():
     db = MagicMock()
+
+    chat_sessions = MagicMock()
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "chat_s1", "user_id": "u1"})
 
     chat_messages = MagicMock()
     cursor = MagicMock()
@@ -22,6 +26,8 @@ def mock_chat_db():
     chat_messages.find.return_value = cursor
 
     def get_collection(name):
+        if name == "chat_sessions":
+            return chat_sessions
         if name == "chat_messages":
             return chat_messages
         return AsyncMock()
@@ -87,7 +93,7 @@ def mock_lexi_store(monkeypatch):
     store.set_session = AsyncMock()
     store.delete_messages = AsyncMock()
     store.append_message = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr(lexi_svc, "lexi_store", store)
     return store
 
 
@@ -99,7 +105,7 @@ async def test_chat_messages_limit_positive_uses_limit_cursor(mock_chat_db):
             {
                 "role": "user",
                 "content": "hello",
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(UTC),
             }
         ]
     )
@@ -108,6 +114,7 @@ async def test_chat_messages_limit_positive_uses_limit_cursor(mock_chat_db):
         session_id="chat_s1",
         limit=1,
         db=mock_chat_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert len(result) == 1
@@ -179,7 +186,9 @@ async def test_topic_messages_limit_positive_uses_limit_cursor(mock_topic_db):
 
 
 @pytest.mark.asyncio
-async def test_lexi_messages_returns_cached_when_cache_is_complete(mock_lexi_db, mock_lexi_store):
+async def test_lexi_messages_returns_cached_when_cache_is_complete(
+    mock_lexi_db, mock_lexi_store
+):
     mock_lexi_db["lexi_sessions"].find_one.return_value = {
         "session_id": "lexi_s1",
         "message_count": 2,
@@ -189,8 +198,18 @@ async def test_lexi_messages_returns_cached_when_cache_is_complete(mock_lexi_db,
         "user_id": "u1",
     }
     mock_lexi_store.get_messages.return_value = [
-        {"id": "m1", "role": "user", "content": "hello", "timestamp": "2026-04-16T10:00:00"},
-        {"id": "m2", "role": "assistant", "content": "hi", "timestamp": "2026-04-16T10:00:01"},
+        {
+            "id": "m1",
+            "role": "user",
+            "content": "hello",
+            "timestamp": "2026-04-16T10:00:00",
+        },
+        {
+            "id": "m2",
+            "role": "assistant",
+            "content": "hi",
+            "timestamp": "2026-04-16T10:00:01",
+        },
     ]
 
     result = await lexi_route.get_lexi_messages(
@@ -206,14 +225,21 @@ async def test_lexi_messages_returns_cached_when_cache_is_complete(mock_lexi_db,
 
 
 @pytest.mark.asyncio
-async def test_lexi_messages_uses_cached_payload_when_session_doc_missing(mock_lexi_db, mock_lexi_store):
+async def test_lexi_messages_uses_cached_payload_when_session_doc_missing(
+    mock_lexi_db, mock_lexi_store
+):
     mock_lexi_db["lexi_sessions"].find_one.return_value = None
     mock_lexi_store.get_session.return_value = {
         "session_id": "lexi_s1",
         "user_id": "u1",
     }
     mock_lexi_store.get_messages.return_value = [
-        {"id": "m1", "role": "user", "content": "cached", "timestamp": "2026-04-16T10:00:00"}
+        {
+            "id": "m1",
+            "role": "user",
+            "content": "cached",
+            "timestamp": "2026-04-16T10:00:00",
+        }
     ]
 
     result = await lexi_route.get_lexi_messages(
@@ -229,7 +255,9 @@ async def test_lexi_messages_uses_cached_payload_when_session_doc_missing(mock_l
 
 
 @pytest.mark.asyncio
-async def test_lexi_messages_raises_404_when_no_db_and_no_cache(mock_lexi_db, mock_lexi_store):
+async def test_lexi_messages_raises_404_when_no_db_and_no_cache(
+    mock_lexi_db, mock_lexi_store
+):
     mock_lexi_db["lexi_sessions"].find_one.return_value = None
     mock_lexi_store.get_session.return_value = None
 

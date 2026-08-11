@@ -9,6 +9,10 @@ import 'package:lexilingo_app/features/games/presentation/widgets/xp_progress_ba
 import 'package:lexilingo_app/features/games/presentation/widgets/streak_indicator.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_card.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/daily_challenge_card.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/daily_challenge_mapper.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart'
+    as progress;
+import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/word_scramble_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/fill_blank_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/matching_game_screen.dart';
@@ -60,6 +64,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       final p = context.read<GamesProvider>();
       p.loadXPProfile();
       p.loadLeaderboard();
+      context.read<DailyChallengesProvider>().loadChallenges();
       Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) _podiumController.forward();
       });
@@ -97,43 +102,49 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final titleColor = isDark ? AppColors.textInverted : AppColors.textDark;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      body: Consumer<GamesProvider>(
-        builder: (context, provider, _) {
-          return CustomScrollView(
-            slivers: [
-              _buildAppBar(provider, titleColor),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      _buildXpHeader(provider),
-                      const SizedBox(height: 16),
-                      _buildDailyChallenge(context),
-                      const SizedBox(height: 20),
-                      _buildLevelPicker(provider),
-                      const SizedBox(height: 20),
-                      _buildSectionTitle(
-                        'gamesHub.gamesSectionTitle'.tr(),
-                        titleColor,
+      body: Consumer2<GamesProvider, DailyChallengesProvider>(
+        builder: (context, provider, challengesProvider, _) {
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1180),
+              child: CustomScrollView(
+                slivers: [
+                  _buildAppBar(provider, titleColor),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          _buildXpHeader(provider),
+                          const SizedBox(height: 16),
+                          _buildDailyChallenge(context, challengesProvider),
+                          const SizedBox(height: 20),
+                          _buildLevelPicker(provider),
+                          const SizedBox(height: 20),
+                          _buildSectionTitle(
+                            'gamesHub.gamesSectionTitle'.tr(),
+                            titleColor,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildGameGrid(context, provider),
+                          const SizedBox(height: 24),
+                          _buildSectionTitle(
+                            'gamesHub.leaderboardSectionTitle'.tr(),
+                            titleColor,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildLeaderboard(provider),
+                          const SizedBox(height: 32),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      _buildGameGrid(context, provider),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle(
-                        'gamesHub.leaderboardSectionTitle'.tr(),
-                        titleColor,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildLeaderboard(provider),
-                      const SizedBox(height: 32),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
@@ -259,31 +270,84 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     );
   }
 
-  /// Hardcoded demo daily challenge card.
-  ///
-  /// In production this would be loaded from the backend.
-  Widget _buildDailyChallenge(BuildContext context) {
+  progress.DailyChallengeEntity? _selectDailyChallenge(
+    DailyChallengesProvider provider,
+  ) {
+    if (provider.challenges.isEmpty) return null;
+    return provider.challenges.firstWhere(
+      (challenge) => !challenge.isCompleted,
+      orElse: () => provider.challenges.first,
+    );
+  }
+
+  Future<void> _handleDailyChallengeTap(
+    progress.DailyChallengeEntity challenge,
+    DailyChallengesProvider provider,
+  ) async {
+    if (challenge.isCompleted) {
+      final claimed = await provider.claimReward(challenge.id);
+      if (!mounted) return;
+      if (claimed) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('dailyChallenges.rewardClaimed'.tr())),
+        );
+        await provider.refresh();
+      }
+      return;
+    }
+
+    _navigateToGame(context, gameTypeForDailyChallenge(challenge));
+  }
+
+  Widget _buildDailyChallenge(
+    BuildContext context,
+    DailyChallengesProvider challengesProvider,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final titleColor = isDark ? AppColors.textInverted : AppColors.textDark;
-    final demo = DailyChallenge(
-      gameType: GameType.fillBlank.apiKey,
-      description: 'Complete 5 Fill in the Blank questions',
-      bonusMultiplier: 2,
-      completed: false,
-      resetsAt: DateTime.now().add(const Duration(days: 1)),
-    );
+    final selectedChallenge = _selectDailyChallenge(challengesProvider);
+    final challenge = selectedChallenge != null
+        ? toGameDailyChallenge(selectedChallenge)
+        : DailyChallenge(
+            gameType: GameType.fillBlank.apiKey,
+            description: 'Complete 5 Fill in the Blank questions',
+            bonusMultiplier: 2,
+            completed: false,
+            resetsAt: DateTime.now().add(const Duration(days: 1)),
+          );
+    final rewardClaimable =
+        selectedChallenge?.isCompleted == true &&
+        !challengesProvider.isRewardClaimed(selectedChallenge!.id);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('gamesHub.dailyChallengeLabel'.tr(), titleColor),
         const SizedBox(height: 10),
-        DailyChallengeCard(
-          challenge: demo,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const FillBlankScreen()),
+        if (challengesProvider.isLoading && selectedChallenge == null)
+          Shimmer.fromColors(
+            baseColor: AppColors.grey200,
+            highlightColor: AppColors.grey100,
+            child: Container(
+              height: 88,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          )
+        else
+          DailyChallengeCard(
+            challenge: challenge,
+            allowCompletedTap: rewardClaimable,
+            onTap: () {
+              if (selectedChallenge != null) {
+                _handleDailyChallengeTap(selectedChallenge, challengesProvider);
+                return;
+              }
+              _navigateToGame(context, GameType.fillBlank);
+            },
           ),
-        ),
       ],
     );
   }
@@ -350,21 +414,32 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   }
 
   Widget _buildGameGrid(BuildContext context, GamesProvider provider) {
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.85,
-      ),
-      itemCount: GameType.values.length,
-      itemBuilder: (context, index) {
-        final type = GameType.values[index];
-        return GameCard(
-          gameType: type,
-          onTap: () => _navigateToGame(context, type),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1000
+            ? 4
+            : width >= 680
+            ? 3
+            : 2;
+
+        return GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 0.85,
+          ),
+          itemCount: GameType.values.length,
+          itemBuilder: (context, index) {
+            final type = GameType.values[index];
+            return GameCard(
+              gameType: type,
+              onTap: () => _navigateToGame(context, type),
+            );
+          },
         );
       },
     );

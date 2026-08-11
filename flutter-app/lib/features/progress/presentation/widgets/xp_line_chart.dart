@@ -35,7 +35,10 @@ class XpLineChart extends StatelessWidget {
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
-            horizontalInterval: (maxXP / 4).ceilToDouble().clamp(1, double.infinity),
+            horizontalInterval: (maxXP / 4).ceilToDouble().clamp(
+              1,
+              double.infinity,
+            ),
             getDrawingHorizontalLine: (_) => FlLine(
               color: isDark
                   ? Colors.white.withValues(alpha: 0.07)
@@ -45,9 +48,15 @@ class XpLineChart extends StatelessWidget {
           ),
           borderData: FlBorderData(show: false),
           titlesData: FlTitlesData(
-            leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -76,8 +85,9 @@ class XpLineChart extends StatelessWidget {
           ),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) =>
-                  isDark ? AppColors.surfaceDarkElevated : Colors.white,
+              getTooltipColor: (_) => isDark
+                  ? AppColors.surfaceDarkElevated
+                  : AppColors.surfaceLight,
               getTooltipItems: (spots) => spots.map((s) {
                 return LineTooltipItem(
                   '${s.y.toInt()} XP',
@@ -103,7 +113,7 @@ class XpLineChart extends StatelessWidget {
                   final isToday = days[index].isToday;
                   return FlDotCirclePainter(
                     radius: isToday ? 5 : 3,
-                    color: isToday ? primary : Colors.white,
+                    color: isToday ? primary : AppColors.surfaceLight,
                     strokeWidth: 2,
                     strokeColor: primary,
                   );
@@ -205,8 +215,9 @@ class LessonsBarChart extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) =>
-                  isDark ? AppColors.surfaceDarkElevated : Colors.white,
+              getTooltipColor: (_) => isDark
+                  ? AppColors.surfaceDarkElevated
+                  : AppColors.surfaceLight,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final count = rod.toY.toInt();
                 return BarTooltipItem(
@@ -285,8 +296,8 @@ class WeekActivityHeatmap extends StatelessWidget {
                             alpha: (0.2 + intensity * 0.7).clamp(0.2, 0.9),
                           )
                         : (isDark
-                            ? Colors.white.withValues(alpha: 0.07)
-                            : Colors.black.withValues(alpha: 0.05)),
+                              ? Colors.white.withValues(alpha: 0.07)
+                              : Colors.black.withValues(alpha: 0.05)),
                     borderRadius: BorderRadius.circular(8),
                     border: day.isToday
                         ? Border.all(color: primary, width: 2)
@@ -301,7 +312,9 @@ class WeekActivityHeatmap extends StatelessWidget {
                   day.day.substring(0, 1),
                   style: TextStyle(
                     fontSize: 10,
-                    fontWeight: day.isToday ? FontWeight.w700 : FontWeight.normal,
+                    fontWeight: day.isToday
+                        ? FontWeight.w700
+                        : FontWeight.normal,
                     color: day.isToday
                         ? primary
                         : AppColorRoles.textMuted(isDark),

@@ -17,6 +17,7 @@ from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
 from app.models.rbac import Role
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
+from app.services.user_deletion_service import permanently_delete_user
 
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - User Management"])
@@ -508,7 +509,7 @@ async def update_user_status(
     
     user.is_active = data.is_active
     await db.commit()
-    
+
     return ApiResponse(
         success=True,
         message=f"User {'activated' if data.is_active else 'deactivated'} successfully",
@@ -516,6 +517,49 @@ async def update_user_status(
             "user_id": str(user.id),
             "is_active": data.is_active
         }
+    )
+
+
+@router.delete("/{user_id}/permanent")
+async def permanently_delete_user_account(
+    user_id: UUID,
+    admin: User = Depends(get_current_super_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Permanently delete a user account and all of their data (GDPR hard delete).
+    Only super_admins may perform this action.
+    """
+    if user_id == admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot delete your own account"
+        )
+
+    result = await db.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    if user.role_level >= admin.role_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot delete users with equal or higher role level"
+        )
+
+    await permanently_delete_user(db, user)
+    await db.commit()
+
+    return ApiResponse(
+        success=True,
+        message="User permanently deleted",
+        data={"user_id": str(user_id)}
     )
 
 

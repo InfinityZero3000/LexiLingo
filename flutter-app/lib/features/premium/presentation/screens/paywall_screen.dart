@@ -2,6 +2,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:lexilingo_app/core/di/injection_container.dart' as di;
+import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/purchases_service.dart';
 
 class PaywallScreen extends StatefulWidget {
@@ -33,6 +35,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
       final success = await PurchasesService.instance.purchase(pkg);
       if (!mounted) return;
       if (success) {
+        await di.sl<EntitlementService>().sync();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('premium.success'.tr())),
         );
@@ -50,6 +54,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
   Future<void> _restore() async {
     setState(() => _purchasing = true);
     final success = await PurchasesService.instance.restore();
+    if (success) await di.sl<EntitlementService>().sync();
     if (!mounted) return;
     setState(() => _purchasing = false);
     ScaffoldMessenger.of(context).showSnackBar(

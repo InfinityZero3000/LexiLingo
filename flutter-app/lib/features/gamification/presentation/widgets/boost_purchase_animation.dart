@@ -27,14 +27,10 @@ class BoostPurchaseAnimation extends StatefulWidget {
       barrierLabel: 'Boost',
       barrierColor: Colors.black.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 250),
-      transitionBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: anim,
-        child: child,
-      ),
-      pageBuilder: (ctx, _, __) => BoostPurchaseAnimation(
-        item: item,
-        onComplete: onComplete,
-      ),
+      transitionBuilder: (ctx, anim, _, child) =>
+          FadeTransition(opacity: anim, child: child),
+      pageBuilder: (ctx, _, __) =>
+          BoostPurchaseAnimation(item: item, onComplete: onComplete),
     );
   }
 
@@ -62,12 +58,14 @@ class _BoostPurchaseAnimationState extends State<BoostPurchaseAnimation>
       duration: const Duration(milliseconds: 700),
     );
 
-    _scaleAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _scale, curve: Curves.elasticOut),
-    );
-    _pulseAnim = Tween<double>(begin: 1.0, end: 1.12).animate(
-      CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _scale, curve: Curves.elasticOut));
+    _pulseAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.12,
+    ).animate(CurvedAnimation(parent: _pulse, curve: Curves.easeInOut));
 
     _scale.forward().then((_) {
       if (mounted) _pulse.repeat(reverse: true);
@@ -102,10 +100,8 @@ class _BoostPurchaseAnimationState extends State<BoostPurchaseAnimation>
           scale: _scaleAnim,
           child: AnimatedBuilder(
             animation: _pulseAnim,
-            builder: (_, child) => Transform.scale(
-              scale: _pulseAnim.value,
-              child: child,
-            ),
+            builder: (_, child) =>
+                Transform.scale(scale: _pulseAnim.value, child: child),
             child: Container(
               width: 160,
               height: 160,
@@ -113,7 +109,7 @@ class _BoostPurchaseAnimationState extends State<BoostPurchaseAnimation>
                 shape: BoxShape.circle,
                 color: isDark
                     ? AppColors.surfaceDarkElevated
-                    : Colors.white,
+                    : AppColors.surfaceLight,
                 boxShadow: [
                   BoxShadow(
                     color: boostColor.withValues(alpha: 0.5),
@@ -144,10 +140,12 @@ class _BoostPurchaseAnimationState extends State<BoostPurchaseAnimation>
     );
   }
 
+  // 0xFF137FEC was a literal duplicate of AppColors.primary — same palette
+  // as ActiveBoostsBar._colorForEffect, kept in sync.
   Color _colorForEffect(String effectType) => switch (effectType) {
-    ShopItemEntity.effectDoubleXP => const Color(0xFFFF9500),
-    ShopItemEntity.effectStreakFreeze => const Color(0xFF137FEC),
-    ShopItemEntity.effectUnlimitedHearts => const Color(0xFFE53E3E),
+    ShopItemEntity.effectDoubleXP => AppColors.orange,
+    ShopItemEntity.effectStreakFreeze => AppColors.primary,
+    ShopItemEntity.effectUnlimitedHearts => AppColors.errorBright,
     ShopItemEntity.effectHintRefill => AppColors.cefrC,
     _ => AppColors.cefrA,
   };

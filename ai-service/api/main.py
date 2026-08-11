@@ -6,15 +6,17 @@ Initializes resources and includes modular routers.
 """
 
 import sentry_sdk
+import asyncio
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from contextlib import asynccontextmanager
 import logging
 import os
 import httpx
+from dotenv import load_dotenv
 from datetime import datetime, timezone
 from typing import Optional
 from pymongo import ASCENDING, DESCENDING
@@ -30,7 +32,6 @@ from api.core.config import get_settings
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from dotenv import load_dotenv
 load_dotenv()
 
 # Settings (loaded after dotenv so env vars are available)
@@ -152,6 +153,38 @@ async def _ensure_mongo_indexes() -> None:
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="lexi_messages_session_timestamp_idx",
     )
+    await _create_index_safe(
+        "lexi_messages",
+        [("session_id", ASCENDING), ("id", ASCENDING)],
+        name="lexi_messages_session_id_uq",
+        unique=True,
+        partialFilterExpression={"id": {"$exists": True, "$type": "string"}},
+    )
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("event_id", ASCENDING)],
+        name="learner_observation_spool_event_id_uq",
+        unique=True,
+    )
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("status", ASCENDING), ("available_at", ASCENDING)],
+        name="learner_observation_spool_claim_idx",
+    )
+    # TTL applies only after delivery. Pending/retry rows have no delivered_at
+    # and therefore never expire.
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("delivered_at", ASCENDING)],
+        name="learner_observation_spool_delivered_ttl",
+        expireAfterSeconds=90 * 24 * 60 * 60,
+    )
+    await _create_index_safe(
+        "ai_interactions",
+        [("indexed_at", ASCENDING)],
+        name="ai_interactions_indexed_at_ttl",
+        expireAfterSeconds=90 * 24 * 60 * 60,
+    )
 
 
 @asynccontextmanager
@@ -178,10 +211,25 @@ async def lifespan(app: FastAPI):
         logger.info(" Redis & Rate Limiter initialized")
     except Exception as e:
         _groq_pool = None
+        if os.getenv("GROQ_REQUIRE_SEVEN_KEYS", "false").lower() == "true":
+            raise RuntimeError("Strict Groq key-pool initialization failed") from e
         logger.warning(f"Redis initialization failed; continuing without cache/rate pool: {e}")
 
     _http_client = httpx.AsyncClient(timeout=30.0)
-    
+
+    if settings.LEARNER_STATE_MODE != "off":
+        from api.services.learner_observation_spool import (
+            start_learner_observation_forwarder,
+        )
+
+        start_learner_observation_forwarder()
+
+    if settings.CONTENT_ETL_ENABLED:
+        from api.services.content_etl.staleness import run_staleness_loop
+
+        asyncio.create_task(run_staleness_loop())
+        logger.info(" content_etl staleness watch started")
+
     if USE_GATEWAY:
         try:
             from api.services.gateway_setup import setup_gateway
@@ -195,6 +243,24 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"Failed to initialize gateway: {e}")
 
+    # Warm the TraceCAG orchestrator (KG open + LangGraph compile) and
+    # preload the CRITICAL/preload=True models (Qwen) here, at deploy time.
+    # Without this, both only run lazily on the first /chat/messages or
+    # /health request, which used to make the first real user pay the
+    # multi-second KG/model cold-start cost inside their chat request.
+    try:
+        from api.services.orchestrator import get_orchestrator
+
+        await asyncio.wait_for(
+            asyncio.gather(get_orchestrator(), _run_model_warmup()),
+            timeout=45.0,
+        )
+        logger.info(" AIOrchestrator + models warmed (KG + TraceCAG pipeline + Qwen)")
+    except Exception as e:
+        logger.warning(
+            f"Startup warmup incomplete (KG/pipeline/models); will lazy-init on first request: {e}"
+        )
+
     try:
         from api.services.stt.runtime import start_stt_runtime
 
@@ -202,14 +268,45 @@ async def lifespan(app: FastAPI):
         logger.info(" Streaming STT runtime initialized")
     except Exception as e:
         logger.warning(f"Failed to initialize streaming STT runtime: {e}")
+
+    try:
+        from api.services.tts_service import get_tts_service
+
+        await asyncio.wait_for(
+            asyncio.to_thread(get_tts_service().warmup),
+            timeout=20.0,
+        )
+        logger.info(" Piper TTS warmed")
+    except Exception as e:
+        logger.warning(f"Piper TTS warmup failed; continuing without warm cache: {e}")
+
+    if settings.VOICE_DUPLEX_ENABLED:
+        from api.routes.voice import voice_readiness
+
+        await voice_readiness()
+        logger.info(" Duplex voice dependencies ready")
     
     yield
     
     # Shutdown
     if _http_client:
         await _http_client.aclose()
+    try:
+        from api.services.learner_observation_spool import (
+            stop_learner_observation_forwarder,
+        )
+
+        await stop_learner_observation_forwarder()
+    except Exception as e:
+        logger.warning(f"Failed to stop learner observation forwarder cleanly: {e}")
     await mongodb_manager.disconnect()
     await RedisClient.close()
+    try:
+        from api.clients.learner_state_client import close_learner_state_client
+
+        await close_learner_state_client()
+    except Exception as e:
+        logger.warning(f"Failed to close learner-state client cleanly: {e}")
     if _gateway_initialized:
         from api.services.gateway_setup import shutdown_gateway
         await shutdown_gateway()
@@ -247,17 +344,18 @@ app.add_middleware(
         "X-Api-Key",
         "X-Idempotency-Key",
     ],
-    allow_private_network=True,
+    allow_private_network=settings.CORS_ALLOW_PRIVATE_NETWORK,
 )
 
 
 # Include Routers
-from api.routes import (
+from api.routes import (  # noqa: E402
     admin,
     ai,
     chat,
     content_agent,
     error_diagnosis,
+    integration_trace_cag,
     lexi_chat,
     notification_agent as notification_agent_router,
     ollama_router,
@@ -267,12 +365,14 @@ from api.routes import (
     topic_chat,
     translate,
     tts,
+    voice,
 )
 
 app.include_router(chat.router, prefix="/api/v1/chat", tags=["Chat"])
 app.include_router(stt.router, prefix="/api/v1/stt", tags=["STT"])
 app.include_router(pronunciation.router, prefix="/api/v1/stt", tags=["STT"])
 app.include_router(tts.router, prefix="/api/v1/tts", tags=["TTS"])
+app.include_router(voice.router, prefix="/api/v1/voice", tags=["Voice"])
 app.include_router(topic_chat.router, prefix="/api/v1/topics", tags=["Topic Chat"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 app.include_router(ai.router, prefix="/api/v1/ai", tags=["AI Analytics"])
@@ -280,6 +380,7 @@ app.include_router(translate.router, prefix="/api/v1/ai", tags=["Translate"])
 app.include_router(lexi_chat.router, tags=["Lexi Chat"])
 app.include_router(ollama_router.router, prefix="/api/v1", tags=["Ollama"])
 app.include_router(content_agent.router, tags=["Internal Content Agent"])
+app.include_router(integration_trace_cag.router)
 app.include_router(notification_agent_router.router, tags=["Notification Agent"])
 app.include_router(ranking_agent_router.router, tags=["Internal Ranking Agent"])
 app.include_router(error_diagnosis.router, tags=["Internal Error Diagnosis"])
@@ -298,7 +399,30 @@ async def visualizer_redirect():
 
 @app.get("/health")
 async def health_check():
+    try:
+        from api.services.orchestrator import get_orchestrator
+
+        orchestrator = await get_orchestrator()
+        if not orchestrator.is_healthy():
+            raise RuntimeError("AI orchestrator is not initialized")
+        await orchestrator._kg.assert_runtime_namespace()
+    except Exception as exc:
+        logger.error("Health check failed: KG is not ready: %s", exc)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unhealthy",
+                "component": "knowledge_graph",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            },
+        )
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@app.get("/live")
+async def liveness_check():
+    """Constant-time process liveness; readiness remains available at /health."""
+    return {"status": "alive"}
 
 
 async def _run_model_warmup() -> None:

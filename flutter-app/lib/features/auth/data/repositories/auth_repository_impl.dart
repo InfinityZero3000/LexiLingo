@@ -21,38 +21,21 @@ class AuthRepositoryImpl implements AuthRepository {
     String? displayName,
   }) async {
     try {
-      // Step 1: Create account on backend
-      await backendDataSource.register(
+      final user = await backendDataSource.register(
         email: email,
         username: username,
         password: password,
         displayName: displayName,
       );
-
-      // Step 2: Auto-login to obtain JWT tokens, so the user is fully
-      // authenticated immediately after registration (no second login needed).
-      final loginResponse = await backendDataSource.login(
-        email: email,
-        password: password,
-      );
-
-      // Step 3: Fetch full profile (same pattern as login)
-      UserEntity user;
-      try {
-        user = await backendDataSource.getCurrentUser();
-      } on ServerException {
-        user = _buildFallbackUser(loginResponse);
-      }
-
       return Right(user);
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on UnauthorizedException catch (_) {
-      return Left(AuthFailure('Auto-login after registration failed.'));
+      return Left(AuthFailure('Registration failed.'));
     } on AuthException catch (_) {
-      return Left(AuthFailure('Auto-login after registration failed.'));
+      return Left(AuthFailure('Registration failed.'));
     } catch (e) {
       return Left(ServerFailure('Registration failed: $e'));
     }
@@ -176,6 +159,8 @@ class AuthRepositoryImpl implements AuthRepository {
     String? nativeLanguage,
     String? targetLanguage,
     String? level,
+    String? goal,
+    String? interest,
     bool? isOnboardingCompleted,
   }) async {
     try {
@@ -185,6 +170,8 @@ class AuthRepositoryImpl implements AuthRepository {
         nativeLanguage: nativeLanguage,
         targetLanguage: targetLanguage,
         level: level,
+        goal: goal,
+        interest: interest,
         isOnboardingCompleted: isOnboardingCompleted,
       );
       return Right(user);
@@ -278,6 +265,7 @@ class AuthRepositoryImpl implements AuthRepository {
       case ErrorCodes.authInvalid:
       case ErrorCodes.authExpired:
       case ErrorCodes.authMissing:
+      case ErrorCodes.authForbidden:
         return AuthFailure(e.message);
 
       case ErrorCodes.validationError:

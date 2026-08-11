@@ -156,6 +156,8 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
     String? nativeLanguage,
     String? targetLanguage,
     String? level,
+    String? goal,
+    String? interest,
     bool? isOnboardingCompleted,
   }) =>
       (super.noSuchMethod(
@@ -165,6 +167,8 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
               #nativeLanguage: nativeLanguage,
               #targetLanguage: targetLanguage,
               #level: level,
+              #goal: goal,
+              #interest: interest,
               #isOnboardingCompleted: isOnboardingCompleted,
             }),
             returnValue:
@@ -177,6 +181,8 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
                       #nativeLanguage: nativeLanguage,
                       #targetLanguage: targetLanguage,
                       #level: level,
+                      #goal: goal,
+                      #interest: interest,
                       #isOnboardingCompleted: isOnboardingCompleted,
                     }),
                   ),
@@ -200,6 +206,21 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
               _FakeEither_0<_i5.Failure, void>(
                 this,
                 Invocation.method(#verifyEmail, [token]),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, void>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, void>> resendVerificationEmail(
+    String? email,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#resendVerificationEmail, [email]),
+            returnValue: _i4.Future<_i2.Either<_i5.Failure, void>>.value(
+              _FakeEither_0<_i5.Failure, void>(
+                this,
+                Invocation.method(#resendVerificationEmail, [email]),
               ),
             ),
           )

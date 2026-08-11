@@ -88,10 +88,12 @@ class AIServiceClient:
         params: dict = {"word": word, "lang": lang}
         if context:
             params["context"] = context
+        api_key = os.getenv("AI_ADMIN_API_KEY", "").strip()
+        headers = {"X-Admin-Key": api_key} if api_key else {}
 
         try:
             async with httpx.AsyncClient(timeout=httpx.Timeout(timeout_seconds)) as client:
-                resp = await client.get(url, params=params)
+                resp = await client.get(url, params=params, headers=headers)
             if resp.status_code == 200:
                 return resp.json()
         except Exception:
@@ -127,3 +129,33 @@ class AIServiceClient:
 
         resp.raise_for_status()
         return resp.json() or {}
+
+    async def transcribe_audio(
+        self,
+        *,
+        audio_bytes: bytes,
+        filename: str,
+        language: str = "en",
+        authorization: Optional[str] = None,
+    ) -> dict[str, Any]:
+        """Send audio to the AI service for STT transcription."""
+        url = f"{self._base_url}/stt/transcribe"
+        headers = {}
+        if authorization:
+            headers["Authorization"] = authorization
+
+        files = {
+            "audio": (
+                filename or "recording.wav",
+                audio_bytes,
+                "audio/mpeg",
+            )
+        }
+        data = {"language": language}
+
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0)) as client:
+            resp = await client.post(url, data=data, files=files, headers=headers)
+
+        resp.raise_for_status()
+        return resp.json() or {}
+

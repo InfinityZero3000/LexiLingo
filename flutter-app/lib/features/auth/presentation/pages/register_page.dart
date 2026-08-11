@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -105,7 +106,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     Row(
                       children: [
-                        IconButton(
+                        AppBackButton(
                           onPressed: () {
                             if (Navigator.of(context).canPop()) {
                               Navigator.of(context).pop();
@@ -117,7 +118,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               ),
                             );
                           },
-                          icon: const Icon(Icons.arrow_back),
+                          icon: Icons.arrow_back,
                         ),
                         Expanded(
                           child: Text(

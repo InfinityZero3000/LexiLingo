@@ -25,6 +25,9 @@ class DeepLinkService {
   /// Referral code received before the user was signed in.
   String? pendingReferralCode;
 
+  /// Password-reset token received before the reset page is built.
+  String? pendingResetToken;
+
   Future<void> init() async {
     // Handle cold-start link (app launched from a link)
     try {
@@ -70,6 +73,12 @@ class DeepLinkService {
         if (segments.length > 1) {
           pendingReferralCode = segments[1];
           debugPrint('Referral code stored: $pendingReferralCode');
+        }
+      case 'reset-password':
+        final token = uri.queryParameters['token'];
+        if (token != null && token.isNotEmpty) {
+          pendingResetToken = token;
+          AppNavigationService.openRoute('/reset-password?token=$token');
         }
       default:
         debugPrint('DeepLink: unhandled path ${uri.path}');

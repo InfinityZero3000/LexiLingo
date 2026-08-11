@@ -12,6 +12,9 @@ import {
   type VocabItem,
 } from "../lib/adminApi";
 import { useI18n } from "../lib/i18n";
+import { downloadCSV } from "../lib/csvExport";
+
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 const POS_OPTIONS = ["noun", "verb", "adjective", "adverb", "pronoun", "preposition", "conjunction", "interjection"];
 const LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -116,6 +119,11 @@ export const VocabularyPage = () => {
   const handleBulkImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("File vượt quá 5 MB.");
+      if (fileRef.current) fileRef.current.value = "";
+      return;
+    }
     setImporting(true);
     setError(null);
     setImportResult(null);
@@ -129,6 +137,21 @@ export const VocabularyPage = () => {
       setImporting(false);
       if (fileRef.current) fileRef.current.value = "";
     }
+  };
+
+  const handleExport = () => {
+    downloadCSV(
+      "vocabulary.csv",
+      ["word", "definition", "translation", "part_of_speech", "pronunciation", "difficulty_level"],
+      items.map((v) => [
+        v.word,
+        v.definition || "",
+        typeof v.translation === "object" ? v.translation?.vi || "" : v.translation || "",
+        v.part_of_speech,
+        v.pronunciation || "",
+        v.difficulty_level,
+      ])
+    );
   };
 
   // Client-side search filter
@@ -166,9 +189,12 @@ export const VocabularyPage = () => {
             onChange={(e) => setSearch(e.target.value)}
             style={{ flex: 1, minWidth: 200 }}
           />
-          <input type="file" accept=".csv" ref={fileRef} onChange={handleBulkImport} style={{ display: "none" }} />
+          <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} style={{ display: "none" }} />
           <button className="ghost-button" onClick={() => fileRef.current?.click()} disabled={importing}>
-            {importing ? "Đang import..." : "Import CSV"}
+            {importing ? "Đang import..." : "Import CSV/PDF"}
+          </button>
+          <button className="ghost-button" onClick={handleExport} disabled={items.length === 0}>
+            Export CSV
           </button>
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
             {t.vocabulary.createWord}

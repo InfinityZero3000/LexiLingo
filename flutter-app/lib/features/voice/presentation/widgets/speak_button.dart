@@ -64,6 +64,7 @@ class _SpeakButtonState extends State<SpeakButton> {
 
     if (_isPlaying) {
       await _player.stop();
+      if (!mounted) return;
       setState(() => _isPlaying = false);
       return;
     }
@@ -200,6 +201,7 @@ class _SpeakButtonState extends State<SpeakButton> {
 /// A simpler icon-only variant for inline use
 class SpeakIconButton extends StatefulWidget {
   final String text;
+  final String? audioUrl;
   final double size;
   final Color? color;
   final bool autoplay;
@@ -207,6 +209,7 @@ class SpeakIconButton extends StatefulWidget {
   const SpeakIconButton({
     super.key,
     required this.text,
+    this.audioUrl,
     this.size = 24,
     this.color,
     this.autoplay = false,
@@ -249,10 +252,14 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
   }
 
   Future<void> _speak() async {
-    if (_isLoading || widget.text.isEmpty) return;
+    final audioUrl = widget.audioUrl?.trim();
+    if (_isLoading || (widget.text.isEmpty && (audioUrl?.isEmpty ?? true))) {
+      return;
+    }
 
     if (_isPlaying) {
       await _player.stop();
+      if (!mounted) return;
       setState(() => _isPlaying = false);
       return;
     }
@@ -260,8 +267,20 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
     setState(() => _isLoading = true);
 
     try {
-      final voiceProvider = context.read<VoiceProvider>();
       final ttsSettings = context.read<TtsSettingsProvider>();
+      if (audioUrl != null && audioUrl.isNotEmpty) {
+        try {
+          await _player.setUrl(audioUrl);
+          await _player.setSpeed(ttsSettings.playbackSpeed);
+          await _player.play();
+          return;
+        } catch (error) {
+          debugPrint('Remote audio failed, falling back to TTS: $error');
+        }
+      }
+
+      if (!mounted) return;
+      final voiceProvider = context.read<VoiceProvider>();
       final result = await voiceProvider.synthesizeAndPlay(text: widget.text);
 
       if (result != null && result.audioData.isNotEmpty) {
@@ -323,7 +342,7 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
               size: widget.size,
               color: color,
             ),
-      tooltip: _isPlaying ? 'Stop' : 'Listen',
+      tooltip: _isPlaying ? 'voice.stop'.tr() : 'voice.listen'.tr(),
       splashRadius: widget.size * 0.8,
     );
   }

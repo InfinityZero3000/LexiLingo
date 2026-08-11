@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
+import 'package:lexilingo_app/core/widgets/widgets.dart';
 
 /// Get personalized greeting based on time of day
 String getTimeBasedGreeting() {
@@ -27,11 +27,11 @@ IconData getTimeBasedIcon() {
   if (hour < 5) {
     return Icons.nightlight_round;
   } else if (hour < 12) {
-    return Icons.wb_sunny;
+    return Icons.wb_sunny_rounded;
   } else if (hour < 18) {
-    return Icons.wb_twilight; // Sunset/afternoon
+    return Icons.wb_twilight_rounded;
   } else if (hour < 22) {
-    return Icons.nightlight_round; // Evening
+    return Icons.nightlight_round;
   } else {
     return Icons.nightlight_round;
   }
@@ -84,15 +84,23 @@ class PersonalizedGreetingHeader extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.surfaceDarkMuted
-            : AppColors.primary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark
-              ? accent.withValues(alpha: 0.25)
-              : AppColors.primary.withValues(alpha: 0.15),
+              ? accent.withValues(alpha: 0.3)
+              : AppColors.primary.withValues(alpha: 0.18),
+          width: 2,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.3)
+                : accent.withValues(alpha: 0.1),
+            blurRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -118,7 +126,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -130,7 +138,7 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                   userName,
                   style: const TextStyle(
                     fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
                   ),
                   maxLines: 1,
@@ -224,7 +232,7 @@ class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
     final accent = AppColorRoles.primary(widget.useDarkAccent);
     return Container(
       color: accent.withValues(alpha: 0.2),
-      child: Icon(Icons.person, color: accent, size: 28),
+      child: Icon(Icons.person_rounded, color: accent, size: 28),
     );
   }
 }
@@ -282,15 +290,19 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.accentYellow.withValues(alpha: 0.2),
-                    AppColors.orange.withValues(alpha: 0.15),
+                    AppColors.accentYellow.withValues(alpha: 0.28),
+                    AppColors.orange.withValues(alpha: 0.2),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: AppColors.orange.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -299,7 +311,7 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
                     scale: _sparkleAnimation.value,
                     child: const Icon(
                       Icons.star_rounded,
-                      size: 14,
+                      size: 16,
                       color: AppColors.orange,
                     ),
                   ),
@@ -307,8 +319,8 @@ class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
                   Text(
                     '${_formatXP(widget.xp)} XP',
                     style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
                       color: AppColors.orange,
                     ),
                   ),
@@ -395,11 +407,17 @@ class _NotificationBellState extends State<_NotificationBell>
               decoration: BoxDecoration(
                 color: isDark ? Colors.grey[800] : AppColors.grey100,
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.grey300,
+                  width: 1.5,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12),
+                    blurRadius: 0,
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
@@ -407,14 +425,14 @@ class _NotificationBellState extends State<_NotificationBell>
                 alignment: Alignment.center,
                 children: [
                   Icon(
-                    Icons.notifications_outlined,
-                    color: isDark ? Colors.white : Colors.grey[700],
+                    Icons.notifications_rounded,
                     size: 22,
+                    color: isDark ? Colors.white : Colors.grey[700],
                   ),
                   if (widget.count > 0)
                     Positioned(
-                      top: 5,
-                      right: 5,
+                      top: 3,
+                      right: 3,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 2,
@@ -423,10 +441,16 @@ class _NotificationBellState extends State<_NotificationBell>
                         decoration: BoxDecoration(
                           color: AppColors.dangerGradient[0],
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.grey[800]!
+                                : AppColors.grey100,
+                            width: 1.5,
+                          ),
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 14,
-                          minHeight: 14,
+                          minWidth: 16,
+                          minHeight: 16,
                         ),
                         child: Text(
                           widget.count > 9 ? '9+' : widget.count.toString(),
@@ -519,17 +543,20 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 end: Alignment.bottomRight,
                 colors: [Color(0xFFFFF6F0), Color(0xFFFFEFE3)],
               ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : const Color(0xFFF4DCCB),
+              ? Colors.white.withValues(alpha: 0.1)
+              : const Color(0xFFFFCFA8),
+          width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: isDark
+                ? Colors.black.withValues(alpha: 0.35)
+                : const Color(0xFFFF8A4C).withValues(alpha: 0.18),
+            blurRadius: 0,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -549,8 +576,8 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                         namedArgs: {'count': '${widget.streakDays}'},
                       ),
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
                         letterSpacing: -0.4,
                         color: isDark ? Colors.white : AppColors.textDark,
                       ),
@@ -570,36 +597,49 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                   ],
                 ),
               ),
-              TextButton.icon(
-                onPressed: widget.onTap,
-                style: TextButton.styleFrom(
-                  foregroundColor: isDark
-                      ? AppColors.primaryDarkModeSoft
-                      : AppColors.teal,
-                  backgroundColor: isDark
-                      ? AppColors.accentMintDark.withValues(alpha: 0.45)
-                      : AppColors.accentMint.withValues(alpha: 0.16),
-                  textStyle: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
+              GestureDetector(
+                onTap: widget.onTap,
+                child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: 12,
+                    vertical: 8,
                   ),
-                  minimumSize: const Size(0, 32),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.accentMintDark.withValues(alpha: 0.45)
+                        : AppColors.accentMint.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(999),
-                    side: BorderSide(
+                    border: Border.all(
                       color: isDark
-                          ? AppColors.accentMint.withValues(alpha: 0.55)
-                          : AppColors.accentMint.withValues(alpha: 0.35),
+                          ? AppColors.accentMint.withValues(alpha: 0.6)
+                          : AppColors.accentMint.withValues(alpha: 0.45),
+                      width: 1.5,
                     ),
                   ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 14,
+                        color: isDark
+                            ? AppColors.primaryDarkModeSoft
+                            : AppColors.teal,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'home.calendar'.tr(),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? AppColors.primaryDarkModeSoft
+                              : AppColors.teal,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                icon: const Icon(Icons.calendar_month_rounded, size: 14),
-                label: Text('home.calendar'.tr()),
               ),
             ],
           ),
@@ -651,15 +691,15 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
             children: [
               // Glow effect
               Container(
-                width: 52,
-                height: 52,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: hasStreak
                         ? [
-                            const Color(0xFFFF6B35).withValues(alpha: 0.38),
-                            const Color(0xFFFF3D00).withValues(alpha: 0.16),
+                            const Color(0xFFFF6B35).withValues(alpha: 0.42),
+                            const Color(0xFFFF3D00).withValues(alpha: 0.18),
                             Colors.transparent,
                           ]
                         : [
@@ -670,48 +710,67 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 ),
               ),
               Container(
-                width: 40,
-                height: 40,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: hasStreak
-                      ? Colors.white.withValues(alpha: 0.14)
+                      ? Colors.white.withValues(alpha: 0.16)
                       : Colors.grey.withValues(alpha: 0.12),
                   border: Border.all(
                     color: hasStreak
-                        ? const Color(0xFFFF7A45).withValues(alpha: 0.55)
-                        : Colors.grey.withValues(alpha: 0.35),
+                        ? const Color(0xFFFF7A45)
+                        : Colors.grey.withValues(alpha: 0.4),
+                    width: 2.5,
                   ),
-                ),
-                child: Center(
-                  child: hasStreak
-                      ? ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Color(0xFFFFB74D),
-                              Color(0xFFFF7043),
-                              Color(0xFFE53935),
-                            ],
-                          ).createShader(bounds),
-                          child: const Icon(
-                            Icons.local_fire_department_rounded,
-                            size: 30,
-                            color: Colors.white,
+                  boxShadow: hasStreak
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFFFF6B35,
+                            ).withValues(alpha: 0.35),
+                            blurRadius: 0,
+                            offset: const Offset(0, 3),
                           ),
-                        )
-                      : const Icon(
-                          Icons.local_fire_department_rounded,
-                          size: 30,
-                          color: AppColors.grey500,
-                        ),
+                        ]
+                      : null,
                 ),
+                child: Center(child: _buildFireContent(hasStreak)),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildFireContent(bool hasStreak) {
+    if (!hasStreak) {
+      return const Icon(
+        Icons.local_fire_department_rounded,
+        size: 34,
+        color: AppColors.grey500,
+      );
+    }
+
+    if (widget.streakDays >= 30) {
+      return const LottieAnimationWidget.fire(width: 40, height: 40);
+    }
+    if (widget.streakDays >= 7) {
+      return const LottieAnimationWidget.flame(width: 40, height: 40);
+    }
+
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFFFB74D), Color(0xFFFF7043), Color(0xFFE53935)],
+      ).createShader(bounds),
+      child: const Icon(
+        Icons.local_fire_department_rounded,
+        size: 34,
+        color: Colors.white,
+      ),
     );
   }
 
@@ -756,8 +815,8 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
               ),
               const SizedBox(height: 8),
               Container(
-                width: 24,
-                height: 24,
+                width: 26,
+                height: 26,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isActive
@@ -769,17 +828,26 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                     color: isToday
                         ? AppColors.deepOrange
                         : isActive
-                        ? Colors.transparent
+                        ? AppColors.deepOrange.withValues(alpha: 0.7)
                         : (isDark
                               ? Colors.white.withValues(alpha: 0.15)
                               : const Color(0xFFE8CCB6)),
-                    width: isToday ? 2 : 1,
+                    width: isToday ? 2.5 : (isActive ? 1.5 : 1),
                   ),
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: AppColors.deepOrange.withValues(alpha: 0.4),
+                            blurRadius: 0,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: isActive
                     ? Icon(
-                        Icons.local_fire_department,
-                        size: 14,
+                        Icons.local_fire_department_rounded,
+                        size: 15,
                         color: AppColors.surfaceLight,
                       )
                     : null,

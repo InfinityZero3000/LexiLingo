@@ -1,14 +1,17 @@
+import 'dart:math' as math;
+
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
 enum LeagueCeremonyType { promotion, demotion }
 
 /// Full-screen ceremony shown when the user's league changes at week end.
 ///
-/// Promoted: star-burst Lottie + league color gradient + upbeat copy.
-/// Demoted: muted animation + neutral tone + motivational copy.
+/// Promoted: confetti burst + radar-pulse badge + league color gradient.
+/// Demoted: muted gradient + neutral tone + motivational copy, no confetti.
 class LeagueCeremonyScreen extends StatefulWidget {
   final String newLeague;
   final String? previousLeague;
@@ -42,10 +45,8 @@ class LeagueCeremonyScreen extends StatefulWidget {
           type: type,
           onContinue: onContinue,
         ),
-        transitionsBuilder: (_, anim, __, child) => FadeTransition(
-          opacity: anim,
-          child: child,
-        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
     );
   }
@@ -56,43 +57,95 @@ class LeagueCeremonyScreen extends StatefulWidget {
 
 class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
     with TickerProviderStateMixin {
-  late final AnimationController _badgeScale;
-  late final AnimationController _textSlide;
-  late final Animation<double> _scaleAnim;
-  late final Animation<Offset> _slideAnim;
+  late final AnimationController _sequence;
+  late final AnimationController _ringPulse;
+  late final Animation<double> _ringFade;
+  late final Animation<double> _badgeScale;
+  late final Animation<double> _headerFade;
+  late final Animation<double> _titleFade;
+  late final Animation<Offset> _titleSlide;
+  late final Animation<double> _subtitleFade;
+  late final Animation<double> _buttonFade;
+  late final Animation<Offset> _buttonSlide;
+  ConfettiController? _confetti;
 
   @override
   void initState() {
     super.initState();
-    _badgeScale = AnimationController(
+    final isPromotion = widget.type == LeagueCeremonyType.promotion;
+
+    _sequence = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 700),
+      duration: const Duration(milliseconds: 1100),
     );
-    _textSlide = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
+
+    _ringFade = CurvedAnimation(
+      parent: _sequence,
+      curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
     );
-    _scaleAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _badgeScale, curve: Curves.elasticOut),
+    _badgeScale = CurvedAnimation(
+      parent: _sequence,
+      curve: const Interval(0.05, 0.55, curve: Curves.easeOutBack),
     );
-    _slideAnim = Tween<Offset>(
+    _headerFade = CurvedAnimation(
+      parent: _sequence,
+      curve: const Interval(0.0, 0.3, curve: Curves.easeOut),
+    );
+    final titleCurve = CurvedAnimation(
+      parent: _sequence,
+      curve: const Interval(0.35, 0.75, curve: Curves.easeOutCubic),
+    );
+    _titleFade = titleCurve;
+    _titleSlide = Tween<Offset>(
+      begin: const Offset(0, 0.25),
+      end: Offset.zero,
+    ).animate(titleCurve);
+    _subtitleFade = CurvedAnimation(
+      parent: _sequence,
+      curve: const Interval(0.45, 0.85, curve: Curves.easeOut),
+    );
+    final buttonCurve = CurvedAnimation(
+      parent: _sequence,
+      curve: const Interval(0.55, 1.0, curve: Curves.easeOutCubic),
+    );
+    _buttonFade = buttonCurve;
+    _buttonSlide = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _textSlide, curve: Curves.easeOutCubic));
+    ).animate(buttonCurve);
 
-    Future.delayed(const Duration(milliseconds: 200), () {
-      if (mounted) _badgeScale.forward();
-    });
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) _textSlide.forward();
-    });
+    _ringPulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
+
+    _sequence.forward();
+
+    if (isPromotion) {
+      _ringPulse.repeat();
+      _confetti = ConfettiController(
+        duration: const Duration(milliseconds: 1200),
+      );
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) _confetti?.play();
+      });
+    }
   }
 
   @override
   void dispose() {
-    _badgeScale.dispose();
-    _textSlide.dispose();
+    _sequence.dispose();
+    _ringPulse.dispose();
+    _confetti?.dispose();
     super.dispose();
+  }
+
+  /// Picks a legible text color for a solid [background] fill,
+  /// since pale league colors (silver, gold, platinum) wash out white text.
+  Color _onColor(Color background) {
+    return background.computeLuminance() > 0.5
+        ? AppColors.textDark
+        : AppColors.surfaceLight;
   }
 
   @override
@@ -101,150 +154,229 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
     final visualData = rankVisualDataFor(widget.newLeague.toLowerCase());
     final leagueColor = isDark ? visualData.colorDark : visualData.color;
     final isPromotion = widget.type == LeagueCeremonyType.promotion;
+    final buttonTextColor = _onColor(leagueColor);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
         alignment: Alignment.center,
         children: [
-          // Gradient backdrop
+          // Layered gradient backdrop
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment.center,
-                radius: 1.2,
+                center: const Alignment(0, -0.2),
+                radius: 1.3,
                 colors: [
-                  leagueColor.withValues(alpha: isPromotion ? 0.3 : 0.12),
-                  Colors.black.withValues(alpha: 0.85),
+                  leagueColor.withValues(alpha: isPromotion ? 0.35 : 0.12),
+                  const Color(0xFF0B0E14).withValues(alpha: 0.92),
+                  const Color(0xFF05070A),
                 ],
+                stops: const [0.0, 0.6, 1.0],
               ),
             ),
           ),
 
-          // Lottie: star-burst for promotion, heartbeat for demotion
-          if (isPromotion)
-            const Positioned.fill(
-              child: IgnorePointer(
-                child: LottieAnimationWidget.starBurst(),
+          // Contained confetti burst from the top — only for promotions.
+          if (isPromotion && _confetti != null)
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confetti!,
+                blastDirection: math.pi / 2,
+                blastDirectionality: BlastDirectionality.explosive,
+                maxBlastForce: 12,
+                minBlastForce: 6,
+                emissionFrequency: 0.06,
+                numberOfParticles: 18,
+                gravity: 0.25,
+                shouldLoop: false,
+                colors: [leagueColor, AppColors.surfaceLight, AppColors.gold],
               ),
             ),
 
-          // Content
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Header
                   FadeTransition(
-                    opacity: _textSlide,
+                    opacity: _headerFade,
+                    child: _StatusChip(
+                      label: isPromotion ? 'PROMOTED' : 'DEMOTED',
+                      color: leagueColor,
+                      icon: isPromotion
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  SizedBox(
+                    width: 160,
+                    height: 160,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        if (isPromotion)
+                          AnimatedBuilder(
+                            animation: _ringPulse,
+                            builder: (context, _) {
+                              final t = _ringPulse.value;
+                              return Opacity(
+                                opacity: (1 - t) * 0.6,
+                                child: Transform.scale(
+                                  scale: 1.0 + t * 0.45,
+                                  child: Container(
+                                    width: 132,
+                                    height: 132,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: leagueColor,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        FadeTransition(
+                          opacity: _ringFade,
+                          child: ScaleTransition(
+                            scale: _badgeScale,
+                            child: Container(
+                              width: 124,
+                              height: 124,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  colors: [
+                                    leagueColor.withValues(alpha: 0.28),
+                                    leagueColor.withValues(alpha: 0.08),
+                                  ],
+                                ),
+                                border: Border.all(
+                                  color: leagueColor.withValues(alpha: 0.7),
+                                  width: 3,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: leagueColor.withValues(alpha: 0.4),
+                                    blurRadius: 36,
+                                    spreadRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              child: Image.asset(
+                                visualData.assetPath,
+                                width: 76,
+                                height: 76,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  Icons.military_tech_rounded,
+                                  size: 64,
+                                  color: leagueColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  SlideTransition(
+                    position: _titleSlide,
+                    child: FadeTransition(
+                      opacity: _titleFade,
+                      child: Text(
+                        _leagueName(widget.newLeague),
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.surfaceLight,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  FadeTransition(
+                    opacity: _subtitleFade,
                     child: Text(
-                      isPromotion ? '🎉 Promoted!' : 'Keep Going!',
+                      isPromotion
+                          ? _promotionSubtitle(widget.previousLeague)
+                          : _demotionSubtitle(widget.newLeague),
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: leagueColor,
-                        letterSpacing: 1,
+                        fontSize: 15,
+                        color: AppColors.surfaceLight.withValues(alpha: 0.72),
+                        height: 1.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 44),
 
-                  // League badge
-                  ScaleTransition(
-                    scale: _scaleAnim,
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: leagueColor.withValues(alpha: 0.15),
-                        border: Border.all(
-                          color: leagueColor.withValues(alpha: 0.5),
-                          width: 3,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: leagueColor.withValues(alpha: 0.35),
-                            blurRadius: 40,
-                            spreadRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: Image.asset(
-                        visualData.assetPath,
-                        width: 72,
-                        height: 72,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => Icon(
-                          Icons.military_tech_rounded,
-                          size: 64,
-                          color: leagueColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // League name
                   SlideTransition(
-                    position: _slideAnim,
+                    position: _buttonSlide,
                     child: FadeTransition(
-                      opacity: _textSlide,
-                      child: Column(
-                        children: [
-                          Text(
-                            _leagueName(widget.newLeague),
-                            style: TextStyle(
-                              fontSize: 34,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            isPromotion
-                                ? _promotionSubtitle(widget.previousLeague)
-                                : _demotionSubtitle(widget.newLeague),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.white.withValues(alpha: 0.75),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-
-                  // CTA button
-                  SlideTransition(
-                    position: _slideAnim,
-                    child: FadeTransition(
-                      opacity: _textSlide,
+                      opacity: _buttonFade,
                       child: SizedBox(
                         width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            widget.onContinue();
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: leagueColor,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                leagueColor,
+                                Color.lerp(
+                                  leagueColor,
+                                  Colors.black,
+                                  0.25,
+                                )!, // darken, not a token
+                              ],
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: leagueColor.withValues(alpha: 0.45),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
-                          child: Text(
-                            isPromotion ? 'Claim Your Spot!' : 'Fight Back!',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
+                          child: Material(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(16),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                widget.onContinue();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    isPromotion
+                                        ? 'Claim Your Spot!'
+                                        : 'Fight Back!',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                      color: buttonTextColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -270,4 +402,44 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
 
   String _demotionSubtitle(String current) =>
       'You dropped to ${_leagueName(current)} League.\nBut every champion starts from the bottom — come back stronger!';
+}
+
+class _StatusChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  const _StatusChip({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

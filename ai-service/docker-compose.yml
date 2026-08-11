@@ -1,31 +1,50 @@
 services:
   # AI Service (FastAPI)
   ai-service:
-    build: .
-    container_name: lexilingo-ai-service
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
     init: true
+    restart: unless-stopped
     mem_limit: 2g
     memswap_limit: 2g
     ports:
-      - "8001:8001"
+      - "127.0.0.1:${AI_E2E_PORT:-18001}:8001"
     environment:
-      - ENVIRONMENT=development
-      - MONGODB_URI=mongodb://mongodb:27017
-      - MONGODB_DB_NAME=lexilingo
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-      - REDIS_URL=redis://redis:6379/0
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-    volumes:
-      - ./api:/app/api
+      ENVIRONMENT: production
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      ALGORITHM: ${ALGORITHM:-HS256}
+      AI_ADMIN_API_KEY: ${AI_ADMIN_API_KEY:?Set AI_ADMIN_API_KEY in .env}
+      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+      REDIS_URL: redis://:${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}@redis:6379/0
+      REDIS_MAX_CONNECTIONS: ${AI_E2E_REDIS_MAX_CONNECTIONS:-64}
+      GEMINI_API_KEY: ${AI_E2E_GEMINI_API_KEY:-}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys in .env}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.1-8b-instant}
+      GROQ_REQUIRE_SEVEN_KEYS: "true"
+      GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-true}
+      TRACECAG_GROQ_RPM: ${AI_E2E_GROQ_RPM:-28}
+      TRACECAG_ENABLE_JIT_MINIGRAPH: ${TRACECAG_ENABLE_JIT_MINIGRAPH:-false}
+      V3_ENABLE_GRAPH_ANALYTICS: ${V3_ENABLE_GRAPH_ANALYTICS:-false}
+      V3_FORCE_HASH_EMBEDDINGS: ${V3_FORCE_HASH_EMBEDDINGS:-true}
+      AI_USER_RPM_LIMIT: ${AI_E2E_USER_RPM_LIMIT:-200}
+      AI_USER_RPD_LIMIT: ${AI_E2E_USER_RPD_LIMIT:-500}
+      AI_USER_TPM_LIMIT: ${AI_E2E_USER_TPM_LIMIT:-1000000}
+      AI_USER_TPD_LIMIT: ${AI_E2E_USER_TPD_LIMIT:-2000000}
+      ALLOWED_ORIGINS: ${AI_E2E_ALLOWED_ORIGINS:-https://e2e.invalid}
+      CORS_ALLOW_ORIGIN_REGEX: ""
+      CORS_ALLOW_PRIVATE_NETWORK: "false"
     depends_on:
       mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8001
     security_opt:
       - no-new-privileges:true
     networks:
@@ -33,13 +52,10 @@ services:
 
   # MongoDB
   mongodb:
-    image: mongo:7.0
-    container_name: lexilingo-mongo
+    image: mongo:7.0@sha256:9bdaeb6dac6e7e762e84e2f84103d1f9bb078fa1ba6bde8bb9d2274f655ad173
     restart: unless-stopped
     mem_limit: 1g
     memswap_limit: 1g
-    ports:
-      - "27017:27017"
     environment:
       - MONGO_INITDB_DATABASE=lexilingo
     volumes:
@@ -57,16 +73,19 @@ services:
   # Mongo Express (Web UI)
   mongo-express:
     image: mongo-express:1.0.2@sha256:1b23d7976f0210dbec74045c209e52fbb26d29b2e873d6c6fa3d3f0ae32c2a64
-    container_name: lexilingo-mongo-express
+    profiles: ["admin"]
     restart: unless-stopped
     mem_limit: 256m
     memswap_limit: 256m
     ports:
-      - "8081:8081"
+      - "127.0.0.1:8081:8081"
     environment:
-      - ME_CONFIG_MONGODB_URL=mongodb://mongodb:27017
-      - ME_CONFIG_BASICAUTH_USERNAME=${MONGO_EXPRESS_USER:-admin}
-      - ME_CONFIG_BASICAUTH_PASSWORD=${MONGO_EXPRESS_PASSWORD:?Set MONGO_EXPRESS_PASSWORD in .env}
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER:-admin}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-}
+      MONGO_EXPRESS_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-}
+    entrypoint: ["/bin/sh", "-ec"]
+    command: 'test -n "$$MONGO_EXPRESS_PASSWORD" || { echo "MONGO_EXPRESS_PASSWORD is required" >&2; exit 1; }; exec /docker-entrypoint.sh'
     depends_on:
       - mongodb
     networks:
@@ -74,18 +93,19 @@ services:
 
   # Redis (optional, for caching)
   redis:
-    image: redis:7-alpine
-    container_name: lexilingo-redis
+    image: redis:7-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     restart: unless-stopped
     mem_limit: 256m
     memswap_limit: 256m
     ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lfu
+      - "127.0.0.1:${AI_E2E_REDIS_PORT:-16379}:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 160mb --maxmemory-policy allkeys-lfu --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "REDISCLI_AUTH=\"$$REDIS_PASSWORD\" redis-cli ping"]
       interval: 10s
       timeout: 5s
       retries: 5

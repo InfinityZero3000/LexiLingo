@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../domain/entities/streak_entity.dart';
 
 const _kReminderEnabledKey = 'checkin_reminder_enabled';
@@ -118,9 +119,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
 
   bool _isToday(DateTime day) {
     final now = DateTime.now();
-    return day.year == now.year &&
-        day.month == now.month &&
-        day.day == now.day;
+    return day.year == now.year && day.month == now.month && day.day == now.day;
   }
 
   bool _isFuture(DateTime day) {
@@ -132,7 +131,9 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.surfaceDark : const Color(0xFFFAF6F2);
-    final cardBg = isDark ? AppColors.surfaceDarkElevated : Colors.white;
+    final cardBg = isDark
+        ? AppColors.surfaceDarkElevated
+        : AppColors.surfaceLight;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -157,20 +158,18 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       padding: const EdgeInsets.fromLTRB(8, 16, 16, 4),
       child: Row(
         children: [
-          IconButton(
+          AppBackButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 20,
-              color: isDark ? Colors.white70 : AppColors.textDark,
-            ),
+            color: isDark
+                ? AppColors.surfaceLight.withValues(alpha: 0.7)
+                : AppColors.textDark,
           ),
           Text(
             'home.pointsCalendar'.tr(),
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : AppColors.textDark,
+              color: isDark ? AppColors.surfaceLight : AppColors.textDark,
               letterSpacing: -0.4,
             ),
           ),
@@ -180,8 +179,10 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
   }
 
   Widget _buildCalendar(bool isDark, Color cardBg) {
-    final daysInMonth =
-        DateUtils.getDaysInMonth(_viewMonth.year, _viewMonth.month);
+    final daysInMonth = DateUtils.getDaysInMonth(
+      _viewMonth.year,
+      _viewMonth.month,
+    );
     final firstWeekday = DateTime(_viewMonth.year, _viewMonth.month, 1).weekday;
     // Flutter: Mon=1 ... Sun=7; we want Sun=0
     final startOffset = firstWeekday % 7;
@@ -225,7 +226,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark ? AppColors.surfaceLight : AppColors.textDark,
           ),
         ),
         _navButton(Icons.chevron_right, _nextMonth, isDark),
@@ -239,7 +240,9 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       child: Icon(
         icon,
         size: 22,
-        color: isDark ? Colors.white60 : AppColors.textGrey,
+        color: isDark
+            ? AppColors.surfaceLight.withValues(alpha: 0.6)
+            : AppColors.textGrey,
       ),
     );
   }
@@ -261,7 +264,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                     color: e.key == 0 || e.key == 6
                         ? const Color(0xFFFF8C00)
                         : isDark
-                        ? Colors.white60
+                        ? AppColors.surfaceLight.withValues(alpha: 0.6)
                         : AppColors.textGrey,
                   ),
                 ),
@@ -285,13 +288,15 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       final today = _isToday(date);
       final future = _isFuture(date);
 
-      cells.add(_DayCell(
-        day: day,
-        isCheckin: checkin,
-        isToday: today,
-        isFuture: future,
-        isDark: isDark,
-      ));
+      cells.add(
+        _DayCell(
+          day: day,
+          isCheckin: checkin,
+          isToday: today,
+          isFuture: future,
+          isDark: isDark,
+        ),
+      );
     }
 
     while (cells.length < _kCalendarCellCount) {
@@ -324,7 +329,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
             Text(
               'home.setupCheckinReminder'.tr(),
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.surfaceLight,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -341,10 +346,12 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                     setState(() => _reminderEnabled = val);
                     _saveReminderPrefs();
                   },
-                  activeThumbColor: Colors.white,
+                  activeThumbColor: AppColors.surfaceLight,
                   activeTrackColor: const Color(0xFF2575CC),
-                  inactiveThumbColor: Colors.white,
-                  inactiveTrackColor: Colors.white.withValues(alpha: 0.4),
+                  inactiveThumbColor: AppColors.surfaceLight,
+                  inactiveTrackColor: AppColors.surfaceLight.withValues(
+                    alpha: 0.4,
+                  ),
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
@@ -359,7 +366,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                   child: Text(
                     _reminderTime.format(context),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.surfaceLight,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
@@ -380,13 +387,13 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
   }) {
     return Row(
       children: [
-        Icon(icon, color: Colors.white, size: 22),
+        Icon(icon, color: AppColors.surfaceLight, size: 22),
         const SizedBox(width: 12),
         Expanded(
           child: Text(
             label,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.surfaceLight,
               fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
@@ -432,7 +439,7 @@ class _DayCell extends StatelessWidget {
 
     if (isCheckin) {
       bgColor = const Color(0xFFFF8C35);
-      textColor = Colors.white;
+      textColor = AppColors.surfaceLight;
       fontWeight = FontWeight.w700;
     } else if (isToday) {
       bgColor = null;
@@ -440,10 +447,12 @@ class _DayCell extends StatelessWidget {
       fontWeight = FontWeight.w700;
     } else if (isFuture) {
       textColor = isDark
-          ? Colors.white24
+          ? AppColors.surfaceLight.withValues(alpha: 0.24)
           : const Color(0xFFB0B0B0);
     } else {
-      textColor = isDark ? Colors.white70 : AppColors.textDark;
+      textColor = isDark
+          ? AppColors.surfaceLight.withValues(alpha: 0.7)
+          : AppColors.textDark;
     }
 
     Widget cell = Center(
@@ -460,10 +469,7 @@ class _DayCell extends StatelessWidget {
     if (bgColor != null) {
       cell = Container(
         margin: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          color: bgColor,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
         child: cell,
       );
     } else if (isToday) {

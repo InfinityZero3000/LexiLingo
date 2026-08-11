@@ -5,11 +5,12 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
-import '../../data/models/story_model.dart';
-import '../../data/models/topic_session_model.dart';
+import '../../domain/entities/story.dart';
+import '../../domain/entities/topic_session.dart';
 import '../providers/story_provider.dart';
 import '../widgets/educational_hints_widgets.dart';
 
@@ -189,7 +190,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     final provider = context.read<StoryProvider>();
     final userId = _currentUserId(context);
 
-    final success = await provider.sendMessage(
+    final success = await provider.sendMessageStreaming(
       userId: userId,
       message: message,
     );
@@ -230,67 +231,73 @@ class _TopicChatPageState extends State<TopicChatPage> {
       appBar: _buildAppBar(isDark),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
-          return Column(
-            children: [
-              // 1. Story context header
-              if (provider.currentSession != null)
-                _StoryContextHeader(session: provider.currentSession!),
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 980),
+              child: Column(
+                children: [
+                  // 1. Story context header
+                  if (provider.currentSession != null)
+                    _StoryContextHeader(session: provider.currentSession!),
 
-              // 2. Messages list
-              Expanded(
-                child: provider.messages.isEmpty
-                    ? Center(
-                        child: Text(
-                          provider.isLoading
-                              ? 'topicChat.preparingTopicMessage'.tr()
-                              : 'topicChat.emptyStateMessage'.tr(),
-                          style: TextStyle(
-                            color: AppColorRoles.textMuted(isDark),
-                            fontStyle: FontStyle.italic,
+                  // 2. Messages list
+                  Expanded(
+                    child: provider.messages.isEmpty
+                        ? Center(
+                            child: Text(
+                              provider.isLoading
+                                  ? 'topicChat.preparingTopicMessage'.tr()
+                                  : 'topicChat.emptyStateMessage'.tr(),
+                              style: TextStyle(
+                                color: AppColorRoles.textMuted(isDark),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(16),
+                            itemCount: provider.messages.length,
+                            itemBuilder: (context, index) {
+                              final message = provider.messages[index];
+                              return _TopicMessageBubble(message: message);
+                            },
                           ),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: provider.messages.length,
-                        itemBuilder: (context, index) {
-                          final message = provider.messages[index];
-                          return _TopicMessageBubble(message: message);
-                        },
-                      ),
+                  ),
+
+                  // 3. Suggested Prompts (if any)
+                  if (widget.story.suggestedPrompts.isNotEmpty &&
+                      !provider.isSendingMessage)
+                    _buildSuggestedPrompts(isDark),
+
+                  // 4. Typing indicator
+                  if (provider.isSendingMessage)
+                    LexiTypingIndicator(
+                      isThinking: true,
+                      name:
+                          provider.currentSession?.rolePersona.name
+                              .split(' ')
+                              .first ??
+                          'AI',
+                    ),
+
+                  // 5. Task banner (collapses to zero height when hidden)
+                  if (!_taskBannerDismissedByUser)
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      child: _taskBannerVisible
+                          ? _buildTaskBanner(isDark)
+                          : const SizedBox.shrink(),
+                    ),
+                  _buildInputField(
+                    isEnabled: provider.hasActiveSession,
+                    isDark: isDark,
+                  ),
+                ],
               ),
-
-              // 3. Suggested Prompts (if any)
-              if (widget.story.suggestedPrompts.isNotEmpty &&
-                  !provider.isSendingMessage)
-                _buildSuggestedPrompts(isDark),
-
-              // 4. Typing indicator
-              if (provider.isSendingMessage)
-                LexiTypingIndicator(
-                  isThinking: true,
-                  name:
-                      provider.currentSession?.rolePersona.name
-                          .split(' ')
-                          .first ??
-                      'AI',
-                ),
-
-              // 5. Task banner (collapses to zero height when hidden)
-              if (!_taskBannerDismissedByUser)
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  child: _taskBannerVisible
-                      ? _buildTaskBanner(isDark)
-                      : const SizedBox.shrink(),
-                ),
-              _buildInputField(
-                isEnabled: provider.hasActiveSession,
-                isDark: isDark,
-              ),
-            ],
+            ),
           );
         },
       ),
@@ -303,7 +310,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       foregroundColor: AppColorRoles.textPrimary(isDark),
       elevation: 0,
-      leading: BackButton(
+      leading: AppBackButton(
         onPressed: () {
           context.read<StoryProvider>().clearActiveSession();
           Navigator.pop(context);

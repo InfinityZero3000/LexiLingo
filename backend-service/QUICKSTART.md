@@ -142,10 +142,9 @@ pytest tests/test_auth.py
 
 ## 📖 Documentation
 
-- **Implementation Progress**: [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md)
-- **Migration Guide**: [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
-- **System Summary**: [../SYSTEM_SUMMARY.md](../SYSTEM_SUMMARY.md)
-- **Development Plan**: [../flutter-app/docs/APP_DEVELOPMENT_PLAN.md](../flutter-app/docs/APP_DEVELOPMENT_PLAN.md)
+- **Backend overview**: [README.md](README.md)
+- **System architecture**: [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)
+- **Flutter application**: [../flutter-app/README.md](../flutter-app/README.md)
 
 ## 🐛 Troubleshooting
 

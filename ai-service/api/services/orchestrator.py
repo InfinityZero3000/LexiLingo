@@ -10,11 +10,48 @@ Responsibilities:
   - Surface health across all sub-services
 """
 
+import asyncio
+import fcntl
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+_kuzu_process_lock_file = None
+
+
+def _get_kg_service_with_process_lock():
+    """Own the shared Kuzu snapshot lock for this process lifetime."""
+    global _kuzu_process_lock_file
+    from api.core.config import settings
+    from api.services.kg_service_v3 import get_kg_service
+
+    lock_path = f"{os.path.abspath(settings.KUZU_DB_PATH)}.init.lock"
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    if _kuzu_process_lock_file is None:
+        lock_file = open(lock_path, "a", encoding="utf-8")
+        try:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            lock_file.close()
+            raise RuntimeError(
+                "Kuzu snapshot is already owned; use one worker or a separate KUZU_DB_PATH"
+            ) from exc
+        _kuzu_process_lock_file = lock_file
+    try:
+        return get_kg_service()
+    except BaseException:
+        _release_kg_process_lock()
+        raise
+
+
+def _release_kg_process_lock() -> None:
+    global _kuzu_process_lock_file
+    if _kuzu_process_lock_file is not None:
+        fcntl.flock(_kuzu_process_lock_file.fileno(), fcntl.LOCK_UN)
+        _kuzu_process_lock_file.close()
+        _kuzu_process_lock_file = None
 
 
 class AIOrchestrator:
@@ -25,9 +62,11 @@ class AIOrchestrator:
       1. KnowledgeGraphServiceV3   — KuzuDB schema + concept seeding
       2. ModelGateway              — lazy model registry + auto-unload scheduler
       3. TraceCAGPipeline          — LangGraph StateGraph compile
+      4. RetrievalServiceV3        — graph analytics + concept embeddings
+                                      (backgrounded — see initialize())
 
-    All three are singletons managed by their own modules; the Orchestrator
-    holds references for health aggregation only (no ownership).
+    All are singletons managed by their own modules; the Orchestrator holds
+    references for health aggregation only (no ownership).
     """
 
     _instance: Optional["AIOrchestrator"] = None
@@ -38,6 +77,7 @@ class AIOrchestrator:
         self._pipeline = None   # TraceCAGPipeline
         self._gateway = None    # ModelGateway
         self._kg = None         # KnowledgeGraphServiceV3
+        self._retrieval_warmup_task: Optional[asyncio.Task] = None
 
         # Cumulative stats
         self._total_requests: int = 0
@@ -65,8 +105,10 @@ class AIOrchestrator:
 
         # 1. Knowledge Graph (cheap, synchronous schema setup)
         try:
-            from api.services.kg_service_v3 import get_kg_service
-            self._kg = get_kg_service()
+            # Kuzu opens files, validates schema and may seed/rebuild the graph.
+            # Those operations are synchronous and can take seconds on a cold
+            # start; never run them on the ASGI event loop.
+            self._kg = await asyncio.to_thread(_get_kg_service_with_process_lock)
             logger.info("AIOrchestrator: KG service ready")
         except Exception as e:
             logger.warning(f"AIOrchestrator: KG service unavailable: {e}")
@@ -88,8 +130,53 @@ class AIOrchestrator:
             logger.error(f"AIOrchestrator: TraceCAG pipeline failed: {e}")
             raise
 
+        # 4. RetrievalServiceV3 (graph analytics + concept embeddings) and the
+        # JIT GLiNER entity-extraction model — retrieve_node's other two lazy
+        # singletons. Measured on the real production KG: RetrievalServiceV3's
+        # constructor alone takes 170-480s (NetworkX centrality + embedding-
+        # model cold load + ~15K concept embeddings), and GLiNER's cold load
+        # adds another ~15s — neither runs during boot today, so retrieve_node
+        # builds them lazily on whichever request hits it first, and that
+        # user pays the full cost inline.
+        #
+        # Fired as a background task, NOT awaited: awaiting it here would
+        # make this whole method (and the `asyncio.wait_for(..., timeout=45)`
+        # in main.py's lifespan that calls it) take minutes, blowing past the
+        # Docker HEALTHCHECK start-period (60s) and risking the container
+        # being killed before it ever finishes warming. A live request that
+        # arrives before this finishes still only pays each cost once — both
+        # singletons already have their own lock (_get_retrieval_v3's lock;
+        # JITGraphService._model_lock) that makes a racing request await the
+        # same in-flight build instead of starting a duplicate.
+        self._retrieval_warmup_task = asyncio.create_task(self._warm_retrieval_stack())
+        self._retrieval_warmup_task.add_done_callback(self._log_retrieval_warmup)
+
         self._initialized = True
-        logger.info("AIOrchestrator ready (kg + gateway + trace-cag)")
+        logger.info("AIOrchestrator ready (kg + gateway + trace-cag; retrieval stack warming in background)")
+
+    @staticmethod
+    async def _warm_retrieval_stack() -> None:
+        from api.services.trace_cag.retrieve import _get_retrieval_v3
+
+        await _get_retrieval_v3()
+
+        from api.services.jit_graph_service import get_jit_graph_service
+
+        jit_cfg = get_jit_graph_service()._load_config()
+        if jit_cfg.enabled:
+            await get_jit_graph_service()._ensure_gliner_model(jit_cfg.model_name)
+
+    @staticmethod
+    def _log_retrieval_warmup(task: asyncio.Task) -> None:
+        if task.cancelled():
+            return
+        exc = task.exception()
+        if exc:
+            logger.warning(f"AIOrchestrator: retrieval-stack background warmup failed: {exc}")
+        else:
+            logger.info(
+                "AIOrchestrator: retrieval stack (graph analytics + embeddings + GLiNER) warmed"
+            )
 
     async def shutdown(self) -> None:
         """Gracefully release resources."""
@@ -100,6 +187,7 @@ class AIOrchestrator:
                 logger.warning(f"AIOrchestrator: gateway shutdown error: {e}")
 
         self._initialized = False
+        _release_kg_process_lock()
         logger.info("AIOrchestrator shutdown")
 
     @property
@@ -189,12 +277,29 @@ class AIOrchestrator:
 # ── Module-level singleton ────────────────────────────────────────────────────
 
 _orchestrator: Optional[AIOrchestrator] = None
+_orchestrator_lock = asyncio.Lock()
+_orchestrator_init_task: Optional[asyncio.Task[AIOrchestrator]] = None
+
+
+async def _initialize_orchestrator() -> AIOrchestrator:
+    global _orchestrator
+    candidate = AIOrchestrator()
+    await candidate.initialize()
+    _orchestrator = candidate
+    return candidate
 
 
 async def get_orchestrator() -> AIOrchestrator:
     """Get or create the global orchestrator instance (auto-initialises)."""
-    global _orchestrator
+    global _orchestrator_init_task
     if _orchestrator is None:
-        _orchestrator = AIOrchestrator()
-        await _orchestrator.initialize()
+        async with _orchestrator_lock:
+            if _orchestrator is None and (
+                _orchestrator_init_task is None or _orchestrator_init_task.done()
+            ):
+                _orchestrator_init_task = asyncio.create_task(
+                    _initialize_orchestrator()
+                )
+        if _orchestrator is None:
+            await asyncio.shield(_orchestrator_init_task)
     return _orchestrator

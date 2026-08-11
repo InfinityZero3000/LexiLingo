@@ -5,13 +5,16 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from app.core.config import settings
+from app.core.logging_config import set_request_id
 
 try:  # pragma: no cover - exercised only when dependency is installed
     from celery import Celery
     from celery.schedules import crontab
+    from celery.signals import task_prerun
 except ImportError:  # pragma: no cover - local test env may not install Celery yet
     Celery = None  # type: ignore[assignment]
     crontab = None  # type: ignore[assignment]
+    task_prerun = None  # type: ignore[assignment]
 
 
 if Celery is not None:
@@ -21,6 +24,7 @@ if Celery is not None:
         backend=settings.effective_celery_result_backend,
         include=[
             "app.tasks.content_agent",
+            "app.tasks.content_prefetch_schedule",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
             "app.tasks.streak_reminders",
@@ -31,6 +35,14 @@ if Celery is not None:
     celery_app.conf.enable_utc = True
     celery_app.conf.task_acks_late = True
     celery_app.conf.worker_prefetch_multiplier = 1
+
+    @task_prerun.connect
+    def _tag_task_with_request_id(task_id: str | None = None, **_kwargs) -> None:
+        """Give every task run its own correlation ID so its log lines —
+        and any outbound safe_http calls it makes — can be traced as one
+        unit, the same way an inbound HTTP request's ID ties its logs
+        together (see RequestIDMiddleware)."""
+        set_request_id(f"task:{task_id}" if task_id else "-")
     celery_app.conf.beat_schedule = {
         "scan-fsrs-reminders": {
             "task": "app.tasks.reminders.scan_fsrs_reminders",
@@ -51,6 +63,18 @@ if Celery is not None:
         "auto-league-reset": {
             "task": "app.tasks.ranking_agent.auto_league_reset",
             "schedule": crontab(hour=0, minute=5, day_of_week=1),
+        },
+        "prefetch-news": {
+            "task": "app.tasks.content_prefetch_schedule.prefetch_news",
+            "schedule": crontab(minute=0, hour="*/6"),
+        },
+        "prefetch-youtube": {
+            "task": "app.tasks.content_prefetch_schedule.prefetch_youtube",
+            "schedule": crontab(minute=0, hour="*/12"),
+        },
+        "prefetch-podcasts": {
+            "task": "app.tasks.content_prefetch_schedule.prefetch_podcasts",
+            "schedule": crontab(minute=0, hour=0),
         },
     }
 else:

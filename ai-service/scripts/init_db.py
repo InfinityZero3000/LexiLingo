@@ -36,8 +36,7 @@ async def init_database():
         # Indexes for common queries
         await interactions.create_index("user_id")
         await interactions.create_index("session_id")
-        await interactions.create_index("timestamp")
-        await interactions.create_index([("timestamp", -1)])  # Descending
+        await interactions.create_index([("timestamp", -1)], name="ai_interactions_timestamp_desc")
         await interactions.create_index("training_eligible")
         await interactions.create_index("quality_score")
         await interactions.create_index([
@@ -158,7 +157,6 @@ async def init_database():
         
         await chat_messages.create_index("session_id")
         await chat_messages.create_index("user_id")
-        await chat_messages.create_index("timestamp")
         await chat_messages.create_index([
             ("session_id", 1),
             ("timestamp", 1)
@@ -167,17 +165,34 @@ async def init_database():
         # TTL index (30 days retention)
         await chat_messages.create_index(
             "timestamp",
-            expireAfterSeconds=30 * 24 * 60 * 60
+            expireAfterSeconds=30 * 24 * 60 * 60,
+            name="chat_messages_timestamp_ttl",
         )
         
         logger.info(" chat_messages collection indexed")
+
+        # Learner observation spool. TTL is intentionally delivered-only;
+        # documents without a BSON datetime delivered_at never expire.
+        learner_spool = db["learner_observation_spool"]
+        await learner_spool.create_index(
+            "event_id", unique=True, name="learner_observation_spool_event_id_uq"
+        )
+        await learner_spool.create_index(
+            [("status", 1), ("available_at", 1)],
+            name="learner_observation_spool_claim_idx",
+        )
+        await learner_spool.create_index(
+            "delivered_at",
+            expireAfterSeconds=90 * 24 * 60 * 60,
+            name="learner_observation_spool_delivered_ttl",
+        )
         
         # ============================================================
         # Summary
         # ============================================================
         collections = await db.list_collection_names()
         logger.info(f"\n{'='*60}")
-        logger.info(f"MongoDB Database Initialization Complete!")
+        logger.info("MongoDB Database Initialization Complete!")
         logger.info(f"Database: {settings.MONGODB_DATABASE}")
         logger.info(f"Collections created: {len(collections)}")
         logger.info(f"Collections: {', '.join(collections)}")

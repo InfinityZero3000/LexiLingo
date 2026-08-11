@@ -1,0 +1,166 @@
+from __future__ import annotations
+
+import hashlib
+from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+
+import pytest
+from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
+
+from api.core.config import get_settings
+from api.core.integration_service_auth import verify_trace_cag_service_token
+from api.core.redis_client import RedisClient
+from api.routes import integration_trace_cag as route
+from api.services.trace_cag.external_request_cache import ExternalRequestCache
+from service.tracecag_service.schemas import TraceCAGResponse
+
+
+class _FakeRedis:
+    """Minimal get/set stand-in so ExternalRequestCache (Redis-backed) behaves
+    like a real cache within a test instead of the conftest autouse mock,
+    which always reports a miss."""
+
+    def __init__(self) -> None:
+        self.store: dict[str, str] = {}
+
+    async def get(self, key: str):
+        return self.store.get(key)
+
+    async def set(self, key: str, value: str, ex=None):
+        self.store[key] = value
+
+
+class FakeService:
+    calls = 0
+    last_request = None
+
+    async def analyze(self, request):
+        self.calls += 1
+        self.last_request = request
+        return TraceCAGResponse(
+            tutor_response="Good answer.",
+            corrections=[],
+            native_hint="Try the greeting.",
+            action={"type": "continue"},
+            metadata={"provider": "test", "model": "trace-cag", "version": "1"},
+        )
+
+
+@pytest.fixture
+def app(monkeypatch):
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(RedisClient, "get_instance", AsyncMock(return_value=_FakeRedis()))
+    application = FastAPI()
+    application.include_router(route.router)
+    service = FakeService()
+    application.dependency_overrides[route.get_trace_cag_service] = lambda: service
+    application.dependency_overrides[verify_trace_cag_service_token] = lambda: "ok"
+    route._cache = ExternalRequestCache()
+    return application, service
+
+
+def payload(text: str = "hello") -> dict:
+    return {
+        "subject": "subject_abcdefghijklmnopqrstuvwxyz123456",
+        "session_id": "session-1",
+        "input_type": "answer",
+        "learner_snapshot": {
+            "learning_goal": "English greetings",
+            "cefr_level": "A1",
+            "concepts": [],
+            "recent_errors": [],
+        },
+        "exercise_context": {
+            "type": "flashcard",
+            "prompt": "hello",
+            "expected_answer": "xin chào",
+            "concept_codes": ["vocabulary:1"],
+        },
+        "text": text,
+    }
+
+
+@pytest.mark.asyncio
+async def test_success_replay_conflict_and_bounds(app):
+    application, service = app
+    request_id = str(uuid4())
+    async with AsyncClient(transport=ASGITransport(app=application), base_url="http://test") as client:
+        first = await client.post(
+            "/api/v1/integrations/trace-cag/v1/analyze",
+            headers={"X-Request-ID": request_id},
+            json=payload(),
+        )
+        replay = await client.post(
+            "/api/v1/integrations/trace-cag/v1/analyze",
+            headers={"X-Request-ID": request_id},
+            json=payload(),
+        )
+        conflict = await client.post(
+            "/api/v1/integrations/trace-cag/v1/analyze",
+            headers={"X-Request-ID": request_id},
+            json=payload("different"),
+        )
+        oversized_text = await client.post(
+            "/api/v1/integrations/trace-cag/v1/analyze",
+            headers={"X-Request-ID": str(uuid4())},
+            json=payload("x" * 2001),
+        )
+
+    assert first.status_code == 200
+    assert first.json()["schema_version"] == "1.0"
+    assert replay.json() == first.json()
+    assert service.calls == 1
+    assert conflict.status_code == 409
+    assert oversized_text.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_session_and_subject_are_namespaced_before_reaching_pipeline(app):
+    """External session_id/subject must never collide with internal Redis
+    keys (ConversationCache/LearnerProfileCache are keyed globally by raw
+    session_id/user_id) — the route must prefix both before they reach the
+    pipeline, regardless of what a partner happens to send."""
+    application, service = app
+    internal_session_id = "session-1"
+    internal_subject = "subject_abcdefghijklmnopqrstuvwxyz123456"
+    async with AsyncClient(transport=ASGITransport(app=application), base_url="http://test") as client:
+        response = await client.post(
+            "/api/v1/integrations/trace-cag/v1/analyze",
+            headers={"X-Request-ID": str(uuid4())},
+            json=payload(),
+        )
+
+    assert response.status_code == 200
+    assert service.last_request.session_id == f"ext:{internal_session_id}"
+    assert service.last_request.user_id == f"ext:{internal_subject}"
+    assert not service.last_request.session_id.startswith(internal_session_id + ":")
+    assert service.last_request.session_id != internal_session_id
+    assert service.last_request.user_id != internal_subject
+
+
+@pytest.mark.asyncio
+async def test_current_previous_and_expired_service_tokens(monkeypatch):
+    current = "current-secret"
+    previous = "previous-secret"
+    monkeypatch.setenv("TRACE_CAG_EXTERNAL_ENABLED", "true")
+    monkeypatch.setenv("TRACE_CAG_SERVICE_TOKEN_HASH", hashlib.sha256(current.encode()).hexdigest())
+    monkeypatch.setenv("TRACE_CAG_PREVIOUS_TOKEN_HASH", hashlib.sha256(previous.encode()).hexdigest())
+    monkeypatch.setenv(
+        "TRACE_CAG_PREVIOUS_TOKEN_VALID_UNTIL",
+        (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
+    )
+    get_settings.cache_clear()
+
+    assert await verify_trace_cag_service_token(current) == current
+    assert await verify_trace_cag_service_token(previous) == previous
+
+    monkeypatch.setenv(
+        "TRACE_CAG_PREVIOUS_TOKEN_VALID_UNTIL",
+        (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat(),
+    )
+    get_settings.cache_clear()
+    with pytest.raises(Exception) as error:
+        await verify_trace_cag_service_token(previous)
+    assert error.value.status_code == 403

@@ -144,7 +144,7 @@ class OllamaQwenHandler:
         """Attempt to call Groq or Gemini API directly, returning the response or None on failure."""
         from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+        groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
         # Build message list up front so we can estimate tokens accurately
         full_messages: List[Dict[str, str]] = []
@@ -258,7 +258,7 @@ class OllamaQwenHandler:
             logger.info("[OllamaQwenHandler] Ollama is offline, falling back to Groq...")
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+            groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
             fallback_messages: List[Dict[str, str]] = []
             if system_prompt:
                 fallback_messages.append({"role": "system", "content": system_prompt})
@@ -299,6 +299,7 @@ class OllamaQwenHandler:
             full_messages.extend(messages_list)
         else:
             full_messages = messages_list
+        full_messages = self._apply_no_think(full_messages, self.config.model)
         
         payload = {
             "model": self.config.model,

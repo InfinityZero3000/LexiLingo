@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/deep_link_service.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
@@ -211,7 +212,9 @@ class AuthProvider extends ChangeNotifier {
         _user = user;
         _errorMessage = null;
         _isJustLoggedIn = true;
-        FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+        FirebaseMessagingService.instance.registerTokenWithBackend(
+          sl<ApiClient>(),
+        );
         unawaited(_claimPendingReferral());
       },
     );
@@ -247,7 +250,9 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true;
-          FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
           unawaited(_claimPendingReferral());
         },
       );
@@ -286,7 +291,9 @@ class AuthProvider extends ChangeNotifier {
           _user = user;
           _errorMessage = null;
           _isJustLoggedIn = true;
-          FirebaseMessagingService.instance.registerTokenWithBackend(sl<ApiClient>());
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
           unawaited(_claimPendingReferral());
         },
       );
@@ -415,6 +422,7 @@ class AuthProvider extends ChangeNotifier {
       await signOutUseCase(NoParams());
       // Clear stored FCM token so it gets re-registered on next login
       await FirebaseMessagingService.instance.clearRegisteredToken();
+      await PurchasesService.instance.logout();
       _user = null;
     } catch (e) {
       debugPrint("Sign out error: $e");
@@ -476,10 +484,10 @@ class AuthProvider extends ChangeNotifier {
           _user = null;
           _isJustLoggedIn = false;
         },
-        (user) {
-          _user = user;
+        (_) {
+          _user = null;
           _errorMessage = null;
-          _isJustLoggedIn = true;
+          _isJustLoggedIn = false;
         },
       );
     } catch (e) {
@@ -535,6 +543,8 @@ class AuthProvider extends ChangeNotifier {
     final result = await authRepository.updateProfile(
       displayName: displayName,
       level: selectedLevel,
+      goal: payload['goal'] as String?,
+      interest: payload['interest'] as String?,
       nativeLanguage: nativeLanguage ?? 'vi',
       targetLanguage: 'en',
       isOnboardingCompleted: true,

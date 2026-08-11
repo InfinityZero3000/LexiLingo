@@ -51,7 +51,7 @@ async def generate_variants_node(state: NotificationAgentState) -> dict:
             "retries": state.get("retries", 0),
         }
 
-    model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     audience = state["audience_summary"]
     orig_title = state["original_title"]
     orig_body = state["original_body"]

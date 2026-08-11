@@ -1,6 +1,6 @@
 # LexiLingo — Architecture Overview
 
-> **Version**: 2.0 | **Updated**: 2026-06-01 
+> **Version**: 2.0 | **Updated**: 2026-06-01
 > Generated from knowledge graph: 1,844 nodes · 2,174 edges · 1,133 source files
 
 ---
@@ -485,3 +485,10 @@ CI/CD (.github/workflows/):
 | **Monorepo** | 5 services trong 1 repo — dễ atomic commits, shared CI/CD, cross-service refactor |
 | **Kong Gateway** | Centralized rate limiting + auth offload — backend không cần handle DDoS logic |
 | **MCP Server** | AI agents (Claude Code) có thể gọi trực tiếp voice models và i18n tools trong IDE |
+# Scalable TRACE-CAG learner state
+
+TRACE-CAG separates shared knowledge topology from sparse per-user state. KuzuDB stores user-agnostic concept traversal; PostgreSQL `learner_concept_states` is the learner-state source of truth. Personalized cache entries use an HMAC user scope and the scalar `learner_state_profiles.state_epoch`; shared subgraph cache entries never contain mastery or raw user identifiers.
+
+Observation flow is durable and asynchronous: chat bulk-upserts deterministic events into MongoDB `learner_observation_spool` before the non-streaming response or terminal SSE marker, a lease worker forwards them to the backend, PostgreSQL commits idempotent outbox rows before ACK, and concurrent workers apply events with `FOR UPDATE SKIP LOCKED`. State, epoch and applied status change in one transaction.
+
+Initial online limits are 60 concept candidates per request, 100 observations per backend batch, a 40 ms absolute learner-read deadline, and a 5,000-row cleanup batch. These are safety bounds, not measured capacity claims. Production p95/p99, safe concurrency, connection usage, cache hit rate and loss/divergence results must be recorded in `docs/operations/learner-state-rollout.md` after staged load tests; promotion is prohibited while those fields remain unmeasured.

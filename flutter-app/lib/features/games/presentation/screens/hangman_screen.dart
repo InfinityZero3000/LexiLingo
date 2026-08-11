@@ -5,11 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/hangman_figure.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
+
+const _hangmanPowerUps = [
+  ShopItemEntity.effectRevealHint,
+  ShopItemEntity.effectTranslateHint,
+  ShopItemEntity.effectMistakeShield,
+  ShopItemEntity.effectExtraHeart,
+  ShopItemEntity.effectSkipToken,
+];
 
 /// Classic Hangman game screen.
 ///
@@ -35,7 +45,10 @@ class _HangmanScreenState extends State<HangmanScreen>
   bool _hint2Used = false;
   bool _hint3Used = false;
   String? _revealedHint;
+  String? _translationReveal;
   bool _isFinishing = false;
+  bool _shieldActive = false;
+  int _extraLives = 0;
 
   @override
   void initState() {
@@ -66,6 +79,8 @@ class _HangmanScreenState extends State<HangmanScreen>
   List<String> _wordLetters(HangmanGame game) =>
       game.word.toUpperCase().split('');
 
+  int _effectiveMaxLives(HangmanGame game) => game.maxLives + _extraLives;
+
   bool _isWordGuessed(HangmanGame game) {
     return _wordLetters(
       game,
@@ -78,10 +93,14 @@ class _HangmanScreenState extends State<HangmanScreen>
     setState(() {
       _guessedLetters.add(letter);
       if (!word.contains(letter)) {
-        _wrongGuesses++;
+        if (_shieldActive) {
+          _shieldActive = false;
+        } else {
+          _wrongGuesses++;
+        }
       }
     });
-    if (_wrongGuesses >= game.maxLives) {
+    if (_wrongGuesses >= _effectiveMaxLives(game)) {
       setState(() {
         _gameOver = true;
         _gameWon = false;
@@ -94,6 +113,50 @@ class _HangmanScreenState extends State<HangmanScreen>
       });
       _confettiController.play();
       _finishGame(game);
+    }
+  }
+
+  void _onPowerUpUsed(String itemType, Map<String, dynamic> effects, HangmanGame game) {
+    if (_gameOver) return;
+    switch (itemType) {
+      case ShopItemEntity.effectRevealHint:
+        final word = _wordLetters(game);
+        final unguessed = word
+            .where((l) => l != ' ' && !_guessedLetters.contains(l))
+            .toList();
+        if (unguessed.isEmpty) return;
+        unguessed.shuffle();
+        setState(() => _guessedLetters.add(unguessed.first));
+        if (_isWordGuessed(game)) {
+          setState(() {
+            _gameOver = true;
+            _gameWon = true;
+          });
+          _confettiController.play();
+          _finishGame(game);
+        }
+        break;
+      case ShopItemEntity.effectTranslateHint:
+        setState(() => _translationReveal = game.vietnameseTranslation);
+        break;
+      case ShopItemEntity.effectMistakeShield:
+        setState(() => _shieldActive = true);
+        break;
+      case ShopItemEntity.effectExtraHeart:
+        final lives = (effects['lives'] as num?)?.toInt() ?? 1;
+        setState(() => _extraLives += lives);
+        break;
+      case ShopItemEntity.effectSkipToken:
+        setState(() {
+          _gameOver = true;
+          _gameWon = true;
+          for (final l in _wordLetters(game)) {
+            _guessedLetters.add(l);
+          }
+        });
+        _confettiController.play();
+        _finishGame(game);
+        break;
     }
   }
 
@@ -282,10 +345,10 @@ class _HangmanScreenState extends State<HangmanScreen>
                     padding: const EdgeInsets.only(right: 12),
                     child: Row(
                       children: List.generate(
-                        game.maxLives,
+                        _effectiveMaxLives(game),
                         (i) => Icon(
                           Icons.favorite,
-                          color: i < game.maxLives - _wrongGuesses
+                          color: i < _effectiveMaxLives(game) - _wrongGuesses
                               ? AppColors.errorBright
                               : AppColors.grey300,
                           size: 18,
@@ -297,6 +360,59 @@ class _HangmanScreenState extends State<HangmanScreen>
               ),
               body: Column(
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: GamePowerUpTray(
+                      availableTypes: _hangmanPowerUps,
+                      enabled: !_gameOver,
+                      onUse: (type, effects) =>
+                          _onPowerUpUsed(type, effects, game),
+                    ),
+                  ),
+                  if (_shieldActive)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: ActivePowerUpBadge(
+                        itemType: ShopItemEntity.effectMistakeShield,
+                        label: 'Shield Active',
+                      ),
+                    ),
+                  if (_translationReveal != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: AppColors.purple.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: AppColors.purple.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.translate_rounded,
+                              size: 14,
+                              color: AppColors.purple,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                _translationReveal!,
+                                style: const TextStyle(fontSize: 13),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   // Category chip
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -324,7 +440,8 @@ class _HangmanScreenState extends State<HangmanScreen>
                         Text(
                           'hangman.livesLeftLabel'.tr(
                             namedArgs: {
-                              'lives': '${game.maxLives - _wrongGuesses}',
+                              'lives':
+                                  '${_effectiveMaxLives(game) - _wrongGuesses}',
                             },
                           ),
                           style: TextStyle(

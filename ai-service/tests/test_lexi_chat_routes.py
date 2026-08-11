@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from bson import ObjectId
 
 from api.routes import lexi_chat as lexi_route
+from api.services import lexi_chat_service as svc
 from api.core.auth import AuthenticatedUser
 
 
@@ -45,7 +46,7 @@ def mock_store(monkeypatch):
     store.get_session = AsyncMock(return_value=None)
     store.delete_session = AsyncMock()
     store.delete_messages = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_store", store)
+    monkeypatch.setattr(svc, "lexi_store", store)
     return store
 
 
@@ -54,7 +55,7 @@ def mock_idempotency(monkeypatch):
     idem = MagicMock()
     idem.get = AsyncMock(return_value=None)
     idem.set = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_idempotency_store", idem)
+    monkeypatch.setattr(svc, "lexi_idempotency_store", idem)
     return idem
 
 
@@ -135,7 +136,7 @@ async def test_lexi_chat_returns_response(mock_store, mock_idempotency, monkeypa
     monkeypatch.setattr(lexi_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
     monkeypatch.setattr(lexi_route, "emit_ai_audit_event", AsyncMock())
 
-    pipeline_result = lexi_route._PipelineResult(
+    pipeline_result = svc.PipelineResult(
         lexi_response="Squawk! Great question!",
         user_text="Hello Lexi",
         message_id="msg-1",
@@ -143,7 +144,7 @@ async def test_lexi_chat_returns_response(mock_store, mock_idempotency, monkeypa
         model_used="trace-cag",
         metadata={"pipeline_steps": [], "latency_ms": 100, "quota": {}},
     )
-    monkeypatch.setattr(lexi_route, "_run_lexi_pipeline", AsyncMock(return_value=pipeline_result))
+    monkeypatch.setattr(svc, "run_lexi_pipeline", AsyncMock(return_value=pipeline_result))
 
     db = _make_db()
     request_ctx = MagicMock()
@@ -174,7 +175,7 @@ async def test_lexi_chat_returns_cached_idempotency_response(mock_store, mock_id
     mock_idempotency.get.return_value = cached
 
     run_pipeline = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_run_lexi_pipeline", run_pipeline)
+    monkeypatch.setattr(svc, "run_lexi_pipeline", run_pipeline)
 
     db = _make_db()
     request_ctx = MagicMock()
@@ -192,6 +193,61 @@ async def test_lexi_chat_returns_cached_idempotency_response(mock_store, mock_id
     run_pipeline.assert_not_called()
 
 
+# ─── native_language ──────────────────────────────────────────────────────────
+
+def test_idempotency_request_hash_differs_by_native_language():
+    """Two otherwise-identical requests in different native languages must not
+    collide on the same idempotency key — a Japanese learner's reply shouldn't
+    surface a cached Vietnamese-hint response (or vice versa)."""
+    base = dict(user_id="u1", session_id="s1", message="Hello Lexi")
+    req_vi = svc.LexiChatRequest(**base, native_language="vi")
+    req_ja = svc.LexiChatRequest(**base, native_language="ja")
+
+    assert svc.idempotency_request_hash(req_vi) != svc.idempotency_request_hash(req_ja)
+
+
+def test_lexi_chat_request_defaults_native_language_to_vi():
+    request = lexi_route.LexiChatRequest(user_id="u1", message="Hello")
+    assert request.native_language == "vi"
+
+
+@pytest.mark.asyncio
+async def test_lexi_chat_passes_native_language_into_learner_profile(
+    mock_store, mock_idempotency, monkeypatch
+):
+    """native_language="ja" must reach orchestrator.process as a mapped
+    learner_profile["native_language"] = "Japanese", not the Vietnamese default."""
+    monkeypatch.setattr(lexi_route, "enforce_user_scope", lambda cu, uid: uid)
+    monkeypatch.setattr(lexi_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
+    monkeypatch.setattr(lexi_route, "emit_ai_audit_event", AsyncMock())
+
+    orchestrator = MagicMock()
+    orchestrator.process = AsyncMock(
+        return_value={"tutor_response": "Good job!", "metadata": {}}
+    )
+    monkeypatch.setattr(
+        "api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator)
+    )
+
+    db = _make_db()
+    request_ctx = MagicMock()
+    request_ctx.headers = {"X-Request-Id": "req-ja"}
+
+    await lexi_route.lexi_chat(
+        request_context=request_ctx,
+        request=lexi_route.LexiChatRequest(
+            user_id="u1", message="Hello Lexi", native_language="ja"
+        ),
+        x_idempotency_key=None,
+        db=db,
+        current_user=_user(),
+    )
+
+    orchestrator.process.assert_awaited_once()
+    learner_profile = orchestrator.process.call_args.kwargs["learner_profile"]
+    assert learner_profile["native_language"] == "Japanese"
+
+
 @pytest.mark.asyncio
 async def test_lexi_chat_uses_hot_cached_session_without_mongo_lookup(
     mock_store,
@@ -207,7 +263,7 @@ async def test_lexi_chat_uses_hot_cached_session_without_mongo_lookup(
     mock_store.get_session.return_value = {"session_id": "s1", "user_id": "u1"}
     mock_store.get_messages.return_value = cached_history
 
-    pipeline_result = lexi_route._PipelineResult(
+    pipeline_result = svc.PipelineResult(
         lexi_response="Fast cached path",
         user_text="Hello again",
         message_id="msg-1",
@@ -216,7 +272,7 @@ async def test_lexi_chat_uses_hot_cached_session_without_mongo_lookup(
         metadata={"pipeline_steps": [], "latency_ms": 50, "quota": {}},
     )
     run_pipeline = AsyncMock(return_value=pipeline_result)
-    monkeypatch.setattr(lexi_route, "_run_lexi_pipeline", run_pipeline)
+    monkeypatch.setattr(svc, "run_lexi_pipeline", run_pipeline)
 
     db = _make_db(session_doc={"session_id": "s1", "user_id": "u1"})
     request_ctx = MagicMock()
@@ -251,7 +307,7 @@ async def test_lexi_chat_quota_exceeded_raises_429(mock_store, monkeypatch):
         AsyncMock(side_effect=HTTPException(status_code=429, detail="quota exceeded")),
     )
     run_pipeline = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_run_lexi_pipeline", run_pipeline)
+    monkeypatch.setattr(svc, "run_lexi_pipeline", run_pipeline)
 
     db = _make_db()
     request_ctx = MagicMock()
@@ -287,7 +343,7 @@ async def test_lexi_chat_rejects_session_owned_by_another_user(
     db = _make_db(session_doc={"session_id": "sess-other", "user_id": "owner-1"})
 
     run_pipeline = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_run_lexi_pipeline", run_pipeline)
+    monkeypatch.setattr(svc, "run_lexi_pipeline", run_pipeline)
 
     request_ctx = MagicMock()
     request_ctx.headers = {}
@@ -328,7 +384,7 @@ async def test_lexi_chat_rejects_unknown_supplied_session_id(
     db = _make_db(session_doc=None)
 
     run_pipeline = AsyncMock()
-    monkeypatch.setattr(lexi_route, "_run_lexi_pipeline", run_pipeline)
+    monkeypatch.setattr(svc, "run_lexi_pipeline", run_pipeline)
 
     request_ctx = MagicMock()
     request_ctx.headers = {}
@@ -419,7 +475,7 @@ async def test_get_lexi_messages_paged_returns_empty_page(monkeypatch):
     """No messages → pagination with empty list and zero count."""
     session_doc = {"session_id": "s1", "user_id": "u1"}
     db = _make_db(session_doc=session_doc, msg_docs=[], count=0)
-    monkeypatch.setattr(lexi_route, "_ensure_session_owner", AsyncMock(return_value=session_doc))
+    monkeypatch.setattr(svc, "ensure_session_owner", AsyncMock(return_value=session_doc))
 
     result = await lexi_route.get_lexi_messages_paged(
         session_id="s1",
@@ -443,7 +499,7 @@ async def test_get_lexi_messages_paged_returns_messages(monkeypatch):
     doc2 = {"id": "m2", "session_id": "s1", "role": "assistant", "content": "Hello!", "timestamp": "2024-01-01T00:00:01", "_id": OID()}
     session_doc = {"session_id": "s1", "user_id": "u1"}
     db = _make_db(session_doc=session_doc, msg_docs=[doc2, doc1], count=2)
-    monkeypatch.setattr(lexi_route, "_ensure_session_owner", AsyncMock(return_value=session_doc))
+    monkeypatch.setattr(svc, "ensure_session_owner", AsyncMock(return_value=session_doc))
 
     result = await lexi_route.get_lexi_messages_paged(
         session_id="s1",
@@ -464,7 +520,7 @@ async def test_get_lexi_messages_paged_invalid_limit_raises_400(monkeypatch):
 
     session_doc = {"session_id": "s1", "user_id": "u1"}
     db = _make_db(session_doc=session_doc)
-    monkeypatch.setattr(lexi_route, "_ensure_session_owner", AsyncMock(return_value=session_doc))
+    monkeypatch.setattr(svc, "ensure_session_owner", AsyncMock(return_value=session_doc))
 
     with pytest.raises(HTTPException) as exc_info:
         await lexi_route.get_lexi_messages_paged(
@@ -485,7 +541,7 @@ async def test_get_lexi_messages_metadata_empty_session(monkeypatch):
     """No messages → all nulls in metadata."""
     session_doc = {"session_id": "s1", "user_id": "u1"}
     db = _make_db(session_doc=session_doc, count=0)
-    monkeypatch.setattr(lexi_route, "_ensure_session_owner", AsyncMock(return_value=session_doc))
+    monkeypatch.setattr(svc, "ensure_session_owner", AsyncMock(return_value=session_doc))
 
     result = await lexi_route.get_lexi_messages_metadata(
         session_id="s1",
@@ -508,7 +564,7 @@ async def test_get_lexi_messages_metadata_with_messages(monkeypatch):
 
     session_doc = {"session_id": "s1", "user_id": "u1"}
     db = _make_db(session_doc=session_doc, count=2)
-    monkeypatch.setattr(lexi_route, "_ensure_session_owner", AsyncMock(return_value=session_doc))
+    monkeypatch.setattr(svc, "ensure_session_owner", AsyncMock(return_value=session_doc))
 
     # Override find to return latest/oldest in the right order per call
     call_count = [0]
@@ -542,3 +598,86 @@ async def test_lexi_health_returns_ok():
     assert result["status"] == "ok"
     assert result["service"] == "lexi-chat"
     assert "text-chat" in result["capabilities"]
+
+
+# ─── _build_suggested_practice ───────────────────────────────────────────────
+
+def test_suggested_practice_built_from_the_error_concept_not_a_generic_scan():
+    """Must use the concept diagnose_node traced THIS mistake to, via
+    KnowledgeGraphServiceV3.get_concepts() for the display title — not
+    get_recommended_concepts()'s generic low-mastery scan."""
+    fake_kg = MagicMock()
+    fake_kg.get_concepts.return_value = {
+        "concept:past_simple": {"title": "Past Simple Tense"},
+    }
+    with patch("api.services.kg_service_v3.get_kg_service", lambda: fake_kg):
+        result = svc._build_suggested_practice(
+            ["concept:past_simple", "concept:articles"], has_correction=True
+        )
+
+    assert result is not None
+    assert result.concept_id == "concept:past_simple"
+    assert result.concept_title == "Past Simple Tense"
+    assert "Past Simple Tense" in result.prompt
+
+
+def test_suggested_practice_is_none_without_a_correction():
+    """A clean sentence shouldn't get nagged with a practice suggestion."""
+    result = svc._build_suggested_practice(["concept:past_simple"], has_correction=False)
+    assert result is None
+
+
+def test_suggested_practice_is_none_without_weak_concepts():
+    result = svc._build_suggested_practice([], has_correction=True)
+    assert result is None
+
+
+# ─── _build_session_recap ────────────────────────────────────────────────────
+
+def _make_recap_db(session_doc=None, message_doc=None):
+    db = MagicMock()
+    lexi_sessions = MagicMock()
+    lexi_sessions.find_one = AsyncMock(return_value=session_doc)
+    lexi_messages = MagicMock()
+    lexi_messages.find_one = AsyncMock(return_value=message_doc)
+
+    def _get(name):
+        return {"lexi_sessions": lexi_sessions, "lexi_messages": lexi_messages}[name]
+
+    db.__getitem__.side_effect = _get
+    return db, lexi_sessions, lexi_messages
+
+
+@pytest.mark.asyncio
+async def test_session_recap_uses_last_user_message_from_most_recent_session():
+    db, sessions, messages = _make_recap_db(
+        session_doc={"session_id": "old-session"},
+        message_doc={"content": "I want to talk about my dream job."},
+    )
+
+    recap = await svc._build_session_recap(db, "user-1", "new-session")
+
+    assert recap == "I want to talk about my dream job."
+    sessions.find_one.assert_awaited_once()
+    call_kwargs = sessions.find_one.call_args
+    query = call_kwargs.args[0]
+    assert query["user_id"] == "user-1"
+    assert query["session_id"] == {"$ne": "new-session"}
+
+
+@pytest.mark.asyncio
+async def test_session_recap_is_none_when_no_prior_session_exists():
+    db, _, _ = _make_recap_db(session_doc=None)
+    recap = await svc._build_session_recap(db, "user-1", "new-session")
+    assert recap is None
+
+
+@pytest.mark.asyncio
+async def test_session_recap_truncates_long_messages():
+    db, _, _ = _make_recap_db(
+        session_doc={"session_id": "old-session"},
+        message_doc={"content": "x" * 500},
+    )
+    recap = await svc._build_session_recap(db, "user-1", "new-session")
+    assert recap is not None
+    assert len(recap) == 150

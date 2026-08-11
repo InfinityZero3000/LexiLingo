@@ -287,7 +287,7 @@ Client WebSocket
 [LISTENING Stream]   → [THINKING Stream]   → [SPEAKING Stream]
 • VAD                  • TRACECAG               • Chunked TTS
 • STT                  • LLM                    • Audio streaming
-• Partial transcripts  • Thinking buffer         
+• Partial transcripts  • Thinking buffer
         │                                              │
         └──────── INTERRUPTION HANDLING ───────────────┘
                   (user ngắt → TTS stop)
@@ -348,7 +348,7 @@ File: ai-service/api/services/hubert_service.py
 ### 7.1 Process
 
 ```
-Audio (WAV, 16kHz) 
+Audio (WAV, 16kHz)
     → HuBERT-large (Facebook)
     → IPA phoneme recognition
     → Compare với target pronunciation
@@ -455,4 +455,4 @@ File: backend-service/app/routes/ai_audit.py
 
 ---
 
-*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_TRACECAG_ALGORITHM_FLOW.md)*
+*Tham khảo: [RPT-018](RPT-018_FEATURE_ANALYSIS.md) | [RPT-020](RPT-020_BACKEND_SERVICE_REPORT.md) | [RPT-021](RPT-021_GRAPHCAG_ALGORITHM_FLOW.md)*

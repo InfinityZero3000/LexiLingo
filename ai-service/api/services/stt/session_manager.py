@@ -62,7 +62,11 @@ class SessionManager:
             self._pending_sessions[message.session_id] = message.user_id
 
         session = VoiceSession(
-            message, self.config, self.registry, self.metrics, self.final_sink
+            message,
+            self.config,
+            self.registry,
+            self.metrics,
+            None if message.duplex else self.final_sink,
         )
         try:
             await asyncio.wait_for(

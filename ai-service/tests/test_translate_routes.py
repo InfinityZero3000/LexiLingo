@@ -71,6 +71,23 @@ async def ai_client():
 class TestTranslateRoute:
 
     @pytest.mark.asyncio
+    async def test_route_requires_admin_key(self, monkeypatch):
+        """HTTP route is server-to-server only."""
+        from fastapi import FastAPI
+        from httpx import ASGITransport, AsyncClient
+
+        from api.routes.translate import router
+
+        monkeypatch.setenv("AI_ADMIN_API_KEY", "secret")
+        app = FastAPI()
+        app.include_router(router, prefix="/api/v1/ai")
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get("/api/v1/ai/translate?word=run")
+
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
     async def test_groq_primary_path(self):
         """Happy path: Groq returns valid JSON → used as translation."""
         groq_payload = {
@@ -82,9 +99,9 @@ class TestTranslateRoute:
         mock_resp.status_code = 200
         mock_resp.json.return_value = groq_payload
 
-        with patch("api.routes.translate.get_available_groq_key", new_callable=AsyncMock, return_value="gsk_test"), \
-             patch("api.routes.translate.record_groq_key_usage", new_callable=AsyncMock), \
-             patch("api.routes.translate._throttled_post_json", new_callable=AsyncMock, return_value=mock_resp):
+        with patch("api.core.groq_key_pool.get_available_groq_key", new_callable=AsyncMock, return_value="gsk_test"), \
+             patch("api.core.groq_key_pool.record_groq_key_usage", new_callable=AsyncMock), \
+             patch("api.services.trace_cag.llm_client._throttled_post_json", new_callable=AsyncMock, return_value=mock_resp):
 
             from api.routes.translate import translate_word
             result = await translate_word(word="run", lang="vi", context="She wants to run a company")
@@ -103,8 +120,8 @@ class TestTranslateRoute:
         mock_ollama.health_check = AsyncMock(return_value=True)
         mock_ollama.chat = AsyncMock(return_value=ollama_raw)
 
-        with patch("api.routes.translate.get_available_groq_key", new_callable=AsyncMock, return_value=None), \
-             patch("api.routes.translate.get_ollama_service", return_value=mock_ollama):
+        with patch("api.core.groq_key_pool.get_available_groq_key", new_callable=AsyncMock, return_value=None), \
+             patch("api.services.ollama_service.get_ollama_service", return_value=mock_ollama):
 
             from api.routes.translate import translate_word
             result = await translate_word(word="run", lang="vi", context="")
@@ -115,8 +132,8 @@ class TestTranslateRoute:
     @pytest.mark.asyncio
     async def test_empty_result_when_both_fail(self):
         """All backends fail → empty fields returned, no exception raised."""
-        with patch("api.routes.translate.get_available_groq_key", new_callable=AsyncMock, return_value=None), \
-             patch("api.routes.translate.get_ollama_service", side_effect=Exception("Ollama down")):
+        with patch("api.core.groq_key_pool.get_available_groq_key", new_callable=AsyncMock, return_value=None), \
+             patch("api.services.ollama_service.get_ollama_service", side_effect=Exception("Ollama down")):
 
             from api.routes.translate import translate_word
             result = await translate_word(word="run", lang="vi", context="")
@@ -136,9 +153,9 @@ class TestTranslateRoute:
             "usage": {"total_tokens": 80},
         }
 
-        with patch("api.routes.translate.get_available_groq_key", new_callable=AsyncMock, return_value="gsk_test"), \
-             patch("api.routes.translate.record_groq_key_usage", new_callable=AsyncMock), \
-             patch("api.routes.translate._throttled_post_json", new_callable=AsyncMock, return_value=mock_resp):
+        with patch("api.core.groq_key_pool.get_available_groq_key", new_callable=AsyncMock, return_value="gsk_test"), \
+             patch("api.core.groq_key_pool.record_groq_key_usage", new_callable=AsyncMock), \
+             patch("api.services.trace_cag.llm_client._throttled_post_json", new_callable=AsyncMock, return_value=mock_resp):
 
             from api.routes.translate import translate_word
             result = await translate_word(word="RUN", lang="vi", context="")
@@ -151,8 +168,8 @@ class TestTranslateRoute:
         mock_ollama = AsyncMock()
         mock_ollama.health_check = AsyncMock(return_value=False)
 
-        with patch("api.routes.translate.get_available_groq_key", new_callable=AsyncMock, return_value=None), \
-             patch("api.routes.translate.get_ollama_service", return_value=mock_ollama):
+        with patch("api.core.groq_key_pool.get_available_groq_key", new_callable=AsyncMock, return_value=None), \
+             patch("api.services.ollama_service.get_ollama_service", return_value=mock_ollama):
 
             from api.routes.translate import translate_word
             result = await translate_word(word="bank", lang="vi", context="")

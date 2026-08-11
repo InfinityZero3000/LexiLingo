@@ -1,6 +1,6 @@
 map $http_upgrade $connection_upgrade {
     default upgrade;
-    '' close;
+    ''      "";
 }
 
 map $request_uri $log_main {
@@ -62,8 +62,12 @@ geo $block_ip {
 
 map $http_origin $cors_allow_origin {
     default "";
+    ~^https?://localhost(:\d+)?$ $http_origin;
+    ~^https?://127\.0\.0\.1(:\d+)?$ $http_origin;
     ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app$   $http_origin;
+    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?$ $http_origin;
+    ~^https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?$ $http_origin;
+    ~^https?://.*\.devtunnels\.ms(:\d+)?$ $http_origin;
 }
 
 # Used to detect OPTIONS (CORS preflight) requests at server level
@@ -120,22 +124,29 @@ gzip_types
     font/woff2
     image/svg+xml;
 
+# ---------------------------------------------------------------------------
+# DNS Resolver — critical for dynamic upstream resolution in Docker networks
+# ---------------------------------------------------------------------------
+resolver 127.0.0.11 ipv6=off valid=5s;
+
 upstream backend_upstream {
     least_conn;
+    zone backend_zone 64k;
     # Primary backend instance.
     # Scale horizontally with: docker-compose up --scale backend-service=N
     # Docker's internal DNS round-robins across all replicas of the same
     # service name, so no additional entries are needed here.
     # Remove `container_name` from the backend-service in docker-compose to
     # allow >1 replica.
-    server backend-service:8000 max_fails=3 fail_timeout=10s;
+    server backend-service:8000 max_fails=3 fail_timeout=10s resolve;
     keepalive 64;
 }
 
 upstream ai_upstream {
     least_conn;
+    zone ai_zone 64k;
     # Scale horizontally with: docker-compose up --scale ai-service=N
-    server ai-service:8001 max_fails=3 fail_timeout=10s;
+    server ai-service:8001 max_fails=3 fail_timeout=10s resolve;
     keepalive 64;
 }
 
@@ -297,6 +308,11 @@ server {
         return 429 '{"detail":"too_many_requests","retry_after_seconds":60}';
     }
 
+    # Block Prometheus metrics from public access
+    location /metrics {
+        return 403;
+    }
+
     # -----------------------------------------------------------------------
     # Scanner / exploit path blocking
     # Return 444 (no response) instead of 403 to deny scanners any feedback.
@@ -427,6 +443,27 @@ server {
 
     location /api/v1/tts/ {
         limit_req zone=ai_tts_per_ip burst=4 nodelay;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
+    location = /api/v1/voice/ticket {
+        limit_req zone=ws_per_ip burst=2 nodelay;
+        limit_conn conn_per_ip 3;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_pass http://ai_upstream;
+    }
+
+    location = /api/v1/voice/stream {
+        limit_req zone=ws_per_ip burst=2 nodelay;
+        limit_conn conn_per_ip 3;
+        include /etc/nginx/snippets/proxy-common.conf;
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_pass http://ai_upstream;
+    }
+
+    location = /api/v1/voice/ready {
         include /etc/nginx/snippets/proxy-common.conf;
         proxy_pass http://ai_upstream;
     }

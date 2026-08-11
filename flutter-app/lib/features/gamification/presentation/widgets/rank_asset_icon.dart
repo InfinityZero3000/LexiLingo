@@ -154,8 +154,8 @@ class RankAssetIcon extends StatelessWidget {
                 gradient: RadialGradient(
                   colors: isMaster
                       ? [
-                          const Color(0xFF5AB6FF).withValues(alpha: 0.28),
-                          const Color(0xFFFFD64F).withValues(alpha: 0.12),
+                          AppColors.masterGradient[0].withValues(alpha: 0.28),
+                          AppColors.masterGradient[1].withValues(alpha: 0.12),
                           Colors.transparent,
                         ]
                       : [

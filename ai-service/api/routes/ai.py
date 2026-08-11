@@ -5,11 +5,14 @@ Endpoints for logging AI interactions and analytics
 """
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from bson import ObjectId
+from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
 
 from api.core.database import get_database
+from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.models.schemas import (
     LogInteractionRequest,
@@ -19,6 +22,7 @@ from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
 from api.services.trace_cag import get_trace_cag
 from api.services.v3_pipeline import get_v3_pipeline
+from api.routes.admin import verify_admin_api_key
 
 router = APIRouter()
 
@@ -60,15 +64,20 @@ class AnalyzeRequest(BaseModel):
     - KG concept expansion: <5ms
     """
 )
-async def analyze_with_trace_cag(request: AnalyzeRequest):
+async def analyze_with_trace_cag(
+    request: AnalyzeRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Main endpoint for TraceCAG-powered text analysis.
     """
-    user_id = request.user_id or "anonymous"
+    user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": user_id})
     await enforce_user_quota(
-        user_id,
+        current_user.user_id,
         "ai.analyze",
         token_cost=default_token_cost_for_endpoint("ai.analyze", text=request.text),
+        fail_closed=True,
     )
     try:
         pipeline = await get_trace_cag()
@@ -95,15 +104,20 @@ async def analyze_with_trace_cag(request: AnalyzeRequest):
     summary="Analyze input with V3 Knowledge-Centric Pipeline",
     description="Legacy V3 pipeline - use /trace-cag/analyze for new integrations."
 )
-async def analyze_with_v3(request: AnalyzeRequest):
+async def analyze_with_v3(
+    request: AnalyzeRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+):
     """
     Legacy V3 pipeline endpoint.
     """
-    user_id = request.user_id or "anonymous"
+    user_id = enforce_user_scope(current_user, request.user_id)
+    request = request.model_copy(update={"user_id": user_id})
     await enforce_user_quota(
-        user_id,
+        current_user.user_id,
         "ai.analyze",
         token_cost=default_token_cost_for_endpoint("ai.analyze", text=request.text),
+        fail_closed=True,
     )
     try:
         pipeline = await get_v3_pipeline()
@@ -281,7 +295,9 @@ async def get_community_concepts(community_id: int):
     summary="Performance monitoring dashboard",
     description="Comprehensive performance metrics and system statistics"
 )
-async def get_monitoring_dashboard():
+async def get_monitoring_dashboard(
+    _key: str = Depends(verify_admin_api_key),
+):
     """
     Get comprehensive monitoring data for dashboard.
     
@@ -320,7 +336,10 @@ async def get_monitoring_dashboard():
     "/monitoring/metrics/{metric_name}",
     summary="Get specific metric statistics"
 )
-async def get_metric_stats(metric_name: str):
+async def get_metric_stats(
+    metric_name: str,
+    _key: str = Depends(verify_admin_api_key),
+):
     """Get detailed statistics for a specific metric."""
     try:
         from api.services.telemetry import get_telemetry
@@ -356,7 +375,9 @@ async def get_metric_stats(metric_name: str):
     "/monitoring/system",
     summary="System resource statistics"
 )
-async def get_system_stats():
+async def get_system_stats(
+    _key: str = Depends(verify_admin_api_key),
+):
     """Get current system resource usage."""
     try:
         from api.services.performance_monitor import get_performance_monitor
@@ -376,7 +397,9 @@ async def get_system_stats():
     "/monitoring/health",
     summary="System health check"
 )
-async def check_system_health():
+async def check_system_health(
+    _key: str = Depends(verify_admin_api_key),
+):
     """Check system resource health with warnings."""
     try:
         from api.services.performance_monitor import get_performance_monitor
@@ -414,7 +437,8 @@ async def check_system_health():
 )
 async def log_interaction(
     request: LogInteractionRequest,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """
     Log an AI interaction to database.
@@ -422,6 +446,8 @@ async def log_interaction(
     Called by Flutter app after each AI analysis.
     """
     try:
+        auth_user_id = enforce_user_scope(current_user, request.user_id)
+        request = request.model_copy(update={"user_id": auth_user_id})
         repo = AIRepository(db)
         interaction_id = await repo.log_interaction(request)
         
@@ -429,7 +455,9 @@ async def log_interaction(
             interaction_id=interaction_id,
             message="Interaction logged successfully"
         )
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -446,7 +474,8 @@ async def get_user_interactions(
     user_id: str,
     limit: int = 100,
     skip: int = 0,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """
     Get user's interaction history.
@@ -454,11 +483,14 @@ async def get_user_interactions(
     Useful for Flutter app to show user progress.
     """
     try:
+        enforce_user_scope(current_user, user_id)
         repo = AIRepository(db)
         interactions = await repo.get_user_interactions(user_id, limit, skip)
         
         return interactions
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -473,15 +505,22 @@ async def get_user_interactions(
 )
 async def get_session_interactions(
     session_id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """Get all interactions in a chat session."""
     try:
         repo = AIRepository(db)
-        interactions = await repo.get_session_interactions(session_id)
+        cursor = repo.collection.find(
+            {"session_id": session_id, "user_id": current_user.user_id}
+        ).sort("created_at", 1)
+        docs = await cursor.to_list(length=1000)
+        interactions = [repo._normalize_doc(doc) for doc in docs]
         
         return interactions
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -496,7 +535,8 @@ async def get_session_interactions(
 async def update_feedback(
     interaction_id: str,
     feedback: Dict[str, Any],
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """
     Update interaction with user feedback.
@@ -505,7 +545,23 @@ async def update_feedback(
     """
     try:
         repo = AIRepository(db)
-        success = await repo.update_feedback(interaction_id, feedback)
+        update_doc = {
+            "$set": {
+                "feedback": feedback,
+                "feedback_updated_at": datetime.now(timezone.utc),
+            }
+        }
+        result = await repo.collection.update_one(
+            {"interaction_id": interaction_id, "user_id": current_user.user_id},
+            update_doc,
+        )
+        success = result.matched_count > 0
+        if not success and ObjectId.is_valid(interaction_id):
+            result = await repo.collection.update_one(
+                {"_id": ObjectId(interaction_id), "user_id": current_user.user_id},
+                update_doc,
+            )
+            success = result.matched_count > 0
         
         if not success:
             raise HTTPException(
@@ -532,7 +588,8 @@ async def update_feedback(
 async def get_user_error_stats(
     user_id: str,
     days: int = 30,
-    db: AsyncIOMotorDatabase = Depends(get_database)
+    current_user: AuthenticatedUser = Depends(get_current_user),
+    db: AsyncIOMotorDatabase = Depends(get_database),
 ):
     """
     Get aggregated error statistics for user.
@@ -540,11 +597,14 @@ async def get_user_error_stats(
     Useful for showing learning progress in Flutter app.
     """
     try:
+        enforce_user_scope(current_user, user_id)
         repo = AIRepository(db)
         stats = await repo.get_user_error_stats(user_id, days)
         
         return stats
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,

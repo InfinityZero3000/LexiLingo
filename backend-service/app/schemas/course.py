@@ -5,9 +5,9 @@ Request and response schemas for Course-related endpoints.
 Follows the envelope pattern defined in APP_DEVELOPMENT_PLAN.md.
 """
 
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 import uuid
 
 
@@ -24,7 +24,8 @@ class CourseBase(BaseModel):
     tags: Optional[List[str]] = Field(default_factory=list)
     thumbnail_url: Optional[str] = Field(None, max_length=500)
     
-    @validator('level')
+    @field_validator("level")
+    @classmethod
     def validate_level(cls, v):
         allowed_levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
         if v not in allowed_levels:
@@ -47,7 +48,8 @@ class CourseUpdate(BaseModel):
     thumbnail_url: Optional[str] = Field(None, max_length=500)
     is_published: Optional[bool] = None
     
-    @validator('level')
+    @field_validator("level")
+    @classmethod
     def validate_level(cls, v):
         if v is not None:
             allowed_levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -70,7 +72,8 @@ class CourseResponse(CourseBase):
     is_enrolled: Optional[bool] = None
     user_progress: Optional[float] = None  # 0-100%
     
-    @validator('tags', pre=True, always=True)
+    @field_validator("tags", mode="before")
+    @classmethod
     def parse_tags(cls, v):
         """Handle tags as dict with 'categories' key or as list."""
         if v is None:
@@ -87,8 +90,7 @@ class CourseResponse(CourseBase):
             return v
         return []
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseListItem(BaseModel):
@@ -105,7 +107,8 @@ class CourseListItem(BaseModel):
     estimated_duration: int = 0
     is_enrolled: Optional[bool] = None
     
-    @validator('tags', pre=True, always=True)
+    @field_validator("tags", mode="before")
+    @classmethod
     def parse_tags(cls, v):
         """Handle tags as dict with 'categories' key or as list."""
         if v is None:
@@ -124,8 +127,7 @@ class CourseListItem(BaseModel):
             return v
         return []
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================
@@ -163,8 +165,7 @@ class UnitResponse(UnitBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================
@@ -175,12 +176,16 @@ class LessonBase(BaseModel):
     """Base lesson schema."""
     title: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None
+    outcome: Optional[str] = Field(
+        None, description="Can-do statement: what the learner will be able to do after this lesson/mission"
+    )
     order_index: int = Field(..., ge=0)
     lesson_type: str = Field(..., description="lesson, practice, review, test, vocabulary, grammar")
     xp_reward: int = Field(default=10, ge=0)
     pass_threshold: int = Field(default=80, ge=0, le=100)
-    
-    @validator('lesson_type')
+
+    @field_validator("lesson_type")
+    @classmethod
     def validate_lesson_type(cls, v):
         allowed_types = ['lesson', 'practice', 'review', 'test', 'vocabulary', 'grammar']
         if v not in allowed_types:
@@ -198,6 +203,7 @@ class LessonUpdate(BaseModel):
     """Schema for updating a lesson (admin only)."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
+    outcome: Optional[str] = None
     order_index: Optional[int] = Field(None, ge=0)
     lesson_type: Optional[str] = None
     xp_reward: Optional[int] = Field(None, ge=0)
@@ -206,7 +212,8 @@ class LessonUpdate(BaseModel):
     estimated_minutes: Optional[int] = Field(None, ge=0)
     content: Optional[Any] = None
 
-    @validator('lesson_type')
+    @field_validator("lesson_type")
+    @classmethod
     def validate_lesson_type(cls, v):
         if v is not None:
             allowed_types = ['lesson', 'practice', 'review', 'test', 'vocabulary', 'grammar']
@@ -227,8 +234,7 @@ class LessonResponse(LessonBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LessonDetailResponse(LessonResponse):
@@ -236,8 +242,7 @@ class LessonDetailResponse(LessonResponse):
     estimated_minutes: int = 10
     content: Optional[Any] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # =====================
@@ -254,8 +259,7 @@ class LessonInUnit(BaseModel):
     is_locked: Optional[bool] = None
     is_completed: Optional[bool] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UnitWithLessons(BaseModel):
@@ -268,8 +272,7 @@ class UnitWithLessons(BaseModel):
     icon_url: Optional[str] = None
     lessons: List[LessonInUnit] = Field(default_factory=list)
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseDetailResponse(CourseResponse):
@@ -288,13 +291,12 @@ class EnrollmentResponse(BaseModel):
     enrolled_at: datetime
     message: str = "Successfully enrolled in course"
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CourseWithLessons(CourseResponse):
     """Schema for course with lessons."""
-    lessons: List[LessonResponse] = []
+    lessons: List[LessonResponse] = Field(default_factory=list)
 
 
 # =====================
@@ -313,6 +315,7 @@ class Exercise(BaseModel):
     id: str
     type: str = Field(..., description="multiple_choice, true_false, fill_blank, translate, matching, reorder")
     ui_type: Optional[str] = None
+    phase: Optional[Literal["pre_task", "task_cycle", "language_focus"]] = None
     question: str
     options: Optional[List[ExerciseOption]] = None
     correct_answer: str
@@ -323,7 +326,8 @@ class Exercise(BaseModel):
     difficulty: int = Field(default=1, ge=1, le=5)
     points: int = Field(default=10, ge=0)
     
-    @validator('type')
+    @field_validator("type")
+    @classmethod
     def validate_type(cls, v):
         allowed = ['multiple_choice', 'true_false', 'fill_blank', 'translate', 'matching', 'reorder']
         if v not in allowed:
@@ -336,6 +340,7 @@ class LessonContentResponse(BaseModel):
     id: uuid.UUID
     title: str
     description: Optional[str] = None
+    outcome: Optional[str] = None
     lesson_type: str
     order_index: int
     xp_reward: int
@@ -344,5 +349,4 @@ class LessonContentResponse(BaseModel):
     total_exercises: int
     exercises: List[Exercise] = Field(default_factory=list)
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

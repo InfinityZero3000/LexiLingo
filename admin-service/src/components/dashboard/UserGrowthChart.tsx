@@ -10,13 +10,22 @@ export type UserGrowthData = {
 type Props = {
   data: UserGrowthData[];
   loading?: boolean;
+  error?: boolean;
 };
 
-export const UserGrowthChart: React.FC<Props> = ({ data, loading }) => {
+export const UserGrowthChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
     return (
       <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="loading-text">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="loading-text">Không tải được dữ liệu.</div>
       </div>
     );
   }
@@ -38,14 +47,15 @@ export const UserGrowthChart: React.FC<Props> = ({ data, loading }) => {
             dataKey="date" 
             tick={{ fontSize: 12 }}
             tickFormatter={(value) => {
-              const date = new Date(value);
+              const date = new Date(String(value ?? ""));
+              if (Number.isNaN(date.getTime())) return "";
               return `${date.getDate()}/${date.getMonth() + 1}`;
             }}
           />
           <YAxis tick={{ fontSize: 12 }} />
           <Tooltip 
             labelFormatter={(value) => {
-              const date = new Date(value);
+              const date = new Date(String(value ?? ""));
               return date.toLocaleDateString("vi-VN");
             }}
             formatter={(value) => [Number(value ?? 0).toLocaleString(), ""]}

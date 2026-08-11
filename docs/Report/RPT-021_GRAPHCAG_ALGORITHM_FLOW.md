@@ -40,47 +40,47 @@ TRACECAGState (TypedDict):
     user_id: Optional[str]       # Để load profile
     input_type: "text" | "voice"
     audio_bytes: bytes           # Raw audio nếu voice
-    
+
     # === LEARNER CONTEXT (Redis CAG) ===
     learner_profile:             # level, native_language, common_errors
     conversation_history: List   # Lịch sử turns
-    
+
     # === KNOWLEDGE GRAPH (KuzuDB) ===
     kg_seed_concepts: List[str]  # ["past_simple", "irregular_verbs"]
     kg_expanded_nodes: List      # Nodes expand from graph hops
     kg_paths: List               # Paths giữa concepts
-    
+
     # === DIAGNOSIS ===
     diagnosis_intent: str        # "correct" | "explain" | "practice" | "ask"
     diagnosis_errors: List       # [{span, type, correction, explanation}]
     diagnosis_root_causes: List  # Concept IDs gốc lỗi
     diagnosis_confidence: float  # 0.0 → 1.0
-    
+
     # === RETRIEVAL ===
     vector_hits: List[VectorHit]
     jit_soft_graph: str          # Compact JIT graph string cho LLM
     retrieved_context: str       # Final combined context
     retrieval_trace: List        # Cho đánh giá retrieval quality
-    
+
     # === RESPONSE ===
     tutor_response: str
     vietnamese_hint: Optional[str]
     pronunciation_tip: Optional[str]
     strategy: "praise"|"scaffold"|"socratic"|"feedback"
-    
+
     # === SCORES ===
     fluency_score: float
     grammar_score: float
     vocabulary_level: str
     overall_score: float
-    
+
     # === RAPID CACHE CONTROL ===
     cache_fingerprint: CacheFingerprint
     cache_decision: "reuse"|"patch"|"full"
     cache_layer: "none"|"L0"|"L1"
     cache_bucket: str            # Graph-aware bucket ID
     reuse_risk: float            # ρ ∈ [0,1]
-    
+
     # === METADATA ===
     models_used: List[str]       # Accumulator
     latency_ms: int
@@ -202,7 +202,7 @@ Step 2: L0 Cache Check (exact fingerprint lookup):
     key = hash(fingerprint)
     cached = redis.get("cache_L0:{key}")
     IF cached:
-        → cache_decision = "reuse" (or "patch") 
+        → cache_decision = "reuse" (or "patch")
         → Populate tutor_response từ cache
         → cache_layer = "L0"
         RETURN
@@ -261,7 +261,7 @@ Algorithm:
    → Store as kg_seed_concepts
 
 3. Graph hop expansion (depth=2):
-   past_simple 
+   past_simple
    ├── PREREQUISITE: simple_present
    ├── PREREQUISITE_OF: past_perfect
    ├── RELATED: time_expressions
@@ -299,7 +299,7 @@ Algorithm:
    {
      "intent": "correct",  // "correct" | "explain" | "practice" | "ask"
      "errors": [
-       {"span": "goes", "type": "verb_conjugation", 
+       {"span": "goes", "type": "verb_conjugation",
         "correction": "went", "explanation": "Past simple irregular verb"}
      ],
      "root_cause_concepts": ["past_simple", "irregular_verbs"],
@@ -390,7 +390,7 @@ Step 2: Vector Search (nếu cần thêm context):
 
 Step 3: Context Fusion:
     retrieved_context = kg_context + vector_hits + conversation_history
-    
+
 Step 4: Retrieval Ranking (EvaluationAgent):
     - Rank retrieved items theo relevance
     - Store retrieval_trace (cho evaluation)
@@ -414,13 +414,13 @@ Step 1: Build Generation Prompt:
     system_prompt = f"""
     You are LexiLingo, an English tutor.
     Learner: level={level}, native={native_language}
-    
+
     Knowledge Graph Context:
     {retrieved_context}
-    
+
     Strategy: {strategy}  # scaffold | praise | socratic | feedback
     """
-    
+
     messages = conversation_history + [
         {"role": "user", "content": user_input}
     ]
@@ -438,7 +438,7 @@ Step 4: Post-process:
     - Extract pronunciation_tip nếu có
     - Update conversation_history
     - Update KG mastery scores (graph_update)
-    
+
 Step 5: Save to Cache (nếu cache_decision == "full"):
     - Tạo CacheEntry với TTL
     - Store L0 và L1 cache entries trong Redis
@@ -599,7 +599,7 @@ Invalidation:
 ```
 File: ai-service/api/routes/lexi_chat.py (50KB)
 
-TRACECAG analyze() 
+TRACECAG analyze()
     → Streaming response via SSE or WebSocket
     → Client receives:
        {"event": "thinking", "data": {...}}
@@ -611,4 +611,4 @@ TRACECAG analyze()
 
 ---
 
-*Tham khảo: [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-016](RPT-016_TRACECAG_KG_REDIS_CACHE.md) | [RPT-018](RPT-018_FEATURE_ANALYSIS.md)*
+*Tham khảo: [RPT-019](RPT-019_AI_SERVICE_DEEP_DIVE.md) | [RPT-016](RPT-016_GRAPHCAG_KG_REDIS_CACHE.md) | [RPT-018](RPT-018_FEATURE_ANALYSIS.md)*

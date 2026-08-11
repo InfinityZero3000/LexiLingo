@@ -14,6 +14,8 @@ from unittest.mock import AsyncMock, MagicMock, patch, call
 import pytest
 from httpx import AsyncClient, ASGITransport
 
+from app.core.cache import build_cache_key
+
 
 BASE = "/api/v1/referral"
 
@@ -154,13 +156,19 @@ class TestGetMyCode:
 
 class TestClaimCode:
     @pytest.mark.asyncio
-    async def test_successful_claim_awards_gems(self, authed_client):
+    async def test_successful_claim_awards_gems(self, authed_client, monkeypatch):
         client, session, claimer = authed_client
         claimer.referred_by = None
 
         referrer = _make_user(referral_code="REFER123")
         referrer_wallet = _make_wallet(referrer.id, gems=50)
         claimer_wallet = _make_wallet(claimer.id, gems=0)
+        deleted = []
+
+        async def fake_delete_cached(key):
+            deleted.append(key)
+
+        monkeypatch.setattr("app.routes.referral.delete_cached", fake_delete_cached)
 
         # Sequence: with_for_update user, referrer lookup, referrer wallet, claimer wallet
         results = [
@@ -189,6 +197,10 @@ class TestClaimCode:
         # referred_by should be set
         assert claimer.referred_by == referrer.id
         session.commit.assert_called_once()
+        assert deleted == [
+            build_cache_key("wallet", user_id=str(referrer.id)),
+            build_cache_key("wallet", user_id=str(claimer.id)),
+        ]
 
     @pytest.mark.asyncio
     async def test_self_referral_returns_400(self, authed_client):

@@ -30,10 +30,10 @@ Khởi động Backend, AI Service, và Flutter Web cùng lúc.
 - 🔧 **Backend Service** - `http://localhost:8000`
   - API Docs: `http://localhost:8000/docs`
   - Health Check: `http://localhost:8000/health`
-  
+
 - 🤖 **AI Service** - `http://localhost:8001`
   - Health Check: `http://localhost:8001/health`
-  
+
 - 📱 **Flutter Web** - `http://localhost:8080`
 
 **Logs được lưu tại:** `logs/`

@@ -26,6 +26,10 @@ ENV/
 htmlcov/
 coverage.xml
 *.cover
+reports/
+
+# Research and benchmark artifacts are not runtime inputs
+model-development/
 
 # IDE / editor
 .idea/
