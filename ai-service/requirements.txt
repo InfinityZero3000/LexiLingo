@@ -88,7 +88,7 @@ gliner>=0.2.28
 matplotlib>=3.11.1,<4
 seaborn>=0.13,<0.14
 playwright>=1.50,<2
-pytest-playwright>=0.7,<1
+pytest-playwright>=0.8.0,<1
 
 # Optional: Redis (if needed later)
 # redis>=7.4.1
