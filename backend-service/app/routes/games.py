@@ -1,16 +1,9 @@
-"""
-Games API Routes — DEPRECATED
+"""Game API routes.
 
-This module has been split into:
-  app/routes/game_data.py      — constants and seed helper
-  app/routes/game_content.py   — 6 GET game endpoints + /categories
-  app/routes/game_scoring.py   — POST /sessions/{id}/complete
-
-main.py now registers game_content_router and game_scoring_router directly.
-This file is kept only as a reference and is no longer imported.
+The monolithic router remains the registered implementation. Game constants,
+content endpoints, and scoring endpoints intentionally live here together.
 """
 
-import asyncio
 import logging
 import random
 import uuid

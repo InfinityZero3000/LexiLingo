@@ -341,6 +341,7 @@ class Settings(BaseSettings):
 
     # ── External API Keys (Phase 0+ Content Features) ──
     YOUTUBE_API_KEY: str | None = None  # YouTube Data API v3
+    YOUTUBE_TRANSCRIPT_PROXY_URL: str | None = None
     NEWSAPI_KEY: str | None = None  # NewsAPI.org
     NEWSDATA_KEY: str | None = None  # NewsData.io (fallback)
     PODCASTINDEX_KEY: str | None = None  # PodcastIndex.org

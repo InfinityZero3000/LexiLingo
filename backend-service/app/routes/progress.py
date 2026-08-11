@@ -43,7 +43,6 @@ from app.services.level_service import (
 from app.services.rank_service import (
     apply_rank_info_to_user,
     calculate_rank as calc_rank,
-    check_rank_up,
 )
 from app.services.streak_service import update_user_streak
 from app.crud.gamification import WalletCRUD

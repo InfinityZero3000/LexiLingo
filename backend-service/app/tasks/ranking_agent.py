@@ -7,7 +7,7 @@ import logging
 import uuid
 
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +18,19 @@ class JobCancelled(Exception):
 
 @celery_app.task(name="app.tasks.ranking_agent.run_ranking_agent_job")
 def run_ranking_agent_job(job_id: str) -> dict:
-    return asyncio.run(_run_ranking_agent_job(uuid.UUID(job_id)))
+    return asyncio.run(_with_db_cleanup(_run_ranking_agent_job(uuid.UUID(job_id))))
 
 
 @celery_app.task(name="app.tasks.ranking_agent.auto_league_reset")
 def auto_league_reset() -> dict:
-    return asyncio.run(_auto_league_reset())
+    return asyncio.run(_with_db_cleanup(_auto_league_reset()))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _run_ranking_agent_job(job_id: uuid.UUID) -> dict:
@@ -103,8 +110,8 @@ async def _fetch_ai_insights(job_type: str, artifact: dict) -> str | None:
 
 async def _calculate_artifact(db, job_type: str, config: dict) -> dict:
     if job_type == "league_reset":
-        from app.services.ranking_agent.league_reset import LeagueResetEngine
         from app.core.config import settings
+        from app.services.ranking_agent.league_reset import LeagueResetEngine
         engine = LeagueResetEngine(
             promotion_threshold=settings.LEAGUE_RESET_PROMOTION_THRESHOLD,
             demotion_threshold=settings.LEAGUE_RESET_DEMOTION_THRESHOLD,

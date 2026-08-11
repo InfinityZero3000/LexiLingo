@@ -12,7 +12,7 @@ import httpx
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,14 @@ class JobCancelled(Exception):
 
 @celery_app.task(name="app.tasks.notification_campaign.run_notification_campaign_job")
 def run_notification_campaign_job(job_id: str) -> dict:
-    return asyncio.run(_run_notification_campaign_job(uuid.UUID(job_id)))
+    return asyncio.run(_with_db_cleanup(_run_notification_campaign_job(uuid.UUID(job_id))))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _run_notification_campaign_job(job_id: uuid.UUID) -> dict:

@@ -10,7 +10,7 @@ Phase 1: YouTube Video Integration with Auto Subtitles.
 import asyncio
 import logging
 from typing import Optional
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -560,7 +560,7 @@ async def _fetch_word_data(word: str, lang: str = "vi", context: str = "") -> di
     - Free Dictionary API  → phonetic (IPA), definition, examples  [always free]
     - ai-service /translate → LLM contextual translation            [Groq → Ollama]
     """
-    dict_url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+    dict_url = f"{settings.DICTIONARY_API_BASE_URL.rstrip('/')}/{word}"
 
     # Run both IO-bound calls concurrently
     async with httpx.AsyncClient(timeout=10.0) as client:
@@ -736,7 +736,11 @@ def _get_transcript_sync(video_id: str, lang: str) -> list | None:
         import requests
 
         session = requests.Session()
-        session.proxies = {"https": "http://172.21.0.1:8888", "http": "http://172.21.0.1:8888"}
+        if settings.YOUTUBE_TRANSCRIPT_PROXY_URL:
+            session.proxies = {
+                "https": settings.YOUTUBE_TRANSCRIPT_PROXY_URL,
+                "http": settings.YOUTUBE_TRANSCRIPT_PROXY_URL,
+            }
         api = YouTubeTranscriptApi(http_client=session)
 
         # Try requested lang, then en, then any available

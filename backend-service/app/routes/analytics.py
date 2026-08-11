@@ -4,19 +4,18 @@ Endpoints for dashboard charts, user metrics, content performance, and vocabular
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Optional
+
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, case
-from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin
+from app.models.course import Course
+from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress
 from app.models.user import User
-from app.models.course import Course, Lesson
-from app.models.progress import LessonCompletion, DailyActivity, UserCourseProgress
-from app.models.vocabulary import VocabularyItem, UserVocabulary
-from app.models.gamification import Achievement, UserAchievement
+from app.models.vocabulary import UserVocabulary, VocabularyItem
 
 router = APIRouter(prefix="/admin/analytics", tags=["Analytics"])
 
@@ -139,59 +138,54 @@ async def get_engagement(
     Get DAU, WAU, MAU engagement metrics by week.
     """
     end_date = datetime.now(timezone.utc).date()
-    start_date = end_date - timedelta(weeks=weeks)
-
-    data = []
-
-    for i in range(weeks):
+    ranges = []
+    expressions = []
+    for index, i in enumerate(reversed(range(weeks))):
         week_end = end_date - timedelta(weeks=i)
         week_start = week_end - timedelta(days=7)
-
-        # DAU (average for the week)
-        dau_result = await db.execute(
-            select(
-                DailyActivity.activity_date,
-                func.count(func.distinct(DailyActivity.user_id)).label("users")
-            )
-            .where(
-                and_(
-                    DailyActivity.activity_date >= week_start,
-                    DailyActivity.activity_date < week_end
-                )
-            )
-            .group_by(DailyActivity.activity_date)
+        month_start = week_end - timedelta(days=30)
+        week_condition = and_(
+            DailyActivity.activity_date >= week_start,
+            DailyActivity.activity_date < week_end,
         )
-        dau_values = [row.users for row in dau_result.fetchall()]
-        avg_dau = sum(dau_values) / len(dau_values) if dau_values else 0
+        month_condition = and_(
+            DailyActivity.activity_date >= month_start,
+            DailyActivity.activity_date < week_end,
+        )
+        active_days = func.count(
+            func.distinct(case((week_condition, DailyActivity.activity_date)))
+        )
+        expressions.extend((
+            (
+                func.count(case((week_condition, DailyActivity.id))) * 1.0
+                / func.nullif(active_days, 0)
+            ).label(f"dau_{index}"),
+            func.count(
+                func.distinct(case((week_condition, DailyActivity.user_id)))
+            ).label(f"wau_{index}"),
+            func.count(
+                func.distinct(case((month_condition, DailyActivity.user_id)))
+            ).label(f"mau_{index}"),
+        ))
+        ranges.append((week_start, week_end))
 
-        # WAU (unique users in the week)
-        wau = await db.scalar(
-            select(func.count(func.distinct(DailyActivity.user_id)))
-            .where(
-                and_(
-                    DailyActivity.activity_date >= week_start,
-                    DailyActivity.activity_date < week_end
-                )
+    range_start = ranges[0][1] - timedelta(days=30)
+    metrics = (
+        await db.execute(
+            select(*expressions).where(
+                DailyActivity.activity_date >= range_start,
+                DailyActivity.activity_date < end_date,
             )
-        ) or 0
+        )
+    ).one()._mapping
 
-        # MAU (unique users in last 30 days from week_end)
-        mau_start = week_end - timedelta(days=30)
-        mau = await db.scalar(
-            select(func.count(func.distinct(DailyActivity.user_id)))
-            .where(
-                and_(
-                    DailyActivity.activity_date >= mau_start,
-                    DailyActivity.activity_date < week_end
-                )
-            )
-        ) or 0
-
-        data.insert(0, {
+    data = []
+    for index, (week_start, week_end) in enumerate(ranges):
+        data.append({
             "week": f"{week_start.strftime('%d/%m')} - {week_end.strftime('%d/%m')}",
-            "dau": int(avg_dau),
-            "wau": wau,
-            "mau": mau,
+            "dau": int(metrics[f"dau_{index}"] or 0),
+            "wau": metrics[f"wau_{index}"] or 0,
+            "mau": metrics[f"mau_{index}"] or 0,
         })
 
     return {"data": data}
