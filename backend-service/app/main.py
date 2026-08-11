@@ -80,7 +80,9 @@ from app.routes.learner_state import router as learner_state_router
 from app.routes.concepts import router as concepts_router
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
+from app.routes.product_events import router as product_events_router
 from app.core.partner_auth import require_partner_api_key
+from app.clients.ai_service_client import AIServiceClient
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -150,17 +152,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:  # pragma: no cover
         logger.warning(f"Could not pre-warm OpenAPI schema: {e}")
 
-    yield
-    
-    # Shutdown
-    logger.info("Shutting down...")
-    if settings.LEARNER_STATE_ENABLED:
-        from app.services.learner_state_outbox import stop_learner_state_outbox_worker
+    AIServiceClient.start()
+    try:
+        yield
+    finally:
+        # Shutdown
+        logger.info("Shutting down...")
+        if settings.LEARNER_STATE_ENABLED:
+            from app.services.learner_state_outbox import stop_learner_state_outbox_worker
 
-        await stop_learner_state_outbox_worker()
-    await RedisClient.close()
-    await close_db()
-    logger.info("Shutdown complete")
+            await stop_learner_state_outbox_worker()
+        await AIServiceClient.close()
+        await RedisClient.close()
+        await close_db()
+        logger.info("Shutdown complete")
 
 
 # Create FastAPI app
@@ -419,6 +424,7 @@ app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["A
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
 app.include_router(learner_state_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(product_events_router, prefix=f"{settings.API_V1_PREFIX}")
 
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:

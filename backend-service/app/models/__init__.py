@@ -119,12 +119,14 @@ from app.models.learner_state import (
 )
 
 from app.models.partner import PartnerApiKey
+from app.models.product_event import ProductEvent
 
 # Entitlement models (server-verified premium state)
 from app.models.entitlement import UserEntitlement
 
 __all__ = [
     "PartnerApiKey",
+    "ProductEvent",
     # User (Phase 1)
     "User",
     "UserDevice",
