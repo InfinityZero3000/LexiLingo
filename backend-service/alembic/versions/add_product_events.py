@@ -1,7 +1,7 @@
 """add product events
 
 Revision ID: add_product_events
-Revises: 74b24453f92f
+Revises: f2c8a1d4e6b9
 Create Date: 2026-08-10
 
 """
@@ -14,7 +14,7 @@ from alembic import op
 from app.core.db_types import GUID, PortableJSON, TZDateTime
 
 revision: str = "add_product_events"
-down_revision: str | None = "74b24453f92f"
+down_revision: str | None = "f2c8a1d4e6b9"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
