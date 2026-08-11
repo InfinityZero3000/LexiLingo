@@ -30,7 +30,15 @@ from app.schemas.games import (
     GameSessionCompleteRequest,
     GameSessionCompleteResponse,
 )
-from app.services.game_scoring_service import GameScoringError, score_game
+from app.services.game_scoring_service import (
+    GameScoringError,
+    score_game,
+)
+from app.services.learner_error_service import record_learner_error
+from app.services.game_fsrs_service import (
+    record_game_grammar_lapse,
+    record_game_vocab_lapse,
+)
 from app.services.item_effects_service import ItemEffectsService
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
@@ -1473,6 +1481,7 @@ async def get_grammar_quiz(
                 "id": str(question["id"]),
                 "answer": question["correct_answer"],
                 "xp_value": XP_BY_LEVEL.get(level, 15),
+                "topic": question["topic"],
             }
             for question in questions
         ],
@@ -1586,6 +1595,42 @@ async def complete_game_session(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
+
+    submitted_by_id = {answer.id.strip(): answer.answer for answer in body.answers}
+    for expected in expected_items:
+        item_id = str(expected["id"]).strip()
+        if item_id in score.incorrect_ids:
+            submitted_answer = submitted_by_id[item_id]
+            expected_answer = expected["answer"]
+            await record_learner_error(
+                db,
+                user_id=current_user.id,
+                source="game",
+                is_correct=False,
+                submitted_answer=submitted_answer,
+                correct_answer=str(expected_answer or ""),
+                context={
+                    "game_type": session.game_type,
+                    "session_id": str(session.id),
+                },
+            )
+            if session.game_type in {
+                "word_scramble",
+                "spelling_bee",
+                "matching",
+                "hangman",
+            }:
+                await record_game_vocab_lapse(
+                    db,
+                    user_id=current_user.id,
+                    game_word_id=str(expected["id"]),
+                )
+            elif session.game_type == "grammar_quiz" and expected.get("topic"):
+                await record_game_grammar_lapse(
+                    db,
+                    user_id=current_user.id,
+                    topic=expected["topic"],
+                )
 
     item_multiplier = await ItemEffectsService(db).get_xp_multiplier(current_user.id)
     xp_result = await award_xp_transaction(

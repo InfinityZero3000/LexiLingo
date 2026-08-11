@@ -9,6 +9,7 @@ This module is safe to include even when AI is not enabled.
 
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any, Optional
 
@@ -16,6 +17,27 @@ import httpx
 
 from app.core.config import settings
 from app.schemas.ai import AIChatRequest, AIChatResponse
+
+logger = logging.getLogger(__name__)
+
+
+async def diagnose_error(text: str, level: str | None = None) -> str | None:
+    """Return the primary diagnosed error type, or None on any failure."""
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as client:
+            response = await client.post(
+                f"{settings.AI_SERVICE_URL.rstrip('/')}/internal/diagnose",
+                headers={
+                    "X-Admin-Api-Key": os.getenv("AI_ADMIN_API_KEY", "").strip()
+                },
+                json={"text": text, "level": level},
+            )
+        response.raise_for_status()
+        errors = response.json()["errors"]
+        return errors[0]["type"] if errors else None
+    except Exception:
+        logger.warning("Error diagnosis request failed", exc_info=True)
+        return None
 
 
 class AIServiceClient:

@@ -386,6 +386,75 @@ class TestRecordExercises:
             )
         assert response.status_code == 200
 
+    async def test_incorrect_exercise_records_diagnosed_error_type(self, auth_client):
+        payload = self._exercise_payload()
+        payload[0].update(
+            is_correct=False,
+            score=25.0,
+            submitted_answer="Yesterday I go",
+            correct_answer="Yesterday I went",
+        )
+        diagnose_mock = AsyncMock(return_value="past_tense")
+        record_mock = AsyncMock()
+
+        with (
+            patch("app.routes.proficiency.diagnose_error", new=diagnose_mock),
+            patch("app.routes.proficiency.record_learner_error", new=record_mock),
+            patch(
+                "app.routes.proficiency.ProficiencyService.calculate_skill_score",
+                return_value=(20.0, 0.2),
+            ),
+            patch(
+                "app.routes.proficiency.ProficiencyService.calculate_overall_level",
+                return_value=(MagicMock(value="A1"), 0.0),
+            ),
+            patch(
+                "app.routes.proficiency.ProficiencyService._calculate_xp_from_exercises",
+                return_value=0,
+            ),
+            patch("app.routes.proficiency.ProficiencyService.get_level_index", return_value=0),
+        ):
+            response = await auth_client.post(
+                f"{BASE}/record-exercises",
+                json=payload,
+            )
+
+        assert response.status_code == 200
+        diagnose_mock.assert_awaited_once_with("Yesterday I go", level="A1")
+        assert record_mock.await_args.kwargs["error_type"] == "past_tense"
+
+    async def test_incorrect_exercise_without_answer_skips_diagnosis(self, auth_client):
+        payload = self._exercise_payload()
+        payload[0].update(is_correct=False, score=0.0)
+        diagnose_mock = AsyncMock()
+        record_mock = AsyncMock()
+
+        with (
+            patch("app.routes.proficiency.diagnose_error", new=diagnose_mock),
+            patch("app.routes.proficiency.record_learner_error", new=record_mock),
+            patch(
+                "app.routes.proficiency.ProficiencyService.calculate_skill_score",
+                return_value=(0.0, 0.0),
+            ),
+            patch(
+                "app.routes.proficiency.ProficiencyService.calculate_overall_level",
+                return_value=(MagicMock(value="A1"), 0.0),
+            ),
+            patch(
+                "app.routes.proficiency.ProficiencyService._calculate_xp_from_exercises",
+                return_value=0,
+            ),
+            patch("app.routes.proficiency.ProficiencyService.get_level_index", return_value=0),
+        ):
+            response = await auth_client.post(
+                f"{BASE}/record-exercises",
+                json=payload,
+            )
+
+        assert response.status_code == 200
+        diagnose_mock.assert_not_awaited()
+        assert record_mock.await_args.kwargs["error_type"] is None
+
     async def test_record_exercises_without_auth_returns_401_or_403(self, no_auth_client):
         """Unauthenticated request is rejected."""
         response = await no_auth_client.post(

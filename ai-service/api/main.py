@@ -354,6 +354,7 @@ from api.routes import (  # noqa: E402
     ai,
     chat,
     content_agent,
+    error_diagnosis,
     integration_trace_cag,
     lexi_chat,
     notification_agent as notification_agent_router,
@@ -382,6 +383,7 @@ app.include_router(content_agent.router, tags=["Internal Content Agent"])
 app.include_router(integration_trace_cag.router)
 app.include_router(notification_agent_router.router, tags=["Notification Agent"])
 app.include_router(ranking_agent_router.router, tags=["Internal Ranking Agent"])
+app.include_router(error_diagnosis.router, tags=["Internal Error Diagnosis"])
 
 # Static files (dev tools / visualizers)
 _static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
