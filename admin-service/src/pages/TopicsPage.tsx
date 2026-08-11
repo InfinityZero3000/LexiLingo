@@ -356,7 +356,7 @@ export const TopicsPage = () => {
           <EmptyState
             title="No topics"
             description="Create the first topic from this admin panel."
-            icon="💬"
+            icon={<MessageSquare size={40} aria-hidden="true" />}
             action={<button className="primary-button" onClick={() => setShowForm(true)}>Create Topic</button>}
           />
         ) : (

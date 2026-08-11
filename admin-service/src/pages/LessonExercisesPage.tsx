@@ -23,6 +23,7 @@ import {
   BookOpen,
   Clock,
   GripVertical,
+  X,
 } from "lucide-react";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -71,26 +72,26 @@ const UI_TYPE_GROUPS: { label: string; types: UiType[] }[] = [
   },
 ];
 
-const TYPE_COLORS: Record<string, string> = {
-  multiple_choice: "bg-blue-100 text-blue-700",
-  collocation_choice: "bg-blue-100 text-blue-700",
-  image_based_choice: "bg-purple-100 text-purple-700",
-  listen_and_choose: "bg-teal-100 text-teal-700",
-  true_or_false: "bg-yellow-100 text-yellow-700",
-  reading_comprehension: "bg-orange-100 text-orange-700",
-  fill_in_the_blank: "bg-green-100 text-green-700",
-  dictation: "bg-green-100 text-green-700",
-  short_writing_answer: "bg-lime-100 text-lime-700",
-  dialogue_completion: "bg-indigo-100 text-indigo-700",
-  grammar_correction: "bg-red-100 text-red-700",
-  arrange_the_sentence: "bg-cyan-100 text-cyan-700",
-  match_word_to_meaning: "bg-pink-100 text-pink-700",
-  cognitive_fluidity: "bg-pink-100 text-pink-700",
-  categorization: "bg-violet-100 text-violet-700",
-  speaking_repeat: "bg-amber-100 text-amber-700",
-  pronunciation_practice: "bg-amber-100 text-amber-700",
-  translation_choice: "bg-sky-100 text-sky-700",
-  vocabulary_flashcard: "bg-emerald-100 text-emerald-700",
+const TYPE_TONES: Record<string, string> = {
+  multiple_choice: "tone-blue",
+  collocation_choice: "tone-blue",
+  image_based_choice: "tone-purple",
+  listen_and_choose: "tone-teal",
+  true_or_false: "tone-gold",
+  reading_comprehension: "tone-orange",
+  fill_in_the_blank: "tone-green",
+  dictation: "tone-green",
+  short_writing_answer: "tone-green",
+  dialogue_completion: "tone-purple",
+  grammar_correction: "tone-red",
+  arrange_the_sentence: "tone-teal",
+  match_word_to_meaning: "tone-berry",
+  cognitive_fluidity: "tone-berry",
+  categorization: "tone-purple",
+  speaking_repeat: "tone-gold",
+  pronunciation_practice: "tone-gold",
+  translation_choice: "tone-blue",
+  vocabulary_flashcard: "tone-green",
 };
 
 // ─── TypeSelector modal ──────────────────────────────────────────────────────
@@ -102,32 +103,34 @@ const TypeSelectorModal = ({
   onSelect: (t: UiType) => void;
   onClose: () => void;
 }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h2 className="text-lg font-bold text-gray-800">Chọn loại bài tập</h2>
+  <div className="modal-overlay lesson-exercise-overlay" role="presentation">
+    <div className="lesson-exercise-modal lesson-exercise-type-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-type-title">
+      <div className="lesson-exercise-modal-header">
+        <h2 id="exercise-type-title">Chọn loại bài tập</h2>
         <button
+          type="button"
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+          className="icon-button"
+          aria-label="Đóng"
         >
-          ✕
+          <X size={18} aria-hidden="true" />
         </button>
       </div>
-      <div className="overflow-y-auto p-6 flex flex-col gap-6">
+      <div className="lesson-exercise-modal-body exercise-type-groups">
         {UI_TYPE_GROUPS.map((group) => (
           <div key={group.label}>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2">
+            <p className="exercise-group-label">
               {group.label}
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="exercise-type-grid">
               {group.types.map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => onSelect(t)}
-                  className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-left text-sm font-medium border border-transparent hover:border-blue-300 hover:bg-blue-50 transition-colors ${TYPE_COLORS[t] ?? "bg-gray-100 text-gray-700"}`}
+                  className={`exercise-type-choice ${TYPE_TONES[t] ?? "tone-neutral"}`}
                 >
-                  <span className="font-semibold">{UI_TYPE_LABELS[t]}</span>
+                  {UI_TYPE_LABELS[t]}
                 </button>
               ))}
             </div>
@@ -166,28 +169,30 @@ const ExerciseModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+    <div className="modal-overlay lesson-exercise-overlay" role="presentation">
+      <div className="lesson-exercise-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-editor-title">
+        <div className="lesson-exercise-modal-header">
           <div>
             <span
-              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_COLORS[exercise.ui_type] ?? "bg-gray-100 text-gray-600"}`}
+              className={`exercise-type-tag ${TYPE_TONES[exercise.ui_type] ?? "tone-neutral"}`}
             >
               {UI_TYPE_LABELS[exercise.ui_type as UiType] ?? exercise.ui_type}
             </span>
-            <h2 className="text-base font-bold text-gray-800 mt-1">
+            <h2 id="exercise-editor-title">
               Bài tập #{index + 1}
             </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
+            className="icon-button"
+            aria-label="Đóng"
           >
-            ✕
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6 flex flex-col gap-4">
+        <div className="lesson-exercise-modal-body">
           <ExerciseTypeForm
             uiType={exercise.ui_type as UiType}
             value={exercise}
@@ -195,20 +200,16 @@ const ExerciseModal = ({
           />
 
           {/* Difficulty */}
-          <div className="flex flex-col gap-1">
-            <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">
+          <div className="exercise-form-field">
+            <label className="exercise-form-label">
               Difficulty (1–5)
             </label>
-            <div className="flex gap-2">
+            <div className="exercise-difficulty-options">
               {[1, 2, 3, 4, 5].map((d) => (
                 <button
                   key={d}
                   type="button"
-                  className={`w-9 h-9 rounded-lg text-sm font-bold border-2 transition-colors ${
-                    exercise.difficulty === d
-                      ? "border-blue-500 bg-blue-500 text-white"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-blue-300"
-                  }`}
+                  className={`exercise-difficulty-button${exercise.difficulty === d ? " is-active" : ""}`}
                   onClick={() => setExercise({ ...exercise, difficulty: d })}
                 >
                   {d}
@@ -218,18 +219,18 @@ const ExerciseModal = ({
           </div>
         </div>
 
-        <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
+        <div className="lesson-exercise-modal-footer">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50"
+            className="ghost-button"
           >
             Hủy
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 flex items-center justify-center gap-2"
+            className="primary-button"
           >
             <Save size={15} /> Lưu bài tập
           </button>
@@ -258,23 +259,24 @@ const ExerciseRow = ({
   onMoveUp: () => void;
   onMoveDown: () => void;
 }) => (
-  <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-4 py-3 hover:border-blue-200 transition-colors group">
-    <GripVertical size={16} className="text-gray-300 flex-shrink-0" />
-    <span className="w-7 h-7 rounded-full bg-gray-100 text-gray-500 text-xs font-bold flex items-center justify-center flex-shrink-0">
+  <div className="exercise-row">
+    <GripVertical size={16} className="exercise-drag-icon" aria-hidden="true" />
+    <span className="exercise-index">
       {index + 1}
     </span>
     <span
-      className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${TYPE_COLORS[exercise.ui_type] ?? "bg-gray-100 text-gray-600"}`}
+      className={`exercise-type-tag ${TYPE_TONES[exercise.ui_type] ?? "tone-neutral"}`}
     >
       {UI_TYPE_LABELS[exercise.ui_type as UiType] ?? exercise.ui_type}
     </span>
-    <p className="flex-1 text-sm text-gray-700 truncate">{exercise.question || <em className="text-gray-400">No question text</em>}</p>
-    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+    <p className="exercise-question">{exercise.question || <em>No question text</em>}</p>
+    <div className="exercise-row-actions">
       <button
         type="button"
         disabled={index === 0}
         onClick={onMoveUp}
-        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 text-gray-500"
+        className="icon-button"
+        aria-label={`Di chuyển bài tập ${index + 1} lên`}
         title="Move up"
       >
         <ChevronUp size={15} />
@@ -283,7 +285,8 @@ const ExerciseRow = ({
         type="button"
         disabled={index === total - 1}
         onClick={onMoveDown}
-        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-30 text-gray-500"
+        className="icon-button"
+        aria-label={`Di chuyển bài tập ${index + 1} xuống`}
         title="Move down"
       >
         <ChevronDown size={15} />
@@ -291,7 +294,8 @@ const ExerciseRow = ({
       <button
         type="button"
         onClick={onEdit}
-        className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600"
+        className="icon-button"
+        aria-label={`Sửa bài tập ${index + 1}`}
         title="Edit"
       >
         <Pencil size={15} />
@@ -299,7 +303,8 @@ const ExerciseRow = ({
       <button
         type="button"
         onClick={onDelete}
-        className="p-1.5 rounded-lg hover:bg-red-50 text-red-500"
+        className="icon-button exercise-delete-button"
+        aria-label={`Xóa bài tập ${index + 1}`}
         title="Delete"
       >
         <Trash2 size={15} />
@@ -424,47 +429,48 @@ export const LessonExercisesPage = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 size={28} className="animate-spin text-blue-500" />
+      <div className="lesson-exercise-loading">
+        <Loader2 size={28} className="is-spinning" aria-label="Đang tải" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-6 max-w-3xl mx-auto">
+    <div className="stack lesson-exercises-page">
       {/* Header */}
-      <div className="flex items-start gap-4">
+      <div>
         <button
           type="button"
           onClick={goBack}
-          className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mt-0.5"
+          className="ghost-button small lesson-back-button"
         >
           <ArrowLeft size={16} /> Quay lại Lessons
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <BookOpen size={18} className="text-blue-500" />
-          <h1 className="text-xl font-bold text-gray-900">{lesson?.title ?? "Bài học"}</h1>
+      <section className="panel lesson-summary">
+        <div className="lesson-summary-title">
+          <span className="stat-icon"><BookOpen size={18} aria-hidden="true" /></span>
+          <h1>{lesson?.title ?? "Bài học"}</h1>
           {lesson?.lesson_type && (
-            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">
+            <span className="status-pill info">
               {lesson.lesson_type}
             </span>
           )}
         </div>
         {lesson?.description && (
-          <p className="text-sm text-gray-500">{lesson.description}</p>
+          <p className="lesson-description">{lesson.description}</p>
         )}
-        <div className="flex items-center gap-4 mt-2">
-          <div className="flex items-center gap-1.5">
-            <Clock size={14} className="text-gray-400" />
-            <label className="text-xs text-gray-500">Estimated minutes:</label>
+        <div className="lesson-meta-row">
+          <div className="lesson-duration-field">
+            <Clock size={15} aria-hidden="true" />
+            <label htmlFor="estimated-minutes">Estimated minutes:</label>
             <input
+              id="estimated-minutes"
               type="number"
               min={1}
               max={120}
-              className="w-16 border border-gray-200 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="lesson-duration-input"
               value={estimatedMinutes}
               onChange={(e) => {
                 setEstimatedMinutes(Number(e.target.value));
@@ -472,33 +478,33 @@ export const LessonExercisesPage = () => {
               }}
             />
           </div>
-          <span className="text-xs text-gray-400">{exercises.length} bài tập</span>
+          <span className="table-meta">{exercises.length} bài tập</span>
         </div>
-      </div>
+      </section>
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600">
+        <div className="form-error">
           {error}
         </div>
       )}
 
       {/* Save success */}
       {saveSuccess && (
-        <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 font-medium">
+        <div className="form-success">
           Đã lưu thành công!
         </div>
       )}
 
       {/* Exercise list + actions header */}
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-700">
+      <div className="lesson-exercise-section-header">
+        <h2>
           Danh sách bài tập ({exercises.length})
         </h2>
         <button
           type="button"
           onClick={() => setShowTypeSelector(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-colors"
+          className="primary-button"
         >
           <Plus size={15} /> Thêm bài tập
         </button>
@@ -506,13 +512,13 @@ export const LessonExercisesPage = () => {
 
       {/* Exercise list */}
       {exercises.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-gray-200 rounded-2xl text-gray-400">
-          <BookOpen size={36} className="mb-3 opacity-40" />
-          <p className="text-sm font-medium">Chưa có bài tập nào</p>
-          <p className="text-xs mt-1">Nhấn "Thêm bài tập" để bắt đầu</p>
+        <div className="empty-state lesson-exercise-empty">
+          <BookOpen size={36} aria-hidden="true" />
+          <p className="empty-title">Chưa có bài tập nào</p>
+          <p className="empty-description">Nhấn "Thêm bài tập" để bắt đầu</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="exercise-list">
           {exercises.map((ex, idx) => (
             <ExerciseRow
               key={ex.id}
@@ -529,19 +535,15 @@ export const LessonExercisesPage = () => {
       )}
 
       {/* Save bar */}
-      <div className="sticky bottom-4 flex justify-end">
+      <div className="lesson-save-bar">
         <button
           type="button"
           disabled={!isDirty || saving}
           onClick={handleSaveAll}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold shadow-lg transition-all ${
-            isDirty && !saving
-              ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200"
-              : "bg-gray-100 text-gray-400 cursor-not-allowed shadow-none"
-          }`}
+          className="primary-button lesson-save-button"
         >
           {saving ? (
-            <Loader2 size={16} className="animate-spin" />
+            <Loader2 size={16} className="is-spinning" aria-hidden="true" />
           ) : (
             <Save size={16} />
           )}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StatCard } from "../components/StatCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
+import { Skeleton } from "../components/Skeleton";
 import { getMonitoringDashboard, MonitoringDashboard } from "../lib/aiApi";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
 import { checkBackendHealth, checkAiHealth } from "../lib/healthApi";
@@ -46,14 +47,30 @@ export const SuperAdminDashboard = () => {
   const warnCount = monitor?.health?.warning_count || 0;
   const critCount = monitor?.health?.critical_count || 0;
 
-  if (loading) return <div className="loading">{t.superDashboard.loadingDashboard}</div>;
+  if (loading) {
+    return (
+      <div className="stack dashboard-view">
+        <SectionHeader title={t.superDashboard.title} description={t.superDashboard.loadingDashboard} />
+        <div className="card-grid dashboard-card-grid">
+          <StatCard label={t.superDashboard.users} value="--" loading />
+          <StatCard label={t.superDashboard.cpuMemory} value="--" accent="teal" loading />
+          <StatCard label={t.superDashboard.diskUsage} value="--" accent="berry" loading />
+          <StatCard label={t.superDashboard.systemHealth} value="--" accent="ink" loading />
+        </div>
+        <div className="grid-2 dashboard-grid-2">
+          <div className="panel"><Skeleton height={260} /></div>
+          <div className="panel"><Skeleton height={260} /></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="stack">
+    <div className="stack dashboard-view">
       <SectionHeader title={t.superDashboard.title} description={t.superDashboard.subtitle} />
 
       {/* Primary Stats */}
-      <div className="card-grid">
+      <div className="card-grid dashboard-card-grid">
         <StatCard
           label={t.superDashboard.users}
           value={String(sysInfo?.totals.users || 0)}
@@ -78,7 +95,7 @@ export const SuperAdminDashboard = () => {
         />
       </div>
 
-      <div className="grid-2">
+      <div className="grid-2 dashboard-grid-2">
         {/* Service Status */}
         <div className="panel">
           <SectionHeader title={t.superDashboard.serviceStatus} description={t.superDashboard.serviceStatusDesc} />
@@ -155,9 +172,9 @@ export const SuperAdminDashboard = () => {
 
       {/* System Config Quick View */}
       {sysInfo && (
-        <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>{t.superDashboard.quickConfig}</h3>
-          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <div className="panel dashboard-config-panel">
+          <h3>{t.superDashboard.quickConfig}</h3>
+          <div className="dashboard-config-grid">
             <ConfigChip label="Env" value={sysInfo.app_env} />
             <ConfigChip label="Debug" value={sysInfo.debug ? "ON" : "OFF"} />
             <ConfigChip label="Log" value={sysInfo.log_level} />
@@ -170,10 +187,10 @@ export const SuperAdminDashboard = () => {
 
       {/* System Warnings */}
       {monitor?.health?.warnings && monitor.health.warnings.length > 0 && (
-        <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>{t.superDashboard.systemWarnings}</h4>
+        <div className="panel dashboard-warning">
+          <h4>{t.superDashboard.systemWarnings}</h4>
           {monitor.health.warnings.map((w, i) => (
-            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w.message}</p>
+            <p key={i}>{w.message}</p>
           ))}
         </div>
       )}
@@ -182,12 +199,8 @@ export const SuperAdminDashboard = () => {
 };
 
 const ConfigChip = ({ label, value }: { label: string; value: string }) => (
-  <span style={{
-    display: "inline-flex", gap: 6, alignItems: "center",
-    padding: "6px 12px", background: "var(--bg-secondary, #f5f5f5)",
-    borderRadius: 8, fontSize: 13,
-  }}>
-    <span style={{ color: "var(--muted, #666)" }}>{label}:</span>
-    <span style={{ fontWeight: 600 }}>{value}</span>
+  <span className="dashboard-config-chip">
+    <span>{label}:</span>
+    <strong>{value}</strong>
   </span>
 );

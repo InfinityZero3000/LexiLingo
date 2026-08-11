@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Bell, Calendar, MessageSquare, Plus, Radio } from "lucide-react";
+import { Bell, Calendar, Loader2, MessageSquare, Plus, Radio } from "lucide-react";
 
 import { NotificationCampaignDrawer } from "../components/notification-campaign/NotificationCampaignDrawer";
 import { NotificationCampaignModal } from "../components/notification-campaign/NotificationCampaignModal";
+import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
 import {
@@ -15,9 +16,9 @@ import {
 } from "../lib/notificationCampaignApi";
 
 const JOB_TYPE_ICONS: Record<string, React.ReactNode> = {
-  targeted_push: <Bell className="w-4 h-4" />,
-  in_app_broadcast: <MessageSquare className="w-4 h-4" />,
-  scheduled_push: <Calendar className="w-4 h-4" />,
+  targeted_push: <Bell size={16} aria-hidden="true" />,
+  in_app_broadcast: <MessageSquare size={16} aria-hidden="true" />,
+  scheduled_push: <Calendar size={16} aria-hidden="true" />,
 };
 
 const STATUS_TONE: Record<
@@ -92,27 +93,24 @@ export function NotificationCampaignPage() {
         description="Gửi push notification và in-app broadcast đến user segments."
         action={
           <button className="primary-button" onClick={() => setShowModal(true)}>
-            <Plus className="w-4 h-4 mr-1" />
+            <Plus size={16} aria-hidden="true" />
             Tạo Campaign
           </button>
         }
       />
 
-      {error && <div className="alert alert-error mb-4">{error}</div>}
+      {error && <div className="form-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       {loading && jobs.length === 0 ? (
-        <div className="empty-state">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-          <p className="mt-2 text-sm text-muted">Đang tải...</p>
-        </div>
+        <EmptyState icon={<Loader2 className="is-spinning" size={32} />} title="Đang tải..." />
       ) : jobs.length === 0 ? (
-        <div className="empty-state">
-          <Radio className="w-10 h-10 text-muted mb-2 mx-auto" />
-          <p className="font-medium">Chưa có campaign nào</p>
-          <p className="text-sm text-muted">Tạo campaign đầu tiên để bắt đầu.</p>
-        </div>
+        <EmptyState
+          icon={<Radio size={36} />}
+          title="Chưa có campaign nào"
+          description="Tạo campaign đầu tiên để bắt đầu."
+        />
       ) : (
-        <div className="data-table-wrapper">
+        <div className="table-container">
           <table className="data-table">
             <thead>
               <tr>
@@ -132,39 +130,39 @@ export function NotificationCampaignPage() {
                 return (
                   <tr
                     key={job.id}
-                    className="cursor-pointer hover:bg-muted/10"
+                    style={{ cursor: "pointer" }}
                     onClick={() => setActiveJob(job)}
                   >
                     <td>
-                      <span className="flex items-center gap-1.5">
+                      <span className="inline-actions">
                         {JOB_TYPE_ICONS[job.job_type]}
-                        <span className="font-medium">{JOB_TYPE_LABELS[job.job_type]}</span>
+                        <span className="table-title">{JOB_TYPE_LABELS[job.job_type]}</span>
                       </span>
                     </td>
                     <td>
                       <StatusPill tone={STATUS_TONE[job.status]} label={STATUS_LABELS[job.status]} />
                     </td>
                     <td>
-                      <span className="text-sm text-muted">{job.progress.percent}%</span>
+                      <span className="table-meta">{job.progress.percent}%</span>
                     </td>
                     <td>
-                      <span className="text-sm text-muted">
+                      <span className="table-meta">
                         {art ? `${String(art.audience_size ?? "?")} users` : "—"}
                       </span>
                     </td>
                     <td>
                       {Object.keys(stats).length > 0 ? (
-                        <span className="text-sm text-green-600 font-medium">
+                        <span className="table-title" style={{ color: "var(--accent-2)" }}>
                           {String(stats.sent ?? 0)} sent
                         </span>
                       ) : (
-                        <span className="text-sm text-muted">—</span>
+                        <span className="table-meta">—</span>
                       )}
                     </td>
-                    <td className="text-sm text-muted">{formatDate(job.created_at)}</td>
+                    <td className="table-meta">{formatDate(job.created_at)}</td>
                     <td>
                       <button
-                        className="ghost-button text-sm"
+                        className="ghost-button small"
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveJob(job);

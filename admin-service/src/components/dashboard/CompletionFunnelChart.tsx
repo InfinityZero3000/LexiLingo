@@ -1,5 +1,6 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { Skeleton } from "../Skeleton";
 
 export type FunnelData = {
   stage: string;
@@ -13,29 +14,29 @@ type Props = {
   error?: boolean;
 };
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
+const COLORS = ["var(--accent)", "var(--accent-2)", "var(--accent-3)", "var(--accent-4)"];
 
 export const CompletionFunnelChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
     return (
-      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="loading-text">Đang tải dữ liệu...</div>
+      <div className="chart-container" aria-busy="true">
+        <Skeleton height={300} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="loading-text">Không tải được dữ liệu.</div>
+      <div className="chart-state error">
+        Không tải được dữ liệu.
       </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="loading-text">Chưa có dữ liệu funnel</div>
+      <div className="chart-state">
+        Chưa có dữ liệu funnel
       </div>
     );
   }
@@ -48,7 +49,7 @@ export const CompletionFunnelChart: React.FC<Props> = ({ data, loading, error })
           layout="vertical"
           margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
           <XAxis type="number" tick={{ fontSize: 12 }} />
           <YAxis
             type="category"

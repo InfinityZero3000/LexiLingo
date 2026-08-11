@@ -5,7 +5,7 @@ import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
 import { getAiConfig, updateAiConfig } from "../lib/healthApi";
-import { Bot, Zap, Key } from "lucide-react";
+import { Bot, CheckCircle, Key, Lightbulb, Zap } from "lucide-react";
 
 interface AiChatConfig {
   gemini_api_key?: string;
@@ -100,7 +100,7 @@ export const AiChatSettingsPage = () => {
 
   return (
     <div className="stack">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="page-header-actions">
         <SectionHeader 
           title={t.aiChat.title} 
           description={t.aiChat.description} 
@@ -116,8 +116,8 @@ export const AiChatSettingsPage = () => {
 
       {saveError && <div className="form-error">{saveError}</div>}
       {saveSuccess && (
-        <div style={{ padding: "12px 16px", borderRadius: 10, background: "#d1fae5", border: "1px solid #10b981", color: "#065f46", fontSize: 14, fontWeight: 500 }}>
-          ✓ {t.common.success}
+        <div className="form-success">
+          <CheckCircle size={16} aria-hidden="true" /> {t.common.success}
         </div>
       )}
 
@@ -337,9 +337,9 @@ export const AiChatSettingsPage = () => {
           <small style={{ color: "var(--muted)" }}>{t.aiChat.apiKeyHint}</small>
         </div>
 
-        <div className="panel" style={{ padding: 12, background: "#EFF6FF", border: "1px solid #BFDBFE", marginTop: 12 }}>
-          <p style={{ margin: 0, fontSize: 13, color: "#1E40AF" }}>
-            💡 {t.aiChat.apiKeyNote}
+        <div className="info-callout">
+          <p>
+            <Lightbulb size={16} aria-hidden="true" /> {t.aiChat.apiKeyNote}
           </p>
         </div>
       </div>

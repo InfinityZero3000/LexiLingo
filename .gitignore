@@ -131,6 +131,7 @@ system-testing/
 dist/
 build/
 *.tsbuildinfo
+admin-service/src/tailwind-utilities.generated.css
 .deploy/
 backups/
 

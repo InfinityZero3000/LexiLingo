@@ -1,4 +1,5 @@
 import React from "react";
+import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
 import {
   type Exercise,
   type ExerciseOption,
@@ -20,10 +21,9 @@ const newOption = (idx: number, isCorrect = false): ExerciseOption => ({
   is_correct: isCorrect,
 });
 
-const inputCls =
-  "w-full border border-[var(--line)] rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400";
-const labelCls = "block text-xs font-semibold text-[var(--muted)] mb-1 uppercase tracking-wide";
-const fieldCls = "flex flex-col gap-1";
+const inputCls = "exercise-form-input";
+const labelCls = "exercise-form-label";
+const fieldCls = "exercise-form-field";
 
 // ─── sub-sections ────────────────────────────────────────────────────────────
 
@@ -46,7 +46,7 @@ const CommonFields = ({
         onChange={(e) => onChange({ ...value, explanation: e.target.value || null })}
       />
     </div>
-    <div className="grid grid-cols-2 gap-3">
+    <div className="exercise-form-grid">
       <div className={fieldCls}>
         <label className={labelCls}>Hint (optional)</label>
         <input
@@ -100,42 +100,40 @@ const OptionsEditor = ({
   return (
     <div className={fieldCls}>
       <label className={labelCls}>Options</label>
-      <div className="flex flex-col gap-2">
+      <div className="exercise-form-list">
         {options.map((opt, idx) => (
-          <div key={opt.id} className="flex items-center gap-2">
+          <div key={opt.id} className="exercise-form-row">
             <button
               type="button"
               title={opt.is_correct ? "Đáp án đúng" : "Nhấn để đánh dấu đúng"}
-              className={`w-6 h-6 rounded-full flex-shrink-0 border-2 transition-colors ${
-                opt.is_correct
-                  ? "bg-green-500 border-green-500 text-white"
-                  : "border-gray-300 bg-white"
-              }`}
+              aria-label={opt.is_correct ? "Đáp án đúng" : "Đánh dấu là đáp án đúng"}
+              className={`exercise-option-toggle${opt.is_correct ? " is-correct" : ""}`}
               onClick={() => markCorrect(idx)}
             >
-              {opt.is_correct && <span className="text-xs font-bold">✓</span>}
+              {opt.is_correct && <Check size={14} aria-hidden="true" />}
             </button>
             <input
-              className={`${inputCls} flex-1`}
+              className={inputCls}
               value={opt.text}
               placeholder={`Option ${idx + 1}`}
               onChange={(e) => setOption(idx, { text: e.target.value })}
             />
             <button
               type="button"
-              className="text-red-400 hover:text-red-600 text-sm px-1"
+              className="icon-button exercise-remove-button"
+              aria-label={`Xóa option ${idx + 1}`}
               onClick={() => removeOption(idx)}
             >
-              ✕
+              <Trash2 size={15} aria-hidden="true" />
             </button>
           </div>
         ))}
         <button
           type="button"
-          className="self-start text-sm text-blue-600 hover:text-blue-800 font-medium"
+          className="ghost-button small exercise-add-button"
           onClick={addOption}
         >
-          + Thêm option
+          <Plus size={15} aria-hidden="true" /> Thêm option
         </button>
       </div>
     </div>
@@ -174,37 +172,38 @@ const PairsEditor = ({
       <label className={labelCls}>
         Pairs ({leftLabel} → {rightLabel})
       </label>
-      <div className="flex flex-col gap-2">
+      <div className="exercise-form-list">
         {pairs.map(([l, r], idx) => (
-          <div key={idx} className="flex items-center gap-2">
+          <div key={idx} className="exercise-form-row">
             <input
-              className={`${inputCls} flex-1`}
+              className={inputCls}
               placeholder={leftLabel}
               value={l}
               onChange={(e) => set(idx, 0, e.target.value)}
             />
-            <span className="text-gray-400 text-sm">→</span>
+            <ArrowRight className="exercise-pair-arrow" size={16} aria-hidden="true" />
             <input
-              className={`${inputCls} flex-1`}
+              className={inputCls}
               placeholder={rightLabel}
               value={r}
               onChange={(e) => set(idx, 1, e.target.value)}
             />
             <button
               type="button"
-              className="text-red-400 hover:text-red-600 text-sm px-1"
+              className="icon-button exercise-remove-button"
+              aria-label={`Xóa cặp ${idx + 1}`}
               onClick={() => remove(idx)}
             >
-              ✕
+              <Trash2 size={15} aria-hidden="true" />
             </button>
           </div>
         ))}
         <button
           type="button"
-          className="self-start text-sm text-blue-600 hover:text-blue-800 font-medium"
+          className="ghost-button small exercise-add-button"
           onClick={add}
         >
-          + Thêm cặp
+          <Plus size={15} aria-hidden="true" /> Thêm cặp
         </button>
       </div>
       {/* hidden helper so caller can read toOptions */}
@@ -274,16 +273,12 @@ const TrueFalseForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exe
       </div>
       <div className={fieldCls}>
         <label className={labelCls}>Correct Answer</label>
-        <div className="flex gap-3">
+        <div className="exercise-answer-options">
           {(["True", "False"] as const).map((v) => (
             <button
               key={v}
               type="button"
-              className={`flex-1 py-2 rounded-lg border-2 text-sm font-semibold transition-colors ${
-                correct === v
-                  ? "border-green-500 bg-green-50 text-green-700"
-                  : "border-gray-200 bg-white text-gray-600"
-              }`}
+              className={`exercise-answer-button${correct === v ? " is-active" : ""}`}
               onClick={() =>
                 onChange({
                   ...value,
@@ -320,7 +315,7 @@ const FillBlankForm = ({
     <>
       <div className={fieldCls}>
         <label className={labelCls}>
-          Sentence (use <code className="bg-gray-100 px-1 rounded">{"{blank}"}</code> for the gap)
+          Sentence (use <code className="exercise-inline-code">{"{blank}"}</code> for the gap)
         </label>
         <textarea
           className={inputCls}
@@ -360,7 +355,7 @@ const DialogueForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exer
     <>
       <div className={fieldCls}>
         <label className={labelCls}>
-          Dialogue (use <code className="bg-gray-100 px-1 rounded">{"{blank}"}</code> for the gap)
+          Dialogue (use <code className="exercise-inline-code">{"{blank}"}</code> for the gap)
         </label>
         <textarea
           className={inputCls}
@@ -369,7 +364,7 @@ const DialogueForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exer
           placeholder={"A: Do you speak English?\nB: Yes, I {blank}."}
           onChange={(e) => onChange({ ...value, question: e.target.value })}
         />
-        <p className="text-xs text-gray-400 mt-1">Format: "A: ... B: ... {`{blank}`}"</p>
+        <p className="exercise-form-help">Format: "A: ... B: ... {`{blank}`}"</p>
       </div>
       <div className={fieldCls}>
         <label className={labelCls}>Correct Answer</label>
@@ -380,7 +375,7 @@ const DialogueForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exer
           onChange={(e) => onChange({ ...value, correct_answer: e.target.value })}
         />
       </div>
-      <div className="flex flex-col gap-1">
+      <div className={fieldCls}>
         <label className={labelCls}>Options (leave empty for text input mode)</label>
         <OptionsEditor
           options={options}
@@ -425,7 +420,7 @@ const ArrangeForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exerc
           placeholder="they / study / every / day"
           onChange={(e) => handleWordsChange(e.target.value)}
         />
-        <p className="text-xs text-gray-400">Nhập các từ cần sắp xếp, phân cách bằng /</p>
+        <p className="exercise-form-help">Nhập các từ cần sắp xếp, phân cách bằng /</p>
       </div>
       <div className={fieldCls}>
         <label className={labelCls}>Correct Sentence</label>
@@ -592,8 +587,8 @@ const FlashcardForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exe
       </div>
       <div className={fieldCls}>
         <label className={labelCls}>Mode</label>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <div className="exercise-mode-options">
+          <label className="exercise-radio-label">
             <input
               type="radio"
               checked={!hasOptions}
@@ -603,7 +598,7 @@ const FlashcardForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exe
             />
             Simple flashcard ("Got it!")
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="exercise-radio-label">
             <input
               type="radio"
               checked={hasOptions}
@@ -694,7 +689,7 @@ const ImageChoiceForm = ({ value, onChange }: { value: Exercise; onChange: (u: E
         <img
           src={value.image_url}
           alt="preview"
-          className="w-32 h-24 object-cover rounded-lg border border-gray-200"
+          className="exercise-image-preview"
           onError={(e) => ((e.target as HTMLImageElement).style.display = "none")}
         />
       )}
@@ -806,8 +801,8 @@ const GrammarCorrectionForm = ({
       </div>
       <div className={fieldCls}>
         <label className={labelCls}>Mode</label>
-        <div className="flex gap-3">
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <div className="exercise-mode-options">
+          <label className="exercise-radio-label">
             <input
               type="radio"
               checked={!hasOptions}
@@ -815,7 +810,7 @@ const GrammarCorrectionForm = ({
             />
             Free text input
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <label className="exercise-radio-label">
             <input
               type="radio"
               checked={hasOptions}

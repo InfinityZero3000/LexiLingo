@@ -1,5 +1,6 @@
 import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { Skeleton } from "../Skeleton";
 
 export type CoursePopularityData = {
   course_title: string;
@@ -12,29 +13,29 @@ type Props = {
   error?: boolean;
 };
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+const COLORS = ["var(--accent)", "var(--accent-2)", "var(--accent-3)", "var(--accent-4)"];
 
 export const CoursePopularityChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
     return (
-      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="loading-text">Đang tải dữ liệu...</div>
+      <div className="chart-container" aria-busy="true">
+        <Skeleton height={300} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="loading-text">Không tải được dữ liệu.</div>
+      <div className="chart-state error">
+        Không tải được dữ liệu.
       </div>
     );
   }
 
   if (!data || data.length === 0) {
     return (
-      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div className="loading-text">Chưa có dữ liệu khóa học</div>
+      <div className="chart-state">
+        Chưa có dữ liệu khóa học
       </div>
     );
   }

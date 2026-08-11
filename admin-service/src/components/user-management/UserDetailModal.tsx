@@ -4,6 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, Gem, ShoppingBag, UserRound } from 'lucide-react';
 import {
   getUserDetail,
   updateUser,
@@ -46,6 +47,12 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const [amount, setAmount] = useState<number>(100);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const GiftTypeIcon = {
+    gems: Gem,
+    course: BookOpen,
+    avatar: UserRound,
+    shop_item: ShoppingBag,
+  }[giftType];
 
   // Queries
   const { data: user, isLoading, error, refetch } = useQuery<UserDetailView>({
@@ -455,22 +462,24 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                 <form onSubmit={handleSendGift} className="form" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     Loại quà tặng
-                    <select 
-                      value={giftType} 
-                      onChange={(e) => {
-                        const val = e.target.value as any;
-                        setGiftType(val);
-                        setAmount(val === 'gems' ? 100 : 1);
-                        setSuccessMessage(null);
-                        setErrorMessage(null);
-                      }}
-                      style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid var(--line)', background: 'var(--panel-soft)', color: 'var(--text)' }}
-                    >
-                      <option value="gems">💎 Gems (Tiền ảo)</option>
-                      <option value="course">📚 Khóa học (Course)</option>
-                      <option value="avatar">👤 Ảnh đại diện (Avatar Shop)</option>
-                      <option value="shop_item">🛍️ Vật phẩm hỗ trợ (Streak freeze, Heart refill, Double XP...)</option>
-                    </select>
+                    <div className="gift-type-select">
+                      <GiftTypeIcon size={18} aria-hidden="true" />
+                      <select
+                        value={giftType}
+                        onChange={(e) => {
+                          const val = e.target.value as typeof giftType;
+                          setGiftType(val);
+                          setAmount(val === 'gems' ? 100 : 1);
+                          setSuccessMessage(null);
+                          setErrorMessage(null);
+                        }}
+                      >
+                        <option value="gems">Gems (Tiền ảo)</option>
+                        <option value="course">Khóa học (Course)</option>
+                        <option value="avatar">Ảnh đại diện (Avatar Shop)</option>
+                        <option value="shop_item">Vật phẩm hỗ trợ (Streak freeze, Heart refill, Double XP...)</option>
+                      </select>
+                    </div>
                   </label>
 
                   {/* Course Dropdown */}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { BookOpen, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -194,22 +194,24 @@ export const CoursesPage = () => {
       {error && <div className="form-error">{error}</div>}
 
       {/* Toolbar */}
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, flex: 1, minWidth: 200 }}>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
+          <form onSubmit={handleSearch} className="filter-search-form">
             <input
+              className="search-input"
               placeholder={t.courses.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ flex: 1 }}
             />
-            <button className="ghost-button" type="submit">{t.common.search}</button>
+            <button className="icon-button filter-search-button" type="submit" aria-label={t.common.search} title={t.common.search}>
+              <Search size={18} aria-hidden="true" />
+            </button>
           </form>
-          <select value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
+          <select className="filter-select" value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allLevels}</option>
             {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
-          <select value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
+          <select className="filter-select" value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allStatus}</option>
             <option value="true">{t.common.published}</option>
             <option value="false">{t.common.draft}</option>
@@ -263,7 +265,7 @@ export const CoursesPage = () => {
           <EmptyState
             title={t.courses.noCourses}
             description={t.courses.noCoursesDesc}
-            icon="📚"
+            icon={<BookOpen size={40} aria-hidden="true" />}
             action={
               <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
                 {t.courses.createCourse}
@@ -328,14 +330,14 @@ export const CoursesPage = () => {
               rows={courses}
             />
             {/* Pagination */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
-              <button className="ghost-button small" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            <div className="pagination">
+              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 {t.courses.prev}
               </button>
-              <span className="table-meta" style={{ padding: "6px 12px" }}>
+              <span className="page-info">
                 {t.common.page} {page} {t.common.of} {Math.ceil(total / 20) || 1}
               </span>
-              <button className="ghost-button small" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
+              <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
                 {t.courses.next}
               </button>
             </div>

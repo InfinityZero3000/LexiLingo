@@ -339,20 +339,18 @@ export const AchievementsPage = () => {
 
       {error && <div className="form-error">{error}</div>}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
           <select
-            className="form-input"
+            className="filter-select"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            style={{ width: 200 }}
           >
             <option value="">{t.achievements.allCategories} ({items.length})</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c} ({categoryCounts[c] || 0})</option>
             ))}
           </select>
-          <div style={{ flex: 1 }} />
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
             {t.achievements.createAchievement}
           </button>
