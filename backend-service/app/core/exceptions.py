@@ -5,6 +5,7 @@ Returns error responses in the consistent ErrorResponse envelope format.
 
 import logging
 from fastapi import Request, status, HTTPException
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
@@ -52,11 +53,14 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
     """Handle Pydantic validation errors."""
+    # exc.errors() can include the raw exception instance in a validator's
+    # ctx (e.g. a field_validator that raises ValueError(...)) — not JSON
+    # serializable on its own, so it must go through jsonable_encoder first.
     error_response = ErrorResponse(
         error=ErrorDetail(
             code=ErrorCodes.VALIDATION_ERROR,
             message="Validation failed",
-            details={"errors": exc.errors()}
+            details={"errors": jsonable_encoder(exc.errors())}
         ),
         meta=RequestMeta(
             request_id=getattr(request.state, "request_id", "unknown")
