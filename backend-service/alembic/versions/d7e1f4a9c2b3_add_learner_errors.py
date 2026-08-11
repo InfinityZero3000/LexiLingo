@@ -1,7 +1,7 @@
 """Add durable learner error history.
 
 Revision ID: d7e1f4a9c2b3
-Revises: add_notification_campaign_jobs, bd41c2120a87
+Revises: 74b24453f92f
 Create Date: 2026-08-10
 """
 
@@ -16,10 +16,7 @@ from app.core.db_types import GUID, PortableJSON, TZDateTime
 
 
 revision: str = "d7e1f4a9c2b3"
-down_revision: tuple[str, str] = (
-    "add_notification_campaign_jobs",
-    "bd41c2120a87",
-)
+down_revision: str = "74b24453f92f"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
