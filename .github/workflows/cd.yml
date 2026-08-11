@@ -2,7 +2,7 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
 
 concurrency:
   group: cd-${{ github.ref }}
@@ -115,6 +115,57 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
+        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+
+  # ──────────────────────────────────────────────
+  # Admin Dashboard → Vercel
+  # ──────────────────────────────────────────────
+  deploy-admin:
+    name: Deploy Admin Dashboard → Vercel
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: admin-service
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: admin-service/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: CI=true pnpm install --config.allowBuilds.esbuild=true --config.confirmModulesPurge=false
+
+      - name: Install latest Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel project settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+
+      - name: Build Vercel prebuilt output
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+        run: vercel build --prod --token "$VERCEL_TOKEN"
+
+      - name: Deploy to Vercel (prebuilt)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
         run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
 
   # ──────────────────────────────────────────────
