@@ -69,7 +69,7 @@ llama-cpp-python>=0.3.34
 
 # Audio Processing (for HuBERT resampling)
 # scipy 1.18+ requires Python 3.12; CI runs Python 3.11.
-scipy>=1.18.0,<1.19.0
+scipy>=1.17.1,<1.18.0
 
 # HTTP Downloads
 requests>=2.34.2
