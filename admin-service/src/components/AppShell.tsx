@@ -44,7 +44,7 @@ export const AppShell = ({
 
       <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div className="brand">
-          <div className="brand-mark" style={{ background: "transparent", padding: 0, borderRadius: 0, overflow: "visible" }}>
+          <div className="brand-mark" style={{ background: "transparent", padding: 0, borderRadius: 0, overflow: "visible", boxShadow: "none" }}>
             <img src="/favicon-admin.png" alt="LexiLingo" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
           </div>
           <div>
