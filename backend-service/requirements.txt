@@ -17,7 +17,7 @@ alembic>=1.19.0
 
 # Data Validation
 pydantic>=2.13.4
-pydantic-settings>=2.14.2
+pydantic-settings>=2.15.0
 email-validator>=2.3.0
 
 # Security
@@ -42,7 +42,7 @@ httpx>=0.28.1
 feedparser>=6.0.14
 
 # News article full-text extraction
-trafilatura>=2.1.0
+trafilatura>=2.2.0
 
 # YouTube captions (no OAuth needed — uses public transcript endpoints)
 youtube-transcript-api>=0.6.3
@@ -73,4 +73,4 @@ httpx>=0.27.0
 black>=26.5.1
 isort>=8.0.1
 flake8>=7.3.0
-ruff>=0.16.1
+ruff>=0.16.2
