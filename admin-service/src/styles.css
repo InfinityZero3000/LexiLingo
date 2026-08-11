@@ -1686,6 +1686,7 @@ textarea:focus {
   border-radius: 12px;
   padding: 24px;
   width: 100%;
+  max-width: 480px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 24px 60px rgba(13, 31, 45, 0.22);

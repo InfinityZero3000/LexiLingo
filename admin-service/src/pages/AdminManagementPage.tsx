@@ -211,7 +211,7 @@ export const AdminManagementPage = () => {
       {/* Add Admin Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
             <SectionHeader
               title={t.adminManagement.addAdmin}
               description={t.adminManagement.addAdminDesc}
