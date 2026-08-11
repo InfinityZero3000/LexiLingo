@@ -509,7 +509,7 @@ When requesting features:
 
 - **Questions:** GitHub Discussions
 - **Bugs:** GitHub Issues
-- **Security:** Email to security@lexilingo.com
+- **Security:** Email to nhthang312@gmail.com
 - **Chat:** Team Slack/Discord
 
 ## 📜 License
