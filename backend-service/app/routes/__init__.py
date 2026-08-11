@@ -8,6 +8,7 @@ from app.routes.health import router as health_router
 from app.routes.auth import router as auth_router
 from app.routes.users import router as users_router
 from app.routes.courses import router as courses_router
+from app.routes.integrations import router as integrations_router
 from app.routes.progress import router as progress_router
 from app.routes.vocabulary import router as vocabulary_router
 from app.routes.gamification import router as gamification_router
@@ -17,8 +18,8 @@ __all__ = [
     "auth_router",
     "users_router",
     "courses_router",
+    "integrations_router",
     "progress_router",
     "vocabulary_router",
     "gamification_router",
 ]
-

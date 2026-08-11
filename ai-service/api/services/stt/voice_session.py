@@ -53,8 +53,18 @@ class VoiceSession:
         self._segment = bytearray()
         self._segment_start_ms = 0
         self._clock_ms = 0
-        self._finalizer = SentenceFinalizer(config, registry)
+        self._finalizer = SentenceFinalizer(config, registry, self.metrics)
         self._downstream_futures: dict[asyncio.Future, str] = {}
+        # timing
+        self._session_start_monotonic = time.monotonic()
+        self._first_audio_at: float | None = None
+        self._first_partial_emitted = False
+        self._vad_speech_end_at: float | None = None
+        # per-session aggregates (flushed to metrics on stop)
+        self._finals_count = 0
+        self._verified_count = 0
+        self._uncertain_count = 0
+        self._total_confidence = 0.0
 
     async def start_worker(self) -> None:
         self._primary = await self.registry.create_primary_session(self.start.language)
@@ -103,6 +113,8 @@ class VoiceSession:
                 await self._primary.close()
 
     async def _process(self, frame: AudioFrame) -> None:
+        if self._first_audio_at is None:
+            self._first_audio_at = time.monotonic()
         start_ms = self._clock_ms
         self._clock_ms += frame.duration_ms
         self.ring.append(frame.pcm16)
@@ -119,6 +131,12 @@ class VoiceSession:
             )
             self.transcripts.set_partial(event)
             await self.emit(event.model_dump())
+            if not self._first_partial_emitted:
+                self._first_partial_emitted = True
+                self.metrics.record_latency(
+                    "stt_time_to_first_partial_ms",
+                    (time.monotonic() - self._first_audio_at) * 1000,
+                )
         vad_event = self.vad.process(frame.pcm16, frame.duration_ms)
         if vad_event.speech_started:
             pre_roll_bytes = self.config.pre_roll_ms * 16000 * 2 // 1000
@@ -127,6 +145,7 @@ class VoiceSession:
         elif self.vad.in_speech:
             self._segment.extend(frame.pcm16)
         if vad_event.speech_ended:
+            self._vad_speech_end_at = time.monotonic()
             await self._finalize_segment()
 
     async def _finalize_segment(self) -> None:
@@ -162,14 +181,30 @@ class VoiceSession:
                 utterance_id,
                 self.start.user_id,
             )
-            self.transcripts.add_final(final)
-            await self.emit(final.model_dump(), preserve=True)
-            if self.final_sink:
-                completion = await self.final_sink.submit(
-                    final, self.emit_downstream_response
-                )
-                self._downstream_futures[completion] = final.utterance_id
-                completion.add_done_callback(self._downstream_futures.pop)
+            if final is not None:
+                self.transcripts.add_final(final)
+                await self.emit(final.model_dump(), preserve=True)
+                if self._vad_speech_end_at is not None:
+                    self.metrics.record_latency(
+                        "stt_final_latency_ms",
+                        (time.monotonic() - self._vad_speech_end_at) * 1000,
+                    )
+                    self._vad_speech_end_at = None
+                self._finals_count += 1
+                self._total_confidence += final.confidence
+                if final.verified:
+                    self._verified_count += 1
+                if final.uncertain:
+                    self._uncertain_count += 1
+                if self.final_sink:
+                    completion = await self.final_sink.submit(
+                        final, self.emit_downstream_response
+                    )
+                    self._downstream_futures[completion] = final.utterance_id
+                    completion.add_done_callback(self._downstream_futures.pop)
+            else:
+                self.transcripts.candidates.pop(utterance_id, None)
+                self.metrics.increment("stt_noise_utterances_dropped")
             self.metrics.increment("stt_number_of_segments")
         self._segment.clear()
 
@@ -227,6 +262,21 @@ class VoiceSession:
                         }
                     )
                 await asyncio.gather(group, return_exceptions=True)
+        session_duration_s = time.monotonic() - self._session_start_monotonic
+        self.metrics.record_latency("stt_session_duration_s", session_duration_s)
+        if self._finals_count > 0:
+            self.metrics.record_latency(
+                "stt_session_avg_confidence",
+                self._total_confidence / self._finals_count,
+            )
+            self.metrics.record_latency(
+                "stt_session_verify_rate",
+                self._verified_count / self._finals_count,
+            )
+            self.metrics.record_latency(
+                "stt_session_uncertain_rate",
+                self._uncertain_count / self._finals_count,
+            )
         self.writer.close(delete=not self.config.save_audio_for_debug)
         await self.emit(
             {

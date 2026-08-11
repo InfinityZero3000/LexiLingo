@@ -24,45 +24,6 @@ const asAdminResponse = <T>(payload: T | AdminResponse<T>): AdminResponse<T> => 
   };
 };
 
-export type AdminUser = {
-  id: string;
-  email: string;
-  username: string;
-  display_name?: string | null;
-  is_active: boolean;
-  is_verified: boolean;
-  role_slug: string;
-  role_level: number;
-  created_at: string;
-  last_login?: string | null;
-};
-
-export type RoleInfo = {
-  id: string;
-  name: string;
-  slug: string;
-  level: number;
-};
-
-export const listUsers = async (search?: string) => {
-  const url = new URL(`${ENV.backendUrl}/admin/users`);
-  url.searchParams.set("limit", "100");
-  url.searchParams.set("offset", "0");
-  if (search) url.searchParams.set("search", search);
-  return apiFetch<AdminResponse<AdminUser[]>>(url.toString());
-};
-
-export const updateUser = async (userId: string, payload: { role_slug?: string; is_active?: boolean; display_name?: string }) => {
-  return apiFetch<AdminResponse<AdminUser>>(`${ENV.backendUrl}/admin/users/${userId}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload)
-  });
-};
-
-export const listRoles = async () => {
-  return apiFetch<AdminResponse<RoleInfo[]>>(`${ENV.backendUrl}/admin/roles`);
-};
-
 // ============================================================================
 // Topic Chat Management (AI Service Admin)
 // ============================================================================
@@ -85,14 +46,8 @@ export type TopicsAdminPayload = {
   total: number;
 };
 
-const aiAdminHeaders = () => ({
-  ...(ENV.aiAdminApiKey ? { "X-Admin-Key": ENV.aiAdminApiKey } : {}),
-});
-
 export const listTopicStoriesAdmin = async () =>
-  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=200`, {
-    headers: aiAdminHeaders(),
-  });
+  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=200`);
 
 export const createTopicStoryAdmin = async (payload: {
   story_id?: string;
@@ -108,7 +63,6 @@ export const createTopicStoryAdmin = async (payload: {
 }) =>
   apiFetch<AdminResponse<TopicItem>>(`${ENV.aiAdminUrl}/topics`, {
     method: "POST",
-    headers: aiAdminHeaders(),
     body: JSON.stringify(payload),
   });
 
@@ -145,6 +99,15 @@ export const deleteGrammar = async (id: string) =>
     method: "DELETE"
   });
 
+export const bulkImportGrammar = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/grammar/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
+
 // Questions
 export type QuestionItem = {
   id: string;
@@ -179,6 +142,15 @@ export const deleteQuestion = async (id: string) =>
     method: "DELETE"
   });
 
+export const bulkImportQuestions = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/questions/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
+
 // Test exams
 export type TestExam = {
   id: string;
@@ -210,6 +182,15 @@ export const deleteTestExam = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/test-exams/${id}`, {
     method: "DELETE"
   });
+
+export const bulkImportTestExams = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/test-exams/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
 
 // ============================================================================
 // Achievement Management
@@ -280,6 +261,8 @@ export const uploadBadgeImage = async (file: File): Promise<AdminResponse<{ url:
 // Shop Management
 // ============================================================================
 
+export type ShopItemEffects = Record<string, unknown>;
+
 export type ShopItemType = {
   id: string;
   name: string;
@@ -289,6 +272,7 @@ export type ShopItemType = {
   is_available: boolean;
   stock_quantity?: number | null;
   icon_url?: string | null;
+  effects?: ShopItemEffects | null;
 };
 
 export const listShopItems = async (includeUnavailable = true) =>
@@ -303,17 +287,19 @@ export const createShopItem = async (params: {
   price_gems: number;
   is_available?: boolean;
   stock_quantity?: number;
-}) => {
-  const url = new URL(`${ENV.backendUrl}/admin/shop`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, String(v)); });
-  return apiFetch<AdminResponse<ShopItemType>>(url.toString(), { method: "POST" });
-};
+  icon_url?: string;
+  effects?: ShopItemEffects;
+}) =>
+  apiFetch<AdminResponse<ShopItemType>>(`${ENV.backendUrl}/admin/shop`, {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
 
-export const updateShopItem = async (id: string, params: Partial<ShopItemType>) => {
-  const url = new URL(`${ENV.backendUrl}/admin/shop/${id}`);
-  Object.entries(params).forEach(([k, v]) => { if (v !== undefined) url.searchParams.set(k, String(v)); });
-  return apiFetch<AdminResponse<ShopItemType>>(url.toString(), { method: "PUT" });
-};
+export const updateShopItem = async (id: string, params: Partial<ShopItemType>) =>
+  apiFetch<AdminResponse<ShopItemType>>(`${ENV.backendUrl}/admin/shop/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
 
 export const deleteShopItem = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/shop/${id}`, {
@@ -388,6 +374,12 @@ export const deleteCourse = async (id: string) =>
   apiFetch<AdminResponse<{ deleted: boolean }>>(`${ENV.backendUrl}/admin/courses/${id}`, {
     method: "DELETE",
   });
+
+export const bulkImportCourses = async (courses: unknown[]) =>
+  apiFetch<AdminResponse<{ courses: number; units: number; lessons: number; errors: string[] }>>(
+    `${ENV.backendUrl}/admin/courses/bulk-import`,
+    { method: "POST", body: JSON.stringify({ courses }) }
+  );
 
 // ============================================================================
 // Unit Management
@@ -508,6 +500,7 @@ export type LessonItem = {
   unit_id: string;
   title: string;
   description?: string | null;
+  outcome?: string | null;
   order_index: number;
   lesson_type: string;
   xp_reward: number;
@@ -534,6 +527,7 @@ export const createLesson = async (payload: {
   unit_id: string;
   title: string;
   description?: string;
+  outcome?: string;
   order_index: number;
   lesson_type: string;
   xp_reward?: number;
@@ -626,6 +620,15 @@ export const bulkImportVocabulary = async (file: File) => {
   formData.append("file", file);
   return apiFetch<AdminResponse<{ created: number; skipped: number; errors: string[] }>>(
     `${ENV.backendUrl}/admin/vocabulary/bulk-import`,
+    { method: "POST", body: formData }
+  );
+};
+
+export const extractPdfText = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ text: string }>>(
+    `${ENV.backendUrl}/admin/import/extract-pdf-text`,
     { method: "POST", body: formData }
   );
 };

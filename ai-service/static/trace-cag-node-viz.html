@@ -543,7 +543,7 @@ async function animatePipeline(resp) {
 
   // Fork routing
   const intent    = meta.diagnosis_intent || 'correct';
-  const hasViet   = !!resp.vietnamese_hint;
+  const hasViet   = !!resp.native_hint;
   const lowConf   = intent === 'ask' && !(resp.corrections && resp.corrections.length);
   const clarifyRan = lowConf;
   const vietRan   = hasViet;
@@ -560,7 +560,7 @@ async function animatePipeline(resp) {
     if (vietRan) {
       document.getElementById('fa-viet').className = 'fork-arm active';
       nodeState('n-viet', 'running', 'hint…'); await delay(TICK);
-      nodeState('n-viet', 'ok', resp.vietnamese_hint.slice(0,30)+'…', '✓');
+      nodeState('n-viet', 'ok', resp.native_hint.slice(0,30)+'…', '✓');
     }
     document.getElementById('fa-retrieve').className = 'fork-arm active';
     nodeState('n-retrieve', 'running', 'vector + KG…'); await delay(TICK);
@@ -592,10 +592,10 @@ function renderResponse(resp) {
   r.innerHTML = `<div class="label">🦜 Lexi</div><div class="resp-text">${esc(resp.tutor_response || '—')}</div>`;
   pane.appendChild(r);
 
-  // Vietnamese hint
-  if (resp.vietnamese_hint) {
+  // Native-language hint
+  if (resp.native_hint) {
     const v = document.createElement('div'); v.className = 'resp-block';
-    v.innerHTML = `<div class="label">🇻🇳 Vietnamese Hint</div><div class="resp-text">${esc(resp.vietnamese_hint)}</div>`;
+    v.innerHTML = `<div class="label">🌐 Native-Language Hint</div><div class="resp-text">${esc(resp.native_hint)}</div>`;
     pane.appendChild(v);
   }
 

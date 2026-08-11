@@ -48,6 +48,17 @@ class LexiChatDataSource {
         msg.contains('401');
   }
 
+  bool _isForbiddenError(Object error) {
+    final msg = error.toString().toLowerCase();
+    return msg.contains('status 403') ||
+        msg.contains('403') ||
+        msg.contains('forbidden');
+  }
+
+  bool _isSessionAccessError(Object error) {
+    return _isSessionNotFoundError(error) || _isForbiddenError(error);
+  }
+
   String _normalizeMarkdownBoldMarkers(String text) {
     if (!text.contains('**')) return text;
 
@@ -191,6 +202,7 @@ class LexiChatDataSource {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
     String? idempotencyKey,
   }) async {
@@ -202,6 +214,7 @@ class LexiChatDataSource {
       if (audioBase64 != null) 'audio_base64': audioBase64,
       'enable_tts': enableTts,
       'learner_level': learnerLevel,
+      'native_language': nativeLanguage,
       if (storyContext != null) 'story_context': storyContext,
     };
 
@@ -261,8 +274,22 @@ class LexiChatDataSource {
       audioBase64: data['audio_base64'],
       corrections: corrections,
       linkedConcepts: linkedConcepts,
-      vietnameseHint: data['vietnamese_hint'],
+      suggestedPractice: _parseSuggestedPractice(data['suggested_practice']),
+      nativeHint: data['native_hint'],
       scores: scores,
+    );
+  }
+
+  /// Shared by both the non-streaming and streaming response paths.
+  static LexiSuggestedPractice? _parseSuggestedPractice(dynamic raw) {
+    if (raw is! Map) return null;
+    final conceptId = raw['concept_id']?.toString() ?? '';
+    final prompt = raw['prompt']?.toString() ?? '';
+    if (conceptId.isEmpty || prompt.isEmpty) return null;
+    return LexiSuggestedPractice(
+      conceptId: conceptId,
+      conceptTitle: raw['concept_title']?.toString() ?? conceptId,
+      prompt: prompt,
     );
   }
 
@@ -288,6 +315,7 @@ class LexiChatDataSource {
         );
       }).toList();
     } catch (e) {
+      if (_isSessionAccessError(e)) rethrow;
       logWarn(_tag, 'getMessages failed, return empty history: $e');
       return [];
     }
@@ -346,17 +374,9 @@ class LexiChatDataSource {
         returned: (pagination['returned'] as num?)?.toInt() ?? messages.length,
       );
     } catch (e) {
-      if (_isSessionNotFoundError(e)) {
-        logWarn(
-          _tag,
-          'getMessagesPaged session not found, return empty page: $e',
-        );
-        return const LexiMessagesPage(
-          messages: [],
-          hasMore: false,
-          nextCursor: null,
-          returned: 0,
-        );
+      if (_isSessionAccessError(e)) {
+        logWarn(_tag, 'getMessagesPaged session unavailable: $e');
+        rethrow;
       }
       logWarn(_tag, 'getMessagesPaged fallback to full history: $e');
       final all = await getMessages(sessionId: sessionId);
@@ -405,6 +425,7 @@ class LexiChatDataSource {
         oldestTs: metadata['oldest_ts']?.toString(),
       );
     } catch (e) {
+      if (_isSessionAccessError(e)) rethrow;
       logWarn(_tag, 'getMessagesMetadata failed, return empty metadata: $e');
       return const LexiMessagesMetadata(
         totalCount: 0,
@@ -468,6 +489,7 @@ class LexiChatDataSource {
     String? audioBase64,
     bool enableTts = true,
     String learnerLevel = 'B1',
+    String nativeLanguage = 'vi',
     String? storyContext,
   }) async* {
     final payload = {
@@ -478,6 +500,7 @@ class LexiChatDataSource {
       if (audioBase64 != null) 'audio_base64': audioBase64,
       'enable_tts': enableTts,
       'learner_level': learnerLevel,
+      'native_language': nativeLanguage,
       if (storyContext != null) 'story_context': storyContext,
     };
 
@@ -559,7 +582,10 @@ class LexiChatDataSource {
                   fullText: json['lexi_response'] as String?,
                   corrections: corrections,
                   linkedConcepts: linkedConcepts,
-                  vietnameseHint: json['vietnamese_hint'] as String?,
+                  suggestedPractice: _parseSuggestedPractice(
+                    json['suggested_practice'],
+                  ),
+                  nativeHint: json['native_hint'] as String?,
                   scores: scores,
                   audioBase64: json['audio_base64'] as String?,
                   storyContext: json['story_context'] as String?,

@@ -7,7 +7,10 @@ import 'package:lexilingo_app/features/vocabulary/domain/usecases/submit_review_
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/get_user_collection_usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/add_to_collection_usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/services/known_words_service.dart';
+import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 
 /// Vocabulary Dependency Injection Setup
 /// Clean Architecture: Dependency inversion principle
@@ -44,9 +47,24 @@ void setupVocabularyDependencies() {
     () => AddToCollectionUseCase(getIt<VocabularyRepository>()),
   );
 
+  getIt.registerLazySingleton(
+    () => KnownWordsService(
+      vocabularyRepository: getIt<VocabularyRepository>(),
+      quickSaveVocabularyService: getIt<QuickSaveVocabularyService>(),
+    ),
+  );
+
   // Providers (ChangeNotifier)
   getIt.registerFactory(
     () => FlashcardProvider(
+      getDueVocabularyUseCase: getIt<GetDueVocabularyUseCase>(),
+      submitReviewUseCase: getIt<SubmitReviewUseCase>(),
+      vocabularyRepository: getIt<VocabularyRepository>(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => QuizProvider(
       getDueVocabularyUseCase: getIt<GetDueVocabularyUseCase>(),
       submitReviewUseCase: getIt<SubmitReviewUseCase>(),
       vocabularyRepository: getIt<VocabularyRepository>(),

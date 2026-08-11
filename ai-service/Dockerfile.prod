@@ -7,6 +7,7 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv "${VIRTUAL_ENV}"
@@ -17,6 +18,16 @@ COPY requirements.txt constraints-ai.txt ./
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -c constraints-ai.txt -r requirements.txt \
       --extra-index-url https://download.pytorch.org/whl/cpu
+
+RUN mkdir -p /opt/voice-models/piper && \
+    curl --fail --location --retry 3 \
+      https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx \
+      --output /opt/voice-models/piper/en_US-lessac-medium.onnx && \
+    curl --fail --location --retry 3 \
+      https://huggingface.co/rhasspy/piper-voices/resolve/v1.0.0/en/en_US/lessac/medium/en_US-lessac-medium.onnx.json \
+      --output /opt/voice-models/piper/en_US-lessac-medium.onnx.json && \
+    echo "5efe09e69902187827af646e1a6e9d269dee769f9877d17b16b1b46eeaaf019f  /opt/voice-models/piper/en_US-lessac-medium.onnx" | sha256sum -c - && \
+    echo "efe19c417bed055f2d69908248c6ba650fa135bc868b0e6abb3da181dab690a0  /opt/voice-models/piper/en_US-lessac-medium.onnx.json" | sha256sum -c -
 
 
 FROM python:3.11.13-slim-bookworm@sha256:86adf8dbadc3d6e82ee5dd2c74bec2e1c2467cdad47886280501df722372d2e1
@@ -35,10 +46,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /opt/voice-models /opt/voice-models
 COPY api ./api
 COPY data ./data
+COPY service ./service
 
-RUN python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
+# Import the real ASGI entrypoint (not just a submodule) so a missing COPY
+# for any package api.main transitively imports (e.g. service/) fails the
+# build instead of surfacing as a crash loop in production.
+RUN SECRET_KEY=build-time-import-check-not-a-runtime-secret \
+    python -c "import defusedxml, typer; from api.services.content_etl.cli import app; import api.main"
 
 RUN mkdir -p /app/models /app/logs /tmp/lexilingo-stt && \
     chown -R appuser:appuser /app /tmp/lexilingo-stt
@@ -49,6 +66,6 @@ EXPOSE 8001
 STOPSIGNAL SIGTERM
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
-  CMD python -c "import urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3); raise SystemExit(0 if response.status == 200 else 1)"
+  CMD python -c "import urllib.request; response = urllib.request.urlopen('http://127.0.0.1:8001/live', timeout=3); raise SystemExit(0 if response.status == 200 else 1)"
 
 CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]

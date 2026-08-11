@@ -145,7 +145,7 @@ class UserVocabulary(Base):
     )
     
     status: Mapped[str] = mapped_column(
-        SQLEnum(VocabularyStatus, name="vocabulary_status_enum"),
+        SQLEnum(VocabularyStatus, name="vocabulary_status_enum", values_callable=lambda obj: [e.value for e in obj]),
         nullable=False,
         default=VocabularyStatus.LEARNING,
         index=True

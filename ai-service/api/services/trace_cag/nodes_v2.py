@@ -17,30 +17,22 @@ import os
 import re
 import json
 import time
-import math
-from typing import AsyncGenerator, Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional
 
+from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
-from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
-from api.services.document_intelligence import get_doc_intel_service
+from api.services.trace_cag.dependencies import (
+    dependency_record,
+    stable_version_token,
+)
 from api.services.jit_graph_service import get_jit_graph_service
-from api.services.llama_kv_service import get_local_llama_kv_service
-
-from api.services.trace_cag.env_helpers import _env_flag, _env_float, _env_int, _clip01
-from api.services.trace_cag.provider_state import _provider_is_disabled
 
 # LLM client — httpx pooling and rate-limit throttling
-from api.services.trace_cag.llm_client import _get_httpx_client, _throttled_post_json
-
-# KG query cache utilities
-from api.services.trace_cag.kg_utils import (
-    _KG_QUERY_CACHE, _kg_cache_key, _kg_cache_get, _kg_cache_set,
-    _pack_kg_nodes_for_context,
-)
+from api.services.trace_cag.llm_client import _throttled_post_json
 
 # PCC cache R/W helpers used by the generation path
-from api.services.trace_cag.cache_utils import _detect_native_request, _write_cache_entry
+from api.services.trace_cag.cache_utils import _detect_native_request
 
 # Façade re-exports: graph.py imports cache_gate_node from this module, and the
 # cache-gate tests reach these helpers through the nodes_v2 namespace.
@@ -52,27 +44,16 @@ from api.services.trace_cag.cache_utils import (  # noqa: F401
     _profile_epoch,
 )
 
-from api.services.trace_cag.benchmark.adaptive import (
-    _adaptive_mode_enabled, _choose_adaptive_profile,
-)
-from api.services.trace_cag.benchmark.ranking import (
-    _select_diverse_multihop_evidence, _compute_evidence_budget,
-    _rank_benchmark_candidates, _ranker_enabled, _rank_with_online_ranker,
-    _build_benchmark_candidates, _update_ranker_from_generation,
-)
-from api.services.trace_cag.benchmark.qa_generation import (
-    _generate_extractive_fallback_response,
-    _generate_benchmark_qa_response,
+# retrieve_node / generate_node live in their own modules (Phase 4 split) —
+# re-exported here so existing `from nodes_v2 import ...` call sites keep working.
+from api.services.trace_cag.retrieve import retrieve_node  # noqa: F401
+from api.services.trace_cag.generate import (  # noqa: F401
+    build_generation_prompt,
+    stream_llm_tokens,
+    generate_node,
 )
 
 logger = logging.getLogger(__name__)
-
-_LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
-    "You are Lexi, an expert English tutor. "
-    "Provide grounded, concise and actionable feedback. "
-    "If evidence is weak, state uncertainty explicitly."
-)
-
 
 
 # ============================================================
@@ -80,7 +61,6 @@ _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
 # ============================================================
 
 _gateway_instance = None
-_retrieval_v3_instance = None
 
 
 async def get_gateway():
@@ -92,16 +72,6 @@ async def get_gateway():
         _gateway_instance = get_model_gateway()
 
     return _gateway_instance
-
-
-async def _get_retrieval_v3():
-    """Lazy singleton for RetrievalServiceV3 (centrality + community ranking)."""
-    global _retrieval_v3_instance
-    if _retrieval_v3_instance is None:
-        from api.services.kg_service_v3 import get_kg_service
-        from api.services.retrieval_service_v3 import RetrievalServiceV3
-        _retrieval_v3_instance = RetrievalServiceV3(get_kg_service())
-    return _retrieval_v3_instance
 
 
 # ============================================================
@@ -123,18 +93,34 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     start_time = time.time()
     
     try:
-        # Load learner profile from Redis
+        # Learner-state versioning is independent from Redis. A Redis outage
+        # must not silently permit reuse of a stale personalized response.
         from api.core.redis_client import LearnerProfileCache, ConversationCache, RedisClient
+        import asyncio as _asyncio
         
         learner_profile = state.get("learner_profile", {"level": "B1"})
         conversation_history = []
+        user_id = state.get("user_id")
+        session_id = state.get("session_id", "")
+        epoch_result = None
+
+        async def _get_learner_epoch():
+            if not user_id or settings.LEARNER_STATE_MODE == "off":
+                return None
+            from api.clients.learner_state_client import get_learner_state_client
+
+            deadline = time.monotonic() + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
+            return await get_learner_state_client().batch_get(
+                str(user_id), [], deadline=deadline
+            )
+
+        epoch_task = _asyncio.create_task(_get_learner_epoch())
         
         try:
-            import asyncio as _asyncio
-            redis_client = await RedisClient.get_instance()
+            if RedisClient._benchmark_redis_disabled():
+                raise RuntimeError("Redis disabled for benchmark")
 
-            user_id = state.get("user_id")
-            session_id = state.get("session_id", "")
+            redis_client = await RedisClient.get_instance()
 
             # Fetch profile and history concurrently.
             async def _get_profile():
@@ -163,9 +149,40 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             conversation_history = fetched_history or []
 
         except Exception as e:
-            logger.warning(f"Redis unavailable: {e}")
+            if RedisClient._benchmark_redis_disabled():
+                logger.debug(f"Redis unavailable: {e}")
+            else:
+                logger.warning(f"Redis unavailable: {e}")
+
+        learner_state_update: Dict[str, Any] = {}
+        try:
+            epoch_result = await epoch_task
+            if epoch_result is not None:
+                learner_profile["_learner_state_available"] = not epoch_result.degraded
+                if not epoch_result.degraded:
+                    learner_profile["_learner_state_epoch"] = epoch_result.state_epoch
+                    if epoch_result.goal:
+                        learner_profile["goal"] = epoch_result.goal
+                    if epoch_result.interest:
+                        learner_profile["interest"] = epoch_result.interest
+                learner_state_update = {
+                    "learner_state_epoch": epoch_result.state_epoch,
+                    "learner_state_degraded": epoch_result.degraded,
+                    "learner_state_reason": epoch_result.reason,
+                }
+        except Exception as e:
+            logger.warning("Learner-state epoch unavailable: %s", e)
+            if user_id and settings.LEARNER_STATE_MODE != "off":
+                learner_profile["_learner_state_available"] = False
+                learner_state_update = {
+                    "learner_state_degraded": True,
+                    "learner_state_reason": "unexpected_error",
+                }
     
         latency_ms = int((time.time() - start_time) * 1000)
+        profile_version = str(learner_profile.get("_learner_state_epoch") or "")
+        if not profile_version:
+            profile_version = stable_version_token(learner_profile, prefix="profile")
         
         return {
             "learner_profile": learner_profile,
@@ -173,6 +190,13 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             "native_explanation_requested": _detect_native_request(user_input),
             "models_used": ["redis_cache"],
             "latency_ms": latency_ms,
+            "dependency_events": [dependency_record(
+                f"learner:{user_id or 'anonymous'}:profile",
+                "learner",
+                profile_version,
+                "learner-state" if epoch_result is not None else "request-profile",
+            )],
+            **learner_state_update,
         }
         
     except Exception as e:
@@ -341,6 +365,9 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
                 "edges_added": len(paths),
             },
             "models_used": ["kuzu_kg_bestfirst"],
+            "dependency_events": [dependency_record(
+                "kg:tracecag:main", "kg", kg.get_kg_content_version(), "kuzu"
+            )],
         }
 
     except Exception as e:
@@ -439,14 +466,28 @@ Be encouraging and focus on the most important errors first."""
         # Call local Qwen via ModelGateway (lazy loads if needed).
         # If local Qwen is unavailable (e.g., missing local weights), fall back
         # to Groq (Qwen3) before degrading to rules.
-        result = await gateway.execute_task(
-            "chat",
-            {
-                "message": diagnosis_prompt,
-                "system": "You are an English grammar analyzer. Return only valid JSON.",
-                "max_tokens": 150,
-            },
-        )
+        # execute_task can *raise* (e.g. "Model 'qwen' not registered") instead
+        # of returning {"success": False} for a genuinely unregistered/unavailable
+        # model — normalize that into the same shape so the Groq-fallback branch
+        # below actually runs instead of being skipped straight to rules.
+        try:
+            result = await gateway.execute_task(
+                "chat",
+                {
+                    "message": diagnosis_prompt,
+                    "system": "You are an English grammar analyzer. Return only valid JSON.",
+                    # 150 was too tight for the requested schema (errors array
+                    # with span/type/correction/explanation per item plus
+                    # scores) — a live run against real Groq truncated mid-
+                    # object ("Expecting ',' delimiter") for a single-error
+                    # sentence, silently degrading to the weaker rule-based
+                    # fallback.
+                    "max_tokens": 400,
+                },
+            )
+        except Exception as gateway_exc:
+            logger.warning(f"[diagnose_node] Local gateway unavailable, trying Groq: {gateway_exc}")
+            result = {"success": False, "error": str(gateway_exc)}
         
         # Parse AI response
         errors: List[DiagnosisError] = []
@@ -460,12 +501,10 @@ Be encouraging and focus on the most important errors first."""
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-            groq_key = await get_available_groq_key(estimated_tokens=150)
-            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3-32b"))
+            groq_key = await get_available_groq_key(estimated_tokens=400)
+            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"))
             if groq_key:
                 try:
-                    import httpx
-
                     _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""
                     messages = [
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
@@ -475,8 +514,7 @@ Be encouraging and focus on the most important errors first."""
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 150, "temperature": 0.0},
-                        httpx_module=httpx,
+                        payload={"model": groq_model, "messages": messages, "max_tokens": 400, "temperature": 0.0},
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:
@@ -622,6 +660,8 @@ async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     merged.update(kg_result or {})
     merged.update(diag_result or {})
     merged.update(jit_result or {})
+    learner_update = await _load_learner_concept_overlay(state, merged)
+    merged.update(learner_update)
     # Merge the accumulator list explicitly (avoid overwrite by dict.update)
     merged["models_used"] = (
         list((kg_result or {}).get("models_used", []))
@@ -629,6 +669,50 @@ async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         + list((jit_result or {}).get("models_used", []))
     )
     return merged
+
+
+async def _load_learner_concept_overlay(
+    state: TraceCAGState,
+    merged: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Batch-load only concepts selected by this request's bounded KG work."""
+    if settings.LEARNER_STATE_MODE == "off" or not state.get("user_id"):
+        return {}
+    from api.clients.learner_state_client import get_learner_state_client
+
+    concept_ids: list[str] = []
+    concept_ids.extend(str(item) for item in merged.get("kg_seed_concepts", []) if item)
+    concept_ids.extend(str(item) for item in merged.get("diagnosis_root_causes", []) if item)
+    concept_ids.extend(
+        str(item.get("id"))
+        for item in merged.get("kg_expanded_nodes", [])
+        if isinstance(item, dict) and item.get("id")
+    )
+    concept_ids = list(dict.fromkeys(concept_ids))[:60]
+    started = time.monotonic()
+    deadline = started + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
+    try:
+        result = await get_learner_state_client().batch_get(
+            str(state["user_id"]), concept_ids, deadline=deadline
+        )
+    except Exception as exc:
+        logger.warning("Learner-state overlay unavailable: %s", exc)
+        return {
+            "learner_concept_states": {},
+            "learner_state_epoch": state.get("learner_profile", {}).get(
+                "_learner_state_epoch", 0
+            ),
+            "learner_state_degraded": True,
+            "learner_state_reason": "unexpected_error",
+            "learner_state_latency_ms": (time.monotonic() - started) * 1000.0,
+        }
+    return {
+        "learner_concept_states": result.states,
+        "learner_state_epoch": result.state_epoch,
+        "learner_state_degraded": result.degraded,
+        "learner_state_reason": result.reason,
+        "learner_state_latency_ms": (time.monotonic() - started) * 1000.0,
+    }
 
 
 async def _jit_graph_extract_node(state: TraceCAGState) -> Dict[str, Any]:
@@ -660,1104 +744,6 @@ async def _jit_graph_extract_node(state: TraceCAGState) -> Dict[str, Any]:
             "jit_soft_graph": None,
             "jit_graph_meta": {"enabled": False, "error": str(exc)},
         }
-
-_FUSION_ALPHA = 0.5   # KG structural relevance weight
-_FUSION_BETA = 0.3    # Vector similarity weight
-_FUSION_GAMMA = 0.2   # Recency bonus weight
-_RECENCY_LAMBDA = 0.01  # Decay rate for recency bonus
-
-
-# ============================================================
-# PCC: PROGRESSIVE COMPLEXITY CONTROL
-# ============================================================
-
-def _compute_difficulty_ramp(session_turn: int, overall_score: float) -> str:
-    """
-    PCC difficulty signal based on session progress + learner performance.
-
-    Returns: 'gentle' | 'standard' | 'challenging'
-      - gentle:     first 3 turns or score < 0.50
-      - standard:   turns 3-8 or score 0.50-0.70
-      - challenging: turns 8+ with score >= 0.70
-    """
-    if session_turn < 3 or overall_score < 0.50:
-        return "gentle"
-    if session_turn < 8 or overall_score < 0.70:
-        return "standard"
-    return "challenging"
-
-
-def _fusion_score(
-    kg_depth: int,
-    vec_sim: float,
-    last_used_turns_ago: int,
-) -> float:
-    """
-    Compute fusion score for a retrieved evidence item (paper Eq. 8).
-
-    s_kg  = 1 / (1 + depth)         — inverse hop distance
-    s_vec = cosine similarity        — from MiniLM
-    s_rec = exp(-λ · Δt)            — recency bonus
-    """
-    s_kg = 1.0 / (1.0 + kg_depth)
-    s_vec = vec_sim
-    s_rec = math.exp(-_RECENCY_LAMBDA * last_used_turns_ago)
-    return _FUSION_ALPHA * s_kg + _FUSION_BETA * s_vec + _FUSION_GAMMA * s_rec
-
-
-
-# ============================================================
-# NODE 4: BUDGETED HYBRID RETRIEVAL (paper Alg. 5)
-# ============================================================
-
-async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
-    """
-    Budgeted hybrid retrieval with fusion scoring (paper Alg. 5).
-
-    Stage 1: Graph-local evidence (cheap) — KG concepts + diagnosis
-    Stage 2: Optional vector evidence (budgeted) — MiniLM similarity
-    Fusion:  score(e) = α·s_kg + β·s_vec + γ·s_rec  (Eq. 8)
-    """
-    logger.info("[retrieve_node] Budgeted hybrid retrieval...")
-    start_time = time.time()
-    retrieve_start = time.monotonic()
-
-    kg_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_KG_MS", 120.0))
-    vector_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_VECTOR_MS", 80.0))
-    fusion_budget_ms = max(0.0, _env_float("TRACECAG_RETRIEVE_BUDGET_FUSION_MS", 40.0))
-    total_budget_ms = kg_budget_ms + vector_budget_ms + fusion_budget_ms
-
-    def _elapsed_ms() -> float:
-        return (time.monotonic() - retrieve_start) * 1000.0
-
-    budget_exhausted = False
-
-    retrieval_policy = state.get("retrieval_policy", "full")
-    benchmark_context = (state.get("benchmark_context") or "").strip()
-    benchmark_task = state.get("benchmark_task") or ""
-    benchmark_metadata = state.get("benchmark_metadata") or {}
-    benchmark_ranker = str(benchmark_metadata.get("_benchmark_ranker") or "graph").strip().lower()
-    benchmark_mode = str(benchmark_metadata.get("_benchmark_mode") or "").strip().lower()
-    user_input = state.get("user_input", "")
-    adaptive_profile = str(state.get("adaptive_profile") or "").strip().lower()
-    adaptive_features = dict(state.get("adaptive_features") or {})
-    adaptive_controller = dict(state.get("adaptive_controller") or {})
-
-    if _adaptive_mode_enabled(state, benchmark_mode) and not adaptive_profile:
-        adaptive_choice = _choose_adaptive_profile(
-            state=state,
-            user_input=user_input,
-            benchmark_task=benchmark_task,
-            benchmark_mode=benchmark_mode,
-            benchmark_metadata=benchmark_metadata,
-        )
-        adaptive_profile = str(adaptive_choice.get("profile") or "balanced")
-        adaptive_features = dict(adaptive_choice.get("features") or {})
-        adaptive_controller = {
-            **dict(adaptive_choice.get("controller") or {}),
-            "explore": bool(adaptive_choice.get("explore", False)),
-            "objective_map": adaptive_choice.get("objective_map", {}),
-            "tau_reuse": adaptive_choice.get("tau_reuse"),
-            "tau_patch": adaptive_choice.get("tau_patch"),
-            "support_floor": adaptive_choice.get("support_floor"),
-            "evidence_budget_delta": adaptive_choice.get("evidence_budget_delta"),
-        }
-
-    kg_concepts = state.get("kg_seed_concepts", [])
-    kg_expanded = state.get("kg_expanded_nodes", [])
-    session_turn = len(state.get("conversation_history", []))
-    benchmark_candidates, relevant_ids = _build_benchmark_candidates(state)
-
-    # ── Stage 1: Graph-local evidence (cheap) ────────────────────────
-    # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
-    evidence_items: List[Dict[str, Any]] = []
-
-    for concept_id in state.get("diagnosis_root_causes", []):
-        evidence_items.append({
-            "text": f"Grammar concept: {concept_id}",
-            "kg_depth": 0,
-            "vec_sim": 0.0,
-            "turns_ago": 0,
-        })
-
-    for node in kg_expanded:
-        depth = node.get("depth", 1) if isinstance(node, dict) else 1
-        evidence_items.append({
-            "text": f"Related: {node.get('id', '')} ({node.get('relation', '')})",
-            "kg_depth": depth,
-            "vec_sim": 0.0,
-            "turns_ago": session_turn,
-        })
-
-    # Query KG with top-K node retrieval and bounded context packing to control prompt size.
-    if not benchmark_candidates and not benchmark_context:
-        try:
-            from api.services.kg_service_v3 import get_kg_service
-
-            learner_level = state.get("learner_profile", {}).get("level", "B1")
-            top_k = max(1, _env_int("TRACECAG_KG_TOPK", 8))
-            token_budget = max(32, _env_int("TRACECAG_KG_CONTEXT_TOKEN_BUDGET", 160))
-
-            cache_key = _kg_cache_key(user_input, learner_level, top_k)
-            queried_nodes = _kg_cache_get(cache_key)
-            if queried_nodes is None:
-                kg = get_kg_service()
-                queried_nodes = kg.query_concepts(user_input, learner_level=learner_level, top_k=top_k)
-                _kg_cache_set(cache_key, queried_nodes)
-
-            packed_nodes = _pack_kg_nodes_for_context(queried_nodes, token_budget)
-            for node in packed_nodes:
-                title = str(node.get("title") or node.get("id") or "")
-                keywords = str(node.get("keywords") or "")
-                score = float(node.get("score") or 0.0)
-                evidence_items.append({
-                    "item_id": str(node.get("id") or title),
-                    "title": title,
-                    "text": f"Concept: {title}. Keywords: {keywords}",
-                    "kg_depth": 1,
-                    "vec_sim": max(0.0, min(1.0, score)),
-                    "turns_ago": session_turn,
-                })
-        except Exception as kg_exc:
-            logger.warning(f"[retrieve_node] KG top-K query skipped: {kg_exc}")
-
-    for error in state.get("diagnosis_errors", [])[:3]:
-        evidence_items.append({
-            "text": f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
-            "kg_depth": 0,
-            "vec_sim": 0.0,
-            "turns_ago": 0,
-        })
-
-    if benchmark_candidates:
-        evidence_items = []
-        ranked_candidates = _rank_benchmark_candidates(
-            user_input,
-            benchmark_candidates,
-            benchmark_ranker,
-            benchmark_mode,
-            adaptive_profile,
-        )
-        for candidate in ranked_candidates:
-            final_score = float(candidate.get("fusion_score", candidate.get("vec_sim", 0.0)))
-            evidence_items.append({
-                "item_id": candidate["item_id"],
-                "title": candidate["title"],
-                "text": candidate["text"],
-                "kg_depth": candidate["kg_depth"],
-                "vec_sim": final_score,
-                "turns_ago": candidate["turns_ago"],
-                "graph_score": float(candidate.get("graph_score") or 0.0),
-                "memory_score": float(candidate.get("memory_score") or 0.0),
-                "precomputed_score": final_score,
-                "is_relevant": candidate["item_id"] in relevant_ids,
-            })
-    elif benchmark_context:
-        evidence_items.insert(0, {
-            "item_id": "benchmark_context",
-            "title": "benchmark_context",
-            "text": benchmark_context,
-            "kg_depth": 0,
-            "vec_sim": 1.0,
-            "turns_ago": 0,
-            "is_relevant": True,
-        })
-
-    # ── Stage 2: RetrievalServiceV3 (centrality + community ranking) ─────
-    vector_hits = []
-    if not benchmark_candidates and _elapsed_ms() <= (kg_budget_ms + vector_budget_ms):
-        errors = state.get("diagnosis_errors", [])
-        confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
-        is_multihop_task = benchmark_task == "multihop_qa"
-
-        do_vector_search = True
-        max_hits = 5
-
-        if retrieval_policy == "rapid":
-            if len(errors) == 0 and confidence >= 0.85 and not is_multihop_task:
-                do_vector_search = False
-            elif len(errors) <= 2 and confidence >= 0.72:
-                max_hits = 3
-
-        if do_vector_search and _elapsed_ms() <= (kg_budget_ms + vector_budget_ms):
-            # ── Primary: RetrievalServiceV3 (centrality + community diversity) ──
-            try:
-                from api.models.v3_schemas import V3PipelineContext
-
-                retrieval_v3 = await _get_retrieval_v3()
-                ctx = V3PipelineContext(
-                    user_input=user_input,
-                    session_id=state.get("session_id", ""),
-                    user_id=state.get("user_id"),
-                )
-                seed_nodes = [
-                    c if isinstance(c, str) else c.get("id", "")
-                    for c in kg_concepts[:5]
-                ]
-                bundle = await retrieval_v3.retrieve(user_input, seed_nodes, ctx)
-
-                for hit in bundle.vector_hits[:max_hits]:
-                    snippet = getattr(hit, "snippet", hit.id)
-                    vector_hits.append({"text": snippet, "score": hit.score})
-                    evidence_items.append({
-                        "item_id": hit.id,
-                        "title": snippet,
-                        "text": f"Concept ({hit.id}): {snippet}",
-                        "kg_depth": 2,
-                        "vec_sim": hit.score,
-                        "turns_ago": session_turn,
-                    })
-
-                logger.info(
-                    f"[retrieve_node] RetrievalServiceV3: {len(vector_hits)} hits "
-                    f"(centrality+community ranked)"
-                )
-
-            except Exception as e:
-                logger.warning(
-                    f"[retrieve_node] RetrievalServiceV3 unavailable, "
-                    f"falling back to MiniLM gateway: {e}"
-                )
-                # ── Fallback: MiniLM gateway ──────────────────────────────────
-                try:
-                    from api.services.model_gateway import get_gateway
-
-                    gateway = await get_gateway()
-                    max_expanded = 10
-                    threshold = 0.3
-
-                    if retrieval_policy == "rapid" and len(errors) <= 2 and confidence >= 0.7:
-                        max_expanded = 5
-                        threshold = 0.35
-
-                    candidate_labels = []
-                    for c in kg_concepts:
-                        if isinstance(c, dict):
-                            candidate_labels.append(c.get("id", "") + " " + c.get("label", ""))
-                        else:
-                            candidate_labels.append(str(c))
-                    for node in kg_expanded[:max_expanded]:
-                        label = node.get("id", "") + " " + node.get("label", node.get("relation", ""))
-                        if label.strip() and label not in candidate_labels:
-                            candidate_labels.append(label)
-
-                    if candidate_labels:
-                        result = await gateway.invoke(
-                            "minilm", "invoke",
-                            {"task": "similarity", "query": user_input, "candidates": candidate_labels},
-                        )
-                        if result.get("success"):
-                            sim_results = result.get("data", {}).get("results", [])
-                            for r in sim_results:
-                                if r["score"] >= threshold:
-                                    vector_hits.append({"text": r["text"], "score": r["score"]})
-                                    evidence_items.append({
-                                        "text": f"Semantic match: {r['text']}",
-                                        "kg_depth": 2,
-                                        "vec_sim": r["score"],
-                                        "turns_ago": session_turn,
-                                    })
-
-                            vector_hits = vector_hits[:max_hits]
-                            logger.info(f"[retrieve_node] MiniLM fallback: {len(vector_hits)} hits")
-                except Exception as e2:
-                    logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
-    elif not benchmark_candidates:
-        budget_exhausted = True
-
-    # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
-    # Phân tích xem có nên ép buộc tìm kiếm bên ngoài không (Proactive Dynamic Retrieval)
-    force_external = False
-    dynamic_patterns = [
-        r"\bhôm (qua|nay|kia)\b", r"\bmới (đây|nhất)\b", r"\bvừa mới\b",
-        r"\brecently\b", r"\byesterday\b", r"\btoday\b", r"\blatest\b", r"\bcurrent\b",
-        r"\bdo you know\b", r"\bnghe nói\b", r"\bbạn có biết\b", r"\bnews\b", r"\btin tức\b"
-    ]
-    if any(re.search(p, user_input, re.IGNORECASE) for p in dynamic_patterns):
-        force_external = True
-        logger.info("[retrieve_node] Dynamic intent detected. Forcing L2 Search.")
-
-    # Kích hoạt L2 nếu (thiếu dữ liệu) HOẶC (phát hiện intent cần tin tức thực tế)
-    if (len(evidence_items) < 3 or force_external) and not benchmark_candidates:
-        try:
-            doc_service = get_doc_intel_service()
-            # Nếu force_external, ta có thể điều chỉnh query để search hiệu quả hơn
-            search_query = user_input
-            if force_external and len(user_input) < 100:
-                # Bổ sung ngữ cảnh để search Tavily tốt hơn
-                search_query = f"latest information about {user_input}"
-                
-            external_hits = await asyncio.wait_for(
-                doc_service.query_l2(search_query), timeout=5.0
-            )
-            for hit in external_hits:
-                # Tránh trùng lặp nếu đã có trong evidence_items
-                if any(e.get("chunk_id") == hit["id"] for e in evidence_items):
-                    continue
-                    
-                evidence_items.append({
-                    "item_id": f"ext_{hit['id']}",
-                    "title": "External Knowledge",
-                    "text": f"Context: {hit['content']}",
-                    "kg_depth": 3, # Tầng sâu hơn KG
-                    "vec_sim": hit["score"],
-                    "turns_ago": session_turn,
-                    "is_external": True,
-                    "chunk_id": hit["id"]
-                })
-            if external_hits:
-                logger.info(f"[retrieve_node] L2 Context injected: {len(external_hits)} chunks")
-        except Exception as e3:
-            logger.warning(f"[retrieve_node] L2 retrieval failed: {e3}")
-
-    # ── Fusion scoring and ranking ───────────────────────────────────
-    if _elapsed_ms() <= total_budget_ms:
-        for item in evidence_items:
-            if benchmark_candidates and "precomputed_score" in item:
-                item["fusion_score"] = float(item.get("precomputed_score") or 0.0)
-            else:
-                item["fusion_score"] = _fusion_score(
-                    kg_depth=item["kg_depth"],
-                    vec_sim=item["vec_sim"],
-                    last_used_turns_ago=item["turns_ago"],
-                )
-    else:
-        budget_exhausted = True
-        for item in evidence_items:
-            if "fusion_score" not in item:
-                item["fusion_score"] = float(item.get("vec_sim") or 0.0)
-
-    evidence_items = _rank_with_online_ranker(
-        question=user_input,
-        evidence_items=evidence_items,
-        allow_exploration=_adaptive_mode_enabled(state, benchmark_mode),
-        benchmark_mode=benchmark_mode,
-    )
-    evidence_budget = _compute_evidence_budget(
-        question=user_input,
-        retrieval_policy=retrieval_policy,
-        benchmark_mode=benchmark_mode,
-        benchmark_candidates=bool(benchmark_candidates),
-        adaptive_profile=adaptive_profile,
-    )
-    if benchmark_candidates and benchmark_task in {"multihop_qa", "retrieval_qa"}:
-        top_evidence = _select_diverse_multihop_evidence(
-            items=evidence_items,
-            question=user_input,
-            budget=evidence_budget,
-        )
-    else:
-        top_evidence = evidence_items[:evidence_budget]
-    retrieval_trace = [
-        {
-            "item_id": str(item.get("item_id") or item.get("title") or f"item_{idx}"),
-            "title": str(item.get("title") or item.get("item_id") or ""),
-            "text": str(item.get("text") or ""),
-            "rank": idx + 1,
-            "score": float(item.get("fusion_score") or 0.0),
-            "is_relevant": bool(item.get("is_relevant") or False),
-        }
-        for idx, item in enumerate(top_evidence)
-    ]
-
-    if benchmark_candidates:
-        context_parts = []
-        for item in top_evidence:
-            title = str(item.get("title") or "").strip()
-            text = str(item.get("text") or "").strip()
-            context_parts.append(f"[{title}] {text}" if title else text)
-        retrieved_context = "\n".join(part for part in context_parts if part).strip()
-    elif benchmark_context and benchmark_task in {"multihop_qa", "retrieval_qa"}:
-        retrieved_context = benchmark_context
-    else:
-        context_parts = [item["text"] for item in top_evidence]
-        retrieved_context = "\n".join(context_parts) if context_parts else ""
-
-    jit_soft_graph = str(state.get("jit_soft_graph") or "").strip()
-    jit_graph_meta = dict(state.get("jit_graph_meta") or {})
-    if jit_soft_graph:
-        retrieved_context = (
-            f"[JIT_SOFT_GRAPH]\n{jit_soft_graph}\n\n"
-            f"{retrieved_context}".strip()
-        )
-
-    latency_ms = int((time.time() - start_time) * 1000)
-    logger.info(
-        f"[retrieve_node] {len(evidence_items)} candidates → top {len(top_evidence)} via fusion scoring"
-        f" (mode={benchmark_mode or 'default'}, ranker={benchmark_ranker}, latency={latency_ms}ms)"
-    )
-
-    ranker_snapshot = get_retrieval_ranker().snapshot() if _ranker_enabled() else {}
-    graph_update = dict(state.get("graph_update") or {})
-
-    return {
-        "vector_hits": vector_hits,
-        "retrieved_context": retrieved_context,
-        "jit_soft_graph": jit_soft_graph or None,
-        "jit_graph_meta": jit_graph_meta,
-        "retrieval_trace": retrieval_trace,
-        "adaptive_profile": adaptive_profile or None,
-        "adaptive_features": adaptive_features,
-        "adaptive_controller": adaptive_controller,
-        "retrieval_meta": {
-            "budget": {
-                "kg_ms": kg_budget_ms,
-                "vector_ms": vector_budget_ms,
-                "fusion_ms": fusion_budget_ms,
-                "total_ms": total_budget_ms,
-                "elapsed_ms": _elapsed_ms(),
-                "exhausted": budget_exhausted,
-            },
-            "fusion": {
-                "alpha": _FUSION_ALPHA,
-                "beta": _FUSION_BETA,
-                "gamma": _FUSION_GAMMA,
-                "recency_lambda": _RECENCY_LAMBDA,
-            },
-            "kg_topk": {
-                "top_k": max(1, _env_int("TRACECAG_KG_TOPK", 8)),
-                "context_token_budget": max(32, _env_int("TRACECAG_KG_CONTEXT_TOKEN_BUDGET", 160)),
-                "query_cache_size": len(_KG_QUERY_CACHE),
-            },
-            "jit_graph": jit_graph_meta,
-            "graph_update": {
-                "latency_ms": int(graph_update.get("latency_ms") or 0),
-                "nodes_added": int(graph_update.get("nodes_added") or 0),
-                "edges_added": int(graph_update.get("edges_added") or 0),
-            },
-            "mode": benchmark_mode or "default",
-            "ranker": benchmark_ranker,
-            "learned_ranker": {
-                "enabled": _ranker_enabled(),
-                "blend": _clip01(_env_float("TRACECAG_RANKER_BLEND", 0.42)),
-                "snapshot": ranker_snapshot,
-            },
-            "adaptive": {
-                "profile": adaptive_profile or None,
-                "features": adaptive_features,
-                "controller": adaptive_controller,
-            },
-        },
-        "models_used": ["retrieval_fusion"] + (["minilm"] if vector_hits else []),
-    }
-
-
-# ============================================================
-# STREAMING HELPERS: Build prompt + stream tokens from LLM
-# ============================================================
-
-def build_generation_prompt(
-    state: Dict[str, Any],
-) -> tuple[str, List[Dict[str, Any]]]:
-    """Extract (system_prompt, messages) from raw pipeline state.
-
-    Used by the streaming endpoint so it can call the LLM with streaming
-    enabled after the rest of the pipeline (KG, diagnosis, retrieval) has
-    prepared the context.
-    """
-    errors = state.get("diagnosis_errors", [])
-    intent = state.get("diagnosis_intent", "correct")
-    level = (state.get("learner_profile") or {}).get("level", "B1")
-    user_input = str(state.get("user_input") or "")
-    context = str(state.get("retrieved_context") or "")
-    vietnamese_hint = state.get("vietnamese_hint")
-    session_turn = len(state.get("conversation_history") or [])
-    prev_overall = state.get("overall_score", 0.5)
-    fluency_score = state.get("fluency_score", 0.8)
-    error_count = len(errors)
-
-    difficulty = _compute_difficulty_ramp(session_turn, prev_overall)
-
-    if intent == "explain" and fluency_score > 0.7:
-        strategy = "socratic"
-    elif error_count == 0:
-        strategy = "praise"
-    elif error_count <= 2:
-        strategy = "feedback"
-    else:
-        strategy = "scaffold"
-
-    system_prompt = (
-        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
-        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
-        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
-        "Gently correct mistakes with encouraging context.\n"
-        f"The learner's current CEFR level is: {level}\n"
-        f"Difficulty setting for this turn: {difficulty}\n"
-    )
-    if context:
-        system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
-
-    if strategy == "socratic":
-        system_prompt += (
-            "\nStrategy: SOCRATIC. Guide through short questions, don't reveal answer.\n"
-        )
-        if errors:
-            hints = "\n".join(
-                f"- '{e.get('span','')}' → '{e.get('correction','')}'"
-                for e in errors[:3]
-            )
-            system_prompt += f"\n--- Errors (hints only) ---\n{hints}\n"
-    elif errors:
-        errs_text = "\n".join(
-            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
-            for e in errors[:3]
-        )
-        system_prompt += f"\n--- Errors Found ---\n{errs_text}\n"
-        system_prompt += f"Strategy: {strategy}. Weave corrections naturally.\n"
-    else:
-        system_prompt += "\nNo errors found — praise the learner's effort!\n"
-
-    if vietnamese_hint:
-        system_prompt += f"\n--- Vietnamese Hint ---\n{vietnamese_hint}\n"
-
-    messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
-    for msg in (state.get("conversation_history") or [])[-12:]:
-        role = msg.get("role")
-        content = msg.get("content", "")
-        if role and content:
-            messages.append({"role": role, "content": content})
-        elif msg.get("user"):
-            messages.append({"role": "user", "content": msg["user"]})
-            if msg.get("ai"):
-                messages.append({"role": "assistant", "content": msg["ai"]})
-    messages.append({"role": "user", "content": user_input})
-
-    return system_prompt, messages
-
-
-async def stream_llm_tokens(
-    *,
-    system_prompt: str,
-    messages: List[Dict[str, Any]],
-    user_input: str,
-) -> "AsyncGenerator[str, None]":
-    """Stream tokens from Groq (preferred) then Gemini as fallback.
-
-    Yields raw text deltas as they arrive from the provider.
-    Falls back silently to Gemini if Groq is unavailable or rate-limited.
-    """
-
-    async def _try_groq() -> "AsyncGenerator[str, None]":
-        from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-
-        groq_key = await get_available_groq_key(estimated_tokens=512)
-        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-        if not groq_key or _provider_is_disabled("groq"):
-            return
-
-        # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
-        groq_messages = messages
-        if "qwen" in groq_model.lower():
-            groq_messages = list(messages)
-            for i, msg in enumerate(groq_messages):
-                if msg.get("role") == "user":
-                    groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
-                    break
-
-        client = _get_httpx_client("groq")
-        tokens_yielded = 0
-        try:
-            async with client.stream(
-                "POST",
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {groq_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": groq_model,
-                    "messages": groq_messages,
-                    "max_tokens": 512,
-                    "temperature": 0.7,
-                    "stream": True,
-                },
-                timeout=25.0,
-            ) as resp:
-                if resp.status_code != 200:
-                    logger.warning("[stream_llm_tokens] Groq status %d", resp.status_code)
-                    return
-                async for line in resp.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-                    data = line[6:]
-                    if data.strip() == "[DONE]":
-                        break
-                    try:
-                        obj = json.loads(data)
-                        delta = obj["choices"][0]["delta"].get("content") or ""
-                        if delta:
-                            tokens_yielded += len(delta.split())
-                            yield delta
-                    except Exception as _exc:
-                        logger.debug("[nodes_v2] ignored: %s", _exc)
-                        pass
-            await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
-        except Exception as exc:
-            logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
-
-    async def _try_gemini() -> "AsyncGenerator[str, None]":
-        gemini_key = os.getenv("GEMINI_API_KEY", "")
-        if not gemini_key or _provider_is_disabled("gemini"):
-            return
-
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-2.0-flash:streamGenerateContent?key={gemini_key}&alt=sse"
-        )
-        request_body = {
-            "contents": [{"role": "user", "parts": [{"text": user_input}]}],
-            "systemInstruction": {"parts": [{"text": system_prompt}]},
-        }
-        client = _get_httpx_client("gemini")
-        try:
-            async with client.stream(
-                "POST", url, json=request_body, timeout=25.0
-            ) as resp:
-                if resp.status_code != 200:
-                    logger.warning("[stream_llm_tokens] Gemini status %d", resp.status_code)
-                    return
-                async for line in resp.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-                    data = line[6:]
-                    try:
-                        obj = json.loads(data)
-                        text = (
-                            obj.get("candidates", [{}])[0]
-                            .get("content", {})
-                            .get("parts", [{}])[0]
-                            .get("text", "")
-                        )
-                        if text:
-                            yield text
-                    except Exception as _exc:
-                        logger.debug("[nodes_v2] ignored: %s", _exc)
-                        pass
-        except Exception as exc:
-            logger.warning("[stream_llm_tokens] Gemini stream error: %s", exc)
-
-    # Try Groq first; if it yields nothing, fall back to Gemini
-    got_tokens = False
-    async for token in _try_groq():
-        got_tokens = True
-        yield token
-
-    if not got_tokens:
-        async for token in _try_gemini():
-            yield token
-
-
-# ============================================================
-# NODE 5: GROUNDED GENERATION (LLM call with context)
-# ============================================================
-
-async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
-    """
-    Generate the tutor response using LLM grounded in KG evidence.
-    
-    This node calls the LLM fallback chain (Groq → Gemini → Ollama)
-    with the Lexi persona, KG context, and diagnosis data injected
-    into the system prompt. This is the SINGLE place where LLM
-    generation happens — callers should NOT make a separate LLM call.
-    """
-    # When the streaming endpoint handles generation externally, skip this node.
-    if state.get("generation_policy") == "skip":
-        return {}
-
-    logger.info("[generate_node] Generating grounded tutor response...")
-    start_time = time.time()
-
-    errors = state.get("diagnosis_errors", [])
-    intent = state.get("diagnosis_intent", "correct")
-    level = state.get("learner_profile", {}).get("level", "B1")
-    user_input = state.get("user_input", "")
-    context = state.get("retrieved_context", "")
-    jit_soft_graph = str(state.get("jit_soft_graph") or "").strip()
-    vietnamese_hint = state.get("vietnamese_hint")
-    benchmark_task = state.get("benchmark_task")
-
-    if benchmark_task in {"multihop_qa", "retrieval_qa"}:
-        return await _generate_benchmark_qa_response(state, start_time)
-    
-    # Determine strategy (paper Eq. strategy)
-    error_count = len(errors)
-    fluency_score = state.get("fluency_score", 0.8)
-
-    if intent == "explain" and fluency_score > 0.7:
-        strategy = "socratic"
-    elif error_count == 0:
-        strategy = "praise"
-    elif error_count <= 2:
-        strategy = "feedback"
-    else:
-        strategy = "scaffold"
-
-    generation_policy = state.get("generation_policy", "auto")
-    if generation_policy == "template":
-        logger.warning("[generate_node] generation_policy='template' is deprecated; using extractive policy")
-        generation_policy = "extractive"
-
-    if generation_policy == "extractive":
-        response = _generate_extractive_fallback_response(errors, strategy, user_input, context)
-        model_used = "extractive_policy"
-
-        if strategy == "socratic":
-            next_action = "ask"
-        elif error_count == 0:
-            next_action = "continue"
-        elif error_count <= 2:
-            next_action = "hint"
-        else:
-            next_action = "correct"
-
-        grammar_score = state.get("grammar_score", 0.8)
-        fluency_score = state.get("fluency_score", 0.8)
-        vocab_level = state.get("vocabulary_level", "B1")
-        overall_score = EvaluationAgent.compute_overall_score(grammar_score, fluency_score, vocab_level)
-
-        _update_ranker_from_generation(
-            question=user_input,
-            response=response,
-            retrieval_trace=list(state.get("retrieval_trace") or []),
-        )
-
-        if state.get("cache_policy", "on") == "on":
-            try:
-                await _write_cache_entry(state, response, strategy, errors, overall_score, context, model_used=model_used)
-            except Exception as e:
-                logger.debug(f"[generate_node] Cache write failed: {e}")
-
-        latency_ms = int((time.time() - start_time) * 1000)
-
-        return {
-            "tutor_response": response,
-            "strategy": strategy,
-            "next_action": next_action,
-            "overall_score": overall_score,
-            "ttft_ms": latency_ms,
-            "models_used": [model_used],
-        }
-    
-    # Build system prompt with Lexi persona + grounded context
-    session_turn = len(state.get("conversation_history", []))
-    prev_overall = state.get("overall_score", 0.5)
-    difficulty = _compute_difficulty_ramp(session_turn, prev_overall)
-
-    system_prompt = (
-        "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
-        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
-        "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
-        "Gently correct mistakes with encouraging context.\n"
-        f"The learner's current CEFR level is: {level}\n"
-        f"Difficulty setting for this turn: {difficulty}\n"
-    )
-    
-    if context:
-        system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
-    
-    if strategy == "socratic":
-        system_prompt += (
-            "\nStrategy: SOCRATIC. The learner asked for an explanation and is fairly fluent.\n"
-            "Guide them through a chain of short questions so they discover the answer themselves.\n"
-            "Do NOT give the answer directly — instead ask 1-2 leading questions.\n"
-        )
-        if errors:
-            errors_text = "\n".join([
-                f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
-                for e in errors[:3]
-            ])
-            system_prompt += f"\n--- Errors Found (use as hints, don't reveal directly) ---\n{errors_text}\n"
-    elif errors:
-        errors_text = "\n".join([
-            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
-            for e in errors[:3]
-        ])
-        system_prompt += f"\n--- Errors Found ---\n{errors_text}\n"
-        system_prompt += f"Strategy: {strategy}. Weave corrections naturally into your response.\n"
-    else:
-        system_prompt += "\nNo errors found — praise the learner's effort!\n"
-    
-    if vietnamese_hint:
-        system_prompt += f"\n--- Vietnamese Hint (for reference) ---\n{vietnamese_hint}\n"
-
-    response = ""
-    model_used = "llm_unavailable"
-
-    local_llama_enabled = _env_flag("TRACECAG_ENABLE_LOCAL_LLAMA_KV", False)
-    if local_llama_enabled and not response:
-        try:
-            local_llama = get_local_llama_kv_service()
-            local_result = await local_llama.generate(
-                session_id=str(state.get("session_id") or "default"),
-                core_system_prompt=_LOCAL_LLAMA_CORE_SYSTEM_PROMPT,
-                dynamic_system_prompt=system_prompt,
-                user_query=user_input,
-                soft_graph="" if "[JIT_SOFT_GRAPH]" in context else jit_soft_graph,
-            )
-            if local_result and str(local_result.get("text") or "").strip():
-                response = str(local_result.get("text") or "").strip()
-                model_used = str(local_result.get("model") or "llama_cpp_kv")
-        except Exception as e:
-            logger.warning(f"[generate_node] Local llama KV path failed, fallback to provider chain: {e}")
-    
-    # Call LLM via fallback chain (Groq → Gemini → Ollama)
-    if not response:
-        response = ""
-        model_used = "llm_unavailable"
-    
-    try:
-        import httpx
-
-        messages = [{"role": "system", "content": system_prompt}]
-
-        # Inject conversation history (last 6 turns = up to 12 messages)
-        history = state.get("conversation_history", [])
-        for msg in history[-12:]:
-            role = msg.get("role")
-            content = msg.get("content", "")
-            if role and content:
-                # Standard {"role": "user"/"assistant", "content": "..."} format
-                messages.append({"role": role, "content": content})
-            elif msg.get("user"):
-                # ConversationCache {"user": "...", "ai": "..."} format
-                messages.append({"role": "user", "content": msg["user"]})
-                if msg.get("ai"):
-                    messages.append({"role": "assistant", "content": msg["ai"]})
-
-        messages.append({"role": "user", "content": user_input})
-        
-        if not response:
-            # Race Groq and Gemini concurrently; first successful response wins.
-            # Ollama is kept as last-resort with a tighter 15s timeout.
-            import asyncio as _asyncio
-            from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-
-            groq_key = await get_available_groq_key(estimated_tokens=512)
-            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
-            gemini_key = os.getenv("GEMINI_API_KEY", "")
-
-            # Disable Qwen3 thinking to keep token budget for actual response.
-            _groq_messages = list(messages)
-            if "qwen" in groq_model.lower():
-                for i, msg in enumerate(_groq_messages):
-                    if msg.get("role") == "user":
-                        _groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
-                        break
-
-            async def _try_groq():
-                if not groq_key:
-                    return None, None
-                try:
-                    resp = await _throttled_post_json(
-                        provider="groq",
-                        url="https://api.groq.com/openai/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": _groq_messages, "max_tokens": 512, "temperature": 0.7},
-                        httpx_module=httpx,
-                        timeout=20.0,
-                    )
-                    if resp is not None and resp.status_code == 200:
-                        data = resp.json()
-                        tokens = data.get("usage", {}).get("total_tokens", 500)
-                        await record_groq_key_usage(groq_key, tokens)
-                        return data["choices"][0]["message"]["content"], f"groq/{groq_model}"
-                except Exception as e:
-                    logger.warning(f"[generate_node] Groq failed: {e}")
-                return None, None
-
-            async def _try_gemini():
-                if not gemini_key:
-                    return None, None
-                try:
-                    gemini_contents = [{"role": "user", "parts": [{"text": user_input}]}]
-                    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
-                    request_body = {
-                        "contents": gemini_contents,
-                        "systemInstruction": {"parts": [{"text": system_prompt}]},
-                    }
-                    resp = await _throttled_post_json(
-                        provider="gemini",
-                        url=url,
-                        payload=request_body,
-                        httpx_module=httpx,
-                        timeout=20.0,
-                    )
-                    if resp is not None and resp.status_code == 200:
-                        candidates = resp.json().get("candidates", [])
-                        if candidates:
-                            return candidates[0]["content"]["parts"][0]["text"], "gemini-2.0-flash"
-                except Exception as e:
-                    logger.warning(f"[generate_node] Gemini failed: {e}")
-                return None, None
-
-            # Launch both concurrently; pick first non-None result.
-            tasks = [_asyncio.ensure_future(_try_groq()), _asyncio.ensure_future(_try_gemini())]
-            done, pending = await _asyncio.wait(tasks, return_when=_asyncio.FIRST_COMPLETED)
-            for task in done:
-                try:
-                    _text, _model = task.result()
-                    if _text:
-                        response = _text
-                        model_used = _model
-                        break
-                except Exception as _exc:
-                    logger.debug("[nodes_v2] ignored: %s", _exc)
-                    pass
-            # If winner found, cancel the loser immediately.
-            if response:
-                for p in pending:
-                    p.cancel()
-            else:
-                # Wait for the second one too before falling back to Ollama.
-                if pending:
-                    done2, _ = await _asyncio.wait(pending, timeout=15.0)
-                    for task in done2:
-                        try:
-                            _text, _model = task.result()
-                            if _text:
-                                response = _text
-                                model_used = _model
-                                break
-                        except Exception as _exc:
-                            logger.debug("[nodes_v2] ignored: %s", _exc)
-                            pass
-
-            # Ollama — last resort, tight 15s timeout.
-            if not response:
-                from api.core.config import settings
-                ollama_url = settings.OLLAMA_BASE_URL
-                ollama_model = os.getenv("OLLAMA_MODEL", "lexilingo-qwen3-1.7b")
-                try:
-                    resp = await _throttled_post_json(
-                        provider="ollama",
-                        url=f"{ollama_url}/api/chat",
-                        payload={
-                            "model": ollama_model,
-                            "messages": messages,
-                            "stream": False,
-                            "options": {"num_predict": 256, "temperature": 0.7},
-                        },
-                        httpx_module=httpx,
-                        timeout=15.0,
-                        max_retries=1,
-                    )
-                    if resp is not None and resp.status_code == 200:
-                        response = resp.json().get("message", {}).get("content", "")
-                        model_used = f"ollama/{ollama_model}"
-                except Exception as e:
-                    logger.warning(f"[generate_node] Ollama failed: {e}")
-    
-    except Exception as e:
-        logger.error(f"[generate_node] LLM chain error: {e}")
-    
-    # 4. Deterministic extractive fallback
-    if not response:
-        response = _generate_extractive_fallback_response(errors, strategy, user_input, context)
-        model_used = "extractive_fallback"
-    
-    # Determine next action
-    if strategy == "socratic":
-        next_action = "ask"
-    elif error_count == 0:
-        next_action = "continue"
-    elif error_count <= 2:
-        next_action = "hint"
-    else:
-        next_action = "correct"
-    
-    # Calculate overall score
-    grammar_score = state.get("grammar_score", 0.8)
-    fluency_score = state.get("fluency_score", 0.8)
-    vocab_level = state.get("vocabulary_level", "B1")
-    overall_score = EvaluationAgent.compute_overall_score(grammar_score, fluency_score, vocab_level)
-
-    _update_ranker_from_generation(
-        question=user_input,
-        response=response,
-        retrieval_trace=list(state.get("retrieval_trace") or []),
-    )
-
-    # Generate personalized practice exercises via ContentAutoGenerator (cag_service)
-    action_plan = []
-    if errors or intent == "practice":
-        try:
-            from api.services.cag_service import ContentAutoGenerator
-            cag_gen = ContentAutoGenerator()
-            err_types = [err.get("type", "grammar") for err in errors if isinstance(err, dict)]
-            if not err_types:
-                err_types = ["grammar"]
-            
-            first_err_type = err_types[0] if errors else "vocabulary"
-            if "vocab" in first_err_type.lower() or intent == "practice":
-                vocab_ex = cag_gen.generate_vocabulary_exercise(
-                    level=level,
-                    error_patterns=err_types if errors else None,
-                    count=3
-                )
-                action_plan.append({
-                    "action": "practice",
-                    "type": "vocabulary",
-                    "concept": vocab_ex.get("topic", ""),
-                    "count": len(vocab_ex.get("words", [])),
-                    "exercise": vocab_ex
-                })
-            else:
-                grammar_drill = cag_gen.generate_grammar_drill(
-                    level=level,
-                    error_patterns=err_types,
-                    count=3
-                )
-                action_plan.append({
-                    "action": "practice",
-                    "type": "grammar",
-                    "concept": grammar_drill.get("grammar_point", ""),
-                    "count": len(grammar_drill.get("exercises", [])),
-                    "exercise": grammar_drill
-                })
-        except Exception as cag_err:
-            logger.warning(f"[generate_node] Failed to generate CAG practice: {cag_err}")
-
-    state["action_plan"] = action_plan
-
-    # Store response in Redis cache for future hits
-    if state.get("cache_policy", "on") == "on":
-        try:
-            # ── Tiered Cache Management (L0/L1 Promotion) ─────────────
-            # Nếu thông tin từ L2 được sử dụng, kiểm tra thăng hạng
-            doc_service = get_doc_intel_service()
-            trace = state.get("retrieval_trace", [])
-            is_l2_used = any(t.get("item_id", "").startswith("ext_") for t in trace[:3])
-            
-            if is_l2_used:
-                for t in trace[:3]:
-                    if t.get("item_id", "").startswith("ext_"):
-                        chunk_id = str(t.get("item_id") or "").replace("ext_", "")
-                        if doc_service.should_promote_to_cache(chunk_id):
-                            logger.info(f"[cache_promotion] Chunk {chunk_id[:8]} promoted to L1 cache")
-                            await _write_cache_entry(state, response, strategy, errors, overall_score, context)
-                            break
-            else:
-                # Mặc định cache cho các luồng KG/Rules để tối ưu tốc độ
-                await _write_cache_entry(state, response, strategy, errors, overall_score, context)
-        except Exception as e:
-            logger.debug(f"[generate_node] Cache write failed: {e}")
-    
-    latency_ms = int((time.time() - start_time) * 1000)
-    logger.info(f"[generate_node] Generated response via {model_used} in {latency_ms}ms")
-    
-    return {
-        "tutor_response": response,
-        "strategy": strategy,
-        "next_action": next_action,
-        "overall_score": overall_score,
-        "action_plan": action_plan,
-        "ttft_ms": latency_ms,
-        "models_used": [model_used],
-    }
-
-
-
 
 # ============================================================
 # NODE 6: NATIVE LANGUAGE HINT (AI-POWERED, Lazy Load)
@@ -1849,39 +835,99 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
 
         # --- Attempt 3: Hardcoded strings ---
         if not native_hint:
-            native_hint = _get_predefined_vietnamese(errors)
+            native_hint = _get_predefined_native_hint(errors, native_language)
             models_used.append("native_fallback")
 
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[vietnamese_node] Hint via {models_used} in {latency_ms}ms")
         return {
-            "vietnamese_hint": native_hint,
+            "native_hint": native_hint,
             "models_used": models_used,
         }
 
     except Exception as e:
         logger.error(f"[vietnamese_node] Error: {e}")
         return {
-            "vietnamese_hint": _get_predefined_vietnamese(errors),
+            "native_hint": _get_predefined_native_hint(errors, native_language),
             "models_used": ["native_fallback"],
         }
 
 
-def _get_predefined_vietnamese(errors: list) -> str:
-    """Fallback predefined Vietnamese explanations"""
-    if not errors:
-        return "Câu của bạn rất tốt! Tiếp tục cố gắng nhé! 🌟"
-    
-    error_type = errors[0].get("type", "").lower()
-    explanations = {
+# Last-resort hardcoded explanations, keyed by language name (matches the
+# `native_language` values produced by api.utils.languages.iso_to_language_name).
+# Only the most common onboarding languages get a translated dict — anything
+# else falls back to a short English line rather than translating every string.
+_PREDEFINED_NATIVE_EXPLANATIONS: Dict[str, Dict[str, str]] = {
+    "Vietnamese": {
+        "_no_errors": "Câu của bạn rất tốt! Tiếp tục cố gắng nhé! ",
+        "_default": "Hãy chú ý quy tắc ngữ pháp này nhé!",
         "subject_verb_agreement": "Trong tiếng Anh, động từ phải hòa hợp với chủ ngữ. Với 'I/you/we/they' dùng động từ nguyên mẫu, với 'he/she/it' thêm -s hoặc -es.",
         "third_person_s": "Với chủ ngữ ngôi thứ 3 số ít (he, she, it), động từ cần thêm -s hoặc -es. Ví dụ: He goes, She works.",
         "past_tense": "Khi nói về quá khứ (yesterday, last week...), cần dùng thì quá khứ đơn. Động từ bất quy tắc cần học thuộc!",
         "present_perfect": "Thì hiện tại hoàn thành dùng: have/has + past participle. Ví dụ: have gone, has eaten.",
         "article": "Dùng 'a' trước phụ âm, 'an' trước nguyên âm (a, e, i, o, u). Ví dụ: a book, an apple.",
-    }
-    
-    return explanations.get(error_type, "Hãy chú ý quy tắc ngữ pháp này nhé!")
+    },
+    "Japanese": {
+        "_no_errors": "あなたの文章はとても良いです!頑張り続けてください!",
+        "_default": "この文法のルールに気をつけてください!",
+        "subject_verb_agreement": "英語では動詞は主語と一致させる必要があります。'I/you/we/they'には原形、'he/she/it'には-sか-esを付けます。",
+        "third_person_s": "三人称単数の主語(he, she, it)には、動詞に-sか-esを付けます。例:He goes, She works.",
+        "past_tense": "過去のことを話すとき(yesterday, last weekなど)は過去形を使います。不規則動詞は覚える必要があります!",
+        "present_perfect": "現在完了形は have/has + 過去分詞 を使います。例:have gone, has eaten.",
+        "article": "子音の前には'a'、母音(a, e, i, o, u)の前には'an'を使います。例:a book, an apple.",
+    },
+    "Korean": {
+        "_no_errors": "문장이 정말 좋아요! 계속 노력하세요!",
+        "_default": "이 문법 규칙에 주의하세요!",
+        "subject_verb_agreement": "영어에서는 동사가 주어와 일치해야 합니다. 'I/you/we/they'는 원형을, 'he/she/it'는 -s나 -es를 붙입니다.",
+        "third_person_s": "3인칭 단수 주어(he, she, it)는 동사에 -s나 -es를 붙입니다. 예: He goes, She works.",
+        "past_tense": "과거(yesterday, last week 등)를 말할 때는 과거 시제를 사용합니다. 불규칙 동사는 외워야 해요!",
+        "present_perfect": "현재완료는 have/has + 과거분사를 사용합니다. 예: have gone, has eaten.",
+        "article": "자음 앞에는 'a', 모음(a, e, i, o, u) 앞에는 'an'을 사용합니다. 예: a book, an apple.",
+    },
+    "Chinese": {
+        "_no_errors": "你的句子很好!继续努力!",
+        "_default": "请注意这个语法规则!",
+        "subject_verb_agreement": "在英语中,动词必须与主语一致。'I/you/we/they'用原形动词,'he/she/it'要加-s或-es。",
+        "third_person_s": "第三人称单数主语(he, she, it)的动词要加-s或-es。例如:He goes, She works.",
+        "past_tense": "说过去的事情(yesterday, last week等)要用过去时。不规则动词需要记住!",
+        "present_perfect": "现在完成时用:have/has + 过去分词。例如:have gone, has eaten.",
+        "article": "辅音前用'a',元音(a, e, i, o, u)前用'an'。例如:a book, an apple.",
+    },
+}
+
+_FALLBACK_NATIVE_NO_ERRORS = "Nice work, your sentence is correct! Keep practicing!"
+_FALLBACK_NATIVE_DEFAULT = "Pay attention to this grammar rule!"
+
+
+def _get_predefined_native_hint(errors: list, native_language: str) -> str:
+    """Last-resort fallback explanation in the learner's native language."""
+    explanations = _PREDEFINED_NATIVE_EXPLANATIONS.get(native_language)
+    if not explanations:
+        return _FALLBACK_NATIVE_NO_ERRORS if not errors else _FALLBACK_NATIVE_DEFAULT
+
+    if not errors:
+        return explanations["_no_errors"]
+
+    error_type = errors[0].get("type", "").lower()
+    return explanations.get(error_type, explanations["_default"])
+
+
+_ASK_CLARIFY_HINTS: Dict[str, str] = {
+    "Vietnamese": "Mình cần thêm thông tin: bạn muốn sửa câu, giải thích ngữ pháp, hay tạo bài tập?",
+    "Japanese": "もう少し情報が必要です。文の訂正、文法の説明、練習問題の作成のどれがいいですか?",
+    "Korean": "조금 더 알려주세요: 문장 교정, 문법 설명, 연습 문제 중 무엇을 원하시나요?",
+    "Chinese": "我需要更多信息:你想要句子修正、语法讲解,还是练习题?",
+}
+_ASK_CLARIFY_HINT_DEFAULT = (
+    "I need a bit more info: would you like a sentence correction, "
+    "a grammar explanation, or a practice exercise?"
+)
+
+
+def _get_ask_clarify_hint(native_language: str) -> str:
+    """Clarification hint in the learner's configured language (falls back to English)."""
+    return _ASK_CLARIFY_HINTS.get(native_language, _ASK_CLARIFY_HINT_DEFAULT)
 
 
 # ============================================================
@@ -1957,11 +1003,13 @@ async def ask_clarify_node(state: TraceCAGState) -> Dict[str, Any]:
     logger.info("[ask_clarify_node] Generating clarification question...")
 
     user_input = state.get("user_input", "")
-    level = state.get("learner_profile", {}).get("level", "B1")
-    
+    learner_profile = state.get("learner_profile", {})
+    level = learner_profile.get("level", "B1")
+    native_language = learner_profile.get("native_language", "Vietnamese")
+
     try:
         gateway = await get_gateway()
-        
+
         clarify_prompt = f"""A {level} level English learner said: "{user_input}"
 
 I'm not sure what they need. Generate a friendly clarification question asking if they want:
@@ -1992,11 +1040,11 @@ Keep it short and friendly (1-2 sentences)."""
                 "Please let me know!"
             )
         
-        vietnamese_hint = "Mình cần thêm thông tin: bạn muốn sửa câu, giải thích ngữ pháp, hay tạo bài tập?"
-        
+        native_hint = _get_ask_clarify_hint(native_language)
+
         return {
             "tutor_response": response,
-            "vietnamese_hint": vietnamese_hint,
+            "native_hint": native_hint,
             "strategy": "ask",
             "next_action": "ask",
             "path": "fast",
@@ -2007,7 +1055,7 @@ Keep it short and friendly (1-2 sentences)."""
         logger.error(f"[ask_clarify_node] Error: {e}")
         return {
             "tutor_response": "Could you please clarify what you'd like help with?",
-            "vietnamese_hint": "Bạn muốn được giúp đỡ điều gì ạ?",
+            "native_hint": _get_ask_clarify_hint(native_language),
             "strategy": "ask",
             "next_action": "ask",
             "path": "fast",

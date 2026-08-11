@@ -112,14 +112,10 @@ class LoginScreen extends StatelessWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      'LexiLingo',
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.onSurface,
-                                        letterSpacing: -0.01,
-                                      ),
+                                    Image.asset(
+                                      'assets/out-app/lexilingo-logo.png',
+                                      height: 22,
+                                      fit: BoxFit.contain,
                                     ),
                                     Text(
                                       'ADMIN CONSOLE',

@@ -13,7 +13,7 @@ Adds tables for multi-dimensional proficiency assessment:
 """
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import ENUM, UUID, JSONB
 
 
 # revision identifiers, used by Alembic.
@@ -25,11 +25,23 @@ depends_on = None
 
 def upgrade() -> None:
     # Create SkillType enum
-    skill_type_enum = sa.Enum(
+    skill_type_enum = ENUM(
         'vocabulary', 'grammar', 'reading', 'listening', 'speaking', 'writing',
         name='skilltype'
     )
     skill_type_enum.create(op.get_bind(), checkfirst=True)
+
+    # Used as a column type on two tables below. Each `op.create_table` call
+    # independently tries to CREATE TYPE its enum column with checkfirst
+    # disabled, so the type object bound to table columns must be built with
+    # create_type=False — the type itself was already made above. Must be
+    # postgresql.ENUM specifically: generic sa.Enum doesn't forward
+    # create_type through its dialect-impl adaptation.
+    skill_type_column_enum = ENUM(
+        'vocabulary', 'grammar', 'reading', 'listening', 'speaking', 'writing',
+        name='skilltype',
+        create_type=False,
+    )
 
     # Create user_proficiency_profiles table
     op.create_table(
@@ -54,7 +66,7 @@ def upgrade() -> None:
         'user_skill_scores',
         sa.Column('id', UUID(as_uuid=True), primary_key=True),
         sa.Column('profile_id', UUID(as_uuid=True), sa.ForeignKey('user_proficiency_profiles.id', ondelete='CASCADE'), nullable=False),
-        sa.Column('skill', skill_type_enum, nullable=False),
+        sa.Column('skill', skill_type_column_enum, nullable=False),
         sa.Column('score', sa.Float, default=0.0),
         sa.Column('confidence', sa.Float, default=0.0),
         sa.Column('estimated_level', sa.String(5), default='A1'),
@@ -91,7 +103,7 @@ def upgrade() -> None:
         sa.Column('id', UUID(as_uuid=True), primary_key=True),
         sa.Column('user_id', UUID(as_uuid=True), sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False),
         sa.Column('exercise_type', sa.String(50), nullable=False),
-        sa.Column('skill', skill_type_enum, nullable=False),
+        sa.Column('skill', skill_type_column_enum, nullable=False),
         sa.Column('difficulty_level', sa.String(5), nullable=False),
         sa.Column('is_correct', sa.Boolean, nullable=False),
         sa.Column('score', sa.Float, nullable=False),
@@ -134,5 +146,5 @@ def downgrade() -> None:
     op.drop_table('user_proficiency_profiles')
     
     # Drop enum
-    skill_type_enum = sa.Enum(name='skilltype')
+    skill_type_enum = ENUM(name='skilltype')
     skill_type_enum.drop(op.get_bind(), checkfirst=True)

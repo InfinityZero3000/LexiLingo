@@ -3,7 +3,7 @@ Generic API response schemas
 """
 
 from typing import Generic, TypeVar, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 T = TypeVar('T')
 
@@ -14,12 +14,13 @@ class ApiResponse(BaseModel, Generic[T]):
     data: T | None = None
     error: str | None = None
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "success": True,
                 "message": "Operation completed successfully",
                 "data": {},
-                "error": None
+                "error": None,
             }
         }
+    )

@@ -155,22 +155,32 @@ def _make_redis_mock(cached_response: Optional[str] = None) -> AsyncMock:
     """Create a Redis mock.  `cached_response` simulates a cache hit."""
     redis = AsyncMock()
     redis.ping = AsyncMock(return_value=True)
+    stored: dict[str, object] = {}
 
     async def _get(key: str):
         if cached_response and key.startswith("v1:resp:"):
             return cached_response
         if key.startswith("learner:"):
             return None
-        return None
+        return stored.get(key)
+
+    async def _set(key: str, value, **_kwargs):
+        stored[key] = value
+        return True
+
+    async def _delete(*keys: str):
+        for key in keys:
+            stored.pop(key, None)
+        return len(keys)
 
     redis.get = AsyncMock(side_effect=_get)
-    redis.set = AsyncMock()
+    redis.set = AsyncMock(side_effect=_set)
     redis.lpush = AsyncMock()
     redis.lrange = AsyncMock(return_value=[])
     redis.ltrim = AsyncMock()
     redis.expire = AsyncMock()
     redis.rpush = AsyncMock()
-    redis.delete = AsyncMock()
+    redis.delete = AsyncMock(side_effect=_delete)
     return redis
 
 
@@ -369,6 +379,9 @@ async def _patched_pipeline(
         default_resp.raise_for_status = MagicMock()
         httpx_mock.post = AsyncMock(return_value=default_resp)
 
+    async def _post_json(**kwargs):
+        return await httpx_mock.post(kwargs["url"], json=kwargs.get("payload"))
+
     # Reset singleton so a fresh graph compiles
     import api.services.trace_cag.graph as _graph_mod
     _graph_mod._trace_cag_instance = None
@@ -393,8 +406,8 @@ async def _patched_pipeline(
     ), patch.dict("sys.modules", {
         "api.services.kg_service_v3": fake_kg_module,
     }), patch(
-        "httpx.AsyncClient",
-        return_value=httpx_mock,
+        "api.services.trace_cag.generate._throttled_post_json",
+        new=_post_json,
     ), patch.dict("os.environ", {
         "GROQ_API_KEY": "test-groq-key",
         "GEMINI_API_KEY": "test-gemini-key",
@@ -441,7 +454,7 @@ def print_trace(trace: PipelineTrace):
             "cache_hit", "path", "kg_seed_concepts", "kg_expanded_nodes",
             "diagnosis_errors", "diagnosis_intent", "diagnosis_confidence",
             "vector_hits", "retrieved_context", "tutor_response",
-            "vietnamese_hint", "strategy", "models_used",
+            "native_hint", "strategy", "models_used",
         ]
         for k in interesting_keys:
             if k in node.output:
@@ -635,10 +648,9 @@ async def test_scenario_grammar_error_normal_path():
 # ------- Scenario 2: Cache hit (fast path) -------
 
 @pytest.mark.asyncio
-async def test_scenario_cache_hit_fast_path():
+async def test_scenario_legacy_cache_without_certificate_fails_closed():
     """
-    Same input seen before → cache hit:
-    input → cache_gate(HIT) → END
+    Legacy cache records without an admissibility certificate are not reused.
     """
     trace = PipelineTrace(
         test_name="Cache Hit — Fast Path",
@@ -669,14 +681,12 @@ async def test_scenario_cache_hit_fast_path():
     trace.total_ms = result.get("metadata", {}).get("latency_ms", 0)
 
     trace.add_check("has_response", bool(result.get("tutor_response")), result.get("tutor_response", "")[:60])
-    trace.add_check("cache_hit_true", result.get("metadata", {}).get("cache_hit") == True)
-    trace.add_check("path_is_fast", trace.actual_path == "fast", f"actual={trace.actual_path}")
+    trace.add_check("cache_hit_false", result.get("metadata", {}).get("cache_hit") is False)
 
-    # Should only have input + cache_gate (no kg_expand, diagnose, etc.)
+    # Safety requires the normal pipeline after the cache record is rejected.
     node_names = [n.name for n in nodes]
-    trace.add_check("only_2_nodes", len(nodes) == 2, f"got {len(nodes)}: {node_names}")
-    trace.add_check("kg_expand_NOT_ran", "kg_expand_node" not in node_names)
-    trace.add_check("generate_NOT_ran", "generate_node" not in node_names)
+    trace.add_check("kg_expand_ran", "kg_diagnose_node" in node_names)
+    trace.add_check("generate_ran", "generate_node" in node_names)
 
     print_trace(trace)
     assert trace.ok, f"Failed checks: {trace.failed_checks}"
@@ -713,7 +723,7 @@ async def test_scenario_vietnamese_path_a1():
     node_names = [n.name for n in nodes]
     trace.add_check("has_response", bool(result.get("tutor_response")))
     trace.add_check("vietnamese_ran", "vietnamese_node" in node_names, f"nodes: {node_names}")
-    trace.add_check("has_vietnamese_hint", result.get("vietnamese_hint") is not None)
+    trace.add_check("has_native_hint", result.get("native_hint") is not None)
     trace.add_check("retrieve_after_vn", "retrieve_node" in node_names)
     trace.add_check("generate_ran", "generate_node" in node_names)
 
@@ -1199,7 +1209,7 @@ async def _run_all_scenarios():
 
     scenarios = [
         ("1. Grammar Error — Normal Path", test_scenario_grammar_error_normal_path),
-        ("2. Cache Hit — Fast Path", test_scenario_cache_hit_fast_path),
+        ("2. Legacy Cache — Fail Closed", test_scenario_legacy_cache_without_certificate_fails_closed),
         ("3. Vietnamese Path — A1", test_scenario_vietnamese_path_a1),
         ("4. Low Confidence — Ask Clarify", test_scenario_low_confidence_ask_clarify),
         ("5. No Errors — Praise", test_scenario_no_errors_praise),

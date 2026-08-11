@@ -1,14 +1,25 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
+
+const _matchingPowerUps = [
+  ShopItemEntity.effectTimeFreeze,
+  ShopItemEntity.effectExtraTime,
+  ShopItemEntity.effectPairSwap,
+  ShopItemEntity.effectLuckyClover,
+  ShopItemEntity.effectScoreMultiplier,
+];
 
 /// Matching Game screen.
 ///
@@ -33,6 +44,9 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   Map<String, _PairState> _matchState = {};
   int _correctCount = 0;
   bool _isFinishing = false;
+  bool _luckyCloverActive = false;
+  int _scoreMultiplier = 1;
+  final _random = Random();
 
   @override
   void initState() {
@@ -97,7 +111,13 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     final pair = game.pairs.firstWhere((p) => p.wordId == _selectedWord);
     final correctMatch = pair.matchText;
 
-    if (matchText == correctMatch) {
+    var matched = matchText == correctMatch;
+    if (!matched && _luckyCloverActive && _random.nextDouble() < 0.3) {
+      matched = true;
+      _luckyCloverActive = false;
+    }
+
+    if (matched) {
       _correctCount++;
       setState(() {
         _matchedIds.add(_selectedWord!);
@@ -126,6 +146,48 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
           });
         }
       });
+    }
+  }
+
+  void _onPowerUpUsed(String itemType, Map<String, dynamic> effects) {
+    final game = context.read<GamesProvider>().matching;
+    if (game == null) return;
+    switch (itemType) {
+      case ShopItemEntity.effectTimeFreeze:
+      case ShopItemEntity.effectExtraTime:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(
+          () => _timeLeft = (_timeLeft + seconds).clamp(0, game.timerSeconds),
+        );
+        break;
+      case ShopItemEntity.effectPairSwap:
+        final remaining = game.pairs
+            .where((p) => !_matchedIds.contains(p.wordId))
+            .toList();
+        if (remaining.isEmpty) return;
+        final pair = remaining[_random.nextInt(remaining.length)];
+        _correctCount++;
+        setState(() {
+          _matchedIds.add(pair.wordId);
+          _matchState[pair.wordId] = _PairState.correct;
+          if (_selectedWord == pair.wordId) {
+            _selectedWord = null;
+            _selectedMatch = null;
+          }
+        });
+        if (_matchedIds.length == game.pairs.length) {
+          _confettiController.play();
+          _timer?.cancel();
+          Future.delayed(const Duration(milliseconds: 800), _finishGame);
+        }
+        break;
+      case ShopItemEntity.effectLuckyClover:
+        setState(() => _luckyCloverActive = true);
+        break;
+      case ShopItemEntity.effectScoreMultiplier:
+        final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
+        setState(() => _scoreMultiplier = multiplier);
+        break;
     }
   }
 
@@ -179,7 +241,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     final elapsed = game.timerSeconds - _timeLeft;
     final xpResult = await provider.completeGame(
       gameType: GameType.matching,
-      score: _correctCount,
+      score: _correctCount * _scoreMultiplier,
       totalQuestions: total,
       correctAnswers: _correctCount,
       answers: [
@@ -198,7 +260,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
           result: GameResult(
             gameType: GameType.matching,
             cefrLevel: provider.selectedLevel,
-            score: _correctCount,
+            score: _correctCount * _scoreMultiplier,
             totalQuestions: total,
             correctAnswers: _correctCount,
             xpEarned: xpResult?.xpAwarded ?? 0,
@@ -281,6 +343,24 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                     color: AppColors.greenSuccess,
                     minHeight: 4,
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    child: GamePowerUpTray(
+                      availableTypes: _matchingPowerUps,
+                      onUse: _onPowerUpUsed,
+                    ),
+                  ),
+                  if (_luckyCloverActive)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 6),
+                      child: ActivePowerUpBadge(
+                        itemType: ShopItemEntity.effectLuckyClover,
+                        label: 'Lucky Clover Active',
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.all(12),
                     child: Text(

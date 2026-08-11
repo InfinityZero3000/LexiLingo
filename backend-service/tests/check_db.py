@@ -20,13 +20,13 @@ async def check():
         engine = create_async_engine(settings.DATABASE_URL, echo=False)
         async with engine.connect() as conn:
             result = await conn.execute(
-                text("SELECT email, level, total_xp FROM users WHERE email = 'nhthang312@gmail.com'")
+                text("SELECT email, level, total_xp FROM users WHERE email = 'nhthang2077@gmail.com'")
             )
             row = result.fetchone()
             if row:
                 print(f"Found user: email={row[0]}, level={row[1]}, xp={row[2]}")
             else:
-                print("User nhthang312@gmail.com NOT FOUND in main DB")
+                print("User nhthang2077@gmail.com NOT FOUND in main DB")
         await engine.dispose()
     except Exception as e:
         print(f"Main DB error: {e}")

@@ -533,28 +533,28 @@ Thêm vào `~/.gitconfig`:
     # Status shortcuts
     st = status
     s = status -sb
-    
+
     # Branch shortcuts
     co = checkout
     cob = checkout -b
     br = branch
     brd = branch -d
-    
+
     # Commit shortcuts
     cm = commit -m
     cam = commit -am
-    
+
     # Log shortcuts
     lg = log --oneline --graph --decorate
     last = log -1 HEAD
-    
+
     # Sync shortcuts
     sync = !git fetch origin && git merge origin/develop
     update = !git pull origin develop
-    
+
     # Cleanup
     cleanup = !git branch --merged | grep -v '*\\|main\\|develop' | xargs -n 1 git branch -d
-    
+
     # Undo shortcuts
     undo = reset HEAD~1 --soft
     unstage = reset HEAD --
@@ -590,24 +590,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
-      
+
       - name: Install dependencies
         run: flutter pub get
         working-directory: ./lexilingo_app
-      
+
       - name: Analyze code
         run: flutter analyze
         working-directory: ./lexilingo_app
-      
+
       - name: Run tests
         run: flutter test
         working-directory: ./lexilingo_app
-      
+
       - name: Check formatting
         run: dart format --set-exit-if-changed .
         working-directory: ./lexilingo_app

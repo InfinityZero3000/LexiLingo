@@ -8,14 +8,16 @@ Use one of the following production env profiles:
   - `VITE_USE_GATEWAY=true`
   - `VITE_BACKEND_URL=https://api.lexilingo.me/api/v1`
   - `VITE_AI_URL=https://api.lexilingo.me/api/v1`
-  - `VITE_AI_ADMIN_URL=https://api.lexilingo.me/api/v1/ai-admin`
   - `VITE_API_KEY=REPLACE_WITH_KONG_ADMIN_WEB_KEY`
-  - `VITE_AI_ADMIN_API_KEY=REPLACE_WITH_AI_ADMIN_API_KEY`
 
 - Direct service mode (fallback): `admin-service/.env.production.direct.example`
   - `VITE_USE_GATEWAY=false`
   - Keep direct Render/Cloudflare URLs
-  - Fill `VITE_AI_ADMIN_API_KEY` so AI settings page can call `/admin/config`
+
+AI topic/config admin operations go through backend-service's JWT-gated
+`/admin/ai-proxy` routes, which inject the ai-service admin key server-side
+(`AI_ADMIN_API_KEY` in backend-service's own env) — no admin key is ever
+shipped to the browser.
 
 ## Build Without Local npm (Docker)
 
@@ -106,11 +108,11 @@ async def create_admin():
         # Get admin role
         result = await db.execute(select(Role).where(Role.slug == 'admin'))
         admin_role = result.scalar_one_or_none()
-        
+
         if not admin_role:
             print('❌ Admin role not found. Run: python scripts/seed_rbac.py')
             return
-        
+
         # Create admin user
         user_data = UserCreate(
             email='nhthang312@gmail.com.com',
@@ -118,11 +120,11 @@ async def create_admin():
             password='admin123',  # Change this!
             display_name='Admin User'
         )
-        
+
         user = await create_user(db, user_data)
         user.role_id = admin_role.id
         await db.commit()
-        
+
         print(f'✅ Admin user created: {user.email}')
         print(f'   Login: nhthang312@gmail.com.com / admin123')
 
@@ -364,7 +366,7 @@ python backend-service/scripts/reset_admin_password.py
 3. **Implement component:**
    ```typescript
    import { BarChart, Bar, ... } from "recharts";
-   
+
    export const MyNewChart: React.FC<Props> = ({ data, loading }) => {
      // ... implement
    };
@@ -374,12 +376,12 @@ python backend-service/scripts/reset_admin_password.py
    ```typescript
    // In EnhancedAdminDashboard.tsx
    import { MyNewChart } from "../components/dashboard/MyNewChart";
-   
+
    const { data: myData } = useQuery({
      queryKey: ["dashboard", "my-data"],
      queryFn: getMyChartData,
    });
-   
+
    // In JSX:
    <MyNewChart data={myData?.data ?? []} loading={isLoading} />
    ```
@@ -430,14 +432,14 @@ python backend-service/scripts/reset_admin_password.py
 
 ## 🎯 Next Development Tasks
 
-Refer to [ADMIN_IMPLEMENTATION_PHASE1.md](ADMIN_IMPLEMENTATION_PHASE1.md) for detailed roadmap.
+The current roadmap is tracked through repository issues and implementation plans under `docs/superpowers/`.
 
 **Week 3-4:** User Management Module
 - User list with filters
 - User detail 360° view
 - Bulk operations
 
-**Week 5-6:** Content Management  
+**Week 5-6:** Content Management
 - Course analytics
 - Vocabulary import
 - Lesson editor

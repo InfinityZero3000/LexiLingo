@@ -29,6 +29,9 @@ class StartMessage(BaseModel):
     language: str = "en"
     use_case: UseCase = UseCase.CONVERSATION
     client_started_at: Optional[int] = None
+    duplex: bool = False
+    tts_enabled: bool = True
+    learner_level: str = Field(default="B1", pattern=r"^(A1|A2|B1|B2|C1|C2)$")
 
 
 class ResumeMessage(BaseModel):

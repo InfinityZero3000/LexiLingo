@@ -5,7 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
-import 'package:lexilingo_app/core/services/app_navigation_service.dart';
+import 'package:lexilingo_app/features/notifications/domain/entities/notification_entity.dart';
+import 'package:lexilingo_app/features/notifications/domain/services/notification_navigation_service.dart';
 
 /// Firebase Cloud Messaging Service
 /// Handles push notifications from Firebase
@@ -59,12 +60,12 @@ class FirebaseMessagingService {
             const Duration(seconds: 5),
           );
           if (kDebugMode) {
-            debugPrint(' FCM Token: ${_maskToken(_fcmToken)}');
+            debugPrint('FCM Token: ${_maskToken(_fcmToken)}');
           }
         }
       } catch (e) {
         debugPrint(
-          '️ Could not get FCM token (expected if APNS/FCM not fully setup): $e',
+          'Could not get FCM token (expected if APNS/FCM not fully setup): $e',
         );
       }
 
@@ -159,7 +160,7 @@ class FirebaseMessagingService {
       final prefs = await SharedPreferences.getInstance();
       final last = prefs.getString(_kRegisteredTokenKey);
       if (last == token) {
-        debugPrint(' FCM token already registered – skipping.');
+        debugPrint('FCM token already registered – skipping.');
         return;
       }
     }
@@ -180,9 +181,9 @@ class FirebaseMessagingService {
       // Persist the successfully registered token to skip future duplicates.
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_kRegisteredTokenKey, token);
-      debugPrint(' FCM token registered with backend ($deviceType)');
+      debugPrint('FCM token registered with backend ($deviceType)');
     } catch (e) {
-      debugPrint('️ FCM token registration failed: $e');
+      debugPrint('FCM token registration failed: $e');
     }
   }
 
@@ -237,40 +238,27 @@ class FirebaseMessagingService {
     final data = message.data;
     debugPrint('Message data: $data');
 
-    // Parse data and navigate accordingly
-    final type = data['type'] as String?;
-    // ignore: unused_local_variable
-    final targetId = data['target_id'] as String?;
+    final notification = NotificationEntity.fromFcm(
+      id: message.messageId ?? 'fcm_${DateTime.now().microsecondsSinceEpoch}',
+      title:
+          message.notification?.title ??
+          _readDataString(data, 'title') ??
+          'Notification',
+      body: message.notification?.body ?? _readDataString(data, 'body') ?? '',
+      data: Map<String, dynamic>.from(data),
+    );
 
-    switch (type) {
-      case 'starter_reward':
-        AppNavigationService.returnToRoot();
-        break;
-      case 'vocabulary_review_reminder':
-        final route = data['route'] as String? ?? '/vocabulary/review';
-        AppNavigationService.openRoute(route);
-        debugPrint('Navigate to vocabulary review screen');
-        break;
-      case 'streak_reminder':
-        // Navigate to home/streak screen
-        debugPrint('Navigate to streak screen');
-        break;
-      case 'lesson_reminder':
-        // Navigate to learning screen
-        debugPrint('Navigate to learning screen');
-        break;
-      case 'achievement':
-        // Navigate to achievements screen
-        debugPrint('Navigate to achievements screen');
-        break;
-      case 'new_content':
-        // Navigate to courses screen
-        debugPrint('Navigate to courses screen');
-        break;
-      default:
-        // Navigate to home
-        debugPrint('Navigate to home screen');
-    }
+    NotificationNavigationService.open(notification);
+    debugPrint(
+      'Navigate notification to ${notification.destinationRoute ?? 'root'}',
+    );
+  }
+
+  String? _readDataString(Map<String, dynamic> data, String key) {
+    final value = data[key];
+    if (value is! String) return null;
+    final trimmed = value.trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   /// Subscribe to a topic

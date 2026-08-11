@@ -16,6 +16,8 @@ def isolate_pipeline_dependencies(monkeypatch, mock_kg_service):
     from api.services import kg_service_v3 as kg_module
     from api.services.trace_cag import graph as graph_module
     from api.services.trace_cag import nodes_v2
+    from api.services.trace_cag import generate as generate_module
+    from api.services.trace_cag import retrieve as retrieve_module
 
     fake_redis = AsyncMock()
     fake_redis.get.return_value = None
@@ -39,9 +41,23 @@ def isolate_pipeline_dependencies(monkeypatch, mock_kg_service):
         execute_with_reconnect,
     )
     monkeypatch.setattr(
-        nodes_v2,
+        generate_module,
         "_throttled_post_json",
         AsyncMock(return_value=None),
+    )
+    monkeypatch.setattr(
+        retrieve_module,
+        "_get_retrieval_v3",
+        AsyncMock(side_effect=RuntimeError("retrieval disabled in integration test")),
+    )
+    doc_service = AsyncMock()
+    doc_service.query_l2.return_value = []
+    monkeypatch.setattr(retrieve_module, "get_doc_intel_service", lambda: doc_service)
+    monkeypatch.setattr(generate_module, "get_doc_intel_service", lambda: doc_service)
+    monkeypatch.setattr(
+        nodes_v2,
+        "_jit_graph_extract_node",
+        AsyncMock(return_value={"jit_soft_graph": None, "jit_graph_meta": {}}),
     )
     mock_kg_service.get_seed_concepts_fast.return_value = []
     mock_kg_service.semantic_seed_concepts.return_value = []

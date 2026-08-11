@@ -15,6 +15,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.token_blacklist import TokenBlacklist
 from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
 from app.models.user import User
 
@@ -36,6 +37,11 @@ async def get_current_user(
             return current_user
     """
     token = credentials.credentials
+    if await TokenBlacklist.is_blacklisted(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
     
     # 1) Try local JWT (backward compatibility)
     payload = decode_token(token)
@@ -96,6 +102,8 @@ async def get_current_user_optional(
         return None
     
     token = credentials.credentials
+    if await TokenBlacklist.is_blacklisted(token):
+        return None
     
     # 1) Try local JWT
     payload = decode_token(token)
@@ -232,6 +240,36 @@ def require_permission(resource: str, action: str):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"Permission denied: {resource}:{action}",
+        )
+
+    return _check
+
+
+def require_entitlement(entitlement_id: str = "premium"):
+    """
+    Dependency factory: require an active, server-verified entitlement.
+
+    Checks the `user_entitlements` row synced from RevenueCat — never trusts
+    client-reported purchase state. No route uses this yet; it is the
+    primitive ready for whichever route(s) become premium-gated.
+
+    Usage:
+        @router.get("/premium-only", dependencies=[Depends(require_entitlement("premium"))])
+        async def premium_only(...):
+            ...
+    """
+    async def _check(
+        current_user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        from app.services.entitlement_service import EntitlementService
+
+        if await EntitlementService.is_active(db, current_user.id, entitlement_id):
+            return current_user
+
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=f"Requires an active '{entitlement_id}' entitlement",
         )
 
     return _check

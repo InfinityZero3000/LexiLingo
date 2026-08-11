@@ -31,7 +31,8 @@
     "rename": "이름 바꾸기",
     "play": "놀다",
     "awesome": "엄청난!",
-    "create": "만들기"
+    "create": "만들기",
+    "refresh": "새로고침"
   },
   "auth": {
     "login": "로그인",
@@ -208,7 +209,50 @@
     "pointsCalendar": "포인트 캘린더",
     "setupCheckinReminder": "체크인 알림 설정",
     "checkinReminder": "체크인 알림",
-    "setTime": "시간 설정"
+    "setTime": "시간 설정",
+    "todayPlan": {
+      "title": "Today's Plan",
+      "subtitle": "A focused path through your next best tasks",
+      "footer": "Built from your reviews, courses, skills, and challenges.",
+      "viewAll": "View plan",
+      "heroTitle": "Your study route is ready",
+      "heroSubtitle": "Finish the next small task, then let LexiLingo guide you into the right practice.",
+      "completedSummary": "{completed}/{total} tasks complete",
+      "startNext": "Start next task",
+      "sequenceTitle": "Today's sequence",
+      "vocabularyTitle": "Review vocabulary",
+      "vocabularyCheckSubtitle": "Check if any words are due for review.",
+      "vocabularyDueSubtitle": "{count} words are waiting for review.",
+      "vocabularyDoneSubtitle": "You're caught up on vocabulary today.",
+      "vocabularyMeta": "SRS",
+      "courseFallbackTitle": "Choose a course",
+      "courseFallbackSubtitle": "Pick a CEFR path and start your first lesson.",
+      "courseSubtitle": "Continue your {level} learning path.",
+      "courseMeta": "Course",
+      "courseProgress": "{percent}% done",
+      "skillFallbackTitle": "Practice speaking",
+      "skillFallbackSubtitle": "Warm up with a short pronunciation drill.",
+      "skillTitle": "Strengthen {skill}",
+      "skillSubtitle": "Current estimate: {level}.",
+      "skillMeta": "Skill",
+      "skillScore": "{score}/100",
+      "challengeFallbackTitle": "Play a quick game",
+      "challengeFallbackSubtitle": "Earn XP with a short English challenge.",
+      "challengeMeta": "Challenge",
+      "challengeProgress": "{current}/{target}",
+      "lexiTitle": "Chat with Lexi",
+      "lexiSubtitle": "Close the loop with a short AI conversation.",
+      "lexiMeta": "AI Tutor",
+      "reviewAction": "Review",
+      "checkAction": "Check",
+      "browseAction": "Browse",
+      "continueAction": "Continue",
+      "practiceAction": "Practice",
+      "playAction": "Play",
+      "startAction": "Start",
+      "doneAction": "Done",
+      "chatAction": "Chat"
+    }
   },
   "course": {
     "title": "행동",
@@ -272,7 +316,50 @@
     "nextQuestion": "다음 질문",
     "lessonComplete": "강의가 완료되었습니다!",
     "score": "점수: {score}/{total}",
-    "accuracy": "정확도: {percent}%"
+    "accuracy": "정확도: {percent}%",
+    "phasePreTask": "준비",
+    "phaseTaskCycle": "과제 연습",
+    "phaseLanguageFocus": "언어 초점",
+    "exercise": {
+      "trueFalseLabel": "참 또는 거짓",
+      "multipleChoiceLabel": "객관식",
+      "fillBlankLabel": "빈칸 채우기",
+      "fillBlankInstruction": "문장을 완성할 가장 알맞은 단어를 고르세요.",
+      "answerHint": "답을 입력하세요...",
+      "arrangeSentenceTitle": "문장 배열하기",
+      "arrangeSentenceInstruction": "아래 단어를 눌러 순서대로 배열하세요...",
+      "translationChoiceTitle": "올바른 번역 고르기",
+      "dialogueCompletionTitle": "대화 완성하기",
+      "collocationPrompt": "\"{word}\"와 어울리는 표현을 고르세요",
+      "collocationInstruction": "의미를 완성하는 올바른 연어를 찾으세요.",
+      "mainVerb": "중심 단어",
+      "hintLabel": "힌트: {hint}",
+      "dictationTitle": "받아쓰기",
+      "dictationInstruction": "듣고 빈칸을 채우세요",
+      "dictationHint": "들은 내용을 입력하세요...",
+      "dictationWordCount": "입력할 단어 {count}개",
+      "grammarCorrectionTitle": "올바른 문장 고르기",
+      "grammarCorrectionInstruction": "아래 문장의 올바른 형태를 고르세요:",
+      "incorrectSentence": "잘못된 문장",
+      "correctSentenceHint": "올바른 문장을 입력하세요...",
+      "imageChoiceLabel": "이미지 선택",
+      "listeningLabel": "듣기",
+      "tapToListen": "눌러서 듣기",
+      "matchPairsTitle": "짝 맞추기",
+      "matchPairsInstruction": "각 단어를 알맞은 뜻과 연결하세요.",
+      "understood": "알겠어요!",
+      "meaningQuestion": "무슨 뜻인가요?",
+      "pronunciationTitle": "발음 연습",
+      "pronunciationInstruction": "듣고 아래 문장을 따라 하세요",
+      "readingTitle": "독해",
+      "readingInstruction": "글을 읽고 아래 질문에 답하세요.",
+      "shortWritingTitle": "짧은 답변",
+      "shortWritingHint": "여기에 답을 입력하세요...",
+      "speakingTitle": "말하기 연습",
+      "speakingInstruction": "다음 문장을 따라 하세요",
+      "categorizationTitle": "어휘 분류",
+      "categorizationInstruction": "단어를 누른 다음 알맞은 분류를 누르세요."
+    }
   },
   "flashcard": {
     "reviewSessionTitle": "검토 세션",
@@ -357,7 +444,10 @@
     "playbackSpeedDescription": "텍스트 음성 변환 오디오 재생 속도 조정",
     "selectPlaybackSpeed": "재생 속도 선택",
     "confidence": "신뢰도: {percent}%",
-    "playError": "재생 실패: {error}"
+    "playError": "재생 실패: {error}",
+    "tapToRecord": "Tap to record",
+    "tapToStop": "Tap to stop",
+    "assessmentFailed": "Pronunciation assessment failed. Please try again."
   },
   "chat": {
     "placeholder": "메시지를 입력하세요...",
@@ -557,10 +647,6 @@
     "goal_insane_description": "1시간/일",
     "goal_progress": "현재 진행률 {percent}%",
     "goal_updated": "일일 목표가 {xp} XP로 업데이트되었습니다.",
-    "delete_account": "계정 삭제",
-    "delete_account_confirm": "이 작업은 되돌릴 수 없습니다. 모든 학습 진행상황, 스트릭 및 데이터가 즉시 영구 삭제됩니다.",
-    "delete_account_confirm_btn": "내 계정 삭제",
-    "delete_account_error": "계정 삭제에 실패했습니다. 다시 시도해 주세요.",
     "about_subtitle": "법적 정보 및 앱 정보",
     "referral": "(Referral) Invite & Earn",
     "referral_subtitle": "(Referral) Invite friends and earn gems together",
@@ -623,7 +709,19 @@
     "earnTipFinishCourse": "강좌 완료하기",
     "earnTipStreakBonus": "일일 연속 보너스",
     "earnTipAchievements": "도전과제 달성하기",
-    "earnTipChallenges": "주간 챌린지"
+    "earnTipChallenges": "주간 챌린지",
+    "dailyStreakRewardAvailable": "Daily Streak Reward!",
+    "dailyStreakRewardSubtitle": "You've kept your streak alive! Claim your daily reward now.",
+    "claimDailyRewardButton": "Claim Daily Reward",
+    "dailyRewardClaimed": "Daily Reward Claimed!",
+    "gemsReceived": "You received {gems} gems!",
+    "starterReward": {
+      "title": "Welcome gift!",
+      "description": "Use Gems to unlock special items in the shop.",
+      "action": "Awesome!",
+      "gemLabel": "Gem reward",
+      "confirmation": "{gems} Gems were added to your wallet."
+    }
   },
   "social": {
     "friends": "친구",
@@ -672,7 +770,29 @@
     "skipTour": "둘러보기 건너뛰기",
     "activeUsers": "활성 사용자",
     "dailyLessons": "일일 레슨",
-    "globalCommunity": "글로벌 커뮤니티에 가입하세요"
+    "globalCommunity": "글로벌 커뮤니티에 가입하세요",
+    "personalizeTitle": "학습 맞춤 설정",
+    "goalQuestion": "목표가 무엇인가요?",
+    "goalSubtitle": "선택한 목표에 맞춰 학습 경험을 조정할게요.",
+    "levelQuestion": "현재 레벨은 무엇인가요?",
+    "levelSubtitle": "처음부터 적절한 난이도의 콘텐츠를 설정하는 데 도움이 됩니다.",
+    "interestQuestion": "가장 좋아하는 주제는 무엇인가요?",
+    "interestSubtitle": "관심사에 맞는 레슨을 우선으로 추천할게요.",
+    "continueBtn": "계속",
+    "createPlan": "내 학습 계획 만들기",
+    "goalCareer": "커리어",
+    "goalTravel": "여행",
+    "goalExams": "시험",
+    "goalCulture": "문화",
+    "levelA1": "A1 - 입문",
+    "levelA2": "A2 - 초급",
+    "levelB1": "B1 - 중급",
+    "levelB2": "B2 - 중상급",
+    "levelC1": "C1 - 고급",
+    "interestDailyLife": "일상생활 및 사회 주제",
+    "interestTechnology": "기술과 혁신",
+    "interestCulture": "문화와 엔터테인먼트",
+    "interestCareer": "커리어 성장과 면접"
   },
   "preAuth": {
     "quickSetup": "빠른 설정",
@@ -729,7 +849,21 @@
     "readingSpeed": "읽기 속도",
     "retakeTest": "시험 다시 보기",
     "yourLevelIs": "당신의 레벨은 {level}입니다",
-    "testCompleted": "시험 완료"
+    "testCompleted": "시험 완료",
+    "questionCounter": "Question {current} of {total}",
+    "answeredCount": "{answered}/{total} answered",
+    "points": "{points} pts",
+    "previous": "Previous",
+    "next": "Next",
+    "submitTest": "Submit test",
+    "answerAllQuestions": "Answer every question before submitting.",
+    "resultSubtitle": "Your CEFR profile has been updated from this assessment.",
+    "score": "Score",
+    "correct": "Correct",
+    "rank": "Rank",
+    "loadFailed": "Could not load the test",
+    "noQuestions": "No questions available",
+    "noQuestionsSubtitle": "Try again in a moment."
   },
   "premium": {
     "title": "(Premium) Go Premium",
@@ -781,7 +915,10 @@
     "categoryPowerUps": "파워업",
     "categoryBoosts": "부스트",
     "categoryCosmetics": "화장품",
-    "categorySpecial": "특별한"
+    "categorySpecial": "특별한",
+    "equipNow": "Equip now",
+    "avatarEquipped": "Avatar equipped successfully!",
+    "avatarEquipFailed": "Could not equip this avatar."
   },
   "leaderboard": {
     "title": "리더보드",
@@ -829,6 +966,7 @@
     "lookingUp": "'{word}'을(를) 찾는 중…",
     "noDefinitionFound": "\"{word}\"에 대한 정의를 찾을 수 없습니다.",
     "saveWordToVocabulary": "단어를 어휘에 저장",
+    "wordAlreadySavedButton": "이미 저장됨",
     "wordAlreadyInCollection": "\"{word}\"은(는) 이미 귀하의 어휘에 있습니다.",
     "wordSaved": "\"{word}\"을(를) 어휘에 저장했습니다.",
     "couldNotSaveWord": "지금은 이 단어를 저장할 수 없습니다."
@@ -871,7 +1009,9 @@
     "streakLabel": "줄",
     "streakBonusLabel": "연속 보너스: {multiplier}x",
     "playAgainButton": "다시 플레이",
-    "backToGamesButton": "게임으로 돌아가기"
+    "backToGamesButton": "게임으로 돌아가기",
+    "xpNotAwarded": "XP was not awarded. Your game result is preserved.",
+    "retryXp": "Retry XP award"
   },
   "spellingBee": {
     "wordProgress": "단어 {current}/{total}",
@@ -881,7 +1021,15 @@
     "correctFeedback": "옳은!",
     "answerRevealLabel": "대답은 다음과 같습니다.",
     "nextWordButton": "다음 단어",
-    "seeResultsButton": "결과 보기"
+    "seeResultsButton": "결과 보기",
+    "audioError": "Could not play audio. Check your connection.",
+    "retryAudio": "Retry",
+    "listenButtonLabel": "Listen to the word",
+    "noPlaysLeft": "No plays remaining",
+    "abandonTitle": "Quit game?",
+    "abandonBody": "XP will be based on words answered correctly so far.",
+    "keepPlaying": "Keep playing",
+    "quit": "Quit"
   },
   "wordScramble": {
     "wordProgress": "{total}의 단어 {current}",
@@ -990,8 +1138,9 @@
     "languageNotes": "언어 참고사항",
     "listenButton": "듣기",
     "viewNotesButton": "노트 보기",
+    "practiceMoreButton": "{concept} 연습하기",
     "correctionsSection": "수정",
-    "vietnameseHintSection": "베트남어 힌트",
+    "nativeHintSection": "모국어 힌트",
     "relatedConceptsSection": "관련 개념"
   },
   "youtube": {
@@ -1049,7 +1198,10 @@
     "unlockGoldenChest": "황금 상자",
     "unlockGems": "보석 50개",
     "unlockXpBooster": "2배 XP 부스터",
-    "continueJourney": "학습 계속하기"
+    "continueJourney": "학습 계속하기",
+    "loadFailed": "Unable to load this game. Please try again.",
+    "emptyGame": "This game has no playable content right now.",
+    "retryLoad": "Try again"
   },
   "learning": {
     "checkAnswer": "답변 확인",
@@ -1076,7 +1228,8 @@
     "backToBook": "예약으로 돌아가기",
     "readerSettings": "리더 설정",
     "pageProgress": "{total} 중 {current} 페이지",
-    "searchPlaceholder": "제목 또는 저자로 검색..."
+    "searchPlaceholder": "제목 또는 저자로 검색...",
+    "savedBooks": "저장한 책"
   },
   "news": {
     "title": "영어 뉴스",
@@ -1150,11 +1303,165 @@
     "topicScienceSubtitle": "개념 & 발견",
     "topicTechnology": "기술",
     "topicTechnologySubtitle": "소프트웨어 & 디지털 시대",
-    "noDefinitionYet": "아직 정의 없음"
+    "noDefinitionYet": "아직 정의 없음",
+    "translationLabel": "번역",
+    "tabWords": "Words",
+    "tabTopics": "Topic Flashcards",
+    "startLearning": "Start",
+    "audioQuestionHint": "Listen and guess the word"
   },
   "legal": {
     "privacy_title": "개인정보 처리방침",
     "terms_title": "이용약관",
     "last_updated": "최종 업데이트: {date}"
+  },
+  "offlineSync": {
+    "title": "Offline & Sync",
+    "settingsTitle": "Offline & Sync",
+    "settingsSubtitle": "Manage cache and pending sync",
+    "entrySubtitle": "Review offline data, cache, and queued updates",
+    "onlineTitle": "You are online",
+    "onlineSubtitle": "Fresh content and queued changes can sync normally.",
+    "offlineTitle": "You are offline",
+    "offlineSubtitle": "Cached content can still open; new changes may wait in the queue.",
+    "cacheTitle": "API cache",
+    "cacheSubtitle": "Cached content used for faster loading and offline fallback.",
+    "totalEntries": "Total entries",
+    "noCache": "No cached API responses yet.",
+    "clearExpired": "Clear expired",
+    "clearAll": "Clear all",
+    "clearAllTitle": "Clear all cached API data?",
+    "clearAllMessage": "This removes cached public content. Your account, saved progress, and pending sync queue are not deleted.",
+    "clearAllConfirm": "Clear cache",
+    "expiredCleared": "Cleared {count} expired cache entries.",
+    "allCacheCleared": "All API cache entries were cleared.",
+    "queueTitle": "Sync queue",
+    "queueSubtitle": "Pending offline actions waiting to be sent.",
+    "totalQueued": "Total queued",
+    "readyQueued": "Ready now",
+    "scheduledQueued": "Scheduled retry",
+    "retryingQueued": "Retrying",
+    "queueHint": "Queued work is processed automatically when the app is online and the account is active.",
+    "queueUnavailable": "Persistent sync queue is not available on this platform.",
+    "noUserScope": "Sign in to see account-scoped sync queue status.",
+    "loadFailed": "Could not load offline status",
+    "cacheTypes": {
+      "news": "News",
+      "youtube": "YouTube",
+      "podcast": "Podcast",
+      "book": "Books",
+      "dictionary": "Dictionary",
+      "game": "Games",
+      "flashcard": "Flashcards"
+    }
+  },
+  "practiceLab": {
+    "title": "Practice Lab",
+    "shortTitle": "Practice",
+    "heroTitle": "Train by skill",
+    "heroSubtitle": "Pick the exact skill you want to sharpen, or follow the focus areas from your CEFR profile.",
+    "currentLevel": "Current level",
+    "recommended": "Focus skills",
+    "recommendedTitle": "Recommended practice",
+    "recommendedSubtitle": "Based on your weakest proficiency scores.",
+    "fallbackSubtitle": "Practice a balanced mix while LexiLingo learns your strengths.",
+    "allSkillsTitle": "All skill labs",
+    "allSkillsSubtitle": "Jump into a focused practice mode using existing lessons, games, audio, and Lexi.",
+    "focus": "Focus",
+    "premiumOnly": "Premium",
+    "premiumLockedSubtitle": "Unlock advanced Lexi-guided writing practice with Premium.",
+    "unlockPremium": "Unlock Premium",
+    "skills": {
+      "vocabulary": {
+        "title": "Vocabulary",
+        "subtitle": "Review due words and strengthen recall.",
+        "action": "Review words",
+        "estimate": "5-8 min"
+      },
+      "speaking": {
+        "title": "Speaking",
+        "subtitle": "Practice pronunciation and spoken responses.",
+        "action": "Speak now",
+        "estimate": "6-10 min"
+      },
+      "listening": {
+        "title": "Listening",
+        "subtitle": "Train your ear with graded podcast content.",
+        "action": "Listen",
+        "estimate": "8-12 min"
+      },
+      "reading": {
+        "title": "Reading",
+        "subtitle": "Read CEFR-graded news and check comprehension.",
+        "action": "Read",
+        "estimate": "7-10 min"
+      },
+      "grammar": {
+        "title": "Grammar",
+        "subtitle": "Use games and quizzes to reinforce structure.",
+        "action": "Practice",
+        "estimate": "5-9 min"
+      },
+      "writing": {
+        "title": "Writing",
+        "subtitle": "Draft sentences with Lexi and refine your output.",
+        "action": "Open Lexi",
+        "estimate": "6-10 min"
+      },
+      "mistakes": {
+        "title": "Mistake Notebook",
+        "subtitle": "Review questions you missed in reading quizzes.",
+        "action": "Review mistakes",
+        "estimate": "4-8 min"
+      }
+    }
+  },
+  "mistakeNotebook": {
+    "title": "Mistake Notebook",
+    "heroTitle": "Turn misses into review",
+    "heroSubtitle": "Wrong answers from book and news quizzes are saved here for quick follow-up.",
+    "total": "Total",
+    "toReview": "To review",
+    "reviewed": "Reviewed",
+    "reviewedTimes": "Reviewed {count} times",
+    "filterAll": "All",
+    "filterToReview": "To review",
+    "filterReviewed": "Reviewed",
+    "emptyTitle": "No mistakes yet",
+    "emptySubtitle": "Missed quiz answers from Books and News will appear here automatically.",
+    "emptyFilterTitle": "Nothing in this filter",
+    "emptyFilterSubtitle": "Switch filters to see the rest of your notebook.",
+    "sourceBookQuiz": "Book quiz",
+    "sourceNewsQuiz": "News quiz",
+    "sourceFillBlank": "Fill in the Blank",
+    "sourceGrammarQuiz": "Grammar Quiz",
+    "sourceQuiz": "Quiz",
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "explanation": "Explanation",
+    "markReviewed": "Mark reviewed",
+    "delete": "Delete",
+    "deleteTitle": "Delete mistake?",
+    "deleteMessage": "This removes the item from your notebook."
+  },
+  "vocabQuiz": {
+    "title": "Vocabulary Quiz",
+    "loading": "Building your quiz...",
+    "empty": "No words due for review!",
+    "tryAgain": "Try again",
+    "term": "TERM",
+    "definition": "DEFINITION",
+    "chooseCorrect": "Choose the correct answer",
+    "continueLabel": "Continue",
+    "finish": "Finish",
+    "correct": "Correct!",
+    "incorrect": "Not quite",
+    "exitTitle": "Exit quiz?",
+    "exitMessage": "Your progress so far is saved. Are you sure you want to exit?",
+    "chooseMode": "Choose a review mode",
+    "modeQuizTitle": "Multiple-choice quiz",
+    "modeQuizSubtitle": "Test meaning and term — auto-graded",
+    "modeFlashcardTitle": "Flashcards",
+    "modeFlashcardSubtitle": "Flip cards and rate yourself"
   }
 }

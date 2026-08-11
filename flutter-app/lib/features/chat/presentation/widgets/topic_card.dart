@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
-import '../../data/models/story_model.dart';
+import '../../domain/entities/story.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../utils/topic_icon_resolver.dart';
 

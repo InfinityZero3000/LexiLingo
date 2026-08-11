@@ -1,8 +1,9 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/failures.dart';
-import '../../data/models/story_model.dart';
-import '../../data/models/topic_session_model.dart';
+import '../entities/story.dart';
+import '../entities/topic_session.dart';
+import '../entities/topic_stream_event.dart';
 
 /// Repository interface for Story/Topic-based conversation
 abstract class StoryRepository {
@@ -35,6 +36,15 @@ abstract class StoryRepository {
 
   /// Send a message in a topic session
   Future<Either<Failure, TopicChatResponse>> sendTopicMessage({
+    required String sessionId,
+    required String userId,
+    required String message,
+  });
+
+  /// Send a message and receive the reply as an SSE event stream instead of
+  /// waiting for the full response. Raw stream (not wrapped in Either) —
+  /// mid-stream failures surface as a [TopicStreamError] event instead.
+  Stream<TopicStreamEvent> sendTopicMessageStream({
     required String sessionId,
     required String userId,
     required String message,

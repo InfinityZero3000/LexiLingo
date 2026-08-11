@@ -3,11 +3,12 @@ Ollama Test Router
 Testing endpoints for Ollama service
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import logging
 
+from api.routes.admin import verify_admin_api_key
 from api.services.ollama_service import get_ollama_service
 from api.core.config import settings
 
@@ -31,19 +32,26 @@ class AnalyzeRequest(BaseModel):
     language: str = "en"
 
 
+async def _require_ollama_enabled_admin(admin_key: str | None) -> None:
+    if not settings.USE_OLLAMA:
+        raise HTTPException(
+            status_code=503,
+            detail="Ollama service is disabled. Set USE_OLLAMA=true"
+        )
+    await verify_admin_api_key(admin_key)
+
+
 @router.get("/ollama/health")
-async def ollama_health():
+async def ollama_health(
+    admin_key: str | None = Header(default=None, alias="X-Admin-Key"),
+):
     """
     Check Ollama service health.
     
     Returns:
         Service status and available models
     """
-    if not settings.USE_OLLAMA:
-        raise HTTPException(
-            status_code=503,
-            detail="Ollama service is disabled. Set USE_OLLAMA=true"
-        )
+    await _require_ollama_enabled_admin(admin_key)
     
     try:
         ollama = get_ollama_service()
@@ -65,13 +73,18 @@ async def ollama_health():
             "model_loaded": settings.OLLAMA_MODEL in models
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Ollama health check failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/ollama/chat")
-async def ollama_chat(request: ChatRequest):
+async def ollama_chat(
+    request: ChatRequest,
+    admin_key: str | None = Header(default=None, alias="X-Admin-Key"),
+):
     """
     Chat with Ollama (Qwen model).
     
@@ -81,11 +94,7 @@ async def ollama_chat(request: ChatRequest):
     Returns:
         AI response
     """
-    if not settings.USE_OLLAMA:
-        raise HTTPException(
-            status_code=503,
-            detail="Ollama service is disabled"
-        )
+    await _require_ollama_enabled_admin(admin_key)
     
     try:
         ollama = get_ollama_service()
@@ -104,13 +113,18 @@ async def ollama_chat(request: ChatRequest):
             "message": request.message
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Ollama chat failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/ollama/analyze")
-async def ollama_analyze(request: AnalyzeRequest):
+async def ollama_analyze(
+    request: AnalyzeRequest,
+    admin_key: str | None = Header(default=None, alias="X-Admin-Key"),
+):
     """
     Analyze text using Ollama.
     
@@ -120,11 +134,7 @@ async def ollama_analyze(request: AnalyzeRequest):
     Returns:
         Analysis results (grammar, fluency, vocabulary, etc.)
     """
-    if not settings.USE_OLLAMA:
-        raise HTTPException(
-            status_code=503,
-            detail="Ollama service is disabled"
-        )
+    await _require_ollama_enabled_admin(admin_key)
     
     try:
         ollama = get_ollama_service()
@@ -142,24 +152,24 @@ async def ollama_analyze(request: AnalyzeRequest):
             "model": settings.OLLAMA_MODEL
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Text analysis failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/ollama/models")
-async def list_ollama_models():
+async def list_ollama_models(
+    admin_key: str | None = Header(default=None, alias="X-Admin-Key"),
+):
     """
     List all available Ollama models.
     
     Returns:
         List of model names
     """
-    if not settings.USE_OLLAMA:
-        raise HTTPException(
-            status_code=503,
-            detail="Ollama service is disabled"
-        )
+    await _require_ollama_enabled_admin(admin_key)
     
     try:
         ollama = get_ollama_service()
@@ -171,6 +181,8 @@ async def list_ollama_models():
             "count": len(models)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Failed to list models: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -8,6 +8,17 @@ import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
 
+
+def _sum_token_members(members) -> int:
+    total = 0
+    for raw in members:
+        value = raw.decode() if isinstance(raw, bytes) else str(raw)
+        try:
+            total += int(value.rsplit("-", 3)[1])
+        except (IndexError, ValueError):
+            logger.warning("Ignoring malformed TPM limiter member")
+    return total
+
 class RedisRateLimiter:
     """
     Sliding-window rate limiter using Redis for multi-worker consistency.
@@ -50,12 +61,12 @@ class RedisRateLimiter:
             # Get counts
             async with self.redis.pipeline() as pipe:
                 pipe.zcard(rpm_key)
-                pipe.zrange(tpm_key, 0, -1, withscores=True)
+                pipe.zrange(tpm_key, 0, -1)
                 pipe.zcard(rpd_key)
                 results = await pipe.execute()
 
             rpm_count = results[0]
-            tpm_count = sum(float(tokens) for _, tokens in results[1])
+            tpm_count = _sum_token_members(results[1])
             rpd_count = results[2]
 
             if rpm_count >= self.rpm_limit * self.safety:
@@ -86,9 +97,9 @@ class RedisRateLimiter:
         try:
             async with self.redis.pipeline() as pipe:
                 # Use a unique identifier for the set member to allow multiple requests at the same timestamp
-                member = f"{now}-{tokens_used}"
+                member = f"{now}-{tokens_used}-{time.time_ns()}"
                 pipe.zadd(rpm_key, {member: now})
-                pipe.zadd(tpm_key, {f"{now}-{tokens_used}-tokens": now})  # score=now for time-window cleanup; member encodes token count
+                pipe.zadd(tpm_key, {f"{now}-{tokens_used}-{time.time_ns()}-tokens": now})
                 pipe.zadd(rpd_key, {member: now})
                 # Set TTL
                 pipe.expire(rpm_key, 65)

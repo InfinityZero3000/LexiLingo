@@ -23,7 +23,6 @@ from api.services.trace_cag.nodes_v2 import (
     retrieve_node,
     generate_node,
     vietnamese_node,
-    tts_node,
     ask_clarify_node,
 )
 from api.services.trace_cag.edges import (
@@ -95,7 +94,6 @@ class TraceCAGPipeline:
         graph.add_node("retrieve_node", retrieve_node)
         graph.add_node("generate_node", generate_node)
         graph.add_node("vietnamese_node", vietnamese_node)
-        graph.add_node("tts_node", tts_node)
         graph.add_node("ask_clarify_node", ask_clarify_node)
         
         # ============================================
@@ -143,9 +141,6 @@ class TraceCAGPipeline:
         graph.add_edge("ask_clarify_node", END)
 
         graph.add_edge("generate_node", END)
-
-        # TTS → end (node remains registered but unreachable; TTS handled externally)
-        graph.add_edge("tts_node", END)
         
         return graph
     
@@ -163,6 +158,7 @@ class TraceCAGPipeline:
         retrieval_policy: str = "full",
         diagnosis_policy: str = "auto",
         generation_policy: str = "auto",
+        topic_system_prompt: Optional[str] = None,
         benchmark_task: Optional[str] = None,
         benchmark_context: Optional[str] = None,
         benchmark_metadata: Optional[Dict[str, Any]] = None,
@@ -197,6 +193,7 @@ class TraceCAGPipeline:
             retrieval_policy=retrieval_policy,
             diagnosis_policy=diagnosis_policy,
             generation_policy=generation_policy,
+            topic_system_prompt=topic_system_prompt,
             benchmark_task=benchmark_task,
             benchmark_context=benchmark_context,
             benchmark_metadata=benchmark_metadata,
@@ -295,8 +292,13 @@ class TraceCAGPipeline:
                 for err in errors
             ],
             "linked_concepts": state.get("kg_seed_concepts", []),
+            # Concept IDs diagnose_node traced the *actual grammar errors* back
+            # to (distinct from linked_concepts, which are just topic-keyword
+            # seeds from the raw input) — the precise signal a "practice this
+            # next" suggestion should be built from.
+            "weak_concepts": state.get("diagnosis_root_causes", []),
             "action_plan": state.get("action_plan", []),
-            "vietnamese_hint": state.get("vietnamese_hint"),
+            "native_hint": state.get("native_hint"),
             "pronunciation_tip": state.get("pronunciation_tip"),
             "scores": {
                 "fluency": fluency,

@@ -10,12 +10,14 @@ from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
+from app.core.cache import build_cache_key, delete_cached
 from app.models.gamification import (
     Achievement, UserAchievement, UserWallet, WalletTransaction,
     LeaderboardEntry, UserFollowing, ActivityFeed, ShopItem, UserInventory
 )
 from app.models.user import User
 from app.crud.leaderboard import competition_rank
+from app.core.cache import build_cache_key, delete_cached
 
 
 # ============================================================================
@@ -143,11 +145,17 @@ class WalletCRUD:
             )
             if commit:
                 try:
-                    db.add(wallet)
+                    # Savepoint, not a bare commit/rollback: a caller may
+                    # already have other pending work in this transaction
+                    # (e.g. an idempotency-grant insert) that a full
+                    # rollback on a concurrent wallet-creation race would
+                    # otherwise silently discard.
+                    async with db.begin_nested():
+                        db.add(wallet)
+                        await db.flush()
                     await db.commit()
                     await db.refresh(wallet)
                 except IntegrityError:
-                    await db.rollback()
                     result = await db.execute(
                         select(UserWallet).where(
                             UserWallet.user_id == user_id
@@ -188,6 +196,12 @@ class WalletCRUD:
             user_id,
             commit=commit,
         )
+        result = await db.execute(
+            select(UserWallet)
+            .where(UserWallet.user_id == user_id)
+            .with_for_update()
+        )
+        wallet = result.scalar_one()
         
         wallet.gems += amount
         wallet.total_gems_earned += amount
@@ -205,11 +219,14 @@ class WalletCRUD:
         if commit:
             await db.commit()
             await db.refresh(wallet)
+            await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         else:
             await db.flush()
-        
+            # commit=False: caller owns the outer transaction and must
+            # invalidate the wallet cache itself after that transaction commits.
+
         return wallet, transaction
-    
+
     @staticmethod
     async def spend_gems(
         db: AsyncSession,
@@ -254,11 +271,14 @@ class WalletCRUD:
         if commit:
             await db.commit()
             await db.refresh(wallet)
+            await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         else:
             await db.flush()
-        
+            # commit=False: caller owns the outer transaction and must
+            # invalidate the wallet cache itself after that transaction commits.
+
         return wallet, transaction
-    
+
     @staticmethod
     async def get_transactions(
         db: AsyncSession,
@@ -313,7 +333,7 @@ class LeaderboardCRUD:
                     LeaderboardEntry.user_id == user_id,
                     LeaderboardEntry.week_start == week_start
                 )
-            )
+            ).with_for_update()
         )
         entry = result.scalar_one_or_none()
 
@@ -341,7 +361,7 @@ class LeaderboardCRUD:
                             LeaderboardEntry.user_id == user_id,
                             LeaderboardEntry.week_start == week_start,
                         )
-                    )
+                    ).with_for_update()
                 )
                 entry = result.scalar_one_or_none()
                 if not entry:
@@ -358,6 +378,12 @@ class LeaderboardCRUD:
     ) -> LeaderboardEntry:
         """Add XP and lessons to user's leaderboard entry"""
         entry = await LeaderboardCRUD.get_or_create_entry(db, user_id)
+        result = await db.execute(
+            select(LeaderboardEntry)
+            .where(LeaderboardEntry.id == entry.id)
+            .with_for_update()
+        )
+        entry = result.scalar_one()
         entry.xp_earned += xp
         entry.lessons_completed += lessons
         await db.commit()

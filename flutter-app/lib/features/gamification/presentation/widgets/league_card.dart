@@ -57,10 +57,7 @@ class LeagueCard extends StatelessWidget {
                             ? ShaderMask(
                                 shaderCallback: (bounds) =>
                                     const LinearGradient(
-                                      colors: [
-                                        Color(0xFF5AB6FF),
-                                        Color(0xFFFFD64F),
-                                      ],
+                                      colors: AppColors.masterGradient,
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ).createShader(bounds),
@@ -69,7 +66,7 @@ class LeagueCard extends StatelessWidget {
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: AppColors.surfaceLight,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -96,7 +93,7 @@ class LeagueCard extends StatelessWidget {
                         'xp': '${status.xpEarned}',
                       },
                     ),
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 13, color: AppColors.grey600),
                   ),
                   const SizedBox(height: 4),
                   Wrap(
@@ -122,14 +119,14 @@ class LeagueCard extends StatelessWidget {
                         Icon(
                           Icons.timer_outlined,
                           size: 14,
-                          color: Colors.grey[500],
+                          color: AppColors.grey500,
                         ),
                         const SizedBox(width: 4),
                         Text(
                           _formatTimeRemaining(status.weekEndsInHours),
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: AppColors.grey500,
                           ),
                         ),
                       ],
@@ -210,7 +207,7 @@ class LeagueCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                           ),
                         ),
@@ -222,7 +219,7 @@ class LeagueCard extends StatelessWidget {
                   entry.userRank == 'master'
                       ? ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                            colors: AppColors.masterGradient,
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ).createShader(bounds),
@@ -231,7 +228,7 @@ class LeagueCard extends StatelessWidget {
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                           ),
                         )
@@ -251,7 +248,7 @@ class LeagueCard extends StatelessWidget {
                         'xp': '${entry.xpEarned}',
                       },
                     ),
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 13, color: AppColors.grey600),
                   ),
                   const SizedBox(height: 4),
                   Wrap(
@@ -306,7 +303,7 @@ class LeagueCard extends StatelessWidget {
       case 3:
         return AppColors.bronze;
       default:
-        return Colors.grey;
+        return AppColors.grey500;
     }
   }
 }
@@ -326,14 +323,11 @@ class _CardShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(
-          alpha: isDark ? 0.44 : 0.74,
-        ),
+        color: Theme.of(
+          context,
+        ).colorScheme.surface.withValues(alpha: isDark ? 0.44 : 0.74),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),

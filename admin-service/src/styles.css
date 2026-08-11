@@ -654,7 +654,6 @@ tbody tr:hover {
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid var(--line);
   color: var(--text);
-  width: 100%;
 }
 
 .ghost-button:hover {

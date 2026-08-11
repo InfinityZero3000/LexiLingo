@@ -28,6 +28,9 @@ services:
       # AI Service (public production gateway)
       - key: AI_SERVICE_URL
         value: https://api.lexilingo.me/api/v1
+
+      - key: AI_ADMIN_API_KEY
+        sync: false  # Must match ai-service AI_ADMIN_API_KEY
       
       # JWT Secret
       - key: SECRET_KEY
@@ -70,7 +73,30 @@ services:
 
       - key: LOG_LEVEL
         value: INFO
-      
+
+      # Email (SMTP) — required for forgot-password / verify-email to actually send.
+      # Without these, EmailService logs a warning and skips sending, but the
+      # /forgot-password endpoint still returns success (by design, to avoid
+      # leaking which emails are registered).
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_USE_TLS
+        value: "false"
+      - key: SMTP_USE_SSL
+        value: "true"
+      - key: SMTP_USERNAME
+        sync: false  # Nhập manual: Gmail address used to send
+      - key: SMTP_PASSWORD
+        sync: false  # Nhập manual: Gmail App Password (not the account password)
+      - key: EMAIL_FROM
+        value: thefirestar312@gmail.com
+      - key: PASSWORD_RESET_URL_BASE_PRODUCTION
+        value: lexilingo-app://reset-password
+      - key: EMAIL_VERIFICATION_URL_BASE_PRODUCTION
+        value: https://lexilingo.me/verify-email
+
       # Redis (optional - dùng Upstash free tier)
       - key: REDIS_URL
         sync: false  # redis://default:pass@host:port

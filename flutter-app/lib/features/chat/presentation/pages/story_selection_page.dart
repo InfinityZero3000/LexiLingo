@@ -4,7 +4,7 @@ import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import '../../data/models/story_model.dart';
+import '../../domain/entities/story.dart';
 import '../providers/story_provider.dart';
 import '../utils/topic_icon_resolver.dart';
 import 'topic_chat_page.dart';
@@ -113,24 +113,30 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             return matchesSearch && matchesDifficulty;
           }).toList();
 
-          return Column(
-            children: [
-              // Search Bar
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: _buildSearchBar(theme, isDark),
-              ),
+          return Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Column(
+                children: [
+                  // Search Bar
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: _buildSearchBar(theme, isDark),
+                  ),
 
-              // Filter Chips
-              _buildFilterChips(theme, isDark),
+                  // Filter Chips
+                  _buildFilterChips(theme, isDark),
 
-              // Content
-              Expanded(
-                child: provider.isLoading && provider.stories.isEmpty
-                    ? const Center(child: LottieLoadingWidget.medium())
-                    : _buildStoryList(filteredStories, theme, isDark),
+                  // Content
+                  Expanded(
+                    child: provider.isLoading && provider.stories.isEmpty
+                        ? const Center(child: LottieLoadingWidget.medium())
+                        : _buildStoryList(filteredStories, theme, isDark),
+                  ),
+                ],
               ),
-            ],
+            ),
           );
         },
       ),
@@ -487,5 +493,4 @@ class _TopicListItem extends StatelessWidget {
       ),
     );
   }
-
 }

@@ -8,6 +8,7 @@ from typing import Optional, List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, and_, func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 
@@ -225,8 +226,9 @@ async def calculate_challenge_progress(
 ) -> int:
     """Calculate current progress for a challenge."""
     
-    today_start = datetime.combine(today, datetime.min.time())
-    today_end = datetime.combine(today + timedelta(days=1), datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
+    today_end = datetime.combine(today + timedelta(days=1), datetime.min.time()).replace(tzinfo=local_tz)
     
     if challenge["category"] == "lesson":
         if challenge["id"] == "complete_lessons":
@@ -382,7 +384,8 @@ async def get_daily_challenges(
     challenges = get_challenges_for_user(current_user.id, today)
     
     # Get claimed challenges for today
-    today_start = datetime.combine(today, datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
     claims_result = await db.execute(
         select(ChallengeRewardClaim.challenge_id).where(
             and_(
@@ -458,7 +461,8 @@ async def claim_daily_bonus(
     from app.services.item_effects_service import ItemEffectsService
 
     today = date.today()
-    today_start = datetime.combine(today, datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
     challenges = get_challenges_for_user(current_user.id, today)
 
     # Check if bonus already claimed
@@ -498,14 +502,50 @@ async def claim_daily_bonus(
     multiplier = await effects_service.get_xp_multiplier(current_user.id)
     boosted_xp = int(bonus_xp * multiplier)
 
-    # Award XP and update numeric level/rank
+    # Create claim record first — the unique constraint on
+    # (user_id, challenge_id, claim_date) is the real race guard; the
+    # pre-check above is only an early-exit for the common case.
+    claim = ChallengeRewardClaim(
+        user_id=current_user.id,
+        challenge_id="daily_bonus",
+        claim_date=today_start,
+        xp_reward=boosted_xp,
+        gems_reward=bonus_gems,
+    )
+    try:
+        async with db.begin_nested():
+            db.add(claim)
+            await db.flush()
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Bonus already claimed today"
+        )
+
+    # Award XP and update numeric level/rank. Lock the user row first —
+    # current_user was loaded unlocked earlier in the request (by the auth
+    # dependency), so mutating it directly here would race with any other
+    # concurrent writer of total_xp (e.g. POST /xp/award). See audit item
+    # #1/#2 (reward/XP atomicity).
     from app.services.level_service import calculate_numeric_level
     from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
 
-    current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
-    current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
-    new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
-    apply_rank_info_to_user(current_user, new_rank_info)
+    locked_user_result = await db.execute(
+        select(User).where(User.id == current_user.id).with_for_update()
+    )
+    locked_user = locked_user_result.scalar_one_or_none() or current_user
+
+    new_total_xp = (locked_user.total_xp or 0) + boosted_xp
+    new_numeric_level = calculate_numeric_level(new_total_xp)
+    new_rank_info = calc_rank(new_numeric_level, locked_user.level)
+
+    locked_user.total_xp = new_total_xp
+    locked_user.numeric_level = new_numeric_level
+    apply_rank_info_to_user(locked_user, new_rank_info)
+    if locked_user is not current_user:
+        current_user.total_xp = new_total_xp
+        current_user.numeric_level = new_numeric_level
+        apply_rank_info_to_user(current_user, new_rank_info)
 
     # Award gems
     await WalletCRUD.add_gems(
@@ -516,15 +556,6 @@ async def claim_daily_bonus(
         description="All daily challenges completed!"
     )
 
-    # Create claim record
-    claim = ChallengeRewardClaim(
-        user_id=current_user.id,
-        challenge_id="daily_bonus",
-        claim_date=today_start,
-        xp_reward=boosted_xp,
-        gems_reward=bonus_gems,
-    )
-    db.add(claim)
     await db.commit()
 
     return ApiResponse(
@@ -556,7 +587,8 @@ async def claim_challenge_reward(
     from app.services.item_effects_service import ItemEffectsService
     
     today = date.today()
-    today_start = datetime.combine(today, datetime.min.time())
+    local_tz = datetime.now().astimezone().tzinfo
+    today_start = datetime.combine(today, datetime.min.time()).replace(tzinfo=local_tz)
     challenges = get_challenges_for_user(current_user.id, today)
     
     # Find the challenge
@@ -598,15 +630,48 @@ async def claim_challenge_reward(
     effects_service = ItemEffectsService(db)
     multiplier = await effects_service.get_xp_multiplier(current_user.id)
     boosted_xp = int(xp_reward * multiplier)
+
+    claim = ChallengeRewardClaim(
+        user_id=current_user.id,
+        challenge_id=challenge_id,
+        claim_date=today_start,
+        xp_reward=boosted_xp,
+        gems_reward=gems_reward,
+    )
+    try:
+        async with db.begin_nested():
+            db.add(claim)
+            await db.flush()
+    except IntegrityError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Reward already claimed today"
+        )
     
-    # Award XP and update numeric level/rank
+    # Award XP and update numeric level/rank. Lock the user row first —
+    # current_user was loaded unlocked earlier in the request (by the auth
+    # dependency), so mutating it directly here would race with any other
+    # concurrent writer of total_xp (e.g. POST /xp/award) and silently lose
+    # one of the two updates. See audit item #1/#2 (reward/XP atomicity).
     from app.services.level_service import calculate_numeric_level
     from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
-    
-    current_user.total_xp = (current_user.total_xp or 0) + boosted_xp
-    current_user.numeric_level = calculate_numeric_level(current_user.total_xp)
-    new_rank_info = calc_rank(current_user.numeric_level, current_user.level)
-    apply_rank_info_to_user(current_user, new_rank_info)
+
+    locked_user_result = await db.execute(
+        select(User).where(User.id == current_user.id).with_for_update()
+    )
+    locked_user = locked_user_result.scalar_one_or_none() or current_user
+
+    new_total_xp = (locked_user.total_xp or 0) + boosted_xp
+    new_numeric_level = calculate_numeric_level(new_total_xp)
+    new_rank_info = calc_rank(new_numeric_level, locked_user.level)
+
+    locked_user.total_xp = new_total_xp
+    locked_user.numeric_level = new_numeric_level
+    apply_rank_info_to_user(locked_user, new_rank_info)
+    if locked_user is not current_user:
+        current_user.total_xp = new_total_xp
+        current_user.numeric_level = new_numeric_level
+        apply_rank_info_to_user(current_user, new_rank_info)
     
     # Award gems if any
     if gems_reward > 0:
@@ -618,15 +683,6 @@ async def claim_challenge_reward(
             description=f"Challenge completed: {challenge['title']}"
         )
     
-    # Create claim record
-    claim = ChallengeRewardClaim(
-        user_id=current_user.id,
-        challenge_id=challenge_id,
-        claim_date=today_start,
-        xp_reward=boosted_xp,
-        gems_reward=gems_reward,
-    )
-    db.add(claim)
     await db.commit()
     
     # --- Check achievements after claiming challenge ---

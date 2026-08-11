@@ -135,6 +135,80 @@ async def test_award_creates_current_week_leaderboard_entry():
     assert leaderboard_entries[0].league == user.rank
 
 
+# ── Game XP must respect a purchased double_xp/triple_xp shop boost ──────────
+
+@pytest.mark.asyncio
+async def test_game_xp_award_applies_item_multiplier_on_top_of_streak():
+    """A purchased Double XP boost (item_multiplier=2.0) must scale game XP,
+    not just lesson/challenge XP — this was previously a dead purchase for
+    players who only play the mini-games."""
+    user_id = uuid.uuid4()
+    user = _make_user(user_id)
+    daily = SimpleNamespace(xp_earned=0)
+    leaderboard = SimpleNamespace(xp_earned=0, league="bronze")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _result(scalar_one_or_none=user),
+            _result(scalar_one_or_none=None),
+            MagicMock(),
+            _result(scalar_one_or_none=daily),
+            _result(scalar_one_or_none=leaderboard),
+        ]
+    )
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+
+    result = await award_xp_transaction(
+        db=db,
+        user=user,
+        source="game",
+        base_xp=10,
+        source_id="game-session-001",
+        item_multiplier=2.0,
+        daily_xp_loader=AsyncMock(return_value=0),
+        streak_loader=AsyncMock(return_value=0),
+    )
+
+    assert result.multiplier == 2.0
+    assert result.xp_awarded == 20
+
+
+@pytest.mark.asyncio
+async def test_item_multiplier_below_one_does_not_reduce_xp():
+    """A missing/invalid boost (item_multiplier < 1.0) must never penalize XP."""
+    user_id = uuid.uuid4()
+    user = _make_user(user_id)
+    daily = SimpleNamespace(xp_earned=0)
+    leaderboard = SimpleNamespace(xp_earned=0, league="bronze")
+    db = MagicMock()
+    db.execute = AsyncMock(
+        side_effect=[
+            _result(scalar_one_or_none=user),
+            _result(scalar_one_or_none=None),
+            MagicMock(),
+            _result(scalar_one_or_none=daily),
+            _result(scalar_one_or_none=leaderboard),
+        ]
+    )
+    db.add = MagicMock()
+    db.commit = AsyncMock()
+
+    result = await award_xp_transaction(
+        db=db,
+        user=user,
+        source="game",
+        base_xp=10,
+        source_id="game-session-002",
+        item_multiplier=0.0,
+        daily_xp_loader=AsyncMock(return_value=0),
+        streak_loader=AsyncMock(return_value=0),
+    )
+
+    assert result.multiplier == 1.0
+    assert result.xp_awarded == 10
+
+
 # ── Task 5: source_id requirement for repeat-sensitive sources ────────────────
 
 @pytest.mark.parametrize("source", sorted(REPEAT_SENSITIVE_SOURCES))

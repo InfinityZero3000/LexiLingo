@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -15,6 +17,11 @@ class LocaleService {
     'fr',
     'es',
   };
+  static int _latestRequestId = 0;
+  static _LocaleRequest? _activeRequest;
+  static _LocaleRequest? _pendingRequest;
+  static Future<void> Function(String)? _debugApply;
+  static Future<void> Function(String)? _debugPersist;
 
   static String normalizeLanguageCode(String? languageCode) {
     final normalized = (languageCode ?? '').trim().toLowerCase();
@@ -45,38 +52,95 @@ class LocaleService {
   /// Update app locale - this should be called when changing language
   /// It updates both EasyLocalization and persists to SharedPreferences
   /// Note: BuildContext must be available and not disposed when this is called
-  static Future<void> updateAppLocale(
+  static Future<bool> updateAppLocale(
     BuildContext context,
     String languageCode,
-  ) async {
+  ) => _requestLocale(languageCode, (code) {
+    if (!context.mounted) {
+      throw StateError('Cannot update locale with an unmounted context');
+    }
+    return context.setLocale(Locale(code));
+  });
+
+  static Future<bool> _requestLocale(
+    String languageCode,
+    Future<void> Function(String) apply,
+  ) {
+    final request = _LocaleRequest(
+      ++_latestRequestId,
+      normalizeLanguageCode(languageCode),
+      apply,
+    );
+    _pendingRequest?.complete(false);
+    _pendingRequest = request;
+    if (_activeRequest == null) unawaited(_drain());
+    return request.future;
+  }
+
+  static Future<void> _drain() async {
+    final request = _pendingRequest;
+    if (request == null || _activeRequest != null) return;
+    _pendingRequest = null;
+    _activeRequest = request;
+
     try {
-      final normalizedLanguageCode = normalizeLanguageCode(languageCode);
-      // Update EasyLocalization first
-      await context.setLocale(Locale(normalizedLanguageCode));
-
-      // Persist to SharedPreferences for consistency
-      await saveLocale(normalizedLanguageCode);
-
-      debugPrint('Locale updated to: $normalizedLanguageCode');
-    } catch (e) {
-      debugPrint('Failed to update locale: $e');
+      await request.apply(request.code);
+      if (request.id != _latestRequestId) {
+        request.complete(false);
+      } else {
+        await (_debugPersist ?? saveLocale)(request.code);
+        final committed = request.id == _latestRequestId;
+        request.complete(committed);
+        if (committed) debugPrint('Locale updated to: ${request.code}');
+      }
+    } catch (error, stackTrace) {
+      request.completeError(error, stackTrace);
+    } finally {
+      _activeRequest = null;
+      if (_pendingRequest != null) unawaited(_drain());
     }
   }
 
-  /// Sync EasyLocalization locale with saved locale from SharedPreferences
-  /// Call this on app startup to ensure consistency
-  static Future<void> syncLocale(BuildContext context) async {
-    try {
-      final savedLocale = await getSavedLocale();
-      if (!context.mounted) return;
-      final currentLocale = context.locale.languageCode;
+  @visibleForTesting
+  static void debugConfigure({
+    required Future<void> Function(String) apply,
+    required Future<void> Function(String) persist,
+  }) {
+    _debugApply = apply;
+    _debugPersist = persist;
+  }
 
-      if (savedLocale != currentLocale) {
-        debugPrint('Syncing locale: $currentLocale -> $savedLocale');
-        await context.setLocale(Locale(savedLocale));
-      }
-    } catch (e) {
-      debugPrint('Failed to sync locale: $e');
-    }
+  @visibleForTesting
+  static Future<bool> debugRequestLocale(String languageCode) {
+    final apply = _debugApply;
+    if (apply == null) throw StateError('Call debugConfigure first');
+    return _requestLocale(languageCode, apply);
+  }
+
+  @visibleForTesting
+  static void debugReset() {
+    assert(_activeRequest == null && _pendingRequest == null);
+    _latestRequestId = 0;
+    _debugApply = null;
+    _debugPersist = null;
+  }
+}
+
+class _LocaleRequest {
+  _LocaleRequest(this.id, this.code, this.apply);
+
+  final int id;
+  final String code;
+  final Future<void> Function(String) apply;
+  final Completer<bool> _completer = Completer<bool>();
+
+  Future<bool> get future => _completer.future;
+
+  void complete(bool value) {
+    if (!_completer.isCompleted) _completer.complete(value);
+  }
+
+  void completeError(Object error, StackTrace stackTrace) {
+    if (!_completer.isCompleted) _completer.completeError(error, stackTrace);
   }
 }

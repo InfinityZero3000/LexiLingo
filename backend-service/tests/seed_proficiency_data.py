@@ -21,8 +21,8 @@ from app.models.proficiency import (
 )
 from app.models.user import User
 
-TARGET_EMAIL = "nhthang312@gmail.com"
-TARGET_USERNAME = "nhthang312"
+TARGET_EMAIL = "nhthang2077@gmail.com"
+TARGET_USERNAME = "nhthang2077"
 TARGET_LEVEL = "B1"
 TARGET_EXERCISES = 520
 TARGET_CORRECT = 418

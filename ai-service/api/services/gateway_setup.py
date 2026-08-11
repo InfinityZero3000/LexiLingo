@@ -88,8 +88,11 @@ async def _register_qwen(gateway: ModelGateway) -> None:
         unloader_fn=unloader,
         description="Qwen via Ollama for chat, grammar analysis, and response generation",
         estimated_memory_mb=200,
+        # CRITICAL priority models are never auto-unloaded regardless of
+        # idle_timeout_seconds (see ModelGateway._auto_unload_loop's
+        # `if model.priority == ModelPriority.CRITICAL: continue`) — no
+        # idle_timeout_seconds is passed here since it would never apply.
         priority=ModelPriority.CRITICAL,  # Main chat model
-        idle_timeout_seconds=600,  # 10 minutes
         preload=True,  # Preload for performance
     )
     
@@ -128,8 +131,9 @@ async def _register_piper(gateway: ModelGateway) -> None:
     
     async def loader():
         config = PiperConfig(
-            model_path=os.getenv("PIPER_MODEL_PATH", "models/piper/en_US-lessac-medium.onnx"),
-            voice=os.getenv("PIPER_VOICE", "en_US-lessac-medium"),
+            model_path=os.getenv("PIPER_MODEL_PATH", "models/piper/en_US-lessac-low.onnx"),
+            voice=os.getenv("PIPER_VOICE", "en_US-lessac-low"),
+            sample_rate=int(os.getenv("PIPER_SAMPLE_RATE", "16000")),
         )
         handler = PiperHandler(config)
         await handler.load()

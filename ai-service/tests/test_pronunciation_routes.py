@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
 
 from api.core.auth import AuthenticatedUser
 from api.routes.pronunciation import assess_pronunciation
@@ -53,7 +53,7 @@ async def test_assess_pronunciation_returns_hubert_result(monkeypatch):
 
     request = MagicMock()
     request.headers = {}
-    audio = UploadFile(filename="recording.wav", file=BytesIO(b"fake-wav"))
+    audio = UploadFile(filename="recording.wav", file=BytesIO(b"RIFF0000fake-wav"))
     user = AuthenticatedUser(user_id="user-1", claims={})
 
     result = await assess_pronunciation(
@@ -66,3 +66,26 @@ async def test_assess_pronunciation_returns_hubert_result(monkeypatch):
     assert result["success"] is True
     assert result["overall_score"] == 88.0
     assert result["transcription"] == "hello"
+
+
+@pytest.mark.asyncio
+async def test_assess_pronunciation_rejects_non_audio_upload(monkeypatch):
+    monkeypatch.setattr(
+        "api.routes.pronunciation.enforce_user_quota",
+        AsyncMock(return_value=SimpleNamespace()),
+    )
+
+    request = MagicMock()
+    request.headers = {}
+    audio = UploadFile(filename="recording.wav", file=BytesIO(b"not-audio"))
+    user = AuthenticatedUser(user_id="user-1", claims={})
+
+    with pytest.raises(HTTPException) as exc:
+        await assess_pronunciation(
+            request,
+            audio=audio,
+            target_text="hello",
+            current_user=user,
+        )
+
+    assert exc.value.status_code == 415

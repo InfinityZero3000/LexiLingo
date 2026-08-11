@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
+
+import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_skeleton.dart';
+import '../../../shared/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
 
 class SuperDashboardScreen extends StatefulWidget {
@@ -15,7 +20,10 @@ class SuperDashboardScreen extends StatefulWidget {
 }
 
 class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
-  Map<String, dynamic>? _data;
+  Map<String, dynamic>? _system;
+  Map<String, dynamic>? _services;
+  Map<String, dynamic>? _info;
+  String? _error;
   bool _loading = true;
 
   @override
@@ -25,420 +33,197 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
   }
 
   Future<void> _load() async {
+    final responses = await Future.wait([
+      _getOrNull(ApiEndpoints.monitoringSystem),
+      _getOrNull(ApiEndpoints.monitoringServices),
+      _getOrNull(ApiEndpoints.systemInfo),
+    ]);
+    if (!mounted) return;
+    final infoResponse = responses[2];
+    setState(() {
+      _system = responses[0] ?? _system;
+      _services = responses[1] ?? _services;
+      _info = infoResponse == null
+          ? _info
+          : (infoResponse['data'] ?? infoResponse) as Map<String, dynamic>?;
+      _error = responses.any((response) => response == null)
+          ? 'One or more services are unavailable.'
+          : null;
+      _loading = false;
+    });
+  }
+
+  Future<Map<String, dynamic>?> _getOrNull(String path) async {
     try {
-      // monitoring returns raw JSON — no ApiResponse wrapper
-      final resp = await ApiClient.instance.get('/admin/monitoring/system');
-      if (mounted) setState(() { _data = resp; _loading = false; });
+      return await ApiClient.instance.get(path);
     } catch (_) {
-      if (mounted) setState(() => _loading = false);
+      return null;
     }
+  }
+
+  String _percent(String key) {
+    final value = key == 'cpu'
+        ? (_system?['cpu_percent'] as num?)
+        : ((_system?[key] as Map?)?['percent'] as num?);
+    return value == null ? '--' : '${value.toStringAsFixed(0)}%';
   }
 
   @override
   Widget build(BuildContext context) {
-    final isSuperAdmin = context.watch<AuthProvider>().isSuperAdmin;
-    if (!isSuperAdmin) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-            onPressed: () => context.pop(),
-          ),
-          title: Text('Super Admin Dashboard',
-              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 72, height: 72,
-                  decoration: BoxDecoration(
-                    color: AppColors.errorContainer,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Icon(Icons.lock_outlined,
-                      color: AppColors.error, size: 36),
-                ),
-                const SizedBox(height: 20),
-                Text('Access Restricted',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 20, fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface)),
-                const SizedBox(height: 8),
-                Text('This section is only accessible to Super Administrators.',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 13, color: AppColors.onSurfaceMuted)),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+    if (!context.watch<AuthProvider>().isSuperAdmin) return _restricted(context);
+    final totals = _info?['totals'] as Map?;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
-          onPressed: AdminShell.openDrawer,
-        ),
-        title: Row(
-          children: [
-            Text('Super Admin Dashboard',
-                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),
-          ],
-        ),
+        leading: IconButton(icon: const Icon(Icons.menu_rounded), onPressed: AdminShell.openDrawer),
+        title: Text('Super Admin Dashboard', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text('SUPER ADMIN MODE',
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 8, fontWeight: FontWeight.w700, color: Colors.white)),
-          ),
+          IconButton(tooltip: 'Refresh', onPressed: _loading ? null : _load, icon: const Icon(Icons.refresh_outlined)),
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('SYSTEM OVERSIGHT',
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.08,
-                          color: AppColors.primary)),
-                  const SizedBox(height: 4),
-                  Text('Super Admin Dashboard',
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.onSurface,
-                          letterSpacing: -0.02)),
-                  const SizedBox(height: 16),
-                  // System Reboot button
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.bolt, size: 16),
-                      label: Text('SYSTEM REBOOT',
-                          style: GoogleFonts.spaceGrotesk(
-                              fontWeight: FontWeight.w700, letterSpacing: 0.05)),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryBright),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Global System Health
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Global System Health',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 16, fontWeight: FontWeight.w700)),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: AppColors.successContainer,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    decoration: const BoxDecoration(
-                                      color: AppColors.success,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text('OPTIMAL',
-                                      style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.success)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text('Live performance across all regional clusters',
-                            style: GoogleFonts.spaceGrotesk(
-                                fontSize: 11, color: AppColors.onSurfaceMuted)),
-                        const SizedBox(height: 16),
-                        _MetricRow(label: 'UPTIME', value: _data?['uptime'] ?? '99.98%'),
-                        const SizedBox(height: 8),
-                        _MetricRow(label: 'LATENCY', value: _data?['latency'] ?? '42ms'),
-                        const SizedBox(height: 8),
-                        _MetricRow(label: 'THROUGHPUT', value: _data?['throughput'] ?? '1.2GB/s'),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Live Concurrent Users
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryBright,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.people_outline,
-                                  color: Colors.white60, size: 24),
-                              const SizedBox(height: 8),
-                              Text(_data?['concurrent_users'] ?? '242.8k',
-                                  style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                      letterSpacing: -0.03)),
-                              Text('LIVE CONCURRENT USERS',
-                                  style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.05,
-                                      color: Colors.white60)),
-                            ],
-                          ),
-                        ),
-                        const Icon(Icons.trending_up, color: Colors.white60, size: 32),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Audit Trail
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Audit Trail',
-                                style: GoogleFonts.spaceGrotesk(
-                                    fontSize: 16, fontWeight: FontWeight.w700)),
-                            const Icon(Icons.history, color: AppColors.onSurfaceMuted, size: 20),
-                          ],
-                        ),
+          ? const Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(children: [
+                AdminSkeleton(height: 120, borderRadius: 16),
+                SizedBox(height: 12),
+                AdminSkeleton(height: 220, borderRadius: 16),
+              ]),
+            )
+          : _error != null && _system == null
+              ? _DashboardError(message: _error!, onRetry: _load)
+              : RefreshIndicator(
+                  onRefresh: _load,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+                    children: [
+                      Text('SYSTEM OVERSIGHT', style: GoogleFonts.spaceGrotesk(
+                          fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8, color: AppColors.primary)),
+                      const SizedBox(height: 4),
+                      Text('At-a-glance platform status', style: GoogleFonts.spaceGrotesk(
+                          fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
+                      if (_error != null) ...[
                         const SizedBox(height: 12),
-                        _AuditRow(
-                          icon: Icons.security_outlined,
-                          title: 'Security Protocol Updated',
-                          detail: 'Region: North America • 2m ago',
-                          color: AppColors.primary,
-                        ),
-                        const Divider(height: 16),
-                        _AuditRow(
-                          icon: Icons.person_add_outlined,
-                          title: 'New Super Admin: Elena R.',
-                          detail: 'Permission: Global Access • 15m ago',
-                          color: AppColors.primary,
-                        ),
-                        const Divider(height: 16),
-                        _AuditRow(
-                          icon: Icons.storage_outlined,
-                          title: 'DB Migration Complete',
-                          detail: 'Zone: EU-West-1 • 1h ago',
-                          color: AppColors.success,
-                        ),
+                        Text('Some dashboard data could not be refreshed.',
+                            style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.error)),
                       ],
-                    ),
+                      const SizedBox(height: 18),
+                      GridView.count(
+                        crossAxisCount: 2,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 1.25,
+                        children: [
+                          StatCard(label: 'USERS', value: totals?['users']?.toString() ?? '--', icon: Icons.people_outline),
+                          StatCard(label: 'COURSES', value: totals?['courses']?.toString() ?? '--', icon: Icons.school_outlined),
+                          StatCard(label: 'CPU / MEMORY', value: '${_percent('cpu')} / ${_percent('memory')}', icon: Icons.memory_outlined),
+                          StatCard(label: 'DISK USAGE', value: _percent('disk'), icon: Icons.storage_outlined),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _panel('Service Status', [
+                        _ServiceRow(label: 'Backend API', status: 'healthy'),
+                        _ServiceRow(label: 'PostgreSQL', status: (_services?['postgres'] ?? 'unknown').toString()),
+                        _ServiceRow(label: 'Redis', status: (_services?['redis'] ?? 'unknown').toString()),
+                        _ServiceRow(label: 'AI Service', status: (_services?['ai_service'] ?? 'unknown').toString()),
+                      ]),
+                      const SizedBox(height: 16),
+                      _panel('Quick Configuration', [
+                        _InfoRow(label: 'Environment', value: (_info?['app_env'] ?? '--').toString()),
+                        _InfoRow(label: 'Debug', value: _info?['debug'] == true ? 'ON' : 'OFF'),
+                        _InfoRow(label: 'Log level', value: (_info?['log_level'] ?? '--').toString()),
+                        _InfoRow(label: 'Access token', value: '${_info?['token_expire_minutes'] ?? '--'} min'),
+                        _InfoRow(label: 'Google OAuth', value: _info?['google_oauth'] == true ? 'ENABLED' : 'DISABLED'),
+                        _InfoRow(label: 'Firebase', value: _info?['firebase'] == true ? 'ENABLED' : 'DISABLED'),
+                      ]),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  // Performance Matrix
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Performance Matrix',
-                            style: GoogleFonts.spaceGrotesk(
-                                fontSize: 16, fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 12),
-                        _MatrixHeader(),
-                        const Divider(height: 12),
-                        _MatrixRow(region: 'North America East', load: '66%', errors: '0.01%', status: 'STABLE', statusOk: true),
-                        _MatrixRow(region: 'Europe Central', load: '92%', errors: '0.05%', status: 'HIGH LOAD', statusOk: false),
-                        _MatrixRow(region: 'Asia Pacific South', load: '34%', errors: '0.00%', status: 'STABLE', statusOk: true),
-                        _MatrixRow(region: 'South America East', load: '12%', errors: '0.02%', status: 'STABLE', statusOk: true),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Navigate to full health screen
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => context.push('/settings/system-health'),
-                      icon: const Icon(Icons.monitor_heart_outlined, size: 16),
-                      label: Text('View System Core Health',
-                          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
     );
+  }
+
+  Widget _panel(String title, List<Widget> children) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: GoogleFonts.spaceGrotesk(fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 10),
+          ...children,
+        ]),
+      );
+
+  Widget _restricted(BuildContext context) => Scaffold(
+        backgroundColor: AppColors.background,
+        appBar: AppBar(
+          leading: AppBackButton(icon: Icons.arrow_back, color: AppColors.onSurface, onPressed: () => context.pop()),
+          title: Text('Super Admin Dashboard', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        ),
+        body: Center(child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.lock_outlined, color: AppColors.error, size: 48),
+            const SizedBox(height: 16),
+            Text('Access Restricted', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            Text('This section is only accessible to Super Administrators.', textAlign: TextAlign.center,
+                style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurfaceMuted)),
+          ]),
+        )),
+      );
+}
+
+class _ServiceRow extends StatelessWidget {
+  final String label;
+  final String status;
+  const _ServiceRow({required this.label, required this.status});
+  @override
+  Widget build(BuildContext context) {
+    final ok = status == 'healthy';
+    return SizedBox(height: 48, child: Row(children: [
+      Expanded(child: Text(label, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600))),
+      Icon(ok ? Icons.check_circle : Icons.warning_amber_rounded,
+          color: ok ? AppColors.success : AppColors.warning, size: 18),
+      const SizedBox(width: 6),
+      Text(status.replaceAll('_', ' ').toUpperCase(), style: GoogleFonts.spaceGrotesk(
+          fontSize: 10, fontWeight: FontWeight.w700, color: ok ? AppColors.success : AppColors.warning)),
+    ]));
   }
 }
 
-class _MetricRow extends StatelessWidget {
+class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  const _MetricRow({required this.label, required this.value});
-
+  const _InfoRow({required this.label, required this.value});
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 11, fontWeight: FontWeight.w700,
-                letterSpacing: 0.05, color: AppColors.onSurfaceMuted)),
-        Text(value,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => SizedBox(height: 44, child: Row(children: [
+        Expanded(child: Text(label, style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurfaceMuted))),
+        Text(value, style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w700)),
+      ]));
 }
 
-class _AuditRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String detail;
-  final Color color;
-  const _AuditRow({required this.icon, required this.title, required this.detail, required this.color});
-
+class _DashboardError extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _DashboardError({required this.message, required this.onRetry});
   @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 16),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-              Text(detail,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11, color: AppColors.onSurfaceMuted)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MatrixHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(flex: 2, child: Text('REGION', style: _headerStyle)),
-        Expanded(child: Text('LOAD', style: _headerStyle)),
-        Expanded(child: Text('ERRORS', style: _headerStyle)),
-        Expanded(child: Text('STATUS', style: _headerStyle)),
-      ],
-    );
-  }
-
-  TextStyle get _headerStyle => GoogleFonts.spaceGrotesk(
-      fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.onSurfaceMuted);
-}
-
-class _MatrixRow extends StatelessWidget {
-  final String region;
-  final String load;
-  final String errors;
-  final String status;
-  final bool statusOk;
-
-  const _MatrixRow({
-    required this.region,
-    required this.load,
-    required this.errors,
-    required this.status,
-    required this.statusOk,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Expanded(
-              flex: 2,
-              child: Text(region,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 12, color: AppColors.onSurface))),
-          Expanded(
-              child: Text(load,
-                  style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurface))),
-          Expanded(
-              child: Text(errors,
-                  style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurface))),
-          Expanded(
-              child: Text(status,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: statusOk ? AppColors.success : AppColors.error))),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => Center(child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          const SizedBox(height: 12),
+          Text('Dashboard unavailable', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(message, textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
+          const SizedBox(height: 16),
+          SizedBox(height: 44, child: OutlinedButton(onPressed: onRetry, child: const Text('Retry'))),
+        ]),
+      ));
 }

@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import tempfile
 import time
 import uuid
@@ -25,6 +26,7 @@ from fastapi import (
 from fastapi.websockets import WebSocketDisconnect
 
 from api.core.auth import AuthenticatedUser, _decode_backend_jwt, get_current_user
+from api.core.config import settings
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.services.stt.audio_ingest import (
@@ -72,16 +74,63 @@ def _websocket_user_id(websocket: WebSocket) -> str | None:
     return str(sub) if sub else None
 
 
+async def _ensure_duplex_session_owner(session_id: str, user_id: str) -> None:
+    from api.core.database import mongodb_manager
+    from api.services import lexi_chat_service
+
+    try:
+        session = await lexi_chat_service.ensure_session_owner(
+            session_id,
+            AuthenticatedUser(user_id=user_id, token_type="access", claims={}),
+            mongodb_manager.db,
+        )
+        if str(session.get("user_id") or "") != user_id:
+            raise HTTPException(status_code=403, detail="Session owner required")
+    except HTTPException as exc:
+        raise STTProtocolError(
+            STTErrorCode.SESSION_NOT_FOUND, "Chat session unavailable"
+        ) from exc
+
+
 @router.websocket("/stream")
 async def stream_audio(websocket: WebSocket):
-    await websocket.accept()
+    protocol = websocket.headers.get("sec-websocket-protocol", "")
+    ticket_protocol = next(
+        (item.strip() for item in protocol.split(",") if item.strip().startswith("voice.ticket.")),
+        "",
+    )
+    ticket = ticket_protocol.removeprefix("voice.ticket.")
+    if websocket.url.path.endswith("/voice/stream") and not ticket:
+        await websocket.close(code=4401)
+        return
+    if ticket and not re.fullmatch(r"[A-Za-z0-9_-]{43}", ticket):
+        await websocket.close(code=4401)
+        return
+    await websocket.accept(subprotocol=ticket_protocol or None)
     send_lock = asyncio.Lock()
 
     async def send_json(payload):
         async with send_lock:
             await websocket.send_json(payload)
 
-    user_id = _websocket_user_id(websocket)
+    async def send_bytes(payload: bytes):
+        async with send_lock:
+            await websocket.send_bytes(payload)
+
+    origin = websocket.headers.get("origin")
+    if origin and origin not in settings.ALLOWED_ORIGINS and not re.fullmatch(
+        settings.CORS_ALLOW_ORIGIN_REGEX or r"(?!)",
+        origin,
+    ):
+        await websocket.close(code=4403)
+        return
+
+    if ticket:
+        from api.services.stt.voice_ticket import consume_voice_ticket
+
+        user_id = await consume_voice_ticket(ticket)
+    else:
+        user_id = _websocket_user_id(websocket)
     if not user_id:
         await send_json(
             {
@@ -108,6 +157,8 @@ async def stream_audio(websocket: WebSocket):
         return
     session = None
     sender = None
+    turn_task = None
+    turn_seq = 0
     try:
         first = await asyncio.wait_for(
             websocket.receive_text(),
@@ -116,6 +167,12 @@ async def stream_audio(websocket: WebSocket):
         payload = json.loads(first)
         if payload.get("type") == "start":
             message = StartMessage.model_validate(payload)
+            if message.duplex and not settings.VOICE_DUPLEX_ENABLED:
+                raise STTProtocolError(
+                    STTErrorCode.INVALID_START, "Duplex voice is disabled"
+                )
+            if message.duplex:
+                await _ensure_duplex_session_owner(message.session_id, user_id)
             if message.user_id and message.user_id != user_id:
                 raise STTProtocolError(
                     STTErrorCode.INVALID_START, "User scope mismatch"
@@ -169,9 +226,55 @@ async def stream_audio(websocket: WebSocket):
             )
 
         async def send_events():
+            nonlocal turn_task, turn_seq
             while True:
                 event = await session.event_queue.get()
                 await send_json(event)
+                if event.get("type") == "stt.final" and session.start.duplex:
+                    if turn_task and not turn_task.done():
+                        turn_task.cancel()
+                        await asyncio.gather(turn_task, return_exceptions=True)
+                    try:
+                        await enforce_user_quota(
+                            user_id,
+                            "voice.turn",
+                            token_cost=160,
+                            fail_closed=True,
+                        )
+                    except HTTPException:
+                        await send_json(
+                            {
+                                "type": "voice.error",
+                                "session_id": session.start.session_id,
+                                "turn_id": event.get("turn_id"),
+                                "code": "QUOTA_EXCEEDED",
+                                "message": "Voice turn quota unavailable or exceeded",
+                            }
+                        )
+                        continue
+                    from api.services.stt.duplex_turn import DuplexTurn
+
+                    turn_seq += 1
+                    from api.core.database import mongodb_manager
+                    from api.services.lexi_chat_service import persist_duplex_voice_turn
+
+                    async def persist(turn_id: str, user_text: str, assistant_text: str):
+                        await persist_duplex_voice_turn(
+                            mongodb_manager.db,
+                            session_id=session.start.session_id,
+                            user_id=user_id,
+                            turn_id=turn_id,
+                            user_text=user_text,
+                            assistant_text=assistant_text,
+                        )
+
+                    turn_task = asyncio.create_task(
+                        DuplexTurn(send_json, send_bytes, persist=persist).run(
+                            event,
+                            turn_seq=turn_seq,
+                            tts_enabled=session.start.tts_enabled,
+                        )
+                    )
                 if event.get("type") == "session_closed":
                     return
 
@@ -230,6 +333,10 @@ async def stream_audio(websocket: WebSocket):
                 if control.get("type") == "stop":
                     await manager.close(session.start.session_id, "client_stop")
                     break
+                if control.get("type") == "cancel_turn" and turn_task:
+                    turn_task.cancel()
+                    await asyncio.gather(turn_task, return_exceptions=True)
+                    turn_task = None
                 if control.get("type") == "ping":
                     await send_json(
                         {"type": "pong", "session_id": session.start.session_id}
@@ -284,8 +391,14 @@ async def stream_audio(websocket: WebSocket):
             await manager.close(session.start.session_id, "error")
         await websocket.close(code=1011)
     finally:
+        if turn_task and not turn_task.done():
+            turn_task.cancel()
         if sender and not sender.done():
             sender.cancel()
+        await asyncio.gather(
+            *(task for task in (turn_task, sender) if task),
+            return_exceptions=True,
+        )
         manager.release_connection(user_id)
 
 

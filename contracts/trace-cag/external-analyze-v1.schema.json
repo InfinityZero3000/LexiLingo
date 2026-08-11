@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://learning-english.local/schemas/trace-cag-external-v1.json",
+  "title": "TraceCAG external analyze v1",
+  "$defs": {
+    "ConceptSummary": {
+      "type": "object",
+      "required": ["code", "mastery"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "mastery": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "RecentErrorSummary": {
+      "type": "object",
+      "required": ["code", "count"],
+      "properties": {
+        "code": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "count": { "type": "integer", "minimum": 1, "maximum": 100 }
+      },
+      "additionalProperties": false
+    },
+    "LearnerSnapshot": {
+      "type": "object",
+      "required": ["learning_goal", "cefr_level", "concepts", "recent_errors"],
+      "properties": {
+        "learning_goal": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "cefr_level": { "type": "string", "enum": ["A1", "A2", "B1", "B2", "C1", "C2"] },
+        "concepts": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "$ref": "#/$defs/ConceptSummary" }
+        },
+        "recent_errors": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "$ref": "#/$defs/RecentErrorSummary" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExerciseContext": {
+      "type": "object",
+      "required": ["type", "prompt"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["quiz", "flashcard", "pronunciation", "free_response"]
+        },
+        "prompt": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "expected_answer": { "type": ["string", "null"], "maxLength": 1000 },
+        "concept_codes": {
+          "type": "array",
+          "maxItems": 50,
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "ExternalAnalyzeRequest": {
+      "type": "object",
+      "$comment": "The transport rejects serialized request bodies larger than 8192 bytes.",
+      "required": [
+        "subject",
+        "session_id",
+        "input_type",
+        "learner_snapshot",
+        "exercise_context",
+        "text"
+      ],
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 32,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "session_id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "input_type": {
+          "type": "string",
+          "enum": ["answer", "hint_request", "pronunciation", "tutor_message"]
+        },
+        "learner_snapshot": { "$ref": "#/$defs/LearnerSnapshot" },
+        "exercise_context": { "$ref": "#/$defs/ExerciseContext" },
+        "text": { "type": "string", "minLength": 1, "maxLength": 2000 }
+      },
+      "additionalProperties": false
+    },
+    "Diagnosis": {
+      "type": "object",
+      "required": ["codes", "summary"],
+      "properties": {
+        "codes": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "uniqueItems": true
+        },
+        "summary": { "type": "string", "maxLength": 1000 }
+      },
+      "additionalProperties": false
+    },
+    "Hint": {
+      "type": "object",
+      "required": ["level", "text"],
+      "properties": {
+        "level": { "type": "integer", "minimum": 1, "maximum": 3 },
+        "text": { "type": "string", "minLength": 1, "maxLength": 500 }
+      },
+      "additionalProperties": false
+    },
+    "ModelMetadata": {
+      "type": "object",
+      "required": ["provider", "model", "latency_ms"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "model": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "version": { "type": ["string", "null"], "maxLength": 100 },
+        "latency_ms": { "type": "integer", "minimum": 0, "maximum": 15000 }
+      },
+      "additionalProperties": false
+    },
+    "ExternalAnalyzeResponse": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "request_id",
+        "diagnosis",
+        "hints",
+        "feedback",
+        "recommended_action",
+        "message",
+        "degraded",
+        "model"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "request_id": { "type": "string", "format": "uuid" },
+        "diagnosis": { "$ref": "#/$defs/Diagnosis" },
+        "hints": {
+          "type": "array",
+          "maxItems": 3,
+          "items": { "$ref": "#/$defs/Hint" }
+        },
+        "feedback": { "type": "string", "maxLength": 2000 },
+        "recommended_action": {
+          "type": "string",
+          "enum": [
+            "continue",
+            "retry",
+            "review_prerequisite",
+            "practice_pronunciation",
+            "ask_teacher"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "degraded": { "type": "boolean" },
+        "model": {
+          "oneOf": [
+            { "$ref": "#/$defs/ModelMetadata" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "degraded": { "const": false } },
+            "required": ["degraded"]
+          },
+          "then": {
+            "properties": {
+              "model": { "$ref": "#/$defs/ModelMetadata" }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

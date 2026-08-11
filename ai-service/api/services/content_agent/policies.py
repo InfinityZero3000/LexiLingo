@@ -8,9 +8,48 @@ from typing import Any
 
 from api.models.content_agent import (
     ContentUsage,
+    CourseArtifact,
     LicenseMode,
     NormalizedSourceRecord,
 )
+
+# ui_types that require the learner to produce language (speak/write/type freely)
+# rather than just recognize/select an option. Mirrors the Flutter exercise widget
+# catalog in flutter-app/lib/features/learning/presentation/widgets/premium_exercise_widgets.dart
+PRODUCTION_UI_TYPES: frozenset[str] = frozenset(
+    {
+        "fill_in_the_blank",
+        "dictation",
+        "grammar_correction",
+        "short_writing_answer",
+        "dialogue_completion",
+        "speaking_repeat",
+        "pronunciation_practice",
+    }
+)
+
+
+def find_missing_production_exercise_lessons(courses: list[CourseArtifact]) -> list[str]:
+    """Return one message per lesson that has no production-type exercise.
+
+    Research basis: recognition-only exercises (pick-from-options) are
+    insufficient on their own (Swain's Output Hypothesis) — every generated
+    mission/lesson must require at least one production exercise.
+    """
+    messages: list[str] = []
+    for course in courses:
+        for unit in course.units:
+            for lesson in unit.lessons:
+                if not any(
+                    exercise.ui_type in PRODUCTION_UI_TYPES
+                    for exercise in lesson.exercises
+                ):
+                    messages.append(
+                        f"Lesson '{lesson.title}' (unit '{unit.title}') has no "
+                        "production exercise (speaking/writing) — recognition-only "
+                        "lessons are not allowed."
+                    )
+    return messages
 
 
 class SourcePolicyError(ValueError):

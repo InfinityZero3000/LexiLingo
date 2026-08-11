@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -56,6 +57,24 @@ class LottieLoadingWidget extends StatelessWidget {
 
         if (effectiveSize <= 0) {
           effectiveSize = size;
+        }
+
+        // Flutter Web's CanvasKit path engine throws a StackOverflowError
+        // painting this animation (upstream lottie/CanvasKit bug, unrelated
+        // to renderCache). Native platforms use real Skia and are unaffected,
+        // so only web falls back to a plain spinner.
+        if (kIsWeb) {
+          return SizedBox(
+            width: effectiveSize,
+            height: effectiveSize,
+            child: Center(
+              child: SizedBox(
+                width: effectiveSize * 0.6,
+                height: effectiveSize * 0.6,
+                child: const CircularProgressIndicator(strokeWidth: 3),
+              ),
+            ),
+          );
         }
 
         return SizedBox(

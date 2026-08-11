@@ -173,6 +173,41 @@ class TestGetMyProgress:
             response = await client.get(f"{BASE}/me")
         assert response.json()["success"] is True
 
+    @pytest.mark.asyncio
+    async def test_returns_200_with_non_empty_activity(self, auth_client):
+        client, _, mock_result, _ = auth_client
+        mock_stats = {
+            "total_xp": 100,
+            "courses_enrolled": 2,
+            "courses_completed": 1,
+            "lessons_completed": 5,
+            "current_streak": 3,
+            "longest_streak": 7,
+            "achievements_unlocked": 2,
+        }
+        
+        # Mock DailyActivity
+        from app.models.progress import DailyActivity
+        mock_activity = DailyActivity(
+            activity_date=date.today(),
+            xp_earned=50,
+            lessons_completed=2,
+            study_time_minutes=15,
+            daily_goal_met=True
+        )
+        
+        mock_result.scalars.return_value.all.return_value = [mock_activity]
+        
+        with patch("app.crud.progress.ProgressCRUD.get_user_stats", new=AsyncMock(return_value=mock_stats)), \
+             patch("app.crud.progress.ProgressCRUD.get_all_user_progress", new=AsyncMock(return_value=[])):
+            response = await client.get(f"{BASE}/me")
+            
+        assert response.status_code == 200
+        data = response.json()
+        assert data["success"] is True
+        assert len(data["data"]["recent_activity"]) == 1
+
+
 
 # ============================================================================
 # GET /api/v1/progress/courses/{course_id}  — Course-specific progress

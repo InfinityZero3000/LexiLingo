@@ -10,15 +10,24 @@ export type FunnelData = {
 type Props = {
   data: FunnelData[];
   loading?: boolean;
+  error?: boolean;
 };
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444"];
 
-export const CompletionFunnelChart: React.FC<Props> = ({ data, loading }) => {
+export const CompletionFunnelChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
     return (
       <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="loading-text">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="loading-text">Không tải được dữ liệu.</div>
       </div>
     );
   }
@@ -34,16 +43,16 @@ export const CompletionFunnelChart: React.FC<Props> = ({ data, loading }) => {
   return (
     <div className="chart-container">
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart 
-          data={data} 
+        <BarChart
+          data={data}
           layout="vertical"
           margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
           <XAxis type="number" tick={{ fontSize: 12 }} />
-          <YAxis 
-            type="category" 
-            dataKey="stage" 
+          <YAxis
+            type="category"
+            dataKey="stage"
             tick={{ fontSize: 12 }}
             width={90}
           />

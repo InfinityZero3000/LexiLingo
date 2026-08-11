@@ -3,6 +3,7 @@ API_BASE_URL=https://api.lexilingo.me/api/v1
 API_BASE_URL_FALLBACK=
 AI_SERVICE_URL=https://api.lexilingo.me/api/v1
 AI_SERVICE_URL_FALLBACK=
+VOICE_DUPLEX_ENABLED=false
 ENABLE_VOICE_FEATURE=true
 ENABLE_GAMIFICATION=true
 DEBUG_MODE=false

@@ -5,7 +5,7 @@ User Schemas
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, UUID4
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, UUID4
 
 
 class UserBase(BaseModel):
@@ -31,6 +31,8 @@ class UserUpdate(BaseModel):
     target_language: Optional[str] = None
     level: Optional[str] = None
     cefr_level: Optional[str] = None
+    goal: Optional[str] = None
+    interest: Optional[str] = None
     is_onboarding_completed: Optional[bool] = None
 
 
@@ -46,6 +48,8 @@ class UserResponse(UserBase):
     
     # Level & Rank fields
     cefr_level: str = "A1"
+    goal: Optional[str] = None
+    interest: Optional[str] = None
     total_xp: int = 0
     numeric_level: int = 1
     rank: str = "bronze"
@@ -63,8 +67,7 @@ class UserResponse(UserBase):
     role_id: Optional[UUID] = None
     role_slug: Optional[str] = None  # Populated from role relationship
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserInDB(UserResponse):
@@ -93,5 +96,4 @@ class AdminUserListItem(BaseModel):
     created_at: datetime
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

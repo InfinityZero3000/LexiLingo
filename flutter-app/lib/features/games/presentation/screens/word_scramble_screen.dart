@@ -5,11 +5,22 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/letter_tile.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+
+const _wordScramblePowerUps = [
+  ShopItemEntity.effectTimeFreeze,
+  ShopItemEntity.effectExtraTime,
+  ShopItemEntity.effectSkipToken,
+  ShopItemEntity.effectRevealHint,
+  ShopItemEntity.effectTranslateHint,
+  ShopItemEntity.effectScoreMultiplier,
+];
 
 /// Word Scramble game screen.
 ///
@@ -34,6 +45,8 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
   bool _wordAnswered = false;
   bool _isFinishing = false;
   String? _xpPopup;
+  String? _translationReveal;
+  int _scoreMultiplier = 1;
   final Map<String, String> _submittedAnswers = {};
 
   // Letter tile state
@@ -78,9 +91,53 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       _showHint = false;
       _wordAnswered = false;
       _xpPopup = null;
+      _translationReveal = null;
       _timeLeft = game.timerSeconds;
     });
     _startTimer(game.timerSeconds);
+  }
+
+  void _onPowerUpUsed(String itemType, Map<String, dynamic> effects) {
+    final game = context.read<GamesProvider>().wordScramble;
+    if (game == null || _wordAnswered) return;
+    final word = game.words[_currentWordIndex];
+    switch (itemType) {
+      case ShopItemEntity.effectTimeFreeze:
+      case ShopItemEntity.effectExtraTime:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(
+          () => _timeLeft = (_timeLeft + seconds).clamp(0, game.timerSeconds),
+        );
+        break;
+      case ShopItemEntity.effectSkipToken:
+        _timer?.cancel();
+        _skipWord();
+        break;
+      case ShopItemEntity.effectRevealHint:
+        _revealLetter(word);
+        break;
+      case ShopItemEntity.effectTranslateHint:
+        setState(() => _translationReveal = word.vietnameseTranslation);
+        break;
+      case ShopItemEntity.effectScoreMultiplier:
+        final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
+        setState(() => _scoreMultiplier = multiplier);
+        break;
+    }
+  }
+
+  void _revealLetter(ScrambleWord word) {
+    final correctLetters = word.word.toUpperCase().split('');
+    final emptySlot = _answerSlots.indexWhere((s) => s == null);
+    if (emptySlot == -1) return;
+    final neededLetter = correctLetters[emptySlot];
+    final poolIdx = _poolLetters.indexWhere((l) => l == neededLetter);
+    if (poolIdx == -1) return;
+    setState(() {
+      _poolLetters[poolIdx] = '';
+      _answerSlots[emptySlot] = neededLetter;
+    });
+    _checkAnswer();
   }
 
   void _startTimer(int seconds) {
@@ -141,7 +198,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       setState(() {
         _slotCorrect = List<bool>.filled(_answerSlots.length, true);
         _wordAnswered = true;
-        _xpPopup = '+${word.xpValue} XP';
+        _xpPopup = '+${word.xpValue * _scoreMultiplier} XP';
       });
       _confettiController.play();
       Future.delayed(const Duration(milliseconds: 1400), _nextWord);
@@ -349,11 +406,24 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                       ),
                       child: Column(
                         children: [
+                          GamePowerUpTray(
+                            availableTypes: _wordScramblePowerUps,
+                            enabled: !_wordAnswered,
+                            onUse: _onPowerUpUsed,
+                          ),
+                          const SizedBox(height: 8),
                           // XP popup
                           if (_xpPopup != null) _XpPopup(text: _xpPopup!),
                           const SizedBox(height: 4),
                           // Hint area
                           _HintCard(word: word, showHint: _showHint),
+                          if (_translationReveal != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: _TranslationBanner(
+                                text: _translationReveal!,
+                              ),
+                            ),
                           const SizedBox(height: 20),
                           // Answer slots
                           Text(
@@ -522,6 +592,43 @@ class _TimerDisplay extends StatelessWidget {
           color: color,
           fontSize: 14,
         ),
+      ),
+    );
+  }
+}
+
+class _TranslationBanner extends StatelessWidget {
+  final String text;
+  const _TranslationBanner({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.purple.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.purple.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.translate_rounded,
+            size: 14,
+            color: AppColors.purple,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

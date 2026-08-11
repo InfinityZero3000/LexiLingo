@@ -36,14 +36,12 @@ export const ENV = {
   useGateway,
   /** Gateway API key for protected routes */
   apiKey: (import.meta.env.VITE_API_KEY as string) || "",
-  /** Optional legacy AI admin key. VITE_* values are visible in the browser. */
-  aiAdminApiKey: (import.meta.env.VITE_AI_ADMIN_API_KEY as string) || "",
-  /** Explicit AI admin URL. If omitted, auto-derive based on gateway mode. */
-  aiAdminUrl:
-    (import.meta.env.VITE_AI_ADMIN_URL as string) ||
-    (useGateway
-      ? `${gatewayBase}/api/v1/ai-admin`
-      : `${stripApiV1(aiUrl)}/api/v1/admin`),
+  /**
+   * AI-service admin operations (topics, model config) are proxied through
+   * backend-service's own JWT-gated routes — the ai-service admin key is
+   * injected there, server-side, and never shipped to the browser.
+   */
+  aiAdminUrl: `${backendUrl}/admin/ai-proxy`,
 
   /** Health endpoints differ between direct services and gateway */
   backendHealthUrl: useGateway ? `${gatewayBase}/backend-health` : `${stripApiV1(backendUrl)}/health`,

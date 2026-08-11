@@ -31,10 +31,14 @@ from app.schemas.games import (
     GameSessionCompleteResponse,
 )
 from app.services.game_scoring_service import GameScoringError, score_game
+from app.services.item_effects_service import ItemEffectsService
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
 from app.services import check_achievements_for_user
 from app.services.streak_service import update_user_streak
+from app.services.proficiency_service import ProficiencyService
+from app.schemas.proficiency import ExerciseResult, ProficiencyLevel
+from app.routes.proficiency import record_exercise_results_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -984,6 +988,7 @@ async def get_word_scramble(
             "definition": w.definition,
             "xp_value": w.xp_value,
             "cefr_level": w.cefr_level,
+            "vietnamese_translation": w.vietnamese_translation,
         })
 
     session = await create_game_session(
@@ -1169,6 +1174,7 @@ async def get_spelling_bee(
             "example_sentence": w.example_sentence,
             "xp_value": w.xp_value,
             "audio_url": None,
+            "vietnamese_translation": w.vietnamese_translation,
         })
 
     session = await create_game_session(
@@ -1275,6 +1281,7 @@ async def get_hangman_word(
             "xp_value": word_obj.xp_value,
             "base_xp": word_obj.xp_value,
             "max_lives": 6,
+            "vietnamese_translation": word_obj.vietnamese_translation,
             "hints": {
                 "hint1_free": word_obj.hint or "",
                 "hint2_xp_cost": hint2_cost,
@@ -1323,6 +1330,7 @@ async def get_hangman_word(
         "xp_value": word_obj["xp_value"],
         "base_xp": word_obj["xp_value"],
         "max_lives": 6,
+        "vietnamese_translation": word_obj.get("vietnamese_translation"),
         "hints": {
             "hint1_free": word_obj["hint"],
             "hint2_xp_cost": hint2_cost,
@@ -1579,6 +1587,7 @@ async def complete_game_session(
             detail=str(exc),
         ) from exc
 
+    item_multiplier = await ItemEffectsService(db).get_xp_multiplier(current_user.id)
     xp_result = await award_xp_transaction(
         db=db,
         user=current_user,
@@ -1587,6 +1596,7 @@ async def complete_game_session(
         source_id=str(session.id),
         source_detail=session.game_type,
         commit=False,
+        item_multiplier=item_multiplier,
     )
 
     session.score = score.correct_count
@@ -1615,6 +1625,34 @@ async def complete_game_session(
         logger.error("Error updating streak on game completion: %s", e, exc_info=True)
     await db.commit()
     await invalidate_cache("leaderboard")
+
+    # CEFR proficiency tracking: one aggregate ExerciseResult per completed
+    # game session. Best-effort — must not fail a session the user already
+    # completed. The `completed_at`/`xp_awarded` guard above is this
+    # route's idempotency boundary, so this only runs once per session.
+    try:
+        level_code = session.cefr_level or current_user.level
+        if level_code in {lvl.value for lvl in ProficiencyLevel}:
+            total = score.total_count or 1
+            await record_exercise_results_for_user(
+                db,
+                current_user,
+                [
+                    ExerciseResult(
+                        exercise_type="game",
+                        skill=ProficiencyService.infer_skill_from_tags(
+                            session.game_type.split("_")
+                        ),
+                        difficulty_level=ProficiencyLevel(level_code),
+                        is_correct=score.correct_count >= total,
+                        score=min(100.0, 100.0 * score.correct_count / total),
+                        time_spent_seconds=duration_seconds,
+                    )
+                ],
+                award_xp=False,  # game completion above already awarded XP
+            )
+    except Exception as e:
+        logger.warning("Proficiency update error: %s", e)
 
     try:
         unlocked_achievements = await check_achievements_for_user(

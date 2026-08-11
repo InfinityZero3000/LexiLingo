@@ -351,24 +351,27 @@ async def get_proficiency_profile(
     }
 
 
-@router.post("/record-exercises", response_model=dict)
-async def record_exercise_results(
+async def record_exercise_results_for_user(
+    db: AsyncSession,
+    current_user: User,
     results: List[ExerciseResult],
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
+    *,
+    award_xp: bool = True,
+) -> dict:
     """
     Record exercise results and update proficiency scores.
-    
-    This endpoint should be called after completing exercises to:
-    1. Update skill scores based on performance
-    2. Check for potential level changes
-    3. Award XP for gamification
-    
-    Returns:
-    - Updated skill scores
-    - Level change notification (if applicable)
-    - XP earned
+
+    Shared by the manual `/record-exercises` route and real completion
+    flows (lesson, game — content-quiz completion has no submit endpoint
+    yet) so the CEFR profile moves from actual activity, not just from an
+    explicit client call. Commits
+    its own transaction — call after the caller's own completion write has
+    already committed.
+
+    Updates skill scores and checks for level changes. `award_xp=False`
+    when the caller already granted gamification XP for this same
+    completion (lesson/game routes do) — this function's own XP bonus is
+    additive and would otherwise double-award.
     """
     # Get profile
     result = await db.execute(
@@ -493,31 +496,40 @@ async def record_exercise_results(
         profile.assessed_level = new_level.value
         profile.last_level_change_at = datetime.now(timezone.utc)
     
-    # Calculate XP earned (separate from proficiency)
-    xp_earned = ProficiencyService._calculate_xp_from_exercises(results)
-    profile.total_xp = (profile.total_xp or 0) + xp_earned
-    
+    # Calculate XP earned (separate from proficiency). Skipped when the
+    # caller already awarded gamification XP for this same completion.
+    xp_earned = 0
+    if award_xp:
+        xp_earned = ProficiencyService._calculate_xp_from_exercises(results)
+        profile.total_xp = (profile.total_xp or 0) + xp_earned
+
     # Update overall score
     if all_skill_scores:
         profile.overall_score = sum(s.score for s in all_skill_scores) / len(all_skill_scores)
-    
+
     profile.last_assessment_at = datetime.now(timezone.utc)
-    
-    # Sync current_user profile
+
+    # Sync current_user's CEFR level — always, regardless of award_xp.
     current_user.level = new_level.value
-    
-    old_xp = current_user.total_xp or 0
-    new_xp = old_xp + xp_earned
-    current_user.total_xp = new_xp
-    current_user.numeric_level = calculate_numeric_level(new_xp)
-    
-    # Recalculate and update rank
-    rank_info = calculate_rank(
-        numeric_level=current_user.numeric_level or 1,
-        proficiency_level=current_user.level,
-    )
-    apply_rank_info_to_user(current_user, rank_info)
-    
+
+    if award_xp:
+        old_xp = current_user.total_xp or 0
+        new_xp = old_xp + xp_earned
+        current_user.total_xp = new_xp
+        current_user.numeric_level = calculate_numeric_level(new_xp)
+
+    if level_changed or award_xp:
+        # Rank depends on proficiency_level (current_user.level, just synced
+        # above) — recalculate whenever that changed, even when award_xp is
+        # False and no XP moved. Otherwise a lesson/game completion that
+        # levels up CEFR leaves the rank badge computed against the old
+        # level until the user's next XP-earning event.
+        rank_info = calculate_rank(
+            numeric_level=current_user.numeric_level or 1,
+            proficiency_level=current_user.level,
+        )
+        apply_rank_info_to_user(current_user, rank_info)
+
     await db.commit()
     
     return {
@@ -531,6 +543,22 @@ async def record_exercise_results(
         "total_xp": profile.total_xp,
         "message": f"Congratulations! You've advanced to {new_level.value}!" if level_changed else "Keep practicing to improve your skills!",
     }
+
+
+@router.post("/record-exercises", response_model=dict)
+async def record_exercise_results(
+    results: List[ExerciseResult],
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Record exercise results and update proficiency scores.
+
+    Manual client-triggered entry point. Real completion flows (lesson,
+    game) call `record_exercise_results_for_user` directly instead of
+    hitting this route.
+    """
+    return await record_exercise_results_for_user(db, current_user, results)
 
 
 @router.get("/level-check", response_model=dict)

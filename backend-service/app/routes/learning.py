@@ -3,6 +3,7 @@ Learning Session Routes
 Endpoints for lesson attempts and learning sessions (Start/Submit/Complete)
 """
 
+import hashlib
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,7 +15,14 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.cache import build_cache_key, delete_cached
+from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.models.learner_state import LearnerObservationEvent
+from app.services.learner_state import (
+    ObservationInput,
+    apply_observation_event,
+    ingest_observations,
+)
 from app.services.streak_service import update_user_streak
 from app.models.user import User
 from app.models.course import Course, Unit, Lesson
@@ -41,6 +49,9 @@ from app.schemas.progress import (
 from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
 from app.services import check_achievements_for_user
+from app.services.proficiency_service import ProficiencyService
+from app.schemas.proficiency import ExerciseResult, ProficiencyLevel
+from app.routes.proficiency import record_exercise_results_for_user
 from app.crud.progress import ProgressCRUD
 from app.services.level_service import (
     LevelService,
@@ -117,6 +128,11 @@ async def start_lesson(
     if lesson.content and isinstance(lesson.content, dict) and lesson.content.get("exercises"):
         total_questions = len(lesson.content["exercises"])
     else:
+        if settings.is_production:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "Lesson content is missing exercises",
+            )
         total_questions = len(_generate_demo_exercises(lesson.title))
 
     # Create new attempt
@@ -189,6 +205,7 @@ async def get_lesson_content(
                 id=ex.get('id', str(idx + 1)),
                 type=ex.get('type', 'multiple_choice'),
                 ui_type=ex.get('ui_type'),
+                phase=ex.get('phase'),
                 question=ex.get('question', ''),
                 options=options,
                 correct_answer=str(ex.get('correct_answer', '')),
@@ -202,6 +219,11 @@ async def get_lesson_content(
     
     # If no exercises in DB, generate default exercises for demo
     if not exercises:
+        if settings.is_production:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                "Lesson content is missing exercises",
+            )
         exercises = _generate_demo_exercises(lesson.title)
     
     return ApiResponse(
@@ -211,6 +233,7 @@ async def get_lesson_content(
             id=lesson.id,
             title=lesson.title,
             description=lesson.description,
+            outcome=lesson.outcome,
             lesson_type=lesson.lesson_type,
             order_index=lesson.order_index,
             xp_reward=lesson.xp_reward,
@@ -553,13 +576,21 @@ async def submit_answer(
     lesson = lesson_result.scalar_one_or_none()
     
     # Validate answer against lesson content
-    is_correct, correct_answer, explanation = await _validate_answer(
+    is_correct, correct_answer, explanation, concept_id = await _validate_answer(
         lesson=lesson,
         question_id=str(request.question_id),
         question_type=request.question_type.value,
         user_answer=request.user_answer
     )
-    
+
+    if concept_id:
+        await _emit_concept_observation(
+            db,
+            user_id=current_user.id,
+            concept_id=concept_id,
+            is_correct=is_correct,
+        )
+
     # Calculate XP based on correctness, hint usage, and time
     xp = 10 if is_correct else 0
     if request.hint_used:
@@ -617,15 +648,64 @@ async def submit_answer(
     )
 
 
+async def _emit_concept_observation(
+    db: AsyncSession,
+    *,
+    user_id: UUID,
+    concept_id: str,
+    is_correct: bool,
+) -> None:
+    """Feed a lesson-exercise answer into the unified learner_concept_state
+    engine (same one vocabulary review uses — app/crud/vocabulary.py
+    submit_review). Applied synchronously in this request's transaction so
+    mastery is immediately queryable, not just eventually via the outbox
+    worker. Best-effort: any failure here must never break answer submission."""
+    now = datetime.now(timezone.utc)
+    event_id = hashlib.sha256(
+        f"{user_id}:{concept_id}:{now.isoformat()}".encode("utf-8")
+    ).hexdigest()
+    try:
+        # SAVEPOINT: a failure here must roll back only this observation,
+        # not abort the outer transaction that still needs to persist the
+        # QuestionAttempt/lesson-progress writes that follow in the caller.
+        async with db.begin_nested():
+            await ingest_observations(
+                db,
+                [
+                    ObservationInput(
+                        event_id=event_id,
+                        user_id=user_id,
+                        concept_id=concept_id,
+                        outcome="correct" if is_correct else "incorrect",
+                        confidence=0.8,
+                        observed_at=now,
+                    )
+                ],
+            )
+            event_db_id = await db.scalar(
+                select(LearnerObservationEvent.id).where(
+                    LearnerObservationEvent.event_id == event_id
+                )
+            )
+            if event_db_id is not None:
+                await apply_observation_event(db, event_db_id, now=now)
+    except Exception:
+        logger.exception(
+            "Failed to record concept observation for user=%s concept=%s",
+            user_id,
+            concept_id,
+        )
+
+
 async def _validate_answer(
     lesson: Optional[Lesson],
     question_id: str,
     question_type: str,
     user_answer: any
-) -> tuple[bool, str, str]:
+) -> tuple[bool, str, str, Optional[str]]:
     """
     Validate user answer against lesson content.
-    Returns (is_correct, correct_answer, explanation)
+    Returns (is_correct, correct_answer, explanation, concept_id)
     """
     correct_answer = ""
     explanation = "Keep practicing!"
@@ -644,10 +724,10 @@ async def _validate_answer(
                     question_type,
                     ex.get("ui_type"),
                 )
-                return is_correct, correct_answer, explanation
+                return is_correct, correct_answer, explanation, ex.get("concept_id")
 
     # Fallback: look up in the dynamic demo exercise set for this lesson
-    if lesson:
+    if lesson and not settings.is_production:
         demo_ex_list = _generate_demo_exercises(lesson.title)
         for demo_ex in demo_ex_list:
             if demo_ex.id == question_id:
@@ -659,11 +739,11 @@ async def _validate_answer(
                     question_type,
                     demo_ex.ui_type,
                 )
-                return is_correct, correct_answer, explanation
+                return is_correct, correct_answer, explanation, None
 
     # Last resort: direct comparison
     is_correct = _normalize_answer(user_answer, question_type) == _normalize_answer(correct_answer, question_type)
-    return is_correct, correct_answer, explanation
+    return is_correct, correct_answer, explanation, None
 
 
 async def _find_next_lesson(db: AsyncSession, current_lesson: Lesson) -> Optional[UUID]:
@@ -1010,6 +1090,37 @@ async def complete_lesson(
     
     await db.commit()
 
+    # CEFR proficiency tracking: one aggregate ExerciseResult per completed
+    # lesson. Best-effort — a failure here must not fail the lesson the
+    # user just finished. complete_lesson's own "Already completed" guard
+    # above (finished_at check) is the idempotency boundary: this only
+    # runs once per attempt.
+    try:
+        course_result = await db.execute(
+            select(Course).where(Course.id == lesson.course_id)
+        )
+        course = course_result.scalar_one_or_none()
+        if course and course.level in {lvl.value for lvl in ProficiencyLevel}:
+            await record_exercise_results_for_user(
+                db,
+                current_user,
+                [
+                    ExerciseResult(
+                        exercise_type="lesson",
+                        skill=ProficiencyService.infer_skill_from_tags(course.tags),
+                        difficulty_level=ProficiencyLevel(course.level),
+                        is_correct=attempt.passed,
+                        score=float(attempt.score),
+                        time_spent_seconds=attempt.time_spent_ms // 1000,
+                        lesson_id=str(attempt.lesson_id),
+                        course_id=str(lesson.course_id),
+                    )
+                ],
+                award_xp=False,  # lesson completion above already awarded XP
+            )
+    except Exception as e:
+        logger.warning("Proficiency update error: %s", e)
+
     await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_me", user_id=str(current_user.id)))
@@ -1192,34 +1303,6 @@ async def get_course_roadmap(
             units=units_roadmap
         )
     )
-
-
-async def _update_streak(db: AsyncSession, user_id: UUID):
-    """Update streak"""
-    result = await db.execute(select(Streak).where(Streak.user_id == user_id))
-    streak = result.scalar_one_or_none()
-    
-    today = datetime.now(timezone.utc).date()
-    
-    if not streak:
-        streak = Streak(
-            user_id=user_id,
-            current_streak=1,
-            longest_streak=1,
-            last_activity_date=today
-        )
-        db.add(streak)
-    else:
-        last = streak.last_activity_date
-        if last == today:
-            pass
-        elif last == today - timedelta(days=1):
-            streak.current_streak += 1
-            streak.longest_streak = max(streak.longest_streak, streak.current_streak)
-            streak.last_activity_date = today
-        else:
-            streak.current_streak = 1
-            streak.last_activity_date = today
 
 
 def _calc_stars(score: float) -> int:

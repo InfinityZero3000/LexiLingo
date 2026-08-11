@@ -23,7 +23,10 @@ class StarterRewardService:
         db: AsyncSession,
         user_id: UUID,
     ) -> UserRewardGrant:
-        """Grant the starter reward without committing the outer transaction."""
+        """Grant the starter reward, committing the session and invalidating
+        the wallet cache. Callers must add all other pending session state
+        (e.g. the new User row) before calling this — it commits everything
+        currently pending, not just the reward."""
         result = await db.execute(
             select(UserRewardGrant).where(
                 UserRewardGrant.user_id == user_id,
@@ -55,14 +58,6 @@ class StarterRewardService:
                 return existing
             raise
 
-        await WalletCRUD.add_gems(
-            db,
-            user_id,
-            cls.gems_awarded,
-            source="new_user_starter_reward",
-            description="New learner starter gift",
-            commit=False,
-        )
         db.add(
             Notification(
                 user_id=user_id,
@@ -76,7 +71,14 @@ class StarterRewardService:
                 },
             )
         )
-        await db.flush()
+        await WalletCRUD.add_gems(
+            db,
+            user_id,
+            cls.gems_awarded,
+            source="new_user_starter_reward",
+            description="New learner starter gift",
+            commit=True,
+        )
         return grant
 
     @classmethod

@@ -4,8 +4,15 @@ Content models for admin-managed grammar, questions, and test exams.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Integer, Boolean, ForeignKey, Text, Index
+from sqlalchemy import String, Integer, Boolean, CheckConstraint, ForeignKey, Text, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+_CEFR_LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
+
+
+def _cefr_check(column: str, name: str) -> CheckConstraint:
+    allowed = ", ".join(f"'{level}'" for level in _CEFR_LEVELS)
+    return CheckConstraint(f"{column} IN ({allowed})", name=name)
 
 from app.core.database import Base
 from app.core.db_types import GUID, TZDateTime, PortableJSON
@@ -24,14 +31,21 @@ class GrammarItem(Base):
     tags: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of tags
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        TZDateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     questions = relationship("QuestionItem", back_populates="grammar", lazy="noload")
 
     __table_args__ = (
         Index("ix_grammar_items_level", "level"),
         Index("ix_grammar_items_topic", "topic"),
+        _cefr_check("level", "ck_grammar_items_level_cefr"),
     )
 
 
@@ -52,18 +66,26 @@ class QuestionItem(Base):
         GUID(), ForeignKey("grammar_items.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
-    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        TZDateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     grammar = relationship("GrammarItem", back_populates="questions", lazy="selectin")
 
     __table_args__ = (
         Index("ix_question_bank_level", "difficulty_level"),
         Index("ix_question_bank_type", "question_type"),
+        _cefr_check("difficulty_level", "ck_question_bank_difficulty_level_cefr"),
     )
 
 
 class TestExam(Base):
+    __test__ = False
     __tablename__ = "test_exams"
 
     id: Mapped[uuid.UUID] = mapped_column(GUID(), primary_key=True, default=uuid.uuid4)
@@ -72,13 +94,22 @@ class TestExam(Base):
     level: Mapped[str] = mapped_column(String(20), nullable=False, default="A1")
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=20)
     passing_score: Mapped[int] = mapped_column(Integer, nullable=False, default=70)
-    question_ids: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)  # list of question UUIDs
+    question_ids: Mapped[dict | None] = mapped_column(
+        PortableJSON, nullable=True
+    )  # list of question UUIDs
     is_published: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        TZDateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        TZDateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     __table_args__ = (
         Index("ix_test_exams_level", "level"),
         Index("ix_test_exams_published", "is_published"),
+        _cefr_check("level", "ck_test_exams_level_cefr"),
     )

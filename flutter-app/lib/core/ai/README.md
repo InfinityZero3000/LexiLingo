@@ -287,6 +287,6 @@ All services currently use mock implementations that simulate the behavior and l
 
 ---
 
-**Author:** Nguyen Huu Thang  
-**Version:** 1.0  
+**Author:** Nguyen Huu Thang
+**Version:** 1.0
 **Last Updated:** January 2026

@@ -43,7 +43,7 @@ def run_tests():
             print(f"PASS [Case {idx+1}]: input={repr(ans)} -> {repr(result)}")
             
     if failed == 0:
-        print("\nAll normalize_answer tests passed successfully! 🎉")
+        print("\nAll normalize_answer tests passed successfully! ")
         sys.exit(0)
     else:
         print(f"\n{failed} tests failed.")

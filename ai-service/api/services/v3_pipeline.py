@@ -216,7 +216,7 @@ class V3Pipeline:
                 models_used=[],
                 cache=CacheMeta(hit=False, key=cache_key),
             ),
-            vietnamese_hint=None,
+            native_hint=None,
             pronunciation_tip=None,
             diagnosis=diagnosis,
             retrieval=retrieval,

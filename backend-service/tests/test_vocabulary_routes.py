@@ -18,7 +18,7 @@ Covers:
 
 import pytest
 import uuid
-from datetime import datetime, date, timedelta
+from datetime import UTC, datetime, date, timedelta
 from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
@@ -124,8 +124,8 @@ def _make_mock_vocab_item(vocab_id: str = VOCAB_ID):
     item.course_id = None
     item.lesson_id = None
     item.usage_frequency = 0
-    item.created_at = datetime.utcnow()
-    item.updated_at = datetime.utcnow()
+    item.created_at = datetime.now(UTC)
+    item.updated_at = datetime.now(UTC)
     return item
 
 
@@ -140,7 +140,7 @@ def _make_mock_user_vocab():
     uv.interval = 1
     uv.streak = 0
     uv.repetitions = 0
-    uv.next_review_date = datetime.utcnow()
+    uv.next_review_date = datetime.now(UTC)
     uv.last_reviewed_at = None
     uv.fsrs_stability = 0.0
     uv.fsrs_difficulty = 0.0
@@ -157,7 +157,7 @@ def _make_mock_user_vocab():
     uv.longest_streak = 0
     uv.total_xp_earned = 0
     uv.notes = None
-    uv.added_at = datetime.utcnow()
+    uv.added_at = datetime.now(UTC)
     return uv
 
 
@@ -269,6 +269,15 @@ class TestGetUserCollection:
         data = response.json()
         assert "items" in data
         assert "total" in data
+
+    @pytest.mark.asyncio
+    async def test_total_comes_from_count_query(self, auth_client):
+        client, _, _, _ = auth_client
+        with patch("app.crud.vocabulary.vocabulary_crud.get_user_vocabulary_list", new=AsyncMock(return_value=[])), \
+             patch("app.crud.vocabulary.vocabulary_crud.count_user_vocabulary", new=AsyncMock(return_value=42)):
+            response = await client.get(f"{BASE}/collection")
+        assert response.status_code == 200
+        assert response.json()["total"] == 42
 
     @pytest.mark.asyncio
     async def test_invalid_status_returns_400(self, auth_client):
@@ -727,7 +736,7 @@ class TestCreateDeck:
         mock_deck.name = "Travel Phrases"
         mock_deck.description = "Words for travel"
         mock_deck.color = "#2196F3"
-        mock_deck.created_at = datetime.utcnow()
+        mock_deck.created_at = datetime.now(UTC)
         mock_deck.user_id = "00000000-0000-0000-0000-000000000001"
         mock_deck.word_count = 0
         with patch("app.crud.vocabulary.vocabulary_crud.create_deck", new=AsyncMock(return_value=mock_deck)):
@@ -774,9 +783,67 @@ class TestGetUserDecks:
         mock_deck.name = "Travel Phrases"
         mock_deck.description = "Words for travel"
         mock_deck.color = "#2196F3"
-        mock_deck.created_at = datetime.utcnow()
+        mock_deck.created_at = datetime.now(UTC)
         mock_deck.user_id = "00000000-0000-0000-0000-000000000001"
         mock_deck.word_count = 5
         with patch("app.crud.vocabulary.vocabulary_crud.get_user_decks", new=AsyncMock(return_value=[mock_deck])):
             response = await client.get(f"{BASE}/decks")
         assert response.status_code == 200
+
+
+class TestGetWordOfDay:
+    """GET /vocabulary/word-of-day — public, no auth.
+
+    Regression coverage for a real production 500: build_cache_key(prefix,
+    **params) was called with a positional date arg instead of a keyword,
+    raising TypeError before the DB was ever touched. No test exercised
+    this route at all, so it shipped and only surfaced live.
+    """
+
+    @pytest.fixture
+    async def word_of_day_client(self):
+        from app.main import app
+        from app.core.database import get_db
+
+        count_result = MagicMock()
+        count_result.scalar_one.return_value = 1
+        item_result = MagicMock()
+        item_result.scalar_one_or_none.return_value = _make_mock_vocab_item()
+
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(side_effect=[count_result, item_result])
+
+        async def mock_get_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
+            yield c
+        app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_returns_a_word(self, word_of_day_client):
+        response = await word_of_day_client.get(f"{BASE}/word-of-day")
+        assert response.status_code == 200
+        assert response.json()["word"] == "hello"
+
+    @pytest.mark.asyncio
+    async def test_404_when_no_vocabulary_exists(self):
+        from app.main import app
+        from app.core.database import get_db
+
+        count_result = MagicMock()
+        count_result.scalar_one.return_value = 0
+        mock_session = MagicMock()
+        mock_session.execute = AsyncMock(return_value=count_result)
+
+        async def mock_get_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get(f"{BASE}/word-of-day")
+        app.dependency_overrides.clear()
+        assert response.status_code == 404

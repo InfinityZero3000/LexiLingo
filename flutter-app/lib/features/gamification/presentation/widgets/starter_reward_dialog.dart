@@ -67,28 +67,39 @@ class StarterRewardDialog extends StatelessWidget {
                 children: [
                   Semantics(
                     label: 'gamification.starterReward.gemLabel'.tr(),
-                    child: Container(
-                      width: 104,
-                      height: 104,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [AppColors.accentMint, Color(0xFF7669F7)],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.accentMint.withValues(alpha: 0.35),
-                            blurRadius: 28,
-                            spreadRadius: 4,
+                    // Bounce-in — the "reward granted" beat, elasticOut needs
+                    // no controller since TweenAnimationBuilder self-drives.
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 650),
+                      curve: Curves.elasticOut,
+                      builder: (_, v, child) =>
+                          Transform.scale(scale: v, child: child),
+                      child: Container(
+                        width: 104,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(30),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [AppColors.accentMint, Color(0xFF7669F7)],
                           ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.diamond_rounded,
-                        size: 58,
-                        color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.accentMint.withValues(
+                                alpha: 0.35,
+                              ),
+                              blurRadius: 28,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.diamond_rounded,
+                          size: 58,
+                          color: AppColors.surfaceLight,
+                        ),
                       ),
                     ),
                   ),
@@ -126,7 +137,7 @@ class StarterRewardDialog extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.accentMint,
-                        foregroundColor: const Color(0xFF0B132B),
+                        foregroundColor: AppColors.textDark,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(22),

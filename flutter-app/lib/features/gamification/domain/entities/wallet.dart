@@ -23,10 +23,18 @@ class WalletEntity extends Equatable {
       id: json['id'] ?? '',
       userId: json['user_id'] ?? json['userId'] ?? '',
       gems: json['gems'] ?? 0,
-      totalEarned: json['total_earned'] ?? json['totalEarned'] ?? 0,
-      totalSpent: json['total_spent'] ?? json['totalSpent'] ?? 0,
-      lastUpdated: json['last_updated'] != null
-          ? DateTime.parse(json['last_updated'])
+      totalEarned:
+          json['total_gems_earned'] ??
+          json['total_earned'] ??
+          json['totalEarned'] ??
+          0,
+      totalSpent:
+          json['total_gems_spent'] ??
+          json['total_spent'] ??
+          json['totalSpent'] ??
+          0,
+      lastUpdated: (json['updated_at'] ?? json['last_updated']) != null
+          ? DateTime.parse(json['updated_at'] ?? json['last_updated'])
           : null,
     );
   }
@@ -61,7 +69,7 @@ class WalletTransactionEntity extends Equatable {
   factory WalletTransactionEntity.fromJson(Map<String, dynamic> json) {
     return WalletTransactionEntity(
       id: json['id'] ?? '',
-      type: json['type'] ?? 'earn',
+      type: json['transaction_type'] ?? json['type'] ?? 'earn',
       amount: json['amount'] ?? 0,
       description: json['description'] ?? '',
       referenceType: json['reference_type'] ?? json['referenceType'],

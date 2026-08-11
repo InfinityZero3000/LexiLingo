@@ -2,31 +2,43 @@ FROM python:3.13-slim as builder
 
 WORKDIR /app
 
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1 \
+    VIRTUAL_ENV=/opt/venv
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
+RUN python -m venv "${VIRTUAL_ENV}"
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+
 COPY requirements.txt ./
-RUN pip install --no-cache-dir --user --upgrade pip && \
-    pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 FROM python:3.13-slim
+
+ENV APP_ENV=production \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:${PATH}" \
+    PYTHONDONTWRITEBYTECODE=1
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 1000 appuser
 
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /opt/venv /opt/venv
 COPY . .
 
-RUN chmod +x scripts/entrypoint.sh
+RUN chmod +x scripts/entrypoint.sh && \
+    chown -R appuser:appuser /app
 
-ENV PATH=/root/.local/bin:$PATH \
-    APP_ENV=production \
-    PYTHONUNBUFFERED=1
+USER appuser
 
 EXPOSE 8000
 

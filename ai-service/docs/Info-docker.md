@@ -1,3 +1,5 @@
+# Docker Integration Notes
+
 1. **Test MongoDB setup:**
    ```bash
    cd LexiLingo_backend

@@ -47,7 +47,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
       final previous = _selectedEntry;
       if (previous != null) {
         // Keep tracking the same user if they're still in the new list
-        final updated = widget.entries.where((e) => e.userId == previous.userId);
+        final updated = widget.entries.where(
+          (e) => e.userId == previous.userId,
+        );
         _selectedEntry = updated.isNotEmpty
             ? updated.first
             : _findCurrentUserEntry(widget.entries);
@@ -57,7 +59,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
     }
   }
 
-  LeaderboardEntryEntity? _findCurrentUserEntry(List<LeaderboardEntryEntity> entries) {
+  LeaderboardEntryEntity? _findCurrentUserEntry(
+    List<LeaderboardEntryEntity> entries,
+  ) {
     final currentUserEntries = entries.where((e) => e.isCurrentUser);
     if (currentUserEntries.isNotEmpty) return currentUserEntries.first;
     return null;
@@ -175,7 +179,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withValues(alpha: 0.98),
+                        AppColors.surfaceLight.withValues(alpha: 0.98),
                         rankColor.withValues(alpha: 0.2),
                       ],
                       begin: Alignment.topLeft,
@@ -184,7 +188,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                     border: Border.all(
                       color: entry?.isCurrentUser == true
                           ? primaryColor
-                          : Colors.white.withValues(alpha: 0.96),
+                          : AppColors.surfaceLight.withValues(alpha: 0.96),
                       width: rank == 1 ? 4 : 3,
                     ),
                     boxShadow: [
@@ -203,7 +207,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                           )
                         : Icon(
                             Icons.person_outline,
-                            color: Colors.grey[400],
+                            color: AppColors.grey400,
                             size: avatarSize * 0.46,
                           ),
                   ),
@@ -217,7 +221,10 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: rankColor,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(
+                        color: AppColors.surfaceLight,
+                        width: 2,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.16),
@@ -229,7 +236,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                     child: Text(
                       '$rank',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: AppColors.surfaceLight,
                         fontSize: avatarSize * 0.17,
                         fontWeight: FontWeight.w800,
                       ),
@@ -243,10 +250,10 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.74),
+                  color: AppColors.surfaceLight.withValues(alpha: 0.74),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: AppColors.surfaceLight.withValues(alpha: 0.72),
                     width: 1,
                   ),
                   boxShadow: [
@@ -280,9 +287,12 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               )
             else
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.68),
+                  color: AppColors.surfaceLight.withValues(alpha: 0.68),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
@@ -312,7 +322,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
     return Container(
       color: entry.isCurrentUser
           ? AppColorRoles.primary(isDark).withValues(alpha: 0.16)
-          : Colors.white.withValues(alpha: 0.82),
+          : AppColors.surfaceLight.withValues(alpha: 0.82),
       child: Center(
         child: Text(
           fallback.toUpperCase(),
@@ -321,7 +331,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
             fontWeight: FontWeight.bold,
             color: entry.isCurrentUser
                 ? AppColorRoles.primary(isDark)
-                : Colors.grey[600],
+                : AppColors.grey600,
           ),
         ),
       ),
@@ -333,10 +343,12 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
     ScrollController scrollController,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final borderColor = Colors.white.withValues(alpha: isDark ? 0.14 : 0.68);
+    final borderColor = AppColors.surfaceLight.withValues(
+      alpha: isDark ? 0.14 : 0.68,
+    );
     final panelColor = isDark
         ? AppColors.surfaceDark.withValues(alpha: 0.82)
-        : Colors.white.withValues(alpha: 0.85);
+        : AppColors.surfaceLight.withValues(alpha: 0.85);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -380,7 +392,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                             height: 4,
                             margin: const EdgeInsets.only(bottom: 12),
                             decoration: BoxDecoration(
-                              color: Colors.grey.withValues(alpha: 0.5),
+                              color: AppColors.grey500.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -454,7 +466,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               widget.league == 'master'
                   ? ShaderMask(
                       shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Color(0xFF5AB6FF), Color(0xFFFFD64F)],
+                        colors: AppColors.masterGradient,
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ).createShader(bounds),
@@ -465,7 +477,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
-                          color: Colors.white,
+                          color: AppColors.surfaceLight,
                         ),
                       ),
                     )
@@ -519,14 +531,14 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               ? primaryColor.withValues(alpha: isDark ? 0.28 : 0.16)
               : entry.isCurrentUser
               ? primaryColor.withValues(alpha: isDark ? 0.22 : 0.13)
-              : Colors.white.withValues(alpha: isDark ? 0.08 : 0.48),
+              : AppColors.surfaceLight.withValues(alpha: isDark ? 0.08 : 0.48),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? primaryColor.withValues(alpha: 0.7)
                 : entry.isCurrentUser
                 ? primaryColor.withValues(alpha: 0.52)
-                : Colors.white.withValues(alpha: isDark ? 0.1 : 0.5),
+                : AppColors.surfaceLight.withValues(alpha: isDark ? 0.1 : 0.5),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -556,11 +568,11 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               height: 42,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.72),
+                color: AppColors.surfaceLight.withValues(alpha: 0.72),
                 border: Border.all(
                   color: entry.isCurrentUser
                       ? primaryColor
-                      : Colors.white.withValues(alpha: 0.84),
+                      : AppColors.surfaceLight.withValues(alpha: 0.84),
                   width: entry.isCurrentUser ? 2 : 1,
                 ),
               ),
@@ -612,7 +624,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
-                              color: Colors.white,
+                              color: AppColors.surfaceLight,
                             ),
                           ),
                         ),
@@ -652,7 +664,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               decoration: BoxDecoration(
                 color: AppColors.gold.withValues(alpha: isDark ? 0.22 : 0.18),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: AppColors.gold.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.gold.withValues(alpha: 0.3),
+                ),
               ),
               child: Text(
                 '${entry.xpEarned} XP',
@@ -681,7 +695,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
       case 3:
         return AppColors.bronze;
       default:
-        return Colors.grey;
+        return AppColors.grey500;
     }
   }
 }
@@ -711,7 +725,7 @@ class LeaderboardEntryRow extends StatelessWidget {
           border: Border.all(
             color: entry.isCurrentUser
                 ? primaryColor.withValues(alpha: 0.5)
-                : Colors.grey.withValues(alpha: 0.12),
+                : AppColors.grey500.withValues(alpha: 0.12),
           ),
         ),
         child: Row(
@@ -745,7 +759,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: entry.isCurrentUser
                     ? primaryColor.withValues(alpha: 0.2)
-                    : Colors.grey[200],
+                    : AppColors.grey200,
                 border: entry.isCurrentUser
                     ? Border.all(color: primaryColor, width: 2)
                     : null,
@@ -854,7 +868,7 @@ class LeaderboardEntryRow extends StatelessWidget {
           fontWeight: FontWeight.bold,
           color: entry.isCurrentUser
               ? AppColorRoles.primary(isDark)
-              : Colors.grey[600],
+              : AppColors.grey600,
         ),
       ),
     );
@@ -869,7 +883,7 @@ class LeaderboardEntryRow extends StatelessWidget {
       case 3:
         return AppColors.warning;
       default:
-        return Colors.grey;
+        return AppColors.grey500;
     }
   }
 }

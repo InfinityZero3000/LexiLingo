@@ -149,7 +149,7 @@ RATE_LIMIT_PER_MINUTE=60
 FutureWarning: All support for the `google.generativeai` package has ended
 ```
 
-**Giải pháp:** 
+**Giải pháp:**
 Đây chỉ là warning, không ảnh hưởng hoạt động hiện tại. Sẽ được cập nhật sang `google.genai` trong phiên bản tương lai.
 
 ---

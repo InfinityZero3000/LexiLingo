@@ -7,7 +7,8 @@ class LexiMessage {
   final String? audioBase64;
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
-  final String? vietnameseHint;
+  final LexiSuggestedPractice? suggestedPractice;
+  final String? nativeHint;
   final Map<String, dynamic>? scores;
   final String syncStatus; // 'synced' | 'pending_sync'
   final String? clientRequestId;
@@ -20,7 +21,8 @@ class LexiMessage {
     this.audioBase64,
     this.corrections = const [],
     this.linkedConcepts = const [],
-    this.vietnameseHint,
+    this.suggestedPractice,
+    this.nativeHint,
     this.scores,
     this.syncStatus = 'synced',
     this.clientRequestId,
@@ -40,7 +42,8 @@ class LexiMessage {
     String? audioBase64,
     List<LexiCorrection>? corrections,
     List<String>? linkedConcepts,
-    String? vietnameseHint,
+    LexiSuggestedPractice? suggestedPractice,
+    String? nativeHint,
     Map<String, dynamic>? scores,
     String? syncStatus,
     String? clientRequestId,
@@ -53,12 +56,27 @@ class LexiMessage {
       audioBase64: audioBase64 ?? this.audioBase64,
       corrections: corrections ?? this.corrections,
       linkedConcepts: linkedConcepts ?? this.linkedConcepts,
-      vietnameseHint: vietnameseHint ?? this.vietnameseHint,
+      suggestedPractice: suggestedPractice ?? this.suggestedPractice,
+      nativeHint: nativeHint ?? this.nativeHint,
       scores: scores ?? this.scores,
       syncStatus: syncStatus ?? this.syncStatus,
       clientRequestId: clientRequestId ?? this.clientRequestId,
     );
   }
+}
+
+/// A one-tap follow-up practice prompt tied to the concept behind the
+/// mistake just corrected (not a generic "you're weak at X" suggestion).
+class LexiSuggestedPractice {
+  final String conceptId;
+  final String conceptTitle;
+  final String prompt;
+
+  const LexiSuggestedPractice({
+    required this.conceptId,
+    required this.conceptTitle,
+    required this.prompt,
+  });
 }
 
 /// A grammar/vocabulary correction from Lexi.

@@ -493,6 +493,10 @@ class TestGameSessionCompletion:
             new_callable=AsyncMock,
             return_value=xp_result,
         ) as award_mock, patch(
+            "app.routes.games.ItemEffectsService.get_xp_multiplier",
+            new_callable=AsyncMock,
+            return_value=1.0,
+        ) as multiplier_mock, patch(
             "app.routes.games.check_achievements_for_user",
             new_callable=AsyncMock,
             return_value=[],
@@ -519,9 +523,11 @@ class TestGameSessionCompletion:
         assert session.completed_at is not None
         assert session.xp_awarded is True
         db.commit.assert_awaited_once()
+        multiplier_mock.assert_awaited_once_with(user_id)
         award_mock.assert_awaited_once()
         assert award_mock.await_args.kwargs["source_id"] == str(session_id)
         assert award_mock.await_args.kwargs["commit"] is False
+        assert award_mock.await_args.kwargs["item_multiplier"] == 1.0
         achievement_mock.assert_awaited_once_with(
             db,
             user_id,

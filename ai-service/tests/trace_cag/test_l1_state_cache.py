@@ -21,6 +21,8 @@ def _request(**overrides):
         "answer_target": "person",
         "relation_hints": {"founder", "maker"},
         "evidence_hash": "ev:iphone:apple",
+        "policy_version": "policy_v1",
+        "kg_version": "kg_v1",
     }
     base.update(overrides)
     return L1Request(**base)
@@ -39,7 +41,9 @@ def _candidate(**overrides):
         "answer_target": "person",
         "relation_hints": {"founder", "maker"},
         "evidence_hash": "ev:iphone:apple",
-        "created_at": time.monotonic(),
+        "policy_version": "policy_v1",
+        "kg_version": "kg_v1",
+        "created_at": time.time(),
         "ttl": 3600,
     }
     base.update(overrides)
@@ -73,7 +77,7 @@ def test_l1_full_for_answer_target_shift():
 
     assert decision.decision == "full"
     assert decision.safe_to_reuse is False
-    assert "answer_target_mismatch" in decision.reasons
+    assert "mismatch:answer_target" in decision.reasons
 
 
 def test_l1_full_for_relation_shift():
@@ -83,7 +87,7 @@ def test_l1_full_for_relation_shift():
 
     assert decision.decision == "full"
     assert decision.safe_to_reuse is False
-    assert "relation_mismatch" in decision.reasons
+    assert "mismatch:relation_path" in decision.reasons
 
 
 def test_l1_full_for_level_shift():
@@ -93,7 +97,7 @@ def test_l1_full_for_level_shift():
 
     assert decision.decision == "full"
     assert decision.safe_to_reuse is False
-    assert "level_mismatch" in decision.reasons
+    assert "mismatch:level" in decision.reasons
 
 
 def test_l1_full_for_profile_epoch_shift():
@@ -103,7 +107,7 @@ def test_l1_full_for_profile_epoch_shift():
 
     assert decision.decision == "full"
     assert decision.safe_to_reuse is False
-    assert "profile_epoch_mismatch" in decision.reasons
+    assert "mismatch:profile_epoch" in decision.reasons
 
 
 def test_l1_full_for_low_concept_overlap():
@@ -117,7 +121,7 @@ def test_l1_full_for_low_concept_overlap():
 
 
 def test_l1_full_for_stale_candidate():
-    candidate = _candidate(created_at=time.monotonic() - 7200, ttl=3600)
+    candidate = _candidate(created_at=time.time() - 7200, ttl=3600)
 
     decision = decide_l1_reuse(_request(), candidate)
 

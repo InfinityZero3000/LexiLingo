@@ -55,14 +55,22 @@ Thumbs.db
 .coverage
 htmlcov/
 *.cover
+coverage.xml
+pytest-output.txt
+proficiency-output.txt
 
 # Database
 *.db
 *.sqlite3
-seed_*
+seed_*.sqlite3
+seed_*.db
+seed_*.json
+seed_*.csv
 !tests/seed_*
 data/
 
 # Logs
 *.log
 logs/
+import_*
+!scripts/import_kuzu_mastery.py

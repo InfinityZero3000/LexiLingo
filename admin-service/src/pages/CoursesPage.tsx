@@ -20,6 +20,7 @@ import {
 } from "../lib/adminApi";
 import { CourseImportModal } from "../components/CourseImportModal";
 import { useI18n } from "../lib/i18n";
+import { downloadCSV } from "../lib/csvExport";
 import {
   listContentAgentJobs,
   type ContentAgentJob,
@@ -165,6 +166,24 @@ export const CoursesPage = () => {
     }
   };
 
+  const handleExport = () => {
+    downloadCSV(
+      "courses.csv",
+      ["title", "description", "language", "level", "tags", "thumbnail_url", "total_lessons", "total_xp", "is_published"],
+      courses.map((c) => [
+        c.title,
+        c.description || "",
+        c.language,
+        c.level,
+        (c.tags || []).join(";"),
+        c.thumbnail_url || "",
+        c.total_lessons,
+        c.total_xp,
+        c.is_published,
+      ])
+    );
+  };
+
   return (
     <div className="stack">
       <SectionHeader
@@ -200,6 +219,13 @@ export const CoursesPage = () => {
             onClick={() => setShowImport(true)}
           >
             {t.courses.importData}
+          </button>
+          <button
+            className="ghost-button"
+            onClick={handleExport}
+            disabled={courses.length === 0}
+          >
+            Export CSV
           </button>
           <button
             className="ghost-button content-agent-launch-button"

@@ -2,10 +2,12 @@ from datetime import date
 
 import pytest
 
+from api.models.content_agent import CourseArtifact, ExerciseArtifact, LessonArtifact, UnitArtifact
 from api.services.content_agent.policies import (
     SOURCE_POLICIES,
     SourcePolicyError,
     apply_source_policy,
+    find_missing_production_exercise_lessons,
     get_source_policy,
 )
 
@@ -77,3 +79,60 @@ def test_unknown_and_expired_policies_fail_closed():
 
     with pytest.raises(SourcePolicyError):
         get_source_policy("oewn", as_of=date(2030, 1, 1))
+
+
+def _vocabulary():
+    return [
+        {
+            "word": "hotel",
+            "definition": "a place to stay",
+            "part_of_speech": "noun",
+            "difficulty_level": "A1",
+        }
+    ]
+
+
+def _course_with_exercises(exercises: list[dict]) -> CourseArtifact:
+    return CourseArtifact(
+        title="Test course",
+        level="A1",
+        units=[
+            UnitArtifact(
+                title="Unit 1",
+                order_index=0,
+                lessons=[
+                    LessonArtifact(
+                        title="Mission lesson",
+                        order_index=0,
+                        vocabulary=_vocabulary(),
+                        exercises=[ExerciseArtifact(id=f"ex{i}", **e) for i, e in enumerate(exercises)],
+                    )
+                ],
+            )
+        ],
+    )
+
+
+def test_missing_production_exercise_is_flagged():
+    course = _course_with_exercises(
+        [
+            {"type": "multiple_choice", "ui_type": "multiple_choice", "question": "q1", "correct_answer": "a"},
+            {"type": "true_false", "ui_type": "true_or_false", "question": "q2", "correct_answer": "True"},
+        ]
+    )
+
+    errors = find_missing_production_exercise_lessons([course])
+
+    assert len(errors) == 1
+    assert "Mission lesson" in errors[0]
+
+
+def test_lesson_with_production_exercise_passes():
+    course = _course_with_exercises(
+        [
+            {"type": "multiple_choice", "ui_type": "multiple_choice", "question": "q1", "correct_answer": "a"},
+            {"type": "fill_blank", "ui_type": "fill_in_the_blank", "question": "q2 {blank}", "correct_answer": "b"},
+        ]
+    )
+
+    assert find_missing_production_exercise_lessons([course]) == []

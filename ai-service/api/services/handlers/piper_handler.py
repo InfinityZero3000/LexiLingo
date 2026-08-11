@@ -20,15 +20,15 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PiperConfig:
     """Configuration for Piper TTS."""
-    model_path: str = "models/piper/en_US-lessac-medium.onnx"
-    voice: str = "en_US-lessac-medium"
+    model_path: str = "models/piper/en_US-lessac-low.onnx"
+    voice: str = "en_US-lessac-low"
     speaker_id: Optional[int] = None
     length_scale: float = 1.0  # Speaking speed (1.0 = normal)
     noise_scale: float = 0.667
     noise_w: float = 0.8
     sentence_silence: float = 0.2
     output_format: str = "wav"  # wav, mp3, ogg
-    sample_rate: int = 22050
+    sample_rate: int = 16000
 
 
 class PiperHandler:

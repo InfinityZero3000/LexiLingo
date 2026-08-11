@@ -6,6 +6,7 @@ Testing admin CRUD operations for courses, units, lessons, vocabulary, achieveme
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from app.models.course import Course, Unit, Lesson
@@ -243,6 +244,64 @@ class TestAdminVocabulary:
         data = response.json()
         assert data["success"] is True
 
+    @pytest.mark.asyncio
+    async def test_bulk_import_vocabulary_from_pdf(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+    ):
+        csv_text = "word,definition,translation\npdfword,From PDF,Từ PDF"
+        with patch("app.routes.admin_courses._extract_pdf_text", return_value=csv_text):
+            response = await async_client.post(
+                "/api/v1/admin/vocabulary/bulk-import",
+                headers=admin_headers,
+                files={"file": ("vocabulary.pdf", b"pdf", "application/pdf")},
+            )
+
+        assert response.status_code == 200
+        assert response.json()["data"]["created"] == 1
+
+    def test_extract_pdf_text_joins_pages(self):
+        from app.routes.admin_courses import _extract_pdf_text
+
+        pages = [MagicMock(), MagicMock()]
+        pages[0].extract_text.return_value = "page one"
+        pages[1].extract_text.return_value = "page two"
+        with patch("app.routes.admin_courses.PdfReader") as reader:
+            reader.return_value.pages = pages
+            assert _extract_pdf_text(b"pdf") == "page one\npage two"
+
+    @pytest.mark.asyncio
+    async def test_extract_pdf_text(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+    ):
+        with patch("app.routes.admin_courses._extract_pdf_text", return_value="# PDF Course"):
+            response = await async_client.post(
+                "/api/v1/admin/import/extract-pdf-text",
+                headers=admin_headers,
+                files={"file": ("course.pdf", b"pdf", "application/pdf")},
+            )
+
+        assert response.status_code == 200
+        assert response.json()["data"] == {"text": "# PDF Course"}
+
+    @pytest.mark.asyncio
+    async def test_extract_pdf_text_rejects_non_pdf(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+    ):
+        response = await async_client.post(
+            "/api/v1/admin/import/extract-pdf-text",
+            headers=admin_headers,
+            files={"file": ("course.txt", b"text", "text/plain")},
+        )
+
+        assert response.status_code == 400
+        assert response.json()["error"]["message"] == "Only PDF files are supported"
+
 
 class TestAdminContentLab:
     """Tests for admin-managed grammar, question bank, and test exams."""
@@ -399,17 +458,86 @@ class TestAdminShop:
         response = await async_client.post(
             "/api/v1/admin/shop",
             headers=admin_headers,
-            params={
+            json={
                 "name": "Test Shop Item",
                 "description": "Test item",
                 "item_type": "test",
                 "price_gems": 100
             }
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_create_shop_item_persists_effects_and_icon_url(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict
+    ):
+        """effects/icon_url must round-trip — admin-created power-ups need a real effects payload to work in-game"""
+        response = await async_client.post(
+            "/api/v1/admin/shop",
+            headers=admin_headers,
+            json={
+                "name": "Test Time Freeze",
+                "description": "Pauses the timer",
+                "item_type": "time_freeze",
+                "price_gems": 10,
+                "icon_url": "assets/icon-library/clock_freeze.png",
+                "effects": {"seconds": 15},
+            }
+        )
+
+        assert response.status_code == 200
+        item_id = response.json()["data"]["id"]
+
+        list_response = await async_client.get(
+            "/api/v1/admin/shop?include_unavailable=true",
+            headers=admin_headers
+        )
+        created = next(
+            item for item in list_response.json()["data"] if item["id"] == item_id
+        )
+        assert created["effects"] == {"seconds": 15}
+        assert created["icon_url"] == "assets/icon-library/clock_freeze.png"
+
+    @pytest.mark.asyncio
+    async def test_update_shop_item_can_change_effects(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict
+    ):
+        """Admin must be able to retune an existing power-up's effects payload"""
+        create_response = await async_client.post(
+            "/api/v1/admin/shop",
+            headers=admin_headers,
+            json={
+                "name": "Test Lucky Clover",
+                "description": "30% auto-correct chance",
+                "item_type": "lucky_clover",
+                "price_gems": 20,
+                "effects": {"chance": 0.3},
+            }
+        )
+        item_id = create_response.json()["data"]["id"]
+
+        update_response = await async_client.put(
+            f"/api/v1/admin/shop/{item_id}",
+            headers=admin_headers,
+            json={"effects": {"chance": 0.5}}
+        )
+        assert update_response.status_code == 200
+
+        list_response = await async_client.get(
+            "/api/v1/admin/shop?include_unavailable=true",
+            headers=admin_headers
+        )
+        updated = next(
+            item for item in list_response.json()["data"] if item["id"] == item_id
+        )
+        assert updated["effects"] == {"chance": 0.5}
 
 
 class TestAdminSeed:

@@ -9,15 +9,24 @@ export type CoursePopularityData = {
 type Props = {
   data: CoursePopularityData[];
   loading?: boolean;
+  error?: boolean;
 };
 
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
-export const CoursePopularityChart: React.FC<Props> = ({ data, loading }) => {
+export const CoursePopularityChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
     return (
       <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div className="loading-text">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="chart-container" style={{ height: 300, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div className="loading-text">Không tải được dữ liệu.</div>
       </div>
     );
   }

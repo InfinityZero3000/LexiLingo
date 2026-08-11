@@ -16,11 +16,13 @@ vi.mock("./env", () => ({
 
 import {
   applyContentAgentJob,
+  buildContentQaQueue,
   cancelContentAgentJob,
   createContentAgentJob,
   getContentAgentJob,
   getContentAgentPreview,
   listContentAgentJobs,
+  listContentQaQueue,
   retryContentAgentJob,
   uploadContentAgentFile,
 } from "./contentAgentApi";
@@ -119,6 +121,38 @@ describe("contentAgentApi", () => {
     await expect(listContentAgentJobs()).resolves.toMatchObject({
       jobs: [{ id: "job-2" }],
       total: 4,
+    });
+  });
+
+  it("builds a content QA queue from agent job statuses", () => {
+    const queue = buildContentQaQueue([
+      { id: "ready", status: "preview_ready" },
+      { id: "failed", status: "failed" },
+      { id: "done", status: "completed" },
+      { id: "running", status: "generating" },
+    ] as any);
+
+    expect(queue.total).toBe(4);
+    expect(queue.reviewable.map((job) => job.id)).toEqual(["ready"]);
+    expect(queue.failed.map((job) => job.id)).toEqual(["failed"]);
+    expect(queue.applied.map((job) => job.id)).toEqual(["done"]);
+  });
+
+  it("loads content QA queue through the jobs endpoint", async () => {
+    apiFetchMock.mockResolvedValueOnce({
+      data: {
+        jobs: [
+          { id: "job-1", status: "preview_ready" },
+          { id: "job-2", status: "failed" },
+        ],
+        total: 2,
+      },
+    });
+
+    await expect(listContentQaQueue()).resolves.toMatchObject({
+      reviewable: [{ id: "job-1" }],
+      failed: [{ id: "job-2" }],
+      total: 2,
     });
   });
 });

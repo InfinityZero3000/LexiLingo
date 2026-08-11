@@ -136,7 +136,7 @@ Each course is exported with the following fields:
 - Grammar courses (Multiple levels)
 - And more...
 
-**Notes**: 
+**Notes**:
 - High-quality, professionally produced content
 - Structured courses with clear levels
 - Rate limit set to 3 seconds to be respectful
@@ -162,7 +162,7 @@ class NewSourceCrawler(BaseCrawler):
     def __init__(self):
         super().__init__()
         # Your initialization
-    
+
     def crawl(self, limit=None):
         # Your crawling logic
         courses = []
@@ -351,7 +351,7 @@ Example import code:
 Future<void> importCourses() async {
   final jsonString = await rootBundle.loadString('assets/courses.json');
   final List<dynamic> jsonData = json.decode(jsonString);
-  
+
   for (var courseJson in jsonData) {
     final course = CourseModel.fromJson(courseJson);
     await courseLocalDataSource.insertCourse(course);

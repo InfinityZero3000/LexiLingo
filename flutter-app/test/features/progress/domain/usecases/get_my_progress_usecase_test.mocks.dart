@@ -180,6 +180,35 @@ class MockProgressRepository extends _i1.Mock
           as _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>);
 
   @override
+  _i4.Future<_i2.Either<_i5.Failure, _i8.StreakEntity>> restoreStreak() =>
+      (super.noSuchMethod(
+            Invocation.method(#restoreStreak, []),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, _i8.StreakEntity>>.value(
+                  _FakeEither_0<_i5.Failure, _i8.StreakEntity>(
+                    this,
+                    Invocation.method(#restoreStreak, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i8.StreakEntity>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>
+  claimDailyReward() =>
+      (super.noSuchMethod(
+            Invocation.method(#claimDailyReward, []),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>.value(
+                  _FakeEither_0<_i5.Failure, Map<String, dynamic>>(
+                    this,
+                    Invocation.method(#claimDailyReward, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>);
+
+  @override
   _i4.Future<_i2.Either<_i5.Failure, _i9.DailyChallengesResponse>>
   getDailyChallenges() =>
       (super.noSuchMethod(

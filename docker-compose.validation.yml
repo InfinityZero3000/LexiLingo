@@ -1,0 +1,79 @@
+services:
+  postgres:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:15432:5432"
+
+  pgadmin:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:15050:80"
+
+  mongodb:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:27018:27017"
+    healthcheck:
+      timeout: 15s
+      retries: 8
+      start_period: 60s
+
+  mongo-express:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:18081:8081"
+
+  redis:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:16379:6379"
+
+  redis-ai:
+    container_name: !reset null
+
+  redisinsight:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:15540:5540"
+
+  backend-service:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:18000:8000"
+    environment:
+      FIREBASE_CREDENTIALS_FILE: ""
+    volumes: !override
+      - ./backend-service/app:/app/app
+      - ./backend-service/alembic:/app/alembic
+      - ./backend-service/data:/app/data
+
+  backend-reminder-worker:
+    container_name: !reset null
+    profiles:
+      - reminders
+    environment:
+      FIREBASE_CREDENTIALS_FILE: ""
+    volumes: !override
+      - ./backend-service/app:/app/app
+      - ./backend-service/alembic:/app/alembic
+
+  backend-reminder-beat:
+    container_name: !reset null
+    profiles:
+      - reminders
+
+  ai-service:
+    container_name: !reset null
+    ports: !override
+      - "127.0.0.1:18001:8001"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request; response =
+          urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=3);
+          raise SystemExit(0 if response.status == 200 else 1)"
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 5

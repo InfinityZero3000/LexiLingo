@@ -16,6 +16,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Settings? _settings;
   String? _activeUserId;
+  String? _confirmedLanguage;
   late String _theme;
   Future<void> _localThemePersistenceQueue = Future.value();
   Future<void> _settingsPersistenceQueue = Future.value();
@@ -103,7 +104,7 @@ class SettingsProvider extends ChangeNotifier {
   ];
 
   /// Load settings for user
-  Future<void> loadSettings(String userId) async {
+  Future<void> loadSettings(String userId, [BuildContext? context]) async {
     // Skip reload if already loaded for this user — avoids spinner flash on re-entry
     if (_activeUserId == userId && _settings != null && !_isLoading) return;
     if (_activeUserId == userId && _isLoading) return;
@@ -113,10 +114,17 @@ class SettingsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    // Read the locally-saved locale before touching settings so we can honour
-    // a language the user picked (e.g. on the welcome screen) even when the
-    // stored settings still carry the entity default ('en').
-    final savedLocale = await LocaleService.getSavedLocale();
+    // Read the app's current active locale before touching settings so we
+    // can honour it even when the stored settings still carry the entity
+    // default ('en'). We read from EasyLocalization's live context rather
+    // than LocaleService.getSavedLocale(): the app boots into 'vi' via
+    // startLocale without ever persisting that choice, so getSavedLocale()
+    // can't tell "never explicitly chosen" apart from "explicitly chose
+    // English" — both normalize to 'en' and silently override the real vi
+    // default the user is looking at.
+    final savedLocale = (context != null && context.mounted)
+        ? LocaleService.normalizeLanguageCode(context.locale.languageCode)
+        : await LocaleService.getSavedLocale();
 
     var shouldPersistMigratedTheme = false;
     try {
@@ -131,6 +139,7 @@ class SettingsProvider extends ChangeNotifier {
             language: savedLocale,
             theme: _theme,
           );
+          _confirmedLanguage = savedLocale;
         },
         (settings) {
           // If the stored language is still the entity default ('en') but the
@@ -145,6 +154,9 @@ class SettingsProvider extends ChangeNotifier {
             shouldPersistMigratedTheme = true;
           }
           _settings = settings.copyWith(theme: _theme, language: effectiveLang);
+          _confirmedLanguage = LocaleService.normalizeLanguageCode(
+            effectiveLang,
+          );
         },
       );
       if (shouldPersistMigratedTheme) {
@@ -163,10 +175,20 @@ class SettingsProvider extends ChangeNotifier {
         language: savedLocale,
         theme: _theme,
       );
+      _confirmedLanguage = savedLocale;
     } finally {
       _isLoading = false;
       SoundService.instance.setEnabled(_settings?.soundEnabled ?? true);
       notifyListeners();
+      final effectiveLanguage = _settings?.language;
+      if (effectiveLanguage != null && context?.mounted == true) {
+        try {
+          await LocaleService.updateAppLocale(context!, effectiveLanguage);
+        } catch (e) {
+          _error = e.toString();
+          notifyListeners();
+        }
+      }
       // Sync reminder asynchronously — must not block isLoading flag.
       if (_settings != null && _error == null) {
         _syncReminderWithSettings(_settings!).catchError((_) {});
@@ -177,7 +199,7 @@ class SettingsProvider extends ChangeNotifier {
   /// Update language preference
   /// This updates both the database and the app locale via EasyLocalization
   Future<void> updateLanguage(String languageCode, BuildContext context) async {
-    if (_settings == null) return;
+    if (_settings == null || !context.mounted) return;
 
     final oldLanguage = LocaleService.normalizeLanguageCode(
       _settings!.language,
@@ -188,43 +210,59 @@ class SettingsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    if (context.mounted) {
-      await LocaleService.updateAppLocale(context, newLanguage);
-    } else {
-      await LocaleService.saveLocale(newLanguage);
-    }
-
-    final settingsToPersist = _settings!;
-
-    Future<void> rollbackLanguage(Object error) async {
-      final shouldRollbackActiveLanguage = _settings?.language == newLanguage;
-      if (shouldRollbackActiveLanguage) {
-        _settings = _settings!.copyWith(language: oldLanguage);
-      }
-      _error = error.toString();
-      notifyListeners();
-
-      if (shouldRollbackActiveLanguage) {
-        if (context.mounted) {
-          await LocaleService.updateAppLocale(context, oldLanguage);
-        } else {
-          await LocaleService.saveLocale(oldLanguage);
-        }
-      }
-    }
-
     try {
-      final result = await _repository.updateSettings(settingsToPersist);
-      await result.fold<Future<void>>(
-        (failure) => rollbackLanguage(failure.message),
-        (_) async {
-          _error = null;
-          debugPrint('Language updated to: $newLanguage');
-        },
+      final committed = await LocaleService.updateAppLocale(
+        context,
+        newLanguage,
       );
+      if (!committed || _settings?.language != newLanguage) return;
+
+      final persistence = _settingsPersistenceQueue.then((_) async {
+        if (_settings?.language != newLanguage) return null;
+        final result = await _persistUserSettings(
+          _settings!.copyWith(language: newLanguage),
+        );
+        if (result == null) _confirmedLanguage = newLanguage;
+        return result;
+      });
+      _settingsPersistenceQueue = persistence.then<void>((_) {});
+      final persistenceError = await persistence;
+      if (persistenceError == null) {
+        _error = null;
+        debugPrint('Language updated to: $newLanguage');
+        return;
+      }
+      final rollbackLanguage = _rollbackLanguageState(
+        newLanguage,
+        oldLanguage,
+        persistenceError,
+      );
+      if (rollbackLanguage != null && context.mounted) {
+        await LocaleService.updateAppLocale(context, rollbackLanguage);
+      }
     } catch (e) {
-      await rollbackLanguage(e);
+      final rollbackLanguage = _rollbackLanguageState(
+        newLanguage,
+        oldLanguage,
+        e,
+      );
+      if (rollbackLanguage != null && context.mounted) {
+        await LocaleService.updateAppLocale(context, rollbackLanguage);
+      }
     }
+  }
+
+  String? _rollbackLanguageState(
+    String failedLanguage,
+    String fallbackLanguage,
+    Object error,
+  ) {
+    if (_settings?.language != failedLanguage) return null;
+    final rollbackLanguage = _confirmedLanguage ?? fallbackLanguage;
+    _settings = _settings!.copyWith(language: rollbackLanguage);
+    _error = error.toString();
+    notifyListeners();
+    return rollbackLanguage;
   }
 
   /// Update daily goal XP
@@ -267,14 +305,19 @@ class SettingsProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
-    final settingsToPersist = _settings;
+    final intendedTheme = normalizedTheme;
     final localPersistence = _localThemePersistenceQueue.then(
       (_) => _persistLocalTheme(normalizedTheme),
     );
     _localThemePersistenceQueue = localPersistence.then<void>((_) {});
 
     final settingsPersistence = _settingsPersistenceQueue.then(
-      (_) => _persistUserSettings(settingsToPersist),
+      (_) => _persistUserSettings(
+        _settings?.copyWith(
+          theme: intendedTheme,
+          language: _confirmedLanguage ?? _settings!.language,
+        ),
+      ),
     );
     _settingsPersistenceQueue = settingsPersistence.then<void>((_) {});
 

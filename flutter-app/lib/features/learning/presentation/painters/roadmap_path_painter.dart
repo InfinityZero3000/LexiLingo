@@ -3,17 +3,19 @@ import 'package:flutter/material.dart';
 
 /// Paints the winding bezier path that connects lesson nodes in the roadmap.
 ///
-/// For each pair of consecutive node centers, a cubic bezier is drawn so that
-/// the path curves smoothly from one node to the next — exactly like Duolingo's
-/// winding snake road.
+/// Flat-minimal style: one clean stroke per segment — solid for completed
+/// ground already covered, dashed for the road still ahead. No layered
+/// glow/shadow strokes, matching the modern-corporate visual direction.
 class RoadmapPathPainter extends CustomPainter {
   final List<Offset> nodeCenters;
   final List<Color> segmentColors;
+  final List<bool> segmentSolid;
   final double nodeRadius;
 
   RoadmapPathPainter({
     required this.nodeCenters,
     required this.segmentColors,
+    required this.segmentSolid,
     this.nodeRadius = 40.0,
   });
 
@@ -28,12 +30,13 @@ class RoadmapPathPainter extends CustomPainter {
       final color = i < segmentColors.length
           ? segmentColors[i]
           : Colors.grey.withValues(alpha: 0.4);
+      final solid = i < segmentSolid.length ? segmentSolid[i] : false;
 
-      _drawSegment(canvas, p1, p2, color);
+      _drawSegment(canvas, p1, p2, color, solid);
     }
   }
 
-  void _drawSegment(Canvas canvas, Offset from, Offset to, Color color) {
+  void _drawSegment(Canvas canvas, Offset from, Offset to, Color color, bool solid) {
     // Connection starts at bottom of first node, ends at top of second node
     final start = Offset(from.dx, from.dy + nodeRadius * 0.85);
     final end = Offset(to.dx, to.dy - nodeRadius * 0.85);
@@ -42,39 +45,26 @@ class RoadmapPathPainter extends CustomPainter {
     final ctrl1 = Offset(from.dx, start.dy + gap * 0.45);
     final ctrl2 = Offset(to.dx, end.dy - gap * 0.45);
 
-    // Thicker outer shadow path (depth effect)
-    final shadowPaint = Paint()
-      ..color = color.withValues(alpha: 0.15)
-      ..strokeWidth = 14
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final mainPaint = Paint()
-      ..color = color.withValues(alpha: 0.6)
-      ..strokeWidth = 8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final highlightPaint = Paint()
-      ..color = color.withValues(alpha: 0.3)
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
     final path = Path()
       ..moveTo(start.dx, start.dy)
       ..cubicTo(ctrl1.dx, ctrl1.dy, ctrl2.dx, ctrl2.dy, end.dx, end.dy);
 
-    canvas.drawPath(path, shadowPaint);
-    canvas.drawPath(path, mainPaint);
+    final paint = Paint()
+      ..color = color.withValues(alpha: solid ? 0.9 : 0.4)
+      ..strokeWidth = solid ? 7 : 6
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    // Dash pattern overlay for visual depth
-    _drawDashedPath(canvas, path, highlightPaint);
+    if (solid) {
+      canvas.drawPath(path, paint);
+    } else {
+      _drawDashedPath(canvas, path, paint);
+    }
   }
 
   void _drawDashedPath(Canvas canvas, Path src, Paint paint) {
-    const dashLength = 8.0;
-    const gapLength = 14.0;
+    const dashLength = 7.0;
+    const gapLength = 10.0;
     final metrics = src.computeMetrics();
 
     for (final metric in metrics) {
@@ -93,5 +83,6 @@ class RoadmapPathPainter extends CustomPainter {
   @override
   bool shouldRepaint(RoadmapPathPainter oldDelegate) =>
       nodeCenters != oldDelegate.nodeCenters ||
-      segmentColors != oldDelegate.segmentColors;
+      segmentColors != oldDelegate.segmentColors ||
+      segmentSolid != oldDelegate.segmentSolid;
 }

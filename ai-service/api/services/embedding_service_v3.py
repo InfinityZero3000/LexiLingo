@@ -15,6 +15,7 @@ from typing import Any, List
 import numpy as np
 
 from api.core.config import settings
+from api.services.gemini_compat import import_generativeai
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ class EmbeddingServiceV3:
         self._fallback_mode = False
         self._fallback_reason: str | None = None
         self._fallback_dim = 384
-        self._model_name = getattr(settings, "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+        self._model_name = getattr(
+            settings, "EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2"
+        )
         self._device = getattr(settings, "EMBEDDING_DEVICE", "cpu")
 
     def _should_force_fallback(self) -> tuple[bool, str | None]:
@@ -51,7 +54,10 @@ class EmbeddingServiceV3:
         np_major, _ = _major_minor(numpy_version)
         torch_major, torch_minor = _major_minor(torch_version)
         if np_major >= 2 and torch_major == 2 and torch_minor < 4:
-            return True, f"incompatible torch/numpy combo detected (torch={torch_version}, numpy={numpy_version})"
+            return (
+                True,
+                f"incompatible torch/numpy combo detected (torch={torch_version}, numpy={numpy_version})",
+            )
 
         return False, None
 
@@ -67,9 +73,13 @@ class EmbeddingServiceV3:
                 )
                 return None
             try:
-                from sentence_transformers import SentenceTransformer  # lazy import: not available on all platforms
+                from sentence_transformers import (
+                    SentenceTransformer,
+                )  # lazy import: not available on all platforms
 
-                logger.info(f"Loading embedding model: {self._model_name} on {self._device}")
+                logger.info(
+                    f"Loading embedding model: {self._model_name} on {self._device}"
+                )
                 self._model = SentenceTransformer(self._model_name, device=self._device)
             except Exception as exc:  # pragma: no cover - environment-dependent
                 self._fallback_mode = True
@@ -85,11 +95,15 @@ class EmbeddingServiceV3:
             return np.empty((0, self._fallback_dim), dtype=np.float32)
 
         # Attempt Gemini Cloud Embeddings first if configured
-        prefer_cloud = os.getenv("TRACECAG_PREFER_CLOUD_LLM", "true").lower() in {"1", "true", "yes"}
+        prefer_cloud = os.getenv("TRACECAG_PREFER_CLOUD_LLM", "true").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
         gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
         if prefer_cloud and gemini_key:
             try:
-                import google.generativeai as genai
+                genai = import_generativeai()
                 genai.configure(api_key=gemini_key)
 
                 # embed_content takes `content` (singular) per call.
@@ -100,9 +114,15 @@ class EmbeddingServiceV3:
                         model="models/text-embedding-004",
                         content=text,
                     )
-                    emb = response.get("embedding") if isinstance(response, dict) else getattr(response, "embedding", None)
+                    emb = (
+                        response.get("embedding")
+                        if isinstance(response, dict)
+                        else getattr(response, "embedding", None)
+                    )
                     if not emb or not isinstance(emb, list):
-                        raise ValueError(f"Unexpected Gemini embedding response: {response!r}")
+                        raise ValueError(
+                            f"Unexpected Gemini embedding response: {response!r}"
+                        )
                     rows.append(emb)
 
                 arr = np.array(rows, dtype=np.float32)
@@ -111,7 +131,9 @@ class EmbeddingServiceV3:
                 logger.info(f"Generated {len(texts)} embeddings via Gemini API")
                 return arr / norms
             except Exception as e:
-                logger.warning(f"Failed to generate embeddings via Gemini API: {e}. Falling back to local model.")
+                logger.warning(
+                    f"Failed to generate embeddings via Gemini API: {e}. Falling back to local model."
+                )
 
         model = self._load_model()
         if model is None:

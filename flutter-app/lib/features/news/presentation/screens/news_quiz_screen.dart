@@ -38,7 +38,10 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
     )..forward();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NewsProvider>().loadQuiz(widget.article.id);
+      context.read<NewsProvider>().loadQuiz(
+        widget.article.id,
+        article: widget.article,
+      );
     });
   }
 
@@ -531,7 +534,10 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                 child: OutlinedButton.icon(
                   onPressed: () {
                     provider.resetQuiz();
-                    provider.loadQuiz(widget.article.id);
+                    provider.loadQuiz(
+                      widget.article.id,
+                      article: widget.article,
+                    );
                   },
                   icon: const Icon(Icons.refresh_rounded, size: 18),
                   label: Text('newsQuiz.retry'.tr()),

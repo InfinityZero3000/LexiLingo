@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
 /// Roadmap Header Widget
 /// Displays course info, progress stats, and streak at the top of roadmap
@@ -41,11 +42,9 @@ class RoadmapHeaderWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
                 children: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.arrow_back,
-                      color: Theme.of(context).colorScheme.surface,
-                    ),
+                  AppBackButton(
+                    icon: Icons.arrow_back,
+                    color: Theme.of(context).colorScheme.surface,
                     onPressed: onBack,
                   ),
                   Expanded(

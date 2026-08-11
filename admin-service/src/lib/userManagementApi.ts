@@ -189,6 +189,19 @@ export async function bulkUserAction(data: BulkActionData): Promise<{ message: s
 }
 
 /**
+ * Permanently delete a user account and all of their data (super admin only)
+ */
+export async function permanentlyDeleteUser(userId: string): Promise<{ message: string; user_id: string }> {
+  const response = await apiFetch<{ success: boolean; data: { message: string; user_id: string } }>(
+    `${ENV.backendUrl}/admin/users/${userId}/permanent`,
+    {
+      method: 'DELETE',
+    }
+  );
+  return response.data;
+}
+
+/**
  * Get role label from level number
  */
 export function getRoleLabel(role_level: number): string {
