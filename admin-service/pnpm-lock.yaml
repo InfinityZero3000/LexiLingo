@@ -36,8 +36,8 @@ importers:
         specifier: ^3.15.0
         version: 3.15.0
       lucide-react:
-        specifier: ^1.29.0
-        version: 1.29.0(react@19.2.8)
+        specifier: ^1.30.0
+        version: 1.30.0(react@19.2.8)
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -1066,8 +1066,8 @@ packages:
     resolution: {integrity: sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==}
     engines: {node: '>= 12.0.0'}
 
-  lucide-react@1.29.0:
-    resolution: {integrity: sha512-Xs9QFG5+9sNX04MdKVT4++umA+hJ2qsJVlRlRWHQ7qZobXgMiNHSpZ5eZm8JUoGCdNyoEdXoEwa8HVr0DNjOQg==}
+  lucide-react@1.30.0:
+    resolution: {integrity: sha512-tUIr2jXLbWpCkdtH8XP7P7YppM9ueWgTky99lpWDY6z5REs6B+O6ZQ3U5tHkUUY59ANyOv/PBcs8E4Fe3KO3eA==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -2261,7 +2261,7 @@ snapshots:
       lightningcss-win32-arm64-msvc: 1.33.0
       lightningcss-win32-x64-msvc: 1.33.0
 
-  lucide-react@1.29.0(react@19.2.8):
+  lucide-react@1.30.0(react@19.2.8):
     dependencies:
       react: 19.2.8
 
