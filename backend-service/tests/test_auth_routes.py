@@ -19,6 +19,7 @@ Covers:
 """
 
 import asyncio
+import threading
 import uuid
 import pytest
 from datetime import UTC, datetime
@@ -820,8 +821,17 @@ class TestGoogleLogin:
 
     async def test_google_login_invalid_token_returns_401(self, client):
         """An unverifiable Google ID token returns 401."""
+        event_loop_thread = threading.get_ident()
+
+        def verify_firebase_in_worker(_token):
+            assert threading.get_ident() != event_loop_thread
+            return None
+
         with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=None)), \
-             patch("app.core.firebase_auth.verify_firebase_token", return_value=None):
+             patch(
+                 "app.core.firebase_auth.verify_firebase_token",
+                 side_effect=verify_firebase_in_worker,
+             ):
             response = await client.post(
                 f"{BASE}/google",
                 json={"id_token": "bad-token", "source": "app"},
@@ -950,7 +960,16 @@ class TestFacebookLogin:
 
     async def test_facebook_login_invalid_token_returns_401(self, client):
         """An unverifiable Firebase ID token returns 401."""
-        with patch("app.core.firebase_auth.verify_firebase_token", return_value=None):
+        event_loop_thread = threading.get_ident()
+
+        def verify_firebase_in_worker(_token):
+            assert threading.get_ident() != event_loop_thread
+            return None
+
+        with patch(
+            "app.core.firebase_auth.verify_firebase_token",
+            side_effect=verify_firebase_in_worker,
+        ):
             response = await client.post(
                 f"{BASE}/facebook",
                 json={"id_token": "bad-token", "source": "app"},

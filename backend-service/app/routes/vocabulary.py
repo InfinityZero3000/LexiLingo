@@ -383,23 +383,11 @@ async def bulk_add_to_collection(
     Bulk add multiple vocabulary items to collection.
     Useful when completing a lesson with many new words.
     """
-    results = []
-    
-    for vocab_id in request.vocabulary_ids:
-        # Verify exists
-        vocab = await vocabulary_crud.get_vocabulary_item(db, vocab_id)
-        if not vocab:
-            continue  # Skip non-existent items
-        
-        # Add to collection
-        user_vocab = await vocabulary_crud.add_to_collection(
-            db,
-            user_id=current_user.id,
-            vocabulary_id=vocab_id
-        )
-        results.append(user_vocab)
-    
-    return results
+    return await vocabulary_crud.bulk_add_to_collection(
+        db,
+        user_id=current_user.id,
+        vocabulary_ids=request.vocabulary_ids,
+    )
 
 
 # ===== Review System =====
@@ -425,11 +413,17 @@ async def evaluate_pronunciation(
             detail="Vocabulary item not found",
         )
 
-    audio_bytes = await audio.read()
+    max_audio_bytes = 20 * 1024 * 1024
+    audio_bytes = await audio.read(max_audio_bytes + 1)
     if not audio_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Audio file is empty",
+        )
+    if len(audio_bytes) > max_audio_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Audio file exceeds the 20MB limit",
         )
 
     try:

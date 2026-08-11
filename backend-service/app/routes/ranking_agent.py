@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.celery_app import celery_app
+from app.core.cache import invalidate_cache
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import _get_user_role_level, get_current_admin
@@ -179,6 +180,8 @@ async def apply_job(
     try:
         job, result = await RankingAgentApplyService.apply(db, job_id)
         await db.commit()
+        if job.job_type == "achievement_batch" and result.get("granted_count", 0) > 0:
+            await invalidate_cache("leaderboard")
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except ValueError as exc:

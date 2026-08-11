@@ -5,8 +5,9 @@ import logging
 import asyncio
 import secrets
 import uuid
+from datetime import datetime, timezone
 
-from datetime import datetime, timezone, timedelta
+import anyio
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,7 +35,6 @@ from app.services.auth_service import (
     register_user,
     authenticate_user,
     save_refresh_token,
-    revoke_refresh_token,
     get_role_id as _get_role_id,
     ensure_unique_username as _ensure_unique_username,
     issue_token_pair,
@@ -398,7 +398,9 @@ async def google_login(
     # Flutter web can return a Firebase ID token instead of Google OAuth id_token.
     # Accept only Firebase tokens issued for Google sign-in to keep auth strict.
     if not google_info:
-        firebase_claims = verify_firebase_token(request.id_token)
+        firebase_claims = await anyio.to_thread.run_sync(
+            verify_firebase_token, request.id_token
+        )
         provider = (firebase_claims or {}).get("firebase", {}).get("sign_in_provider")
         if firebase_claims and provider == "google.com":
             logger.info("Accepted Firebase token for Google login flow")
@@ -552,7 +554,7 @@ async def facebook_login(
     logger.info(f"Facebook (Firebase) login attempt: source={request.source}")
 
     # Verify Firebase ID token
-    claims = verify_firebase_token(request.id_token)
+    claims = await anyio.to_thread.run_sync(verify_firebase_token, request.id_token)
     if not claims:
         logger.error(f"Firebase token verification failed for Facebook login (source={request.source})")
         raise HTTPException(

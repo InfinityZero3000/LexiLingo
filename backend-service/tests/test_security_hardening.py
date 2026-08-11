@@ -2,12 +2,23 @@
 Hardening tests for project security changes.
 """
 
-import pytest
 import html
-from typing import AsyncGenerator
-from httpx import AsyncClient, ASGITransport
+import threading
+from collections.abc import AsyncGenerator
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from fastapi import HTTPException
+from httpx import ASGITransport, AsyncClient
+
+from app.core import dependencies
+from app.core.security import (
+    create_verification_token,
+    decode_verification_token,
+    verify_google_token,
+)
 from app.main import app
-from app.core.security import create_verification_token, decode_verification_token
 from app.services.email_service import EmailService
 
 
@@ -86,3 +97,69 @@ def test_email_html_escaping():
     escaped_display_name = html.escape(malicious_display_name)
     assert escaped_display_name in html_part
     assert malicious_display_name not in html_part
+
+
+@pytest.mark.asyncio
+async def test_google_sdk_verification_runs_off_event_loop():
+    event_loop_thread = threading.get_ident()
+
+    def verify_in_worker(*_args, **_kwargs):
+        assert threading.get_ident() != event_loop_thread
+        return {"email": "user@example.com", "sub": "google-user"}
+
+    with patch(
+        "google.oauth2.id_token.verify_oauth2_token",
+        side_effect=verify_in_worker,
+    ):
+        result = await verify_google_token("token", audience="client-id")
+
+    assert result["email"] == "user@example.com"
+
+
+@pytest.mark.asyncio
+async def test_firebase_dependency_verification_runs_off_event_loop(monkeypatch):
+    event_loop_thread = threading.get_ident()
+
+    def verify_in_worker(_token):
+        assert threading.get_ident() != event_loop_thread
+        return None
+
+    monkeypatch.setattr(dependencies, "verify_firebase_token", verify_in_worker)
+    monkeypatch.setattr(dependencies, "decode_token", lambda _token: None)
+    monkeypatch.setattr(
+        dependencies.TokenBlacklist,
+        "is_blacklisted",
+        AsyncMock(return_value=False),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await dependencies.get_current_user(
+            credentials=SimpleNamespace(credentials="firebase-token"),
+            db=MagicMock(),
+        )
+
+    assert exc_info.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_optional_firebase_verification_runs_off_event_loop(monkeypatch):
+    event_loop_thread = threading.get_ident()
+
+    def verify_in_worker(_token):
+        assert threading.get_ident() != event_loop_thread
+        return None
+
+    monkeypatch.setattr(dependencies, "verify_firebase_token", verify_in_worker)
+    monkeypatch.setattr(dependencies, "decode_token", lambda _token: None)
+    monkeypatch.setattr(
+        dependencies.TokenBlacklist,
+        "is_blacklisted",
+        AsyncMock(return_value=False),
+    )
+
+    result = await dependencies.get_current_user_optional(
+        credentials=SimpleNamespace(credentials="firebase-token"),
+        db=MagicMock(),
+    )
+
+    assert result is None
