@@ -9,7 +9,7 @@ def test_review_reminder_templates_render():
         "due_count": "5",
         "review_link": "https://lexilingo.me/vocabulary/review",
         "settings_link": "https://lexilingo.me/settings",
-        "support_email": "noreply@lexilingo.app",
+        "support_email": "nhthang2077@gmail.com",
     }
 
     html = EmailService._render_template("vocabulary_review_reminder.html", context)

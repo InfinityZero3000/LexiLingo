@@ -9,7 +9,7 @@ FILE_PATH = "/opt/lexilingo/backend-service/data/vocabulary_import.json"
 
 def get_wiktionary_translations(word):
     url = f"https://en.wiktionary.org/w/api.php?action=query&prop=revisions&rvprop=content&rvslots=main&titles={urllib.parse.quote(word)}&format=json"
-    req = urllib.request.Request(url, headers={'User-Agent': 'LexiLingo-VocabBot/1.0 (contact@lexilingo.com)'})
+    req = urllib.request.Request(url, headers={'User-Agent': 'LexiLingo-VocabBot/1.0 (nhthang312@gmail.com)'})
     
     max_retries = 5
     base_delay = 5.0

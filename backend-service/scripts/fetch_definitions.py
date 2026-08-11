@@ -14,7 +14,7 @@ def strip_html(text):
 def get_wiktionary_definition(word):
     url = f"https://en.wiktionary.org/api/rest_v1/page/definition/{urllib.parse.quote(word)}"
     req = urllib.request.Request(url, headers={
-        'User-Agent': 'LexiLingo-VocabBot/1.0 (contact@lexilingo.com)',
+        'User-Agent': 'LexiLingo-VocabBot/1.0 (nhthang312@gmail.com)',
         'Accept': 'application/json'
     })
     
