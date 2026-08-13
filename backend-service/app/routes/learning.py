@@ -124,10 +124,8 @@ async def start_lesson(
         )
     
     # Determine total questions dynamically from lesson content or demo fallback
-    total_questions = 10
-    if lesson.content and isinstance(lesson.content, dict) and lesson.content.get("exercises"):
-        total_questions = len(lesson.content["exercises"])
-    else:
+    total_questions = lesson.exercise_count
+    if total_questions == 0:
         if settings.is_production:
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
@@ -1174,8 +1172,20 @@ async def get_course_roadmap(
     if not course:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
     
+    # Lessons whose content has no exercises are not playable (start/content
+    # both reject them) — hide them so they can't dead-end the unlock chain.
+    playable_lessons = {
+        unit.id: sorted(
+            (lesson for lesson in unit.lessons if lesson.exercise_count > 0),
+            key=lambda lesson: lesson.order_index,
+        )
+        for unit in course.units
+    }
+
     # Get progress for all lessons
-    lesson_ids = [lesson.id for unit in course.units for lesson in unit.lessons]
+    lesson_ids = [
+        lesson.id for lessons in playable_lessons.values() for lesson in lessons
+    ]
     result = await db.execute(
         select(UserProgress).where(
             and_(
@@ -1208,15 +1218,16 @@ async def get_course_roadmap(
     completed_units = 0
     completed_lessons_count = 0
 
-    sorted_units = sorted(course.units, key=lambda unit: unit.order_index)
+    sorted_units = [
+        unit
+        for unit in sorted(course.units, key=lambda unit: unit.order_index)
+        if playable_lessons[unit.id]
+    ]
     for unit_number, unit in enumerate(sorted_units, start=1):
         lessons_items = []
         unit_completed = 0
 
-        sorted_lessons = sorted(
-            unit.lessons,
-            key=lambda lesson: lesson.order_index
-        )
+        sorted_lessons = playable_lessons[unit.id]
         for lesson_index, lesson in enumerate(sorted_lessons):
             progress = progress_map.get(lesson.id)
 
@@ -1283,7 +1294,7 @@ async def get_course_roadmap(
         )
         units_roadmap.append(unit_roadmap)
     
-    total_lessons = sum(len(u.lessons) for u in course.units)
+    total_lessons = len(lesson_ids)
     overall_comp = (completed_lessons_count / total_lessons * 100) if total_lessons > 0 else 0
     
     return ApiResponse(
@@ -1293,7 +1304,7 @@ async def get_course_roadmap(
             course_id=course.id,
             course_title=course.title,
             level=course.level,
-            total_units=len(course.units),
+            total_units=len(sorted_units),
             completed_units=completed_units,
             total_lessons=total_lessons,
             completed_lessons=completed_lessons_count,

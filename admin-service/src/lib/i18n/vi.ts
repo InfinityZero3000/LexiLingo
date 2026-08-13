@@ -235,6 +235,7 @@ const vi = {
     tags: "Tags (cách bởi dấu phẩy)",
     thumbnailUrl: "URL hình thu nhỏ",
     publishNow: "Xuất bản ngay",
+    publishRequirement: "Chỉ có thể xuất bản khi mọi bài học đều có ít nhất một bài tập. Hãy lưu bản nháp trước, rồi thêm bài tập.",
     allLevels: "Tất cả cấp độ",
     allStatus: "Tất cả trạng thái",
     noCourses: "Chưa có khóa học",

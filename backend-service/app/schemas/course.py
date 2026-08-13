@@ -228,6 +228,7 @@ class LessonResponse(LessonBase):
     unit_id: uuid.UUID
     prerequisites: List[uuid.UUID] = Field(default_factory=list)
     total_exercises: int = 0
+    exercise_count: int = 0  # authored exercises in content (source of truth)
     is_locked: Optional[bool] = None
     is_completed: Optional[bool] = None
     best_score: Optional[int] = None

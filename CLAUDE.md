@@ -34,6 +34,16 @@ Language learning app (Duolingo-style). Stack:
 - `TestExam.question_ids` → JSON list (populated at runtime)
 - bcrypt: use `import bcrypt; bcrypt.hashpw(...)` directly — passlib has a 4.x bug
 
+## Course Content Invariant
+
+A lesson is playable only if `content.exercises` is non-empty. Consequences:
+
+- Use `Lesson.exercise_count` (or `count_exercises()`), never `total_exercises`, to decide "is this learnable?" — the column is auto-synced by a `@validates("content")` hook, so don't set it by hand.
+- Learner-facing endpoints (roadmap, course detail) hide lessons without exercises; `/learning/lessons/{id}/start|content` reject them with 409 in production.
+- Publishing a course is gated on every lesson having exercises (`CourseCRUD.publish_blockers`); the gate fires on the draft→published transition only.
+- All admin lesson edits must go through `_apply_lesson_update` in `routes/admin_courses.py` — both `PUT /lessons/{id}` and `PUT /lessons/{id}/content` share it.
+- `scripts/audit_course_content.py` reports/repairs existing data.
+
 ## Python Environment
 
 ```bash

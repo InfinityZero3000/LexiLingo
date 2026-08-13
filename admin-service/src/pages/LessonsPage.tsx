@@ -290,7 +290,14 @@ export const LessonsPage = () => {
               },
               {
                 header: "Bài tập",
-                render: (row: LessonItem) => <span className="table-meta">{row.total_exercises}</span>,
+                render: (row: LessonItem) =>
+                  row.exercise_count > 0 ? (
+                    <span className="table-meta">{row.exercise_count}</span>
+                  ) : (
+                    <span title="Bài học chưa có bài tập — người học không mở được và khóa học không thể xuất bản">
+                      <StatusPill tone="warning" label="Chưa có" />
+                    </span>
+                  ),
                 align: "center",
               },
               {
@@ -303,7 +310,7 @@ export const LessonsPage = () => {
                       onClick={() => handleEditExercises(row)}
                       title="Quản lý bài tập"
                     >
-                      Bài tập ({row.total_exercises})
+                      Bài tập ({row.exercise_count})
                     </button>
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
                     <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>

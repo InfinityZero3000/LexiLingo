@@ -506,6 +506,8 @@ export type LessonItem = {
   xp_reward: number;
   pass_threshold: number;
   total_exercises: number;
+  /** Exercises actually authored in content — total_exercises can be stale. */
+  exercise_count: number;
   estimated_minutes?: number;
   prerequisites: string[];
   created_at: string;
@@ -560,10 +562,10 @@ export const updateLessonContent = async (
 ) =>
   apiFetch<AdminResponse<LessonDetail>>(`${ENV.backendUrl}/admin/lessons/${id}/content`, {
     method: "PUT",
+    // total_exercises is derived from content server-side — don't send it.
     body: JSON.stringify({
       content: { exercises },
       estimated_minutes: estimatedMinutes,
-      total_exercises: exercises.length,
     }),
   });
 

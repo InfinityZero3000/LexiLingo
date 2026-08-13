@@ -379,9 +379,15 @@ export const CoursesPage = () => {
                 <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
               </label>
               <label className="checkbox">
-                <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
+                <input
+                  type="checkbox"
+                  checked={form.is_published}
+                  disabled={!editingId}
+                  onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
+                />
                 {t.courses.publishNow}
               </label>
+              <p className="form-hint">{t.courses.publishRequirement}</p>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                 <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>

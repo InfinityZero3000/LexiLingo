@@ -65,21 +65,109 @@ class TestAdminCourses:
         await db_session.commit()
         await db_session.refresh(course)
         
-        update_data = {
-            "title": "Updated Title",
-            "is_published": True
-        }
-        
         response = await async_client.put(
             f"/api/v1/admin/courses/{course.id}",
             headers=admin_headers,
-            json=update_data
+            json={"title": "Updated Title"}
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["data"]["title"] == "Updated Title"
-    
+
+    @pytest.mark.asyncio
+    async def test_publish_course_rejected_when_lessons_have_no_exercises(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+    ):
+        """A course is only publishable once every lesson has exercises."""
+        course = Course(
+            title="Publish Gate Course",
+            language="en",
+            level="A1",
+            is_published=False,
+        )
+        db_session.add(course)
+        await db_session.flush()
+        unit = Unit(course_id=course.id, title="Unit 1", order_index=0)
+        db_session.add(unit)
+        await db_session.flush()
+        empty_lesson = Lesson(
+            course_id=course.id,
+            unit_id=unit.id,
+            title="Draft lesson",
+            order_index=0,
+            lesson_type="lesson",
+            content={"exercises": []},
+        )
+        db_session.add(empty_lesson)
+        await db_session.commit()
+
+        response = await async_client.put(
+            f"/api/v1/admin/courses/{course.id}",
+            headers=admin_headers,
+            json={"is_published": True}
+        )
+
+        assert response.status_code == 409
+        assert "Draft lesson" in response.json()["error"]["message"]
+
+        empty_lesson.content = {"exercises": [{"id": "1", "type": "multiple_choice"}]}
+        await db_session.commit()
+
+        response = await async_client.put(
+            f"/api/v1/admin/courses/{course.id}",
+            headers=admin_headers,
+            json={"is_published": True}
+        )
+
+        assert response.status_code == 200
+        assert response.json()["data"]["is_published"] is True
+
+    @pytest.mark.asyncio
+    async def test_editing_a_live_course_is_not_blocked_by_a_draft_lesson(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+    ):
+        """The dashboard resubmits is_published on every save — only the
+        draft→published transition may be gated, otherwise adding an
+        unfinished lesson would lock admins out of editing the course."""
+        course = Course(
+            title="Live Course",
+            language="en",
+            level="A1",
+            is_published=True,
+        )
+        db_session.add(course)
+        await db_session.flush()
+        unit = Unit(course_id=course.id, title="Unit 1", order_index=0)
+        db_session.add(unit)
+        await db_session.flush()
+        db_session.add(
+            Lesson(
+                course_id=course.id,
+                unit_id=unit.id,
+                title="Lesson being written",
+                order_index=0,
+                lesson_type="lesson",
+                content={"exercises": []},
+            )
+        )
+        await db_session.commit()
+
+        response = await async_client.put(
+            f"/api/v1/admin/courses/{course.id}",
+            headers=admin_headers,
+            json={"title": "Live Course v2", "is_published": True}
+        )
+
+        assert response.status_code == 200
+        assert response.json()["data"]["title"] == "Live Course v2"
+
     @pytest.mark.asyncio
     async def test_delete_course(
         self,
@@ -200,6 +288,86 @@ class TestAdminLessons:
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_exercise_count_stays_true_across_both_update_routes(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+        test_unit: Unit,
+    ):
+        """total_exercises is derived from content on write, so the two
+        lesson-update endpoints can never disagree about how many
+        exercises a lesson has."""
+        lesson = Lesson(
+            course_id=test_unit.course_id,
+            unit_id=test_unit.id,
+            title="Counter Lesson",
+            order_index=0,
+            lesson_type="lesson",
+            total_exercises=99,  # deliberately wrong
+        )
+        db_session.add(lesson)
+        await db_session.commit()
+
+        two = {"exercises": [{"id": "1"}, {"id": "2"}]}
+        response = await async_client.put(
+            f"/api/v1/admin/lessons/{lesson.id}/content",
+            headers=admin_headers,
+            json={"content": two},
+        )
+        assert response.status_code == 200
+        assert response.json()["data"]["total_exercises"] == 2
+        assert response.json()["data"]["exercise_count"] == 2
+
+        response = await async_client.put(
+            f"/api/v1/admin/lessons/{lesson.id}",
+            headers=admin_headers,
+            json={"content": {"exercises": [{"id": "1"}]}},
+        )
+        assert response.status_code == 200
+        assert response.json()["data"]["total_exercises"] == 1
+        assert response.json()["data"]["exercise_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_cannot_empty_exercises_of_a_published_lesson(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+    ):
+        """Both update routes share one guard — neither can break a live lesson."""
+        course = Course(
+            title="Live Content Course",
+            language="en",
+            level="A1",
+            is_published=True,
+        )
+        db_session.add(course)
+        await db_session.flush()
+        unit = Unit(course_id=course.id, title="Unit 1", order_index=0)
+        db_session.add(unit)
+        await db_session.flush()
+        lesson = Lesson(
+            course_id=course.id,
+            unit_id=unit.id,
+            title="Live Lesson",
+            order_index=0,
+            lesson_type="lesson",
+            content={"exercises": [{"id": "1"}]},
+        )
+        db_session.add(lesson)
+        await db_session.commit()
+
+        for url in (
+            f"/api/v1/admin/lessons/{lesson.id}",
+            f"/api/v1/admin/lessons/{lesson.id}/content",
+        ):
+            response = await async_client.put(
+                url, headers=admin_headers, json={"content": {"exercises": []}}
+            )
+            assert response.status_code == 409, url
 
 
 class TestAdminVocabulary:

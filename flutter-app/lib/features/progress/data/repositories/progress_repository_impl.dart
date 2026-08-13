@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
+import 'package:lexilingo_app/core/error/failure_mapper.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/progress/data/datasources/progress_remote_datasource.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
@@ -29,7 +30,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -47,7 +48,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -69,7 +70,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -85,7 +86,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -105,7 +106,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -125,7 +126,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -141,7 +142,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -157,7 +158,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -173,7 +174,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -189,7 +190,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -209,7 +210,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -227,7 +228,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 }

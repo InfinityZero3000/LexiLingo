@@ -20,7 +20,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_admin
 from app.crud.course import CourseCRUD, LessonCRUD, UnitCRUD
 from app.models.content import GrammarItem, QuestionItem, TestExam
-from app.models.course import Course, Lesson, Unit
+from app.models.course import Course, Lesson, Unit, count_exercises
 from app.models.user import User
 from app.models.vocabulary import VocabularyItem
 from app.schemas.content import (
@@ -51,6 +51,56 @@ from app.schemas.response import ApiResponse
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 require_admin = get_current_admin
+
+
+async def _assert_publishable(db: AsyncSession, course_id: UUID) -> None:
+    """Guard every path that flips a course to published — learners get a
+    409 on lessons without exercises, so a course must be complete first."""
+    blockers = await CourseCRUD.publish_blockers(db, course_id)
+    if blockers:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Cannot publish this course: "
+                + "; ".join(blockers[:10])
+                + (f" (and {len(blockers) - 10} more)" if len(blockers) > 10 else "")
+            ),
+        )
+
+
+async def _apply_lesson_update(
+    db: AsyncSession, lesson_id: UUID, lesson_update: LessonUpdate
+) -> Lesson:
+    """The one write path for lesson edits — both PUT /lessons/{id} and
+    PUT /lessons/{id}/content go through here so guards can't be bypassed
+    by picking the other endpoint."""
+    lesson = await LessonCRUD.get_lesson(db, lesson_id)
+    if not lesson:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lesson not found"
+        )
+
+    fields = lesson_update.model_dump(exclude_unset=True)
+    if "content" in fields and not count_exercises(fields["content"]):
+        course = await CourseCRUD.get_course(db, lesson.course_id)
+        if course and course.is_published:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=(
+                    "Cannot remove all exercises from a lesson in a published "
+                    "course — unpublish the course first."
+                ),
+            )
+
+    updated = await LessonCRUD.update_lesson(db, lesson_id, lesson_update)
+    if not updated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lesson not found"
+        )
+    return updated
+
 
 _MAX_IMPORT_BYTES = 10 * 1024 * 1024
 _MAX_PDF_PAGES = 500
@@ -224,9 +274,18 @@ async def create_course(
 ):
     """
     Create a new course.
-    
+
     Admin only endpoint.
     """
+    if course.is_published:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "Cannot publish this course: the course has no lessons yet. "
+                "Save it as a draft, add lessons with exercises, then publish."
+            ),
+        )
+
     new_course = await CourseCRUD.create_course(db, course)
     
     return ApiResponse(
@@ -245,9 +304,17 @@ async def update_course(
 ):
     """
     Update an existing course.
-    
+
     Admin only endpoint.
     """
+    # Gate the draft → published transition only. The dashboard resubmits the
+    # whole form (is_published included) on every edit, so gating "payload says
+    # published" would block routine edits to an already-live course.
+    if course_update.is_published:
+        existing = await CourseCRUD.get_course(db, course_id)
+        if existing is not None and not existing.is_published:
+            await _assert_publishable(db, course_id)
+
     updated_course = await CourseCRUD.update_course(db, course_id, course_update)
     
     if not updated_course:
@@ -348,7 +415,9 @@ async def bulk_import_courses(
                     level=course_data.level,
                     tags=course_data.tags,
                     thumbnail_url=course_data.thumbnail_url,
-                    is_published=course_data.is_published,
+                    # Imported lessons carry no exercises yet, so the course
+                    # lands as a draft; publish it after authoring them.
+                    is_published=False,
                 )
                 db.add(course)
                 await db.flush()
@@ -389,6 +458,11 @@ async def bulk_import_courses(
                 course.total_lessons = course_total_lessons
                 course.total_xp = course_total_xp
             created_courses += 1
+            if course_data.is_published:
+                errors.append(
+                    f'Course "{course_data.title}" was imported as a draft: '
+                    "add exercises to its lessons, then publish it."
+                )
         except Exception as e:
             errors.append(f'Course "{course_data.title}": {str(e)}')
 
@@ -532,17 +606,11 @@ async def update_lesson(
 ):
     """
     Update an existing lesson.
-    
+
     Admin only endpoint.
     """
-    updated_lesson = await LessonCRUD.update_lesson(db, lesson_id, lesson_update)
-    
-    if not updated_lesson:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Lesson not found"
-        )
-    
+    updated_lesson = await _apply_lesson_update(db, lesson_id, lesson_update)
+
     return ApiResponse(
         success=True,
         message="Lesson updated successfully",
@@ -591,36 +659,20 @@ async def get_lesson_detail(
     return ApiResponse(success=True, message="Lesson retrieved", data=data)
 
 
-class LessonContentUpdate(LessonUpdate):
-    """Dedicated schema for updating lesson exercises content."""
-    pass
-
-
 @router.put("/lessons/{lesson_id}/content", response_model=ApiResponse[dict])
 async def update_lesson_content(
     lesson_id: UUID,
-    payload: LessonContentUpdate,
+    payload: LessonUpdate,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_admin)
 ):
-    """Update lesson exercises and estimated_minutes (admin only)."""
-    lesson = await LessonCRUD.get_lesson(db, lesson_id)
-    if not lesson:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+    """Update lesson exercises and estimated_minutes (admin only).
 
-    update_data = payload.model_dump(exclude_unset=True)
-
-    # Derive total_exercises from exercises array inside content
-    if "content" in update_data and update_data["content"]:
-        exercises = update_data["content"].get("exercises", [])
-        update_data["total_exercises"] = len(exercises)
-
-    for field, value in update_data.items():
-        setattr(lesson, field, value)
-
-    await db.commit()
-    await db.refresh(lesson)
-
+    Same write path as ``PUT /lessons/{id}``; kept as a separate route only
+    because the admin dashboard's exercise editor calls this URL. It returns
+    the full content so the editor can re-render from the saved state.
+    """
+    lesson = await _apply_lesson_update(db, lesson_id, payload)
     data = LessonDetailResponse.model_validate(lesson).model_dump()
     return ApiResponse(success=True, message="Lesson content updated", data=data)
 

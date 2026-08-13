@@ -264,17 +264,19 @@ class ProgressCRUD:
         db: AsyncSession,
         user_id: str,
         course_id: str,
-        total_lessons: Optional[int] = None,
     ) -> float:
         """Calculate course progress percentage based on completed lessons.
 
-        Pass ``total_lessons`` from an already-loaded Course to skip a DB round-trip.
+        Counts the lessons that actually exist rather than trusting the
+        denormalized ``Course.total_lessons`` — otherwise a learner who
+        finishes everything can be stuck below 100%.
         """
-        if total_lessons is None:
-            course_result = await db.execute(
-                select(Course.total_lessons).where(Course.id == course_id)
-            )
-            total_lessons = course_result.scalar_one_or_none() or 0
+        total_result = await db.execute(
+            select(func.count(Lesson.id))
+            .join(Unit, Unit.id == Lesson.unit_id)
+            .where(Unit.course_id == course_id)
+        )
+        total_lessons = total_result.scalar() or 0
 
         if not total_lessons:
             return 0.0

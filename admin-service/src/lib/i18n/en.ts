@@ -237,6 +237,7 @@ const en: Translations = {
     tags: "Tags (comma separated)",
     thumbnailUrl: "Thumbnail URL",
     publishNow: "Publish now",
+    publishRequirement: "A course can only be published once every lesson has at least one exercise. Save it as a draft first, then add exercises.",
     allLevels: "All Levels",
     allStatus: "All Status",
     noCourses: "No courses yet",

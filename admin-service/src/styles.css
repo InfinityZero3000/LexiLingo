@@ -881,6 +881,13 @@ textarea:focus {
   font-size: 13px;
 }
 
+.form-hint {
+  margin: -4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .empty-state {
   padding: 24px;
   border-radius: 16px;

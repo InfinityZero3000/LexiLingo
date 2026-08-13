@@ -218,7 +218,7 @@ class ErrorCodes {
   // Resource Errors
   static const String notFound = 'NOT_FOUND';
   static const String alreadyExists = 'ALREADY_EXISTS';
-  static const String conflictError = 'CONFLICT_ERROR';
+  static const String conflict = 'CONFLICT';
 
   // Business Logic Errors
   static const String lessonNotUnlocked = 'LESSON_NOT_UNLOCKED';

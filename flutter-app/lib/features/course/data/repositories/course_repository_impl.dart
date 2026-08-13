@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failure_mapper.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/features/course/data/datasources/course_backend_datasource.dart';
@@ -48,7 +49,7 @@ class CourseRepositoryImpl implements CourseRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -68,7 +69,7 @@ class CourseRepositoryImpl implements CourseRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -90,7 +91,7 @@ class CourseRepositoryImpl implements CourseRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -149,7 +150,7 @@ class CourseRepositoryImpl implements CourseRepository {
       }
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -179,7 +180,7 @@ class CourseRepositoryImpl implements CourseRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -207,7 +208,7 @@ class CourseRepositoryImpl implements CourseRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 }

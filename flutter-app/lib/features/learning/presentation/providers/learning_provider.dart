@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/services/rating_service.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
@@ -75,6 +76,7 @@ class LearningProvider with ChangeNotifier {
   Map<int, AnswerResponse> _answerResponses = {};
   bool _isLoading = false;
   String? _error;
+  bool _isContentUnavailable = false;
   int _xpEarned = 0;
   int _livesRemaining = 3;
   int _hintsRemaining = 3;
@@ -87,6 +89,10 @@ class LearningProvider with ChangeNotifier {
   int get totalExercises => _currentLesson?.exercises.length ?? 0;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  /// Backend rejected the lesson because it has no authored exercises —
+  /// a content gap, not something a retry can fix.
+  bool get isContentUnavailable => _isContentUnavailable;
   int get xpEarned => _xpEarned;
   int get livesRemaining => _livesRemaining;
   int get hintsRemaining => _hintsRemaining;
@@ -116,6 +122,7 @@ class LearningProvider with ChangeNotifier {
   Future<void> startLesson(String courseId, String lessonId) async {
     _isLoading = true;
     _error = null;
+    _isContentUnavailable = false;
     _lessonResult = null;
     notifyListeners();
 
@@ -136,7 +143,10 @@ class LearningProvider with ChangeNotifier {
         GetLessonContentParams(lessonId: lessonId),
       );
       contentResult.fold(
-        (failure) => _error = failure.message,
+        (failure) {
+          _error = failure.message;
+          _isContentUnavailable = failure is ConflictFailure;
+        },
         (lesson) => _currentLesson = lesson,
       );
 

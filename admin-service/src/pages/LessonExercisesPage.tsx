@@ -410,8 +410,9 @@ export const LessonExercisesPage = () => {
       } else {
         setError(res.message ?? "Lưu thất bại.");
       }
-    } catch {
-      setError("Lỗi kết nối server.");
+    } catch (err: any) {
+      // Server rejects e.g. emptying exercises of a live lesson — show why.
+      setError(err?.message || "Lỗi kết nối server.");
     } finally {
       setSaving(false);
     }

@@ -134,27 +134,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             }
 
             if (provider.error != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: AppColors.errorBright,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(provider.error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        provider.startLesson(widget.courseId, widget.lessonId);
-                      },
-                      child: Text('common.retry'.tr()),
-                    ),
-                  ],
-                ),
-              );
+              return _buildErrorState(context, provider);
             }
 
             if (provider.currentLesson == null) {
@@ -208,6 +188,80 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               ],
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, LearningProvider provider) {
+    final theme = Theme.of(context);
+    final contentGap = provider.isContentUnavailable;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: contentGap
+                    ? theme.colorScheme.secondaryContainer
+                    : theme.colorScheme.errorContainer,
+              ),
+              child: Icon(
+                contentGap
+                    ? Icons.hourglass_empty_rounded
+                    : Icons.error_outline_rounded,
+                size: 44,
+                color: contentGap
+                    ? theme.colorScheme.onSecondaryContainer
+                    : theme.colorScheme.onErrorContainer,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              contentGap
+                  ? 'lesson.contentUnavailableTitle'.tr()
+                  : 'common.error'.tr(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              contentGap
+                  ? 'lesson.contentUnavailableMessage'.tr()
+                  : provider.error!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
+            if (contentGap)
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('common.back'.tr()),
+              )
+            else ...[
+              FilledButton(
+                onPressed: () =>
+                    provider.startLesson(widget.courseId, widget.lessonId),
+                child: Text('common.retry'.tr()),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text('common.back'.tr()),
+              ),
+            ],
+          ],
         ),
       ),
     );

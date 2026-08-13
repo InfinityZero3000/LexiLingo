@@ -374,7 +374,16 @@ async def test_course_with_units(db_session: AsyncSession, test_course: Course) 
                 lesson_type="vocabulary",
                 xp_reward=50,
                 pass_threshold=70,
-                content={"questions": []},
+                content={
+                    "exercises": [
+                        {
+                            "id": f"{unit.title}-{j + 1}-1",
+                            "type": "multiple_choice",
+                            "question": "Placeholder?",
+                            "correct_answer": "yes",
+                        }
+                    ]
+                },
             )
             db_session.add(lesson)
 

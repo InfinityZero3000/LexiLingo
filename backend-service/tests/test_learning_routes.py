@@ -521,6 +521,47 @@ class TestCourseRoadmap:
             # (depends on test data setup)
             assert "is_locked" in second_lesson
     
+    async def test_roadmap_hides_lessons_without_exercises(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_course_with_units: Course,
+    ):
+        """Unplayable lessons must not appear — they'd dead-end the unlock chain."""
+        unit_result = await db_session.execute(
+            select(Unit)
+            .where(Unit.course_id == test_course_with_units.id)
+            .order_by(Unit.order_index)
+        )
+        first_unit = unit_result.scalars().first()
+        db_session.add(
+            Lesson(
+                course_id=test_course_with_units.id,
+                unit_id=first_unit.id,
+                title="Unauthored Lesson",
+                order_index=99,
+                lesson_type="lesson",
+                content={"exercises": []},
+            )
+        )
+        await db_session.commit()
+
+        response = await async_client.get(
+            f"/api/v1/learning/courses/{test_course_with_units.id}/roadmap",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        roadmap = response.json()["data"]
+        titles = [
+            lesson["title"]
+            for unit in roadmap["units"]
+            for lesson in unit["lessons"]
+        ]
+        assert "Unauthored Lesson" not in titles
+        assert roadmap["total_lessons"] == len(titles)
+
     async def test_roadmap_not_found(
         self,
         async_client: AsyncClient,

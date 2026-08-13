@@ -257,6 +257,10 @@ async def get_course(
     for unit in sorted(course.units, key=lambda u: u.order_index):
         lessons = []
         for lesson in sorted(unit.lessons, key=lambda l: l.order_index):
+            # Lessons without authored exercises are not playable — the
+            # learning endpoints reject them, so never advertise them here.
+            if lesson.exercise_count == 0:
+                continue
             lesson_data = LessonInUnit.model_validate(lesson)
             
             # Check if lesson is locked (prerequisites not met)
@@ -273,7 +277,10 @@ async def get_course(
                 lesson_data.is_completed = lesson.id in completed_lesson_ids
             
             lessons.append(lesson_data)
-        
+
+        if not lessons:
+            continue
+
         unit_with_lessons = UnitWithLessons(
             id=unit.id,
             title=unit.title,

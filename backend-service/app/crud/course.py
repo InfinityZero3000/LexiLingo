@@ -124,6 +124,32 @@ class CourseCRUD:
         return db_course
     
     @staticmethod
+    async def publish_blockers(db: AsyncSession, course_id: uuid.UUID) -> List[str]:
+        """Reasons this course is not safe to publish (empty list = publishable).
+
+        A published course must be fully playable end to end: learners hit
+        409 CONFLICT on any lesson whose content has no exercises.
+
+        Walks course → unit → lesson, the same chain the roadmap and course
+        detail use, so the gate checks exactly the lessons learners can open
+        (``Lesson.course_id`` is a denormalized copy that can disagree).
+        """
+        result = await db.execute(
+            select(Lesson)
+            .join(Unit, Unit.id == Lesson.unit_id)
+            .where(Unit.course_id == course_id)
+            .order_by(Unit.order_index, Lesson.order_index)
+        )
+        lessons = list(result.scalars().all())
+        if not lessons:
+            return ["the course has no lessons yet"]
+        return [
+            f'lesson "{lesson.title}" has no exercises'
+            for lesson in lessons
+            if lesson.exercise_count == 0
+        ]
+
+    @staticmethod
     async def delete_course(db: AsyncSession, course_id: uuid.UUID) -> bool:
         """Delete a course (soft delete by unpublishing)."""
         db_course = await CourseCRUD.get_course(db, course_id)

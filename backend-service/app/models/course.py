@@ -6,11 +6,16 @@ Extended for Phase 2: Advanced Content Management System
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, Index
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from typing import List
 
 from app.core.database import Base
 from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
+
+
+def count_exercises(content) -> int:
+    exercises = content.get("exercises") if isinstance(content, dict) else None
+    return len(exercises) if isinstance(exercises, list) else 0
 
 
 class Course(Base):
@@ -171,7 +176,21 @@ class Lesson(Base):
     
     # Relationships
     unit: Mapped["Unit"] = relationship("Unit", back_populates="lessons")
-    
+
+    @property
+    def exercise_count(self) -> int:
+        """Playable exercises in content — the single source of truth for
+        "is this lesson learnable?"."""
+        return count_exercises(self.content)
+
+    @validates("content")
+    def _sync_total_exercises(self, _key: str, content):
+        """Keep the denormalized counter true no matter who writes content
+        (admin routes, CRUD, content agent, seeds, scripts) — it used to be
+        set by hand in some paths and left at 0 in others."""
+        self.total_exercises = count_exercises(content)
+        return content
+
     def __repr__(self) -> str:
         return f"<Lesson {self.title}>"
 
