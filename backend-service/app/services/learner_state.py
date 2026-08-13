@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
-from math import exp, log
 from collections.abc import Awaitable, Callable
 from typing import Any
 from uuid import UUID, uuid4
@@ -20,7 +19,7 @@ from app.models.learner_state import (
 )
 from app.models.user import User
 
-ALGORITHM_VERSION = "bkt-fsrs-v1"
+ALGORITHM_VERSION = "bkt-fsrs-v2"
 LEARNING_RATE = 0.45
 MIN_MASTERY = 0.01
 MAX_MASTERY = 0.99
@@ -29,6 +28,32 @@ MAX_STABILITY_DAYS = 3650.0
 TARGET_RETENTION = 0.9
 MAX_BATCH_CONCEPTS = 100
 MAX_OBSERVATION_BATCH = 100
+
+# FSRS power-law forgetting curve: R(t) = (1 + FACTOR * t / S) ** DECAY.
+# These two constants are what make R(S) == 0.9, so ``stability_days`` reads
+# directly as "days until recall drops to 90%" and the review interval equals
+# stability at the default target. v1 used an exponential curve whose interval
+# worked out to stability * 0.105, so a concept needed ~200 days of stability
+# to earn a 21-day interval while stability itself only grew ~1.1x per review —
+# perfect recalls stayed pinned to the 6-hour floor for a dozen reviews.
+FORGETTING_DECAY = -0.5
+FORGETTING_FACTOR = 19 / 81
+
+# First-observation stability, in days, spanning least→most decisive answer.
+INITIAL_STABILITY_RECALL = (2.0, 6.0)
+INITIAL_STABILITY_LAPSE = (0.4, 1.0)
+
+STABILITY_GROWTH = 0.45
+# Recalling a memory that has already decayed strengthens it more than drilling
+# a fresh one; this is the spacing effect SM-2 cannot express at all.
+SPACING_BONUS = 1.6
+LAPSE_DECAY = 0.55
+DIFFICULTY_EASE_STEP = 0.04
+DIFFICULTY_LAPSE_STEP = 0.08
+
+# SM-2 grading convention: 0-2 is a lapse, 3-5 is a recall.
+GRADE_PASS_THRESHOLD = 3
+MIN_GRADE_CONFIDENCE = 0.2
 
 
 class TooManyConceptsError(ValueError):
@@ -68,6 +93,58 @@ def _clamp(lower: float, upper: float, value: float) -> float:
     return max(lower, min(upper, value))
 
 
+def _retrievability(elapsed_days: float, stability_days: float) -> float:
+    """Recall probability after ``elapsed_days`` under the power-law curve."""
+    ratio = 1.0 + FORGETTING_FACTOR * elapsed_days / stability_days
+    return _clamp(0.0, 1.0, ratio**FORGETTING_DECAY)
+
+
+def _interval_days(stability_days: float) -> float:
+    """Days until recall probability decays to ``TARGET_RETENTION``.
+
+    Exact inverse of :func:`_retrievability`, so raising the retention target
+    shortens intervals and lowering it lengthens them, with no separate
+    constant to keep in sync.
+    """
+    span = TARGET_RETENTION ** (1.0 / FORGETTING_DECAY) - 1.0
+    return max(MIN_STABILITY_DAYS, stability_days * span / FORGETTING_FACTOR)
+
+
+def _initial_stability(outcome: str, confidence: float) -> float:
+    """Seed stability for a concept's very first observation.
+
+    v1 seeded every concept at a flat 1.0 days regardless of how the first
+    answer went, so a perfect first recall and a blackout earned the same
+    next-review date.
+    """
+    low, high = (
+        INITIAL_STABILITY_RECALL if outcome == "correct" else INITIAL_STABILITY_LAPSE
+    )
+    span = high - low
+    # Confidence is decisiveness, so it stretches a confident recall and
+    # shortens a confident lapse — opposite directions, same input.
+    value = low + span * confidence if outcome == "correct" else high - span * confidence
+    return _clamp(MIN_STABILITY_DAYS, MAX_STABILITY_DAYS, value)
+
+
+def grade_to_observation(quality: int) -> tuple[str, float]:
+    """Map a 0-5 SM-2-style grade onto this engine's (outcome, confidence).
+
+    ``confidence`` is how *decisive* an observation is, not how well the
+    learner did. A blackout (0) and a perfect recall (5) are both strong
+    evidence; a barely-failed (2) or barely-passed (3) answer is ambiguous.
+    Passing ``quality / 5`` instead — as the vocabulary route used to — made a
+    total blackout a zero-evidence no-op and punished a near-miss harder than
+    a complete one.
+    """
+    if not 0 <= quality <= 5:
+        raise ValueError("quality must be between 0 and 5")
+    outcome = "correct" if quality >= GRADE_PASS_THRESHOLD else "incorrect"
+    decisiveness = abs(quality - 2.5) / 2.5
+    confidence = MIN_GRADE_CONFIDENCE + (1.0 - MIN_GRADE_CONFIDENCE) * decisiveness
+    return outcome, _clamp(0.0, 1.0, confidence)
+
+
 @dataclass(frozen=True, slots=True)
 class LearnerStateSnapshot:
     """Database-independent state used by the deterministic update function."""
@@ -90,11 +167,13 @@ def evolve_state(
     confidence: float,
     now: datetime,
 ) -> LearnerStateSnapshot:
-    """Apply one confidence-weighted observation with exponential forgetting.
+    """Apply one confidence-weighted observation against a power-law forgetting curve.
 
-    This v1 model deliberately keeps a small sufficient state. It combines a
-    BKT-style posterior step with an FSRS-style stability interval without
-    retaining an unbounded review history.
+    Keeps a small sufficient state: a BKT-style posterior over mastery plus an
+    FSRS-style stability/difficulty pair, with no unbounded review history.
+    ``confidence`` is the decisiveness of the observation (see
+    :func:`grade_to_observation`), so it scales the update in whichever
+    direction ``outcome`` points.
     """
     if outcome not in {"correct", "incorrect"}:
         raise ValueError("outcome must be 'correct' or 'incorrect'")
@@ -115,11 +194,11 @@ def evolve_state(
         MAX_STABILITY_DAYS,
         state.stability_days,
     )
-    retention = exp(-elapsed_days / stability)
+    retrievability = _retrievability(elapsed_days, stability)
     decayed_mastery = _clamp(
         MIN_MASTERY,
         MAX_MASTERY,
-        state.mastery_probability * retention,
+        state.mastery_probability * retrievability,
     )
     difficulty = _clamp(0.0, 1.0, state.difficulty)
     evidence = confidence * (1.0 - 0.35 * difficulty)
@@ -130,19 +209,29 @@ def evolve_state(
         decayed_mastery + evidence * LEARNING_RATE * (target - decayed_mastery),
     )
 
-    if outcome == "correct":
-        next_stability = stability * (1.0 + 0.45 * evidence * (1.0 - difficulty))
-        next_difficulty = difficulty - 0.04 * evidence
+    if state.attempt_count == 0:
+        next_stability = _initial_stability(outcome, confidence)
+    elif outcome == "correct":
+        growth = 1.0 + STABILITY_GROWTH * evidence * (1.0 - difficulty) * (
+            1.0 + SPACING_BONUS * (1.0 - retrievability)
+        )
+        next_stability = stability * growth
     else:
-        next_stability = stability * (1.0 - 0.55 * evidence)
-        next_difficulty = difficulty + 0.08 * evidence
+        # A lapse has to land the concept back in relearning however long it
+        # had grown: scaling alone would leave a 200-day memory 90 days out.
+        next_stability = min(
+            stability * (1.0 - LAPSE_DECAY * evidence),
+            _initial_stability(outcome, confidence),
+        )
+
+    if outcome == "correct":
+        next_difficulty = difficulty - DIFFICULTY_EASE_STEP * evidence
+    else:
+        next_difficulty = difficulty + DIFFICULTY_LAPSE_STEP * evidence
 
     next_stability = _clamp(MIN_STABILITY_DAYS, MAX_STABILITY_DAYS, next_stability)
     next_difficulty = _clamp(0.0, 1.0, next_difficulty)
-    interval_days = max(
-        MIN_STABILITY_DAYS,
-        -next_stability * log(TARGET_RETENTION),
-    )
+    interval_days = _interval_days(next_stability)
 
     return replace(
         state,

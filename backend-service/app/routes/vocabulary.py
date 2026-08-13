@@ -12,8 +12,9 @@ Endpoints:
 - GET    /vocabulary/stats          - Get user vocabulary statistics
 """
 
+import math
 import uuid
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import List, Optional
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
@@ -58,6 +59,21 @@ def _pronunciation_feedback(score: float) -> tuple[int, str, int]:
     if score >= 60:
         return 2, "Good", 3
     return 1, "Try again", 1
+
+
+def _days_until(next_review_date: datetime | None) -> int:
+    """Whole days until a scheduled review, rounded up, floor of 1.
+
+    Read off the actual schedule rather than the frozen legacy columns: those
+    are no longer written, so `fsrs_scheduled_days or interval` always fell
+    through to the column default and reported 1 day for every review.
+    """
+    if next_review_date is None:
+        return 1
+    if next_review_date.tzinfo is None:
+        next_review_date = next_review_date.replace(tzinfo=timezone.utc)
+    seconds = (next_review_date - datetime.now(timezone.utc)).total_seconds()
+    return max(1, math.ceil(seconds / 86400))
 
 
 # ===== Word of the Day =====
@@ -672,7 +688,7 @@ async def submit_review(
         user_vocabulary=updated_vocab,
         xp_awarded=xp_awarded,
         streak_bonus=streak_bonus,
-        next_review_in_days=updated_vocab.fsrs_scheduled_days or updated_vocab.interval,
+        next_review_in_days=_days_until(updated_vocab.next_review_date),
         message=messages.get(review.quality, "Keep going!")
     )
 

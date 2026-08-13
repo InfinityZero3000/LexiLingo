@@ -1,5 +1,6 @@
-"""Best-effort FSRS updates for incorrect game answers."""
+"""Best-effort learner-state updates for incorrect game answers."""
 
+import hashlib
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -9,14 +10,24 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud.vocabulary import VocabularyCRUD
+from app.crud.vocabulary import VocabularyCRUD, _vocab_concept_id
 from app.models.content import GrammarItem
 from app.models.games import GameWord
+from app.models.learner_state import (
+    LearnerConceptState,
+    LearnerObservationEvent,
+)
 from app.models.user_grammar_item import UserGrammarItem
 from app.models.vocabulary import (
     UserVocabulary,
     VocabularyItem,
     VocabularyStatus,
+)
+from app.services.learner_state import (
+    ObservationInput,
+    apply_observation_event,
+    grade_to_observation,
+    ingest_observations,
 )
 
 logger = logging.getLogger(__name__)
@@ -28,46 +39,69 @@ _SchedulableItem = Union[UserVocabulary, UserGrammarItem]
 # same (user, concept) can both see "no row yet" and both attempt to insert.
 _MAX_GET_OR_CREATE_ATTEMPTS = 2
 
+# A missed game answer is a lapse, but a softer signal than a failed review:
+# games are timed and partly luck, so it must not carry blackout weight.
+GAME_LAPSE_QUALITY = 1
 
-def _apply_lapse(item: _SchedulableItem, *, now: datetime) -> tuple[float, int, int]:
-    new_ease, new_interval, new_repetitions, _ = (
-        _vocabulary_crud.calculate_next_review(
-            quality=1,
-            ease_factor=item.ease_factor or 2.5,
-            interval=item.interval or 1,
-            repetitions=item.repetitions or 0,
+
+def _grammar_concept_id(topic: str) -> str:
+    """Mirror of :func:`_vocab_concept_id`'s slug convention for grammar."""
+    return f"grammar:{'_'.join(topic.strip().lower().split())}"
+
+
+async def _apply_lapse(
+    db: AsyncSession,
+    item: _SchedulableItem,
+    *,
+    user_id: uuid.UUID,
+    concept_id: str,
+    now: datetime,
+) -> LearnerConceptState | None:
+    """Record the lapse through the unified learner-state engine.
+
+    This used to run its own SM-2 + FSRS-lite pass and write the legacy
+    ease/interval/fsrs_* columns directly, which made game answers and
+    vocabulary reviews schedule the same word by two different algorithms —
+    whichever ran last won. Scheduling now has a single owner; the legacy
+    columns stay frozen as history, exactly as submit_review leaves them.
+    """
+    outcome, confidence = grade_to_observation(GAME_LAPSE_QUALITY)
+    event_id = hashlib.sha256(
+        f"game:{user_id}:{concept_id}:{now.isoformat()}".encode()
+    ).hexdigest()
+
+    await ingest_observations(
+        db,
+        [
+            ObservationInput(
+                event_id=event_id,
+                user_id=user_id,
+                concept_id=concept_id,
+                outcome=outcome,
+                confidence=confidence,
+                observed_at=now,
+            )
+        ],
+    )
+    event_db_id = await db.scalar(
+        select(LearnerObservationEvent.id).where(
+            LearnerObservationEvent.event_id == event_id
         )
     )
-    fsrs_update = _vocabulary_crud.calculate_fsrs_review(
-        quality=1,
-        stability=item.fsrs_stability,
-        difficulty=item.fsrs_difficulty,
-        scheduled_days=item.fsrs_scheduled_days,
-        reps=item.fsrs_reps,
-        lapses=item.fsrs_lapses,
-        fsrs_last_review=item.fsrs_last_review,
-        sm2_last_review=item.last_reviewed_at,
-        now=now,
+    await apply_observation_event(db, event_db_id, now=now)
+    concept_state = await db.scalar(
+        select(LearnerConceptState).where(
+            LearnerConceptState.user_id == user_id,
+            LearnerConceptState.concept_id == concept_id,
+        )
     )
 
-    item.ease_factor = new_ease
-    item.interval = new_interval
-    item.repetitions = new_repetitions
-    item.next_review_date = fsrs_update["next_review_date"]
+    # Keep the row usable as a read-cache for the existing due-list queries.
+    if concept_state is not None:
+        item.next_review_date = concept_state.next_review_at
     item.last_reviewed_at = now
-    for field in (
-        "fsrs_stability",
-        "fsrs_difficulty",
-        "fsrs_elapsed_days",
-        "fsrs_scheduled_days",
-        "fsrs_reps",
-        "fsrs_lapses",
-        "fsrs_state",
-        "fsrs_last_review",
-    ):
-        setattr(item, field, fsrs_update[field])
     item.total_reviews = (item.total_reviews or 0) + 1
-    return new_ease, new_interval, new_repetitions
+    return concept_state
 
 
 async def _get_or_create_vocabulary_row(
@@ -190,15 +224,21 @@ async def record_game_vocab_lapse(
                         vocabulary_id=vocabulary.id,
                         now=now,
                     )
-                    new_ease, new_interval, new_repetitions = _apply_lapse(
+                    concept_state = await _apply_lapse(
+                        db,
                         user_vocabulary,
+                        user_id=user_id,
+                        concept_id=_vocab_concept_id(vocabulary.word),
                         now=now,
                     )
-                    user_vocabulary.status = _vocabulary_crud.determine_status(
-                        new_ease,
-                        new_interval,
-                        new_repetitions,
-                    )
+                    if concept_state is not None:
+                        user_vocabulary.status = (
+                            _vocabulary_crud.determine_status_from_mastery(
+                                concept_state.mastery_probability,
+                                concept_state.attempt_count,
+                                concept_state.stability_days,
+                            )
+                        )
                     user_vocabulary.streak = 0
                     await db.flush()
                 return
@@ -245,7 +285,13 @@ async def record_game_grammar_lapse(
                         grammar_item_id=grammar_item.id,
                         now=now,
                     )
-                    _apply_lapse(user_grammar, now=now)
+                    await _apply_lapse(
+                        db,
+                        user_grammar,
+                        user_id=user_id,
+                        concept_id=_grammar_concept_id(grammar_item.topic),
+                        now=now,
+                    )
                     await db.flush()
                 return
             except IntegrityError:

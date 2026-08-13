@@ -35,8 +35,11 @@ class LearnerConceptState(Base):
     last_interacted_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
     next_review_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
     state_version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # Placeholder only: evolve_state stamps its own ALGORITHM_VERSION on every
+    # write. Kept as a literal because importing the service here would close
+    # an import cycle (the service imports this module).
     algorithm_version: Mapped[str] = mapped_column(
-        String(32), nullable=False, default="bkt-fsrs-v1"
+        String(32), nullable=False, default="bkt-fsrs-v2"
     )
     created_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=False, default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(

@@ -4,7 +4,6 @@ Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
 import hashlib
-import math
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -35,8 +34,15 @@ from app.models.vocabulary import (
 from app.services.learner_state import (
     ObservationInput,
     apply_observation_event,
+    grade_to_observation,
     ingest_observations,
 )
+
+
+# A word counts as mastered only once recall is both confident and durable;
+# 21 days is the interval bar the pre-unification SM-2 status used.
+MASTERED_MASTERY = 0.85
+MASTERED_STABILITY_DAYS = 21.0
 
 
 def _vocab_concept_id(word: str) -> str:
@@ -528,176 +534,31 @@ class VocabularyCRUD:
         )
         return result.scalar() or 0
     
-    # ===== SRS Algorithm (SuperMemo SM-2) =====
-    
-    def calculate_next_review(
-        self,
-        quality: int,
-        ease_factor: float,
-        interval: int,
-        repetitions: int
-    ) -> tuple[float, int, int, datetime]:
-        """
-        Calculate next review parameters using SM-2 algorithm.
-        
-        Args:
-            quality: 0-5 rating (0=blackout, 5=perfect)
-            ease_factor: Current ease factor (1.3-3.0)
-            interval: Current interval in days
-            repetitions: Number of consecutive correct answers
-        
-        Returns:
-            (new_ease_factor, new_interval, new_repetitions, next_review_date)
-        """
-        # Quality < 3: Failed review, reset
-        if quality < 3:
-            repetitions = 0
-            interval = 1
-        else:
-            # Successful review
-            if repetitions == 0:
-                interval = 1
-            elif repetitions == 1:
-                interval = 6
-            else:
-                interval = int(interval * ease_factor)
-            
-            repetitions += 1
-        
-        # Update ease factor based on quality
-        ease_factor = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
-        ease_factor = max(1.3, ease_factor)  # Minimum ease factor
-        
-        # Calculate next review date
-        next_review_date = datetime.now(timezone.utc) + timedelta(days=interval)
-        
-        return ease_factor, interval, repetitions, next_review_date
-
-    def _clamp(self, value: float, lower: float, upper: float) -> float:
-        """Clamp a numeric value to an inclusive range."""
-        return max(lower, min(upper, value))
-
-    def calculate_fsrs_review(
-        self,
-        quality: int,
-        stability: Optional[float],
-        difficulty: Optional[float],
-        scheduled_days: Optional[int],
-        reps: Optional[int],
-        lapses: Optional[int],
-        fsrs_last_review: Optional[datetime],
-        sm2_last_review: Optional[datetime],
-        now: Optional[datetime] = None,
-    ) -> dict:
-        """
-        Calculate FSRS-style scheduling fields for a review.
-
-        This intentionally keeps FSRS side-by-side with the existing SM-2 fields.
-        It uses the FSRS concepts of stability, difficulty, retrievability, reps,
-        lapses, state, elapsed days, and scheduled days without adding a new
-        dependency or changing existing review contracts.
-        """
-        now = now or datetime.now(timezone.utc)
-        quality = max(0, min(5, quality))
-
-        last_review = fsrs_last_review or sm2_last_review
-        if last_review and last_review.tzinfo is None:
-            last_review = last_review.replace(tzinfo=timezone.utc)
-        elapsed_days = max(0, (now - last_review).days) if last_review else 0
-
-        current_reps = max(0, reps or 0)
-        current_lapses = max(0, lapses or 0)
-        current_scheduled_days = max(0, scheduled_days or 0)
-        current_stability = stability if stability and stability > 0 else None
-        current_difficulty = difficulty if difficulty and difficulty > 0 else None
-
-        if current_reps == 0 or current_stability is None or current_difficulty is None:
-            initial_stability = {
-                0: 0.4,
-                1: 0.6,
-                2: 1.0,
-                3: 2.4,
-                4: 3.8,
-                5: 5.8,
-            }[quality]
-            new_stability = initial_stability
-            new_difficulty = self._clamp(7.0 - (quality - 3) * 0.8, 1.0, 10.0)
-        else:
-            decay = -0.5
-            factor = 19 / 81
-            retrievability = (1 + factor * elapsed_days / current_stability) ** decay
-            retrievability = self._clamp(retrievability, 0.01, 1.0)
-
-            mean_reversion = (4.0 - current_difficulty) * 0.05
-            new_difficulty = self._clamp(
-                current_difficulty - (quality - 3) * 0.3 + mean_reversion,
-                1.0,
-                10.0,
-            )
-
-            if quality < 3:
-                new_stability = max(0.5, current_stability * 0.55)
-            else:
-                rating_boost = {3: 1.2, 4: 2.0, 5: 2.8}[quality]
-                difficulty_factor = (11.0 - new_difficulty) / 10.0
-                recall_gap = 1.0 - retrievability
-                growth = 1.0 + rating_boost * difficulty_factor * (recall_gap + 0.2)
-                new_stability = max(current_stability + 0.5, current_stability * growth)
-
-        if quality < 3:
-            next_lapses = current_lapses + 1
-            next_state = 3 if current_reps > 0 else 1  # relearning or learning
-            next_scheduled_days = 1
-        else:
-            next_lapses = current_lapses
-            next_state = 2 if new_stability >= 2 else 1  # review or learning
-            next_scheduled_days = max(1, int(math.ceil(new_stability)))
-            if quality == 3 and current_scheduled_days:
-                next_scheduled_days = min(next_scheduled_days, current_scheduled_days + 1)
-            elif quality == 5:
-                next_scheduled_days = max(next_scheduled_days, int(math.ceil(new_stability * 1.15)))
-
-        next_scheduled_days = min(next_scheduled_days, 36500)
-
-        return {
-            "fsrs_stability": round(new_stability, 4),
-            "fsrs_difficulty": round(new_difficulty, 4),
-            "fsrs_elapsed_days": elapsed_days,
-            "fsrs_scheduled_days": next_scheduled_days,
-            "fsrs_reps": current_reps + 1,
-            "fsrs_lapses": next_lapses,
-            "fsrs_state": next_state,
-            "fsrs_last_review": now,
-            "next_review_date": now + timedelta(days=next_scheduled_days),
-        }
-    
-    def determine_status(self, ease_factor: float, interval: int, repetitions: int) -> VocabularyStatus:
-        """
-        Determine vocabulary status based on SRS parameters.
-        
-        Mastered: ease_factor >= 2.5 AND interval >= 21 days
-        Reviewing: repetitions >= 3
-        Learning: Otherwise
-        """
-        if ease_factor >= 2.5 and interval >= 21:
-            return VocabularyStatus.MASTERED
-        elif repetitions >= 3:
-            return VocabularyStatus.REVIEWING
-        else:
-            return VocabularyStatus.LEARNING
+    # ===== Review status =====
+    #
+    # Scheduling itself lives in app/services/learner_state.py (one engine for
+    # vocabulary, grammar and missions). The SM-2 and FSRS-lite routines that
+    # used to sit here were unreachable from any route once submit_review moved
+    # over, so they were removed rather than left as a second source of truth.
 
     def determine_status_from_mastery(
-        self, mastery_probability: float, attempt_count: int
+        self,
+        mastery_probability: float,
+        attempt_count: int,
+        stability_days: float,
     ) -> VocabularyStatus:
         """
         Determine vocabulary status from learner_concept_state fields.
 
-        Mastered: mastery_probability >= 0.85 (equivalent intent to the old
-        ease_factor>=2.5 + interval>=21 threshold — high confidence, stable recall)
+        Mastered: mastery_probability >= 0.85 AND stability_days >= 21.
+        Both halves are needed to match the old ease_factor>=2.5 +
+        interval>=21 bar: mastery alone crosses 0.85 after three same-day
+        correct answers, which marked a word mastered for cramming it rather
+        than for remembering it.
         Reviewing: attempt_count >= 3 (equivalent to the old repetitions>=3)
         Learning: otherwise
         """
-        if mastery_probability >= 0.85:
+        if mastery_probability >= MASTERED_MASTERY and stability_days >= MASTERED_STABILITY_DAYS:
             return VocabularyStatus.MASTERED
         elif attempt_count >= 3:
             return VocabularyStatus.REVIEWING
@@ -732,7 +593,7 @@ class VocabularyCRUD:
 
         now = datetime.now(timezone.utc)
         concept_id = _vocab_concept_id(user_vocab.vocabulary.word)
-        outcome = "correct" if quality >= 3 else "incorrect"
+        outcome, confidence = grade_to_observation(quality)
         event_id = hashlib.sha256(
             f"{user_vocabulary_id}:{quality}:{now.isoformat()}".encode("utf-8")
         ).hexdigest()
@@ -745,7 +606,7 @@ class VocabularyCRUD:
                     user_id=user_vocab.user_id,
                     concept_id=concept_id,
                     outcome=outcome,
-                    confidence=max(0.0, min(1.0, quality / 5.0)),
+                    confidence=confidence,
                     observed_at=now,
                 )
             ],
@@ -781,7 +642,9 @@ class VocabularyCRUD:
 
         # Update status
         user_vocab.status = self.determine_status_from_mastery(
-            concept_state.mastery_probability, concept_state.attempt_count
+            concept_state.mastery_probability,
+            concept_state.attempt_count,
+            concept_state.stability_days,
         )
 
         # Award XP (base: 5, bonus for quality and streak)
