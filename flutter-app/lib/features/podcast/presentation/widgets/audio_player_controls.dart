@@ -116,7 +116,7 @@ class AudioPlayerControls extends StatelessWidget {
                 icon: const Icon(Icons.replay_10_rounded),
                 iconSize: 32,
                 color: isDark ? Colors.white70 : AppColors.textDark,
-                tooltip: 'Rewind 15 s',
+                tooltip: 'podcast.rewind15'.tr(),
               ),
 
               // Play/Pause
@@ -144,7 +144,7 @@ class AudioPlayerControls extends StatelessWidget {
                 icon: const Icon(Icons.forward_10_rounded),
                 iconSize: 32,
                 color: isDark ? Colors.white70 : AppColors.textDark,
-                tooltip: 'Skip 15 s',
+                tooltip: 'podcast.forward15'.tr(),
               ),
 
               // Placeholder for balance (keeps play/pause centred)

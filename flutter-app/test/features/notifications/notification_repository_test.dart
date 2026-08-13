@@ -227,11 +227,11 @@ void main() {
       final groups = await repository.getGroupedNotifications();
 
       expect(groups.length, 3);
-      expect(groups[0].title, 'Today');
+      expect(groups[0].title, 'datetime.today');
       expect(groups[0].notifications.length, 1);
-      expect(groups[1].title, 'Yesterday');
+      expect(groups[1].title, 'datetime.yesterday');
       expect(groups[1].notifications.length, 1);
-      expect(groups[2].title, 'Earlier');
+      expect(groups[2].title, 'datetime.earlier');
       expect(groups[2].notifications.length, 1);
     });
 
@@ -249,7 +249,7 @@ void main() {
       final groups = await repository.getGroupedNotifications();
 
       expect(groups.length, 1);
-      expect(groups[0].title, 'Today');
+      expect(groups[0].title, 'datetime.today');
     });
   });
 

@@ -32,7 +32,21 @@
     "play": "遊ぶ",
     "awesome": "素晴らしい！",
     "create": "作成",
-    "refresh": "更新"
+    "refresh": "更新",
+    "tryAgain": "もう一度",
+    "goToLogin": "ログイン画面へ",
+    "offline": "オフラインです",
+    "filter": "フィルター",
+    "streak": "連続記録",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "submit": "送信",
+    "copiedToClipboard": "コピーしました！",
+    "tapAnywhereToContinue": "どこかをタップして続ける",
+    "dayCount": {
+      "one": "{}日",
+      "other": "{}日"
+    }
   },
   "auth": {
     "login": "ログイン",
@@ -109,7 +123,13 @@
     "emailVerificationResendSuccess": "確認メールを再送信しました。受信トレイを確認してください。",
     "emailVerificationResendError": "再送信に失敗しました。もう一度お試しください。",
     "emailVerificationBackToLogin": "ログインに戻る",
-    "passwordMismatch": "パスワードが一致しません"
+    "passwordMismatch": "パスワードが一致しません",
+    "googleAccountHint": "このアカウントがGoogleの場合は、下のGoogleをタップしてください。",
+    "errInvalidCredentials": "メールアドレスまたはパスワードが正しくありません",
+    "errAlreadyExists": "そのメールアドレスまたはユーザー名は既に使われています",
+    "errValidation": "入力内容が正しくありません。ご確認ください。",
+    "errNetwork": "ネットワークに接続できません。もう一度お試しください。",
+    "errRateLimited": "試行回数が多すぎます。しばらくお待ちください。"
   },
   "home": {
     "greeting": "こんにちは、{name}さん！",
@@ -285,13 +305,32 @@
     "noCourses": "このカテゴリにはまだコースがありません",
     "durationMin": "{count} 分",
     "totalLessonsCount": "{count} レッスン",
-    "userProgressPercent": "{percent}% 完了"
+    "userProgressPercent": "{percent}% 完了",
+    "pickCoursePrompt": "コースを選んで、今日から\n語学の旅を始めましょう！",
+    "langAll": "すべて",
+    "langEnglish": "英語",
+    "langSpanish": "スペイン語",
+    "langVietnamese": "ベトナム語",
+    "myEnrollments": "受講中のコース",
+    "showEnrolledOnly": "受講中のコースのみ表示",
+    "sortBy": "並び替え",
+    "applyFilters": "フィルターを適用",
+    "coursesAvailablePlural": {
+      "one": "{}コースを受講できます",
+      "other": "{}コースを受講できます"
+    },
+    "courseCount": {
+      "one": "{}コース",
+      "other": "{}コース"
+    }
   },
   "lesson": {
     "sessionTitle": "学習",
     "loadingLesson": "レッスンを読み込み中...",
     "noLessonData": "レッスンデータがありません",
     "noExerciseAvailable": "利用できる問題がありません",
+    "contentUnavailableTitle": "このレッスンは準備中です",
+    "contentUnavailableMessage": "コンテンツはまだ準備できていません。しばらくしてからもう一度お試しください。",
     "exerciseTypeNotImplemented": "問題タイプ \"{type}\" はまだ未対応です",
     "checkAnswer": "答えを確認",
     "continueButton": "続ける",
@@ -448,7 +487,26 @@
     "playError": "再生に失敗しました: {error}",
     "tapToRecord": "Tap to record",
     "tapToStop": "Tap to stop",
-    "assessmentFailed": "Pronunciation assessment failed. Please try again."
+    "assessmentFailed": "Pronunciation assessment failed. Please try again.",
+    "matchPercent": "一致度: {percent}%",
+    "ttsSpeedTooltip": "読み上げ速度: {speed}\nタップで変更、長押しでオプション",
+    "speedNormal": "標準",
+    "micPermissionSettings": "ブラウザまたは端末の設定でマイクの使用を許可してください。",
+    "recordingUnreadable": "録音データを読み取れませんでした。もう一度お試しください。",
+    "recordingMissing": "録音ファイルを受け取れませんでした。もう一度お試しください。",
+    "recordingPathInvalid": "録音ファイルのパスが無効です。",
+    "recordingBrowserUnreadable": "ブラウザから録音ファイルを読み取れませんでした。",
+    "recordingNotFound": "録音ファイルが見つかりません。",
+    "speechNotRecognized": "音声を認識できませんでした。",
+    "speechUnclear": "はっきり聞き取れませんでした。もう一度話してください。",
+    "micPermissionRetry": "マイクの使用を許可してからもう一度お試しください。",
+    "stopRecording": "録音を停止",
+    "startRecording": "録音を開始",
+    "tapToStartSpeaking": "タップして話し始める",
+    "recordingTapToStop": "録音中 — タップで停止",
+    "recognizing": "音声を認識しています…",
+    "notMatchedTryAgain": "まだ一致していません。もう一度どうぞ。",
+    "saidCorrectly": "正しく言えました"
   },
   "chat": {
     "placeholder": "メッセージを入力してください...",
@@ -470,7 +528,14 @@
     "processingVoice": "音声を処理しています...",
     "grammarCorrection": "文法修正",
     "correctionRule": "ルール: {rule}",
-    "practiceThisAction": "練習する"
+    "practiceThisAction": "練習する",
+    "correctionSuggestion": "「{incorrect}」を「{correction}」に直しましょう。",
+    "correctionExplanation": "{explanation}（今起きている動作には現在進行形を使います）。",
+    "naturalSentencePraise": "よくできました！とても自然な文です。",
+    "learningHintsCount": {
+      "one": "学習ヒント{}件",
+      "other": "学習ヒント{}件"
+    }
   },
   "achievements": {
     "title": "業績",
@@ -588,7 +653,10 @@
     "yourProficiency": "あなたの熟練度",
     "proficiencyUnlockHint": "最初の数レッスンを終えるとスコアが表示されます。今すぐ学習を始めましょう！",
     "proficiencyUnlockThreshold": "約 {count} レッスン後にスコアがロック解除されます",
-    "startLessons": "レッスンを開始する"
+    "startLessons": "レッスンを開始する",
+    "adminMobile": "管理者モバイル",
+    "switchToAdmin": "管理パネルに切り替える",
+    "adminMobileSubtitle": "LexiLingo 管理者モバイル"
   },
   "progress": {
     "title": "学習の進捗",
@@ -599,7 +667,13 @@
     "coursesCompletedStat": "完了したコース",
     "lessonsCompletedStat": "完了したレッスン",
     "courseProgressTitle": "コース進捗",
-    "lastActivity": "最後のアクティビティ: {date}"
+    "lastActivity": "最後のアクティビティ: {date}",
+    "weeklyOverview": "今週の概要",
+    "weeklySummary": "{xp} XP · {lessons}レッスン · 7日中{days}日学習",
+    "lessonsOfTotal": "{completed}/{total}レッスン",
+    "streakMilestone": "🔥 連続記録の達成！",
+    "daysInARow": "日連続",
+    "emptyChart": "学習を始めると進捗グラフが表示されます！"
   },
   "settings": {
     "title": "設定",
@@ -659,7 +733,11 @@
     "invite_message": "(Referral) 🎓 Join me on LexiLingo and learn English together! Use my referral code for 50 free gems.",
     "share_invite": "(Referral) Share Invite Link",
     "code_copied": "(Referral) Code copied!",
-    "referral_count": "(Referral) {count} friend(s) joined via your code"
+    "referral_count": "(Referral) {count} friend(s) joined via your code",
+    "delete_account": "アカウントを削除",
+    "delete_account_confirm": "アカウントとすべての学習データが完全に削除されます。この操作は取り消せません。",
+    "delete_account_confirm_btn": "完全に削除",
+    "delete_account_error": "アカウントを削除できませんでした。もう一度お試しください。"
   },
   "notifications": {
     "pageTitle": "通知",
@@ -677,7 +755,15 @@
     "removed": "通知が削除されました",
     "undo": "元に戻す",
     "deleteAction": "消去",
-    "tooltipBack": "戻る"
+    "tooltipBack": "戻る",
+    "reviewReminderTitle": "単語を復習する時間です",
+    "reviewChannelName": "毎日のリマインダー",
+    "reviewChannelDescription": "毎日単語を復習するようリマインドします",
+    "reviewTitle": "単語の復習",
+    "reviewBodyDue": "今日は{count}語の復習があります！",
+    "reviewBodyStreak": "単語を復習する時間です。連続記録を守りましょう！",
+    "reviewBodyDueNow": "復習期限の単語が{count}語あります！",
+    "reviewWaitingBody": "{count}語が復習を待っています。"
   },
   "errors": {
     "networkError": "ネットワークエラー",
@@ -686,7 +772,8 @@
     "notFound": "見つかりません",
     "unknown": "不明なエラーが発生しました",
     "timeout": "リクエストタイムアウト",
-    "noInternet": "インターネット接続がありません"
+    "noInternet": "インターネット接続がありません",
+    "genericRetry": "エラーが発生しました。もう一度お試しください。"
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -723,7 +810,14 @@
       "action": "Awesome!",
       "gemLabel": "Gem reward",
       "confirmation": "{gems} Gems were added to your wallet."
-    }
+    },
+    "activeBoosts": "有効なブースト",
+    "activated": "有効化しました！",
+    "rankLessons": "{rank} · {count}レッスン",
+    "lessonsCompletedCount": "{count}レッスン完了",
+    "rankLabel": "ランク",
+    "rankUp": "ランクアップ！",
+    "reachedRank": "{rank}に到達しました"
   },
   "social": {
     "friends": "友達",
@@ -898,7 +992,8 @@
     "justNow": "たった今",
     "minutesAgo": "{minutes} 分前",
     "hoursAgo": "{hours} 時間前",
-    "daysAgo": "{days} 日前"
+    "daysAgo": "{days} 日前",
+    "earlier": "それ以前"
   },
   "shop": {
     "title": "店",
@@ -1113,7 +1208,8 @@
     "xpStat": "{count} XP",
     "sessionSummaryDone": "完了",
     "levelBadgeTooltip": "現在のレベル",
-    "srsReminderMessage": "復習が必要な単語が{count}個あります — タップして復習"
+    "srsReminderMessage": "復習が必要な単語が{count}個あります — タップして復習",
+    "levelMinutesLeft": "{level} • 残り{minutes}分"
   },
   "lexiChat": {
     "title": "レクシー",
@@ -1168,7 +1264,58 @@
     "noVideos": "動画が見つかりませんでした",
     "couldNotOpen": "YouTubeを開けませんでした。コピーされた URL: {url}",
     "urlCopied": "コピーされたビデオ URL: {url}",
-    "dictionaryComingSoon": "辞書検索はフェーズ 6 で利用できるようになります。"
+    "dictionaryComingSoon": "辞書検索はフェーズ 6 で利用できるようになります。",
+    "learnThroughVideo": "動画で英語を学ぶ",
+    "searchHint": "英語学習動画を検索…",
+    "catGeneral": "総合",
+    "catPronunciation": "発音",
+    "catAcademic": "アカデミック",
+    "catNews": "ニュース",
+    "errServiceUnavailable": "動画サービスは一時的に利用できません。\n後でもう一度お試しください。",
+    "errQuotaExceeded": "本日の検索上限に達しました。\n明日もう一度お試しください。",
+    "errTimeout": "リクエストに時間がかかりすぎました。\n接続を確認して再試行してください。",
+    "errForbidden": "アクセスが拒否されました。\nサポートにお問い合わせください。",
+    "errLoadFailed": "動画を読み込めませんでした。\n接続を確認して再試行してください。",
+    "tabExplore": "見つける",
+    "tabRecommended": "おすすめ",
+    "tabSaved": "保存済み",
+    "tabHistory": "履歴",
+    "noRecommendations": "おすすめはまだありません",
+    "noRecommendationsDesc": "いくつか動画を見ると、あなたに合う内容を提案できます。",
+    "noSavedVideos": "保存した動画はまだありません",
+    "noSavedVideosDesc": "動画のブックマークアイコンをタップすると後で見られます。",
+    "emptyHistory": "履歴は空です",
+    "emptyHistoryDesc": "視聴した動画がここに表示されます。",
+    "clearHistoryTitle": "視聴履歴を削除",
+    "clearHistoryConfirm": "視聴履歴をすべて削除してもよろしいですか？",
+    "guideTitle": "英語学習ハンドブック",
+    "guideIntro": "動画学習は自然な英語の反射を鍛えるのにとても効果的です。次の機能を活用しましょう。",
+    "guideTip1": "リアルタイムのインタラクティブ字幕",
+    "guideTip1Desc": "字幕はプレーヤーの下に同期して流れます。単語をタップするとすぐに意味を調べられます。",
+    "guideTip2": "ワンタップで単語を保存",
+    "guideTip2Desc": "翻訳パネルで「単語を保存」をタップするだけで、単語帳に追加できます。",
+    "guideTip3": "シャドーイング学習法",
+    "guideTip3Desc": "ネイティブの一文ごとに一時停止し、声に出して繰り返すと発音・抑揚・強勢が改善します。",
+    "guideTip4": "検索履歴を復習する",
+    "guideTip4Desc": "動画再生中、そのセッションで調べた単語がすぐ下に表示され、その場で復習できます。",
+    "guideCta": "今すぐ学習を始める",
+    "subtitlePlaceholder": "リアルタイム字幕がここに表示されます…",
+    "saved": "保存済み",
+    "saveVideo": "動画を保存",
+    "removedFromSaved": "保存リストから削除しました",
+    "videoSaved": "動画を保存しました",
+    "speed": "速度",
+    "wordCount": "{count}語",
+    "lookedUpWords": "調べた単語",
+    "segmentCount": "{count}区間",
+    "tapWordToLookUp": "単語をタップして意味を調べる",
+    "noLookupsYet": "まだ調べた単語はありません",
+    "tapWordInSubtitle": "字幕の単語をタップすると意味を調べられます",
+    "wordAlreadySaved": "「{word}」はすでに単語帳にあります。",
+    "wordSaved": "「{word}」を単語帳に保存しました。",
+    "lookingUp": "検索中…",
+    "sentenceInVideo": "動画内の文",
+    "saving": "保存中…"
   },
   "podcast": {
     "pageTitle": "ポッドキャスト",
@@ -1190,7 +1337,10 @@
     "showMore": "もっと見る",
     "playbackSpeed": "再生速度",
     "noTranscript": "利用可能なトランスクリプトはありません",
-    "generateTranscript": "トランスクリプトの生成"
+    "generateTranscript": "トランスクリプトの生成",
+    "episodeCount": "{count}エピソード",
+    "rewind15": "15秒戻る",
+    "forward15": "15秒進む"
   },
   "games": {
     "levelUpTitle": "レベルアップ！",
@@ -1216,7 +1366,22 @@
     "continueJourney": "学習を続ける",
     "loadFailed": "Unable to load this game. Please try again.",
     "emptyGame": "This game has no playable content right now.",
-    "retryLoad": "Try again"
+    "retryLoad": "Try again",
+    "exitTitle": "ゲームを終了しますか？",
+    "exitXpByQuestions": "XPは完了した問題数に応じて計算されます。",
+    "exitXpByPairs": "XPは正しく合わせたペアの数に応じて計算されます。",
+    "exitXpByWords": "XPは完了した単語数に応じて計算されます。",
+    "exitNoXpForWord": "この単語を完了しないとXPは獲得できません。",
+    "keepPlaying": "プレイを続ける",
+    "exit": "終了",
+    "luckyCloverActive": "ラッキークローバー発動中",
+    "shieldActive": "シールド発動中",
+    "resultTitle": "{game} — 結果",
+    "dailyXpToday": "本日 {current}/{cap} XP",
+    "weeklyXp": "今週 {xp}",
+    "percentToNextLevel": "次のレベルまで{percent}%",
+    "fillBlankChallenge": "穴埋め問題を5問完了する",
+    "completeTodayChallenge": "今日のチャレンジを完了する"
   },
   "learning": {
     "checkAnswer": "答えを確認する",
@@ -1229,7 +1394,8 @@
     "practiceAgain": "もう一度練習してください",
     "startLesson": "レッスンを開始する",
     "correct": "正しい！",
-    "notQuite": "完全ではありません"
+    "notQuite": "完全ではありません",
+    "loadingRoadmap": "ロードマップを読み込み中…"
   },
   "books": {
     "library": "図書室",
@@ -1244,7 +1410,10 @@
     "readerSettings": "リーダーの設定",
     "pageProgress": "ページ {current}/{total}",
     "searchPlaceholder": "タイトルまたは著者で検索...",
-    "savedBooks": "保存した本"
+    "savedBooks": "保存した本",
+    "chapterCountShort": "{count}章",
+    "wordCountK": "{count}k語",
+    "quizScore": "正解 {score}/{total}"
   },
   "news": {
     "title": "英語ニュース",
@@ -1256,7 +1425,8 @@
     "takeQuiz": "理解度クイズに挑戦する",
     "dictionaryComingSoon": "辞書検索はフェーズ 6 で利用できるようになります。",
     "saveWord": "ワードを保存",
-    "closeButton": "近い"
+    "closeButton": "近い",
+    "minRead": "{count}分で読めます"
   },
   "vocabulary": {
     "library": "語彙ライブラリ",
@@ -1323,12 +1493,73 @@
     "tabWords": "Words",
     "tabTopics": "Topic Flashcards",
     "startLearning": "Start",
-    "audioQuestionHint": "Listen and guess the word"
+    "audioQuestionHint": "Listen and guess the word",
+    "selectOneWord": "保存する単語を1つだけ選んでください。",
+    "saveWordFailed": "単語を単語帳に保存できませんでした。",
+    "saveToVocabulary": "単語帳に保存",
+    "noSpeakingDue": "現在、期限が来ているスピーキング練習はありません。",
+    "itemNumber": "{current}番",
+    "totalCount": "全{total}件",
+    "meaning": "意味",
+    "wordOfTheDay": "今日の単語",
+    "noWordAvailable": "単語がありません",
+    "addedToFlashcards": "「{word}」をフラッシュカードに追加しました！",
+    "reviewed": "復習済み",
+    "remaining": "残り",
+    "wordCount": "{count}語",
+    "tagIelts": "IELTS",
+    "tagAcademic": "アカデミック",
+    "tagHealth": "健康",
+    "tagFood": "食べ物",
+    "tagSports": "スポーツ",
+    "tagGovernment": "政治・行政",
+    "tagEconomics": "経済",
+    "tagEducation": "教育",
+    "tagLesson": "レッスン",
+    "tagPhilosophy": "哲学",
+    "tagBasic200": "基本単語",
+    "tagNature": "自然",
+    "tagCore": "コア",
+    "tagAuto": "自動保存",
+    "tagCrawl": "収集",
+    "tagSociety": "社会",
+    "tagSeed": "シード",
+    "tagHistory": "歴史"
   },
   "legal": {
     "privacy_title": "プライバシーポリシー",
     "terms_title": "利用規約",
-    "last_updated": "最終更新: {date}"
+    "last_updated": "最終更新: {date}",
+    "privacy1Title": "1. 収集する情報",
+    "privacy1Body": "お名前、メールアドレス、学習の設定など、お客様が直接提供する情報を収集します。また、学習体験を改善するために利用データも収集します。",
+    "privacy2Title": "2. 情報の利用方法",
+    "privacy2Body": "学習パスの個別化、進捗の記録、学習リマインダーの送信、AIチューター機能の改善のために情報を利用します。個人データを第三者に販売することはありません。",
+    "privacy3Title": "3. データの保存とセキュリティ",
+    "privacy3Body": "データは安全なサーバーに保存されます。通信時（TLS）および保存時に業界標準の暗号化を使用します。ログイン情報は Firebase Authentication が管理します。",
+    "privacy4Title": "4. 第三者サービス",
+    "privacy4Body": "LexiLingo は Google（Firebase、YouTube）と連携しており、これらには独自のプライバシーポリシーがあります。エラー監視には Sentry を使用し、エラーレポートには匿名化された端末情報が含まれる場合があります。",
+    "privacy5Title": "5. お客様の権利",
+    "privacy5Body": "設定 → アカウント → アカウント削除 から、いつでも個人データの開示、訂正、完全削除を請求できます。削除は取り消せず、直ちに処理されます。",
+    "privacy6Title": "6. 子どものプライバシー",
+    "privacy6Body": "LexiLingo は13歳未満のお子様を対象としていません。13歳未満の個人情報を意図的に収集することはありません。",
+    "privacy7Title": "7. お問い合わせ",
+    "privacy7Body": "プライバシーに関するお問い合わせは nhthang312@gmail.com までご連絡ください。30日以内に返信します。",
+    "terms1Title": "1. 同意",
+    "terms1Body": "LexiLingo を利用することで、本規約に同意したものとみなされます。同意されない場合はアプリをご利用にならないでください。",
+    "terms2Title": "2. アカウント",
+    "terms2Body": "アカウントの安全管理およびアカウント上で行われるすべての活動について、お客様が責任を負います。不正利用に気づいた場合は直ちにご連絡ください。",
+    "terms3Title": "3. 許容される利用",
+    "terms3Body": "アプリのリバースエンジニアリング、虚偽情報の送信、自動ツールによる学習スコアやランキングの操作など、LexiLingo の不正利用を行わないことに同意するものとします。",
+    "terms4Title": "4. 知的財産",
+    "terms4Body": "LexiLingo 内のすべてのコンテンツ、機能、AI生成の応答は、LexiLingo が所有またはライセンスを受けています。許可なく複製・配布することはできません。",
+    "terms5Title": "5. バーチャルアイテム",
+    "terms5Body": "XP、コイン、バーチャルアイテムには現実の金銭的価値はなく、譲渡や現金への交換はできません。当社はいつでもこれらを変更・終了する権利を留保します。",
+    "terms6Title": "6. 免責事項",
+    "terms6Body": "LexiLingo は「現状有姿」で提供されます。学習成果を保証するものではありません。AI の応答は自動生成であり誤りを含む可能性があります。重要な用途では必ず有資格の語学教師にご相談ください。",
+    "terms7Title": "7. 利用の終了",
+    "terms7Body": "本規約に違反するアカウントを停止または終了する権利を留保します。設定からいつでもアカウントを削除できます。",
+    "terms8Title": "8. 準拠法",
+    "terms8Body": "本規約はベトナム法に準拠します。"
   },
   "offlineSync": {
     "title": "Offline & Sync",
@@ -1478,5 +1709,26 @@
     "modeQuizSubtitle": "Test meaning and term — auto-graded",
     "modeFlashcardTitle": "Flashcards",
     "modeFlashcardSubtitle": "Flip cards and rate yourself"
+  },
+  "emptyState": {
+    "noCourses": "コースがありません",
+    "noCoursesDesc": "コースを見て学習の旅を始めましょう。",
+    "noVocabulary": "単語がありません",
+    "noVocabularyDesc": "単語を追加して自分の単語帳を作りましょう。",
+    "addWords": "単語を追加",
+    "allCaughtUp": "すべて確認済みです！また後で見てください。",
+    "noConversations": "会話がありません",
+    "noConversationsDesc": "AIチューターとの会話を始めましょう。",
+    "startChat": "会話を始める",
+    "noResults": "結果が見つかりません",
+    "noResultsForQuery": "「{query}」の結果は見つかりませんでした。別のキーワードをお試しください。",
+    "noResultsDesc": "結果が見つかりません。別のキーワードをお試しください。",
+    "noProgress": "進捗がまだありません",
+    "noProgressDesc": "レッスンを完了すると学習の進捗を記録できます。",
+    "noInternetDesc": "ネットワークを確認して、もう一度お試しください。",
+    "serverErrorDesc": "接続に問題が発生しています。もう一度お試しください。"
+  },
+  "dailyChallenges": {
+    "rewardClaimed": "報酬を受け取りました！"
   }
 }

@@ -235,16 +235,16 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Thoát game?'),
-        content: const Text('XP sẽ được tính dựa trên số câu đã hoàn thành.'),
+        title: Text('games.exitTitle'.tr()),
+        content: Text('games.exitXpByQuestions'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Tiếp tục chơi'),
+            child: Text('games.keepPlaying'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Thoát'),
+            child: Text('games.exit'.tr()),
           ),
         ],
       ),
@@ -405,11 +405,11 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                             onUse: _onPowerUpUsed,
                           ),
                           if (_luckyCloverActive)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.only(top: 6),
                               child: ActivePowerUpBadge(
                                 itemType: ShopItemEntity.effectLuckyClover,
-                                label: 'Lucky Clover Active',
+                                label: 'games.luckyCloverActive'.tr(),
                               ),
                             ),
                           const SizedBox(height: 12),

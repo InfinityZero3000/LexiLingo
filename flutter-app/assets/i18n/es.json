@@ -32,7 +32,21 @@
     "play": "Jugar",
     "awesome": "¡Impresionante!",
     "create": "Crear",
-    "refresh": "Actualizar"
+    "refresh": "Actualizar",
+    "tryAgain": "Reintentar",
+    "goToLogin": "Ir al inicio de sesión",
+    "offline": "Estás sin conexión",
+    "filter": "Filtrar",
+    "streak": "Racha",
+    "minimize": "Minimizar",
+    "maximize": "Maximizar",
+    "submit": "Enviar",
+    "copiedToClipboard": "¡Copiado al portapapeles!",
+    "tapAnywhereToContinue": "Toca en cualquier lugar para continuar",
+    "dayCount": {
+      "one": "{} día",
+      "other": "{} días"
+    }
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -109,7 +123,13 @@
     "emailVerificationResendSuccess": "Correo de verificación reenviado. Por favor revisa tu bandeja de entrada.",
     "emailVerificationResendError": "Error al reenviar. Por favor intenta de nuevo.",
     "emailVerificationBackToLogin": "Volver al inicio de sesión",
-    "passwordMismatch": "Las contraseñas no coinciden"
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "googleAccountHint": "Si esta cuenta usa Google, toca Google abajo.",
+    "errInvalidCredentials": "Correo o contraseña incorrectos",
+    "errAlreadyExists": "Ese correo o nombre de usuario ya está en uso",
+    "errValidation": "Algunos datos no son válidos. Compruébalos de nuevo.",
+    "errNetwork": "Sin conexión de red. Inténtalo de nuevo.",
+    "errRateLimited": "Demasiados intentos. Espera un momento."
   },
   "home": {
     "greeting": "¡Hola, {name}!",
@@ -285,13 +305,32 @@
     "noCourses": "Aún no hay cursos en esta categoría",
     "durationMin": "{count} min",
     "totalLessonsCount": "{count} lecciones",
-    "userProgressPercent": "{percent}% Completado"
+    "userProgressPercent": "{percent}% Completado",
+    "pickCoursePrompt": "¡Elige un curso y comienza\nhoy tu viaje con los idiomas!",
+    "langAll": "Todos",
+    "langEnglish": "Inglés",
+    "langSpanish": "Español",
+    "langVietnamese": "Vietnamita",
+    "myEnrollments": "Mis inscripciones",
+    "showEnrolledOnly": "Mostrar solo cursos inscritos",
+    "sortBy": "Ordenar por",
+    "applyFilters": "Aplicar filtros",
+    "coursesAvailablePlural": {
+      "one": "{} curso disponible",
+      "other": "{} cursos disponibles"
+    },
+    "courseCount": {
+      "one": "{} curso",
+      "other": "{} cursos"
+    }
   },
   "lesson": {
     "sessionTitle": "Aprendizaje",
     "loadingLesson": "Cargando lección...",
     "noLessonData": "No hay datos de la lección",
     "noExerciseAvailable": "No hay ejercicios disponibles",
+    "contentUnavailableTitle": "Esta lección se está preparando",
+    "contentUnavailableMessage": "Su contenido aún no está listo. ¡Vuelve pronto!",
     "exerciseTypeNotImplemented": "El tipo de ejercicio \"{type}\" aún no está implementado",
     "checkAnswer": "Comprobar",
     "continueButton": "Continuar",
@@ -448,7 +487,26 @@
     "playError": "No se pudo reproducir: {error}",
     "tapToRecord": "Tap to record",
     "tapToStop": "Tap to stop",
-    "assessmentFailed": "Pronunciation assessment failed. Please try again."
+    "assessmentFailed": "Pronunciation assessment failed. Please try again.",
+    "matchPercent": "Coincidencia: {percent} %",
+    "ttsSpeedTooltip": "Velocidad de lectura: {speed}\nToca para cambiar, mantén pulsado para opciones",
+    "speedNormal": "Normal",
+    "micPermissionSettings": "Concede permiso de micrófono en los ajustes del navegador o del dispositivo.",
+    "recordingUnreadable": "No se pudo leer la grabación. Inténtalo de nuevo.",
+    "recordingMissing": "No se recibió la grabación. Inténtalo de nuevo.",
+    "recordingPathInvalid": "La ruta de la grabación no es válida.",
+    "recordingBrowserUnreadable": "No se pudo leer la grabación desde el navegador.",
+    "recordingNotFound": "No se encontró el archivo de grabación.",
+    "speechNotRecognized": "No se pudo reconocer el habla.",
+    "speechUnclear": "No se oyó con claridad. Dilo otra vez.",
+    "micPermissionRetry": "Concede permiso de micrófono e inténtalo de nuevo.",
+    "stopRecording": "Detener grabación",
+    "startRecording": "Empezar a grabar",
+    "tapToStartSpeaking": "Toca para empezar a hablar",
+    "recordingTapToStop": "Grabando: toca para detener",
+    "recognizing": "Reconociendo tu voz...",
+    "notMatchedTryAgain": "Aún no coincide: inténtalo otra vez",
+    "saidCorrectly": "Lo dijiste correctamente"
   },
   "chat": {
     "placeholder": "Escribe un mensaje...",
@@ -470,7 +528,14 @@
     "processingVoice": "Procesando tu voz...",
     "grammarCorrection": "Corrección gramatical",
     "correctionRule": "Regla: {rule}",
-    "practiceThisAction": "Practicar"
+    "practiceThisAction": "Practicar",
+    "correctionSuggestion": "Deberías cambiar «{incorrect}» por «{correction}». ",
+    "correctionExplanation": "{explanation} (usa el presente continuo para una acción en curso).",
+    "naturalSentencePraise": "¡Muy bien! Tu frase suena muy natural.",
+    "learningHintsCount": {
+      "one": "{} consejo de aprendizaje",
+      "other": "{} consejos de aprendizaje"
+    }
   },
   "achievements": {
     "title": "Logros",
@@ -588,7 +653,10 @@
     "yourProficiency": "Tu competencia",
     "proficiencyUnlockHint": "Tus puntuaciones se mostrarán después de realizar las primeras lecciones. ¡Empiece a aprender ahora!",
     "proficiencyUnlockThreshold": "Tus puntuaciones se desbloquean después de aproximadamente lecciones {count}",
-    "startLessons": "Iniciar lecciones"
+    "startLessons": "Iniciar lecciones",
+    "adminMobile": "Admin móvil",
+    "switchToAdmin": "Cambiar al panel de administración",
+    "adminMobileSubtitle": "LexiLingo Admin móvil"
   },
   "progress": {
     "title": "Mi progreso",
@@ -599,7 +667,13 @@
     "coursesCompletedStat": "Cursos completados",
     "lessonsCompletedStat": "Lecciones completadas",
     "courseProgressTitle": "Progreso del curso",
-    "lastActivity": "Última actividad: {date}"
+    "lastActivity": "Última actividad: {date}",
+    "weeklyOverview": "Resumen semanal",
+    "weeklySummary": "{xp} XP · {lessons} lecciones · {days}/7 días activos",
+    "lessonsOfTotal": "{completed}/{total} lecciones",
+    "streakMilestone": "🔥 ¡Hito de racha!",
+    "daysInARow": "días seguidos",
+    "emptyChart": "¡Empieza a aprender para ver tu gráfico de progreso!"
   },
   "settings": {
     "title": "Configuración",
@@ -659,7 +733,11 @@
     "invite_message": "(Referral) 🎓 Join me on LexiLingo and learn English together! Use my referral code for 50 free gems.",
     "share_invite": "(Referral) Share Invite Link",
     "code_copied": "(Referral) Code copied!",
-    "referral_count": "(Referral) {count} friend(s) joined via your code"
+    "referral_count": "(Referral) {count} friend(s) joined via your code",
+    "delete_account": "Eliminar cuenta",
+    "delete_account_confirm": "Esto elimina de forma permanente tu cuenta y todos tus datos de aprendizaje. No se puede deshacer.",
+    "delete_account_confirm_btn": "Eliminar definitivamente",
+    "delete_account_error": "No se pudo eliminar la cuenta. Inténtalo de nuevo."
   },
   "notifications": {
     "pageTitle": "Notificaciones",
@@ -677,7 +755,15 @@
     "removed": "Notificación eliminada",
     "undo": "Deshacer",
     "deleteAction": "Borrar",
-    "tooltipBack": "Atrás"
+    "tooltipBack": "Atrás",
+    "reviewReminderTitle": "Es hora de repasar tu vocabulario",
+    "reviewChannelName": "Recordatorios diarios",
+    "reviewChannelDescription": "Te recuerda repasar vocabulario cada día",
+    "reviewTitle": "Repaso de vocabulario",
+    "reviewBodyDue": "¡Hoy tienes {count} palabras para repasar!",
+    "reviewBodyStreak": "Hora de repasar: ¡mantén tu racha!",
+    "reviewBodyDueNow": "¡Tienes {count} palabras pendientes de repaso!",
+    "reviewWaitingBody": "{count} palabras esperan tu repaso."
   },
   "errors": {
     "networkError": "Error de red",
@@ -686,7 +772,8 @@
     "notFound": "No encontrado",
     "unknown": "Ocurrió un error desconocido",
     "timeout": "Tiempo de espera agotado",
-    "noInternet": "Sin conexión a Internet"
+    "noInternet": "Sin conexión a Internet",
+    "genericRetry": "Se produjo un error. Inténtalo de nuevo."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -723,7 +810,14 @@
       "action": "Awesome!",
       "gemLabel": "Gem reward",
       "confirmation": "{gems} Gems were added to your wallet."
-    }
+    },
+    "activeBoosts": "MEJORAS ACTIVAS",
+    "activated": "¡Activado!",
+    "rankLessons": "{rank} · {count} lecciones",
+    "lessonsCompletedCount": "{count} lecciones completadas",
+    "rankLabel": "Rango",
+    "rankUp": "¡Subiste de rango!",
+    "reachedRank": "Has alcanzado {rank}"
   },
   "social": {
     "friends": "Amigos",
@@ -898,7 +992,8 @@
     "justNow": "Ahora mismo",
     "minutesAgo": "Hace {minutes} min",
     "hoursAgo": "Hace {hours} h",
-    "daysAgo": "Hace {days} días"
+    "daysAgo": "Hace {days} días",
+    "earlier": "Anterior"
   },
   "shop": {
     "title": "Comercio",
@@ -1113,7 +1208,8 @@
     "xpStat": "{count} XP",
     "sessionSummaryDone": "Listo",
     "levelBadgeTooltip": "Tu nivel actual",
-    "srsReminderMessage": "Tienes {count} palabras pendientes de repaso — toca para repasarlas"
+    "srsReminderMessage": "Tienes {count} palabras pendientes de repaso — toca para repasarlas",
+    "levelMinutesLeft": "{level} • quedan {minutes} min"
   },
   "lexiChat": {
     "title": "Lexi",
@@ -1168,7 +1264,58 @@
     "noVideos": "No se encontraron vídeos",
     "couldNotOpen": "No se pudo abrir YouTube. URL copiada: {url}",
     "urlCopied": "URL del vídeo copiada: {url}",
-    "dictionaryComingSoon": "La búsqueda de diccionario estará disponible en la Fase 6."
+    "dictionaryComingSoon": "La búsqueda de diccionario estará disponible en la Fase 6.",
+    "learnThroughVideo": "Aprende inglés con vídeos",
+    "searchHint": "Buscar vídeos para aprender inglés...",
+    "catGeneral": "General",
+    "catPronunciation": "Pronunciación",
+    "catAcademic": "Académico",
+    "catNews": "Noticias",
+    "errServiceUnavailable": "El servicio de vídeo no está disponible temporalmente.\nInténtalo más tarde.",
+    "errQuotaExceeded": "Has alcanzado el límite de búsquedas de hoy.\nInténtalo mañana.",
+    "errTimeout": "La solicitud tardó demasiado.\nComprueba tu conexión e inténtalo de nuevo.",
+    "errForbidden": "Acceso denegado.\nPonte en contacto con soporte.",
+    "errLoadFailed": "No se pudieron cargar los vídeos.\nComprueba tu conexión e inténtalo de nuevo.",
+    "tabExplore": "Explorar",
+    "tabRecommended": "Para ti",
+    "tabSaved": "Guardados",
+    "tabHistory": "Historial",
+    "noRecommendations": "Aún no hay recomendaciones",
+    "noRecommendationsDesc": "Mira algunos vídeos para que podamos sugerirte contenido adecuado.",
+    "noSavedVideos": "Aún no hay vídeos guardados",
+    "noSavedVideosDesc": "Toca el icono de marcador de un vídeo para guardarlo.",
+    "emptyHistory": "El historial está vacío",
+    "emptyHistoryDesc": "Los vídeos que hayas visto aparecerán aquí.",
+    "clearHistoryTitle": "Borrar el historial de reproducción",
+    "clearHistoryConfirm": "¿Seguro que quieres borrar todo el historial de reproducción?",
+    "guideTitle": "Manual para aprender inglés",
+    "guideIntro": "Aprender con vídeos es muy eficaz para desarrollar reflejos naturales en inglés. Aprovecha estas herramientas:",
+    "guideTip1": "Subtítulos interactivos en tiempo real",
+    "guideTip1Desc": "Los subtítulos avanzan bajo el reproductor. Toca cualquier palabra para consultarla al instante.",
+    "guideTip2": "Guardar vocabulario con un toque",
+    "guideTip2Desc": "En el panel de traducción, toca «Guardar palabra» para añadirla a tu cuaderno.",
+    "guideTip3": "El método shadowing",
+    "guideTip3Desc": "Pausa tras cada frase del hablante nativo y repítela en voz alta para mejorar pronunciación, entonación y acento.",
+    "guideTip4": "Repasa tu historial de consultas",
+    "guideTip4Desc": "Mientras se reproduce el vídeo, las palabras consultadas en la sesión aparecen debajo para repasarlas al instante.",
+    "guideCta": "Empezar ahora",
+    "subtitlePlaceholder": "Los subtítulos en tiempo real aparecerán aquí...",
+    "saved": "Guardado",
+    "saveVideo": "Guardar vídeo",
+    "removedFromSaved": "Eliminado de los vídeos guardados",
+    "videoSaved": "Vídeo guardado",
+    "speed": "Velocidad",
+    "wordCount": "{count} palabras",
+    "lookedUpWords": "Palabras consultadas",
+    "segmentCount": "{count} segmentos",
+    "tapWordToLookUp": "Toca una palabra para consultarla",
+    "noLookupsYet": "Aún no has consultado palabras",
+    "tapWordInSubtitle": "Toca una palabra de los subtítulos para consultarla",
+    "wordAlreadySaved": "«{word}» ya está en tu cuaderno de vocabulario.",
+    "wordSaved": "Se guardó «{word}» en tu cuaderno de vocabulario.",
+    "lookingUp": "Consultando…",
+    "sentenceInVideo": "Frase en el vídeo",
+    "saving": "Guardando..."
   },
   "podcast": {
     "pageTitle": "Pódcasts",
@@ -1190,7 +1337,10 @@
     "showMore": "Mostrar más",
     "playbackSpeed": "Velocidad de reproducción",
     "noTranscript": "No hay transcripción disponible",
-    "generateTranscript": "Generar transcripción"
+    "generateTranscript": "Generar transcripción",
+    "episodeCount": "{count} episodios",
+    "rewind15": "Retroceder 15 s",
+    "forward15": "Avanzar 15 s"
   },
   "games": {
     "levelUpTitle": "¡Elevar a mismo nivel!",
@@ -1216,7 +1366,22 @@
     "continueJourney": "Continuar viaje",
     "loadFailed": "Unable to load this game. Please try again.",
     "emptyGame": "This game has no playable content right now.",
-    "retryLoad": "Try again"
+    "retryLoad": "Try again",
+    "exitTitle": "¿Salir del juego?",
+    "exitXpByQuestions": "El XP se calcula según las preguntas completadas.",
+    "exitXpByPairs": "El XP se calcula según los pares emparejados correctamente.",
+    "exitXpByWords": "El XP se calcula según las palabras completadas.",
+    "exitNoXpForWord": "No ganarás XP si no terminas esta palabra.",
+    "keepPlaying": "Seguir jugando",
+    "exit": "Salir",
+    "luckyCloverActive": "Trébol de la suerte activo",
+    "shieldActive": "Escudo activo",
+    "resultTitle": "{game} — Resultado",
+    "dailyXpToday": "{current}/{cap} XP hoy",
+    "weeklyXp": "{xp} esta semana",
+    "percentToNextLevel": "{percent}% para el siguiente nivel",
+    "fillBlankChallenge": "Completa 5 preguntas de rellenar huecos",
+    "completeTodayChallenge": "Completa el reto de hoy"
   },
   "learning": {
     "checkAnswer": "Verificar respuesta",
@@ -1229,7 +1394,8 @@
     "practiceAgain": "Practica de nuevo",
     "startLesson": "Iniciar lección",
     "correct": "¡Correcto!",
-    "notQuite": "No exactamente"
+    "notQuite": "No exactamente",
+    "loadingRoadmap": "Cargando la ruta…"
   },
   "books": {
     "library": "Biblioteca de libros",
@@ -1244,7 +1410,10 @@
     "readerSettings": "Configuración del lector",
     "pageProgress": "Página {current} de {total}",
     "searchPlaceholder": "Buscar por título o autor...",
-    "savedBooks": "Libros guardados"
+    "savedBooks": "Libros guardados",
+    "chapterCountShort": "{count} cap.",
+    "wordCountK": "{count}k palabras",
+    "quizScore": "{score} / {total} correctas"
   },
   "news": {
     "title": "noticias en ingles",
@@ -1256,7 +1425,8 @@
     "takeQuiz": "Tomar prueba de comprensión",
     "dictionaryComingSoon": "La búsqueda de diccionario estará disponible en la Fase 6.",
     "saveWord": "guardar palabra",
-    "closeButton": "Cerca"
+    "closeButton": "Cerca",
+    "minRead": "{count} min de lectura"
   },
   "vocabulary": {
     "library": "Biblioteca de vocabulario",
@@ -1323,12 +1493,73 @@
     "tabWords": "Words",
     "tabTopics": "Topic Flashcards",
     "startLearning": "Start",
-    "audioQuestionHint": "Listen and guess the word"
+    "audioQuestionHint": "Listen and guess the word",
+    "selectOneWord": "Selecciona exactamente una palabra para guardar.",
+    "saveWordFailed": "No se pudo guardar la palabra en el vocabulario.",
+    "saveToVocabulary": "Guardar en vocabulario",
+    "noSpeakingDue": "No hay práctica oral pendiente ahora mismo.",
+    "itemNumber": "N.º {current}",
+    "totalCount": "{total} en total",
+    "meaning": "Significado",
+    "wordOfTheDay": "Palabra del día",
+    "noWordAvailable": "No hay ninguna palabra",
+    "addedToFlashcards": "¡«{word}» se añadió a tus tarjetas!",
+    "reviewed": "Repasadas",
+    "remaining": "Restantes",
+    "wordCount": "{count} palabras",
+    "tagIelts": "IELTS",
+    "tagAcademic": "Académico",
+    "tagHealth": "Salud",
+    "tagFood": "Comida",
+    "tagSports": "Deportes",
+    "tagGovernment": "Gobierno",
+    "tagEconomics": "Economía",
+    "tagEducation": "Educación",
+    "tagLesson": "Lección",
+    "tagPhilosophy": "Filosofía",
+    "tagBasic200": "Palabras básicas",
+    "tagNature": "Naturaleza",
+    "tagCore": "Esencial",
+    "tagAuto": "Guardado auto.",
+    "tagCrawl": "Recopiladas",
+    "tagSociety": "Sociedad",
+    "tagSeed": "Semilla",
+    "tagHistory": "Historia"
   },
   "legal": {
     "privacy_title": "Política de privacidad",
     "terms_title": "Términos de servicio",
-    "last_updated": "Última actualización: {date}"
+    "last_updated": "Última actualización: {date}",
+    "privacy1Title": "1. Información que recopilamos",
+    "privacy1Body": "Recopilamos la información que proporcionas directamente, como tu nombre, correo electrónico y preferencias de aprendizaje. También recopilamos datos de uso para mejorar tu experiencia.",
+    "privacy2Title": "2. Cómo usamos tu información",
+    "privacy2Body": "Usamos tu información para personalizar tu ruta de aprendizaje, seguir tu progreso, enviarte recordatorios y mejorar nuestras funciones de tutoría con IA. Nunca vendemos tus datos personales a terceros.",
+    "privacy3Title": "3. Almacenamiento y seguridad de datos",
+    "privacy3Body": "Tus datos se almacenan en servidores seguros. Usamos cifrado estándar en tránsito (TLS) y en reposo. Firebase Authentication gestiona tus credenciales de acceso.",
+    "privacy4Title": "4. Servicios de terceros",
+    "privacy4Body": "LexiLingo se integra con Google (Firebase, YouTube), que tienen sus propias políticas de privacidad. Usamos Sentry para supervisar errores; los informes pueden incluir información anonimizada del dispositivo.",
+    "privacy5Title": "5. Tus derechos",
+    "privacy5Body": "Puedes solicitar el acceso, la corrección o la eliminación permanente de tus datos personales en cualquier momento desde Ajustes → Cuenta → Eliminar cuenta. La eliminación es irreversible e inmediata.",
+    "privacy6Title": "6. Privacidad de los menores",
+    "privacy6Body": "LexiLingo no está dirigido a menores de 13 años. No recopilamos conscientemente información personal de menores de 13 años.",
+    "privacy7Title": "7. Contacto",
+    "privacy7Body": "Para consultas de privacidad, escríbenos a nhthang312@gmail.com. Responderemos en un plazo de 30 días.",
+    "terms1Title": "1. Aceptación",
+    "terms1Body": "Al usar LexiLingo, aceptas estos Términos. Si no estás de acuerdo, no uses la aplicación.",
+    "terms2Title": "2. Cuenta",
+    "terms2Body": "Eres responsable de la seguridad de tu cuenta y de toda la actividad que ocurra en ella. Avísanos de inmediato de cualquier uso no autorizado.",
+    "terms3Title": "3. Uso aceptable",
+    "terms3Body": "Aceptas no hacer un uso indebido de LexiLingo, incluidos los intentos de ingeniería inversa, el envío de información falsa o el uso de herramientas automatizadas para manipular puntuaciones o clasificaciones.",
+    "terms4Title": "4. Propiedad intelectual",
+    "terms4Body": "Todo el contenido, las funciones y las respuestas generadas por IA en LexiLingo son propiedad de LexiLingo o están licenciados a ella. No puedes reproducir ni distribuir el contenido sin permiso.",
+    "terms5Title": "5. Bienes virtuales",
+    "terms5Body": "El XP, las monedas y los objetos virtuales no tienen valor monetario real y no pueden transferirse ni canjearse por dinero. Nos reservamos el derecho de modificarlos o retirarlos en cualquier momento.",
+    "terms6Title": "6. Exención de responsabilidad",
+    "terms6Body": "LexiLingo se ofrece «tal cual». No garantizamos resultados de aprendizaje. Las respuestas de la IA se generan automáticamente y pueden contener errores: consulta siempre a un profesor cualificado para necesidades críticas.",
+    "terms7Title": "7. Cancelación",
+    "terms7Body": "Nos reservamos el derecho de suspender o cancelar las cuentas que incumplan estos Términos. Puedes eliminar tu cuenta en cualquier momento desde Ajustes.",
+    "terms8Title": "8. Legislación aplicable",
+    "terms8Body": "Estos Términos se rigen por las leyes de Vietnam."
   },
   "offlineSync": {
     "title": "Offline & Sync",
@@ -1478,5 +1709,26 @@
     "modeQuizSubtitle": "Test meaning and term — auto-graded",
     "modeFlashcardTitle": "Flashcards",
     "modeFlashcardSubtitle": "Flip cards and rate yourself"
+  },
+  "emptyState": {
+    "noCourses": "Aún no hay cursos",
+    "noCoursesDesc": "Comienza tu aprendizaje explorando nuestros cursos.",
+    "noVocabulary": "Sin vocabulario",
+    "noVocabularyDesc": "Añade palabras para crear tu biblioteca de vocabulario.",
+    "addWords": "Añadir palabras",
+    "allCaughtUp": "¡Estás al día! Vuelve más tarde.",
+    "noConversations": "Sin conversaciones",
+    "noConversationsDesc": "Empieza una conversación con nuestro tutor de IA.",
+    "startChat": "Iniciar conversación",
+    "noResults": "Sin resultados",
+    "noResultsForQuery": "No hay resultados para «{query}». Prueba con otro término.",
+    "noResultsDesc": "Sin resultados. Prueba con otro término.",
+    "noProgress": "Aún sin progreso",
+    "noProgressDesc": "Completa lecciones para seguir tu progreso.",
+    "noInternetDesc": "Comprueba tu red e inténtalo de nuevo.",
+    "serverErrorDesc": "Tenemos problemas de conexión. Inténtalo de nuevo."
+  },
+  "dailyChallenges": {
+    "rewardClaimed": "¡Recompensa reclamada!"
   }
 }

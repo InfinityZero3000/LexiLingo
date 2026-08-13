@@ -32,7 +32,21 @@
     "play": "놀다",
     "awesome": "엄청난!",
     "create": "만들기",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "tryAgain": "다시 시도",
+    "goToLogin": "로그인으로 이동",
+    "offline": "오프라인 상태입니다",
+    "filter": "필터",
+    "streak": "연속 학습",
+    "minimize": "최소화",
+    "maximize": "최대화",
+    "submit": "제출",
+    "copiedToClipboard": "클립보드에 복사했습니다!",
+    "tapAnywhereToContinue": "아무 곳이나 눌러 계속하기",
+    "dayCount": {
+      "one": "{}일",
+      "other": "{}일"
+    }
   },
   "auth": {
     "login": "로그인",
@@ -109,7 +123,13 @@
     "emailVerificationResendSuccess": "인증 이메일을 재전송했습니다. 받은 편지함을 확인하세요.",
     "emailVerificationResendError": "재전송에 실패했습니다. 다시 시도해 주세요.",
     "emailVerificationBackToLogin": "로그인으로 돌아가기",
-    "passwordMismatch": "비밀번호가 일치하지 않습니다"
+    "passwordMismatch": "비밀번호가 일치하지 않습니다",
+    "googleAccountHint": "이 계정이 Google 계정이라면 아래 Google을 누르세요.",
+    "errInvalidCredentials": "이메일 또는 비밀번호가 올바르지 않습니다",
+    "errAlreadyExists": "이미 사용 중인 이메일 또는 사용자 이름입니다",
+    "errValidation": "입력한 정보가 올바르지 않습니다. 다시 확인해 주세요.",
+    "errNetwork": "네트워크에 연결할 수 없습니다. 다시 시도해 주세요.",
+    "errRateLimited": "시도 횟수가 너무 많습니다. 잠시 기다려 주세요."
   },
   "home": {
     "greeting": "안녕하세요, {name}님!",
@@ -285,13 +305,32 @@
     "noCourses": "이 카테고리에는 아직 강좌가 없습니다.",
     "durationMin": "{count} 분",
     "totalLessonsCount": "{count} 레슨",
-    "userProgressPercent": "{percent}% 완료"
+    "userProgressPercent": "{percent}% 완료",
+    "pickCoursePrompt": "코스를 골라 오늘부터\n언어 학습을 시작해 보세요!",
+    "langAll": "전체",
+    "langEnglish": "영어",
+    "langSpanish": "스페인어",
+    "langVietnamese": "베트남어",
+    "myEnrollments": "내 수강 목록",
+    "showEnrolledOnly": "수강 중인 코스만 보기",
+    "sortBy": "정렬 기준",
+    "applyFilters": "필터 적용",
+    "coursesAvailablePlural": {
+      "one": "{}개 코스 이용 가능",
+      "other": "{}개 코스 이용 가능"
+    },
+    "courseCount": {
+      "one": "코스 {}개",
+      "other": "코스 {}개"
+    }
   },
   "lesson": {
     "sessionTitle": "학습",
     "loadingLesson": "레슨을 불러오는 중...",
     "noLessonData": "레슨 데이터가 없습니다",
     "noExerciseAvailable": "이용 가능한 문제가 없습니다",
+    "contentUnavailableTitle": "이 레슨은 준비 중입니다",
+    "contentUnavailableMessage": "콘텐츠가 아직 준비되지 않았습니다. 잠시 후 다시 확인해 주세요!",
     "exerciseTypeNotImplemented": "문제 유형 \"{type}\" 은 아직 지원되지 않습니다",
     "checkAnswer": "정답 확인",
     "continueButton": "계속",
@@ -448,7 +487,26 @@
     "playError": "재생 실패: {error}",
     "tapToRecord": "Tap to record",
     "tapToStop": "Tap to stop",
-    "assessmentFailed": "Pronunciation assessment failed. Please try again."
+    "assessmentFailed": "Pronunciation assessment failed. Please try again.",
+    "matchPercent": "일치도: {percent}%",
+    "ttsSpeedTooltip": "읽기 속도: {speed}\n탭하여 변경, 길게 눌러 옵션 보기",
+    "speedNormal": "보통",
+    "micPermissionSettings": "브라우저 또는 기기 설정에서 마이크 권한을 허용해 주세요.",
+    "recordingUnreadable": "녹음 데이터를 읽지 못했습니다. 다시 시도해 주세요.",
+    "recordingMissing": "녹음 파일을 받지 못했습니다. 다시 시도해 주세요.",
+    "recordingPathInvalid": "녹음 파일 경로가 올바르지 않습니다.",
+    "recordingBrowserUnreadable": "브라우저에서 녹음 파일을 읽지 못했습니다.",
+    "recordingNotFound": "녹음 파일을 찾을 수 없습니다.",
+    "speechNotRecognized": "음성을 인식하지 못했습니다.",
+    "speechUnclear": "잘 들리지 않았습니다. 다시 말해 주세요.",
+    "micPermissionRetry": "마이크 권한을 허용한 뒤 다시 시도해 주세요.",
+    "stopRecording": "녹음 중지",
+    "startRecording": "녹음 시작",
+    "tapToStartSpeaking": "눌러서 말하기 시작",
+    "recordingTapToStop": "녹음 중 — 눌러서 중지",
+    "recognizing": "음성을 인식하는 중...",
+    "notMatchedTryAgain": "아직 일치하지 않아요. 다시 시도해 보세요.",
+    "saidCorrectly": "정확하게 말했어요"
   },
   "chat": {
     "placeholder": "메시지를 입력하세요...",
@@ -470,7 +528,14 @@
     "processingVoice": "음성 처리 중...",
     "grammarCorrection": "문법 교정",
     "correctionRule": "규칙: {rule}",
-    "practiceThisAction": "연습하기"
+    "practiceThisAction": "연습하기",
+    "correctionSuggestion": "\"{incorrect}\"을(를) \"{correction}\"(으)로 고쳐야 해요. ",
+    "correctionExplanation": "{explanation} (지금 일어나는 동작에는 현재진행형을 사용합니다).",
+    "naturalSentencePraise": "아주 잘했어요! 문장이 매우 자연스럽습니다.",
+    "learningHintsCount": {
+      "one": "학습 힌트 {}개",
+      "other": "학습 힌트 {}개"
+    }
   },
   "achievements": {
     "title": "업적",
@@ -588,7 +653,10 @@
     "yourProficiency": "당신의 능력",
     "proficiencyUnlockHint": "처음 몇 번의 수업을 마친 후에 점수가 표시됩니다. 지금 학습을 시작하세요!",
     "proficiencyUnlockThreshold": "약 {count} 수업 후에 점수가 잠금 해제됩니다.",
-    "startLessons": "수업 시작"
+    "startLessons": "수업 시작",
+    "adminMobile": "관리자 모바일",
+    "switchToAdmin": "관리자 패널로 전환",
+    "adminMobileSubtitle": "LexiLingo 관리자 모바일"
   },
   "progress": {
     "title": "나의 진행 상황",
@@ -599,7 +667,13 @@
     "coursesCompletedStat": "완료한 코스",
     "lessonsCompletedStat": "완료한 레슨",
     "courseProgressTitle": "코스 진행 상황",
-    "lastActivity": "마지막 활동: {date}"
+    "lastActivity": "마지막 활동: {date}",
+    "weeklyOverview": "주간 요약",
+    "weeklySummary": "{xp} XP · 레슨 {lessons}개 · 7일 중 {days}일 학습",
+    "lessonsOfTotal": "레슨 {completed}/{total}개",
+    "streakMilestone": "🔥 연속 학습 기록 달성!",
+    "daysInARow": "일 연속",
+    "emptyChart": "학습을 시작하면 진행 그래프가 표시됩니다!"
   },
   "settings": {
     "title": "설정",
@@ -659,7 +733,11 @@
     "invite_message": "(Referral) 🎓 Join me on LexiLingo and learn English together! Use my referral code for 50 free gems.",
     "share_invite": "(Referral) Share Invite Link",
     "code_copied": "(Referral) Code copied!",
-    "referral_count": "(Referral) {count} friend(s) joined via your code"
+    "referral_count": "(Referral) {count} friend(s) joined via your code",
+    "delete_account": "계정 삭제",
+    "delete_account_confirm": "계정과 모든 학습 데이터가 영구적으로 삭제됩니다. 되돌릴 수 없습니다.",
+    "delete_account_confirm_btn": "영구 삭제",
+    "delete_account_error": "계정을 삭제하지 못했습니다. 다시 시도해 주세요."
   },
   "notifications": {
     "pageTitle": "알림",
@@ -677,7 +755,15 @@
     "removed": "알림이 삭제되었습니다.",
     "undo": "끄르다",
     "deleteAction": "삭제",
-    "tooltipBack": "뒤쪽에"
+    "tooltipBack": "뒤쪽에",
+    "reviewReminderTitle": "단어를 복습할 시간이에요",
+    "reviewChannelName": "일일 알림",
+    "reviewChannelDescription": "매일 단어를 복습하도록 알려 줍니다",
+    "reviewTitle": "단어 복습",
+    "reviewBodyDue": "오늘 복습할 단어가 {count}개 있습니다!",
+    "reviewBodyStreak": "단어를 복습할 시간입니다 — 연속 기록을 이어가세요!",
+    "reviewBodyDueNow": "복습할 때가 된 단어가 {count}개 있습니다!",
+    "reviewWaitingBody": "{count}개 단어가 복습을 기다리고 있습니다."
   },
   "errors": {
     "networkError": "네트워크 오류",
@@ -686,7 +772,8 @@
     "notFound": "찾을 수 없음",
     "unknown": "알 수 없는 오류가 발생했습니다.",
     "timeout": "요청 시간 초과",
-    "noInternet": "인터넷에 연결되어 있지 않음"
+    "noInternet": "인터넷에 연결되어 있지 않음",
+    "genericRetry": "오류가 발생했습니다. 다시 시도해 주세요."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -723,7 +810,14 @@
       "action": "Awesome!",
       "gemLabel": "Gem reward",
       "confirmation": "{gems} Gems were added to your wallet."
-    }
+    },
+    "activeBoosts": "활성 부스트",
+    "activated": "활성화되었습니다!",
+    "rankLessons": "{rank} · 레슨 {count}개",
+    "lessonsCompletedCount": "레슨 {count}개 완료",
+    "rankLabel": "랭크",
+    "rankUp": "랭크 업!",
+    "reachedRank": "{rank}에 도달했습니다"
   },
   "social": {
     "friends": "친구",
@@ -898,7 +992,8 @@
     "justNow": "방금",
     "minutesAgo": "{minutes}분 전",
     "hoursAgo": "{hours}시간 전",
-    "daysAgo": "{days}일 전"
+    "daysAgo": "{days}일 전",
+    "earlier": "이전"
   },
   "shop": {
     "title": "가게",
@@ -1113,7 +1208,8 @@
     "xpStat": "{count} XP",
     "sessionSummaryDone": "완료",
     "levelBadgeTooltip": "현재 레벨",
-    "srsReminderMessage": "복습할 단어가 {count}개 있어요 — 탭하여 복습하기"
+    "srsReminderMessage": "복습할 단어가 {count}개 있어요 — 탭하여 복습하기",
+    "levelMinutesLeft": "{level} • {minutes}분 남음"
   },
   "lexiChat": {
     "title": "렉시",
@@ -1168,7 +1264,58 @@
     "noVideos": "동영상을 찾을 수 없습니다.",
     "couldNotOpen": "YouTube를 열 수 없습니다. 복사된 URL: {url}",
     "urlCopied": "복사된 동영상 URL: {url}",
-    "dictionaryComingSoon": "사전 조회는 6단계에서 사용할 수 있습니다."
+    "dictionaryComingSoon": "사전 조회는 6단계에서 사용할 수 있습니다.",
+    "learnThroughVideo": "영상으로 영어 배우기",
+    "searchHint": "영어 학습 영상 검색...",
+    "catGeneral": "일반",
+    "catPronunciation": "발음",
+    "catAcademic": "학술",
+    "catNews": "뉴스",
+    "errServiceUnavailable": "영상 서비스를 일시적으로 사용할 수 없습니다.\n잠시 후 다시 시도해 주세요.",
+    "errQuotaExceeded": "오늘의 검색 한도에 도달했습니다.\n내일 다시 시도해 주세요.",
+    "errTimeout": "요청 시간이 너무 오래 걸렸습니다.\n연결을 확인한 뒤 다시 시도해 주세요.",
+    "errForbidden": "접근 권한이 없습니다.\n고객 지원에 문의해 주세요.",
+    "errLoadFailed": "영상을 불러오지 못했습니다.\n연결을 확인한 뒤 다시 시도해 주세요.",
+    "tabExplore": "탐색",
+    "tabRecommended": "추천",
+    "tabSaved": "저장됨",
+    "tabHistory": "기록",
+    "noRecommendations": "아직 추천이 없습니다",
+    "noRecommendationsDesc": "영상을 몇 개 시청하면 맞춤 콘텐츠를 추천해 드립니다.",
+    "noSavedVideos": "저장한 영상이 없습니다",
+    "noSavedVideosDesc": "영상의 북마크 아이콘을 눌러 나중에 볼 수 있게 저장하세요.",
+    "emptyHistory": "기록이 비어 있습니다",
+    "emptyHistoryDesc": "시청한 영상이 여기에 표시됩니다.",
+    "clearHistoryTitle": "시청 기록 삭제",
+    "clearHistoryConfirm": "시청 기록을 모두 삭제할까요?",
+    "guideTitle": "영어 학습 안내서",
+    "guideIntro": "영상 학습은 자연스러운 영어 반응 속도를 기르는 데 매우 효과적입니다. 다음 기능을 활용해 보세요:",
+    "guideTip1": "실시간 인터랙티브 자막",
+    "guideTip1Desc": "자막이 플레이어 아래에서 함께 흐릅니다. 단어를 누르면 바로 뜻을 볼 수 있습니다.",
+    "guideTip2": "한 번에 단어 저장",
+    "guideTip2Desc": "번역 패널에서 \"단어 저장\"만 누르면 바로 단어장에 추가됩니다.",
+    "guideTip3": "섀도잉 학습법",
+    "guideTip3Desc": "원어민의 문장마다 일시정지하고 소리 내어 따라 하면 발음, 억양, 강세가 좋아집니다.",
+    "guideTip4": "검색 기록 다시 보기",
+    "guideTip4Desc": "영상 재생 중에 해당 세션에서 찾아본 단어가 바로 아래에 표시되어 즉시 복습할 수 있습니다.",
+    "guideCta": "지금 학습 시작하기",
+    "subtitlePlaceholder": "실시간 자막이 여기에 표시됩니다...",
+    "saved": "저장됨",
+    "saveVideo": "영상 저장",
+    "removedFromSaved": "저장 목록에서 삭제했습니다",
+    "videoSaved": "영상을 저장했습니다",
+    "speed": "속도",
+    "wordCount": "단어 {count}개",
+    "lookedUpWords": "찾아본 단어",
+    "segmentCount": "{count}개 구간",
+    "tapWordToLookUp": "단어를 눌러 뜻 보기",
+    "noLookupsYet": "아직 찾아본 단어가 없습니다",
+    "tapWordInSubtitle": "자막의 단어를 누르면 뜻을 볼 수 있습니다",
+    "wordAlreadySaved": "\"{word}\"은(는) 이미 단어장에 있습니다.",
+    "wordSaved": "\"{word}\"을(를) 단어장에 저장했습니다.",
+    "lookingUp": "찾는 중…",
+    "sentenceInVideo": "영상 속 문장",
+    "saving": "저장 중..."
   },
   "podcast": {
     "pageTitle": "팟캐스트",
@@ -1190,7 +1337,10 @@
     "showMore": "더 보기",
     "playbackSpeed": "재생 속도",
     "noTranscript": "사용 가능한 스크립트가 없습니다.",
-    "generateTranscript": "성적 증명서 생성"
+    "generateTranscript": "성적 증명서 생성",
+    "episodeCount": "{count}개 에피소드",
+    "rewind15": "15초 뒤로",
+    "forward15": "15초 앞으로"
   },
   "games": {
     "levelUpTitle": "레벨 업!",
@@ -1216,7 +1366,22 @@
     "continueJourney": "학습 계속하기",
     "loadFailed": "Unable to load this game. Please try again.",
     "emptyGame": "This game has no playable content right now.",
-    "retryLoad": "Try again"
+    "retryLoad": "Try again",
+    "exitTitle": "게임을 종료할까요?",
+    "exitXpByQuestions": "XP는 완료한 문제 수에 따라 계산됩니다.",
+    "exitXpByPairs": "XP는 올바르게 맞춘 짝의 수에 따라 계산됩니다.",
+    "exitXpByWords": "XP는 완료한 단어 수에 따라 계산됩니다.",
+    "exitNoXpForWord": "이 단어를 끝내지 않으면 XP를 받을 수 없습니다.",
+    "keepPlaying": "계속하기",
+    "exit": "나가기",
+    "luckyCloverActive": "행운의 클로버 활성화",
+    "shieldActive": "실드 활성화",
+    "resultTitle": "{game} — 결과",
+    "dailyXpToday": "오늘 {current}/{cap} XP",
+    "weeklyXp": "이번 주 {xp}",
+    "percentToNextLevel": "다음 레벨까지 {percent}%",
+    "fillBlankChallenge": "빈칸 채우기 5문제 완료하기",
+    "completeTodayChallenge": "오늘의 챌린지 완료하기"
   },
   "learning": {
     "checkAnswer": "답변 확인",
@@ -1229,7 +1394,8 @@
     "practiceAgain": "다시 연습하세요",
     "startLesson": "레슨 시작",
     "correct": "옳은!",
-    "notQuite": "좀 빠지는"
+    "notQuite": "좀 빠지는",
+    "loadingRoadmap": "로드맵을 불러오는 중…"
   },
   "books": {
     "library": "도서 도서관",
@@ -1244,7 +1410,10 @@
     "readerSettings": "리더 설정",
     "pageProgress": "{total} 중 {current} 페이지",
     "searchPlaceholder": "제목 또는 저자로 검색...",
-    "savedBooks": "저장한 책"
+    "savedBooks": "저장한 책",
+    "chapterCountShort": "{count}장",
+    "wordCountK": "단어 {count}k",
+    "quizScore": "{score}/{total} 정답"
   },
   "news": {
     "title": "영어 뉴스",
@@ -1256,7 +1425,8 @@
     "takeQuiz": "이해력 퀴즈를 풀어보세요",
     "dictionaryComingSoon": "사전 조회는 6단계에서 사용할 수 있습니다.",
     "saveWord": "단어 저장",
-    "closeButton": "닫다"
+    "closeButton": "닫다",
+    "minRead": "{count}분 분량"
   },
   "vocabulary": {
     "library": "어휘 도서관",
@@ -1323,12 +1493,73 @@
     "tabWords": "Words",
     "tabTopics": "Topic Flashcards",
     "startLearning": "Start",
-    "audioQuestionHint": "Listen and guess the word"
+    "audioQuestionHint": "Listen and guess the word",
+    "selectOneWord": "저장할 단어를 하나만 선택해 주세요.",
+    "saveWordFailed": "단어를 단어장에 저장하지 못했습니다.",
+    "saveToVocabulary": "단어장에 저장",
+    "noSpeakingDue": "지금 복습할 말하기 연습이 없습니다.",
+    "itemNumber": "{current}번",
+    "totalCount": "총 {total}개",
+    "meaning": "뜻",
+    "wordOfTheDay": "오늘의 단어",
+    "noWordAvailable": "표시할 단어가 없습니다",
+    "addedToFlashcards": "\"{word}\"을(를) 플래시카드에 추가했습니다!",
+    "reviewed": "복습함",
+    "remaining": "남음",
+    "wordCount": "단어 {count}개",
+    "tagIelts": "IELTS",
+    "tagAcademic": "학술",
+    "tagHealth": "건강",
+    "tagFood": "음식",
+    "tagSports": "스포츠",
+    "tagGovernment": "정부",
+    "tagEconomics": "경제",
+    "tagEducation": "교육",
+    "tagLesson": "레슨",
+    "tagPhilosophy": "철학",
+    "tagBasic200": "기본 단어",
+    "tagNature": "자연",
+    "tagCore": "핵심",
+    "tagAuto": "자동 저장",
+    "tagCrawl": "수집됨",
+    "tagSociety": "사회",
+    "tagSeed": "시드",
+    "tagHistory": "역사"
   },
   "legal": {
     "privacy_title": "개인정보 처리방침",
     "terms_title": "이용약관",
-    "last_updated": "최종 업데이트: {date}"
+    "last_updated": "최종 업데이트: {date}",
+    "privacy1Title": "1. 수집하는 정보",
+    "privacy1Body": "이름, 이메일 주소, 학습 환경설정 등 사용자가 직접 제공하는 정보를 수집합니다. 학습 경험 개선을 위해 사용 데이터도 수집합니다.",
+    "privacy2Title": "2. 정보 이용 방식",
+    "privacy2Body": "학습 경로 개인화, 진행 상황 추적, 학습 알림 발송, AI 튜터 기능 개선을 위해 정보를 사용합니다. 개인 데이터를 제3자에게 판매하지 않습니다.",
+    "privacy3Title": "3. 데이터 저장 및 보안",
+    "privacy3Body": "데이터는 보안 서버에 저장됩니다. 전송 구간(TLS)과 저장 시 업계 표준 암호화를 사용합니다. 로그인 자격 증명은 Firebase Authentication이 관리합니다.",
+    "privacy4Title": "4. 제3자 서비스",
+    "privacy4Body": "LexiLingo는 자체 개인정보처리방침을 가진 Google(Firebase, YouTube)과 연동됩니다. 오류 모니터링에는 Sentry를 사용하며, 오류 보고서에는 익명화된 기기 정보가 포함될 수 있습니다.",
+    "privacy5Title": "5. 사용자의 권리",
+    "privacy5Body": "설정 → 계정 → 계정 삭제에서 언제든지 개인 데이터의 열람, 정정, 영구 삭제를 요청할 수 있습니다. 삭제는 되돌릴 수 없으며 즉시 처리됩니다.",
+    "privacy6Title": "6. 아동의 개인정보",
+    "privacy6Body": "LexiLingo는 만 13세 미만 아동을 대상으로 하지 않으며, 만 13세 미만 아동의 개인정보를 고의로 수집하지 않습니다.",
+    "privacy7Title": "7. 문의",
+    "privacy7Body": "개인정보 관련 문의는 nhthang312@gmail.com으로 연락해 주세요. 30일 이내에 답변드립니다.",
+    "terms1Title": "1. 약관 동의",
+    "terms1Body": "LexiLingo를 사용하면 본 약관에 동의하는 것으로 간주됩니다. 동의하지 않는 경우 앱을 사용하지 마세요.",
+    "terms2Title": "2. 계정",
+    "terms2Body": "계정 보안과 계정에서 발생하는 모든 활동에 대한 책임은 사용자에게 있습니다. 무단 사용을 발견하면 즉시 알려 주세요.",
+    "terms3Title": "3. 허용되는 사용",
+    "terms3Body": "앱 역설계 시도, 허위 정보 제출, 자동화 도구를 이용한 학습 점수·순위 조작 등 LexiLingo를 부정하게 사용하지 않을 것에 동의합니다.",
+    "terms4Title": "4. 지식재산권",
+    "terms4Body": "LexiLingo의 모든 콘텐츠, 기능, AI 생성 응답은 LexiLingo가 소유하거나 라이선스를 보유합니다. 허가 없이 복제하거나 배포할 수 없습니다.",
+    "terms5Title": "5. 가상 재화",
+    "terms5Body": "XP, 코인, 가상 아이템은 실제 금전적 가치가 없으며 양도하거나 현금으로 교환할 수 없습니다. 당사는 언제든지 가상 재화를 변경하거나 중단할 권리를 보유합니다.",
+    "terms6Title": "6. 면책 조항",
+    "terms6Body": "LexiLingo는 \"있는 그대로\" 제공됩니다. 학습 결과를 보장하지 않습니다. AI 응답은 자동 생성되어 오류가 있을 수 있으므로 중요한 경우 반드시 자격을 갖춘 어학 교사와 상담하세요.",
+    "terms7Title": "7. 이용 종료",
+    "terms7Body": "본 약관을 위반하는 계정을 정지하거나 종료할 권리를 보유합니다. 설정에서 언제든지 계정을 삭제할 수 있습니다.",
+    "terms8Title": "8. 준거법",
+    "terms8Body": "본 약관은 베트남 법률의 적용을 받습니다."
   },
   "offlineSync": {
     "title": "Offline & Sync",
@@ -1478,5 +1709,26 @@
     "modeQuizSubtitle": "Test meaning and term — auto-graded",
     "modeFlashcardTitle": "Flashcards",
     "modeFlashcardSubtitle": "Flip cards and rate yourself"
+  },
+  "emptyState": {
+    "noCourses": "아직 코스가 없습니다",
+    "noCoursesDesc": "코스를 둘러보며 학습을 시작해 보세요.",
+    "noVocabulary": "단어가 없습니다",
+    "noVocabularyDesc": "단어를 추가해 나만의 단어장을 만들어 보세요.",
+    "addWords": "단어 추가",
+    "allCaughtUp": "모두 확인했습니다! 나중에 다시 확인해 보세요.",
+    "noConversations": "대화가 없습니다",
+    "noConversationsDesc": "AI 튜터와 대화를 시작해 보세요.",
+    "startChat": "대화 시작",
+    "noResults": "결과를 찾을 수 없습니다",
+    "noResultsForQuery": "\"{query}\"에 대한 결과가 없습니다. 다른 검색어로 시도해 보세요.",
+    "noResultsDesc": "결과가 없습니다. 다른 검색어로 시도해 보세요.",
+    "noProgress": "아직 진행 기록이 없습니다",
+    "noProgressDesc": "레슨을 완료하면 학습 진행 상황이 기록됩니다.",
+    "noInternetDesc": "네트워크를 확인한 뒤 다시 시도해 주세요.",
+    "serverErrorDesc": "연결에 문제가 있습니다. 다시 시도해 주세요."
+  },
+  "dailyChallenges": {
+    "rewardClaimed": "보상을 받았습니다!"
   }
 }

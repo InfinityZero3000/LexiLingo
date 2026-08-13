@@ -458,7 +458,7 @@ class _TopicListItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${story.estimatedMinutes} mins',
+                          'course.durationMin'.tr(namedArgs: {'count': '${story.estimatedMinutes}'}),
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColorRoles.textMuted(isDark),

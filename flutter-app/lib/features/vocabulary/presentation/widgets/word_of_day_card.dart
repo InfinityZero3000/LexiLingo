@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Compact home-screen card for the Word of the Day.
 /// Navigates to the full word screen on tap.
@@ -83,7 +84,7 @@ class _WordCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            'Word of the Day',
+                            'vocabulary.wordOfTheDay'.tr(),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -95,6 +96,7 @@ class _WordCard extends StatelessWidget {
                           CefrBadge(
                             level: word.difficultyLevel,
                             size: CefrBadgeSize.small,
+                            onColored: true,
                           ),
                         ],
                       ),

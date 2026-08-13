@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Full-screen Rank-up celebration inspired by LevelUpDialog.
 class RankUpDialog extends StatefulWidget {
@@ -309,7 +310,7 @@ class _HeaderCopy extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Rank Up!',
+          'gamification.rankUp'.tr(),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.displayMedium?.copyWith(
             color: palette.primary,
@@ -326,7 +327,7 @@ class _HeaderCopy extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'You have reached $rankName',
+          'gamification.reachedRank'.tr(namedArgs: {'rank': rankName}),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             color: palette.onSurfaceVariant,

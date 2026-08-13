@@ -345,7 +345,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${article.readingTimeMin} min',
+                                'course.durationMin'.tr(namedArgs: {'count': '${article.readingTimeMin}'}),
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11,

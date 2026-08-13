@@ -72,7 +72,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                   _buildStatItem(
                     icon: Icons.local_fire_department,
                     value: '${roadmap.currentStreak}',
-                    label: 'Streak',
+                    label: 'common.streak'.tr(),
                     iconColor: AppColors.orange,
                   ),
                   _buildStatItem(
@@ -85,14 +85,14 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     icon: Icons.check_circle,
                     value:
                         '${roadmap.completedLessons}/${roadmap.totalLessons}',
-                    label: 'Lessons',
+                    label: 'course.lessons'.tr(),
                     iconColor: AppColors.greenSuccessBright,
                   ),
                   _buildStatItem(
                     icon: Icons.pie_chart,
                     value:
                         '${roadmap.completionPercentage.toStringAsFixed(0)}%',
-                    label: 'Progress',
+                    label: 'profile.progress'.tr(),
                     iconColor: primaryAccent,
                   ),
                 ],

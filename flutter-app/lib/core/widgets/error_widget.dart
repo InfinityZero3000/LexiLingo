@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Types of errors that can be displayed
 enum ErrorType { network, server, timeout, unauthorized, notFound, unknown }
@@ -155,7 +156,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               icon: const Icon(Icons.refresh),
               color: _iconColor,
               onPressed: onRetry,
-              tooltip: 'Retry',
+              tooltip: 'common.retry'.tr(),
             ),
         ],
       ),
@@ -200,7 +201,7 @@ class ErrorDisplayWidget extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+                label: Text('common.tryAgain'.tr()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _iconColor,
                   foregroundColor: Colors.white,
@@ -220,7 +221,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                     context,
                   ).pushNamedAndRemoveUntil('/login', (route) => false);
                 },
-                child: const Text('Go to Login'),
+                child: Text('common.goToLogin'.tr()),
               ),
             ],
           ],
@@ -250,7 +251,7 @@ class OfflineBanner extends StatelessWidget {
           ),
           SizedBox(width: 8),
           Text(
-            'You are offline',
+            'common.offline'.tr(),
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
           ),
         ],

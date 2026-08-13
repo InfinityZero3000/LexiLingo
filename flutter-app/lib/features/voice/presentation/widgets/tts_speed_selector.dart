@@ -194,7 +194,7 @@ class TtsSpeedButton extends StatelessWidget {
       builder: (context, settings, child) {
         return Tooltip(
           message:
-              'TTS Speed: ${settings.speedLabel}\nTap to change, long-press for options',
+              'voice.ttsSpeedTooltip'.tr(namedArgs: {'speed': settings.speedLabel}),
           child: InkWell(
             onTap: () => settings.cycleSpeed(),
             onLongPress: () => _showSpeedBottomSheet(context, settings),

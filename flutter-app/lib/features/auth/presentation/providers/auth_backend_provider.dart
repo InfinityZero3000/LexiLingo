@@ -6,6 +6,7 @@ import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/login_with_google_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/register_usecase.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Auth provider using backend API with proper error handling
 class AuthBackendProvider extends ChangeNotifier {
@@ -184,16 +185,16 @@ class AuthBackendProvider extends ChangeNotifier {
     if (error == null) return '';
 
     if (error.toLowerCase().contains('invalid credentials')) {
-      return 'Email hoặc mật khẩu không đúng';
+      return 'auth.errInvalidCredentials'.tr();
     } else if (error.toLowerCase().contains('already exists')) {
-      return 'Email hoặc username đã được sử dụng';
+      return 'auth.errAlreadyExists'.tr();
     } else if (error.toLowerCase().contains('validation')) {
-      return 'Thông tin không hợp lệ. Vui lòng kiểm tra lại';
+      return 'auth.errValidation'.tr();
     } else if (error.toLowerCase().contains('network') ||
         error.toLowerCase().contains('connection')) {
-      return 'Không có kết nối mạng. Vui lòng thử lại';
+      return 'auth.errNetwork'.tr();
     } else if (error.toLowerCase().contains('rate limit')) {
-      return 'Bạn đã thử quá nhiều lần. Vui lòng đợi một chút';
+      return 'auth.errRateLimited'.tr();
     }
 
     return error;

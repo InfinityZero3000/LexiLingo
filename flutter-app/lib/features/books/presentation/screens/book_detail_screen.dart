@@ -444,13 +444,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       if (book.chapterCount > 0)
         _StatItem(
           icon: Icons.format_list_numbered_rounded,
-          label: '${book.chapterCount} ch.',
+          label: 'books.chapterCountShort'.tr(namedArgs: {'count': '${book.chapterCount}'}),
           isDark: isDark,
         ),
       if (book.wordCount > 0)
         _StatItem(
           icon: Icons.text_fields_rounded,
-          label: '${(book.wordCount / 1000).toStringAsFixed(0)}k words',
+          label: 'books.wordCountK'.tr(namedArgs: {'count': (book.wordCount / 1000).toStringAsFixed(0)}),
           isDark: isDark,
         ),
       _StatItem(

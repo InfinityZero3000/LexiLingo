@@ -519,7 +519,7 @@ class _SearchResultTile extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '${podcast.episodeCount} episodes',
+                        'podcast.episodeCount'.tr(namedArgs: {'count': '${podcast.episodeCount}'}),
                         style: TextStyle(
                           fontSize: 11,
                           color: isDark ? Colors.white38 : AppColors.textGrey,

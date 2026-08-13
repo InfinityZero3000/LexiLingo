@@ -112,7 +112,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
         centerTitle: true,
         actions: [
           IconButton(
-            tooltip: 'Speaking practice',
+            tooltip: 'lesson.exercise.speakingTitle'.tr(),
             icon: const Icon(Icons.mic_none_rounded),
             onPressed: _openSpeakingPractice,
           ),

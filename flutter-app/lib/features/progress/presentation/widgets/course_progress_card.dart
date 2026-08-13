@@ -72,11 +72,11 @@ class CourseProgressCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '${courseProgress.progressPercentage.toStringAsFixed(1)}% Complete',
+                        'course.userProgressPercent'.tr(namedArgs: {'percent': courseProgress.progressPercentage.toStringAsFixed(1)}),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       Text(
-                        '${courseProgress.lessonsCompleted}/${courseProgress.totalLessons} lessons',
+                        'progress.lessonsOfTotal'.tr(namedArgs: {'completed': '${courseProgress.lessonsCompleted}', 'total': '${courseProgress.totalLessons}'}),
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

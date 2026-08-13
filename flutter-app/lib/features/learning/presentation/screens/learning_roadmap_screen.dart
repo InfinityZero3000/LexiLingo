@@ -173,7 +173,7 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
         child: Consumer<LearningProvider>(
           builder: (context, provider, _) {
             if (provider.isLoadingRoadmap) {
-              return const LoadingScreen(message: 'Loading roadmap…');
+              return LoadingScreen(message: 'learning.loadingRoadmap'.tr());
             }
             if (provider.roadmapError != null) {
               return _ErrorView(
@@ -881,6 +881,12 @@ class _EmptyView extends StatelessWidget {
           Text(
             'learning.checkBackLater'.tr(),
             style: TextStyle(color: AppColors.grey500),
+          ),
+          const SizedBox(height: 24),
+          // Without the roadmap header there is no other way out of here.
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('common.back'.tr()),
           ),
         ],
       ),

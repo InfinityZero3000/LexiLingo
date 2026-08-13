@@ -32,18 +32,13 @@ class VocabularyItemEntity {
     required this.createdAt,
   });
 
-  /// Get localized translation dynamically
+  /// Get localized translation dynamically.
+  /// Never falls back to Vietnamese — showing `vi` to a non-Vietnamese user is
+  /// noise, not a translation. Null means "no translation for this locale".
   String? getTranslation(String localeCode) {
-    if (translation == null) return null;
-    // Attempt exact match
-    if (translation!.containsKey(localeCode)) {
-      return translation![localeCode] as String?;
-    }
-    // Fallbacks
-    if (translation!.containsKey('en')) {
-      return translation!['en'] as String?;
-    }
-    return vietnameseTranslation;
+    final text =
+        translation?[localeCode] as String? ?? translation?['en'] as String?;
+    return (text == null || text.isEmpty) ? null : text;
   }
 
   /// Get Vietnamese translation

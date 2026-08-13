@@ -244,16 +244,16 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Thoát game?'),
-        content: const Text('XP sẽ được tính dựa trên số từ đã hoàn thành.'),
+        title: Text('games.exitTitle'.tr()),
+        content: Text('games.exitXpByWords'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Tiếp tục chơi'),
+            child: Text('games.keepPlaying'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Thoát'),
+            child: Text('games.exit'.tr()),
           ),
         ],
       ),

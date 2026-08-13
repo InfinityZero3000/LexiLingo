@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Adds a "Save Word" item to text selection context menu.
 class QuickSaveSelectionArea extends StatefulWidget {
@@ -41,7 +42,7 @@ class _QuickSaveSelectionAreaState extends State<QuickSaveSelectionArea> {
 
         buttonItems.add(
           ContextMenuButtonItem(
-            label: 'Save Word',
+            label: 'vocabulary.saveWord'.tr(),
             onPressed: () {
               final word = _extractCandidateWord(
                 _selectedText,
@@ -53,8 +54,8 @@ class _QuickSaveSelectionAreaState extends State<QuickSaveSelectionArea> {
               if (word == null) {
                 final messenger = ScaffoldMessenger.maybeOf(hostContext);
                 messenger?.showSnackBar(
-                  const SnackBar(
-                    content: Text('Please select exactly one word to save.'),
+                  SnackBar(
+                    content: Text('vocabulary.selectOneWord'.tr()),
                     behavior: SnackBarBehavior.floating,
                     backgroundColor: AppColors.orange,
                   ),

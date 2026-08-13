@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:lexilingo_app/core/services/app_navigation_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class NotificationService {
   static const int _dailyReminderId = 0;
@@ -107,18 +108,18 @@ class NotificationService {
   Future<void> scheduleDailyReminder(TimeOfDay time, {int dueCount = 0}) async {
     await ensureInitialized();
     final body = dueCount > 0
-        ? 'Bạn có $dueCount từ cần ôn tập hôm nay!'
-        : 'Đã đến giờ ôn từ vựng – giữ vững streak của bạn!';
+        ? 'notifications.reviewBodyDue'.tr(namedArgs: {'count': '$dueCount'})
+        : 'notifications.reviewBodyStreak'.tr();
     await flutterLocalNotificationsPlugin.zonedSchedule(
       _dailyReminderId,
-      'Ôn tập từ vựng',
+      'notifications.reviewTitle'.tr(),
       body,
       _nextInstanceOfTime(time.hour, time.minute),
-      const NotificationDetails(
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder_channel',
-          'Nhắc nhở hàng ngày',
-          channelDescription: 'Nhắc bạn ôn tập từ vựng mỗi ngày',
+          'notifications.reviewChannelName'.tr(),
+          channelDescription: 'notifications.reviewChannelDescription'.tr(),
           importance: Importance.high,
         ),
         iOS: DarwinNotificationDetails(
@@ -135,13 +136,13 @@ class NotificationService {
     await ensureInitialized();
     await flutterLocalNotificationsPlugin.show(
       _dailyReminderId + 1,
-      'Ôn tập từ vựng',
-      'Bạn có $dueCount từ đến hạn ôn tập!',
-      const NotificationDetails(
+      'notifications.reviewTitle'.tr(),
+      'notifications.reviewBodyDueNow'.tr(namedArgs: {'count': '$dueCount'}),
+      NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_reminder_channel',
-          'Nhắc nhở hàng ngày',
-          channelDescription: 'Nhắc bạn ôn tập từ vựng mỗi ngày',
+          'notifications.reviewChannelName'.tr(),
+          channelDescription: 'notifications.reviewChannelDescription'.tr(),
           importance: Importance.high,
         ),
         iOS: DarwinNotificationDetails(

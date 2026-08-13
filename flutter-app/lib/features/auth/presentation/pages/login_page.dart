@@ -458,7 +458,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'If this account uses Google, tap Google below.',
+                        'auth.googleAccountHint'.tr(),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: isDark

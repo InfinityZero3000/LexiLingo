@@ -70,10 +70,10 @@ void main() {
       ),
     );
 
-    await tester.tap(find.byTooltip('Save to Vocabulary'));
+    await tester.tap(find.byTooltip('vocabulary.saveToVocabulary'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Save Word'), findsOneWidget);
+    expect(find.text('vocabulary.saveWord'), findsOneWidget);
     expect(find.text('resilient'), findsWidgets);
   });
 }

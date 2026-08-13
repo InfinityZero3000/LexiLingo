@@ -422,7 +422,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                   ),
                 ),
                 Text(
-                  '${widget.story.difficultyLevel.shortName} • ${widget.story.estimatedMinutes}m left',
+                  'topicChat.levelMinutesLeft'.tr(namedArgs: {'level': widget.story.difficultyLevel.shortName, 'minutes': '${widget.story.estimatedMinutes}'}),
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColorRoles.textSecondary(isDark),
@@ -1355,7 +1355,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
                     ],
                   ),
                   trailing: IconButton(
-                    tooltip: 'Save to Vocabulary',
+                    tooltip: 'vocabulary.saveToVocabulary'.tr(),
                     icon: const Icon(Icons.bookmark_add_outlined),
                     onPressed: () {
                       trackProductEvent(

@@ -32,7 +32,21 @@
     "play": "玩",
     "awesome": "惊人的！",
     "create": "创建",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "tryAgain": "重试",
+    "goToLogin": "前往登录",
+    "offline": "您已离线",
+    "filter": "筛选",
+    "streak": "连续天数",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "submit": "提交",
+    "copiedToClipboard": "已复制到剪贴板！",
+    "tapAnywhereToContinue": "点击任意位置继续",
+    "dayCount": {
+      "one": "{} 天",
+      "other": "{} 天"
+    }
   },
   "auth": {
     "login": "登录",
@@ -109,7 +123,13 @@
     "emailVerificationResendSuccess": "验证邮件已重新发送，请查看收件箱。",
     "emailVerificationResendError": "重新发送失败，请重试。",
     "emailVerificationBackToLogin": "返回登录",
-    "passwordMismatch": "密码不一致"
+    "passwordMismatch": "密码不一致",
+    "googleAccountHint": "如果该账号使用 Google 登录，请点击下方的 Google。",
+    "errInvalidCredentials": "邮箱或密码不正确",
+    "errAlreadyExists": "该邮箱或用户名已被使用",
+    "errValidation": "信息无效，请重新检查。",
+    "errNetwork": "无网络连接，请重试。",
+    "errRateLimited": "尝试次数过多，请稍候再试。"
   },
   "home": {
     "greeting": "你好，{name}！",
@@ -285,13 +305,32 @@
     "noCourses": "该类别还没有课程",
     "durationMin": "{count} 分钟",
     "totalLessonsCount": "{count} 课程",
-    "userProgressPercent": "{percent}% 完成"
+    "userProgressPercent": "{percent}% 完成",
+    "pickCoursePrompt": "选择一门课程，\n今天就开启你的语言之旅！",
+    "langAll": "全部",
+    "langEnglish": "英语",
+    "langSpanish": "西班牙语",
+    "langVietnamese": "越南语",
+    "myEnrollments": "我的课程",
+    "showEnrolledOnly": "仅显示已报名课程",
+    "sortBy": "排序方式",
+    "applyFilters": "应用筛选",
+    "coursesAvailablePlural": {
+      "one": "共 {} 门课程",
+      "other": "共 {} 门课程"
+    },
+    "courseCount": {
+      "one": "{} 门课程",
+      "other": "{} 门课程"
+    }
   },
   "lesson": {
     "sessionTitle": "学习",
     "loadingLesson": "正在加载课程...",
     "noLessonData": "暂无课程数据",
     "noExerciseAvailable": "暂无可用练习",
+    "contentUnavailableTitle": "本课程正在准备中",
+    "contentUnavailableMessage": "内容尚未就绪，请稍后再来查看！",
     "exerciseTypeNotImplemented": "练习类型 \"{type}\" 尚未支持",
     "checkAnswer": "检查答案",
     "continueButton": "继续",
@@ -448,7 +487,26 @@
     "playError": "播放失败：{error}",
     "tapToRecord": "Tap to record",
     "tapToStop": "Tap to stop",
-    "assessmentFailed": "Pronunciation assessment failed. Please try again."
+    "assessmentFailed": "Pronunciation assessment failed. Please try again.",
+    "matchPercent": "匹配度：{percent}%",
+    "ttsSpeedTooltip": "朗读速度：{speed}\n点击切换，长按查看选项",
+    "speedNormal": "正常",
+    "micPermissionSettings": "请在浏览器或设备设置中授予麦克风权限。",
+    "recordingUnreadable": "无法读取录音数据，请重试。",
+    "recordingMissing": "未收到录音文件，请重试。",
+    "recordingPathInvalid": "录音路径无效。",
+    "recordingBrowserUnreadable": "无法从浏览器读取录音文件。",
+    "recordingNotFound": "找不到录音文件。",
+    "speechNotRecognized": "无法识别语音。",
+    "speechUnclear": "没有听清，请再说一次。",
+    "micPermissionRetry": "请授予麦克风权限后重试。",
+    "stopRecording": "停止录音",
+    "startRecording": "开始录音",
+    "tapToStartSpeaking": "点击开始说话",
+    "recordingTapToStop": "录音中 — 点击停止",
+    "recognizing": "正在识别语音…",
+    "notMatchedTryAgain": "还不匹配，请再试一次",
+    "saidCorrectly": "你说对了"
   },
   "chat": {
     "placeholder": "输入消息...",
@@ -470,7 +528,14 @@
     "processingVoice": "正在处理您的声音...",
     "grammarCorrection": "语法纠正",
     "correctionRule": "规则：{rule}",
-    "practiceThisAction": "练习"
+    "practiceThisAction": "练习",
+    "correctionSuggestion": "你需要把“{incorrect}”改成“{correction}”。",
+    "correctionExplanation": "{explanation}（正在发生的动作用现在进行时）。",
+    "naturalSentencePraise": "做得好！你的句子非常自然。",
+    "learningHintsCount": {
+      "one": "{} 条学习提示",
+      "other": "{} 条学习提示"
+    }
   },
   "achievements": {
     "title": "成就",
@@ -588,7 +653,10 @@
     "yourProficiency": "你的熟练程度",
     "proficiencyUnlockHint": "您的分数将在您完成前几节课程后显示。现在就开始学习吧！",
     "proficiencyUnlockThreshold": "您的分数在大约 {count} 课程后解锁",
-    "startLessons": "开始上课"
+    "startLessons": "开始上课",
+    "adminMobile": "移动端管理",
+    "switchToAdmin": "切换到管理后台",
+    "adminMobileSubtitle": "LexiLingo 移动端管理"
   },
   "progress": {
     "title": "我的进度",
@@ -599,7 +667,13 @@
     "coursesCompletedStat": "已完成课程",
     "lessonsCompletedStat": "已完成课程单元",
     "courseProgressTitle": "课程进度",
-    "lastActivity": "最后活动：{date}"
+    "lastActivity": "最后活动：{date}",
+    "weeklyOverview": "本周概览",
+    "weeklySummary": "{xp} XP · {lessons} 节课 · 7 天中活跃 {days} 天",
+    "lessonsOfTotal": "{completed}/{total} 节课",
+    "streakMilestone": "🔥 连续学习里程碑！",
+    "daysInARow": "天连续",
+    "emptyChart": "开始学习后即可看到进度图表！"
   },
   "settings": {
     "title": "设置",
@@ -659,7 +733,11 @@
     "invite_message": "(Referral) 🎓 Join me on LexiLingo and learn English together! Use my referral code for 50 free gems.",
     "share_invite": "(Referral) Share Invite Link",
     "code_copied": "(Referral) Code copied!",
-    "referral_count": "(Referral) {count} friend(s) joined via your code"
+    "referral_count": "(Referral) {count} friend(s) joined via your code",
+    "delete_account": "删除账户",
+    "delete_account_confirm": "此操作将永久删除你的账户和全部学习数据，且无法撤销。",
+    "delete_account_confirm_btn": "永久删除",
+    "delete_account_error": "无法删除账户，请重试。"
   },
   "notifications": {
     "pageTitle": "通知",
@@ -677,7 +755,15 @@
     "removed": "通知已删除",
     "undo": "撤消",
     "deleteAction": "删除",
-    "tooltipBack": "后退"
+    "tooltipBack": "后退",
+    "reviewReminderTitle": "该复习词汇了",
+    "reviewChannelName": "每日提醒",
+    "reviewChannelDescription": "每天提醒你复习词汇",
+    "reviewTitle": "词汇复习",
+    "reviewBodyDue": "今天有 {count} 个单词需要复习！",
+    "reviewBodyStreak": "该复习词汇了，保持你的连续记录！",
+    "reviewBodyDueNow": "有 {count} 个单词到复习时间了！",
+    "reviewWaitingBody": "有 {count} 个单词等你复习。"
   },
   "errors": {
     "networkError": "网络错误",
@@ -686,7 +772,8 @@
     "notFound": "未找到",
     "unknown": "发生未知错误",
     "timeout": "请求超时",
-    "noInternet": "没有网络连接"
+    "noInternet": "没有网络连接",
+    "genericRetry": "出错了，请重试。"
   },
   "gamification": {
     "xpEarned": "+{xp} 经验值",
@@ -723,7 +810,14 @@
       "action": "Awesome!",
       "gemLabel": "Gem reward",
       "confirmation": "{gems} Gems were added to your wallet."
-    }
+    },
+    "activeBoosts": "生效中的加成",
+    "activated": "已激活！",
+    "rankLessons": "{rank} · {count} 节课",
+    "lessonsCompletedCount": "已完成 {count} 节课",
+    "rankLabel": "段位",
+    "rankUp": "段位提升！",
+    "reachedRank": "你已达到 {rank}"
   },
   "social": {
     "friends": "好友",
@@ -898,7 +992,8 @@
     "justNow": "刚刚",
     "minutesAgo": "{minutes} 分钟前",
     "hoursAgo": "{hours} 小时前",
-    "daysAgo": "{days} 天前"
+    "daysAgo": "{days} 天前",
+    "earlier": "更早"
   },
   "shop": {
     "title": "店铺",
@@ -1113,7 +1208,8 @@
     "xpStat": "{count} 经验值",
     "sessionSummaryDone": "完成",
     "levelBadgeTooltip": "你当前的等级",
-    "srsReminderMessage": "有 {count} 个单词到期需要复习 — 点击复习"
+    "srsReminderMessage": "有 {count} 个单词到期需要复习 — 点击复习",
+    "levelMinutesLeft": "{level} • 剩余 {minutes} 分钟"
   },
   "lexiChat": {
     "title": "莱克西",
@@ -1168,7 +1264,58 @@
     "noVideos": "没有找到视频",
     "couldNotOpen": "无法打开 YouTube。复制的网址：{url}",
     "urlCopied": "复制的视频网址：{url}",
-    "dictionaryComingSoon": "字典查找将在第 6 阶段提供。"
+    "dictionaryComingSoon": "字典查找将在第 6 阶段提供。",
+    "learnThroughVideo": "通过视频学英语",
+    "searchHint": "搜索英语学习视频…",
+    "catGeneral": "综合",
+    "catPronunciation": "发音",
+    "catAcademic": "学术",
+    "catNews": "新闻",
+    "errServiceUnavailable": "视频服务暂时不可用。\n请稍后再试。",
+    "errQuotaExceeded": "已达到今日搜索次数上限。\n请明天再试。",
+    "errTimeout": "请求超时。\n请检查网络连接后重试。",
+    "errForbidden": "没有访问权限。\n请联系客服。",
+    "errLoadFailed": "无法加载视频。\n请检查网络连接后重试。",
+    "tabExplore": "发现",
+    "tabRecommended": "推荐",
+    "tabSaved": "已保存",
+    "tabHistory": "历史",
+    "noRecommendations": "暂无推荐",
+    "noRecommendationsDesc": "先看几个视频，我们就能为你推荐合适的内容。",
+    "noSavedVideos": "还没有保存的视频",
+    "noSavedVideosDesc": "点击视频上的书签图标即可保存以便稍后学习。",
+    "emptyHistory": "历史记录为空",
+    "emptyHistoryDesc": "你观看过的视频会显示在这里。",
+    "clearHistoryTitle": "清除观看历史",
+    "clearHistoryConfirm": "确定要清除全部观看历史吗？",
+    "guideTitle": "英语学习手册",
+    "guideIntro": "通过视频学习是提升英语自然反应的高效方法。请充分利用以下工具：",
+    "guideTip1": "实时互动字幕",
+    "guideTip1Desc": "字幕在播放器下方同步滚动，点击任意单词即可快速查词。",
+    "guideTip2": "一键保存词汇",
+    "guideTip2Desc": "在翻译面板中点击“保存单词”，即可直接加入你的生词本。",
+    "guideTip3": "跟读（Shadowing）法",
+    "guideTip3Desc": "在母语者说完每句话后暂停并大声重复，可改善发音、语调和重音。",
+    "guideTip4": "回顾查词记录",
+    "guideTip4Desc": "播放视频时，本次学习中查过的单词会显示在下方，方便即时复习。",
+    "guideCta": "立即开始学习",
+    "subtitlePlaceholder": "实时字幕将显示在这里…",
+    "saved": "已保存",
+    "saveVideo": "保存视频",
+    "removedFromSaved": "已从收藏中移除",
+    "videoSaved": "视频已保存",
+    "speed": "速度",
+    "wordCount": "{count} 个词",
+    "lookedUpWords": "已查单词",
+    "segmentCount": "{count} 段",
+    "tapWordToLookUp": "点击单词查看词义",
+    "noLookupsYet": "还没有查过单词",
+    "tapWordInSubtitle": "点击字幕中的单词即可查询词义",
+    "wordAlreadySaved": "“{word}”已在你的生词本中。",
+    "wordSaved": "已将“{word}”保存到生词本。",
+    "lookingUp": "查询中…",
+    "sentenceInVideo": "视频中的例句",
+    "saving": "正在保存…"
   },
   "podcast": {
     "pageTitle": "播客",
@@ -1190,7 +1337,10 @@
     "showMore": "显示更多",
     "playbackSpeed": "播放速度",
     "noTranscript": "没有可用的成绩单",
-    "generateTranscript": "生成成绩单"
+    "generateTranscript": "生成成绩单",
+    "episodeCount": "{count} 集",
+    "rewind15": "后退 15 秒",
+    "forward15": "前进 15 秒"
   },
   "games": {
     "levelUpTitle": "升级！",
@@ -1216,7 +1366,22 @@
     "continueJourney": "继续学习",
     "loadFailed": "Unable to load this game. Please try again.",
     "emptyGame": "This game has no playable content right now.",
-    "retryLoad": "Try again"
+    "retryLoad": "Try again",
+    "exitTitle": "要退出游戏吗？",
+    "exitXpByQuestions": "XP 将根据你已完成的题目计算。",
+    "exitXpByPairs": "XP 将根据你正确配对的数量计算。",
+    "exitXpByWords": "XP 将根据你已完成的单词计算。",
+    "exitNoXpForWord": "未完成该单词将无法获得 XP。",
+    "keepPlaying": "继续游戏",
+    "exit": "退出",
+    "luckyCloverActive": "幸运四叶草生效中",
+    "shieldActive": "护盾生效中",
+    "resultTitle": "{game} — 结果",
+    "dailyXpToday": "今日 {current}/{cap} XP",
+    "weeklyXp": "本周 {xp}",
+    "percentToNextLevel": "距离下一等级 {percent}%",
+    "fillBlankChallenge": "完成 5 道填空题",
+    "completeTodayChallenge": "完成今日挑战"
   },
   "learning": {
     "checkAnswer": "检查答案",
@@ -1229,7 +1394,8 @@
     "practiceAgain": "再练习一次",
     "startLesson": "开始上课",
     "correct": "正确的！",
-    "notQuite": "不完全是"
+    "notQuite": "不完全是",
+    "loadingRoadmap": "正在加载学习路线…"
   },
   "books": {
     "library": "图书图书馆",
@@ -1244,7 +1410,10 @@
     "readerSettings": "读卡器设置",
     "pageProgress": "{total} 的页面 {current}",
     "searchPlaceholder": "按标题或作者搜索...",
-    "savedBooks": "已保存的书籍"
+    "savedBooks": "已保存的书籍",
+    "chapterCountShort": "{count} 章",
+    "wordCountK": "{count}k 词",
+    "quizScore": "答对 {score}/{total}"
   },
   "news": {
     "title": "英文新闻",
@@ -1256,7 +1425,8 @@
     "takeQuiz": "参加理解测验",
     "dictionaryComingSoon": "字典查找将在第 6 阶段提供。",
     "saveWord": "保存单词",
-    "closeButton": "关闭"
+    "closeButton": "关闭",
+    "minRead": "阅读约 {count} 分钟"
   },
   "vocabulary": {
     "library": "词汇库",
@@ -1323,12 +1493,73 @@
     "tabWords": "Words",
     "tabTopics": "Topic Flashcards",
     "startLearning": "Start",
-    "audioQuestionHint": "Listen and guess the word"
+    "audioQuestionHint": "Listen and guess the word",
+    "selectOneWord": "请只选择一个要保存的单词。",
+    "saveWordFailed": "无法将该单词保存到词汇表。",
+    "saveToVocabulary": "保存到词汇表",
+    "noSpeakingDue": "目前没有到期的口语练习。",
+    "itemNumber": "第 {current} 个",
+    "totalCount": "共 {total} 个",
+    "meaning": "含义",
+    "wordOfTheDay": "每日一词",
+    "noWordAvailable": "暂无单词",
+    "addedToFlashcards": "已将“{word}”加入你的记忆卡！",
+    "reviewed": "已复习",
+    "remaining": "剩余",
+    "wordCount": "{count} 个词",
+    "tagIelts": "雅思",
+    "tagAcademic": "学术",
+    "tagHealth": "健康",
+    "tagFood": "美食",
+    "tagSports": "体育",
+    "tagGovernment": "政府",
+    "tagEconomics": "经济",
+    "tagEducation": "教育",
+    "tagLesson": "课程",
+    "tagPhilosophy": "哲学",
+    "tagBasic200": "基础词汇",
+    "tagNature": "自然",
+    "tagCore": "核心",
+    "tagAuto": "自动保存",
+    "tagCrawl": "采集",
+    "tagSociety": "社会",
+    "tagSeed": "种子词",
+    "tagHistory": "历史"
   },
   "legal": {
     "privacy_title": "隐私政策",
     "terms_title": "服务条款",
-    "last_updated": "最后更新: {date}"
+    "last_updated": "最后更新: {date}",
+    "privacy1Title": "1. 我们收集的信息",
+    "privacy1Body": "我们会收集你直接提供的信息，例如姓名、电子邮件地址和学习偏好，同时收集使用数据以改进你的学习体验。",
+    "privacy2Title": "2. 我们如何使用你的信息",
+    "privacy2Body": "我们使用你的信息来个性化学习路径、跟踪进度、发送学习提醒并改进 AI 辅导功能。我们绝不会将你的个人数据出售给第三方。",
+    "privacy3Title": "3. 数据存储与安全",
+    "privacy3Body": "你的数据存储在安全服务器上。我们在传输（TLS）和存储时均使用行业标准加密。登录凭据由 Firebase Authentication 管理。",
+    "privacy4Title": "4. 第三方服务",
+    "privacy4Body": "LexiLingo 集成了 Google（Firebase、YouTube），它们有各自的隐私政策。我们使用 Sentry 进行错误监控，错误报告可能包含匿名化的设备信息。",
+    "privacy5Title": "5. 你的权利",
+    "privacy5Body": "你可以随时通过“设置 → 账户 → 删除账户”申请访问、更正或永久删除个人数据。删除不可撤销且立即生效。",
+    "privacy6Title": "6. 儿童隐私",
+    "privacy6Body": "LexiLingo 并非面向 13 岁以下儿童。我们不会有意收集 13 岁以下儿童的个人信息。",
+    "privacy7Title": "7. 联系我们",
+    "privacy7Body": "如有隐私相关问题，请联系 nhthang312@gmail.com。我们将在 30 天内回复。",
+    "terms1Title": "1. 接受条款",
+    "terms1Body": "使用 LexiLingo 即表示你同意本条款。如不同意，请勿使用本应用。",
+    "terms2Title": "2. 账户",
+    "terms2Body": "你需负责维护账户安全，并对账户下发生的所有活动负责。如发现未经授权的使用，请立即通知我们。",
+    "terms3Title": "3. 可接受的使用",
+    "terms3Body": "你同意不滥用 LexiLingo，包括尝试逆向工程、提交虚假信息，或使用自动化工具操纵学习分数与排行榜。",
+    "terms4Title": "4. 知识产权",
+    "terms4Body": "LexiLingo 中的所有内容、功能和 AI 生成的回复均由 LexiLingo 拥有或获得授权。未经许可不得复制或分发。",
+    "terms5Title": "5. 虚拟物品",
+    "terms5Body": "XP、金币和虚拟物品不具有现实货币价值，且不可转让或兑换现金。我们保留随时修改或停止虚拟物品的权利。",
+    "terms6Title": "6. 免责声明",
+    "terms6Body": "LexiLingo 按“现状”提供。我们不对学习效果作任何保证。AI 回复由系统生成，可能存在错误——重要需求请咨询专业语言教师。",
+    "terms7Title": "7. 终止",
+    "terms7Body": "我们保留暂停或终止违反本条款账户的权利。你可以随时在“设置”中删除账户。",
+    "terms8Title": "8. 适用法律",
+    "terms8Body": "本条款受越南法律管辖。"
   },
   "offlineSync": {
     "title": "Offline & Sync",
@@ -1478,5 +1709,26 @@
     "modeQuizSubtitle": "Test meaning and term — auto-graded",
     "modeFlashcardTitle": "Flashcards",
     "modeFlashcardSubtitle": "Flip cards and rate yourself"
+  },
+  "emptyState": {
+    "noCourses": "还没有课程",
+    "noCoursesDesc": "浏览课程，开启你的学习之旅。",
+    "noVocabulary": "还没有词汇",
+    "noVocabularyDesc": "添加单词，建立你的词汇库。",
+    "addWords": "添加单词",
+    "allCaughtUp": "全部看完啦！稍后再来看看。",
+    "noConversations": "还没有对话",
+    "noConversationsDesc": "与我们的 AI 导师开始对话吧。",
+    "startChat": "开始对话",
+    "noResults": "未找到结果",
+    "noResultsForQuery": "未找到“{query}”的结果，请换个关键词试试。",
+    "noResultsDesc": "未找到结果，请换个关键词试试。",
+    "noProgress": "还没有学习记录",
+    "noProgressDesc": "完成课程即可记录你的学习进度。",
+    "noInternetDesc": "请检查网络后重试。",
+    "serverErrorDesc": "连接出现问题，请重试。"
+  },
+  "dailyChallenges": {
+    "rewardClaimed": "奖励已领取！"
   }
 }

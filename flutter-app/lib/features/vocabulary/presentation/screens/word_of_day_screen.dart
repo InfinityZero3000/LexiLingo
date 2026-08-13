@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -47,18 +48,20 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
   Widget build(BuildContext context) {
     final word = ModalRoute.of(context)?.settings.arguments as VocabularyItemEntity?;
     if (word == null) {
-      return const Scaffold(
-        body: Center(child: Text('No word available')),
+      return Scaffold(
+        body: Center(child: Text('vocabulary.noWordAvailable'.tr())),
       );
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cefrColor = CefrBadge.colorForLevel(word.difficultyLevel);
+    final localizedTranslation = word.getTranslation(
+      context.locale.languageCode,
+    );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
       appBar: AppBar(
-        title: const Text('Word of the Day'),
+        title: Text('vocabulary.wordOfTheDay'.tr()),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
@@ -90,7 +93,9 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: cefrColor.withValues(alpha: 0.25),
+                        color: AppColorRoles.primary(
+                          isDark,
+                        ).withValues(alpha: 0.25),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -101,7 +106,10 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                     children: [
                       Row(
                         children: [
-                          CefrBadge(level: word.difficultyLevel),
+                          CefrBadge(
+                            level: word.difficultyLevel,
+                            onColored: true,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             word.partOfSpeech,
@@ -141,7 +149,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
 
                 // Definition
                 _Section(
-                  title: 'Definition',
+                  title: 'vocabulary.definition'.tr(),
                   child: Text(
                     word.definition,
                     style: TextStyle(
@@ -152,13 +160,14 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                   ),
                 ),
 
-                // Vietnamese translation
-                if (word.vietnameseTranslation != null) ...[
+                // Translation in the user's app language (hidden when the word
+                // has no entry for that locale).
+                if (localizedTranslation != null) ...[
                   const SizedBox(height: 16),
                   _Section(
-                    title: 'Vietnamese',
+                    title: 'vocabulary.translationLabel'.tr(),
                     child: Text(
-                      word.vietnameseTranslation!,
+                      localizedTranslation,
                       style: TextStyle(
                         fontSize: 15,
                         color: AppColorRoles.textPrimary(isDark),
@@ -173,7 +182,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                 if (word.examples.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _Section(
-                    title: 'Examples',
+                    title: 'vocabulary.examples'.tr(),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: word.examples.map((example) {
@@ -291,7 +300,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
         setState(() => _addedToCollection = true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('"${word.word}" added to your flashcards!'),
+            content: Text('vocabulary.addedToFlashcards'.tr(namedArgs: {'word': word.word})),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -311,7 +320,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Copied to clipboard!'),
+        content: Text('common.copiedToClipboard'.tr()),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 2),

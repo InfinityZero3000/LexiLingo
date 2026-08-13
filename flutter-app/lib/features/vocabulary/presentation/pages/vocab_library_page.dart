@@ -28,31 +28,31 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   final TextEditingController _searchController = TextEditingController();
 
   static const Map<String, _TagMeta> _tagMeta = {
-    'general':    _TagMeta(label: 'Tổng quát',  icon: Icons.hearing_rounded),
-    'travel':     _TagMeta(label: 'Du lịch',    icon: Icons.flight),
-    'business':   _TagMeta(label: 'Kinh doanh', icon: Icons.work),
-    'daily':      _TagMeta(label: 'Hàng ngày',  icon: Icons.coffee),
-    'science':    _TagMeta(label: 'Khoa học',   icon: Icons.science_rounded),
-    'technology': _TagMeta(label: 'Công nghệ',  icon: Icons.devices_rounded),
-    'ielts':      _TagMeta(label: 'IELTS',       icon: Icons.school_rounded),
-    'academic':   _TagMeta(label: 'Học thuật',  icon: Icons.menu_book_rounded),
-    'health':     _TagMeta(label: 'Sức khỏe',   icon: Icons.health_and_safety_rounded),
-    'food':       _TagMeta(label: 'Ẩm thực',    icon: Icons.restaurant_rounded),
-    'sports':     _TagMeta(label: 'Thể thao',   icon: Icons.sports_rounded),
-    'daily_life': _TagMeta(label: 'Hàng ngày',  icon: Icons.coffee_rounded),
-    'government': _TagMeta(label: 'Chính phủ',  icon: Icons.gavel_rounded),
-    'economics':  _TagMeta(label: 'Kinh tế',    icon: Icons.monetization_on_rounded),
-    'education':  _TagMeta(label: 'Giáo dục',   icon: Icons.school_rounded),
-    'lesson':     _TagMeta(label: 'Bài học',    icon: Icons.import_contacts_rounded),
-    'philosophy': _TagMeta(label: 'Triết học',  icon: Icons.psychology_rounded),
-    'basic_200':  _TagMeta(label: 'Từ cơ bản',  icon: Icons.star_outline_rounded),
-    'nature':     _TagMeta(label: 'Tự nhiên',   icon: Icons.nature_people_rounded),
-    'core-vocab': _TagMeta(label: 'Cốt lõi',    icon: Icons.grade_rounded),
-    'auto':       _TagMeta(label: 'Tự động lưu', icon: Icons.bolt_rounded),
-    'crawl':      _TagMeta(label: 'Thu thập',    icon: Icons.download_rounded),
-    'society':    _TagMeta(label: 'Xã hội',     icon: Icons.people_rounded),
-    'seed':       _TagMeta(label: 'Mầm',        icon: Icons.spa_rounded),
-    'history':    _TagMeta(label: 'Lịch sử',    icon: Icons.history_edu_rounded),
+    'general':    _TagMeta(labelKey: 'vocabulary.topicGeneral',  icon: Icons.hearing_rounded),
+    'travel':     _TagMeta(labelKey: 'vocabulary.topicTravel',    icon: Icons.flight),
+    'business':   _TagMeta(labelKey: 'vocabulary.topicBusiness', icon: Icons.work),
+    'daily':      _TagMeta(labelKey: 'vocabulary.topicDailyLife',  icon: Icons.coffee),
+    'science':    _TagMeta(labelKey: 'vocabulary.topicScience',   icon: Icons.science_rounded),
+    'technology': _TagMeta(labelKey: 'vocabulary.topicTechnology',  icon: Icons.devices_rounded),
+    'ielts':      _TagMeta(labelKey: 'vocabulary.tagIelts',       icon: Icons.school_rounded),
+    'academic':   _TagMeta(labelKey: 'vocabulary.tagAcademic',  icon: Icons.menu_book_rounded),
+    'health':     _TagMeta(labelKey: 'vocabulary.tagHealth',   icon: Icons.health_and_safety_rounded),
+    'food':       _TagMeta(labelKey: 'vocabulary.tagFood',    icon: Icons.restaurant_rounded),
+    'sports':     _TagMeta(labelKey: 'vocabulary.tagSports',   icon: Icons.sports_rounded),
+    'daily_life': _TagMeta(labelKey: 'vocabulary.topicDailyLife',  icon: Icons.coffee_rounded),
+    'government': _TagMeta(labelKey: 'vocabulary.tagGovernment',  icon: Icons.gavel_rounded),
+    'economics':  _TagMeta(labelKey: 'vocabulary.tagEconomics',    icon: Icons.monetization_on_rounded),
+    'education':  _TagMeta(labelKey: 'vocabulary.tagEducation',   icon: Icons.school_rounded),
+    'lesson':     _TagMeta(labelKey: 'vocabulary.tagLesson',    icon: Icons.import_contacts_rounded),
+    'philosophy': _TagMeta(labelKey: 'vocabulary.tagPhilosophy',  icon: Icons.psychology_rounded),
+    'basic_200':  _TagMeta(labelKey: 'vocabulary.tagBasic200',  icon: Icons.star_outline_rounded),
+    'nature':     _TagMeta(labelKey: 'vocabulary.tagNature',   icon: Icons.nature_people_rounded),
+    'core-vocab': _TagMeta(labelKey: 'vocabulary.tagCore',    icon: Icons.grade_rounded),
+    'auto':       _TagMeta(labelKey: 'vocabulary.tagAuto', icon: Icons.bolt_rounded),
+    'crawl':      _TagMeta(labelKey: 'vocabulary.tagCrawl',    icon: Icons.download_rounded),
+    'society':    _TagMeta(labelKey: 'vocabulary.tagSociety',     icon: Icons.people_rounded),
+    'seed':       _TagMeta(labelKey: 'vocabulary.tagSeed',        icon: Icons.spa_rounded),
+    'history':    _TagMeta(labelKey: 'vocabulary.tagHistory',    icon: Icons.history_edu_rounded),
   };
 
   @override
@@ -171,9 +171,9 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       Text(
                         vocabProvider.selectedTag == null
                             ? 'vocabulary.recentWordsHeader'.tr()
-                            : (_tagMeta[vocabProvider.selectedTag]?.label ??
-                                    _capitalizeTag(vocabProvider.selectedTag!))
-                                .toUpperCase(),
+                            : _tagLabel(
+                                vocabProvider.selectedTag!,
+                              ).toUpperCase(),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -182,7 +182,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       ),
                       if (!vocabProvider.isLoading)
                         Text(
-                          '${words.length} từ',
+                          'vocabulary.wordCount'.tr(namedArgs: {'count': '${words.length}'}),
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -965,7 +965,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             return Padding(
               padding: const EdgeInsets.only(left: 8),
               child: _buildFilterChip(
-                meta?.label ?? _capitalizeTag(tag),
+                _tagLabel(tag),
                 selectedTag == tag,
                 icon: meta?.icon,
                 onTap: () => vocabProvider.setTagFilter(
@@ -977,6 +977,11 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         ],
       ),
     );
+  }
+
+  String _tagLabel(String tag) {
+    final meta = _tagMeta[tag];
+    return meta == null ? _capitalizeTag(tag) : meta.labelKey.tr();
   }
 
   String _capitalizeTag(String tag) =>
@@ -1508,9 +1513,9 @@ class _InfoChip extends StatelessWidget {
 }
 
 class _TagMeta {
-  final String label;
+  final String labelKey;
   final IconData icon;
-  const _TagMeta({required this.label, required this.icon});
+  const _TagMeta({required this.labelKey, required this.icon});
 }
 
 class _TopicConfig {

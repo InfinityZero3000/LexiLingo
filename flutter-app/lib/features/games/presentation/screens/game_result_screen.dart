@@ -117,7 +117,7 @@ class _GameResultScreenState extends State<GameResultScreen>
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
-          '${result.gameType.displayName} — Result',
+          'games.resultTitle'.tr(namedArgs: {'game': result.gameType.displayName}),
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,

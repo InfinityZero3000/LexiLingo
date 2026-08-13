@@ -161,7 +161,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
+                              'course.coursesAvailablePlural'.plural(categoryCourses.length),
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: AppColorRoles.textSecondary(isDark),

@@ -6,6 +6,7 @@ import '../stt/stt_service.dart';
 import '../tts/tts_service.dart';
 import '../pronunciation/pronunciation_service.dart';
 import '../../utils/app_logger.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// AI Orchestrator - Central coordinator for the AI pipeline
 ///
@@ -404,11 +405,11 @@ class AIOrchestrator {
 
     if (analysisResult.grammarErrors.isNotEmpty) {
       final firstError = analysisResult.grammarErrors.first;
-      return 'Bạn cần sửa "${firstError.incorrect}" thành "${firstError.correction}". '
-          '${firstError.explanation} (dùng thì hiện tại tiếp diễn cho hành động đang xảy ra).';
+      return '${'chat.correctionSuggestion'.tr(namedArgs: {'incorrect': firstError.incorrect, 'correction': firstError.correction})}'
+          '${'chat.correctionExplanation'.tr(namedArgs: {'explanation': firstError.explanation})}';
     }
 
-    return 'Bạn làm tốt lắm! Câu của bạn rất tự nhiên.';
+    return 'chat.naturalSentencePraise'.tr();
   }
 
   /// Generate tutor response in English

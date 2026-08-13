@@ -40,81 +40,81 @@ class LegalPage extends StatelessWidget {
 
   List<Widget> _privacySections(BuildContext context) => [
     _Section(
-      title: '1. Information We Collect',
+      title: 'legal.privacy1Title'.tr(),
       body:
-          'We collect information you provide directly, such as your name, email address, and learning preferences. We also collect usage data to improve your learning experience.',
+          'legal.privacy1Body'.tr(),
     ),
     _Section(
-      title: '2. How We Use Your Information',
+      title: 'legal.privacy2Title'.tr(),
       body:
-          'We use your information to personalize your learning path, track progress, send study reminders, and improve our AI tutoring features. We never sell your personal data to third parties.',
+          'legal.privacy2Body'.tr(),
     ),
     _Section(
-      title: '3. Data Storage & Security',
+      title: 'legal.privacy3Title'.tr(),
       body:
-          'Your data is stored on secure servers. We use industry-standard encryption in transit (TLS) and at rest. Firebase Authentication manages your login credentials.',
+          'legal.privacy3Body'.tr(),
     ),
     _Section(
-      title: '4. Third-Party Services',
+      title: 'legal.privacy4Title'.tr(),
       body:
-          'LexiLingo integrates with Google (Firebase, YouTube), which have their own privacy policies. We use Sentry for error monitoring — error reports may include anonymized device information.',
+          'legal.privacy4Body'.tr(),
     ),
     _Section(
-      title: '5. Your Rights',
+      title: 'legal.privacy5Title'.tr(),
       body:
-          'You can request access to, correction of, or permanent deletion of your personal data at any time through Settings → Account → Delete Account. Deletion is irreversible and processed immediately.',
+          'legal.privacy5Body'.tr(),
     ),
     _Section(
-      title: '6. Children\'s Privacy',
+      title: 'legal.privacy6Title'.tr(),
       body:
-          'LexiLingo is not directed at children under 13. We do not knowingly collect personal information from children under 13.',
+          'legal.privacy6Body'.tr(),
     ),
     _Section(
-      title: '7. Contact',
+      title: 'legal.privacy7Title'.tr(),
       body:
-          'For privacy inquiries, contact us at nhthang312@gmail.com. We will respond within 30 days.',
+          'legal.privacy7Body'.tr(),
     ),
   ];
 
   List<Widget> _termsSections(BuildContext context) => [
     _Section(
-      title: '1. Acceptance',
+      title: 'legal.terms1Title'.tr(),
       body:
-          'By using LexiLingo, you agree to these Terms. If you do not agree, please do not use the app.',
+          'legal.terms1Body'.tr(),
     ),
     _Section(
-      title: '2. Account',
+      title: 'legal.terms2Title'.tr(),
       body:
-          'You are responsible for maintaining the security of your account and for all activities that occur under your account. Notify us immediately of any unauthorized use.',
+          'legal.terms2Body'.tr(),
     ),
     _Section(
-      title: '3. Acceptable Use',
+      title: 'legal.terms3Title'.tr(),
       body:
-          'You agree not to misuse LexiLingo, including attempting to reverse-engineer the app, submitting false information, or using automated tools to manipulate learning scores or leaderboards.',
+          'legal.terms3Body'.tr(),
     ),
     _Section(
-      title: '4. Intellectual Property',
+      title: 'legal.terms4Title'.tr(),
       body:
-          'All content, features, and AI-generated responses in LexiLingo are owned by or licensed to LexiLingo. You may not reproduce or distribute content without permission.',
+          'legal.terms4Body'.tr(),
     ),
     _Section(
-      title: '5. Virtual Goods',
+      title: 'legal.terms5Title'.tr(),
       body:
-          'XP, Coins, and virtual items have no real-world monetary value and cannot be transferred or exchanged for cash. We reserve the right to modify or discontinue virtual goods at any time.',
+          'legal.terms5Body'.tr(),
     ),
     _Section(
-      title: '6. Disclaimer',
+      title: 'legal.terms6Title'.tr(),
       body:
-          'LexiLingo is provided "as is". We make no guarantees about learning outcomes. AI responses are generated and may contain errors — always consult a qualified language teacher for critical needs.',
+          'legal.terms6Body'.tr(),
     ),
     _Section(
-      title: '7. Termination',
+      title: 'legal.terms7Title'.tr(),
       body:
-          'We reserve the right to suspend or terminate accounts that violate these Terms. You may delete your account at any time through Settings.',
+          'legal.terms7Body'.tr(),
     ),
     _Section(
-      title: '8. Governing Law',
-      body: 'These Terms are governed by the laws of Vietnam.',
+      title: 'legal.terms8Title'.tr(),
+      body: 'legal.terms8Body'.tr(),
     ),
   ];
 }

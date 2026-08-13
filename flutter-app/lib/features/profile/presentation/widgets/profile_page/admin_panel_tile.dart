@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AdminPanelTile extends StatelessWidget {
   final VoidCallback onTap;
@@ -48,12 +49,12 @@ class AdminPanelTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Switch to Admin Panel',
+                          'profile.switchToAdmin'.tr(),
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -62,7 +63,7 @@ class AdminPanelTile extends StatelessWidget {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'LexiLingo Admin mobile',
+                          'profile.adminMobileSubtitle'.tr(),
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,

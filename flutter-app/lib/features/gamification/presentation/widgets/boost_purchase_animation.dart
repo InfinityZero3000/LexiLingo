@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Overlay shown for ~1.5s after a successful boost purchase.
 /// Scales in the boost icon with a glow pulse effect.
@@ -124,7 +125,7 @@ class _BoostPurchaseAnimationState extends State<BoostPurchaseAnimation>
                   Icon(icon, size: 56, color: boostColor),
                   const SizedBox(height: 8),
                   Text(
-                    'Activated!',
+                    'gamification.activated'.tr(),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,

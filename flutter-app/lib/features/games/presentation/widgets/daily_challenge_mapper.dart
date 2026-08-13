@@ -1,5 +1,6 @@
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 GameType gameTypeForDailyChallenge(DailyChallengeEntity challenge) {
   final haystack = [
@@ -36,7 +37,7 @@ DailyChallenge toGameDailyChallenge(DailyChallengeEntity challenge) {
     gameType: gameType.apiKey,
     description: description.isNotEmpty
         ? description
-        : 'Complete today challenge',
+        : 'games.completeTodayChallenge'.tr(),
     targetScore: challenge.target,
     bonusMultiplier: challenge.xpReward >= 40 ? 2 : 1,
     completed: challenge.isCompleted,

@@ -32,7 +32,21 @@
     "play": "Chơi",
     "awesome": "Tuyệt vời!",
     "create": "Tạo",
-    "refresh": "Làm mới"
+    "refresh": "Làm mới",
+    "tryAgain": "Thử lại",
+    "goToLogin": "Đến trang đăng nhập",
+    "offline": "Bạn đang ngoại tuyến",
+    "filter": "Bộ lọc",
+    "streak": "Chuỗi ngày",
+    "minimize": "Thu nhỏ",
+    "maximize": "Phóng to",
+    "submit": "Gửi",
+    "copiedToClipboard": "Đã sao chép!",
+    "tapAnywhereToContinue": "Chạm vào bất kỳ đâu để tiếp tục",
+    "dayCount": {
+      "one": "{} ngày",
+      "other": "{} ngày"
+    }
   },
   "auth": {
     "login": "Đăng nhập",
@@ -109,7 +123,13 @@
     "emailVerificationResend": "Gửi lại email xác minh",
     "emailVerificationResendSuccess": "Email xác minh đã được gửi lại. Vui lòng kiểm tra hộp thư.",
     "emailVerificationResendError": "Gửi lại thất bại. Vui lòng thử lại.",
-    "emailVerificationBackToLogin": "Quay lại đăng nhập"
+    "emailVerificationBackToLogin": "Quay lại đăng nhập",
+    "googleAccountHint": "Nếu tài khoản này dùng Google, hãy nhấn Google bên dưới.",
+    "errInvalidCredentials": "Email hoặc mật khẩu không đúng",
+    "errAlreadyExists": "Email hoặc username đã được sử dụng",
+    "errValidation": "Thông tin không hợp lệ. Vui lòng kiểm tra lại",
+    "errNetwork": "Không có kết nối mạng. Vui lòng thử lại",
+    "errRateLimited": "Bạn đã thử quá nhiều lần. Vui lòng đợi một chút"
   },
   "home": {
     "greeting": "Xin chào, {name}!",
@@ -285,13 +305,32 @@
     "noCourses": "Chưa có khóa học trong danh mục này",
     "durationMin": "{count} phút",
     "totalLessonsCount": "{count} bài học",
-    "userProgressPercent": "{percent}% Hoàn thành"
+    "userProgressPercent": "{percent}% Hoàn thành",
+    "pickCoursePrompt": "Chọn một khóa học và bắt đầu\nhành trình ngôn ngữ của bạn!",
+    "langAll": "Tất cả",
+    "langEnglish": "Tiếng Anh",
+    "langSpanish": "Tiếng Tây Ban Nha",
+    "langVietnamese": "Tiếng Việt",
+    "myEnrollments": "Khóa học của tôi",
+    "showEnrolledOnly": "Chỉ hiện khóa học đã đăng ký",
+    "sortBy": "Sắp xếp theo",
+    "applyFilters": "Áp dụng bộ lọc",
+    "coursesAvailablePlural": {
+      "one": "Có {} khóa học",
+      "other": "Có {} khóa học"
+    },
+    "courseCount": {
+      "one": "{} khóa học",
+      "other": "{} khóa học"
+    }
   },
   "lesson": {
     "sessionTitle": "Học tập",
     "loadingLesson": "Đang tải bài học...",
     "noLessonData": "Không có dữ liệu bài học",
     "noExerciseAvailable": "Không có bài tập khả dụng",
+    "contentUnavailableTitle": "Bài học đang được cập nhật",
+    "contentUnavailableMessage": "Nội dung của bài học này chưa sẵn sàng. Hãy quay lại sau nhé!",
     "exerciseTypeNotImplemented": "Loại bài tập \"{type}\" chưa được hỗ trợ",
     "checkAnswer": "Kiểm tra",
     "continueButton": "Tiếp tục",
@@ -448,7 +487,26 @@
     "playError": "Không thể phát: {error}",
     "tapToRecord": "Nhấn để ghi âm",
     "tapToStop": "Nhấn để dừng",
-    "assessmentFailed": "Phân tích phát âm thất bại. Vui lòng thử lại."
+    "assessmentFailed": "Phân tích phát âm thất bại. Vui lòng thử lại.",
+    "matchPercent": "Mức khớp: {percent}%",
+    "ttsSpeedTooltip": "Tốc độ đọc: {speed}\nChạm để đổi, giữ lâu để xem tuỳ chọn",
+    "speedNormal": "Bình thường",
+    "micPermissionSettings": "Vui lòng cấp quyền microphone trong cài đặt trình duyệt hoặc thiết bị.",
+    "recordingUnreadable": "Không đọc được dữ liệu ghi âm. Vui lòng thử lại.",
+    "recordingMissing": "Không nhận được file ghi âm. Vui lòng thử lại.",
+    "recordingPathInvalid": "Đường dẫn ghi âm không hợp lệ.",
+    "recordingBrowserUnreadable": "Không đọc được file ghi âm từ trình duyệt.",
+    "recordingNotFound": "Không tìm thấy file ghi âm.",
+    "speechNotRecognized": "Không thể nhận dạng giọng nói.",
+    "speechUnclear": "Không nghe rõ nội dung. Vui lòng nói lại.",
+    "micPermissionRetry": "Vui lòng cấp quyền microphone rồi thử lại.",
+    "stopRecording": "Dừng ghi âm",
+    "startRecording": "Bắt đầu ghi âm",
+    "tapToStartSpeaking": "Nhấn để bắt đầu nói",
+    "recordingTapToStop": "Đang ghi âm - nhấn để dừng",
+    "recognizing": "Đang nhận dạng giọng nói...",
+    "notMatchedTryAgain": "Chưa khớp, hãy thử lại",
+    "saidCorrectly": "Bạn đã nói đúng"
   },
   "chat": {
     "placeholder": "Nhập tin nhắn...",
@@ -470,7 +528,14 @@
     "processingVoice": "Đang xử lý giọng nói...",
     "grammarCorrection": "Sửa ngữ pháp",
     "correctionRule": "Quy tắc: {rule}",
-    "practiceThisAction": "Luyện tập"
+    "practiceThisAction": "Luyện tập",
+    "correctionSuggestion": "Bạn cần sửa \"{incorrect}\" thành \"{correction}\". ",
+    "correctionExplanation": "{explanation} (dùng thì hiện tại tiếp diễn cho hành động đang xảy ra).",
+    "naturalSentencePraise": "Bạn làm tốt lắm! Câu của bạn rất tự nhiên.",
+    "learningHintsCount": {
+      "one": "{} gợi ý học tập",
+      "other": "{} gợi ý học tập"
+    }
   },
   "achievements": {
     "title": "Thành tựu",
@@ -588,7 +653,10 @@
     "yourProficiency": "Trình độ của bạn",
     "proficiencyUnlockHint": "Điểm của bạn sẽ hiển thị sau khi hoàn thành vài bài học. Bắt đầu học ngay!",
     "proficiencyUnlockThreshold": "Điểm của bạn sẽ được mở khóa sau khoảng {count} bài học",
-    "startLessons": "Bắt đầu học"
+    "startLessons": "Bắt đầu học",
+    "adminMobile": "Quản trị trên di động",
+    "switchToAdmin": "Chuyển sang trang quản trị",
+    "adminMobileSubtitle": "LexiLingo Admin trên di động"
   },
   "progress": {
     "title": "Tiến độ của tôi",
@@ -599,7 +667,13 @@
     "coursesCompletedStat": "Khóa học đã hoàn thành",
     "lessonsCompletedStat": "Bài học đã hoàn thành",
     "courseProgressTitle": "Tiến độ khóa học",
-    "lastActivity": "Hoạt động cuối: {date}"
+    "lastActivity": "Hoạt động cuối: {date}",
+    "weeklyOverview": "Tổng quan tuần",
+    "weeklySummary": "{xp} XP · {lessons} bài học · {days}/7 ngày hoạt động",
+    "lessonsOfTotal": "{completed}/{total} bài học",
+    "streakMilestone": "🔥 Cột mốc chuỗi ngày!",
+    "daysInARow": "ngày liên tiếp",
+    "emptyChart": "Bắt đầu học để xem biểu đồ tiến độ của bạn!"
   },
   "settings": {
     "title": "Cài đặt",
@@ -659,7 +733,11 @@
     "invite_message": "🎓 Hãy học tiếng Anh cùng mình trên LexiLingo! Dùng mã của mình để nhận 50 gems miễn phí.",
     "share_invite": "Chia sẻ link mời",
     "code_copied": "Đã sao chép mã!",
-    "referral_count": "{count} bạn đã tham gia qua mã của bạn"
+    "referral_count": "{count} bạn đã tham gia qua mã của bạn",
+    "delete_account": "Xoá tài khoản",
+    "delete_account_confirm": "Thao tác này sẽ xoá vĩnh viễn tài khoản và toàn bộ dữ liệu học tập của bạn. Không thể hoàn tác.",
+    "delete_account_confirm_btn": "Xoá vĩnh viễn",
+    "delete_account_error": "Không thể xoá tài khoản. Vui lòng thử lại."
   },
   "notifications": {
     "pageTitle": "Thông báo",
@@ -677,7 +755,15 @@
     "removed": "Đã xóa thông báo",
     "undo": "Hoàn tác",
     "deleteAction": "Xóa",
-    "tooltipBack": "Quay lại"
+    "tooltipBack": "Quay lại",
+    "reviewReminderTitle": "Đến giờ ôn từ vựng",
+    "reviewChannelName": "Nhắc nhở hàng ngày",
+    "reviewChannelDescription": "Nhắc bạn ôn tập từ vựng mỗi ngày",
+    "reviewTitle": "Ôn tập từ vựng",
+    "reviewBodyDue": "Bạn có {count} từ cần ôn tập hôm nay!",
+    "reviewBodyStreak": "Đã đến giờ ôn từ vựng – giữ vững streak của bạn!",
+    "reviewBodyDueNow": "Bạn có {count} từ đến hạn ôn tập!",
+    "reviewWaitingBody": "{count} từ đang đợi bạn ôn tập."
   },
   "errors": {
     "networkError": "Lỗi kết nối mạng",
@@ -686,7 +772,8 @@
     "notFound": "Không tìm thấy",
     "unknown": "Đã xảy ra lỗi không xác định",
     "timeout": "Hết thời gian chờ",
-    "noInternet": "Không có kết nối internet"
+    "noInternet": "Không có kết nối internet",
+    "genericRetry": "Đã xảy ra lỗi. Vui lòng thử lại."
   },
   "gamification": {
     "xpEarned": "+{xp}XP",
@@ -723,7 +810,14 @@
       "action": "Tuyệt vời!",
       "gemLabel": "Phần thưởng Gem",
       "confirmation": "{gems} Gem đã được thêm vào ví của bạn."
-    }
+    },
+    "activeBoosts": "TĂNG TỐC ĐANG BẬT",
+    "activated": "Đã kích hoạt!",
+    "rankLessons": "{rank} · {count} bài học",
+    "lessonsCompletedCount": "Đã hoàn thành {count} bài học",
+    "rankLabel": "Hạng",
+    "rankUp": "Lên hạng!",
+    "reachedRank": "Bạn đã đạt hạng {rank}"
   },
   "social": {
     "friends": "Bạn bè",
@@ -1027,7 +1121,8 @@
     "justNow": "Vừa xong",
     "minutesAgo": "{minutes} phút trước",
     "hoursAgo": "{hours} giờ trước",
-    "daysAgo": "{days} ngày trước"
+    "daysAgo": "{days} ngày trước",
+    "earlier": "Trước đó"
   },
   "shop": {
     "title": "Cửa hàng",
@@ -1242,7 +1337,8 @@
     "xpStat": "{count} XP",
     "sessionSummaryDone": "Xong",
     "levelBadgeTooltip": "Trình độ hiện tại của bạn",
-    "srsReminderMessage": "{count} từ đến hạn ôn tập — chạm để ôn ngay"
+    "srsReminderMessage": "{count} từ đến hạn ôn tập — chạm để ôn ngay",
+    "levelMinutesLeft": "{level} • còn {minutes} phút"
   },
   "lexiChat": {
     "title": "Lexi",
@@ -1297,7 +1393,58 @@
     "noVideos": "Không tìm thấy video",
     "couldNotOpen": "Không thể mở YouTube. Đã sao chép URL: {url}",
     "urlCopied": "Đã sao chép URL video: {url}",
-    "dictionaryComingSoon": "Tra từ điển sẽ có trong Giai đoạn 6."
+    "dictionaryComingSoon": "Tra từ điển sẽ có trong Giai đoạn 6.",
+    "learnThroughVideo": "Học tiếng Anh qua video",
+    "searchHint": "Tìm video học tiếng Anh...",
+    "catGeneral": "Tổng quát",
+    "catPronunciation": "Phát âm",
+    "catAcademic": "Học thuật",
+    "catNews": "Tin tức",
+    "errServiceUnavailable": "Dịch vụ video tạm thời không khả dụng.\nVui lòng thử lại sau.",
+    "errQuotaExceeded": "Đã đạt giới hạn tìm kiếm hôm nay.\nVui lòng thử lại vào ngày mai.",
+    "errTimeout": "Yêu cầu mất quá nhiều thời gian.\nKiểm tra kết nối mạng và thử lại.",
+    "errForbidden": "Không có quyền truy cập.\nVui lòng liên hệ hỗ trợ.",
+    "errLoadFailed": "Không thể tải video.\nKiểm tra kết nối mạng và thử lại.",
+    "tabExplore": "Khám phá",
+    "tabRecommended": "Đề xuất",
+    "tabSaved": "Đã lưu",
+    "tabHistory": "Lịch sử",
+    "noRecommendations": "Chưa có đề xuất nào",
+    "noRecommendationsDesc": "Hãy xem một vài video để chúng tôi gợi ý những nội dung phù hợp cho bạn.",
+    "noSavedVideos": "Chưa có video nào được lưu",
+    "noSavedVideosDesc": "Nhấn biểu tượng bookmark trên video để lưu lại học sau.",
+    "emptyHistory": "Lịch sử trống",
+    "emptyHistoryDesc": "Các video bạn đã xem sẽ xuất hiện tại đây.",
+    "clearHistoryTitle": "Xóa lịch sử xem",
+    "clearHistoryConfirm": "Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem video không?",
+    "guideTitle": "Cẩm nang học tiếng Anh",
+    "guideIntro": "Học qua video là phương pháp cực kỳ hiệu quả để nâng cao phản xạ tiếng Anh tự nhiên. Hãy tận dụng tối đa các công cụ hỗ trợ:",
+    "guideTip1": "Phụ đề tương tác thời gian thực",
+    "guideTip1Desc": "Phụ đề hiển thị chạy song song dưới video player. Chạm trực tiếp vào bất kỳ từ nào để tra nghĩa nhanh.",
+    "guideTip2": "Lưu từ vựng nhanh 1 chạm",
+    "guideTip2Desc": "Khi mở bảng dịch nghĩa, chỉ cần nhấn \"Lưu từ\" để thêm ngay từ vựng vào Sổ tay từ vựng của bạn mà không có thêm màn hình trung gian.",
+    "guideTip3": "Phương pháp Shadowing",
+    "guideTip3Desc": "Tạm dừng sau mỗi câu nói của người bản xứ và lặp lại thật to để cải thiện phát âm, ngữ điệu và trọng âm.",
+    "guideTip4": "Xem lại lịch sử tra cứu",
+    "guideTip4Desc": "Trong khi phát video, lịch sử các từ bạn đã tra trong phiên học sẽ được hiển thị ngay bên dưới để ôn tập tức thì.",
+    "guideCta": "Bắt đầu học ngay",
+    "subtitlePlaceholder": "Phụ đề thời gian thực sẽ hiển thị tại đây...",
+    "saved": "Đã lưu",
+    "saveVideo": "Lưu video",
+    "removedFromSaved": "Đã xóa khỏi danh sách lưu",
+    "videoSaved": "Đã lưu video",
+    "speed": "Tốc độ",
+    "wordCount": "{count} từ",
+    "lookedUpWords": "Từ đã tra",
+    "segmentCount": "{count} đoạn",
+    "tapWordToLookUp": "Nhấn vào từ để tra nghĩa",
+    "noLookupsYet": "Chưa tra từ nào",
+    "tapWordInSubtitle": "Nhấn vào từ trong phụ đề để tra nghĩa",
+    "wordAlreadySaved": "\"{word}\" đã có trong sổ tay từ vựng.",
+    "wordSaved": "Đã lưu \"{word}\" vào sổ tay từ vựng.",
+    "lookingUp": "Đang tra từ…",
+    "sentenceInVideo": "Câu trong video",
+    "saving": "Đang lưu..."
   },
   "podcast": {
     "pageTitle": "Podcast",
@@ -1319,7 +1466,10 @@
     "showMore": "Xem thêm",
     "playbackSpeed": "Tốc độ phát",
     "noTranscript": "Không có bản chép lời",
-    "generateTranscript": "Tạo bản chép lời"
+    "generateTranscript": "Tạo bản chép lời",
+    "episodeCount": "{count} tập",
+    "rewind15": "Lùi 15 giây",
+    "forward15": "Tua 15 giây"
   },
   "games": {
     "loadFailed": "Không thể tải trò chơi. Vui lòng thử lại.",
@@ -1345,7 +1495,22 @@
     "unlockGoldenChest": "Rương vàng",
     "unlockGems": "50 Gem",
     "unlockXpBooster": "2x XP Boost",
-    "continueJourney": "Tiếp tục học"
+    "continueJourney": "Tiếp tục học",
+    "exitTitle": "Thoát game?",
+    "exitXpByQuestions": "XP sẽ được tính dựa trên số câu đã hoàn thành.",
+    "exitXpByPairs": "XP sẽ được tính dựa trên số cặp đã ghép đúng.",
+    "exitXpByWords": "XP sẽ được tính dựa trên số từ đã hoàn thành.",
+    "exitNoXpForWord": "Bạn sẽ không nhận XP nếu chưa hoàn thành từ này.",
+    "keepPlaying": "Tiếp tục chơi",
+    "exit": "Thoát",
+    "luckyCloverActive": "Cỏ bốn lá đang hoạt động",
+    "shieldActive": "Khiên đang hoạt động",
+    "resultTitle": "{game} — Kết quả",
+    "dailyXpToday": "{current}/{cap} XP hôm nay",
+    "weeklyXp": "{xp} tuần này",
+    "percentToNextLevel": "{percent}% đến cấp tiếp theo",
+    "fillBlankChallenge": "Hoàn thành 5 câu điền vào chỗ trống",
+    "completeTodayChallenge": "Hoàn thành thử thách hôm nay"
   },
   "learning": {
     "checkAnswer": "Kiểm tra đáp án",
@@ -1358,7 +1523,8 @@
     "practiceAgain": "Luyện lại",
     "startLesson": "Bắt đầu bài học",
     "correct": "Đúng rồi!",
-    "notQuite": "Chưa đúng"
+    "notQuite": "Chưa đúng",
+    "loadingRoadmap": "Đang tải lộ trình…"
   },
   "books": {
     "library": "Thư viện sách",
@@ -1373,7 +1539,10 @@
     "readerSettings": "Cài đặt đọc",
     "pageProgress": "Trang {current} / {total}",
     "searchPlaceholder": "Tìm sách theo tên hoặc tác giả...",
-    "savedBooks": "Sách đã lưu"
+    "savedBooks": "Sách đã lưu",
+    "chapterCountShort": "{count} chương",
+    "wordCountK": "{count}k từ",
+    "quizScore": "Đúng {score}/{total}"
   },
   "news": {
     "title": "Tin tức tiếng Anh",
@@ -1385,7 +1554,8 @@
     "takeQuiz": "Làm bài kiểm tra hiểu bài",
     "dictionaryComingSoon": "Tra từ điển sẽ có trong Giai đoạn 6.",
     "saveWord": "Lưu từ",
-    "closeButton": "Đóng"
+    "closeButton": "Đóng",
+    "minRead": "Đọc {count} phút"
   },
   "vocabulary": {
     "library": "Thư viện từ vựng",
@@ -1452,12 +1622,73 @@
     "topicTechnology": "Công nghệ",
     "topicTechnologySubtitle": "Phần mềm & Kỷ nguyên số",
     "noDefinitionYet": "Chưa có định nghĩa",
-    "vietnameseLabel": "Tiếng Việt"
+    "vietnameseLabel": "Tiếng Việt",
+    "selectOneWord": "Vui lòng chọn đúng một từ để lưu.",
+    "saveWordFailed": "Không thể lưu từ vào từ vựng.",
+    "saveToVocabulary": "Lưu vào từ vựng",
+    "noSpeakingDue": "Hiện chưa có bài luyện nói nào đến hạn.",
+    "itemNumber": "Từ số {current}",
+    "totalCount": "Tổng cộng {total}",
+    "meaning": "Nghĩa",
+    "wordOfTheDay": "Từ vựng hôm nay",
+    "noWordAvailable": "Chưa có từ nào",
+    "addedToFlashcards": "Đã thêm \"{word}\" vào thẻ ghi nhớ của bạn!",
+    "reviewed": "Đã ôn",
+    "remaining": "Còn lại",
+    "wordCount": "{count} từ",
+    "tagIelts": "IELTS",
+    "tagAcademic": "Học thuật",
+    "tagHealth": "Sức khỏe",
+    "tagFood": "Ẩm thực",
+    "tagSports": "Thể thao",
+    "tagGovernment": "Chính phủ",
+    "tagEconomics": "Kinh tế",
+    "tagEducation": "Giáo dục",
+    "tagLesson": "Bài học",
+    "tagPhilosophy": "Triết học",
+    "tagBasic200": "Từ cơ bản",
+    "tagNature": "Tự nhiên",
+    "tagCore": "Cốt lõi",
+    "tagAuto": "Tự động lưu",
+    "tagCrawl": "Thu thập",
+    "tagSociety": "Xã hội",
+    "tagSeed": "Mầm",
+    "tagHistory": "Lịch sử"
   },
   "legal": {
     "privacy_title": "Chính sách bảo mật",
     "terms_title": "Điều khoản sử dụng",
-    "last_updated": "Cập nhật lần cuối: {date}"
+    "last_updated": "Cập nhật lần cuối: {date}",
+    "privacy1Title": "1. Thông tin chúng tôi thu thập",
+    "privacy1Body": "Chúng tôi thu thập thông tin bạn cung cấp trực tiếp, như tên, địa chỉ email và tuỳ chọn học tập. Chúng tôi cũng thu thập dữ liệu sử dụng để cải thiện trải nghiệm học của bạn.",
+    "privacy2Title": "2. Cách chúng tôi sử dụng thông tin",
+    "privacy2Body": "Chúng tôi dùng thông tin của bạn để cá nhân hoá lộ trình học, theo dõi tiến độ, gửi nhắc nhở học tập và cải thiện tính năng gia sư AI. Chúng tôi không bao giờ bán dữ liệu cá nhân của bạn cho bên thứ ba.",
+    "privacy3Title": "3. Lưu trữ và bảo mật dữ liệu",
+    "privacy3Body": "Dữ liệu của bạn được lưu trên máy chủ bảo mật. Chúng tôi dùng mã hoá tiêu chuẩn ngành khi truyền (TLS) và khi lưu trữ. Firebase Authentication quản lý thông tin đăng nhập của bạn.",
+    "privacy4Title": "4. Dịch vụ của bên thứ ba",
+    "privacy4Body": "LexiLingo tích hợp với Google (Firebase, YouTube), các dịch vụ này có chính sách bảo mật riêng. Chúng tôi dùng Sentry để giám sát lỗi — báo cáo lỗi có thể chứa thông tin thiết bị đã ẩn danh.",
+    "privacy5Title": "5. Quyền của bạn",
+    "privacy5Body": "Bạn có thể yêu cầu truy cập, chỉnh sửa hoặc xoá vĩnh viễn dữ liệu cá nhân bất kỳ lúc nào qua Cài đặt → Tài khoản → Xoá tài khoản. Việc xoá là không thể hoàn tác và được xử lý ngay lập tức.",
+    "privacy6Title": "6. Quyền riêng tư của trẻ em",
+    "privacy6Body": "LexiLingo không hướng tới trẻ em dưới 13 tuổi. Chúng tôi không cố ý thu thập thông tin cá nhân của trẻ em dưới 13 tuổi.",
+    "privacy7Title": "7. Liên hệ",
+    "privacy7Body": "Với các thắc mắc về quyền riêng tư, hãy liên hệ nhthang312@gmail.com. Chúng tôi sẽ phản hồi trong vòng 30 ngày.",
+    "terms1Title": "1. Chấp nhận điều khoản",
+    "terms1Body": "Khi sử dụng LexiLingo, bạn đồng ý với các Điều khoản này. Nếu không đồng ý, vui lòng không sử dụng ứng dụng.",
+    "terms2Title": "2. Tài khoản",
+    "terms2Body": "Bạn chịu trách nhiệm bảo mật tài khoản và mọi hoạt động diễn ra dưới tài khoản của mình. Hãy báo cho chúng tôi ngay nếu phát hiện sử dụng trái phép.",
+    "terms3Title": "3. Sử dụng hợp lệ",
+    "terms3Body": "Bạn đồng ý không lạm dụng LexiLingo, bao gồm việc dịch ngược ứng dụng, gửi thông tin sai lệch hoặc dùng công cụ tự động để can thiệp điểm học tập và bảng xếp hạng.",
+    "terms4Title": "4. Sở hữu trí tuệ",
+    "terms4Body": "Toàn bộ nội dung, tính năng và phản hồi do AI tạo ra trong LexiLingo thuộc sở hữu hoặc được cấp phép cho LexiLingo. Bạn không được sao chép hay phân phối nội dung nếu chưa được phép.",
+    "terms5Title": "5. Vật phẩm ảo",
+    "terms5Body": "XP, xu và vật phẩm ảo không có giá trị tiền tệ thực và không thể chuyển nhượng hay quy đổi thành tiền mặt. Chúng tôi có quyền thay đổi hoặc ngừng cung cấp vật phẩm ảo bất kỳ lúc nào.",
+    "terms6Title": "6. Miễn trừ trách nhiệm",
+    "terms6Body": "LexiLingo được cung cấp \"nguyên trạng\". Chúng tôi không đảm bảo về kết quả học tập. Phản hồi của AI được tạo tự động và có thể chứa sai sót — hãy tham khảo giáo viên ngôn ngữ có chuyên môn cho các nhu cầu quan trọng.",
+    "terms7Title": "7. Chấm dứt",
+    "terms7Body": "Chúng tôi có quyền tạm ngưng hoặc chấm dứt các tài khoản vi phạm Điều khoản này. Bạn có thể xoá tài khoản bất kỳ lúc nào trong phần Cài đặt.",
+    "terms8Title": "8. Luật áp dụng",
+    "terms8Body": "Các Điều khoản này được điều chỉnh bởi pháp luật Việt Nam."
   },
   "vocabQuiz": {
     "title": "Quiz từ vựng",
@@ -1478,5 +1709,26 @@
     "modeQuizSubtitle": "Kiểm tra nghĩa và thuật ngữ — tự chấm điểm",
     "modeFlashcardTitle": "Thẻ ghi nhớ",
     "modeFlashcardSubtitle": "Lật thẻ và tự đánh giá"
+  },
+  "emptyState": {
+    "noCourses": "Chưa có khóa học",
+    "noCoursesDesc": "Bắt đầu hành trình học của bạn bằng cách khám phá các khóa học.",
+    "noVocabulary": "Chưa có từ vựng",
+    "noVocabularyDesc": "Thêm từ để xây dựng thư viện từ vựng của bạn.",
+    "addWords": "Thêm từ",
+    "allCaughtUp": "Bạn đã xem hết rồi! Hãy quay lại sau nhé.",
+    "noConversations": "Chưa có cuộc trò chuyện",
+    "noConversationsDesc": "Bắt đầu trò chuyện với gia sư AI của chúng tôi.",
+    "startChat": "Bắt đầu trò chuyện",
+    "noResults": "Không tìm thấy kết quả",
+    "noResultsForQuery": "Không tìm thấy kết quả cho \"{query}\". Hãy thử từ khóa khác.",
+    "noResultsDesc": "Không tìm thấy kết quả. Hãy thử từ khóa khác.",
+    "noProgress": "Chưa có tiến độ",
+    "noProgressDesc": "Hoàn thành bài học để theo dõi tiến độ học tập.",
+    "noInternetDesc": "Vui lòng kiểm tra kết nối mạng và thử lại.",
+    "serverErrorDesc": "Chúng tôi đang gặp sự cố kết nối. Vui lòng thử lại."
+  },
+  "dailyChallenges": {
+    "rewardClaimed": "Đã nhận thưởng thành công!"
   }
 }

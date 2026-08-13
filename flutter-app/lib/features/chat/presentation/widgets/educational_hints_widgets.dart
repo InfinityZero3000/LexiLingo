@@ -565,7 +565,7 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
                 Icon(Icons.school, size: 14, color: Colors.purple.shade600),
                 const SizedBox(width: 4),
                 Text(
-                  '$totalHints Learning Hint${totalHints > 1 ? 's' : ''}',
+                  'chat.learningHintsCount'.plural(totalHints),
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.purple.shade700,

@@ -186,7 +186,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${widget.article.readingTimeMin} min read',
+                              'news.minRead'.tr(namedArgs: {'count': '${widget.article.readingTimeMin}'}),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,

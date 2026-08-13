@@ -267,14 +267,14 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Weekly Overview',
+              'progress.weeklyOverview'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 4),
             Text(
-              '${weekly.totalXP} XP · ${weekly.totalLessons} lessons · ${weekly.daysActive}/7 days active',
+              'progress.weeklySummary'.tr(namedArgs: {'xp': '${weekly.totalXP}', 'lessons': '${weekly.totalLessons}', 'days': '${weekly.daysActive}'}),
               style: TextStyle(
                 fontSize: 13,
                 color: AppColorRoles.textMuted(isDark),

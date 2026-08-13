@@ -152,7 +152,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        '$episodeCount Episodes',
+                        'podcast.episodeCount'.tr(namedArgs: {'count': '$episodeCount'}),
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 16,

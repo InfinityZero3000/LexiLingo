@@ -10,6 +10,7 @@ import 'package:record/record.dart';
 
 import '../../../voice/presentation/providers/voice_provider.dart';
 import '../../domain/services/speaking_answer_matcher.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 typedef StartLessonRecording = Future<void> Function();
 typedef StopLessonRecording = Future<Uint8List> Function();
@@ -124,7 +125,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
       throw StateError(
-        'Vui lòng cấp quyền microphone trong cài đặt trình duyệt hoặc thiết bị.',
+        'voice.micPermissionSettings'.tr(),
       );
     }
 
@@ -158,7 +159,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
           ? await widget.stopRecording!()
           : await _stopDefaultRecording();
       if (audioData.isEmpty) {
-        throw StateError('Không đọc được dữ liệu ghi âm. Vui lòng thử lại.');
+        throw StateError('voice.recordingUnreadable'.tr());
       }
 
       final transcript = widget.transcribeAudio != null
@@ -190,24 +191,24 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
   Future<Uint8List> _stopDefaultRecording() async {
     final path = await _recorder.stop();
     if (path == null || path.isEmpty) {
-      throw StateError('Không nhận được file ghi âm. Vui lòng thử lại.');
+      throw StateError('voice.recordingMissing'.tr());
     }
 
     if (kIsWeb) {
       final uri = Uri.tryParse(path);
       if (uri == null) {
-        throw StateError('Đường dẫn ghi âm không hợp lệ.');
+        throw StateError('voice.recordingPathInvalid'.tr());
       }
       final response = await http.get(uri);
       if (response.statusCode != 200) {
-        throw StateError('Không đọc được file ghi âm từ trình duyệt.');
+        throw StateError('voice.recordingBrowserUnreadable'.tr());
       }
       return response.bodyBytes;
     }
 
     final file = File(path);
     if (!await file.exists()) {
-      throw StateError('Không tìm thấy file ghi âm.');
+      throw StateError('voice.recordingNotFound'.tr());
     }
     return file.readAsBytes();
   }
@@ -221,11 +222,11 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
     );
     if (result == null) {
       throw StateError(
-        provider.errorMessage ?? 'Không thể nhận dạng giọng nói.',
+        provider.errorMessage ?? 'voice.speechNotRecognized'.tr(),
       );
     }
     if (result.text.trim().isEmpty) {
-      throw StateError('Không nghe rõ nội dung. Vui lòng nói lại.');
+      throw StateError('voice.speechUnclear'.tr());
     }
     return result.text;
   }
@@ -244,7 +245,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
   String _friendlyRecordingError(Object error) {
     final message = error.toString().replaceFirst('Bad state: ', '');
     if (message.toLowerCase().contains('permission')) {
-      return 'Vui lòng cấp quyền microphone rồi thử lại.';
+      return 'voice.micPermissionRetry'.tr();
     }
     return message;
   }
@@ -263,7 +264,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
       children: [
         Semantics(
           button: true,
-          label: _isRecording ? 'Dừng ghi âm' : 'Bắt đầu ghi âm',
+          label: _isRecording ? 'voice.stopRecording'.tr() : 'voice.startRecording'.tr(),
           child: GestureDetector(
             key: const Key('lesson-speaking-mic'),
             onTap: _handleTap,
@@ -325,7 +326,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
         if (_transcript != null && _transcript!.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
-            'Đã nghe: "$_transcript"',
+            '${'voice.youSaid'.tr()} "$_transcript"',
             style: TextStyle(fontSize: 12, color: secondary),
             textAlign: TextAlign.center,
           ),
@@ -333,7 +334,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
         if (_similarity != null && !_isApproved) ...[
           const SizedBox(height: 4),
           Text(
-            'Mức khớp: ${(_similarity! * 100).round()}%',
+            'voice.matchPercent'.tr(namedArgs: {'percent': '${(_similarity! * 100).round()}'}),
             style: TextStyle(fontSize: 12, color: secondary),
           ),
         ],
@@ -352,15 +353,15 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
   String get _statusLabel {
     switch (_state) {
       case _SpeakingRecorderState.idle:
-        return 'Nhấn để bắt đầu nói';
+        return 'voice.tapToStartSpeaking'.tr();
       case _SpeakingRecorderState.recording:
-        return 'Đang ghi âm - nhấn để dừng';
+        return 'voice.recordingTapToStop'.tr();
       case _SpeakingRecorderState.processing:
-        return 'Đang nhận dạng giọng nói...';
+        return 'voice.recognizing'.tr();
       case _SpeakingRecorderState.rejected:
-        return 'Chưa khớp, hãy thử lại';
+        return 'voice.notMatchedTryAgain'.tr();
       case _SpeakingRecorderState.approved:
-        return 'Bạn đã nói đúng';
+        return 'voice.saidCorrectly'.tr();
     }
   }
 

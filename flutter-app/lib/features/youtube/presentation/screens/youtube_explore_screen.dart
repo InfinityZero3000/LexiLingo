@@ -162,7 +162,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                   ),
                 ),
                 Text(
-                  'Học tiếng Anh qua video',
+                  'youtube.learnThroughVideo'.tr(),
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark ? Colors.white38 : AppColors.textGrey,
@@ -274,7 +274,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
           },
           style: const TextStyle(fontSize: 15),
           decoration: InputDecoration(
-            hintText: 'Tìm video học tiếng Anh...',
+            hintText: 'youtube.searchHint'.tr(),
             hintStyle: TextStyle(
               color: isDark ? Colors.white38 : AppColors.textGrey,
               fontSize: 14,
@@ -325,7 +325,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Kênh học tiếng Anh',
+                  'youtube.channelsTitle'.tr(),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -359,7 +359,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'Theo chủ đề',
+                  'youtube.browseByCategory'.tr(),
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
@@ -385,29 +385,30 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
     );
   }
 
-  static const _kCategories = [
+  // Getter, not a const list: labels must be resolved after a locale switch.
+  List<_CategoryInfo> get _kCategories => [
     _CategoryInfo(
-      'Tổng quát',
+      'youtube.catGeneral'.tr(),
       Icons.school_rounded,
-      Color(0xFF2196F3),
+      const Color(0xFF2196F3),
       'general',
     ),
     _CategoryInfo(
-      'Phát âm',
+      'youtube.catPronunciation'.tr(),
       Icons.record_voice_over_rounded,
-      Color(0xFFE91E63),
+      const Color(0xFFE91E63),
       'pronunciation',
     ),
     _CategoryInfo(
-      'Học thuật',
+      'youtube.catAcademic'.tr(),
       Icons.auto_stories_rounded,
-      Color(0xFF7C4DFF),
+      const Color(0xFF7C4DFF),
       'academic',
     ),
     _CategoryInfo(
-      'Tin tức',
+      'youtube.catNews'.tr(),
       Icons.newspaper_rounded,
-      Color(0xFF009688),
+      const Color(0xFF009688),
       'news',
     ),
   ];
@@ -633,7 +634,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                       setState(() {});
                     },
                     icon: const Icon(Icons.arrow_back_rounded, size: 16),
-                    label: const Text('Quay lại'),
+                    label: Text('common.back'.tr()),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(
@@ -862,20 +863,20 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
 
   String _localizedApiError(String error) {
     if (error.contains('503') || error.contains('unavailable')) {
-      return 'Dịch vụ video tạm thời không khả dụng.\nVui lòng thử lại sau.';
+      return 'youtube.errServiceUnavailable'.tr();
     }
     if (error.contains('429') ||
         error.contains('quota') ||
         error.contains('exhausted')) {
-      return 'Đã đạt giới hạn tìm kiếm hôm nay.\nVui lòng thử lại vào ngày mai.';
+      return 'youtube.errQuotaExceeded'.tr();
     }
     if (error.contains('504') || error.contains('timeout')) {
-      return 'Yêu cầu mất quá nhiều thời gian.\nKiểm tra kết nối mạng và thử lại.';
+      return 'youtube.errTimeout'.tr();
     }
     if (error.contains('401') || error.contains('403')) {
-      return 'Không có quyền truy cập.\nVui lòng liên hệ hỗ trợ.';
+      return 'youtube.errForbidden'.tr();
     }
-    return 'Không thể tải video.\nKiểm tra kết nối mạng và thử lại.';
+    return 'youtube.errLoadFailed'.tr();
   }
 
   List<Color> _channelGradient(String channelId, String category) {
@@ -933,11 +934,11 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
         labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
         padding: const EdgeInsets.all(4),
-        tabs: const [
-          Tab(text: 'Khám phá'),
-          Tab(text: 'Đề xuất'),
-          Tab(text: 'Đã lưu'),
-          Tab(text: 'Lịch sử'),
+        tabs: [
+          Tab(text: 'youtube.tabExplore'.tr()),
+          Tab(text: 'youtube.tabRecommended'.tr()),
+          Tab(text: 'youtube.tabSaved'.tr()),
+          Tab(text: 'youtube.tabHistory'.tr()),
         ],
       ),
     );
@@ -963,7 +964,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
               Icon(Icons.auto_awesome_rounded, size: 64, color: isDark ? Colors.white24 : AppColors.grey300),
               const SizedBox(height: 16),
               Text(
-                'Chưa có đề xuất nào',
+                'youtube.noRecommendations'.tr(),
                 style: TextStyle(
                   color: isDark ? Colors.white70 : AppColors.textDark,
                   fontSize: 16,
@@ -972,7 +973,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
               ),
               const SizedBox(height: 8),
               Text(
-                'Hãy xem một vài video để chúng tôi gợi ý những nội dung phù hợp cho bạn.',
+                'youtube.noRecommendationsDesc'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isDark ? Colors.white30 : AppColors.textGrey,
@@ -983,7 +984,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
               ElevatedButton.icon(
                 onPressed: () => provider.loadRecommendations(),
                 icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Tải lại'),
+                label: Text('home.reload'.tr()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -1024,7 +1025,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 color: isDark ? Colors.white24 : AppColors.grey300),
             const SizedBox(height: 16),
             Text(
-              'Chưa có video nào được lưu',
+              'youtube.noSavedVideos'.tr(),
               style: TextStyle(
                 color: isDark ? Colors.white70 : AppColors.textDark,
                 fontSize: 16,
@@ -1033,7 +1034,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Nhấn biểu tượng bookmark trên video để lưu lại học sau.',
+              'youtube.noSavedVideosDesc'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isDark ? Colors.white30 : AppColors.textGrey,
@@ -1078,7 +1079,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 color: isDark ? Colors.white24 : AppColors.grey300),
             const SizedBox(height: 16),
             Text(
-              'Lịch sử trống',
+              'youtube.emptyHistory'.tr(),
               style: TextStyle(
                 color: isDark ? Colors.white70 : AppColors.textDark,
                 fontSize: 16,
@@ -1087,7 +1088,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             ),
             const SizedBox(height: 8),
             Text(
-              'Các video bạn đã xem sẽ xuất hiện tại đây.',
+              'youtube.emptyHistoryDesc'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: isDark ? Colors.white30 : AppColors.textGrey,
@@ -1108,7 +1109,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             child: TextButton.icon(
               onPressed: () => _showClearHistoryDialog(provider),
               icon: const Icon(Icons.delete_sweep_rounded, size: 18),
-              label: const Text('Xóa lịch sử'),
+              label: Text('chat.clearHistory'.tr()),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primary,
               ),
@@ -1133,12 +1134,12 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Xóa lịch sử xem'),
-        content: const Text('Bạn có chắc chắn muốn xóa toàn bộ lịch sử xem video không?'),
+        title: Text('youtube.clearHistoryTitle'.tr()),
+        content: Text('youtube.clearHistoryConfirm'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
+            child: Text('common.cancel'.tr()),
           ),
           TextButton(
             onPressed: () {
@@ -1146,7 +1147,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.primary),
-            child: const Text('Xóa'),
+            child: Text('common.delete'.tr()),
           ),
         ],
       ),
@@ -1180,7 +1181,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Cẩm nang học tiếng Anh',
+                        'youtube.guideTitle'.tr(),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -1192,7 +1193,7 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Học qua video là phương pháp cực kỳ hiệu quả để nâng cao phản xạ tiếng Anh tự nhiên. Hãy tận dụng tối đa các công cụ hỗ trợ:',
+                  'youtube.guideIntro'.tr(),
                   style: TextStyle(
                     fontSize: 13,
                     color: isDark ? Colors.white70 : AppColors.textGrey,
@@ -1203,29 +1204,29 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                 _buildGuideItem(
                   icon: Icons.subtitles_rounded,
                   color: Colors.blue,
-                  title: 'Phụ đề tương tác thời gian thực',
-                  desc: 'Phụ đề hiển thị chạy song song dưới video player. Chạm trực tiếp vào bất kỳ từ nào để tra nghĩa nhanh.',
+                  title: 'youtube.guideTip1'.tr(),
+                  desc: 'youtube.guideTip1Desc'.tr(),
                   isDark: isDark,
                 ),
                 _buildGuideItem(
                   icon: Icons.bookmark_add_rounded,
                   color: Colors.green,
-                  title: 'Lưu từ vựng nhanh 1 chạm',
-                  desc: 'Khi mở bảng dịch nghĩa, chỉ cần nhấn "Lưu từ" để thêm ngay từ vựng vào Sổ tay từ vựng của bạn mà không có thêm màn hình trung gian.',
+                  title: 'youtube.guideTip2'.tr(),
+                  desc: 'youtube.guideTip2Desc'.tr(),
                   isDark: isDark,
                 ),
                 _buildGuideItem(
                   icon: Icons.repeat_rounded,
                   color: Colors.purple,
-                  title: 'Phương pháp Shadowing',
-                  desc: 'Tạm dừng sau mỗi câu nói của người bản xứ và lặp lại thật to để cải thiện phát âm, ngữ điệu và trọng âm.',
+                  title: 'youtube.guideTip3'.tr(),
+                  desc: 'youtube.guideTip3Desc'.tr(),
                   isDark: isDark,
                 ),
                 _buildGuideItem(
                   icon: Icons.history_edu_rounded,
                   color: Colors.orange,
-                  title: 'Xem lại lịch sử tra cứu',
-                  desc: 'Trong khi phát video, lịch sử các từ bạn đã tra trong phiên học sẽ được hiển thị ngay bên dưới để ôn tập tức thì.',
+                  title: 'youtube.guideTip4'.tr(),
+                  desc: 'youtube.guideTip4Desc'.tr(),
                   isDark: isDark,
                 ),
                 const SizedBox(height: 20),
@@ -1242,8 +1243,8 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Bắt đầu học ngay',
+                    child: Text(
+                      'youtube.guideCta'.tr(),
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),

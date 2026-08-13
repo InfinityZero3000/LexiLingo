@@ -37,13 +37,13 @@ void main() {
 
     await tester.tap(find.byKey(const Key('lesson-speaking-mic')));
     await tester.pump();
-    expect(find.text('Đang ghi âm - nhấn để dừng'), findsOneWidget);
+    expect(find.text('voice.recordingTapToStop'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('lesson-speaking-mic')));
     await tester.pumpAndSettle();
 
     expect(approvedAnswer, 'Could you please speak more slowly');
-    expect(find.text('Bạn đã nói đúng'), findsOneWidget);
+    expect(find.text('voice.saidCorrectly'), findsOneWidget);
   });
 
   testWidgets('keeps the exercise retryable when transcript does not match', (
@@ -64,7 +64,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(approvedAnswer, isNull);
-    expect(find.text('Chưa khớp, hãy thử lại'), findsOneWidget);
+    expect(find.text('voice.notMatchedTryAgain'), findsOneWidget);
     expect(
       find.textContaining('What time does the train leave'),
       findsOneWidget,
@@ -72,6 +72,6 @@ void main() {
 
     await tester.tap(find.byKey(const Key('lesson-speaking-mic')));
     await tester.pump();
-    expect(find.text('Đang ghi âm - nhấn để dừng'), findsOneWidget);
+    expect(find.text('voice.recordingTapToStop'), findsOneWidget);
   });
 }
