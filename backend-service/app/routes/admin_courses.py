@@ -277,14 +277,10 @@ async def create_course(
 
     Admin only endpoint.
     """
-    if course.is_published:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=(
-                "Cannot publish this course: the course has no lessons yet. "
-                "Save it as a draft, add lessons with exercises, then publish."
-            ),
-        )
+    # A brand-new course has no lessons, so it can never satisfy the publish
+    # gate — land it as a draft rather than rejecting the request, same as
+    # bulk import. Publish it once its lessons have exercises.
+    course = course.model_copy(update={"is_published": False})
 
     new_course = await CourseCRUD.create_course(db, course)
     

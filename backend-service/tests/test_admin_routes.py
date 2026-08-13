@@ -44,7 +44,29 @@ class TestAdminCourses:
         data = response.json()
         assert data["success"] is True
         assert data["data"]["title"] == "Test Course"
-    
+
+    @pytest.mark.asyncio
+    async def test_create_course_always_lands_as_draft(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict
+    ):
+        """A new course has no lessons, so it cannot satisfy the publish gate;
+        asking for published is downgraded rather than rejected."""
+        response = await async_client.post(
+            "/api/v1/admin/courses",
+            headers=admin_headers,
+            json={
+                "title": "Born Published",
+                "language": "en",
+                "level": "A1",
+                "is_published": True,
+            }
+        )
+
+        assert response.status_code == 200
+        assert response.json()["data"]["is_published"] is False
+
     @pytest.mark.asyncio
     async def test_update_course(
         self,
