@@ -9,4 +9,11 @@ User=root
 WorkingDirectory=/opt/lexilingo
 Environment=BACKUP_DIR=/opt/lexilingo/backups
 Environment=RETENTION_DAYS=14
+# Never prune below this many sets, so a run of failures cannot age out the
+# last good copy.
+Environment=MIN_KEEP_SETS=7
+# Set to an rclone remote (e.g. b2:lexilingo-backups) to get an off-site copy.
+# Until this is set, every backup lives on the same disk as the database.
+# Environment=OFFSITE_RCLONE_REMOTE=
 ExecStart=/usr/bin/bash /opt/lexilingo/scripts/backup-prod.sh
+OnFailure=lexilingo-backup-alert@%n.service

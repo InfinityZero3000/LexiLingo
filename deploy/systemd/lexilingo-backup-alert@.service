@@ -1,0 +1,11 @@
+[Unit]
+Description=Alert that LexiLingo backup unit %i failed
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/lexilingo
+# Set ALERT_WEBHOOK_URL here (or via a drop-in) to get a push instead of a
+# marker file only.
+# Environment=ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
+ExecStart=/usr/bin/bash /opt/lexilingo/scripts/backup-alert.sh %i
