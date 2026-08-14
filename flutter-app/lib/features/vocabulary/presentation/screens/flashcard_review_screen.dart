@@ -212,12 +212,19 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                 maintainSize: true,
                 maintainAnimation: true,
                 maintainState: true,
-                child: AnimatedOpacity(
-                  opacity: provider.isCardFlipped ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 250),
-                  child: ReviewQualityButtons(
-                    onQualitySelected: _handleReview,
-                    isLoading: provider.isLoading,
+                child: AnimatedSlide(
+                  offset: provider.isCardFlipped
+                      ? Offset.zero
+                      : const Offset(0, 0.3),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: AnimatedOpacity(
+                    opacity: provider.isCardFlipped ? 1.0 : 0.0,
+                    duration: const Duration(milliseconds: 250),
+                    child: ReviewQualityButtons(
+                      onQualitySelected: _handleReview,
+                      isLoading: provider.isLoading,
+                    ),
                   ),
                 ),
               ),

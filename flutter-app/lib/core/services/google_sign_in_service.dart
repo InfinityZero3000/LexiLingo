@@ -120,6 +120,12 @@ class GoogleSignInService {
   Future<String?> _extractGoogleIdTokenAndSignOut(
     UserCredential userCredential,
   ) async {
+    // getRedirectResult() resolves with an empty credential when no redirect is
+    // pending — that is the normal popup path, not a failure.
+    if (userCredential.user == null && userCredential.credential == null) {
+      return null;
+    }
+
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;
     String? googleIdToken = oauthCredential?.idToken;

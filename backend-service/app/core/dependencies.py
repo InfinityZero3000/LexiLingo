@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.security import decode_token
+from app.core.security import decode_token, is_locally_issued_token
 from app.core.token_blacklist import TokenBlacklist
 from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
 from app.models.user import User
@@ -58,6 +58,15 @@ async def get_current_user(
                 return user
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
+
+    # Our own token that did not validate (expired, wrong type, unknown user):
+    # Firebase can never accept it, so skip the remote verification. Expired
+    # access tokens are the common case and used to pay for it on every request.
+    if is_locally_issued_token(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
 
     # 2) Try Firebase ID token
     claims = await anyio.to_thread.run_sync(verify_firebase_token, token)
@@ -120,6 +129,10 @@ async def get_current_user_optional(
                 return user
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
+
+    # Same short-circuit as the required dependency above.
+    if is_locally_issued_token(token):
+        return None
 
     # 2) Try Firebase ID token
     claims = await anyio.to_thread.run_sync(verify_firebase_token, token)

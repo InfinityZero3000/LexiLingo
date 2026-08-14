@@ -1,6 +1,17 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
+import '../../../../core/network/backend_auth_header_provider.dart'
+    show isAccessTokenExpiring;
 import '../constants/api_endpoints.dart';
 import '../storage/token_storage.dart';
+
+/// Backend refresh tokens are single-use (rotated on every /auth/refresh), so
+/// concurrent refreshes would spend the same token twice and log the admin out.
+/// The first caller does the work; the rest await the same result.
+Completer<bool>? _refreshCompleter;
+
+const _retriedFlag = '__auth_retried';
 
 class ApiClient {
   static ApiClient? _instance;
@@ -16,21 +27,37 @@ class ApiClient {
 
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await TokenStorage.getAccessToken();
+        var token = await TokenStorage.getAccessToken();
+        // Renew before the request instead of after a 401 — the 401 path cannot
+        // recover uploads or any request replayed outside this client.
+        if (token != null && isAccessTokenExpiring(token)) {
+          if (await _tryRefresh()) {
+            token = await TokenStorage.getAccessToken();
+          }
+        }
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         handler.next(options);
       },
       onError: (error, handler) async {
-        if (error.response?.statusCode == 401) {
+        final options = error.requestOptions;
+        if (error.response?.statusCode == 401 &&
+            options.extra[_retriedFlag] != true) {
           final refreshed = await _tryRefresh();
           if (refreshed) {
+            // Guard against a refresh that keeps succeeding while the request
+            // keeps returning 401 — otherwise fetch() loops forever.
+            options.extra[_retriedFlag] = true;
             final token = await TokenStorage.getAccessToken();
-            error.requestOptions.headers['Authorization'] = 'Bearer $token';
-            final response = await _dio.fetch(error.requestOptions);
-            handler.resolve(response);
-            return;
+            options.headers['Authorization'] = 'Bearer $token';
+            try {
+              handler.resolve(await _dio.fetch(options));
+              return;
+            } on DioException catch (retryError) {
+              handler.next(retryError);
+              return;
+            }
           }
           await TokenStorage.clear();
         }
@@ -44,9 +71,17 @@ class ApiClient {
   Dio get dio => _dio;
 
   Future<bool> _tryRefresh() async {
+    final pending = _refreshCompleter;
+    if (pending != null) return pending.future;
+
+    final completer = Completer<bool>();
+    _refreshCompleter = completer;
     try {
       final refreshToken = await TokenStorage.getRefreshToken();
-      if (refreshToken == null) return false;
+      if (refreshToken == null) {
+        completer.complete(false);
+        return false;
+      }
 
       final response = await Dio().post(
         '${ApiEndpoints.baseUrl}${ApiEndpoints.refreshToken}',
@@ -58,9 +93,15 @@ class ApiClient {
           accessToken: data['access_token'],
           refreshToken: data['refresh_token'] ?? refreshToken,
         );
+        completer.complete(true);
         return true;
       }
-    } catch (_) {}
+    } catch (_) {
+      // Fall through to the failure result below.
+    } finally {
+      _refreshCompleter = null;
+    }
+    if (!completer.isCompleted) completer.complete(false);
     return false;
   }
 

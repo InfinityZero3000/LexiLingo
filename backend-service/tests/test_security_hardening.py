@@ -14,6 +14,7 @@ from httpx import ASGITransport, AsyncClient
 
 from app.core import dependencies
 from app.core.security import (
+    create_access_token,
     create_verification_token,
     decode_verification_token,
     verify_google_token,
@@ -139,6 +140,39 @@ async def test_firebase_dependency_verification_runs_off_event_loop(monkeypatch)
         )
 
     assert exc_info.value.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_expired_local_token_skips_firebase_verification(monkeypatch):
+    """An expired backend JWT must not pay for a Firebase round trip."""
+    import uuid
+    from datetime import timedelta
+
+    expired = create_access_token(
+        {"sub": str(uuid.uuid4())}, expires_delta=timedelta(seconds=-10)
+    )
+
+    def fail_if_called(_token):
+        raise AssertionError("Firebase verification must be skipped for our own token")
+
+    monkeypatch.setattr(dependencies, "verify_firebase_token", fail_if_called)
+    monkeypatch.setattr(
+        dependencies.TokenBlacklist,
+        "is_blacklisted",
+        AsyncMock(return_value=False),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        await dependencies.get_current_user(
+            credentials=SimpleNamespace(credentials=expired),
+            db=MagicMock(),
+        )
+    assert exc_info.value.status_code == 401
+
+    assert await dependencies.get_current_user_optional(
+        credentials=SimpleNamespace(credentials=expired),
+        db=MagicMock(),
+    ) is None
 
 
 @pytest.mark.asyncio

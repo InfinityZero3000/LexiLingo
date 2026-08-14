@@ -135,6 +135,19 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def is_locally_issued_token(token: str) -> bool:
+    """True when the JWT carries our own issuer (claims read without verifying).
+
+    Only ever used to skip the Firebase verification path — never to grant
+    access — so a forged `iss` costs the attacker a path, not us a check.
+    """
+    try:
+        claims = jwt.get_unverified_claims(token)
+    except (JWTError, ValueError, AttributeError):
+        return False
+    return claims.get("iss") == settings.JWT_ISSUER
+
+
 def create_verification_token(data: Dict[str, Any], expires_minutes: int = 60) -> str:
     """
     Create a verification token (for email verification, password reset).

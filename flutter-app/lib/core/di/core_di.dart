@@ -27,7 +27,7 @@ import 'service_locator.dart';
 // refresh; the rest wait on the same Completer and reuse the result.
 Completer<bool>? _tokenRefreshCompleter;
 
-Future<bool> _refreshBackendToken(TokenStorage tokenStorage) async {
+Future<bool> refreshBackendToken(TokenStorage tokenStorage) async {
   if (_tokenRefreshCompleter != null) {
     return _tokenRefreshCompleter!.future;
   }
@@ -107,7 +107,10 @@ Future<void> registerCore({required bool skipDatabase}) async {
 
   // Register BackendAuthHeaderProvider instead of FirebaseAuthHeaderProvider
   sl.registerLazySingleton<BackendAuthHeaderProvider>(
-    () => BackendAuthHeaderProvider(tokenStorage: sl<TokenStorage>()),
+    () => BackendAuthHeaderProvider(
+      tokenStorage: sl<TokenStorage>(),
+      refreshTokens: () => refreshBackendToken(sl<TokenStorage>()),
+    ),
   );
 
   // Main API Client for Backend Service (Auth, Courses, Gamification)
@@ -115,7 +118,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
     () => ApiClient(
       networkInfo: sl<NetworkInfo>(),
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
-      onUnauthorized: () => _refreshBackendToken(sl<TokenStorage>()),
+      onUnauthorized: () => refreshBackendToken(sl<TokenStorage>()),
     ),
   );
 
@@ -124,7 +127,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
     () => AiApiClient(
       networkInfo: sl<NetworkInfo>(),
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
-      onUnauthorized: () => _refreshBackendToken(sl<TokenStorage>()),
+      onUnauthorized: () => refreshBackendToken(sl<TokenStorage>()),
     ),
   );
 
