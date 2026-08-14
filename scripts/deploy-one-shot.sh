@@ -143,6 +143,22 @@ check_required_secrets() {
   fi
 }
 
+tag_rollback_images() {
+  # There is no registry and no image backup on this host, so a lost :latest
+  # tag is unrecoverable — on 2026-08-14 a cancelled build left ai-service with
+  # no image and no container. Keep a known-good tag before anything swaps.
+  local image
+  for service in ai-service backend-service; do
+    image="lexilingo-${service}:latest"
+    if sudo docker image inspect "${image}" >/dev/null 2>&1; then
+      run "sudo docker tag ${image} lexilingo-${service}:rollback"
+      log "Tagged rollback image for ${service}"
+    else
+      log "WARNING: ${image} missing — no rollback image for ${service}"
+    fi
+  done
+}
+
 wait_for_service() {
   local service="$1"
   local timeout_sec="$2"
@@ -222,6 +238,7 @@ main() {
   fi
 
   log "Step 3/4: Docker up with orphan cleanup"
+  tag_rollback_images
   run "${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
 
   if [[ "${DRY_RUN}" == false ]]; then
