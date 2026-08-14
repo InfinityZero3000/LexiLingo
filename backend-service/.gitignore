@@ -73,4 +73,7 @@ data/
 *.log
 logs/
 import_*
-!scripts/import_kuzu_mastery.py
+# The rule above targets imported data dumps, but it also swallowed every
+# scripts/import_*.py — which is why import_kuzu_mastery.py needed its own
+# exception. Keep tooling tracked instead of adding one exception per script.
+!scripts/import_*.py
