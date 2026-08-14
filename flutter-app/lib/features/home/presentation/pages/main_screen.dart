@@ -200,8 +200,8 @@ class _MainScreenState extends State<MainScreen> {
               label: Text('home.navLearning'.tr()),
             ),
             NavigationRailDestination(
-              icon: const Icon(Icons.smart_toy_outlined),
-              selectedIcon: const Icon(Icons.smart_toy),
+              icon: const Icon(Icons.flutter_dash_outlined),
+              selectedIcon: const Icon(Icons.flutter_dash_rounded),
               label: Text('home.navLexi'.tr()),
             ),
             NavigationRailDestination(
@@ -222,60 +222,57 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildBottomNavigationBar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.4)
-                : Colors.black.withValues(alpha: 0.08),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          type: BottomNavigationBarType.fixed,
-          onTap: _selectTab,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.explore_outlined),
-              activeIcon: const Icon(Icons.explore),
-              label: 'home.navDiscovery'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.menu_book_outlined),
-              activeIcon: const Icon(Icons.menu_book),
-              label: 'home.navLearning'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.smart_toy_outlined),
-              activeIcon: const Icon(Icons.smart_toy),
-              label: 'home.navLexi'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.chat_bubble_outline),
-              activeIcon: const Icon(Icons.chat_bubble),
-              label: 'home.navTopic'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.account_circle_outlined),
-              activeIcon: const Icon(Icons.account_circle),
-              label: 'home.navAccount'.tr(),
+    return SafeArea(
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.surfaceDark : Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.4)
+                  : Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            type: BottomNavigationBarType.fixed,
+            elevation: 0,
+            onTap: _selectTab,
+            items: [
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.explore_outlined),
+                activeIcon: const Icon(Icons.explore),
+                label: 'home.navDiscovery'.tr(),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.menu_book_outlined),
+                activeIcon: const Icon(Icons.menu_book),
+                label: 'home.navLearning'.tr(),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.flutter_dash_outlined),
+                activeIcon: const Icon(Icons.flutter_dash_rounded),
+                label: 'home.navLexi'.tr(),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.chat_bubble_outline),
+                activeIcon: const Icon(Icons.chat_bubble),
+                label: 'home.navTopic'.tr(),
+              ),
+              BottomNavigationBarItem(
+                icon: const Icon(Icons.account_circle_outlined),
+                activeIcon: const Icon(Icons.account_circle),
+                label: 'home.navAccount'.tr(),
+              ),
+            ],
+          ),
         ),
       ),
     );
