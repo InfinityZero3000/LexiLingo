@@ -2,6 +2,8 @@
 Description=LexiLingo backup restore verification
 After=network-online.target docker.service
 Wants=network-online.target
+# Must be in [Unit], not [Service] — see lexilingo-backup.service.
+OnFailure=lexilingo-backup-alert@%N.service
 
 [Service]
 Type=oneshot
@@ -11,4 +13,3 @@ Environment=BACKUP_DIR=/opt/lexilingo/backups
 # Restores the newest dump into a disposable container and asserts user data
 # survived. Never touches production.
 ExecStart=/usr/bin/bash /opt/lexilingo/scripts/verify-backup.sh
-OnFailure=lexilingo-backup-alert@%N.service

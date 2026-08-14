@@ -2,6 +2,10 @@
 Description=LexiLingo production backup job
 After=network-online.target docker.service
 Wants=network-online.target
+# OnFailure must live in [Unit]. systemd silently ignores it in [Service]
+# ("Unknown key name 'OnFailure' in section 'Service'"), which is why the
+# first version of this unit never alerted on a real failure.
+OnFailure=lexilingo-backup-alert@%N.service
 
 [Service]
 Type=oneshot
@@ -16,4 +20,3 @@ Environment=MIN_KEEP_SETS=7
 # Until this is set, every backup lives on the same disk as the database.
 # Environment=OFFSITE_RCLONE_REMOTE=
 ExecStart=/usr/bin/bash /opt/lexilingo/scripts/backup-prod.sh
-OnFailure=lexilingo-backup-alert@%N.service
