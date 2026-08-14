@@ -76,14 +76,19 @@ cmp -s "${PROBE_ENC}" "${PROBE_BACK}" || die "round trip corrupted the file"
 "${RCLONE}" --config "${CONFIG}" delete "lexilingo-b2:${B2_BUCKET}/probe/$(basename "${PROBE_ENC}")" 2>/dev/null || true
 log "Round trip verified"
 
-# Deletion must fail if the key is correctly scoped write-only. Report either
-# way — this is the difference between a backup and a backup that survives an
-# attacker with root on this host.
-if "${RCLONE}" --config "${CONFIG}" delete "lexilingo-b2:${B2_BUCKET}/probe/" 2>/dev/null; then
-  log "NOTE: this key CAN delete objects. Prefer a key without deleteFiles, plus"
-  log "      Object Lock on the bucket, so a compromised host cannot erase backups."
+# What matters is not whether the delete call succeeds, but whether the DATA
+# survives it. On B2 rclone's delete hides the file (hard_delete defaults to
+# false) and Object Lock protects the underlying version, so a "successful"
+# delete can still leave the bytes fully recoverable. Test that, not the exit
+# code — an earlier version of this check reported "key CAN delete" on a bucket
+# where nothing was actually destroyable.
+"${RCLONE}" --config "${CONFIG}" delete "lexilingo-b2:${B2_BUCKET}/probe/" 2>/dev/null || true
+if "${RCLONE}" --config "${CONFIG}" ls "lexilingo-b2:${B2_BUCKET}/probe/" --b2-versions 2>/dev/null | grep -q .; then
+  log "Good: data survives deletion (Object Lock / versioning) — a compromised"
+  log "      host can hide backups but cannot destroy them. Recover with --b2-versions."
 else
-  log "Good: this key cannot delete — backups are protected from a compromised host"
+  log "WARNING: the probe was permanently destroyed. Backups are NOT immutable —"
+  log "         enable Object Lock on '${B2_BUCKET}' or an attacker can erase them."
 fi
 
 cat <<EOF
@@ -95,7 +100,14 @@ Setup complete. Enable the off-site push:
   [Service]
   Environment=OFFSITE_RCLONE_REMOTE=lexilingo-b2:${B2_BUCKET}/lexilingo
   Environment=RCLONE_CONFIG=${CONFIG}
-  Environment=AGE_RECIPIENTS=${AGE_RECIPIENTS}
+  # AGE_RECIPIENTS must stay quoted: systemd splits an unquoted Environment=
+  # on whitespace, which silently drops every recipient after the first and
+  # leaves backups encrypted to a single key.
+  Environment="AGE_RECIPIENTS=${AGE_RECIPIENTS}"
+
+Then confirm the count matches your recipients:
+  sudo systemctl start lexilingo-backup.service
+  journalctl -u lexilingo-backup.service | grep 'Encrypting backup set for'
 
   sudo systemctl start lexilingo-backup.service
 
