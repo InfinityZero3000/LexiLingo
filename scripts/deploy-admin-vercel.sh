@@ -232,7 +232,12 @@ else
         vercel login
     fi
 
-    vercel --prod --yes
+    # Build here, ship the output. A plain `vercel --prod` uploads only
+    # admin-service and builds remotely, where src/lib/adminApi.ts cannot
+    # resolve ../../../contracts/ — the same prebuilt flow CD uses avoids it.
+    vercel pull --yes --environment=production
+    vercel build --prod
+    vercel deploy --prebuilt --prod --yes
 
     echo ""
     echo -e "${GREEN}✓${NC} Production deployment complete!"
