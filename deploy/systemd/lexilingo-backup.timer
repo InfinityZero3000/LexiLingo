@@ -2,8 +2,11 @@
 Description=Run LexiLingo production backup daily
 
 [Timer]
-OnCalendar=*-*-* 02:30:00
+# Every 6h instead of daily: cuts worst-case data loss from 24h to 6h of
+# learner progress, for ~6MB/day and a few seconds of CPU.
+OnCalendar=*-*-* 00,06,12,18:30:00
 Persistent=true
+RandomizedDelaySec=120
 Unit=lexilingo-backup.service
 
 [Install]

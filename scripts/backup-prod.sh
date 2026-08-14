@@ -58,13 +58,24 @@ log "Backup manifest -> ${MANIFEST_FILE}"
 # Backups on the same disk as the database die with the disk. This is opt-in
 # because it needs a configured rclone remote; when unset we say so loudly
 # rather than implying the data is safe.
+RCLONE_BIN="${RCLONE_BIN:-/usr/local/bin/rclone}"
 if [[ -n "${OFFSITE_RCLONE_REMOTE}" ]]; then
-  if command -v rclone >/dev/null 2>&1; then
+  if [[ -x "${RCLONE_BIN}" ]] || RCLONE_BIN="$(command -v rclone 2>/dev/null)"; then
     log "Copying backup set off-site -> ${OFFSITE_RCLONE_REMOTE}"
-    rclone copy "${PG_FILE}" "${OFFSITE_RCLONE_REMOTE}/" --no-traverse
-    rclone copy "${MONGO_FILE}" "${OFFSITE_RCLONE_REMOTE}/" --no-traverse
-    rclone copy "${MANIFEST_FILE}" "${OFFSITE_RCLONE_REMOTE}/" --no-traverse
-    log "Off-site copy complete"
+    for f in "${PG_FILE}" "${MONGO_FILE}" "${MANIFEST_FILE}"; do
+      "${RCLONE_BIN}" copy "${f}" "${OFFSITE_RCLONE_REMOTE}" --no-traverse \
+        || die "off-site copy of $(basename "${f}") failed"
+    done
+    # An exit code of 0 is not proof the bytes landed. Compare the remote size
+    # against local for each file before calling the backup protected.
+    for f in "${PG_FILE}" "${MONGO_FILE}"; do
+      remote_size="$("${RCLONE_BIN}" size "${OFFSITE_RCLONE_REMOTE}/$(basename "${f}")" \
+        --json 2>/dev/null | sed -E 's/.*"bytes":([0-9]+).*/\1/')"
+      local_size="$(file_size "${f}")"
+      [[ "${remote_size}" == "${local_size}" ]] \
+        || die "off-site verify failed for $(basename "${f}"): remote=${remote_size:-missing} local=${local_size}"
+    done
+    log "Off-site copy verified (sizes match remote)"
   else
     log "WARNING: OFFSITE_RCLONE_REMOTE set but rclone is not installed — backup is LOCAL ONLY"
   fi
