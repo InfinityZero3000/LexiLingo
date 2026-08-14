@@ -312,7 +312,9 @@ class GroqKeyPool:
         keys = list((provider.get("day_counts") or {}).keys())
         keys.extend((provider.get("cooldown_until") or {}).keys())
         keys.extend(extra_keys or [])
-        env_keys = os.getenv("GROQ_KEYS", "")
+        # GROQ_API_KEYS is what the env files and docker-compose actually set;
+        # reading only GROQ_KEYS left this script rotating a pool of one.
+        env_keys = os.getenv("GROQ_KEYS", "") or os.getenv("GROQ_API_KEYS", "")
         if env_keys:
             keys.extend(item.strip() for item in env_keys.split(","))
         env_key = os.getenv("GROQ_API_KEY", "")

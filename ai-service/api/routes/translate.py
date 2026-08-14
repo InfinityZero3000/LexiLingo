@@ -15,7 +15,6 @@ import os
 import re
 from typing import Optional
 
-import httpx
 from fastapi import APIRouter, Depends, Query
 
 from api.routes.admin import verify_admin_api_key
@@ -91,7 +90,6 @@ async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[di
                 "max_tokens": 80,
                 "temperature": 0.0,
             },
-            httpx_module=httpx,
             timeout=12.0,
         )
 

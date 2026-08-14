@@ -16,6 +16,7 @@ Fix a reported course by authoring exercises in the admin dashboard or with
 """
 
 import argparse
+import copy
 import asyncio
 import sys
 from pathlib import Path
@@ -43,8 +44,57 @@ async def fix_counters(db) -> int:
     return fixed
 
 
-async def audit(unpublish: bool, repair_counters: bool) -> int:
+PAIRED_UI_TYPES = {"match_word_to_meaning", "categorization", "cognitive_fluidity"}
+
+
+def _option_text(option) -> str:
+    return option.get("text", "") if isinstance(option, dict) else str(option)
+
+
+async def fix_matching_options(db) -> int:
+    """Rebuild `options` for pair-matching exercises.
+
+    The Flutter widget keeps only each option's text and splits the list in
+    half — first half is the left (key) column, second half the right (value)
+    column. Content authored as [{id: key, text: value}] therefore rendered
+    the values twice and the keys never, making the exercise unanswerable.
+    """
+    result = await db.execute(select(Lesson))
+    fixed = 0
+    for lesson in result.scalars().all():
+        if not isinstance(lesson.content, dict):
+            continue
+        # Deep-copy first: mutating the loaded dict in place also mutates the
+        # value SQLAlchemy compares against, so the UPDATE is never emitted.
+        content = copy.deepcopy(lesson.content)
+        changed = False
+        for exercise in content.get("exercises") or []:
+            if exercise.get("ui_type") not in PAIRED_UI_TYPES:
+                continue
+            pairs = [
+                part.split(":", 1)
+                for part in str(exercise.get("correct_answer", "")).split(",")
+                if ":" in part
+            ]
+            if not pairs:
+                continue
+            wanted = [k.strip() for k, _ in pairs] + [v.strip() for _, v in pairs]
+            if [_option_text(o) for o in exercise.get("options") or []] != wanted:
+                exercise["options"] = wanted
+                changed = True
+        if changed:
+            # reassign so SQLAlchemy sees the mutation (and re-syncs the counter)
+            lesson.content = content
+            fixed += 1
+    if fixed:
+        await db.commit()
+    return fixed
+
+
+async def audit(unpublish: bool, repair_counters: bool, repair_matching: bool = False) -> int:
     async with AsyncSessionLocal() as db:
+        if repair_matching:
+            print(f"Repaired matching options on {await fix_matching_options(db)} lesson(s).")
         if repair_counters:
             print(f"Repaired total_exercises on {await fix_counters(db)} lesson(s).")
 
@@ -91,5 +141,10 @@ if __name__ == "__main__":
         action="store_true",
         help="rewrite stale Lesson.total_exercises values from content",
     )
+    parser.add_argument(
+        "--fix-matching",
+        action="store_true",
+        help="rebuild options for pair-matching exercises so both columns render",
+    )
     args = parser.parse_args()
-    asyncio.run(audit(args.unpublish, args.fix_counters))
+    asyncio.run(audit(args.unpublish, args.fix_counters, args.fix_matching))

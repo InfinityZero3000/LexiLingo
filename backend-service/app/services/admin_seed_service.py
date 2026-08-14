@@ -84,11 +84,20 @@ async def seed_courses(
         unit_seed = course_data.pop("units")
         category_slug = course_data.pop("category_slug")
 
+        # Same gate as CourseCRUD.publish_blockers: a lesson without exercises
+        # is unplayable (learners get 409), and a course of those renders as an
+        # empty roadmap. Seeding must not create what admin publishing rejects.
+        playable = all(
+            lesson.get("exercises")
+            for unit in unit_seed
+            for lesson in unit["lessons"]
+        )
+
         course = Course(
             **course_data,
             category_id=category_ids.get(category_slug),
             total_lessons=sum(len(unit["lessons"]) for unit in unit_seed),
-            is_published=True,
+            is_published=playable,
         )
         db.add(course)
         await db.flush()

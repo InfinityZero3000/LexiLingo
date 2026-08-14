@@ -855,6 +855,12 @@ class _ErrorView extends StatelessWidget {
               icon: const Icon(Icons.refresh_rounded),
               label: Text('common.retry'.tr()),
             ),
+            const SizedBox(height: 8),
+            // Without the roadmap header there is no other way out of here.
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('common.back'.tr()),
+            ),
           ],
         ),
       ),

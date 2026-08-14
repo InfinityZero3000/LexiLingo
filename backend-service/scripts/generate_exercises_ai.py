@@ -13,6 +13,7 @@ Run:
 """
 
 import asyncio
+import itertools
 import os
 import json
 import re
@@ -30,11 +31,73 @@ from sqlalchemy import text
 # Load env variables
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = os.getenv("EXERCISE_GEN_MODEL", "llama-3.3-70b-versatile")
+
+# Groq quota is per key AND per model, so rotating the configured pool
+# multiplies the daily token budget instead of exhausting one account.
+# ai-service has a Redis-backed pool; a standalone script must not reach
+# across the service boundary, so it round-robins the same env var itself.
+GROQ_API_KEYS = [
+    key.strip()
+    for key in (
+        os.getenv("GROQ_API_KEYS") or os.getenv("GROQ_API_KEY") or ""
+    ).split(",")
+    if key.strip()
+]
+
+_key_cursor = itertools.cycle(GROQ_API_KEYS) if GROQ_API_KEYS else None
+_key_lock = asyncio.Lock()
+
+
+async def next_groq_key() -> str:
+    async with _key_lock:
+        return next(_key_cursor)
+
 
 # Concurrency limit to prevent hitting API rate limits
 SEMAPHORE_LIMIT = 5
+
+REQUIRED_KEYS = ("type", "ui_type", "question", "correct_answer", "explanation")
+GAP_UI_TYPES = {"fill_in_the_blank", "dialogue_completion", "dictation"}
+PAIRED_UI_TYPES = {"match_word_to_meaning", "categorization", "cognitive_fluidity"}
+
+
+def sanitize_exercises(exercises: list) -> list:
+    """Drop exercises the app cannot render, and repair the one case the model
+    reliably gets wrong (true/false without options). Returns [] if anything
+    is unusable so the caller retries rather than saving a broken lesson."""
+    if not isinstance(exercises, list) or not exercises:
+        return []
+
+    cleaned = []
+    for exercise in exercises:
+        if not isinstance(exercise, dict):
+            return []
+        if any(not exercise.get(key) for key in REQUIRED_KEYS):
+            return []
+
+        ui_type = exercise["ui_type"]
+        options = exercise.get("options") or []
+
+        if ui_type == "true_or_false":
+            # The renderer needs both choices; the model often omits them.
+            exercise["options"] = ["True", "False"]
+            if str(exercise["correct_answer"]).strip().lower() not in ("true", "false"):
+                return []
+        elif ui_type in PAIRED_UI_TYPES:
+            if len(options) != 4 or ":" not in str(exercise["correct_answer"]):
+                return []
+        elif ui_type in GAP_UI_TYPES:
+            if "{blank}" not in exercise["question"]:
+                return []
+        elif options and exercise["correct_answer"] not in options:
+            return []
+
+        cleaned.append(exercise)
+
+    return cleaned
+
 
 async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str, level: str, unit_title: str, lesson_title: str, lesson_id: str) -> list:
     """Call Gemini to generate exercises for a single lesson"""
@@ -68,36 +131,55 @@ async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str
     2. Vary the ui_type values across the 5 exercises to keep the lesson diverse.
     3. Ensure matching/categorization exercises contain 4 items in 'options' and their correct_answer matches the 'key1:value1, key2:value2' format.
     4. For fill_in_the_blank and dialogue_completion, include '{{blank}}' in the question.
+    5. The learners are Vietnamese speakers studying English. Every translation,
+       gloss or meaning MUST be Vietnamese (with correct diacritics) — never any
+       other language. The prompt text itself stays in English.
+    6. For true_false / true_or_false, 'options' MUST be exactly ["True", "False"]
+       and 'correct_answer' MUST be either "True" or "False".
     """
 
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt
-                    }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "responseMimeType": "application/json"
-        }
+        "model": GROQ_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.7,
     }
-    
-    # Retry configuration for robustness
-    for attempt in range(3):
+    # Retry configuration for robustness. Each attempt takes the next key in
+    # the rotation, so a key that is out of daily quota costs one attempt
+    # rather than stalling the whole run.
+    for attempt in range(max(3, len(GROQ_API_KEYS))):
         try:
-            response = await client.post(GEMINI_URL, json=payload, timeout=45.0)
+            headers = {"Authorization": f"Bearer {await next_groq_key()}"}
+            response = await client.post(
+                GROQ_URL, json=payload, headers=headers, timeout=45.0
+            )
             if response.status_code == 200:
                 result_json = response.json()
-                text_response = result_json["candidates"][0]["content"]["parts"][0]["text"]
+                text_response = result_json["choices"][0]["message"]["content"]
                 # Parse JSON
                 data = json.loads(text_response)
-                return data.get("exercises", [])
+                exercises = sanitize_exercises(data.get("exercises", []))
+                if exercises:
+                    return exercises
+                print(f"    [Invalid payload] Lesson '{lesson_title}' - retrying...")
+            elif response.status_code in (401, 403) or (
+                response.status_code == 400
+                and "json_validate_failed" not in response.text
+            ):
+                # Bad key/model/request — retrying just burns quota silently,
+                # which is how a dead API key stayed invisible for 208 lessons.
+                # A 400 json_validate_failed is only a bad roll of the dice,
+                # so it falls through to the normal retry path below.
+                print(
+                    f"    [FATAL {response.status_code}] {response.text[:300]}"
+                )
+                raise SystemExit(
+                    "Aborting: the API rejected the request (see error above)."
+                )
             elif response.status_code == 429:
-                # Rate limit, wait and retry
-                wait_time = 15 * (attempt + 1)
+                # With a key pool the next attempt uses a different key, so
+                # only back off hard when there is nothing to rotate to.
+                wait_time = 1 if len(GROQ_API_KEYS) > 1 else 15 * (attempt + 1)
                 print(f"    [Rate limit 429] Lesson '{lesson_title}' - retrying in {wait_time}s...")
                 await asyncio.sleep(wait_time)
             elif response.status_code in (503, 500, 502):
@@ -106,8 +188,13 @@ async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str
                 print(f"    [HTTP Error {response.status_code}] Lesson '{lesson_title}' - retrying in {wait_time}s...")
                 await asyncio.sleep(wait_time)
             else:
-                print(f"    [HTTP Error {response.status_code}] Lesson '{lesson_title}' - retrying...")
+                print(
+                    f"    [HTTP Error {response.status_code}] Lesson '{lesson_title}' "
+                    f"- retrying... {response.text[:200]}"
+                )
                 await asyncio.sleep(5)
+        except SystemExit:
+            raise
         except Exception as e:
             print(f"    [Error] Lesson '{lesson_title}': {e} - retrying...")
             await asyncio.sleep(2)
@@ -147,8 +234,8 @@ async def process_lesson(sem: asyncio.Semaphore, client: httpx.AsyncClient, less
         return False
 
 async def main():
-    if not GEMINI_API_KEY:
-        print("Error: GEMINI_API_KEY env variable is not set. Please check backend-service/.env")
+    if not GROQ_API_KEYS:
+        print("Error: set GROQ_API_KEYS (comma-separated) or GROQ_API_KEY in backend-service/.env")
         sys.exit(1)
         
     limit = None

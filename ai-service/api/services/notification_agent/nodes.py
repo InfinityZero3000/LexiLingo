@@ -42,7 +42,7 @@ def analyze_audience_node(state: NotificationAgentState) -> dict:
 
 async def generate_variants_node(state: NotificationAgentState) -> dict:
     """Call Groq to generate 3 notification copy variants."""
-    groq_key = _get_groq_key()
+    groq_key = await _get_groq_key()
     if not groq_key:
         logger.warning("No Groq API key available — skipping AI copy generation")
         return {
@@ -88,7 +88,14 @@ async def generate_variants_node(state: NotificationAgentState) -> dict:
             logger.warning("Groq returned %d for notification copy generation", resp.status_code)
             return {"variants": [], "generation_skipped": True, "retries": state.get("retries", 0)}
 
-        content = resp.json()["choices"][0]["message"]["content"].strip()
+        payload = resp.json()
+        from api.core.groq_key_pool import record_groq_key_usage
+
+        await record_groq_key_usage(
+            groq_key, payload.get("usage", {}).get("total_tokens", 600)
+        )
+
+        content = payload["choices"][0]["message"]["content"].strip()
         # Strip markdown code fences if present (handles ```json ... ``` or ``` ... ```)
         content = re.sub(r"^```[a-zA-Z]*\s*", "", content)
         content = re.sub(r"\s*```$", "", content).strip()
@@ -188,13 +195,16 @@ def _score_variant(variant: NotificationVariant, state: NotificationAgentState) 
     return min(score, 1.0)
 
 
-def _get_groq_key() -> str | None:
-    """Return first available Groq API key from environment."""
-    for i in range(1, 10):
-        key = os.getenv(f"GROQ_API_KEY_{i}", "").strip()
-        if key:
-            return key
-    return os.getenv("GROQ_API_KEY", "").strip() or None
+async def _get_groq_key() -> str | None:
+    """Next key from the shared rotating pool.
+
+    This used to read GROQ_API_KEY_1..9 — a naming scheme configured nowhere —
+    and then fall back to the single GROQ_API_KEY, so every notification job
+    hammered one key while the other six sat idle.
+    """
+    from api.core.groq_key_pool import get_available_groq_key
+
+    return await get_available_groq_key(estimated_tokens=600)
 
 
 def should_regenerate(state: NotificationAgentState) -> str:

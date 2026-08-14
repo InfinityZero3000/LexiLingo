@@ -240,7 +240,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "categorization",
                                 "question": "Categorize the pronouns: Singular vs Plural",
-                                "options": [{"id": "he", "text": "Singular"}, {"id": "they", "text": "Plural"}],
+                                "options": ["he", "they", "Singular", "Plural"],
                                 "correct_answer": "he:Singular, they:Plural",
                                 "explanation": "He is singular, they is plural."
                             }
@@ -289,7 +289,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "match_word_to_meaning",
                                 "question": "Match the family words with meanings.",
-                                "options": [{"id": "father", "text": "Male parent"}, {"id": "mother", "text": "Female parent"}],
+                                "options": ["father", "mother", "Male parent", "Female parent"],
                                 "correct_answer": "father:Male parent, mother:Female parent",
                                 "explanation": "Father is male parent, mother is female."
                             },
@@ -306,7 +306,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "cognitive_fluidity",
                                 "question": "Match: mother, sister",
-                                "options": [{"id": "mother", "text": "female parent"}, {"id": "sister", "text": "female sibling"}],
+                                "options": ["mother", "sister", "female parent", "female sibling"],
                                 "correct_answer": "mother:female parent, sister:female sibling",
                                 "explanation": "Fast match."
                             },
@@ -386,7 +386,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "match_word_to_meaning",
                                 "question": "Match rooms with objects.",
-                                "options": [{"id": "bedroom", "text": "bed"}, {"id": "kitchen", "text": "fridge"}],
+                                "options": ["bedroom", "kitchen", "bed", "fridge"],
                                 "correct_answer": "bedroom:bed, kitchen:fridge",
                                 "explanation": "Bed in bedroom, fridge in kitchen."
                             },
