@@ -16,4 +16,4 @@ Environment=MIN_KEEP_SETS=7
 # Until this is set, every backup lives on the same disk as the database.
 # Environment=OFFSITE_RCLONE_REMOTE=
 ExecStart=/usr/bin/bash /opt/lexilingo/scripts/backup-prod.sh
-OnFailure=lexilingo-backup-alert@%n.service
+OnFailure=lexilingo-backup-alert@%N.service

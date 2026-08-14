@@ -43,11 +43,13 @@ log "Creating PostgreSQL backup -> ${PG_FILE}"
 ${DOCKER_COMPOSE_CMD} exec -T postgres sh -lc \
   'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner --no-privileges' | gzip -c > "${PG_FILE}"
 assert_gzip_intact "${PG_FILE}" "postgres backup"
+assert_not_shrunk "${PG_FILE}" "postgres backup"
 
 log "Creating MongoDB backup (${MONGO_DB}) -> ${MONGO_FILE}"
 ${DOCKER_COMPOSE_CMD} exec -T -e MONGO_DB="${MONGO_DB}" mongodb sh -lc \
   'mongodump --archive --gzip --db "$MONGO_DB"' > "${MONGO_FILE}"
 assert_gzip_intact "${MONGO_FILE}" "mongo backup"
+assert_not_shrunk "${MONGO_FILE}" "mongo backup"
 
 sha256sum "${PG_FILE}" "${MONGO_FILE}" > "${MANIFEST_FILE}"
 log "Backup manifest -> ${MANIFEST_FILE}"

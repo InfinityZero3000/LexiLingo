@@ -11,4 +11,4 @@ Environment=BACKUP_DIR=/opt/lexilingo/backups
 # Restores the newest dump into a disposable container and asserts user data
 # survived. Never touches production.
 ExecStart=/usr/bin/bash /opt/lexilingo/scripts/verify-backup.sh
-OnFailure=lexilingo-backup-alert@%n.service
+OnFailure=lexilingo-backup-alert@%N.service

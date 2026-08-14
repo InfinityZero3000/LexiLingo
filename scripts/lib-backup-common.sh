@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Shared helpers for backup / restore / verify. Source, do not execute.
 
-# A dump this small is a failed pg_dump or mongodump, not a real backup.
-# Prod postgres is ~1.8MB gzipped and mongo ~2MB; 100KB is far below any
-# legitimate value and catches "container was down, dump is just headers".
-: "${MIN_BACKUP_BYTES:=102400}"
+# Absolute floor only catches an empty or header-only dump. Real sizes differ
+# wildly per store (prod postgres ~1.8MB gzipped, mongo ~79KB), so a single
+# constant is either useless or rejects a good backup — the 100KB value first
+# tried here failed a perfectly valid mongo dump.
+: "${MIN_BACKUP_BYTES:=8192}"
+# The useful signal is a sudden collapse against the previous good backup of
+# the same store, which adapts as the data grows.
+: "${SHRINK_FAIL_RATIO:=50}"   # fail under this percent of the previous backup
 
 log() { printf '[%s] %s\n' "${SCRIPT_NAME:-backup}" "$*"; }
 die() { printf '[%s] ERROR: %s\n' "${SCRIPT_NAME:-backup}" "$*" >&2; exit 1; }
@@ -24,6 +28,33 @@ assert_gzip_intact() {
   fi
   gzip -t "${file}" 2>/dev/null || die "${label}: gzip integrity check failed — file is corrupt"
   log "${label}: OK (${size} bytes, gzip intact)"
+}
+
+# Catch a dump that succeeded technically but lost most of its content — a
+# wrong --db, a half-empty database, a truncated stream.
+assert_not_shrunk() {
+  local file="$1" label="$2"
+  local dir prefix prev prev_size size floor
+  dir="$(cd "$(dirname "${file}")" && pwd)"
+  prefix="$(basename "${file}" | sed -E 's/_[0-9]{8}T[0-9]{6}Z.*//')"
+
+  # Newest same-store backup that is not the one we just wrote.
+  prev="$(find "${dir}" -maxdepth 1 -name "${prefix}_*" ! -name "$(basename "${file}")" \
+    | sort | tail -1)"
+  if [[ -z "${prev}" ]]; then
+    log "${label}: no previous backup to compare against (first run)"
+    return 0
+  fi
+
+  size="$(file_size "${file}")"
+  prev_size="$(file_size "${prev}")"
+  (( prev_size > 0 )) || return 0
+  floor=$(( prev_size * SHRINK_FAIL_RATIO / 100 ))
+
+  if (( size < floor )); then
+    die "${label}: ${size} bytes is under ${SHRINK_FAIL_RATIO}% of the previous backup (${prev_size} bytes, $(basename "${prev}")) — data appears to be missing"
+  fi
+  log "${label}: size sane vs previous ($(basename "${prev}"): ${prev_size} bytes)"
 }
 
 # Verify against the manifest written at backup time, when one exists.
