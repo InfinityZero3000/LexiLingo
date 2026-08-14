@@ -58,24 +58,54 @@ log "Backup manifest -> ${MANIFEST_FILE}"
 # Backups on the same disk as the database die with the disk. This is opt-in
 # because it needs a configured rclone remote; when unset we say so loudly
 # rather than implying the data is safe.
+AGE_BIN="${AGE_BIN:-/usr/local/bin/age}"
 RCLONE_BIN="${RCLONE_BIN:-/usr/local/bin/rclone}"
+
+# Encrypt to public keys before anything leaves the host. Asymmetric on
+# purpose: this box holds only recipient public keys, so a compromise cannot
+# decrypt historical backups, and multiple recipients mean losing one private
+# key is survivable. AGE_RECIPIENTS is a space-separated list of age1... keys.
+encrypt_for_offsite() {
+  local plain="$1" out="${1}.age"
+  local -a recipient_args=()
+  for r in ${AGE_RECIPIENTS}; do recipient_args+=(-r "${r}"); done
+  "${AGE_BIN}" "${recipient_args[@]}" -o "${out}" "${plain}" \
+    || die "age encryption failed for $(basename "${plain}")"
+  # Refuse to ship something we cannot prove is a real age file.
+  head -c 22 "${out}" | grep -q 'age-encryption.org' \
+    || die "$(basename "${out}") is not a valid age file"
+  printf '%s' "${out}"
+}
+
+if [[ -n "${OFFSITE_RCLONE_REMOTE}" && -z "${AGE_RECIPIENTS:-}" ]]; then
+  die "OFFSITE_RCLONE_REMOTE is set but AGE_RECIPIENTS is empty — refusing to upload unencrypted user data"
+fi
+
 if [[ -n "${OFFSITE_RCLONE_REMOTE}" ]]; then
   if [[ -x "${RCLONE_BIN}" ]] || RCLONE_BIN="$(command -v rclone 2>/dev/null)"; then
-    log "Copying backup set off-site -> ${OFFSITE_RCLONE_REMOTE}"
+    [[ -x "${AGE_BIN}" ]] || die "age not found at ${AGE_BIN} — cannot encrypt off-site copy"
+    log "Encrypting backup set for $(wc -w <<< "${AGE_RECIPIENTS}") recipient(s)"
+    ENC_FILES=()
     for f in "${PG_FILE}" "${MONGO_FILE}" "${MANIFEST_FILE}"; do
+      ENC_FILES+=( "$(encrypt_for_offsite "${f}")" )
+    done
+
+    log "Copying encrypted set off-site -> ${OFFSITE_RCLONE_REMOTE}"
+    for f in "${ENC_FILES[@]}"; do
       "${RCLONE_BIN}" copy "${f}" "${OFFSITE_RCLONE_REMOTE}" --no-traverse \
         || die "off-site copy of $(basename "${f}") failed"
     done
     # An exit code of 0 is not proof the bytes landed. Compare the remote size
     # against local for each file before calling the backup protected.
-    for f in "${PG_FILE}" "${MONGO_FILE}"; do
+    for f in "${ENC_FILES[@]}"; do
       remote_size="$("${RCLONE_BIN}" size "${OFFSITE_RCLONE_REMOTE}/$(basename "${f}")" \
         --json 2>/dev/null | sed -E 's/.*"bytes":([0-9]+).*/\1/')"
       local_size="$(file_size "${f}")"
       [[ "${remote_size}" == "${local_size}" ]] \
         || die "off-site verify failed for $(basename "${f}"): remote=${remote_size:-missing} local=${local_size}"
     done
-    log "Off-site copy verified (sizes match remote)"
+    rm -f "${ENC_FILES[@]}"
+    log "Off-site copy verified (encrypted, sizes match remote)"
   else
     log "WARNING: OFFSITE_RCLONE_REMOTE set but rclone is not installed — backup is LOCAL ONLY"
   fi
