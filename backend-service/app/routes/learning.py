@@ -1144,7 +1144,11 @@ async def complete_lesson(
             accuracy=accuracy,
             stars_earned=stars,
             next_lesson_unlocked=next_lesson_id,
-            achievements_unlocked=unlocked_achievements,
+            # check_achievements_for_user returns rich dicts (id, name, badge…)
+            # but both this schema and the Flutter model expect bare ids. Passing
+            # the dicts raised ValidationError, so completing a lesson 500'd for
+            # any learner who actually unlocked something — the reward moment.
+            achievements_unlocked=[a["id"] for a in unlocked_achievements],
             total_questions=attempt.total_questions,
             correct_answers=attempt.correct_answers,
             wrong_answers=attempt.total_questions - attempt.correct_answers,

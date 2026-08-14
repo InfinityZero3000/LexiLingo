@@ -575,3 +575,31 @@ class TestCourseRoadmap:
         )
         
         assert response.status_code == 404
+
+
+def test_lesson_complete_response_accepts_achievement_ids():
+    """Regression: completing a lesson 500'd whenever achievements unlocked.
+
+    check_achievements_for_user returns dicts; LessonCompleteResponse and the
+    Flutter model both want bare ids. Only a learner who actually unlocked
+    something hit it, so a fresh test user never reproduced the bug.
+    """
+    import uuid
+
+    import pytest
+    from pydantic import ValidationError
+
+    from app.schemas.progress import LessonCompleteResponse
+
+    rich = {"id": str(uuid.uuid4()), "name": "First Lesson", "badge_icon": "star"}
+    base = dict(
+        attempt_id=uuid.uuid4(), passed=True, final_score=100.0, total_xp_earned=12,
+        time_spent_seconds=9, accuracy=100.0, stars_earned=3, next_lesson_unlocked=None,
+        total_questions=5, correct_answers=5, wrong_answers=0, hints_used=0,
+    )
+
+    with pytest.raises(ValidationError):
+        LessonCompleteResponse(**base, achievements_unlocked=[rich])
+
+    resp = LessonCompleteResponse(**base, achievements_unlocked=[rich["id"]])
+    assert str(resp.achievements_unlocked[0]) == rich["id"]
