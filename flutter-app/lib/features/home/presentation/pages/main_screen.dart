@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -201,8 +200,8 @@ class _MainScreenState extends State<MainScreen> {
               label: Text('home.navLearning'.tr()),
             ),
             NavigationRailDestination(
-              icon: const Icon(LucideIcons.bird),
-              selectedIcon: const Icon(LucideIcons.bird),
+              icon: const Icon(Icons.auto_awesome_outlined),
+              selectedIcon: const Icon(Icons.auto_awesome),
               label: Text('home.navLexi'.tr()),
             ),
             NavigationRailDestination(
@@ -258,8 +257,8 @@ class _MainScreenState extends State<MainScreen> {
                 label: 'home.navLearning'.tr(),
               ),
               BottomNavigationBarItem(
-                icon: const Icon(LucideIcons.bird),
-                activeIcon: const Icon(LucideIcons.bird),
+                icon: const Icon(Icons.auto_awesome_outlined),
+                activeIcon: const Icon(Icons.auto_awesome),
                 label: 'home.navLexi'.tr(),
               ),
               BottomNavigationBarItem(
