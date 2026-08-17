@@ -1,6 +1,6 @@
 # FastAPI and Server
 fastapi>=0.141.1
-uvicorn[standard]>=0.52.1
+uvicorn[standard]>=0.52.3
 python-multipart>=0.0.32
 pypdf
 
@@ -12,8 +12,8 @@ psycopg2-binary>=2.9.12
 aiosqlite>=0.22.1
 
 # SQLAlchemy (Async ORM)
-sqlalchemy[asyncio]>=2.0.51
-alembic>=1.19.0
+sqlalchemy[asyncio]>=2.0.52
+alembic>=1.19.1
 
 # Data Validation
 pydantic>=2.13.4
@@ -33,7 +33,7 @@ python-dotenv>=1.2.2
 
 # Logging and Error Tracking
 loguru>=0.7.3
-sentry-sdk[fastapi,sqlalchemy,loguru]>=2.66.1
+sentry-sdk[fastapi,sqlalchemy,loguru]>=2.68.0
 
 # HTTP Client (optional - for calling AI service)
 httpx>=0.28.1
@@ -73,4 +73,4 @@ httpx>=0.27.0
 black>=26.5.1
 isort>=8.0.1
 flake8>=7.3.0
-ruff>=0.16.2
+ruff>=0.16.3

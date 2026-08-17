@@ -1,6 +1,6 @@
 # FastAPI and Server
 fastapi>=0.141.1
-uvicorn[standard]>=0.52.1
+uvicorn[standard]>=0.52.3
 python-multipart>=0.0.32
 
 # MongoDB
@@ -12,7 +12,7 @@ redis>=7.4.1
 
 # Data Validation
 pydantic>=2.13.4
-pydantic-settings>=2.14.2
+pydantic-settings>=2.15.0
 defusedxml>=0.7.1
 typer>=0.27.1,<1
 
@@ -28,7 +28,7 @@ python-dotenv>=1.2.2
 
 # Logging and Error Tracking
 loguru>=0.7.3
-sentry-sdk[fastapi,loguru]>=2.66.1
+sentry-sdk[fastapi,loguru]>=2.68.0
 
 # HTTP Client (for calling DL-Model-Support)
 httpx[http2]>=0.28.1
@@ -45,8 +45,8 @@ numpy>=1.26.4,<2.0.0
 faster-whisper>=1.2.1
 # Native streaming primary. Kept behind an optional runtime adapter so an
 # unsupported wheel degrades to Faster-Whisper instead of crashing startup.
-moonshine-voice>=0.1.1,<0.2
-sherpa-onnx>=1.13.4,<2
+moonshine-voice>=0.1.2,<0.2
+sherpa-onnx>=1.13.5,<2
 piper-tts>=1.6.0
 gTTS>=2.5.4
 
@@ -60,8 +60,8 @@ torch<=2.13.0,>=2.13.0
 peft>=0.20.0  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (TRACECAG Orchestration)
-langgraph>=1.2.10
-langchain-core>=1.5.3
+langgraph>=1.2.11
+langchain-core>=1.5.4
 langchain-community>=0.4.2
 
 # LLaMA.cpp for GGUF model inference (Vietnamese explanation)
