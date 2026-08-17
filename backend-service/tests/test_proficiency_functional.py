@@ -88,6 +88,16 @@ def _make_batch(
     return exercises
 
 
+def _make_confidences(value: float = 1.0) -> Dict[SkillType, float]:
+    """Skill confidences for a learner whose scores have been measured.
+
+    calculate_overall_level treats an absent confidence as zero — a learner we
+    know nothing about cannot be promoted — so every test that expects a
+    promotion has to say how well measured the learner is.
+    """
+    return {skill: value for skill in SkillType}
+
+
 def _make_skill_scores(
     vocab: float = 0, grammar: float = 0, reading: float = 0,
     listening: float = 0, speaking: float = 0, writing: float = 0,
@@ -164,17 +174,37 @@ class TestSkillScoreCalculation:
             f"C1 exercise ({score_c1}) should score higher than A1 ({score_a1})"
         )
 
-    def test_incorrect_answers_contribute_less(self):
-        correct = [_make_exercise(score=80.0, is_correct=True)]
-        incorrect = [_make_exercise(score=80.0, is_correct=False)]
+    def test_a_weak_answer_pulls_the_score_down(self):
+        """The exercise's own score is the target, not its correct/incorrect flag.
 
-        score_correct, _ = ProficiencyService.calculate_skill_score(
-            exercises=correct, skill=SkillType.VOCABULARY, current_score=0
+        A wrong answer used to still add half its score, so a badly
+        pronounced word could raise the speaking score. What matters is how
+        well it was answered; is_correct is only a label for accuracy stats.
+        """
+        strong, _ = ProficiencyService.calculate_skill_score(
+            exercises=[_make_exercise(score=90.0, is_correct=True)],
+            skill=SkillType.VOCABULARY,
+            current_score=60,
         )
-        score_incorrect, _ = ProficiencyService.calculate_skill_score(
-            exercises=incorrect, skill=SkillType.VOCABULARY, current_score=0
+        weak, _ = ProficiencyService.calculate_skill_score(
+            exercises=[_make_exercise(score=20.0, is_correct=False)],
+            skill=SkillType.VOCABULARY,
+            current_score=60,
         )
-        assert score_correct > score_incorrect
+        assert strong > 60 > weak
+
+        # Same measured score, different label → same movement.
+        labelled_correct, _ = ProficiencyService.calculate_skill_score(
+            exercises=[_make_exercise(score=80.0, is_correct=True)],
+            skill=SkillType.VOCABULARY,
+            current_score=60,
+        )
+        labelled_wrong, _ = ProficiencyService.calculate_skill_score(
+            exercises=[_make_exercise(score=80.0, is_correct=False)],
+            skill=SkillType.VOCABULARY,
+            current_score=60,
+        )
+        assert labelled_correct == labelled_wrong
 
     def test_confidence_increases_with_volume(self):
         """More exercises → higher confidence (up to 1.0 at 50 exercises)."""
@@ -225,64 +255,69 @@ class TestOverallLevelDetermination:
 
     def test_a2_qualification(self):
         """Meet all A2 requirements → should get A2."""
-        # Overall weighted = 70*.25 + 65*.25 + 60*.15 + 55*.15 + 40*.10 + 35*.10 = 58.5 >= 55
+        # Weighted overall = 70*.10 + 65*.10 + 60*.20 + 58*.20 + 52*.20 + 50*.20 = 57.5 >= 55
         level, _ = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=70, grammar=65, reading=60, listening=55, speaking=40, writing=35,
+                vocab=70, grammar=65, reading=60, listening=58, speaking=52, writing=50,
             ),
-            exercises_completed=120,
-            lessons_completed=12,
+            exercises_completed=60,
+            lessons_completed=8,
             accuracy=0.65,
+            skill_confidences=_make_confidences(),
         )
         assert level == ProficiencyLevel.A2
 
     def test_b1_qualification(self):
         """Meet all B1 requirements → should get B1."""
-        # Overall weighted = 80*.25 + 75*.25 + 70*.15 + 65*.15 + 55*.10 + 50*.10 = 69.0 >= 65
+        # Weighted overall = 80*.10 + 75*.10 + 72*.20 + 70*.20 + 62*.20 + 60*.20 = 68.3 >= 65
         level, _ = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=80, grammar=75, reading=70, listening=65, speaking=55, writing=50,
+                vocab=80, grammar=75, reading=72, listening=70, speaking=62, writing=60,
             ),
-            exercises_completed=350,
-            lessons_completed=35,
+            exercises_completed=150,
+            lessons_completed=20,
             accuracy=0.70,
             streak_days=10,
+            skill_confidences=_make_confidences(),
         )
         assert level == ProficiencyLevel.B1
 
     def test_b2_qualification(self):
         level, _ = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=80, grammar=80, reading=75, listening=70, speaking=65, writing=55,
+                vocab=85, grammar=82, reading=80, listening=78, speaking=72, writing=70,
             ),
-            exercises_completed=650,
-            lessons_completed=65,
+            exercises_completed=300,
+            lessons_completed=35,
             accuracy=0.75,
             streak_days=16,
+            skill_confidences=_make_confidences(),
         )
         assert level == ProficiencyLevel.B2
 
     def test_c1_qualification(self):
         level, _ = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=90, grammar=88, reading=85, listening=80, speaking=78, writing=75,
+                vocab=90, grammar=88, reading=86, listening=84, speaking=80, writing=78,
             ),
-            exercises_completed=1300,
-            lessons_completed=130,
+            exercises_completed=600,
+            lessons_completed=70,
             accuracy=0.82,
             streak_days=35,
+            skill_confidences=_make_confidences(),
         )
         assert level == ProficiencyLevel.C1
 
     def test_c2_qualification(self):
         level, progress = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=96, grammar=96, reading=92, listening=92, speaking=92, writing=88,
+                vocab=96, grammar=96, reading=94, listening=93, speaking=92, writing=90,
             ),
-            exercises_completed=2600,
-            lessons_completed=260,
+            exercises_completed=1100,
+            lessons_completed=130,
             accuracy=0.92,
             streak_days=65,
+            skill_confidences=_make_confidences(),
         )
         assert level == ProficiencyLevel.C2
         assert progress == 100.0, "At max level, progress should be 100%"
@@ -316,12 +351,13 @@ class TestOverallLevelDetermination:
         """B1 requires 7 streak days. Missing it → stays A2."""
         level, _ = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=75, grammar=70, reading=65, listening=60, speaking=40, writing=35,
+                vocab=80, grammar=75, reading=72, listening=70, speaking=62, writing=60,
             ),
-            exercises_completed=350,
-            lessons_completed=35,
+            exercises_completed=150,
+            lessons_completed=20,
             accuracy=0.70,
             streak_days=0,  # B1 requires 7
+            skill_confidences=_make_confidences(),
         )
         assert level == ProficiencyLevel.A2, (
             f"With 0 streak days, should be A2 max, got {level}"
@@ -380,17 +416,16 @@ class TestLevelRequirementsCheck:
         assert len(check.blockers) > 0, "Should have blockers for A2 promotion"
 
     def test_no_blockers_when_qualified(self):
-        # Overall simple avg = (70+65+60+55+40+35)/6 = 54.2 but the check uses
-        # sum/len which must be >= 55. Use higher scores to pass.
         check = ProficiencyService.get_level_requirements_check(
             current_level=ProficiencyLevel.A1,
             skill_scores=_make_skill_scores(
-                vocab=75, grammar=70, reading=65, listening=60, speaking=50, writing=45,
+                vocab=75, grammar=70, reading=68, listening=65, speaking=60, writing=58,
             ),
-            exercises_completed=120,
-            lessons_completed=12,
+            exercises_completed=60,
+            lessons_completed=8,
             accuracy=0.65,
             streak_days=0,
+            skill_confidences=_make_confidences(),
         )
         assert check.qualifies_for_next is True
         assert len(check.blockers) == 0
@@ -573,7 +608,7 @@ class TestLevelThresholds:
         c2 = LEVEL_THRESHOLDS[ProficiencyLevel.C2]
         assert c2.min_vocabulary_score == 95
         assert c2.min_grammar_score == 95
-        assert c2.min_exercises_completed == 2500
+        assert c2.min_exercises_completed == 1000
         assert c2.min_accuracy == 0.90
 
     def test_all_skill_weights_sum_to_1(self):
@@ -659,7 +694,20 @@ class TestEdgeCases:
         score, _ = ProficiencyService.calculate_skill_score(
             exercises=exercises, skill=SkillType.VOCABULARY, current_score=0
         )
-        assert score >= 90, f"10 perfect exercises should give 90+, got {score}"
+        # Ten answers move the score a long way but must not max it — the old
+        # version returned a flat 100 from the very first one.
+        assert 30 <= score <= 60, f"10 perfect exercises from zero, got {score}"
+
+        # Fifty of them should get close to the ceiling without reaching it.
+        many, _ = ProficiencyService.calculate_skill_score(
+            exercises=[
+                _make_exercise(score=100.0, is_correct=True, level=ProficiencyLevel.B1)
+                for _ in range(50)
+            ],
+            skill=SkillType.VOCABULARY,
+            current_score=0,
+        )
+        assert 85 <= many < 100, f"50 perfect exercises should approach 100, got {many}"
 
     def test_progress_100_at_max_level(self):
         """At C2, progress should be 100%."""
@@ -703,25 +751,39 @@ class TestLearningJourney:
             exercises_completed=80,
             lessons_completed=8,
             accuracy=0.58,
+            skill_confidences=_make_confidences(0.5),
         )
         assert level_2 == ProficiencyLevel.A1  # Not yet A2
 
-        # Stage 3: Meets A2 (weighted overall = 70*.25+65*.25+60*.15+55*.15+40*.10+35*.10 = 58.5)
+        # Stage 3: strong on form but still weak at speaking and writing —
+        # under the four-skill weighting that is no longer an A2 learner.
         level_3, _ = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(70, 65, 60, 55, 40, 35),
             exercises_completed=120,
             lessons_completed=12,
             accuracy=0.65,
+            skill_confidences=_make_confidences(),
         )
-        assert level_3 == ProficiencyLevel.A2
+        assert level_3 == ProficiencyLevel.A1
 
-        # Stage 4: Working toward B1 (weighted overall = 80*.25+75*.25+70*.15+65*.15+55*.10+50*.10 = 69.0)
+        # Stage 4: production catches up → A2
+        level_4a, _ = ProficiencyService.calculate_overall_level(
+            skill_scores=_make_skill_scores(70, 65, 60, 58, 52, 50),
+            exercises_completed=120,
+            lessons_completed=12,
+            accuracy=0.65,
+            skill_confidences=_make_confidences(),
+        )
+        assert level_4a == ProficiencyLevel.A2
+
+        # Stage 5: balanced improvement across all four skills → B1
         level_4, progress_4 = ProficiencyService.calculate_overall_level(
-            skill_scores=_make_skill_scores(80, 75, 70, 65, 55, 50),
+            skill_scores=_make_skill_scores(80, 75, 72, 70, 62, 60),
             exercises_completed=350,
             lessons_completed=35,
             accuracy=0.68,
             streak_days=10,
+            skill_confidences=_make_confidences(),
         )
         # Should be B1 with these scores
         assert level_4 == ProficiencyLevel.B1
@@ -788,12 +850,13 @@ class TestSeedDataConsistency:
         # Approximate the seeded user's stats
         level, progress = ProficiencyService.calculate_overall_level(
             skill_scores=_make_skill_scores(
-                vocab=72, grammar=68, reading=63, listening=58, speaking=42, writing=38,
+                vocab=72, grammar=68, reading=65, listening=62, speaking=56, writing=54,
             ),
             exercises_completed=500,
             lessons_completed=38,
             accuracy=0.68,
             streak_days=10,  # Simulated
+            skill_confidences=_make_confidences(),
         )
         assert level in (ProficiencyLevel.A2, ProficiencyLevel.B1), (
             f"Seeded stats should qualify for A2 or B1, got {level}"

@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/skill_event_recorder.dart';
+import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/mistakes/data/mistake_notebook_repository.dart';
 import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.dart';
 
@@ -13,13 +16,16 @@ import '../../domain/entities/news_entities.dart';
 class NewsProvider extends ChangeNotifier {
   final NewsRepository _repository;
   final MistakeNotebookRepository _mistakeRepository;
+  final SkillEventRecorder _skillRecorder;
 
   NewsProvider({
     NewsRepository? repository,
     MistakeNotebookRepository? mistakeRepository,
+    SkillEventRecorder? skillRecorder,
   }) : _repository = repository ?? NewsRepository(),
        _mistakeRepository =
-           mistakeRepository ?? const MistakeNotebookRepository();
+           mistakeRepository ?? const MistakeNotebookRepository(),
+       _skillRecorder = skillRecorder ?? const SkillEventRecorder();
 
   // ── State ──
   List<NewsArticle> _articles = [];
@@ -174,6 +180,7 @@ class NewsProvider extends ChangeNotifier {
   void submitQuiz() {
     if (_quizSubmitted) return;
     _recordSubmittedMistakes();
+    unawaited(_recordSubmittedSkillEvents());
     _quizSubmitted = true;
     notifyListeners();
   }
@@ -210,6 +217,46 @@ class NewsProvider extends ChangeNotifier {
       if (article.id == articleId) return article;
     }
     return null;
+  }
+
+  /// Which skill a news quiz question exercises. The API tags questions
+  /// "comprehension", "vocabulary" or "grammar"; comprehension of an article
+  /// is reading, and an unrecognised tag is treated the same way rather than
+  /// silently crediting vocabulary.
+  static SkillType _skillForQuestion(String type) {
+    switch (type.trim().toLowerCase()) {
+      case 'vocabulary':
+        return SkillType.vocabulary;
+      case 'grammar':
+        return SkillType.grammar;
+      default:
+        return SkillType.reading;
+    }
+  }
+
+  Future<void> _recordSubmittedSkillEvents() async {
+    final quiz = _currentQuiz;
+    if (quiz == null) return;
+
+    final level = normalizeCefrLevel(_currentQuizArticle?.cefrLevel);
+    final results = <ExerciseResultData>[];
+
+    for (final question in quiz.questions) {
+      final selectedIndex = _answers[question.id];
+      if (selectedIndex == null) continue; // unanswered is not evidence
+      final isCorrect = selectedIndex == question.correctIndex;
+      results.add(
+        ExerciseResultData(
+          exerciseType: 'news_quiz',
+          skill: _skillForQuestion(question.type),
+          difficultyLevel: level,
+          isCorrect: isCorrect,
+          score: isCorrect ? 100 : 0,
+        ),
+      );
+    }
+
+    await _skillRecorder.record(results);
   }
 
   void _recordSubmittedMistakes() {

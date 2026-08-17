@@ -14,11 +14,19 @@ from pymongo.write_concern import WriteConcern
 
 logger = logging.getLogger(__name__)
 
+# Kept in sync by hand with ALLOWED_OBSERVATION_PAYLOAD_KEYS in
+# backend-service/app/schemas/learner_state.py — the backend rejects the whole
+# batch on an unknown key, so add to both sides together.
 _ALLOWED_PAYLOAD_KEYS = {
     "algorithm_version",
     "error_count",
     "migration_version",
     "source",
+    # Skill evidence, carried on one anchor observation per turn (see
+    # persist_trace_observations).
+    "skill",
+    "score",
+    "difficulty_level",
 }
 
 
@@ -442,8 +450,22 @@ async def persist_trace_observations(
     session_id: str,
     turn_id: str,
     trace_result: dict[str, Any],
+    skill: str | None = None,
+    difficulty_level: str | None = None,
 ) -> dict[str, Any]:
-    """Persist bounded concept evidence without retaining conversational text."""
+    """Persist bounded concept evidence without retaining conversational text.
+
+    When `skill` is given, the first observation of the turn also carries the
+    skill/score payload the backend turns into a CEFR skill result — a
+    conversation is speaking or writing practice, and until this existed an
+    hour of talking to Lexi moved neither score.
+
+    Only the first observation carries it, so one turn produces one skill
+    result rather than one per linked concept. That also means a turn that
+    linked no concepts at all records no skill evidence: the anchor rides on
+    a real concept observation, which is what makes it idempotent (the
+    backend dedupes on event_id) without a second dedup table.
+    """
     from api.core.config import settings
 
     if settings.LEARNER_STATE_MODE == "off":
@@ -465,6 +487,18 @@ async def persist_trace_observations(
     outcome = "incorrect" if errors else "correct"
     confidence = 0.8 if errors else 0.6
     spool = get_learner_observation_spool()
+
+    def _payload(is_anchor: bool) -> dict[str, Any]:
+        payload: dict[str, Any] = {"error_count": len(errors)}
+        if is_anchor and skill:
+            payload["skill"] = skill
+            # Fewer mistakes is a better turn. Capped at four so a long turn
+            # with many corrections floors at 0 rather than going negative.
+            payload["score"] = max(0.0, 100.0 - 25.0 * min(len(errors), 4))
+            if difficulty_level:
+                payload["difficulty_level"] = difficulty_level
+        return payload
+
     observations = [
             LearnerObservation(
                 user_id=str(user_id),
@@ -475,9 +509,9 @@ async def persist_trace_observations(
                 outcome=outcome,
                 confidence=confidence,
                 observed_at=datetime.now(UTC),
-                payload={"error_count": len(errors)},
+                payload=_payload(index == 0),
             )
-        for concept_id in concept_ids
+        for index, concept_id in enumerate(concept_ids)
     ]
     results = await spool.persist_many(observations)
     degraded = any(not result.durable for result in results)

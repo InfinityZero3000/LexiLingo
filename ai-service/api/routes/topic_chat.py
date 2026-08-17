@@ -499,6 +499,7 @@ async def send_topic_message(
                     session_id=session_id,
                     turn_id=ai_message_id,
                     trace_result=tracecag_result.trace_result,
+                    skill="writing",
                 )
             except Exception as observation_err:
                 logger.error(

@@ -110,6 +110,11 @@ async def auth_client():
                 obj.assessed_level = "A1"
 
         mock_session.execute = fake_execute
+        # A MagicMock bind reports no recognisable dialect, so the daily-stats
+        # rollup takes its portable read-modify-write path — which calls
+        # scalar(). Without this the mock is more permissive than the real
+        # session and the await blows up inside the route.
+        mock_session.scalar = AsyncMock(return_value=None)
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock(side_effect=fake_refresh)
@@ -158,6 +163,7 @@ async def auth_client_with_profile():
             return mock_result
 
         mock_session.execute = fake_execute
+        mock_session.scalar = AsyncMock(return_value=None)
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock()

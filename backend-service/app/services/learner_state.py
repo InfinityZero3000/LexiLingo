@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from collections.abc import Awaitable, Callable
@@ -19,7 +20,13 @@ from app.models.learner_state import (
 )
 from app.models.user import User
 
-ALGORITHM_VERSION = "bkt-fsrs-v2"
+# Named for what it is: an FSRS scheduler (power-law forgetting, stability,
+# difficulty) driven by a delta-rule mastery update. It is deliberately *not*
+# Bayesian Knowledge Tracing — there is no transition probability and no slip
+# or guess parameter, so do not assume Bayesian properties when building on it.
+# Guess noise is handled instead by scaling observation confidence, see
+# FORMAT_CONFIDENCE.
+ALGORITHM_VERSION = "delta-fsrs-v3"
 LEARNING_RATE = 0.45
 MIN_MASTERY = 0.01
 MAX_MASTERY = 0.99
@@ -54,6 +61,26 @@ DIFFICULTY_LAPSE_STEP = 0.08
 # SM-2 grading convention: 0-2 is a lapse, 3-5 is a recall.
 GRADE_PASS_THRESHOLD = 3
 MIN_GRADE_CONFIDENCE = 0.2
+
+# How much a correct answer is worth as evidence, by question format.
+#
+# A four-option multiple choice answered correctly can be a guess a quarter of
+# the time; a typed answer cannot. Without this the two counted the same, and
+# mastery rose faster than the evidence justified — the role a guess parameter
+# plays in Bayesian Knowledge Tracing, obtained here by scaling the confidence
+# that ``evolve_state`` already accepts.
+#
+# Keys are the ``question_type`` values stored on QuestionAttempt and emitted by
+# the content agent. Unknown formats get the neutral default.
+FORMAT_CONFIDENCE = {
+    "true_false": 0.45,      # 50% guess rate
+    "multiple_choice": 0.65,  # ~25% guess rate
+    "matching": 0.85,
+    "reorder": 0.9,
+    "fill_blank": 1.0,       # nothing to guess from
+    "translate": 1.0,
+}
+DEFAULT_FORMAT_CONFIDENCE = 1.0
 
 
 class TooManyConceptsError(ValueError):
@@ -523,6 +550,73 @@ async def apply_observation_event(
     event.last_error_code = None
     await session.flush()
     return True
+
+
+async def record_concept_observation(
+    session: AsyncSession,
+    *,
+    user_id: UUID,
+    concept_id: str,
+    outcome: str,
+    confidence: float,
+    source: str,
+    observed_at: datetime | None = None,
+    session_id: str | None = None,
+    question_format: str | None = None,
+) -> LearnerConceptState | None:
+    """Enqueue one observation and apply it inside the caller's transaction.
+
+    The synchronous path: vocabulary review, lesson answers, game lapses and
+    exercise results all need the resulting mastery/next_review_at immediately
+    in their own response, so they bypass the outbox worker. Returns the
+    concept row so callers can read the new schedule off it.
+
+    ``question_format`` discounts the observation when the format is guessable
+    (see FORMAT_CONFIDENCE) — a correct four-option answer is weaker evidence
+    than a typed one. Omit it for formats with nothing to guess from.
+
+    Raises on failure — a caller that must not fail because of this (lesson
+    answer submission) wraps the call in its own SAVEPOINT.
+    """
+    now = observed_at or datetime.now(UTC)
+    if question_format:
+        confidence *= FORMAT_CONFIDENCE.get(
+            question_format.strip().lower(), DEFAULT_FORMAT_CONFIDENCE
+        )
+    confidence = _clamp(0.0, 1.0, confidence)
+    event_id = hashlib.sha256(
+        f"{source}:{user_id}:{concept_id}:{now.isoformat()}".encode()
+    ).hexdigest()
+
+    await ingest_observations(
+        session,
+        [
+            ObservationInput(
+                event_id=event_id,
+                user_id=user_id,
+                concept_id=concept_id,
+                outcome=outcome,
+                confidence=confidence,
+                observed_at=now,
+                session_id=session_id,
+                payload={"source": source},
+            )
+        ],
+    )
+    event_db_id = await session.scalar(
+        select(LearnerObservationEvent.id).where(
+            LearnerObservationEvent.event_id == event_id
+        )
+    )
+    if event_db_id is not None:
+        await apply_observation_event(session, event_db_id, now=now)
+
+    return await session.scalar(
+        select(LearnerConceptState).where(
+            LearnerConceptState.user_id == user_id,
+            LearnerConceptState.concept_id == concept_id,
+        )
+    )
 
 
 async def cleanup_observation_events(

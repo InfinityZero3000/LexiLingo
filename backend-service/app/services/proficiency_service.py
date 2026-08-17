@@ -24,15 +24,30 @@ from app.schemas.proficiency import (
     SkillType,
 )
 
-# Skill weights for overall score calculation
+# Skill weights for overall score calculation.
+#
+# Weighted around the four skills rather than around form knowledge. The
+# previous split put 50% on vocabulary+grammar and only 20% on speaking+writing,
+# which measured something closer to a traditional grammar-and-vocabulary test
+# than to CEFR — where vocabulary and grammar are *resources* serving reception,
+# production and interaction, not two of the pillars.
 SKILL_WEIGHTS = {
-    SkillType.VOCABULARY: 0.25,
-    SkillType.GRAMMAR: 0.25,
-    SkillType.READING: 0.15,
-    SkillType.LISTENING: 0.15,
-    SkillType.SPEAKING: 0.10,
-    SkillType.WRITING: 0.10,
+    SkillType.LISTENING: 0.20,
+    SkillType.SPEAKING: 0.20,
+    SkillType.READING: 0.20,
+    SkillType.WRITING: 0.20,
+    SkillType.VOCABULARY: 0.10,
+    SkillType.GRAMMAR: 0.10,
 }
+
+# How many measured exercises make a skill score fully trustworthy. Reached
+# gradually, so a brand-new skill reads as "barely measured" rather than as a
+# confident zero.
+CONFIDENCE_FULL_EXERCISES = 50
+
+# Ceiling on how far one exercise may move a skill score, whatever its
+# difficulty — without it a single C2 answer would swing the score by 10%.
+MAX_SCORE_STEP = 0.15
 
 # Level difficulty multipliers (exercises at higher levels worth more)
 LEVEL_DIFFICULTY_MULTIPLIER = {
@@ -54,15 +69,61 @@ LEVEL_ORDER = [
     ProficiencyLevel.C2,
 ]
 
+# What each game actually exercises. This used to be derived by splitting
+# game_type on "_" and keyword-matching the pieces, which scored every game
+# except grammar_quiz as vocabulary — fill_blank in particular draws from a
+# grammar question bank (present simple, passive, conditionals) and was being
+# credited to the wrong skill. Keep this in sync with the game_type values
+# created in app/routes/games.py.
+GAME_TYPE_SKILL = {
+    "word_scramble": SkillType.VOCABULARY,
+    "matching": SkillType.VOCABULARY,
+    "spelling_bee": SkillType.VOCABULARY,
+    "hangman": SkillType.VOCABULARY,
+    "fill_blank": SkillType.GRAMMAR,
+    "grammar_quiz": SkillType.GRAMMAR,
+}
+
 
 class ProficiencyService:
     """Service for calculating and managing user proficiency."""
 
     @staticmethod
+    def resolve_lesson_skill(
+        lesson_skill: str | None,
+        course_skill: str | None,
+        course_tags: list[str] | None,
+    ) -> SkillType:
+        """Which skill a finished lesson credits, most specific label first.
+
+        lesson.skill beats course.skill beats guessing from tags. The guess is
+        only reachable for content authored before the columns existed; new
+        content sets them explicitly.
+        """
+        for label in (lesson_skill, course_skill):
+            if not label:
+                continue
+            try:
+                return SkillType(label.strip().lower())
+            except ValueError:
+                continue
+        return ProficiencyService.infer_skill_from_tags(course_tags)
+
+    @staticmethod
+    def skill_for_game(game_type: str | None) -> SkillType:
+        """SkillType a game session exercises. Unknown types fall back to
+        VOCABULARY — add the new game to GAME_TYPE_SKILL instead of relying
+        on that."""
+        return GAME_TYPE_SKILL.get((game_type or "").strip().lower(), SkillType.VOCABULARY)
+
+    @staticmethod
     def infer_skill_from_tags(tags: list[str] | None) -> SkillType:
-        """Best-effort SkillType for content with no explicit skill field
-        (e.g. a course's free-form tags). Defaults to VOCABULARY, the most
-        common content type, when nothing matches."""
+        """Last-resort SkillType guess from a course's free-form tags.
+
+        Only for legacy rows: courses and lessons carry an explicit `skill`
+        column now, and `resolve_lesson_skill` consults that first. A tag
+        list that matches nothing lands on VOCABULARY, which is why guessing
+        used to mis-credit listening and speaking content."""
         skill_keywords = {
             SkillType.GRAMMAR: {"grammar"},
             SkillType.READING: {"reading"},
@@ -175,78 +236,130 @@ class ProficiencyService:
         skill: SkillType,
         current_score: float | None = 0,
         decay_factor: float = 0.95,
+        *,
+        prior_exercises: int = 0,
+        current_level: ProficiencyLevel = ProficiencyLevel.A1,
     ) -> tuple[float, float]:
         """
-        Calculate updated skill score using Exponential Moving Average (EMA).
-
-        This gives more weight to recent exercises while still considering
-        historical performance. Exercises at higher difficulty levels
-        contribute more to the score.
+        Update a skill score by one exponential-moving-average step per exercise.
 
         Args:
-            exercises: List of exercise results for this skill
-            skill: The skill type being assessed
-            current_score: Current skill score (0-100)
-            decay_factor: How much to weight historical score (0.95 = 95% history)
+            exercises: results from this call (any skill; filtered here)
+            skill: the skill being updated
+            current_score: score before this call, 0-100
+            decay_factor: history weight; 0.95 means one average-difficulty
+                exercise moves the score 5% of the way to its result
+            prior_exercises: how many exercises this skill has already been
+                scored on, for the confidence figure
+            current_level: the learner's assessed CEFR level, used as the
+                starting point when this skill has never been scored
 
         Returns:
-            Tuple of (new_score, confidence)
+            (new_score, confidence)
+
+        Three properties this has to hold, each of which it did not before:
+
+        * **One exercise cannot max the score.** The old version skipped the
+          average entirely when the score was 0, so a single correct answer
+          scored 100/100. It now starts from the floor of the learner's
+          current level and moves gradually.
+        * **Batching does not change the result.** The average used to be
+          applied once per call, so six answers in one request moved the score
+          far less than the same six sent separately — and News quizzes batch
+          while Book quizzes do not. It is now applied once per exercise.
+        * **Difficulty survives.** The old difficulty bonus went into the
+          numerator and was then clipped at 100, so A1 and C2 answers landed
+          identically. Difficulty now scales the step size instead.
         """
-        normalized_current_score = current_score or 0.0
-
-        if not exercises:
-            return normalized_current_score, 0.0
-
-        # Filter exercises for this skill
         skill_exercises = [e for e in exercises if e.skill == skill]
+
+        score = current_score or 0.0
         if not skill_exercises:
-            return normalized_current_score, 0.0
+            return round(score, 2), ProficiencyService._score_confidence(prior_exercises)
 
-        # Calculate weighted average of new exercise scores
-        total_weight = 0.0
-        weighted_sum = 0.0
+        if not score:
+            # Never scored: start from what the learner's level already implies
+            # rather than from whatever the first answer happened to be.
+            threshold = LEVEL_THRESHOLDS.get(current_level)
+            score = float(getattr(threshold, "min_overall_score", 0.0) or 0.0)
 
+        base_step = 1.0 - decay_factor
         for exercise in skill_exercises:
-            # Weight by difficulty level
-            difficulty_mult = LEVEL_DIFFICULTY_MULTIPLIER.get(exercise.difficulty_level, 1.0)
-
-            # Correct answers at higher difficulty worth more
-            weight = difficulty_mult
-
-            # Add bonus for being correct at user's level or above
-            if exercise.is_correct:
-                # Score contribution (0-100 range)
-                score_contribution = exercise.score * (1 + 0.1 * difficulty_mult)
-            else:
-                # Incorrect answers still contribute but less
-                score_contribution = exercise.score * 0.5
-
-            weighted_sum += score_contribution * weight
-            total_weight += weight
-
-        if total_weight == 0:
-            return normalized_current_score, 0.0
-
-        # New score from recent exercises
-        new_exercise_score = weighted_sum / total_weight
-
-        # Blend with historical score using EMA
-        if normalized_current_score > 0:
-            final_score = (decay_factor * normalized_current_score) + (
-                (1 - decay_factor) * new_exercise_score
+            difficulty_mult = LEVEL_DIFFICULTY_MULTIPLIER.get(
+                exercise.difficulty_level, 1.0
             )
-        else:
-            # First time scoring this skill
-            final_score = new_exercise_score
+            # Harder exercises are stronger evidence, so they move the score
+            # further. Capped so a single C2 answer still cannot dominate.
+            step = min(MAX_SCORE_STEP, base_step * difficulty_mult)
+            # The exercise's own score is the target — a wrong answer is not
+            # worth half credit, it is worth what it scored.
+            score += step * (exercise.score - score)
 
-        # Clamp to valid range
-        final_score = max(0, min(100, final_score))
+        score = max(0.0, min(100.0, score))
+        confidence = ProficiencyService._score_confidence(
+            prior_exercises + len(skill_exercises)
+        )
+        return round(score, 2), confidence
 
-        # Calculate confidence based on number of exercises
-        # More exercises = higher confidence
-        confidence = min(1.0, len(skill_exercises) / 50)  # 50+ exercises = full confidence
+    @staticmethod
+    def weighted_overall(skill_scores: dict[SkillType, float]) -> float:
+        """The one overall score, weighted by SKILL_WEIGHTS.
 
-        return round(final_score, 2), round(confidence, 2)
+        There used to be three different answers to "what is this learner's
+        overall score": this weighted one (used to decide level-ups but never
+        stored), a plain unweighted mean written to the profile after every
+        exercise, and the raw percentage from a placement test that overwrote
+        it. The number a learner saw was therefore not the number their
+        promotion was judged on. Every caller goes through here now.
+
+        Skills with no score yet are left out rather than counted as zero, so
+        an unmeasured skill does not drag the total down.
+        """
+        weighted = 0.0
+        total_weight = 0.0
+        for skill, weight in SKILL_WEIGHTS.items():
+            score = skill_scores.get(skill)
+            if score is None:
+                continue
+            weighted += score * weight
+            total_weight += weight
+        if total_weight <= 0:
+            return 0.0
+        return round(weighted / total_weight, 2)
+
+    @staticmethod
+    def weighted_confidence(
+        skill_confidences: dict[SkillType, float] | None,
+    ) -> float:
+        """How well measured this learner is overall, on the same weights.
+
+        Unmeasured skills count as zero here — unlike weighted_overall, where
+        skipping them avoids dragging the score down. That difference is the
+        point: a learner who has only ever done vocabulary drills is genuinely
+        not well measured, and should not be promoted on that evidence.
+        """
+        if not skill_confidences:
+            return 0.0
+        total_weight = sum(SKILL_WEIGHTS.values())
+        if total_weight <= 0:
+            return 0.0
+        weighted = sum(
+            (skill_confidences.get(skill) or 0.0) * weight
+            for skill, weight in SKILL_WEIGHTS.items()
+        )
+        return round(weighted / total_weight, 3)
+
+    @staticmethod
+    def _score_confidence(exercises_completed: int) -> float:
+        """How much to trust a skill score, from how often it has been measured.
+
+        This used to count only the exercises in the current request, so it sat
+        at 0.02 forever and the "50+ exercises = full confidence" comment next
+        to it was never true of any learner.
+        """
+        if exercises_completed <= 0:
+            return 0.0
+        return round(min(1.0, exercises_completed / CONFIDENCE_FULL_EXERCISES), 2)
 
     @staticmethod
     def calculate_overall_level(
@@ -256,6 +369,7 @@ class ProficiencyService:
         accuracy: float,
         streak_days: int = 0,
         current_level: ProficiencyLevel = ProficiencyLevel.A1,
+        skill_confidences: dict[SkillType, float] | None = None,
     ) -> tuple[ProficiencyLevel, float]:
         """
         Determine user's CEFR level based on skill scores and requirements.
@@ -266,17 +380,8 @@ class ProficiencyService:
         Returns:
             Tuple of (level, progress_to_next_level)
         """
-        # Calculate weighted overall score
-        overall_score = 0.0
-        total_weight = 0.0
-
-        for skill, weight in SKILL_WEIGHTS.items():
-            if skill in skill_scores:
-                overall_score += skill_scores[skill] * weight
-                total_weight += weight
-
-        if total_weight > 0:
-            overall_score = overall_score / total_weight * sum(SKILL_WEIGHTS.values())
+        overall_score = ProficiencyService.weighted_overall(skill_scores)
+        measured = ProficiencyService.weighted_confidence(skill_confidences)
 
         # Check each level from highest to lowest to find qualifying level
         qualifying_level = ProficiencyLevel.A1
@@ -284,6 +389,11 @@ class ProficiencyService:
         for level in reversed(LEVEL_ORDER):
             threshold = LEVEL_THRESHOLDS.get(level)
             if threshold is None:
+                continue
+
+            if measured < (threshold.min_skill_confidence or 0.0):
+                # Not measured well enough to claim this level yet, however
+                # good the scores look.
                 continue
 
             if ProficiencyService._meets_level_requirements(
@@ -399,6 +509,7 @@ class ProficiencyService:
         lessons_completed: int,
         accuracy: float,
         streak_days: int,
+        skill_confidences: dict[SkillType, float] | None = None,
     ) -> LevelCheckResponse:
         """
         Check what requirements are met/unmet for the next level.
@@ -492,13 +603,21 @@ class ProficiencyService:
 
         add_req(
             "Overall Score",
-            sum(skill_scores.values()) / max(1, len(skill_scores)),
+            ProficiencyService.weighted_overall(skill_scores),
             threshold.min_overall_score,
             "%",
         )
         add_req("Exercises Completed", exercises_completed, threshold.min_exercises_completed)
         add_req("Lessons Completed", lessons_completed, threshold.min_lessons_completed)
         add_req("Accuracy Rate", accuracy * 100, threshold.min_accuracy * 100, "%")
+
+        if threshold.min_skill_confidence > 0:
+            add_req(
+                "Skills Measured",
+                ProficiencyService.weighted_confidence(skill_confidences) * 100,
+                threshold.min_skill_confidence * 100,
+                "%",
+            )
 
         if threshold.min_streak_days > 0:
             add_req("Study Streak", streak_days, threshold.min_streak_days, " days")

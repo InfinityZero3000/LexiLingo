@@ -56,6 +56,11 @@ def env_float(name: str, default: float, minimum: float = 0.0) -> float:
         return default
 
 
+def _turn_skill(input_type: str | None) -> str:
+    """A spoken turn is speaking practice; a typed one is writing practice."""
+    return "speaking" if (input_type or "").strip().lower() == "voice" else "writing"
+
+
 # ─── Request / Response Models ───────────────────────────────────────────────
 class LexiChatRequest(BaseModel):
     """Request to chat with Lexi."""
@@ -670,6 +675,8 @@ async def run_lexi_pipeline(
                 session_id=session_id,
                 turn_id=user_message["id"],
                 trace_result=observation_trace_result,
+                skill=_turn_skill(request.input_type),
+                difficulty_level=request.learner_level,
             )
         )
     except Exception as observation_err:
@@ -1038,6 +1045,8 @@ async def stream_lexi_chat(
             session_id=session_id,
             turn_id=user_message["id"],
             trace_result=raw_state,
+            skill=_turn_skill(request.input_type),
+            difficulty_level=request.learner_level,
         )
     except Exception as observation_err:
         logger.error(

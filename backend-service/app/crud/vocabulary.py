@@ -3,7 +3,6 @@ Vocabulary CRUD Operations
 Phase 3: Spaced Repetition System with SuperMemo SM-2 Algorithm
 """
 
-import hashlib
 import re
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -20,7 +19,6 @@ if TYPE_CHECKING:
 
 from app.models.content_agent import LessonVocabularyItem
 from app.models.course import Lesson
-from app.models.learner_state import LearnerConceptState, LearnerObservationEvent
 from app.models.vocabulary import (
     DifficultyLevel,
     PartOfSpeech,
@@ -32,10 +30,8 @@ from app.models.vocabulary import (
     VocabularyStatus,
 )
 from app.services.learner_state import (
-    ObservationInput,
-    apply_observation_event,
     grade_to_observation,
-    ingest_observations,
+    record_concept_observation,
 )
 
 
@@ -594,34 +590,15 @@ class VocabularyCRUD:
         now = datetime.now(timezone.utc)
         concept_id = _vocab_concept_id(user_vocab.vocabulary.word)
         outcome, confidence = grade_to_observation(quality)
-        event_id = hashlib.sha256(
-            f"{user_vocabulary_id}:{quality}:{now.isoformat()}".encode("utf-8")
-        ).hexdigest()
 
-        await ingest_observations(
+        concept_state = await record_concept_observation(
             db,
-            [
-                ObservationInput(
-                    event_id=event_id,
-                    user_id=user_vocab.user_id,
-                    concept_id=concept_id,
-                    outcome=outcome,
-                    confidence=confidence,
-                    observed_at=now,
-                )
-            ],
-        )
-        event_db_id = await db.scalar(
-            select(LearnerObservationEvent.id).where(
-                LearnerObservationEvent.event_id == event_id
-            )
-        )
-        await apply_observation_event(db, event_db_id, now=now)
-        concept_state = await db.scalar(
-            select(LearnerConceptState).where(
-                LearnerConceptState.user_id == user_vocab.user_id,
-                LearnerConceptState.concept_id == concept_id,
-            )
+            user_id=user_vocab.user_id,
+            concept_id=concept_id,
+            outcome=outcome,
+            confidence=confidence,
+            source="vocab_review",
+            observed_at=now,
         )
 
         # Sync UserVocabulary as a read-cache so GET /vocabulary/due (which

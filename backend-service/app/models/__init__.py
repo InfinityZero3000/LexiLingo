@@ -55,6 +55,7 @@ from app.models.proficiency import (
     UserSkillScore,
     UserLevelHistory,
     ExerciseAttempt,
+    SkillDailyStat,
     LevelAssessmentTest,
 )
 
@@ -171,6 +172,7 @@ __all__ = [
     "UserSkillScore",
     "UserLevelHistory",
     "ExerciseAttempt",
+    "SkillDailyStat",
     "LevelAssessmentTest",
     # Content lab
     "GrammarItem",

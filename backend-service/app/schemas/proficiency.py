@@ -123,6 +123,15 @@ class LevelThreshold(BaseModel):
     min_accuracy: float = Field(..., ge=0, le=1, description="Minimum accuracy rate")
     min_streak_days: int = Field(default=0, description="Minimum consecutive study days")
 
+    # How well measured the skill scores must be before a promotion counts.
+    # The volume requirements above ask "did you do enough?"; this asks "do we
+    # know enough about you yet?". Without it, every quality bar was cleared by
+    # the first correct answer and raw counts were the only real gate — which a
+    # long chat session could satisfy without demonstrating anything.
+    min_skill_confidence: float = Field(
+        default=0.0, ge=0, le=1, description="Weighted mean confidence across skills"
+    )
+
 
 # Default level thresholds
 LEVEL_THRESHOLDS = {
@@ -140,9 +149,10 @@ LEVEL_THRESHOLDS = {
         min_vocabulary_score=60,
         min_grammar_score=55,
         min_overall_score=55,
-        min_exercises_completed=100,
-        min_lessons_completed=10,
+        min_exercises_completed=40,
+        min_lessons_completed=5,
         min_accuracy=0.6,
+        min_skill_confidence=0.2,
     ),
     ProficiencyLevel.B1: LevelThreshold(
         level=ProficiencyLevel.B1,
@@ -151,10 +161,11 @@ LEVEL_THRESHOLDS = {
         min_reading_score=60,
         min_listening_score=55,
         min_overall_score=65,
-        min_exercises_completed=300,
-        min_lessons_completed=30,
+        min_exercises_completed=120,
+        min_lessons_completed=15,
         min_accuracy=0.65,
         min_streak_days=7,
+        min_skill_confidence=0.35,
     ),
     ProficiencyLevel.B2: LevelThreshold(
         level=ProficiencyLevel.B2,
@@ -164,10 +175,11 @@ LEVEL_THRESHOLDS = {
         min_listening_score=65,
         min_speaking_score=60,
         min_overall_score=72,
-        min_exercises_completed=600,
-        min_lessons_completed=60,
+        min_exercises_completed=250,
+        min_lessons_completed=30,
         min_accuracy=0.70,
         min_streak_days=14,
+        min_skill_confidence=0.5,
     ),
     ProficiencyLevel.C1: LevelThreshold(
         level=ProficiencyLevel.C1,
@@ -178,10 +190,11 @@ LEVEL_THRESHOLDS = {
         min_speaking_score=75,
         min_writing_score=70,
         min_overall_score=80,
-        min_exercises_completed=1200,
-        min_lessons_completed=120,
+        min_exercises_completed=500,
+        min_lessons_completed=60,
         min_accuracy=0.80,
         min_streak_days=30,
+        min_skill_confidence=0.7,
     ),
     ProficiencyLevel.C2: LevelThreshold(
         level=ProficiencyLevel.C2,
@@ -192,10 +205,11 @@ LEVEL_THRESHOLDS = {
         min_speaking_score=90,
         min_writing_score=85,
         min_overall_score=90,
-        min_exercises_completed=2500,
-        min_lessons_completed=250,
+        min_exercises_completed=1000,
+        min_lessons_completed=120,
         min_accuracy=0.90,
         min_streak_days=60,
+        min_skill_confidence=0.85,
     ),
 }
 

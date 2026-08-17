@@ -259,6 +259,7 @@ class TestGetCourseDetail:
         mock_course.description = "Learn basics"
         mock_course.language = "en"
         mock_course.level = "A1"
+        mock_course.skill = None
         mock_course.tags = []
         mock_course.thumbnail_url = None
         mock_course.total_lessons = 5

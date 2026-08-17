@@ -1,6 +1,5 @@
 """Best-effort learner-state updates for incorrect game answers."""
 
-import hashlib
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -13,10 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.vocabulary import VocabularyCRUD, _vocab_concept_id
 from app.models.content import GrammarItem
 from app.models.games import GameWord
-from app.models.learner_state import (
-    LearnerConceptState,
-    LearnerObservationEvent,
-)
+from app.models.learner_state import LearnerConceptState
 from app.models.user_grammar_item import UserGrammarItem
 from app.models.vocabulary import (
     UserVocabulary,
@@ -24,10 +20,8 @@ from app.models.vocabulary import (
     VocabularyStatus,
 )
 from app.services.learner_state import (
-    ObservationInput,
-    apply_observation_event,
     grade_to_observation,
-    ingest_observations,
+    record_concept_observation,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,34 +60,15 @@ async def _apply_lapse(
     columns stay frozen as history, exactly as submit_review leaves them.
     """
     outcome, confidence = grade_to_observation(GAME_LAPSE_QUALITY)
-    event_id = hashlib.sha256(
-        f"game:{user_id}:{concept_id}:{now.isoformat()}".encode()
-    ).hexdigest()
 
-    await ingest_observations(
+    concept_state = await record_concept_observation(
         db,
-        [
-            ObservationInput(
-                event_id=event_id,
-                user_id=user_id,
-                concept_id=concept_id,
-                outcome=outcome,
-                confidence=confidence,
-                observed_at=now,
-            )
-        ],
-    )
-    event_db_id = await db.scalar(
-        select(LearnerObservationEvent.id).where(
-            LearnerObservationEvent.event_id == event_id
-        )
-    )
-    await apply_observation_event(db, event_db_id, now=now)
-    concept_state = await db.scalar(
-        select(LearnerConceptState).where(
-            LearnerConceptState.user_id == user_id,
-            LearnerConceptState.concept_id == concept_id,
-        )
+        user_id=user_id,
+        concept_id=concept_id,
+        outcome=outcome,
+        confidence=confidence,
+        source="game_lapse",
+        observed_at=now,
     )
 
     # Keep the row usable as a read-cache for the existing due-list queries.

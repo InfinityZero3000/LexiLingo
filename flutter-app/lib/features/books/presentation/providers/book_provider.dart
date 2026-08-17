@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:lexilingo_app/core/services/skill_event_recorder.dart';
+import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/mistakes/data/mistake_notebook_repository.dart';
 import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.dart';
 
@@ -14,13 +17,16 @@ import '../../domain/entities/book_entities.dart';
 class BookProvider extends ChangeNotifier {
   final BookRepository _repository;
   final MistakeNotebookRepository _mistakeRepository;
+  final SkillEventRecorder _skillRecorder;
 
   BookProvider({
     BookRepository? repository,
     MistakeNotebookRepository? mistakeRepository,
+    SkillEventRecorder? skillRecorder,
   }) : _repository = repository ?? BookRepository(),
        _mistakeRepository =
-           mistakeRepository ?? const MistakeNotebookRepository();
+           mistakeRepository ?? const MistakeNotebookRepository(),
+       _skillRecorder = skillRecorder ?? const SkillEventRecorder();
 
   // ── State ──────────────────────────────────────────────────
 
@@ -518,11 +524,26 @@ class BookProvider extends ChangeNotifier {
     final quiz = _currentQuiz;
     if (quiz == null || questionIndex >= quiz.questions.length) return;
     final question = quiz.questions[questionIndex];
-    if (question.correctIndex == selectedIndex) {
+    final isCorrect = question.correctIndex == selectedIndex;
+    if (isCorrect) {
       _quizScore++;
     } else {
       unawaited(_saveQuizMistake(quiz, question, questionIndex, selectedIndex));
     }
+    // A book comprehension question is reading evidence either way — the
+    // wrong ones already went to the notebook, but both outcomes have to
+    // reach the skill score or accuracy is only ever measured from failures.
+    unawaited(
+      _skillRecorder.record([
+        ExerciseResultData(
+          exerciseType: 'book_quiz',
+          skill: SkillType.reading,
+          difficultyLevel: normalizeCefrLevel(_currentBook?.cefrLevel),
+          isCorrect: isCorrect,
+          score: isCorrect ? 100 : 0,
+        ),
+      ]),
+    );
     notifyListeners();
   }
 

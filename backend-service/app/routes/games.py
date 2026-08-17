@@ -1678,9 +1678,7 @@ async def complete_game_session(
                 [
                     ExerciseResult(
                         exercise_type="game",
-                        skill=ProficiencyService.infer_skill_from_tags(
-                            session.game_type.split("_")
-                        ),
+                        skill=ProficiencyService.skill_for_game(session.game_type),
                         difficulty_level=ProficiencyLevel(level_code),
                         is_correct=score.correct_count >= total,
                         score=min(100.0, 100.0 * score.correct_count / total),

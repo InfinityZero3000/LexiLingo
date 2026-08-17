@@ -356,6 +356,7 @@ class _LessonBulkImportItem(BaseModel):
     title: str
     description: Optional[str] = None
     lesson_type: str = "lesson"
+    skill: Optional[str] = None
     xp_reward: int = Field(default=10, ge=0)
     pass_threshold: int = Field(default=80, ge=0, le=100)
 
@@ -373,6 +374,7 @@ class _CourseBulkImportItem(BaseModel):
     description: Optional[str] = None
     language: str = "en"
     level: str = "A1"
+    skill: Optional[str] = None
     tags: List[str] = Field(default_factory=list)
     thumbnail_url: Optional[str] = None
     is_published: bool = False
@@ -409,6 +411,7 @@ async def bulk_import_courses(
                     description=course_data.description,
                     language=course_data.language,
                     level=course_data.level,
+                    skill=course_data.skill,
                     tags=course_data.tags,
                     thumbnail_url=course_data.thumbnail_url,
                     # Imported lessons carry no exercises yet, so the course
@@ -442,6 +445,7 @@ async def bulk_import_courses(
                             description=lesson_data.description,
                             order_index=lesson_index,
                             lesson_type=lesson_data.lesson_type,
+                            skill=lesson_data.skill,
                             xp_reward=lesson_data.xp_reward,
                             pass_threshold=lesson_data.pass_threshold,
                         ))

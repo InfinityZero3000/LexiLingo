@@ -10,12 +10,14 @@ Provides endpoints for:
 """
 
 import asyncio
+import logging
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime, timezone
 
 from app.core.database import get_db
@@ -27,6 +29,8 @@ from app.models.proficiency import (
     UserSkillScore,
     UserLevelHistory,
     ExerciseAttempt,
+    LevelAssessmentTest,
+    SkillDailyStat,
     SkillType as ModelSkillType,
 )
 from app.schemas.proficiency import (
@@ -42,12 +46,18 @@ from app.schemas.proficiency import (
     ExamGatedProgressionRequest,
     ExamGatedProgressionResponse,
 )
-from app.services.proficiency_service import ProficiencyService
+from app.services.proficiency_service import (
+    LEVEL_DIFFICULTY_MULTIPLIER,
+    ProficiencyService,
+)
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank
 from app.services.level_service import calculate_numeric_level
 from app.services.learner_error_service import record_learner_error
+from app.services.learner_state import record_concept_observation
 from app.clients.ai_service_client import diagnose_error
 
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/proficiency", tags=["proficiency"])
 
@@ -322,6 +332,9 @@ async def get_proficiency_profile(
     skill_scores_dict = {
         SkillType(k): v["score"] for k, v in skills.items()
     }
+    skill_confidences = {
+        SkillType(k): v["confidence"] for k, v in skills.items()
+    }
     level_check = ProficiencyService.get_level_requirements_check(
         current_level=ProficiencyLevel(profile.assessed_level),
         skill_scores=skill_scores_dict,
@@ -329,6 +342,7 @@ async def get_proficiency_profile(
         lessons_completed=profile.total_lessons_completed,
         accuracy=profile.accuracy,
         streak_days=streak_days,
+        skill_confidences=skill_confidences,
     )
     
     return {
@@ -352,6 +366,102 @@ async def get_proficiency_profile(
         },
         "last_assessment": profile.last_assessment_at.isoformat() if profile.last_assessment_at else None,
     }
+
+
+async def _roll_up_daily_stats(
+    db: AsyncSession,
+    user_id,
+    results: List[ExerciseResult],
+) -> None:
+    """Fold this batch into one row per (user, day, skill).
+
+    The per-answer ExerciseAttempt rows are pruned after 90 days; this is what
+    survives, so anything that wants long-term history reads it instead of the
+    raw log. One UPSERT per skill touched, whatever the batch size — a learner
+    who answers 200 questions in a day still costs at most six rows.
+    """
+    if not results:
+        return
+
+    today = datetime.now(timezone.utc).date()
+    buckets: dict[str, dict[str, float]] = {}
+    for exercise in results:
+        bucket = buckets.setdefault(
+            exercise.skill.value,
+            {"attempts": 0, "correct": 0, "score_sum": 0.0, "difficulty_sum": 0.0},
+        )
+        bucket["attempts"] += 1
+        bucket["correct"] += 1 if exercise.is_correct else 0
+        bucket["score_sum"] += exercise.score
+        bucket["difficulty_sum"] += LEVEL_DIFFICULTY_MULTIPLIER.get(
+            exercise.difficulty_level, 1.0
+        )
+
+    # This function runs against SQLite in unit tests as well as PostgreSQL in
+    # production, and the postgresql dialect's insert() emits SQL SQLite
+    # rejects. Both dialects expose the same on_conflict_do_update API, so pick
+    # by bind; anything else falls back to a plain read-modify-write.
+    dialect = db.bind.dialect.name if db.bind is not None else "postgresql"
+    if dialect == "postgresql":
+        upsert = pg_insert
+    elif dialect == "sqlite":
+        from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+        upsert = sqlite_insert
+    else:
+        upsert = None
+
+    if upsert is None:
+        for skill_value, bucket in buckets.items():
+            skill = ModelSkillType(skill_value)
+            row = await db.scalar(
+                select(SkillDailyStat).where(
+                    SkillDailyStat.user_id == user_id,
+                    SkillDailyStat.day == today,
+                    SkillDailyStat.skill == skill,
+                )
+            )
+            if row is None:
+                db.add(
+                    SkillDailyStat(
+                        user_id=user_id,
+                        day=today,
+                        skill=skill,
+                        attempts=bucket["attempts"],
+                        correct=bucket["correct"],
+                        score_sum=bucket["score_sum"],
+                        difficulty_sum=bucket["difficulty_sum"],
+                    )
+                )
+            else:
+                row.attempts += bucket["attempts"]
+                row.correct += bucket["correct"]
+                row.score_sum += bucket["score_sum"]
+                row.difficulty_sum += bucket["difficulty_sum"]
+        return
+
+    for skill_value, bucket in buckets.items():
+        statement = upsert(SkillDailyStat).values(
+            user_id=user_id,
+            day=today,
+            skill=ModelSkillType(skill_value),
+            attempts=bucket["attempts"],
+            correct=bucket["correct"],
+            score_sum=bucket["score_sum"],
+            difficulty_sum=bucket["difficulty_sum"],
+        )
+        await db.execute(
+            statement.on_conflict_do_update(
+                index_elements=["user_id", "day", "skill"],
+                set_={
+                    "attempts": SkillDailyStat.attempts + statement.excluded.attempts,
+                    "correct": SkillDailyStat.correct + statement.excluded.correct,
+                    "score_sum": SkillDailyStat.score_sum + statement.excluded.score_sum,
+                    "difficulty_sum": SkillDailyStat.difficulty_sum
+                    + statement.excluded.difficulty_sum,
+                },
+            )
+        )
 
 
 async def record_exercise_results_for_user(
@@ -443,7 +553,33 @@ async def record_exercise_results_for_user(
             course_id=exercise.course_id,
         )
         db.add(attempt)
-    
+
+        # An exercise that names a concept is also spaced-repetition evidence.
+        # Feeding it here (rather than at each call site) is what keeps the
+        # CEFR skill scores and the BKT/FSRS schedule from drifting apart:
+        # every caller of this function updates both engines or neither.
+        # Best-effort per exercise — a lesson/game completion already
+        # committed must not fail because one concept row misbehaved.
+        if exercise.concept_id:
+            try:
+                async with db.begin_nested():
+                    await record_concept_observation(
+                        db,
+                        user_id=current_user.id,
+                        concept_id=exercise.concept_id,
+                        outcome="correct" if exercise.is_correct else "incorrect",
+                        confidence=0.8,
+                        source="exercise",
+                    )
+            except Exception:
+                logger.exception(
+                    "Failed to record concept observation for user=%s concept=%s",
+                    current_user.id,
+                    exercise.concept_id,
+                )
+
+    await _roll_up_daily_stats(db, current_user.id, results)
+
     # Update profile statistics
     correct_count = sum(1 for r in results if r.is_correct)
     profile.total_exercises_completed = (profile.total_exercises_completed or 0) + len(results)
@@ -481,8 +617,10 @@ async def record_exercise_results_for_user(
             exercises=results,
             skill=skill_type,
             current_score=skill_score.score,
+            prior_exercises=skill_score.exercises_completed or 0,
+            current_level=ProficiencyLevel(profile.assessed_level),
         )
-        
+
         old_score = skill_score.score or 0.0
         skill_score.score = new_score
         skill_score.confidence = confidence
@@ -507,13 +645,18 @@ async def record_exercise_results_for_user(
         SkillType(skill_score.skill.value): skill_score.score
         for skill_score in all_skill_scores
     }
-    
+    skill_confidences_dict = {
+        SkillType(skill_score.skill.value): skill_score.confidence or 0.0
+        for skill_score in all_skill_scores
+    }
+
     new_level, progress = ProficiencyService.calculate_overall_level(
         skill_scores=skill_scores_dict,
         exercises_completed=profile.total_exercises_completed,
         lessons_completed=profile.total_lessons_completed,
         accuracy=profile.accuracy,
         current_level=ProficiencyLevel(profile.assessed_level),
+        skill_confidences=skill_confidences_dict,
     )
     
     level_changed = new_level.value != previous_level
@@ -545,7 +688,9 @@ async def record_exercise_results_for_user(
 
     # Update overall score
     if all_skill_scores:
-        profile.overall_score = sum(s.score for s in all_skill_scores) / len(all_skill_scores)
+        # Same weighted figure the level check uses — an unweighted mean here
+        # meant the score a learner saw was not the score they were promoted on.
+        profile.overall_score = ProficiencyService.weighted_overall(skill_scores_dict)
 
     profile.last_assessment_at = datetime.now(timezone.utc)
 
@@ -643,6 +788,10 @@ async def check_level_requirements(
         SkillType(skill_score.skill.value): skill_score.score
         for skill_score in skill_scores
     }
+    skill_confidences_dict = {
+        SkillType(skill_score.skill.value): skill_score.confidence or 0.0
+        for skill_score in skill_scores
+    }
 
     streak_result2 = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
     streak_row2 = streak_result2.scalar_one_or_none()
@@ -655,6 +804,7 @@ async def check_level_requirements(
         lessons_completed=profile.total_lessons_completed,
         accuracy=profile.accuracy,
         streak_days=streak_days2,
+        skill_confidences=skill_confidences_dict,
     )
     
     return {
@@ -690,6 +840,7 @@ async def get_level_thresholds():
             "min_lessons_completed": threshold.min_lessons_completed,
             "min_accuracy": threshold.min_accuracy,
             "min_streak_days": threshold.min_streak_days,
+            "min_skill_confidence": threshold.min_skill_confidence,
         }
     
     return {
@@ -839,18 +990,39 @@ async def submit_placement_test(
     old_level = current_user.level or "A1"
     level_changed = old_level != assessed_level
 
+    now = datetime.now(timezone.utc)
+
     if profile:
         profile.assessed_level = assessed_level
-        profile.overall_score = round(pct, 2)
-        profile.last_assessment_at = datetime.now(timezone.utc)
+        profile.last_assessment_at = now
     else:
         profile = UserProficiencyProfile(
             user_id=current_user.id,
             assessed_level=assessed_level,
-            overall_score=round(pct, 2),
-            last_assessment_at=datetime.now(timezone.utc),
+            last_assessment_at=now,
         )
         db.add(profile)
+
+    # The test's own percentage belongs to the test record, not to
+    # profile.overall_score: that field is the weighted skill total, and
+    # overwriting it with "% of placement questions correct" made the two
+    # numbers mean different things depending on which ran last. The level
+    # assessed here still steers everything downstream, because
+    # calculate_skill_score starts an unmeasured skill from this level's floor.
+    db.add(
+        LevelAssessmentTest(
+            user_id=current_user.id,
+            test_type="initial",
+            assessed_level=assessed_level,
+            overall_score=round(pct, 2),
+            skill_scores={},
+            questions_count=len(PLACEMENT_QUESTIONS),
+            correct_count=correct_count,
+            started_at=now,
+            completed_at=now,
+            level_changed=level_changed,
+        )
+    )
 
     # Update user record
     current_user.level = assessed_level

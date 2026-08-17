@@ -28,6 +28,11 @@ import {
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+// Which CEFR skill this course credits on completion. Leaving it unset falls
+// back to guessing from tags, which is how listening and speaking content
+// ended up scored as vocabulary.
+const SKILLS = ["vocabulary", "grammar", "reading", "listening", "speaking", "writing"];
+
 export const CoursesPage = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -54,13 +59,14 @@ export const CoursesPage = () => {
     description: "",
     language: "en",
     level: "A1",
+    skill: "",
     tags: "",
     thumbnail_url: "",
     is_published: false,
   });
 
   const resetForm = () => {
-    setForm({ title: "", description: "", language: "en", level: "A1", tags: "", thumbnail_url: "", is_published: false });
+    setForm({ title: "", description: "", language: "en", level: "A1", skill: "", tags: "", thumbnail_url: "", is_published: false });
     setEditingId(null);
   };
 
@@ -125,6 +131,7 @@ export const CoursesPage = () => {
       description: course.description || "",
       language: course.language,
       level: course.level,
+      skill: course.skill || "",
       tags: (course.tags || []).join(", "),
       thumbnail_url: course.thumbnail_url || "",
       is_published: course.is_published,
@@ -139,6 +146,9 @@ export const CoursesPage = () => {
     try {
       const payload = {
         ...form,
+        // "" is the form's "no label yet" choice; the API accepts a real
+        // skill name or null, and null keeps the tag-based fallback.
+        skill: form.skill || null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       if (editingId) {
@@ -367,6 +377,13 @@ export const CoursesPage = () => {
                   {t.courses.level}
                   <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
                     {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Kỹ năng chính
+                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                    <option value="">— Chưa gắn nhãn —</option>
+                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </label>
               </div>

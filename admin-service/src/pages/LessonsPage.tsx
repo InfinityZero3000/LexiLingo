@@ -21,6 +21,11 @@ import { useI18n } from "../lib/i18n";
 
 const LESSON_TYPES = ["lesson", "practice", "review", "test", "vocabulary", "grammar"];
 
+// Which CEFR skill a finished lesson credits. Empty = inherit the course's
+// label; only override when this lesson exercises something else (a listening
+// lesson inside a grammar course).
+const SKILLS = ["vocabulary", "grammar", "reading", "listening", "speaking", "writing"];
+
 const typeColors: Record<string, "info" | "success" | "warning" | "danger"> = {
   lesson: "info",
   practice: "success",
@@ -58,6 +63,7 @@ export const LessonsPage = () => {
     outcome: "",
     order_index: 0,
     lesson_type: "lesson",
+    skill: "",
     xp_reward: 10,
     pass_threshold: 80,
     estimated_minutes: 10,
@@ -70,6 +76,7 @@ export const LessonsPage = () => {
       outcome: "",
       order_index: lessons.length,
       lesson_type: "lesson",
+      skill: "",
       xp_reward: 10,
       pass_threshold: 80,
       estimated_minutes: 10,
@@ -144,6 +151,7 @@ export const LessonsPage = () => {
       outcome: lesson.outcome || "",
       order_index: lesson.order_index,
       lesson_type: lesson.lesson_type,
+      skill: lesson.skill || "",
       xp_reward: lesson.xp_reward,
       pass_threshold: lesson.pass_threshold,
       estimated_minutes: lesson.estimated_minutes ?? 10,
@@ -165,11 +173,14 @@ export const LessonsPage = () => {
     setSaving(true);
     setError(null);
     try {
+      // "" is the form's "inherit from the course" choice; the API only
+      // accepts a real skill name or null.
+      const payload = { ...form, skill: form.skill || null };
       if (editingId) {
-        await updateLesson(editingId, { ...form });
+        await updateLesson(editingId, payload);
       } else {
         await createLesson({
-          ...form,
+          ...payload,
           unit_id: targetUnitId,
           order_index: form.order_index || lessons.length,
         });
@@ -367,6 +378,15 @@ export const LessonsPage = () => {
                     {LESSON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </label>
+                <label>
+                  Kỹ năng chấm điểm
+                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                    <option value="">— Theo khóa học —</option>
+                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </label>
+              </div>
+              <div className="form-row">
                 <label>
                   Thứ tự
                   <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />

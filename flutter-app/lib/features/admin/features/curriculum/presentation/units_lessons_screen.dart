@@ -51,17 +51,21 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
     final threshold = TextEditingController(text: '${lesson?.passThreshold ?? 80}');
     final minutes = TextEditingController(text: '${lesson?.estimatedMinutes ?? 10}');
     var type = lesson?.lessonType ?? 'lesson';
+    // Empty string is the picker's "inherit from the course" choice; the
+    // API takes a real skill name or null.
+    var skill = lesson?.skill ?? '';
     final saved = await showDialog<bool>(context: context, builder: (context) => StatefulBuilder(builder: (context, setDialogState) => AlertDialog(
       title: Text(lesson == null ? 'Create lesson' : 'Edit lesson'), content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
         TextField(controller: title, autofocus: true, decoration: const InputDecoration(labelText: 'Title *')),
         TextField(controller: description, maxLines: 2, decoration: const InputDecoration(labelText: 'Description')),
         TextField(controller: outcome, maxLines: 2, decoration: const InputDecoration(labelText: 'Outcome')),
         DropdownButtonFormField<String>(initialValue: type, decoration: const InputDecoration(labelText: 'Type'), items: ['lesson','practice','review','test','vocabulary','grammar'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(), onChanged: (v) => setDialogState(() => type = v!)),
+        DropdownButtonFormField<String>(initialValue: skill, decoration: const InputDecoration(labelText: 'Skill scored'), items: ['','vocabulary','grammar','reading','listening','speaking','writing'].map((v) => DropdownMenuItem(value: v, child: Text(v.isEmpty ? 'Inherit from course' : v))).toList(), onChanged: (v) => setDialogState(() => skill = v ?? '')),
         Row(children: [Expanded(child: TextField(controller: xp, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'XP'))), const SizedBox(width: 8), Expanded(child: TextField(controller: threshold, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Pass %')))]),
         TextField(controller: minutes, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Minutes')),
       ])), actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')), FilledButton(onPressed: () => Navigator.pop(context, title.text.trim().isNotEmpty), child: const Text('Save'))])));
     if (saved != true) return;
-    final data = {'title': title.text.trim(), 'description': description.text.trim(), 'outcome': outcome.text.trim(), 'lesson_type': type, 'xp_reward': int.tryParse(xp.text) ?? 10, 'pass_threshold': int.tryParse(threshold.text) ?? 80, 'estimated_minutes': int.tryParse(minutes.text) ?? 10, 'order_index': lesson?.orderIndex ?? _lessons.length};
+    final data = {'title': title.text.trim(), 'description': description.text.trim(), 'outcome': outcome.text.trim(), 'lesson_type': type, 'skill': skill.isEmpty ? null : skill, 'xp_reward': int.tryParse(xp.text) ?? 10, 'pass_threshold': int.tryParse(threshold.text) ?? 80, 'estimated_minutes': int.tryParse(minutes.text) ?? 10, 'order_index': lesson?.orderIndex ?? _lessons.length};
     try { if (lesson == null) { await _repo.createLesson({...data, 'unit_id': widget.unitId}); } else { await _repo.updateLesson(lesson.id, data); } await _load(); }
     catch (_) { if (mounted) setState(() => _error = 'Could not save lesson.'); }
   }

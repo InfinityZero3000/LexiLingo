@@ -397,7 +397,10 @@ class TestLevelThresholds:
         assert c2["min_listening_score"] > 0
         assert c2["min_speaking_score"] > 0
         assert c2["min_writing_score"] > 0
-        assert c2["min_exercises_completed"] >= 2500
+        # Volume gates were lowered when min_skill_confidence took over the
+        # "measured enough to promote" role; C2 still asks for the most.
+        assert c2["min_exercises_completed"] >= 1000
+        assert c2["min_skill_confidence"] >= 0.8
         assert c2["min_streak_days"] >= 60
 
 

@@ -12,6 +12,7 @@ Endpoints:
 - GET    /vocabulary/stats          - Get user vocabulary statistics
 """
 
+import logging
 import math
 import uuid
 from datetime import date, datetime, timezone
@@ -74,6 +75,55 @@ def _days_until(next_review_date: datetime | None) -> int:
         next_review_date = next_review_date.replace(tzinfo=timezone.utc)
     seconds = (next_review_date - datetime.now(timezone.utc)).total_seconds()
     return max(1, math.ceil(seconds / 86400))
+
+
+async def _record_review_proficiency(
+    db: AsyncSession,
+    current_user: User,
+    user_vocab,
+    quality: int,
+) -> None:
+    """Feed one finished flashcard review into the CEFR skill scores.
+
+    Quality is SM-2's 0-5 scale; 3 is the "recalled it, with difficulty"
+    boundary the rest of this route already treats as correct.
+    """
+    from sqlalchemy import select
+
+    from app.models.vocabulary import VocabularyItem
+    from app.routes.proficiency import record_exercise_results_for_user
+    from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
+
+    item = await db.scalar(
+        select(VocabularyItem).where(VocabularyItem.id == user_vocab.vocabulary_id)
+    )
+    if item is None:
+        return
+
+    level_code = getattr(item.difficulty_level, "value", item.difficulty_level)
+    if level_code not in {level.value for level in ProficiencyLevel}:
+        level_code = current_user.level if current_user.level in {
+            level.value for level in ProficiencyLevel
+        } else ProficiencyLevel.A1.value
+
+    await record_exercise_results_for_user(
+        db,
+        current_user,
+        [
+            ExerciseResult(
+                exercise_type="vocab_review",
+                skill=SkillType.VOCABULARY,
+                difficulty_level=ProficiencyLevel(level_code),
+                is_correct=quality >= 3,
+                score=quality / 5 * 100,
+                # Deliberately no concept_id: vocabulary_crud.submit_review
+                # already recorded this review against the concept, and
+                # record_exercise_results_for_user would schedule it a second
+                # time from the same answer.
+            )
+        ],
+        award_xp=False,
+    )
 
 
 # ===== Word of the Day =====
@@ -660,7 +710,6 @@ async def submit_review(
     try:
         await update_user_streak(db, current_user.id)
     except Exception as e:
-        import logging
         logging.getLogger(__name__).error(f"Error updating streak on vocabulary review: {e}", exc_info=True)
 
     # Invalidate user's progress caches
@@ -673,7 +722,17 @@ async def submit_review(
     # --- Check vocabulary achievements ---
     from app.services import check_achievements_for_user
     await check_achievements_for_user(db, current_user.id, "vocab_review")
-    
+
+    # CEFR proficiency tracking. submit_review above only fed the BKT/FSRS
+    # schedule, so a learner who reviewed hundreds of cards still showed a
+    # vocabulary skill score of zero. award_xp=False — this route already
+    # granted XP above and this function's bonus is additive.
+    try:
+        await _record_review_proficiency(db, current_user, updated_vocab, review.quality)
+    except Exception as e:
+        logging.getLogger(__name__).warning("Proficiency update error: %s", e)
+
+
     # Generate message
     messages = {
         5: "Perfect! ",

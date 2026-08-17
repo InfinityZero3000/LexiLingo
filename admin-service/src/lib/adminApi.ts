@@ -316,6 +316,8 @@ export type CourseItem = {
   description?: string | null;
   language: string;
   level: string;
+  /** CEFR skill this course mainly exercises; null falls back to tag guessing. */
+  skill?: string | null;
   tags?: string[];
   thumbnail_url?: string | null;
   total_lessons: number;
@@ -503,6 +505,8 @@ export type LessonItem = {
   outcome?: string | null;
   order_index: number;
   lesson_type: string;
+  /** CEFR skill credited on completion. Null inherits the course's. */
+  skill?: string | null;
   xp_reward: number;
   pass_threshold: number;
   total_exercises: number;

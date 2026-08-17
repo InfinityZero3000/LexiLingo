@@ -10,6 +10,18 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 import uuid
 
+from app.schemas.proficiency import SkillType
+
+
+def _validate_skill(v):
+    """Shared validator body: accept any SkillType value, or None."""
+    if v is None:
+        return v
+    allowed = [skill.value for skill in SkillType]
+    if v not in allowed:
+        raise ValueError(f'Skill must be one of {allowed}')
+    return v
+
 
 # =====================
 # Course Schemas
@@ -21,9 +33,13 @@ class CourseBase(BaseModel):
     description: Optional[str] = None
     language: str = Field(..., min_length=2, max_length=10)
     level: str = Field(..., description="CEFR level: A1, A2, B1, B2, C1, C2")
+    skill: Optional[str] = Field(
+        None,
+        description="Primary CEFR skill this course exercises; null falls back to guessing from tags",
+    )
     tags: Optional[List[str]] = Field(default_factory=list)
     thumbnail_url: Optional[str] = Field(None, max_length=500)
-    
+
     @field_validator("level")
     @classmethod
     def validate_level(cls, v):
@@ -31,6 +47,11 @@ class CourseBase(BaseModel):
         if v not in allowed_levels:
             raise ValueError(f'Level must be one of {allowed_levels}')
         return v
+
+    @field_validator("skill")
+    @classmethod
+    def validate_skill(cls, v):
+        return _validate_skill(v)
 
 
 class CourseCreate(CourseBase):
@@ -44,10 +65,11 @@ class CourseUpdate(BaseModel):
     description: Optional[str] = None
     language: Optional[str] = Field(None, min_length=2, max_length=10)
     level: Optional[str] = None
+    skill: Optional[str] = None
     tags: Optional[List[str]] = None
     thumbnail_url: Optional[str] = Field(None, max_length=500)
     is_published: Optional[bool] = None
-    
+
     @field_validator("level")
     @classmethod
     def validate_level(cls, v):
@@ -56,6 +78,11 @@ class CourseUpdate(BaseModel):
             if v not in allowed_levels:
                 raise ValueError(f'Level must be one of {allowed_levels}')
         return v
+
+    @field_validator("skill")
+    @classmethod
+    def validate_skill(cls, v):
+        return _validate_skill(v)
 
 
 class CourseResponse(CourseBase):
@@ -181,6 +208,10 @@ class LessonBase(BaseModel):
     )
     order_index: int = Field(..., ge=0)
     lesson_type: str = Field(..., description="lesson, practice, review, test, vocabulary, grammar")
+    skill: Optional[str] = Field(
+        None,
+        description="Overrides the course's skill for this lesson; null inherits it",
+    )
     xp_reward: int = Field(default=10, ge=0)
     pass_threshold: int = Field(default=80, ge=0, le=100)
 
@@ -191,6 +222,11 @@ class LessonBase(BaseModel):
         if v not in allowed_types:
             raise ValueError(f'Lesson type must be one of {allowed_types}')
         return v
+
+    @field_validator("skill")
+    @classmethod
+    def validate_skill(cls, v):
+        return _validate_skill(v)
 
 
 class LessonCreate(LessonBase):
@@ -206,6 +242,7 @@ class LessonUpdate(BaseModel):
     outcome: Optional[str] = None
     order_index: Optional[int] = Field(None, ge=0)
     lesson_type: Optional[str] = None
+    skill: Optional[str] = None
     xp_reward: Optional[int] = Field(None, ge=0)
     pass_threshold: Optional[int] = Field(None, ge=0, le=100)
     prerequisites: Optional[List[uuid.UUID]] = None
@@ -220,6 +257,11 @@ class LessonUpdate(BaseModel):
             if v not in allowed_types:
                 raise ValueError(f'Lesson type must be one of {allowed_types}')
         return v
+
+    @field_validator("skill")
+    @classmethod
+    def validate_skill(cls, v):
+        return _validate_skill(v)
 
 
 class LessonResponse(LessonBase):

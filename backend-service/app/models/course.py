@@ -45,6 +45,12 @@ class Course(Base):
         index=True
     )
     
+    # Which of the six CEFR skills this course mainly exercises, used to
+    # credit the right UserSkillScore on completion. NULL means "not
+    # labelled yet" and falls back to guessing from tags — see
+    # ProficiencyService.resolve_lesson_skill.
+    skill: Mapped[str] = mapped_column(String(20), nullable=True)
+
     # Phase 2: Enhanced metadata
     tags: Mapped[dict] = mapped_column(PortableJSON, nullable=True)  # ["grammar", "vocabulary", "business"]
     total_xp: Mapped[int] = mapped_column(Integer, default=0)
@@ -166,7 +172,12 @@ class Lesson(Base):
     total_exercises: Mapped[int] = mapped_column(Integer, default=0)
     
     lesson_type: Mapped[str] = mapped_column(String(50), default="lesson")  # lesson, practice, review, test
-    
+
+    # Overrides Course.skill for a single lesson (a listening lesson inside a
+    # grammar course). NULL = inherit from the course.
+    skill: Mapped[str] = mapped_column(String(20), nullable=True)
+
+
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         TZDateTime,

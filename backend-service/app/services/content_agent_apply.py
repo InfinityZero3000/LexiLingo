@@ -45,6 +45,21 @@ def _course_tags(course_level: str, source_topics: list[str]) -> dict:
     }
 
 
+def _lesson_skill(exercises: list[dict]) -> str:
+    """Which skill a generated lesson credits, read off its own exercises.
+
+    Listening is the only one the artifact marks unambiguously: the validator
+    requires an `audio_url` on listening exercises. Everything the generator
+    currently emits otherwise (multiple_choice, fill_blank, translate,
+    matching, reorder, true_false) is vocabulary or grammar practice, and the
+    grammar share is decided per exercise rather than per lesson — so a lesson
+    with no audio is labelled vocabulary, which is what these lessons are.
+    """
+    if any(exercise.get("audio_url") for exercise in exercises):
+        return "listening"
+    return "vocabulary"
+
+
 class ContentAgentApplyService:
     @staticmethod
     async def apply(
@@ -201,6 +216,7 @@ class ContentAgentApplyService:
                         outcome=lesson_data.outcome,
                         order_index=lesson_data.order_index,
                         lesson_type="vocabulary",
+                        skill=_lesson_skill(exercises),
                         pass_threshold=80,
                         estimated_minutes=lesson_data.estimated_minutes,
                         xp_reward=lesson_data.xp_reward,

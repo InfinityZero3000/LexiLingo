@@ -3,7 +3,6 @@ Learning Session Routes
 Endpoints for lesson attempts and learning sessions (Start/Submit/Complete)
 """
 
-import hashlib
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,12 +16,7 @@ from app.core.database import get_db
 from app.core.cache import build_cache_key, delete_cached
 from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.models.learner_state import LearnerObservationEvent
-from app.services.learner_state import (
-    ObservationInput,
-    apply_observation_event,
-    ingest_observations,
-)
+from app.services.learner_state import record_concept_observation
 from app.services.streak_service import update_user_streak
 from app.models.user import User
 from app.models.course import Course, Unit, Lesson
@@ -587,6 +581,7 @@ async def submit_answer(
             user_id=current_user.id,
             concept_id=concept_id,
             is_correct=is_correct,
+            question_format=request.question_type.value,
         )
 
     # Calculate XP based on correctness, hint usage, and time
@@ -652,41 +647,27 @@ async def _emit_concept_observation(
     user_id: UUID,
     concept_id: str,
     is_correct: bool,
+    question_format: str | None = None,
 ) -> None:
     """Feed a lesson-exercise answer into the unified learner_concept_state
     engine (same one vocabulary review uses — app/crud/vocabulary.py
     submit_review). Applied synchronously in this request's transaction so
     mastery is immediately queryable, not just eventually via the outbox
     worker. Best-effort: any failure here must never break answer submission."""
-    now = datetime.now(timezone.utc)
-    event_id = hashlib.sha256(
-        f"{user_id}:{concept_id}:{now.isoformat()}".encode("utf-8")
-    ).hexdigest()
     try:
         # SAVEPOINT: a failure here must roll back only this observation,
         # not abort the outer transaction that still needs to persist the
         # QuestionAttempt/lesson-progress writes that follow in the caller.
         async with db.begin_nested():
-            await ingest_observations(
+            await record_concept_observation(
                 db,
-                [
-                    ObservationInput(
-                        event_id=event_id,
-                        user_id=user_id,
-                        concept_id=concept_id,
-                        outcome="correct" if is_correct else "incorrect",
-                        confidence=0.8,
-                        observed_at=now,
-                    )
-                ],
+                user_id=user_id,
+                concept_id=concept_id,
+                outcome="correct" if is_correct else "incorrect",
+                confidence=0.8,
+                source="lesson_answer",
+                question_format=question_format,
             )
-            event_db_id = await db.scalar(
-                select(LearnerObservationEvent.id).where(
-                    LearnerObservationEvent.event_id == event_id
-                )
-            )
-            if event_db_id is not None:
-                await apply_observation_event(db, event_db_id, now=now)
     except Exception:
         logger.exception(
             "Failed to record concept observation for user=%s concept=%s",
@@ -1105,7 +1086,9 @@ async def complete_lesson(
                 [
                     ExerciseResult(
                         exercise_type="lesson",
-                        skill=ProficiencyService.infer_skill_from_tags(course.tags),
+                        skill=ProficiencyService.resolve_lesson_skill(
+                            lesson.skill, course.skill, course.tags
+                        ),
                         difficulty_level=ProficiencyLevel(course.level),
                         is_correct=attempt.passed,
                         score=float(attempt.score),

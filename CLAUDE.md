@@ -36,6 +36,88 @@ Language learning app (Duolingo-style). Stack:
 - `TestExam.question_ids` → JSON list (populated at runtime)
 - bcrypt: use `import bcrypt; bcrypt.hashpw(...)` directly — passlib has a 4.x bug
 
+## Learner Signal Pipeline — where practice becomes data
+
+Two engines model the learner, and **every graded activity must reach both**:
+
+| Engine | Table | Written by |
+|---|---|---|
+| CEFR skill scores | `UserSkillScore` | `record_exercise_results_for_user` (`routes/proficiency.py`) |
+| Delta-rule + FSRS schedule | `LearnerConceptState` | `record_concept_observation` (`services/learner_state.py`) |
+
+- **One entry point per engine.** Never re-implement the "ingest → look up event
+  id → apply" sequence; three copies of it had already drifted before they were
+  folded into `record_concept_observation`.
+- `record_exercise_results_for_user` feeds *both*: pass `ExerciseResult.concept_id`
+  and it also schedules the concept. Leave `concept_id` unset when something
+  else already recorded that answer — vocabulary review does, and passing it
+  there would count one answer as two pieces of evidence.
+- `award_xp=False` whenever the calling route granted XP itself (lesson, game,
+  vocab review, chat turns). The function's XP is additive.
+- **Skill comes from a label, not a guess.** `Course.skill` / `Lesson.skill`,
+  resolved by `ProficiencyService.resolve_lesson_skill` (lesson → course →
+  `infer_skill_from_tags`). The tag guess is legacy fallback only: it defaults
+  to `VOCABULARY`, which is how listening and speaking content used to be
+  mis-credited. Games map through `GAME_TYPE_SKILL`, never by splitting the
+  game_type string. Label new content; `scripts/backfill_content_skill.py`
+  reports and fixes unlabelled rows.
+- **Chat scores skills through the observation channel.** ai-service tags one
+  anchor observation per turn with `skill`/`score`/`difficulty_level`;
+  `_record_turn_skill_evidence` in `routes/learner_state.py` turns it into an
+  `ExerciseResult`. Idempotency rides on the spool's `event_id` dedup — only
+  newly inserted events are scored, so no extra table is needed. The payload
+  allowlist is duplicated in `app/schemas/learner_state.py` and
+  `ai-service/api/services/learner_observation_spool.py`: **change both**, an
+  unknown key rejects the whole batch.
+- Passive consumption (podcast, YouTube, plain reading) deliberately records
+  **nothing** — finishing an episode is not evidence of comprehension. Wire
+  those up when they gain dictation or a quiz.
+- Client-side graded surfaces go through `SkillEventRecorder`
+  (`flutter-app/lib/core/services/skill_event_recorder.dart`), fire-and-forget.
+  `vocabConceptId` there must stay in sync with `_vocab_concept_id` in
+  `backend-service/app/crud/vocabulary.py`.
+
+**The scheduler is FSRS; the mastery update is not BKT.** `ALGORITHM_VERSION`
+is `delta-fsrs-v3`. Retrievability, interval and the spacing bonus follow FSRS
+properly, but mastery moves by a delta rule with no transition probability and
+no slip/guess — do not assume Bayesian properties. Guess noise is handled by
+scaling observation confidence through `FORMAT_CONFIDENCE` (a correct
+four-option answer is worth less than a typed one), so pass `question_format`
+wherever the format is known.
+
+**Scoring rules that exist because each was once wrong:**
+
+- Skill score moves **one EMA step per exercise**, never one per batch — News
+  quizzes post in batches and Book quizzes post per answer, and a per-batch
+  step made the same practice worth 2.4× more when sent separately.
+- A skill with no score starts from the **floor of the learner's current
+  level**, not from the first answer. Skipping that made one correct answer
+  score 100/100.
+- The exercise's own `score` is the target; `is_correct` is a label for
+  accuracy stats only. Wrong answers must not add half credit.
+- Difficulty scales the **step size**, not the numerator — the old bonus was
+  clipped at 100, so A1 and C2 answers landed identically.
+- `confidence` comes from **cumulative** `exercises_completed`, not from the
+  current request. It gates promotion via `LevelThreshold.min_skill_confidence`:
+  volume asks "did you do enough?", confidence asks "do we know enough about
+  you yet?". Without it, raw counts were the only real gate and a long chat
+  session could satisfy them.
+- One weighted overall score, `ProficiencyService.weighted_overall`. There were
+  four different formulas; two overwrote each other, so the number a learner
+  saw was not the number their promotion was judged on.
+- `SKILL_WEIGHTS` is balanced around the four skills (20% each) with
+  vocabulary and grammar at 10% — they are CEFR *resources*, not pillars.
+
+**Data growth is bounded on purpose:**
+
+- `ExerciseAttempt` is a write-only detail log. Nothing reads it back; it is
+  pruned after 90 days by `app.tasks.skill_history.prune_exercise_attempts`.
+- `SkillDailyStat` is what survives — one row per (user, day, skill), merged
+  with an UPSERT, so a day costs at most six rows however much someone
+  practises. Read history from here, not from the attempts table.
+- `UserSkillScore.trend` reads `score_7d_ago`/`score_30d_ago`, which nothing
+  wrote until `snapshot_skill_scores` ran weekly. Two columns, no history table.
+
 ## Course Content Invariant
 
 A lesson is playable only if `content.exercises` is non-empty. Consequences:

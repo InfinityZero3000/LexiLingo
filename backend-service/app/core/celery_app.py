@@ -28,6 +28,7 @@ if Celery is not None:
             "app.tasks.learner_state",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
+            "app.tasks.skill_history",
             "app.tasks.streak_reminders",
             "app.tasks.word_of_day",
         ],
@@ -64,6 +65,17 @@ if Celery is not None:
         "cleanup-learner-observations": {
             "task": "app.tasks.learner_state.cleanup_learner_observations",
             "schedule": crontab(hour=2, minute=30),
+        },
+        # Answer-level rows are only kept while they can still explain a
+        # recent score; skill_daily_stats carries the long term.
+        "prune-exercise-attempts": {
+            "task": "app.tasks.skill_history.prune_exercise_attempts",
+            "schedule": crontab(hour=2, minute=45),
+        },
+        # Feeds UserSkillScore.trend, which read two columns nothing wrote.
+        "snapshot-skill-scores": {
+            "task": "app.tasks.skill_history.snapshot_skill_scores",
+            "schedule": crontab(hour=3, minute=0, day_of_week=1),
         },
         "auto-league-reset": {
             "task": "app.tasks.ranking_agent.auto_league_reset",

@@ -33,6 +33,79 @@ async def _set_learner_statement_timeout(db: AsyncSession) -> None:
         await db.execute(text(f"SET LOCAL statement_timeout = {timeout_ms}"))
 
 
+async def _record_turn_skill_evidence(
+    db: AsyncSession,
+    observations: list[ObservationInput],
+    inserted: set[str],
+) -> None:
+    """Credit a conversation turn to its CEFR skill score.
+
+    ai-service marks one observation per turn with a `skill` payload; a turn
+    is speaking or writing practice, and before this it moved neither score.
+
+    Only observations this call actually inserted are counted, so the spool's
+    at-least-once delivery cannot score the same turn twice — the event_id
+    uniqueness that already protects the concept state protects this too.
+
+    Best-effort: the observations are committed by now and the caller's ACK
+    must not be withheld because the skill pass had a problem.
+    """
+    from app.models.user import User
+    from app.routes.proficiency import record_exercise_results_for_user
+    from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
+
+    scored = [
+        item
+        for item in observations
+        if item.event_id in inserted and (item.payload or {}).get("skill")
+    ]
+    if not scored:
+        return
+
+    valid_levels = {level.value for level in ProficiencyLevel}
+
+    for item in scored:
+        payload = item.payload or {}
+        try:
+            skill = SkillType(str(payload["skill"]).strip().lower())
+        except ValueError:
+            logger.warning("Unknown skill in observation payload: %r", payload.get("skill"))
+            continue
+
+        user = await db.get(User, item.user_id)
+        if user is None:
+            continue
+
+        level = str(payload.get("difficulty_level") or "").strip().upper()
+        if level not in valid_levels:
+            level = user.level if user.level in valid_levels else ProficiencyLevel.B1.value
+
+        score = float(payload.get("score") or 0.0)
+        try:
+            await record_exercise_results_for_user(
+                db,
+                user,
+                [
+                    ExerciseResult(
+                        exercise_type="conversation_turn",
+                        skill=skill,
+                        difficulty_level=ProficiencyLevel(level),
+                        # An error-free turn is the "correct" case; the
+                        # observation's own outcome says the same thing.
+                        is_correct=item.outcome == "correct",
+                        score=score,
+                        # No concept_id: the same observation is already
+                        # scheduling this concept through the outbox.
+                    )
+                ],
+                award_xp=False,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to record turn skill evidence for user=%s", item.user_id
+            )
+
+
 async def require_learner_state_service(
     x_lexilingo_service_token: str = Header(default=""),
     x_lexilingo_audience: str = Header(default=""),
@@ -106,6 +179,7 @@ async def ingest_learner_observation_batch(
         len(inserted),
         len(requested - inserted),
     )
+    await _record_turn_skill_evidence(db, observations, inserted)
     return LearnerObservationBatchResponse(
         accepted_event_ids=sorted(inserted),
         duplicate_event_ids=sorted(requested - inserted),

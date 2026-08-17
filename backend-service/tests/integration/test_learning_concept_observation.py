@@ -78,7 +78,7 @@ async def test_emit_concept_observation_swallows_failure_without_aborting_sessio
 
     import app.routes.learning as learning_module
 
-    monkeypatch.setattr(learning_module, "ingest_observations", _boom)
+    monkeypatch.setattr(learning_module, "record_concept_observation", _boom)
 
     # Must not raise, and the session must stay usable afterward (savepoint
     # isolation) — proven by successfully committing unrelated work next.

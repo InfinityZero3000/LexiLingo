@@ -203,6 +203,11 @@ class ExerciseResultData {
   final String? lessonId;
   final String? courseId;
 
+  /// Names the concept this result is evidence about (e.g. `vocab:hotel_room`).
+  /// Setting it also puts the concept on the spaced-repetition schedule, so
+  /// leave it null when something else already recorded that.
+  final String? conceptId;
+
   ExerciseResultData({
     required this.exerciseType,
     required this.skill,
@@ -212,6 +217,7 @@ class ExerciseResultData {
     this.timeSpentSeconds = 0,
     this.lessonId,
     this.courseId,
+    this.conceptId,
   });
 
   Map<String, dynamic> toJson() => {
@@ -223,5 +229,6 @@ class ExerciseResultData {
     'time_spent_seconds': timeSpentSeconds,
     if (lessonId != null) 'lesson_id': lessonId,
     if (courseId != null) 'course_id': courseId,
+    if (conceptId != null) 'concept_id': conceptId,
   };
 }

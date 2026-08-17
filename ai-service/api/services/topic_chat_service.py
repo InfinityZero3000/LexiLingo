@@ -431,6 +431,9 @@ async def stream_tracecag_topic_message(
                 session_id=session_id,
                 turn_id=ai_message_id,
                 trace_result=raw_state,
+                # Topic chat is typed only, and TopicChatRequest carries no
+                # CEFR level, so the band is left to the backend's default.
+                skill="writing",
             )
         except Exception as observation_err:
             logger.error(

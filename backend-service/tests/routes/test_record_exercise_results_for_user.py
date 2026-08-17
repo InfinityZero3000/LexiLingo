@@ -8,6 +8,7 @@ from app.models.proficiency import (
     UserSkillScore,
     UserLevelHistory,
     ExerciseAttempt,
+    SkillDailyStat,
 )
 from app.models.user import User
 from app.routes.proficiency import record_exercise_results_for_user
@@ -24,6 +25,7 @@ async def db_session():
         UserSkillScore.__table__,
         UserLevelHistory.__table__,
         ExerciseAttempt.__table__,
+        SkillDailyStat.__table__,
     ]
     async with engine.begin() as connection:
         await connection.run_sync(
