@@ -60,7 +60,7 @@ torch<=2.13.0,>=2.13.0
 peft>=0.20.0  # LoRA fine-tuning and adapter loading
 
 # LangGraph + LangChain (TRACECAG Orchestration)
-langgraph>=1.2.10
+langgraph>=1.2.11
 langchain-core>=1.5.4
 langchain-community>=0.4.2
 
