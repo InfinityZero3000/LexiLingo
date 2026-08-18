@@ -213,6 +213,33 @@ ai-service is the slow one to rebuild; backend-service is ~1 min. Losing
 ai-service costs chat/translate/STT/TRACE-CAG but **not** courses, lessons,
 auth or progress — those are backend-service.
 
+**Four ways a deploy ships nothing while looking fine** (all hit on 2026-08-17):
+
+- **`deploy-one-shot.sh` never builds.** It is pull → tag rollback → `up -d` →
+  health → smoke. Both app services are `build:`-from-source with no registry,
+  so `up -d` reuses the existing image and new code never ships. Always
+  `$COMPOSE build <svc>` first, detached, then swap.
+- **A container-name conflict aborts the whole swap.** `lexilingo-prometheus`
+  belongs to compose project `gateway`, not `lexilingo`, so
+  `up -d --remove-orphans` dies on the name clash *before* reaching
+  backend/ai-service — prod stays up on old images and the failure reads as a
+  monitoring problem. Until the monitoring stack moves into this project, swap
+  with `up -d backend-service ai-service` (no `--remove-orphans`).
+- **The script's own rollback tagging can be wrong.** Its image check reported
+  "no image" for both services while `backend-service:rollback` pointed at an
+  image *older* than the running one. Confirm `:latest` and `:rollback` resolve
+  to the same ID before you build:
+  `sudo docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep -E "(ai|backend)-service:(latest|rollback)"`
+- **Celery worker and beat are separate images.** `backend-reminder-worker` and
+  `backend-reminder-beat` build from the same context but are distinct images;
+  rebuilding backend-service alone leaves new tasks and new `beat_schedule`
+  entries silently absent. Note the compose service names differ from the
+  container names (`lexilingo-reminder-*`).
+
+Migrations run themselves: backend-service applies `alembic upgrade head` on
+start, so a deploy that swaps that container has already migrated by the time
+it is healthy. Verify with `compose exec -T backend-service alembic current`.
+
 ## Backup & Restore
 
 User data lives in exactly two stores: **postgres** (accounts, progress, XP,
