@@ -25,7 +25,7 @@ services:
       REDIS_MAX_CONNECTIONS: ${AI_E2E_REDIS_MAX_CONNECTIONS:-64}
       GEMINI_API_KEY: ${AI_E2E_GEMINI_API_KEY:-}
       GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys in .env}
-      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
+      GROQ_MODEL: ${GROQ_MODEL:-groq/compound-mini}
       GROQ_REQUIRE_SEVEN_KEYS: "true"
       GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-true}
       TRACECAG_GROQ_RPM: ${AI_E2E_GROQ_RPM:-28}

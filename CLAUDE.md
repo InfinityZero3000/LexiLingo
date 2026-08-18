@@ -209,10 +209,19 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   phrase clearly." — check the wording before trusting a job.
   Groq decommissions models without notice: `llama-3.1-8b-instant` (the old
   ai-service default) and `llama-3.3-70b-versatile` (the old exercise-generator
-  default) both 404 as of 2026-08-17. Live defaults are `openai/gpt-oss-20b`
-  (service-wide) and `openai/gpt-oss-120b` (`CONTENT_AGENT_GROQ_MODEL`,
-  `EXERCISE_GEN_MODEL`). List what is available with
+  default) both 404 as of 2026-08-17. List what is available with
   `curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $KEY"`.
+- **`GROQ_MODEL` must name a non-reasoning model.** A reasoning model spends
+  `reasoning_tokens` before it emits any content, so at the small budgets this
+  service uses it returns an empty string — a silent failure, worse than the
+  404 it replaced. Measured against `translate.py`'s own payload
+  (`max_tokens: 80`): `openai/gpt-oss-20b` → 78 reasoning tokens, content `""`;
+  `qwen/qwen3.6-27b` → `<think>` prose in the content, so the JSON parse fails;
+  `groq/compound-mini` → clean JSON, `finish_reason=stop`, ~1.2s, and it streams
+  fine at 100 and 512 tokens. `groq/compound-mini` is the default everywhere
+  `GROQ_MODEL` is read. Reasoning models are only safe where the budget is
+  uncapped, which is why generation (`CONTENT_AGENT_GROQ_MODEL`,
+  `EXERCISE_GEN_MODEL`) stays on `openai/gpt-oss-120b`.
 - `backend-service/scripts/generate_exercises_ai.py --regenerate` rewrites
   lessons that are already playable but weak (fewer than 3 distinct ui_types, no
   production task, or a generic "Match the words with their meanings" prompt). It

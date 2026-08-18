@@ -74,7 +74,7 @@ def test_e2e_compose_matches_production_security_boundary():
     assert ai["environment"]["GROQ_SLOT_TELEMETRY"]
     assert ai["ports"] == ["127.0.0.1:${AI_E2E_PORT:-18001}:8001"]
     assert ai["environment"]["ALLOWED_ORIGINS"] == "${AI_E2E_ALLOWED_ORIGINS:-https://e2e.invalid}"
-    assert ai["environment"]["GROQ_MODEL"] == "${GROQ_MODEL:-openai/gpt-oss-20b}"
+    assert ai["environment"]["GROQ_MODEL"] == "${GROQ_MODEL:-groq/compound-mini}"
     assert ai["environment"]["GEMINI_API_KEY"] == "${AI_E2E_GEMINI_API_KEY:-}"
     assert ai["environment"]["TRACECAG_ENABLE_JIT_MINIGRAPH"].endswith(":-false}")
     assert ai["environment"]["V3_ENABLE_GRAPH_ANALYTICS"].endswith(":-false}")

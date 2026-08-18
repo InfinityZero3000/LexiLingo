@@ -70,7 +70,10 @@ async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[di
         logger.info("[translate] Groq key pool exhausted, skipping")
         return None
 
-    groq_model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    # Must be a non-reasoning model: this call caps max_tokens at 80, and a
+    # reasoning model spends that budget before emitting any content —
+    # openai/gpt-oss-20b burns 78 reasoning tokens and returns "".
+    groq_model = os.getenv("GROQ_MODEL", "groq/compound-mini")
     messages = [
         {"role": "system", "content": _SYSTEM_PROMPT},
         {"role": "user", "content": _build_user_prompt(word, lang, context)},

@@ -308,7 +308,7 @@ class TestGenerateNode:
         )
 
         system_prompt = captured_payloads[0]["messages"][0]["content"]
-        assert captured_payloads[0]["model"] == "openai/gpt-oss-20b"
+        assert captured_payloads[0]["model"] == "groq/compound-mini"
         assert "You are Sarah, an airport check-in agent." in system_prompt
         assert "You are Lexi" not in system_prompt
 

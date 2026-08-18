@@ -51,7 +51,7 @@ async def generate_variants_node(state: NotificationAgentState) -> dict:
             "retries": state.get("retries", 0),
         }
 
-    model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
+    model = os.getenv("GROQ_MODEL", "groq/compound-mini")
     audience = state["audience_summary"]
     orig_title = state["original_title"]
     orig_body = state["original_body"]
