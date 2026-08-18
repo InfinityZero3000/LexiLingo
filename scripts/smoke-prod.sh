@@ -78,8 +78,11 @@ check_cors_preflight
 # AI routes via gateway
 check_status "TraceCAG Health" "/api/v1/ai/trace-cag/health" "200"
 
-# Chat route via gateway (AI service)
-check_status "Chat Session Messages" "/api/v1/chat/sessions/test/messages?limit=1" "200"
+# Chat route via gateway (AI service). Anonymous must be refused: chat history
+# is private, and this check expected 200 from before the endpoint gained
+# authentication in 652dd15d (2026-07-27) — so it had been failing ever since,
+# while asserting the opposite of the behaviour we actually want.
+check_status "Chat Session Messages (auth required)" "/api/v1/chat/sessions/test/messages?limit=1" "401"
 
 echo
 if [[ "$failures" -eq 0 ]]; then
