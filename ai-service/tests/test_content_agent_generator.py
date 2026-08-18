@@ -222,3 +222,41 @@ async def test_llm_mission_generator_uses_deterministic_when_no_api_key():
     courses = await generator.generate_courses(plan, request)
 
     assert len(courses[0].units[0].lessons[0].exercises) == request.exercises_per_lesson
+
+
+@pytest.mark.asyncio
+async def test_groq_mission_generator_falls_back_when_every_key_is_throttled(
+    monkeypatch,
+):
+    """A throttled pool must cost one lesson its mission, not the whole job."""
+    from api.services.content_agent import generator as generator_module
+
+    async def no_key(estimated_tokens: int = 600):
+        return None
+
+    monkeypatch.setattr(generator_module, "get_available_groq_key", no_key)
+
+    request = GenerationRequest(levels=["A1"], units_per_course=1, lessons_per_unit=1)
+    plan = plan_curriculum(_records(), request)
+
+    # max_attempts=1: the retry backoff is 15s a go and buys the test nothing.
+    courses = await generator_module.GroqMissionGenerator(
+        max_attempts=1
+    ).generate_courses(plan, request)
+
+    exercises = courses[0].units[0].lessons[0].exercises
+    assert exercises, "expected the deterministic template, not an empty lesson"
+
+
+def test_groq_mission_generator_does_not_borrow_the_short_call_model(monkeypatch):
+    """GROQ_MODEL names the small non-reasoning model the short service calls
+    need; generating a whole lesson on it would be a silent quality drop."""
+    from api.services.content_agent.generator import GroqMissionGenerator
+
+    monkeypatch.setenv("GROQ_MODEL", "groq/compound-mini")
+    monkeypatch.delenv("CONTENT_AGENT_GROQ_MODEL", raising=False)
+
+    assert GroqMissionGenerator()._model == "openai/gpt-oss-120b"
+
+    monkeypatch.setenv("CONTENT_AGENT_GROQ_MODEL", "openai/gpt-oss-20b")
+    assert GroqMissionGenerator()._model == "openai/gpt-oss-20b"

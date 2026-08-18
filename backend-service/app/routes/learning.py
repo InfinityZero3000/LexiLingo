@@ -330,9 +330,16 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         [
             Exercise(
                 id="1", type="multiple_choice", ui_type="vocabulary_flashcard",
-                question="Learn the word: 'Persevere' (kiên trì)",
-                options=[ExerciseOption(id="0", text="Got it!", is_correct=True)],
-                correct_answer="Got it!",
+                question="Learn the word: 'Persevere'",
+                # Never a lone "Got it!": that grades itself correct and pays XP
+                # for a tap.
+                options=[
+                    ExerciseOption(id="0", text="Kiên trì theo đuổi", is_correct=True),
+                    ExerciseOption(id="1", text="Bỏ cuộc sớm", is_correct=False),
+                    ExerciseOption(id="2", text="Nghỉ ngơi đầy đủ", is_correct=False),
+                    ExerciseOption(id="3", text="Thay đổi kế hoạch", is_correct=False),
+                ],
+                correct_answer="Kiên trì theo đuổi",
                 explanation="To persevere means to continue in spite of difficulty.",
                 difficulty=1, points=10
             ),

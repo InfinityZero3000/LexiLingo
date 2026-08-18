@@ -65,17 +65,24 @@ def _repair_exercise(exercise: dict) -> str | None:
     options = exercise.get("options") or []
     correct_answer = str(exercise.get("correct_answer", ""))
 
-    if ui_type == "arrange_the_sentence":
+    if ui_type == "arrange_the_sentence" and not arrange_bank_matches(
+        options, correct_answer
+    ):
+        # Checked before the MCQ case below: a one-word sentence has its answer
+        # in the bank legitimately, and converting it would make a
+        # single-option question that grades itself correct.
         if correct_answer in [_option_text(o) for o in options]:
             # The model wrote candidate sentences, not a word bank — that is an
             # MCQ, and the arrange widget cannot grade it.
             exercise["ui_type"] = "multiple_choice"
             exercise["type"] = "multiple_choice"
             return "arrange -> multiple_choice"
-        if not arrange_bank_matches(options, correct_answer):
-            # Empty or inconsistent bank: rebuild it from the answer itself.
-            exercise["options"] = arrange_tiles(correct_answer)
-            return "arrange word bank rebuilt"
+        tiles = arrange_tiles(correct_answer)
+        if not tiles:
+            # Nothing to rebuild from; a human has to write this one.
+            return None
+        exercise["options"] = tiles
+        return "arrange word bank rebuilt"
 
     if ui_type == "image_based_choice" and not exercise.get("image_url"):
         # No image pipeline exists, so the picture slot renders as a grey

@@ -529,7 +529,15 @@ class LLMMissionGenerator:
         try:
             raw = await self._call_model(client, planned_lesson, level, request)
             return self._to_lesson_artifact(raw, planned_lesson, level, request)
-        except (httpx.HTTPError, ValueError, ValidationError, KeyError) as exc:
+        except (
+            httpx.HTTPError,
+            ValueError,
+            ValidationError,
+            KeyError,
+            # e.g. "No Groq key available (all rate limited)" — one throttled
+            # lesson must not take the whole job down with it.
+            RuntimeError,
+        ) as exc:
             logger.warning(
                 "LLM mission generation failed for lesson '%s', falling back to "
                 "deterministic template: %s",
@@ -655,8 +663,11 @@ class GroqMissionGenerator(LLMMissionGenerator):
             timeout_seconds=timeout_seconds,
             max_attempts=max_attempts,
         )
-        self._model = model or os.getenv(
-            "CONTENT_AGENT_GROQ_MODEL", os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+        # Deliberately not falling back to GROQ_MODEL: that one names the small
+        # non-reasoning model the short service calls need, and generating a
+        # whole lesson on it is a silent quality drop.
+        self._model = (
+            model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "openai/gpt-oss-120b"
         )
 
     async def _call_model(

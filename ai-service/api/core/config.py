@@ -231,7 +231,7 @@ class Settings(BaseSettings):
         moving_refs = {"head", "latest", "main", "master", "stable", "trunk"}
 
         def require_non_moving(name: str, value: str) -> None:
-            if not value or value.strip().lower() in moving_refs:
+            if not value.strip() or value.strip().lower() in moving_refs:
                 raise ValueError(f"{name} must use a pinned immutable version")
 
         def validate_dataset(

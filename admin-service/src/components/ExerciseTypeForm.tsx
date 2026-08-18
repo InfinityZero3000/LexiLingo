@@ -552,10 +552,14 @@ const TranslationForm = ({ value, onChange }: { value: Exercise; onChange: (u: E
   );
 };
 
-/** Vocabulary flashcard: word + definition + optional MCQ */
+/** Vocabulary flashcard: word + definition + MCQ.
+ *  No "Got it!" mode: a card whose only option is correct grades itself and
+ *  pays XP for a tap. */
 const FlashcardForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exercise) => void }) => {
-  const hasOptions = (value.options?.length ?? 0) > 1;
-  const options = value.options ?? [{ id: "0", text: "Got it!", is_correct: true }];
+  const options =
+    (value.options?.length ?? 0) > 1
+      ? value.options!
+      : [newOption(0, true), newOption(1), newOption(2), newOption(3)];
 
   return (
     <>
@@ -587,43 +591,13 @@ const FlashcardForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exe
           onChange={(e) => onChange({ ...value, image_url: e.target.value || null })}
         />
       </div>
-      <div className={fieldCls}>
-        <label className={labelCls}>Mode</label>
-        <div className="exercise-mode-options">
-          <label className="exercise-radio-label">
-            <input
-              type="radio"
-              checked={!hasOptions}
-              onChange={() =>
-                onChange({ ...value, options: [{ id: "0", text: "Got it!", is_correct: true }], correct_answer: "Got it!" })
-              }
-            />
-            Simple flashcard ("Got it!")
-          </label>
-          <label className="exercise-radio-label">
-            <input
-              type="radio"
-              checked={hasOptions}
-              onChange={() =>
-                onChange({
-                  ...value,
-                  options: [newOption(0, true), newOption(1), newOption(2), newOption(3)],
-                })
-              }
-            />
-            Flashcard + MCQ
-          </label>
-        </div>
-      </div>
-      {hasOptions && (
-        <OptionsEditor
-          options={options}
-          onlyOneCorrect
-          onChange={(opts) =>
-            onChange({ ...value, options: opts, correct_answer: opts.find((o) => o.is_correct)?.text ?? "" })
-          }
-        />
-      )}
+      <OptionsEditor
+        options={options}
+        onlyOneCorrect
+        onChange={(opts) =>
+          onChange({ ...value, options: opts, correct_answer: opts.find((o) => o.is_correct)?.text ?? "" })
+        }
+      />
     </>
   );
 };
