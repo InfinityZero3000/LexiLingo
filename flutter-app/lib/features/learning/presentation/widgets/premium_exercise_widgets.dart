@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -2086,14 +2088,41 @@ class MatchWordMeaningWidget extends StatefulWidget {
 class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
   String? _selectedLeft;
   final Map<String, String> _matched = {};
+  late List<String> _left;
+  late List<String> _right;
+
+  @override
+  void initState() {
+    super.initState();
+    _splitColumns();
+  }
+
+  @override
+  void didUpdateWidget(MatchWordMeaningWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.exercise.id != oldWidget.exercise.id) {
+      _matched.clear();
+      _selectedLeft = null;
+      _splitColumns();
+    }
+  }
+
+  /// Content stores the pairs aligned (first half keys, second half values), so
+  /// an unshuffled right column is solvable by tapping row i ↔ row i.
+  /// Seeded by exercise id so the order is stable across rebuilds.
+  void _splitColumns() {
+    final options = widget.exercise.options ?? [];
+    final half = options.length ~/ 2;
+    _left = options.take(half).toList();
+    _right = options.skip(half).toList()
+      ..shuffle(Random(widget.exercise.id.hashCode));
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
-    final options = widget.exercise.options ?? [];
-    final half = options.length ~/ 2;
-    final left = options.take(half).toList();
-    final right = options.skip(half).toList();
+    final left = _left;
+    final right = _right;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -3091,7 +3120,11 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
     final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options ?? [];
     final half = options.length ~/ 2;
-    final words = options.take(half).toList();
+    // Word i belongs to category i in the stored content — shuffle the bank so
+    // the buckets can't be filled top-to-bottom without reading. Seeded by
+    // exercise id: same order on every rebuild.
+    final words = options.take(half).toList()
+      ..shuffle(Random(widget.exercise.id.hashCode));
     final cats = options.skip(half).toList();
 
     final unassigned = words

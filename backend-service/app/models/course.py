@@ -18,6 +18,39 @@ def count_exercises(content) -> int:
     return len(exercises) if isinstance(exercises, list) else 0
 
 
+def option_text(option) -> str:
+    return option.get("text", "") if isinstance(option, dict) else str(option)
+
+
+_TILE_PUNCTUATION = ".,?!;:"
+
+
+def arrange_tiles(sentence) -> list[str]:
+    """Word-bank tiles for a reorder sentence — punctuation is not a tile."""
+    tiles = (word.strip(_TILE_PUNCTUATION) for word in str(sentence).split())
+    return [tile for tile in tiles if tile]
+
+
+def arrange_bank_matches(options, correct_answer) -> bool:
+    """True when `options` is the shuffled word bank of `correct_answer`.
+
+    An arrange exercise never has its answer among the options, so the generic
+    "answer must be one of the options" check cannot be used on it.
+    """
+    bank = [
+        tile
+        for tile in (
+            option_text(option).strip(_TILE_PUNCTUATION) for option in options or []
+        )
+        if tile
+    ]
+    if not bank:
+        return False
+    return sorted(t.lower() for t in bank) == sorted(
+        t.lower() for t in arrange_tiles(correct_answer)
+    )
+
+
 class Course(Base):
     """
     Course model with hierarchical content structure.

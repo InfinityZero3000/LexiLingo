@@ -10,6 +10,7 @@ Run:
     venv/bin/python3 scripts/audit_course_content.py
     venv/bin/python3 scripts/audit_course_content.py --unpublish     # demote to draft
     venv/bin/python3 scripts/audit_course_content.py --fix-counters  # repair total_exercises
+    venv/bin/python3 scripts/audit_course_content.py --fix-unplayable  # repair broken exercises
 
 Fix a reported course by authoring exercises in the admin dashboard or with
 `scripts/generate_exercises_ai.py`, then publish it again.
@@ -27,7 +28,13 @@ from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.crud.course import CourseCRUD
-from app.models.course import Course, Lesson
+from app.models.course import (
+    Course,
+    Lesson,
+    arrange_bank_matches,
+    arrange_tiles,
+    option_text,
+)
 
 
 async def fix_counters(db) -> int:
@@ -46,9 +53,60 @@ async def fix_counters(db) -> int:
 
 PAIRED_UI_TYPES = {"match_word_to_meaning", "categorization", "cognitive_fluidity"}
 
+_option_text = option_text
 
-def _option_text(option) -> str:
-    return option.get("text", "") if isinstance(option, dict) else str(option)
+
+def _repair_exercise(exercise: dict) -> str | None:
+    """Make one exercise playable, or return None if it already is.
+
+    Returns a short reason for the log so a run says what it touched.
+    """
+    ui_type = exercise.get("ui_type")
+    options = exercise.get("options") or []
+    correct_answer = str(exercise.get("correct_answer", ""))
+
+    if ui_type == "arrange_the_sentence":
+        if correct_answer in [_option_text(o) for o in options]:
+            # The model wrote candidate sentences, not a word bank — that is an
+            # MCQ, and the arrange widget cannot grade it.
+            exercise["ui_type"] = "multiple_choice"
+            exercise["type"] = "multiple_choice"
+            return "arrange -> multiple_choice"
+        if not arrange_bank_matches(options, correct_answer):
+            # Empty or inconsistent bank: rebuild it from the answer itself.
+            exercise["options"] = arrange_tiles(correct_answer)
+            return "arrange word bank rebuilt"
+
+    if ui_type == "image_based_choice" and not exercise.get("image_url"):
+        # No image pipeline exists, so the picture slot renders as a grey
+        # placeholder. The options are text anyway.
+        exercise["ui_type"] = "multiple_choice"
+        return "image_based_choice -> multiple_choice (no image_url)"
+
+    return None
+
+
+async def fix_unplayable_exercises(db) -> int:
+    result = await db.execute(select(Lesson))
+    fixed = 0
+    for lesson in result.scalars().all():
+        if not isinstance(lesson.content, dict):
+            continue
+        content = copy.deepcopy(lesson.content)
+        reasons = []
+        for exercise in content.get("exercises") or []:
+            if not isinstance(exercise, dict):
+                continue
+            reason = _repair_exercise(exercise)
+            if reason:
+                reasons.append(reason)
+        if reasons:
+            lesson.content = content
+            fixed += 1
+            print(f"  {lesson.title}: {', '.join(reasons)}")
+    if fixed:
+        await db.commit()
+    return fixed
 
 
 async def fix_matching_options(db) -> int:
@@ -91,10 +149,20 @@ async def fix_matching_options(db) -> int:
     return fixed
 
 
-async def audit(unpublish: bool, repair_counters: bool, repair_matching: bool = False) -> int:
+async def audit(
+    unpublish: bool,
+    repair_counters: bool,
+    repair_matching: bool = False,
+    repair_unplayable: bool = False,
+) -> int:
     async with AsyncSessionLocal() as db:
         if repair_matching:
             print(f"Repaired matching options on {await fix_matching_options(db)} lesson(s).")
+        if repair_unplayable:
+            print(
+                f"Repaired unplayable exercises on "
+                f"{await fix_unplayable_exercises(db)} lesson(s)."
+            )
         if repair_counters:
             print(f"Repaired total_exercises on {await fix_counters(db)} lesson(s).")
 
@@ -146,5 +214,20 @@ if __name__ == "__main__":
         action="store_true",
         help="rebuild options for pair-matching exercises so both columns render",
     )
+    parser.add_argument(
+        "--fix-unplayable",
+        action="store_true",
+        help=(
+            "repair arrange exercises with a broken word bank and demote "
+            "image questions that have no image to plain multiple choice"
+        ),
+    )
     args = parser.parse_args()
-    asyncio.run(audit(args.unpublish, args.fix_counters, args.fix_matching))
+    asyncio.run(
+        audit(
+            args.unpublish,
+            args.fix_counters,
+            args.fix_matching,
+            args.fix_unplayable,
+        )
+    )

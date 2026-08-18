@@ -126,7 +126,25 @@ A lesson is playable only if `content.exercises` is non-empty. Consequences:
 - Learner-facing endpoints (roadmap, course detail) hide lessons without exercises; `/learning/lessons/{id}/start|content` reject them with 409 in production.
 - Publishing a course is gated on every lesson having exercises (`CourseCRUD.publish_blockers`); the gate fires on the draft→published transition only.
 - All admin lesson edits must go through `_apply_lesson_update` in `routes/admin_courses.py` — both `PUT /lessons/{id}` and `PUT /lessons/{id}/content` share it.
-- `scripts/audit_course_content.py` reports/repairs existing data.
+- `scripts/audit_course_content.py` reports/repairs existing data (`--fix-counters`, `--fix-matching`, `--fix-unplayable`).
+
+Nothing validates an exercise's *shape* on write, so a malformed one is only
+discovered by a learner who cannot answer it. The shapes that have already been
+broken once:
+
+- **Pair types** (`match_word_to_meaning`, `categorization`, `cognitive_fluidity`):
+  `options` is every key followed by every value, `correct_answer` is
+  `"key1:value1, key2:value2"`. **The separator is `", "`** — the grader
+  (`_normalize_answer` in `routes/learning.py`) and `fix_matching_options` both
+  split on `,`, so a `|` join grades every answer wrong and corrupts the repair.
+- **`arrange_the_sentence`**: `options` is the shuffled word bank, `correct_answer`
+  the full sentence — the answer is never one of the options. Use
+  `arrange_bank_matches()` / `arrange_tiles()` in `app/models/course.py`, never the
+  generic "answer must be in options" check.
+- **`image_based_choice` has no asset pipeline.** Generators must not emit it; the
+  app renders a grey placeholder and the question becomes unanswerable.
+- Both matching widgets shuffle the right column with a seed from `exercise.id`;
+  content stores the pairs aligned, so an unshuffled column gives the answer away.
 
 ## Python Environment
 
@@ -165,10 +183,53 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
 ## Content ETL / Crawl — what actually feeds courses
 
 - `ai-service/api/services/content_etl/` — license-gated **lexical corpus** ETL
-  (OEWN, CMUdict, CEFR-J, Tatoeba, Wikidata, LibriSpeech, Common Voice). Healthy
-  (114 tests). It produces vocabulary/pronunciation records — **never lessons**.
+  (OEWN, CMUdict, CEFR-J, Tatoeba, Wikidata, LibriSpeech, Common Voice). It
+  produces vocabulary/pronunciation records — **never lessons**.
+  Run it with `python -m api.services.content_etl.cli sync --sources cmudict,oewn
+  --write` (add `--storage-root` outside the container; the default
+  `/data/content-etl` only exists there).
+  - A dataset is **on only when its ref/version *and* its sha256 are pinned** in
+    the env; unpinned datasets are skipped rather than blocking startup. CEFR-J
+    stays unpinned on purpose — its licence is commercial.
+  - Pinned 2026-08-17: `CONTENT_ETL_CMU_REF=74790861…` (cmudict.dict, 126,052
+    records), `CONTENT_ETL_OEWN_VERSION=2025` (185,129 records).
+  - **Its fixtures were more forgiving than the real downloads**, so all three of
+    these shipped broken and each returned "0 approved records": cmudict.dict is
+    lowercase with `#` notes (the fixture was uppercase), the OEWN release is
+    gzipped and namespace-free (the fixture was plain namespaced XML), and OEWN
+    multi-word lemmas need their `source_url` percent-encoded or the URL
+    validator rewrites the value and the record checksum no longer matches.
+    Test adapters against a fixture shaped like the real artifact.
 - `backend-service/app/services/content_agent_apply.py` — the only path that
   builds course → unit → lesson **with exercises**. Lands courses unpublished.
+- **Which LLM actually generates.** The content agent picks `GroqMissionGenerator`
+  when Groq keys exist, else Gemini, else deterministic templates. Both LLM paths
+  fall back to those templates per lesson on *any* error, so a dead key looks
+  like "generation worked" while producing "Listen, then repeat the target
+  phrase clearly." — check the wording before trusting a job.
+  Groq decommissions models without notice: `llama-3.1-8b-instant` (the old
+  ai-service default) and `llama-3.3-70b-versatile` (the old exercise-generator
+  default) both 404 as of 2026-08-17. Live defaults are `openai/gpt-oss-20b`
+  (service-wide) and `openai/gpt-oss-120b` (`CONTENT_AGENT_GROQ_MODEL`,
+  `EXERCISE_GEN_MODEL`). List what is available with
+  `curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $KEY"`.
+- `backend-service/scripts/generate_exercises_ai.py --regenerate` rewrites
+  lessons that are already playable but weak (fewer than 3 distinct ui_types, no
+  production task, or a generic "Match the words with their meanings" prompt). It
+  only overwrites once the replacement passes `sanitize_exercises`, so a failed
+  call leaves the old content in place. Groq's free tier rate-limits hard:
+  `--concurrency=2 --delay=6` completed 93/93, `--concurrency=4 --delay=1` lost
+  93 of 249 to 429s.
+- **ETL corpora cannot seed a course by themselves.** `plan_curriculum` selects
+  words strictly by `declared_cefr`, and OEWN/CMUdict records carry no CEFR
+  label — they are enrichment (definitions, examples, pronunciation), not a seed
+  list. The labelled source in the registry is CEFR-J, whose licence is
+  commercial, and `existing_cefr` is only an alias for it
+  (`content_agent_sources._SOURCE_ALIASES`), so a job with the CLI's default
+  `--sources existing_cefr` fails with "not found in catalog". Today the working
+  seed is `admin_upload`: a word list carrying `declared_cefr` per word.
+  Attaching a full corpus would also exceed `CONTENT_AGENT_MAX_RECORDS` (20,000;
+  OEWN is 185,129).
 - `flutter-app/data/crawler/` (BBC) — **dead code**: unreferenced anywhere, writes
   to a `flutter-app/courses/` directory that does not exist, and its export
   format carries no lessons or exercises. Do not build on it.

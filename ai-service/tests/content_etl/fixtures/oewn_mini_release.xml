@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE LexicalResource SYSTEM "http://globalwordnet.github.io/schemas/WN-LMF-1.3.dtd">
+<!-- Shaped like the published english-wordnet-<version>.xml.gz: WN-LMF is
+     declared as a DOCTYPE only, so no element carries a namespace. -->
+<LexicalResource xmlns:dc="https://globalwordnet.github.io/schemas/dc/">
+  <Lexicon id="oewn" label="Open English Wordnet" language="en"
+           email="english-wordnet@googlegroups.com"
+           license="https://creativecommons.org/licenses/by/4.0"
+           version="2025">
+    <LexicalEntry id="oewn-journey-n">
+      <Lemma writtenForm="journey" partOfSpeech="n"/>
+      <Sense id="oewn-journey-n-sense-1" synset="oewn-00012345-n">
+        <SenseExample>Their journey took three days.</SenseExample>
+      </Sense>
+    </LexicalEntry>
+    <Synset id="oewn-00012345-n" ili="i90001" partOfSpeech="n">
+      <Definition>An act of travelling from one place to another.</Definition>
+    </Synset>
+  </Lexicon>
+</LexicalResource>

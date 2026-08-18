@@ -276,7 +276,7 @@ async def stream_llm_tokens(
     """
 
     groq_admitted = False
-    groq_model_used = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    groq_model_used = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -597,7 +597,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
             groq_key = await get_available_groq_key(estimated_tokens=512)
-            groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+            groq_model = os.getenv("GROQ_MODEL", "openai/gpt-oss-20b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
             # Disable Qwen3 thinking to keep token budget for actual response.

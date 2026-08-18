@@ -17,9 +17,14 @@ OFFICIAL_URL = "https://github.com/cmusphinx/cmudict"
 
 # CMUdict lines starting with ";;;" are comments.
 _COMMENT_RE = re.compile(r"^;;;")
-# Variant entries have a numeric suffix, e.g. "TOMATO(2)"
-_VARIANT_RE = re.compile(r"^([A-Z'.-]+)\((\d+)\)\s+(.+)$")
-_ENTRY_RE = re.compile(r"^([A-Z'.-]+)\s+(.+)$")
+# cmudict.dict annotates entries with a trailing "# place, danish" note.
+_INLINE_NOTE_RE = re.compile(r"\s+#.*$")
+# The headword charset differs per distribution: cmudict-0.7b is uppercase,
+# cmudict.dict (the pinned file) is lowercase and includes digits.
+# Variant entries have a numeric suffix, e.g. "tomato(2)".
+_WORD = r"[A-Za-z0-9'._-]+"
+_VARIANT_RE = re.compile(rf"^({_WORD})\((\d+)\)\s+(.+)$")
+_ENTRY_RE = re.compile(rf"^({_WORD})\s+(.+)$")
 # Stress markers are digits 0–2 on vowel phonemes.
 _STRESS_RE = re.compile(r"[012]$")
 
@@ -40,7 +45,7 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
     seen_words: set[str] = set()
 
     for raw_line in raw_path.read_text(encoding="latin-1").splitlines():
-        line = raw_line.strip()
+        line = _INLINE_NOTE_RE.sub("", raw_line.strip())
         if not line or _COMMENT_RE.match(line):
             continue
 

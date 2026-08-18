@@ -66,7 +66,9 @@ def build_source_sync_spec(
             source_name=source,
             source_version=version,
             download_url=(
-                f"https://en-word.net/static/english-wordnet-{version}.xml.gz"
+                # /static/ 301-redirects to /downloads/ and the downloader
+                # refuses redirects, so point at the final location.
+                f"https://en-word.net/downloads/english-wordnet-{version}.xml.gz"
             ),
             expected_sha256=_required_checksum(
                 "CONTENT_ETL_OEWN_SHA256",

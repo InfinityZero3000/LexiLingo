@@ -25,6 +25,24 @@ def test_oewn_parses_all_entries():
     assert "quick" in words
 
 
+def test_oewn_parses_the_published_gzipped_release(tmp_path):
+    """The pinned artifact is gzipped and namespace-free; parsing it as plain,
+    namespaced XML is why the OEWN sync produced 0 records."""
+    import gzip
+
+    from api.services.content_etl.adapters.oewn import parse
+
+    source = (FIXTURES / "oewn_mini_release.xml").read_bytes()
+    gzipped = tmp_path / "english-wordnet-2025.xml.gz"
+    gzipped.write_bytes(gzip.compress(source))
+
+    records = parse(gzipped)
+
+    assert [r["word"] for r in records] == ["journey"]
+    assert records[0]["definition"] == "An act of travelling from one place to another."
+    assert records[0]["example"] == "Their journey took three days."
+
+
 def test_oewn_pos_mapping():
     from api.services.content_etl.adapters.oewn import parse
 
@@ -98,6 +116,11 @@ def test_cmudict_parses_entries():
     assert "quick" in words
     assert "travel" in words
     assert "tomato" in words
+    # The pinned cmudict.dict is lowercase with inline "#" notes; an
+    # uppercase-only fixture hid that the adapter parsed 0 of its 135k lines.
+    assert "aalborg" in words
+    pronunciation = next(r for r in records if r["word"] == "aalborg")["pronunciation"]
+    assert pronunciation == "AO L B AO R G"
 
 
 def test_cmudict_normalises_arpabet_stress():

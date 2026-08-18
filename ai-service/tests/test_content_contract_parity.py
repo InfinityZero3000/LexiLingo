@@ -7,6 +7,11 @@ from api.models.content_agent import (
     NormalizedSourceRecord,
     PartOfSpeech,
 )
+from api.services.content_agent.generator import (
+    GENERATED_UI_TYPES,
+    PRODUCTION_UI_TYPES,
+    SUPPORTED_UI_TYPES,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -84,3 +89,13 @@ def test_shared_exercise_mapping_uses_only_supported_base_types():
     assert set(contract["base_types"]) == supported
     assert set(contract["ui_type_to_type"].values()) <= supported
     assert len(contract["ui_type_to_type"]) == len(set(contract["ui_type_to_type"]))
+
+
+def test_generator_ui_types_match_the_contract():
+    """The generator hardcodes the list (the contract file is not in its image),
+    so it drifts silently — that is how 'match_word_meaning' reached the prompt."""
+    contract = _contract("exercise-types-v1.json")
+
+    assert SUPPORTED_UI_TYPES == set(contract["ui_type_to_type"])
+    assert GENERATED_UI_TYPES <= SUPPORTED_UI_TYPES
+    assert PRODUCTION_UI_TYPES <= GENERATED_UI_TYPES

@@ -38,8 +38,10 @@ SOURCE_REGISTRY: dict[SourceName, SourceDefinition] = {
         official_url="https://en-word.net/static/english-wordnet-2025.xml.gz",
         url_rules=(
             SourceUrlRule(
+                # /static/ is the published link and 301s to /downloads/, so both
+                # the start and the end of the redirect have to be approved.
                 "en-word.net",
-                re.compile(r"^/static/[A-Za-z0-9._-]+(?:\.xml)?\.gz$"),
+                re.compile(r"^/(?:static|downloads)/[A-Za-z0-9._-]+(?:\.xml)?\.gz$"),
             ),
         ),
         allowed_licenses=(AllowedLicenseId.CC_BY_4_0,),

@@ -452,7 +452,9 @@ const PairsForm = ({
 
   const handlePairsChange = (newPairs: [string, string][]) => {
     const opts = pairsToOptions(newPairs);
-    const correctStr = newPairs.map(([l, r]) => `${l}:${r}`).join("|");
+    // ", " is the pair separator the app and the grader both expect
+    // (learning.py `_normalize_answer`, MatchWordMeaningWidget) — "|" grades every answer wrong.
+    const correctStr = newPairs.map(([l, r]) => `${l}:${r}`).join(", ");
     onChange({ ...value, options: opts, correct_answer: correctStr });
   };
 

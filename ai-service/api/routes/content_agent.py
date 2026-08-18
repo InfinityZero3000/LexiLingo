@@ -27,7 +27,11 @@ from api.models.content_agent import (
     SourceSnapshotDescriptor,
     SourceRecordBatch,
 )
-from api.services.content_agent.generator import LLMMissionGenerator
+from api.core.groq_key_pool import get_configured_key_count
+from api.services.content_agent.generator import (
+    GroqMissionGenerator,
+    LLMMissionGenerator,
+)
 from api.services.content_agent.planner import InsufficientVocabularyError
 from api.services.content_agent.policies import SourcePolicyError
 from api.services.content_agent.service import (
@@ -101,11 +105,19 @@ async def get_content_agent_service() -> ContentAgentService:
         )
     else:
         _store.set_redis_client(redis)
-    generator = (
-        LLMMissionGenerator(api_key=settings.GEMINI_API_KEY)
-        if settings.GEMINI_API_KEY
-        else None
-    )
+    # Groq first: its keys are pooled and rate-limited service-wide, and an
+    # unusable Gemini key degrades a job to the deterministic template without
+    # any signal that the missions were never generated.
+    if get_configured_key_count() > 0:
+        generator = GroqMissionGenerator()
+    elif settings.GEMINI_API_KEY:
+        generator = LLMMissionGenerator(api_key=settings.GEMINI_API_KEY)
+    else:
+        generator = None
+        logger.warning(
+            "No Groq keys and no GEMINI_API_KEY — content-agent jobs will fall "
+            "back to deterministic exercise templates"
+        )
     return ContentAgentService(store=_store, generator=generator)
 
 

@@ -7,11 +7,13 @@ import asyncio
 import hashlib
 import json
 import logging
+import os
 from typing import Protocol
 
 import httpx
 from pydantic import ValidationError
 
+from api.core.groq_key_pool import get_available_groq_key
 from api.models.content_agent import (
     CourseArtifact,
     ExerciseArtifact,
@@ -335,6 +337,37 @@ class DeterministicCourseGenerator:
         return courses
 
 
+# Mirrors contracts/content-agent/exercise-types-v1.json — the contract file is
+# not shipped in this image, so tests/content_agent/test_generator_ui_types.py
+# asserts the two stay identical.
+# image_based_choice is supported by the app but excluded from generation: there
+# is no image pipeline, so a question about a picture is unanswerable.
+SUPPORTED_UI_TYPES: frozenset[str] = frozenset(
+    {
+        "multiple_choice",
+        "true_or_false",
+        "fill_in_the_blank",
+        "arrange_the_sentence",
+        "translation_choice",
+        "dialogue_completion",
+        "collocation_choice",
+        "dictation",
+        "grammar_correction",
+        "image_based_choice",
+        "listen_and_choose",
+        "match_word_to_meaning",
+        "vocabulary_flashcard",
+        "pronunciation_practice",
+        "reading_comprehension",
+        "short_writing_answer",
+        "speaking_repeat",
+        "categorization",
+        "cognitive_fluidity",
+    }
+)
+
+GENERATED_UI_TYPES: frozenset[str] = SUPPORTED_UI_TYPES - {"image_based_choice"}
+
 PRODUCTION_UI_TYPES: frozenset[str] = frozenset(
     {
         "fill_in_the_blank",
@@ -365,6 +398,7 @@ def _mission_prompt(
     )
     situation = planned_lesson.topic.replace("_", " ")
     production_list = ", ".join(sorted(PRODUCTION_UI_TYPES))
+    ui_type_list = ", ".join(sorted(GENERATED_UI_TYPES))
     return f"""
     Design one Task-Based Language Teaching (TBLT) mission lesson for an English learning app.
 
@@ -391,12 +425,8 @@ def _mission_prompt(
     4. "exercises" is a list of exactly {request.exercises_per_lesson} objects, each matching:
        {{
          "type": "multiple_choice" | "true_false" | "fill_blank" | "translate" | "matching" | "reorder",
-         "ui_type": one of the 20 supported UI types (multiple_choice, true_or_false,
-           fill_in_the_blank, arrange_the_sentence, translation_choice, dialogue_completion,
-           collocation_choice, dictation, speaking_repeat, vocabulary_flashcard,
-           grammar_correction, image_based_choice, listen_and_choose, pronunciation_practice,
-           reading_comprehension, short_writing_answer, categorization, match_word_to_meaning,
-           cognitive_fluidity, match_word_meaning),
+         "ui_type": exactly one of these {len(GENERATED_UI_TYPES)} values — any other value is
+           rejected: {ui_type_list},
          "phase": "pre_task" | "task_cycle" | "language_focus",
          "concept_id": "...", // stable slug for the single grammar point or vocabulary word this
            exercise tests, e.g. "grammar:past_simple", "grammar:present_perfect", "vocab:hotel".
@@ -412,6 +442,19 @@ def _mission_prompt(
     6. Exercises must stay connected to the single situation/theme above — do not generate
        unrelated single-sentence grammar drills.
     7. Difficulty must match {level.value} CEFR level.
+    8. Shape rules the app enforces when rendering and grading:
+       - match_word_to_meaning / categorization / cognitive_fluidity: "options" lists every key
+         first and then every value in the same order, and "correct_answer" is
+         "key1:value1, key2:value2" (comma-separated, never any other separator).
+       - arrange_the_sentence: "options" is the words of the sentence in shuffled order (one word
+         per item) and "correct_answer" is the full sentence made of exactly those words.
+       - true_or_false: "options" is exactly ["True", "False"], "correct_answer" is "True" or "False".
+       - fill_in_the_blank / dialogue_completion / dictation: the question contains '{{blank}}' and
+         "correct_answer" is the text that replaces it.
+       - every other type with "options": "correct_answer" must repeat one option verbatim.
+    9. Write each "question" around this mission's own content. Never reuse a generic
+       instruction such as "Match the words with their meanings" — name what is being
+       matched, completed or said.
     """
 
 
@@ -484,7 +527,7 @@ class LLMMissionGenerator:
         request: GenerationRequest,
     ) -> LessonArtifact:
         try:
-            raw = await self._call_gemini(client, planned_lesson, level, request)
+            raw = await self._call_model(client, planned_lesson, level, request)
             return self._to_lesson_artifact(raw, planned_lesson, level, request)
         except (httpx.HTTPError, ValueError, ValidationError, KeyError) as exc:
             logger.warning(
@@ -495,7 +538,7 @@ class LLMMissionGenerator:
             )
             return _deterministic_lesson(planned_lesson, level, request)
 
-    async def _call_gemini(
+    async def _call_model(
         self,
         client: httpx.AsyncClient,
         planned_lesson: PlannedLesson,
@@ -554,6 +597,13 @@ class LLMMissionGenerator:
             planned_lesson.order_index,
             ",".join(record.record_id for record in planned_lesson.vocabulary),
         )
+        for raw_exercise in raw["exercises"]:
+            # An unknown ui_type renders through the generic fallback widget in
+            # the app, silently downgrading the exercise. Fail the lesson instead
+            # — the caller falls back to the deterministic template.
+            if raw_exercise.get("ui_type") not in SUPPORTED_UI_TYPES:
+                raise ValueError(f"unsupported ui_type: {raw_exercise.get('ui_type')!r}")
+
         exercises = [
             ExerciseArtifact(
                 id=_stable_id(*lesson_key, index),
@@ -580,3 +630,86 @@ class LLMMissionGenerator:
             estimated_minutes=max(10, request.exercises_per_lesson * 2),
             xp_reward=request.exercises_per_lesson * 2,
         )
+
+
+_GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+
+class GroqMissionGenerator(LLMMissionGenerator):
+    """The same TBLT prompt, served by the Groq key pool.
+
+    Gemini is the original backend, but a job silently degrades to the
+    deterministic template when its key is rejected — which is what an expired
+    GEMINI_API_KEY did. Groq keys are already pooled and rate-limited for the
+    rest of the service, so the content agent can share them.
+    """
+
+    def __init__(
+        self,
+        model: str | None = None,
+        timeout_seconds: float = 60.0,
+        max_attempts: int = 3,
+    ) -> None:
+        super().__init__(
+            api_key="groq-key-pool",
+            timeout_seconds=timeout_seconds,
+            max_attempts=max_attempts,
+        )
+        self._model = model or os.getenv(
+            "CONTENT_AGENT_GROQ_MODEL", os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+        )
+
+    async def _call_model(
+        self,
+        client: httpx.AsyncClient,
+        planned_lesson: PlannedLesson,
+        level: object,
+        request: GenerationRequest,
+    ) -> dict:
+        payload = {
+            "model": self._model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": _mission_prompt(planned_lesson, level, request),
+                }
+            ],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.7,
+        }
+        last_error: Exception | None = None
+        for attempt in range(self._max_attempts):
+            api_key = await get_available_groq_key(estimated_tokens=2000)
+            if not api_key:
+                last_error = RuntimeError("No Groq key available (all rate limited)")
+                if attempt < self._max_attempts - 1:
+                    await self._backoff(attempt)
+                continue
+            try:
+                response = await client.post(
+                    _GROQ_URL,
+                    json=payload,
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    timeout=self._timeout_seconds,
+                )
+            except httpx.HTTPError as exc:
+                last_error = exc
+                if attempt < self._max_attempts - 1:
+                    await self._backoff(attempt)
+                continue
+
+            if response.status_code == 200:
+                content = response.json()["choices"][0]["message"]["content"]
+                return json.loads(content)
+            if response.status_code == 429 or response.status_code >= 500:
+                last_error = httpx.HTTPStatusError(
+                    f"Groq returned {response.status_code}",
+                    request=response.request,
+                    response=response,
+                )
+                if attempt < self._max_attempts - 1:
+                    await self._backoff(attempt)
+                continue
+            response.raise_for_status()
+
+        raise last_error or RuntimeError("Groq generation failed with no response")

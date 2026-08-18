@@ -115,7 +115,8 @@ class Settings(BaseSettings):
     CONTENT_ETL_MAX_DOWNLOAD_BYTES: int = Field(default=1073741824, gt=0)
     CONTENT_ETL_MAX_QUARANTINE_RATIO: float = Field(default=0.02, ge=0.0, le=1.0)
     CONTENT_ETL_USER_AGENT: str = Field(default="LexiLingo-ETL/1.0", min_length=1)
-    CONTENT_ETL_OEWN_VERSION: str = Field(default="2025")
+    # Empty means "dataset not configured" — pin it together with its checksum.
+    CONTENT_ETL_OEWN_VERSION: str = Field(default="")
     CONTENT_ETL_OEWN_SHA256: str = Field(default="")
     CONTENT_ETL_CMU_REF: str = Field(default="")
     CONTENT_ETL_CMU_SHA256: str = Field(default="")
@@ -233,25 +234,60 @@ class Settings(BaseSettings):
             if not value or value.strip().lower() in moving_refs:
                 raise ValueError(f"{name} must use a pinned immutable version")
 
-        require_non_moving(
-            "CONTENT_ETL_OEWN_VERSION",
-            self.CONTENT_ETL_OEWN_VERSION,
-        )
-        for name, value in (
-            ("CONTENT_ETL_CMU_REF", self.CONTENT_ETL_CMU_REF),
-            ("CONTENT_ETL_CEFR_J_REF", self.CONTENT_ETL_CEFR_J_REF),
-        ):
-            require_non_moving(name, value)
-            if re.fullmatch(r"[a-fA-F0-9]{40}", value) is None:
-                raise ValueError(f"{name} must use a pinned 40-character commit SHA")
+        def validate_dataset(
+            ref_name: str,
+            ref_value: str,
+            sha_name: str,
+            sha_value: str,
+            *,
+            commit_sha: bool,
+        ) -> bool:
+            """A dataset is either fully pinned or not configured at all.
 
-        for name, value in (
-            ("CONTENT_ETL_OEWN_SHA256", self.CONTENT_ETL_OEWN_SHA256),
-            ("CONTENT_ETL_CMU_SHA256", self.CONTENT_ETL_CMU_SHA256),
-            ("CONTENT_ETL_CEFR_J_SHA256", self.CONTENT_ETL_CEFR_J_SHA256),
-        ):
-            if re.fullmatch(r"[a-f0-9]{64}", value) is None:
-                raise ValueError(f"{name} must use a lowercase SHA-256 checksum")
+            Requiring every dataset would make ETL unusable for an operator who
+            has not licensed one of them (CEFR-J is commercial): a half-pinned
+            dataset still fails, and an unpinned one is refused at sync time by
+            `sources.build_source_sync_spec`, so nothing unverified is ingested.
+            """
+            if not ref_value.strip() and not sha_value.strip():
+                return False
+            require_non_moving(ref_name, ref_value)
+            if commit_sha and re.fullmatch(r"[a-fA-F0-9]{40}", ref_value) is None:
+                raise ValueError(
+                    f"{ref_name} must use a pinned 40-character commit SHA"
+                )
+            if re.fullmatch(r"[a-f0-9]{64}", sha_value) is None:
+                raise ValueError(f"{sha_name} must use a lowercase SHA-256 checksum")
+            return True
+
+        configured = [
+            validate_dataset(
+                "CONTENT_ETL_OEWN_VERSION",
+                self.CONTENT_ETL_OEWN_VERSION,
+                "CONTENT_ETL_OEWN_SHA256",
+                self.CONTENT_ETL_OEWN_SHA256,
+                commit_sha=False,
+            ),
+            validate_dataset(
+                "CONTENT_ETL_CMU_REF",
+                self.CONTENT_ETL_CMU_REF,
+                "CONTENT_ETL_CMU_SHA256",
+                self.CONTENT_ETL_CMU_SHA256,
+                commit_sha=True,
+            ),
+            validate_dataset(
+                "CONTENT_ETL_CEFR_J_REF",
+                self.CONTENT_ETL_CEFR_J_REF,
+                "CONTENT_ETL_CEFR_J_SHA256",
+                self.CONTENT_ETL_CEFR_J_SHA256,
+                commit_sha=True,
+            ),
+        ]
+        if not any(configured) and not self.CONTENT_ETL_WIKIDATA_SNAPSHOT:
+            raise ValueError(
+                "CONTENT_ETL_ENABLED requires at least one pinned dataset "
+                "(OEWN, CMUdict, CEFR-J or a Wikidata snapshot)"
+            )
 
         if self.CONTENT_ETL_WIKIDATA_SNAPSHOT:
             require_non_moving(
