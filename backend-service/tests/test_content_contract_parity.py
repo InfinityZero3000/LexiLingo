@@ -75,3 +75,14 @@ def test_shared_exercise_mapping_contains_every_supported_base_type():
     assert set(exercise_contract["base_types"]) == set(
         artifact_contract["$defs"]["exercise"]["properties"]["type"]["enum"]
     )
+
+
+def test_backend_ui_type_mapping_matches_the_contract():
+    """The mapping is duplicated in app/models/course.py because the contract
+    file is not shipped in the backend image."""
+    from app.models.course import UI_TYPE_TO_BASE_TYPE
+
+    contract = _contract("exercise-types-v1.json")
+
+    assert UI_TYPE_TO_BASE_TYPE == contract["ui_type_to_type"]
+    assert set(UI_TYPE_TO_BASE_TYPE.values()) <= set(contract["base_types"])

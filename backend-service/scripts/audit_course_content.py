@@ -33,6 +33,7 @@ from app.models.course import (
     Lesson,
     arrange_bank_matches,
     arrange_tiles,
+    base_type_for,
     option_text,
 )
 
@@ -59,11 +60,13 @@ _option_text = option_text
 def _repair_exercise(exercise: dict) -> str | None:
     """Make one exercise playable, or return None if it already is.
 
-    Returns a short reason for the log so a run says what it touched.
+    Every check runs, so a single pass fixes an exercise that is wrong in more
+    than one way; the joined reasons go to the log.
     """
     ui_type = exercise.get("ui_type")
     options = exercise.get("options") or []
     correct_answer = str(exercise.get("correct_answer", ""))
+    reasons: list[str] = []
 
     if ui_type == "arrange_the_sentence" and not arrange_bank_matches(
         options, correct_answer
@@ -74,23 +77,29 @@ def _repair_exercise(exercise: dict) -> str | None:
         if correct_answer in [_option_text(o) for o in options]:
             # The model wrote candidate sentences, not a word bank — that is an
             # MCQ, and the arrange widget cannot grade it.
-            exercise["ui_type"] = "multiple_choice"
-            exercise["type"] = "multiple_choice"
-            return "arrange -> multiple_choice"
-        tiles = arrange_tiles(correct_answer)
-        if not tiles:
-            # Nothing to rebuild from; a human has to write this one.
-            return None
-        exercise["options"] = tiles
-        return "arrange word bank rebuilt"
+            ui_type = exercise["ui_type"] = "multiple_choice"
+            reasons.append("arrange -> multiple_choice")
+        else:
+            tiles = arrange_tiles(correct_answer)
+            if tiles:
+                exercise["options"] = tiles
+                reasons.append("arrange word bank rebuilt")
+            # else: nothing to rebuild from; a human has to write this one.
 
     if ui_type == "image_based_choice" and not exercise.get("image_url"):
         # No image pipeline exists, so the picture slot renders as a grey
         # placeholder. The options are text anyway.
-        exercise["ui_type"] = "multiple_choice"
-        return "image_based_choice -> multiple_choice (no image_url)"
+        ui_type = exercise["ui_type"] = "multiple_choice"
+        reasons.append("image_based_choice -> multiple_choice (no image_url)")
 
-    return None
+    base_type = base_type_for(ui_type)
+    if base_type and exercise.get("type") != base_type:
+        # A generator that copied ui_type into type ("short_writing_answer")
+        # makes the learner endpoint 500 on the whole lesson.
+        exercise["type"] = base_type
+        reasons.append(f"type -> {base_type}")
+
+    return ", ".join(reasons) or None
 
 
 async def fix_unplayable_exercises(db) -> int:

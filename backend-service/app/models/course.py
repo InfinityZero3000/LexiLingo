@@ -18,6 +18,42 @@ def count_exercises(content) -> int:
     return len(exercises) if isinstance(exercises, list) else 0
 
 
+# Mirrors contracts/content-agent/exercise-types-v1.json. The contract file is
+# not in the backend image, and tests/test_content_contract_parity.py asserts
+# this stays identical to it.
+UI_TYPE_TO_BASE_TYPE: dict[str, str] = {
+    "multiple_choice": "multiple_choice",
+    "true_or_false": "true_false",
+    "fill_in_the_blank": "fill_blank",
+    "arrange_the_sentence": "reorder",
+    "translation_choice": "translate",
+    "dialogue_completion": "fill_blank",
+    "collocation_choice": "multiple_choice",
+    "dictation": "fill_blank",
+    "grammar_correction": "fill_blank",
+    "image_based_choice": "multiple_choice",
+    "listen_and_choose": "multiple_choice",
+    "match_word_to_meaning": "matching",
+    "vocabulary_flashcard": "multiple_choice",
+    "pronunciation_practice": "translate",
+    "reading_comprehension": "multiple_choice",
+    "short_writing_answer": "fill_blank",
+    "speaking_repeat": "translate",
+    "categorization": "matching",
+    "cognitive_fluidity": "matching",
+}
+
+
+def base_type_for(ui_type) -> str | None:
+    """The `type` an exercise must carry for its `ui_type`.
+
+    A generator that copies ui_type into type ("short_writing_answer") produces
+    content the learner endpoint rejects with a 500, so type is derived, never
+    trusted.
+    """
+    return UI_TYPE_TO_BASE_TYPE.get(str(ui_type or ""))
+
+
 def option_text(option) -> str:
     return option.get("text", "") if isinstance(option, dict) else str(option)
 

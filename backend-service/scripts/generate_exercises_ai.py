@@ -27,7 +27,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.database import AsyncSessionLocal
-from app.models.course import arrange_bank_matches
+from app.models.course import arrange_bank_matches, base_type_for
 from sqlalchemy import text
 
 # Load env variables
@@ -96,6 +96,14 @@ def sanitize_exercises(exercises: list) -> list:
 
         ui_type = exercise["ui_type"]
         options = exercise.get("options") or []
+
+        # The model copies ui_type into type often enough that 62 exercises
+        # reached production with type="short_writing_answer", which the learner
+        # endpoint rejects with a 500. Derive it; never trust it.
+        base_type = base_type_for(ui_type)
+        if base_type is None:
+            return []
+        exercise["type"] = base_type
 
         if ui_type == "true_or_false":
             # The renderer needs both choices; the model often omits them.

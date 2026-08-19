@@ -185,3 +185,15 @@ def test_payload_unwrapping_covers_what_the_model_actually_returns():
     assert exercises_from_payload({"exercises": "nope"}) == []
     assert exercises_from_payload({}) == []
     assert exercises_from_payload("nope") == []
+
+
+def test_type_is_derived_from_ui_type_not_taken_from_the_model():
+    cleaned = sanitize_exercises([
+        _mc(ui_type="short_writing_answer", type="short_writing_answer",
+            options=[], correct_answer="I visited my grandmother.")
+    ])
+    assert cleaned[0]["type"] == "fill_blank"
+
+
+def test_unknown_ui_type_is_rejected():
+    assert sanitize_exercises([_mc(ui_type="made_up_type")]) == []
