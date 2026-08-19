@@ -208,6 +208,9 @@ async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str
        and 'correct_answer' MUST be either "True" or "False".
     7. For vocabulary_flashcard, 'options' MUST contain at least 2 real choices and
        'correct_answer' MUST be one of them — never a single "Got it!" button.
+    7b. For short_writing_answer, 'correct_answer' is ONE model sentence in English
+       only. Never pack a translation next to it ("English | Tiếng Việt"): the
+       grader compares the learner's writing against this string verbatim.
     8. For arrange_the_sentence, 'options' MUST be the words of the sentence in
        shuffled order (one word per item, no punctuation) and 'correct_answer'
        MUST be the full sentence built from exactly those words — never a list of
