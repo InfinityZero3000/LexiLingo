@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
+import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 
 enum TodayPlanDestination {
@@ -208,19 +209,26 @@ TodayPlanTask _buildSkillTask(List<SkillScore> weakestSkills) {
   );
 }
 
+/// Reuses Practice Lab's mapping so the two surfaces cannot disagree about
+/// where a skill is practised — they already had, with writing pointing at
+/// games here and at Lexi there.
 TodayPlanDestination _destinationForSkill(SkillType skill) {
-  switch (skill) {
-    case SkillType.vocabulary:
+  switch (practiceDestinationForSkill(skill)) {
+    case PracticeLabDestination.vocabularyReview:
       return TodayPlanDestination.vocabularyReview;
-    case SkillType.grammar:
-    case SkillType.writing:
+    case PracticeLabDestination.games:
       return TodayPlanDestination.games;
-    case SkillType.reading:
+    case PracticeLabDestination.news:
       return TodayPlanDestination.news;
-    case SkillType.listening:
+    case PracticeLabDestination.podcast:
       return TodayPlanDestination.podcast;
-    case SkillType.speaking:
+    case PracticeLabDestination.voicePractice:
       return TodayPlanDestination.voice;
+    case PracticeLabDestination.lexi:
+      return TodayPlanDestination.lexi;
+    case PracticeLabDestination.mistakeNotebook:
+      // Not reachable from a skill, and Today's Plan has no slot for it.
+      return TodayPlanDestination.games;
   }
 }
 

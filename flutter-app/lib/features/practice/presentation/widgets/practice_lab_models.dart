@@ -53,6 +53,28 @@ class PracticeLabItem {
   }
 }
 
+/// Where a learner goes to work on a given skill.
+///
+/// The single source of truth for that question. Today's Plan used to keep its
+/// own copy and the two had already drifted — writing sent you to games there
+/// and to Lexi here — so both now read this.
+PracticeLabDestination practiceDestinationForSkill(SkillType skill) {
+  switch (skill) {
+    case SkillType.vocabulary:
+      return PracticeLabDestination.vocabularyReview;
+    case SkillType.grammar:
+      return PracticeLabDestination.games;
+    case SkillType.reading:
+      return PracticeLabDestination.news;
+    case SkillType.listening:
+      return PracticeLabDestination.podcast;
+    case SkillType.speaking:
+      return PracticeLabDestination.voicePractice;
+    case SkillType.writing:
+      return PracticeLabDestination.lexi;
+  }
+}
+
 List<PracticeLabItem> buildPracticeLabItems({
   List<SkillScore> weakestSkills = const [],
 }) {
@@ -68,13 +90,32 @@ List<PracticeLabItem> buildPracticeLabItems({
 List<PracticeLabItem> recommendedPracticeItems({
   required List<PracticeLabItem> items,
   int limit = 2,
+  bool hasPremium = false,
 }) {
-  final recommended = items.where((item) => item.recommended).toList();
-  if (recommended.isNotEmpty) {
-    return recommended.take(limit).toList(growable: false);
+  bool usable(PracticeLabItem item) => hasPremium || !item.premiumOnly;
+
+  // One card per skill. Two cards share a skill (reading is both the news
+  // card and the mistake notebook), so an unfiltered take(2) could hand back
+  // two ways to do the same thing and hide the learner's second weakness.
+  final seenSkills = <SkillType>{};
+  final picked = <PracticeLabItem>[];
+
+  void add(Iterable<PracticeLabItem> candidates) {
+    for (final item in candidates) {
+      if (picked.length >= limit) return;
+      if (!usable(item)) continue;
+      if (!seenSkills.add(item.skill)) continue;
+      picked.add(item);
+    }
   }
 
-  return items.take(limit).toList(growable: false);
+  // Recommending a locked card is worse than recommending nothing: writing is
+  // premium and is almost always among the weakest skills, so the very first
+  // suggestion a free learner saw was a padlock.
+  add(items.where((item) => item.recommended));
+  add(items);
+
+  return List.unmodifiable(picked);
 }
 
 const List<PracticeLabItem> _basePracticeLabItems = [

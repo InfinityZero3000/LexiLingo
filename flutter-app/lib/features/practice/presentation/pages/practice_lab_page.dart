@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/premium_gate.dart';
+import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_navigation.dart';
@@ -15,12 +16,29 @@ class PracticeLabPage extends StatefulWidget {
 }
 
 class _PracticeLabPageState extends State<PracticeLabPage> {
+  // Drives which cards may be recommended. Assume no entitlement until the
+  // check answers, so a free learner is never shown a locked card as their
+  // top suggestion while it resolves.
+  bool _hasPremium = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProficiencyProvider>().loadProfile();
     });
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    try {
+      final isPremium = await PurchasesService.instance.isPremium;
+      if (!mounted || isPremium == _hasPremium) return;
+      setState(() => _hasPremium = isPremium);
+    } catch (_) {
+      // Entitlement unknown — leave it locked rather than promoting a card
+      // the learner may not be able to open.
+    }
   }
 
   @override
@@ -38,7 +56,10 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
             final items = buildPracticeLabItems(
               weakestSkills: proficiency.weakestSkills,
             );
-            final recommended = recommendedPracticeItems(items: items);
+            final recommended = recommendedPracticeItems(
+              items: items,
+              hasPremium: _hasPremium,
+            );
             final hasRecommendations = items.any((item) => item.recommended);
 
             return RefreshIndicator(

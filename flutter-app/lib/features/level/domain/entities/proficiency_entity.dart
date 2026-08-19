@@ -76,6 +76,15 @@ class SkillScore extends Equatable {
   bool get isImproving => trend == 'improving';
   bool get isDeclining => trend == 'declining';
 
+  /// Whether this score rests on any actual evidence.
+  ///
+  /// The backend returns all six skills, filling unpractised ones with zeros,
+  /// so a score of 0 means either "measured and poor" or "never measured".
+  /// Only the exercise count can tell those apart, and confusing them is what
+  /// made "your weakest skill" a list of whatever the API happened to return
+  /// first.
+  bool get isMeasured => exercisesCompleted > 0;
+
   @override
   List<Object?> get props => [
     skill,
@@ -247,18 +256,35 @@ class ProficiencyProfile extends Equatable {
     );
   }
 
-  /// Get the weakest skills that need improvement
+  /// Skills the learner is genuinely weakest at, lowest first.
+  ///
+  /// Only skills with evidence behind them are eligible. Sorting all six by
+  /// score used to return whichever zeros came first out of the API when a
+  /// learner had barely practised — presenting insertion order as a diagnosis.
+  /// A skill nobody has measured is not weak, it is unknown; see
+  /// [unmeasuredSkills].
   List<SkillScore> get weakestSkills {
-    final sortedSkills = skills.values.toList()
-      ..sort((a, b) => a.score.compareTo(b.score));
-    return sortedSkills.take(2).toList();
+    final measured = skills.values.where((s) => s.isMeasured).toList()
+      ..sort((a, b) {
+        final byScore = a.score.compareTo(b.score);
+        // Same score: trust the better-measured one as the truer reading.
+        return byScore != 0 ? byScore : b.confidence.compareTo(a.confidence);
+      });
+    return measured.take(2).toList();
   }
 
-  /// Get the strongest skills
+  /// Skills with no evidence yet — the honest answer to "what should I do
+  /// next?" when nothing has been measured, and what a recommendation should
+  /// offer instead of inventing a weakness.
+  List<SkillScore> get unmeasuredSkills =>
+      skills.values.where((s) => !s.isMeasured).toList();
+
+  /// Strongest skills, highest first — measured ones only, for the same
+  /// reason as [weakestSkills].
   List<SkillScore> get strongestSkills {
-    final sortedSkills = skills.values.toList()
+    final measured = skills.values.where((s) => s.isMeasured).toList()
       ..sort((a, b) => b.score.compareTo(a.score));
-    return sortedSkills.take(2).toList();
+    return measured.take(2).toList();
   }
 
   /// Check if user is close to leveling up
