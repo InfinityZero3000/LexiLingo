@@ -14,6 +14,7 @@ import httpx
 from pydantic import ValidationError
 
 from api.core.groq_key_pool import get_available_groq_key
+from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
 from api.models.content_agent import (
     CourseArtifact,
     ExerciseArtifact,
@@ -663,11 +664,9 @@ class GroqMissionGenerator(LLMMissionGenerator):
             timeout_seconds=timeout_seconds,
             max_attempts=max_attempts,
         )
-        # Deliberately not falling back to GROQ_MODEL: the short service calls
-        # run that one with reasoning switched off, and generating a whole
-        # lesson without reasoning is a silent quality drop. Here the token
-        # budget is uncapped and response_format pins the JSON, so reasoning
-        # stays on.
+        # Deliberately not falling back to GROQ_MODEL: that one names whatever
+        # the short service calls use, and a whole lesson deserves the bigger
+        # model when the two differ.
         self._model = (
             model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "qwen/qwen3.6-27b"
         )
@@ -689,6 +688,11 @@ class GroqMissionGenerator(LLMMissionGenerator):
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.7,
+            # This is the fifth caller that posts to Groq with a raw client, so
+            # it has to spread the override in by hand. Without it qwen writes
+            # <think> prose, Groq's JSON validator answers 400, and every job
+            # degrades to the deterministic template with nothing but a warning.
+            **_qwen_reasoning_overrides(self._model),
         }
         last_error: Exception | None = None
         for attempt in range(self._max_attempts):

@@ -260,3 +260,40 @@ def test_groq_mission_generator_does_not_borrow_the_short_call_model(monkeypatch
 
     monkeypatch.setenv("CONTENT_AGENT_GROQ_MODEL", "openai/gpt-oss-20b")
     assert GroqMissionGenerator()._model == "openai/gpt-oss-20b"
+
+
+@pytest.mark.asyncio
+async def test_groq_mission_generator_sends_the_qwen_reasoning_override(monkeypatch):
+    """Without it qwen writes <think> prose, Groq answers 400 json_validate_failed
+    and every content-agent job silently degrades to the deterministic template."""
+    from api.services.content_agent import generator as generator_module
+
+    seen: dict = {}
+
+    async def fake_key(estimated_tokens: int = 600):
+        return "test-key"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.update(json.loads(request.content))
+        return httpx.Response(200, json={"choices": [{"message": {"content": json.dumps(
+            {"title": "t", "outcome": "You can book.", "exercises": [{
+                "type": "fill_blank", "ui_type": "dictation", "phase": "task_cycle",
+                "question": "Type {blank}.", "correct_answer": "room"}]})}}]})
+
+    monkeypatch.setattr(generator_module, "get_available_groq_key", fake_key)
+    request = GenerationRequest(levels=["A1"], units_per_course=1, lessons_per_unit=1)
+    plan = plan_curriculum(_records(), request)
+    gen = generator_module.GroqMissionGenerator(model="qwen/qwen3.6-27b")
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+        await gen._call_model(client, plan.courses[0].units[0].lessons[0],
+                              plan.courses[0].level, request)
+
+    assert seen["reasoning_effort"] == "none"
+    assert seen["response_format"] == {"type": "json_object"}
+
+
+def test_non_qwen_generation_model_sends_no_override():
+    from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
+
+    assert _qwen_reasoning_overrides("openai/gpt-oss-120b") == {}
