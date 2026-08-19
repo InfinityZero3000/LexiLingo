@@ -34,8 +34,8 @@ from sqlalchemy import text
 load_dotenv()
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-# llama-3.3-70b-versatile was decommissioned on Groq (404 model_not_found).
-GROQ_MODEL = os.getenv("EXERCISE_GEN_MODEL", "openai/gpt-oss-120b")
+# llama-3.3-70b-versatile and openai/gpt-oss-120b are gone/quota-bound on Groq.
+GROQ_MODEL = os.getenv("EXERCISE_GEN_MODEL", "qwen/qwen3.6-27b")
 
 # Groq quota is per key AND per model, so rotating the configured pool
 # multiplies the daily token budget instead of exhausting one account.
@@ -219,6 +219,10 @@ async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_object"},
         "temperature": 0.7,
+        # Five exercises are ~800 tokens of JSON, but a reasoning model spends
+        # its budget thinking first and returns `json_validate_failed` with an
+        # empty `failed_generation` when it runs out. Leave room for both.
+        "max_tokens": 4000,
     }
     # Retry configuration for robustness. Each attempt takes the next key in
     # the rotation, so a key that is out of daily quota costs one attempt
