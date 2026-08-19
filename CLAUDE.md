@@ -110,6 +110,14 @@ wherever the format is known.
   allowlist is duplicated in `app/schemas/learner_state.py` and
   `ai-service/api/services/learner_observation_spool.py`: **change both**, an
   unknown key rejects the whole batch.
+- **An answer we cannot grade must not become evidence.** `short_writing_answer`
+  is the learner's own words, so string equality marked correct answers wrong —
+  and a wrong answer here does not just lower a score: it feeds
+  `_emit_concept_observation`, moving BKT mastery and pulling the FSRS review
+  date in, and files a `learner_error`. Free-form writing is now accepted when
+  substantive, and its `concept_id` is withheld so nothing enters the schedule
+  on an outcome nothing verified. `dictation`, `translation_choice` and the
+  choice types keep exact matching — those have one right answer.
 - Passive consumption (podcast, YouTube, plain reading) deliberately records
   **nothing** — finishing an episode is not evidence of comprehension. Wire
   those up when they gain dictation or a quiz.
