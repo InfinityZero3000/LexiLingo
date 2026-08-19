@@ -356,6 +356,17 @@ Rules that exist because they were violated:
 - Mocks must not be more permissive than the real callee: patch with
   `autospec=True`. A bare `AsyncMock` accepted a stale `httpx_module=` kwarg
   for months while `/api/v1/ai/translate` returned empty for every word.
+- The same rule caught the ETL adapters from the other side: every fixture was
+  hand-written to match what the adapter expected, so all three parsed 0 records
+  from the real download while the suite stayed green. Shape a fixture like the
+  artifact, not like the parser.
+- **Two pytest runs cannot share one test database.** `conftest` does
+  `DROP SCHEMA public CASCADE` + `create_all` per run, so a concurrent run tears
+  the schema out from under the other; on 2026-08-17 that produced 21 failures
+  and errors that all passed when re-run alone. Give each run its own database:
+  `TEST_DATABASE_URL=postgresql+asyncpg://…/lexilingo_<name>_test pytest …`
+  (the name must end in `_test` — conftest refuses otherwise and creates it if
+  missing).
 
 ## MCP Tools (use BEFORE grep/read)
 
