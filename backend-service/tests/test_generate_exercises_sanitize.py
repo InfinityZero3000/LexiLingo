@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
 from generate_exercises_ai import (
+    exercises_from_payload,
     lesson_is_varied,
     needs_regeneration,
     sanitize_exercises,
@@ -174,3 +175,13 @@ def test_needs_regeneration_reports_weak_content():
     assert needs_regeneration({"exercises": []}) == "empty"
     assert needs_regeneration(weak) is not None
     assert needs_regeneration(strong) is None
+
+
+def test_payload_unwrapping_covers_what_the_model_actually_returns():
+    # A bare array cost a full retry ("'list' object has no attribute 'get'")
+    # during the production run.
+    assert exercises_from_payload({"exercises": [_mc()]}) == [_mc()]
+    assert exercises_from_payload([_mc()]) == [_mc()]
+    assert exercises_from_payload({"exercises": "nope"}) == []
+    assert exercises_from_payload({}) == []
+    assert exercises_from_payload("nope") == []

@@ -127,6 +127,17 @@ def sanitize_exercises(exercises: list) -> list:
     return cleaned
 
 
+def exercises_from_payload(data) -> list:
+    """The model answers with {"exercises": [...]} — or, now and then, with the
+    bare array. Unwrapping both saves a retry per stray response."""
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        found = data.get("exercises", [])
+        return found if isinstance(found, list) else []
+    return []
+
+
 def lesson_is_varied(exercises: list) -> bool:
     """Lesson-level bar: five recognition questions in a row is not a lesson."""
     ui_types = {exercise["ui_type"] for exercise in exercises}
@@ -223,7 +234,7 @@ async def generate_lesson_exercises(client: httpx.AsyncClient, course_title: str
                 text_response = result_json["choices"][0]["message"]["content"]
                 # Parse JSON
                 data = json.loads(text_response)
-                exercises = sanitize_exercises(data.get("exercises", []))
+                exercises = sanitize_exercises(exercises_from_payload(data))
                 if exercises and lesson_is_varied(exercises):
                     return exercises
                 reason = "Invalid payload" if not exercises else "Too uniform"
