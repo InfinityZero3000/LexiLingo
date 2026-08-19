@@ -704,13 +704,20 @@ async def _validate_answer(
                 correct_answer = str(ex.get('correct_answer', ''))
                 explanation = ex.get('explanation', 'Check the correct answer and try again.')
 
+                ui_type = ex.get("ui_type")
                 is_correct = _answers_match(
                     user_answer,
                     correct_answer,
                     question_type,
-                    ex.get("ui_type"),
+                    ui_type,
                 )
-                return is_correct, correct_answer, explanation, ex.get("concept_id")
+                # A free-form answer we merely accepted is not evidence about
+                # the concept: we know the learner wrote something, not whether
+                # they were right. Withholding concept_id keeps that guess out
+                # of the BKT/FSRS schedule, which would otherwise move mastery
+                # on an outcome nothing actually verified.
+                concept_id = None if _is_free_form_writing(ui_type) else ex.get("concept_id")
+                return is_correct, correct_answer, explanation, concept_id
 
     # Fallback: look up in the dynamic demo exercise set for this lesson
     if lesson and not settings.is_production:
@@ -819,6 +826,33 @@ def _normalize_answer(answer: any, question_type: str) -> str:
     return ans_str
 
 
+# Exercises whose answer is the learner's own words. A model answer exists, but
+# it is one acceptable phrasing out of many — "Cartels see soccer as a way to
+# gain power." is a correct response to a prompt whose stored answer reads "The
+# cartels want to use soccer to gain power", and no string comparison will ever
+# agree. Dictation and translation are deliberately absent: those do have one
+# right answer, so matching them exactly is correct.
+_FREE_FORM_WRITING_UI_TYPES = {"short_writing_answer"}
+
+# Shortest response worth treating as an attempt rather than a stray keypress.
+_MIN_FREE_FORM_ANSWER_CHARS = 3
+
+
+def _is_free_form_writing(ui_type: Optional[str]) -> bool:
+    return str(ui_type or "").lower() in _FREE_FORM_WRITING_UI_TYPES
+
+
+def _free_form_answer_is_substantive(user_answer: any) -> bool:
+    """Whether the learner actually wrote something.
+
+    This is all we can honestly assess for a free-form answer without a grader
+    that understands meaning. It deliberately does not claim the answer is
+    *right* — see _validate_answer, which withholds the concept evidence for
+    these so a good answer we cannot grade never counts as a mistake.
+    """
+    return len(_normalize_answer(user_answer, "translate")) >= _MIN_FREE_FORM_ANSWER_CHARS
+
+
 def _answers_match(
     user_answer: any,
     correct_answer: any,
@@ -830,6 +864,12 @@ def _answers_match(
         "pronunciation_practice",
     }:
         return _speaking_answers_match(user_answer, correct_answer)
+
+    if _is_free_form_writing(ui_type):
+        # Marking these wrong would punish the learner for the grader's limits:
+        # every non-verbatim answer scored 0, dragging down the lesson score,
+        # the skill it credits and the spaced-repetition schedule at once.
+        return _free_form_answer_is_substantive(user_answer)
 
     return _normalize_answer(user_answer, question_type) == _normalize_answer(
         correct_answer,
