@@ -12,6 +12,7 @@ import httpx
 
 from api.services.notification_agent.state import NotificationAgentState, NotificationVariant
 
+from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
 logger = logging.getLogger(__name__)
 
 _GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -51,7 +52,7 @@ async def generate_variants_node(state: NotificationAgentState) -> dict:
             "retries": state.get("retries", 0),
         }
 
-    model = os.getenv("GROQ_MODEL", "groq/compound-mini")
+    model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
     audience = state["audience_summary"]
     orig_title = state["original_title"]
     orig_body = state["original_body"]
@@ -82,6 +83,7 @@ async def generate_variants_node(state: NotificationAgentState) -> dict:
                     "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 600,
                     "temperature": 0.7,
+                    **_qwen_reasoning_overrides(model),
                 },
             )
         if resp.status_code != 200:

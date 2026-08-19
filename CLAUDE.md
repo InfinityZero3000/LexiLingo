@@ -45,38 +45,6 @@ Two engines model the learner, and **every graded activity must reach both**:
 | CEFR skill scores | `UserSkillScore` | `record_exercise_results_for_user` (`routes/proficiency.py`) |
 | Delta-rule + FSRS schedule | `LearnerConceptState` | `record_concept_observation` (`services/learner_state.py`) |
 
-- **One entry point per engine.** Never re-implement the "ingest → look up event
-  id → apply" sequence; three copies of it had already drifted before they were
-  folded into `record_concept_observation`.
-- `record_exercise_results_for_user` feeds *both*: pass `ExerciseResult.concept_id`
-  and it also schedules the concept. Leave `concept_id` unset when something
-  else already recorded that answer — vocabulary review does, and passing it
-  there would count one answer as two pieces of evidence.
-- `award_xp=False` whenever the calling route granted XP itself (lesson, game,
-  vocab review, chat turns). The function's XP is additive.
-- **Skill comes from a label, not a guess.** `Course.skill` / `Lesson.skill`,
-  resolved by `ProficiencyService.resolve_lesson_skill` (lesson → course →
-  `infer_skill_from_tags`). The tag guess is legacy fallback only: it defaults
-  to `VOCABULARY`, which is how listening and speaking content used to be
-  mis-credited. Games map through `GAME_TYPE_SKILL`, never by splitting the
-  game_type string. Label new content; `scripts/backfill_content_skill.py`
-  reports and fixes unlabelled rows.
-- **Chat scores skills through the observation channel.** ai-service tags one
-  anchor observation per turn with `skill`/`score`/`difficulty_level`;
-  `_record_turn_skill_evidence` in `routes/learner_state.py` turns it into an
-  `ExerciseResult`. Idempotency rides on the spool's `event_id` dedup — only
-  newly inserted events are scored, so no extra table is needed. The payload
-  allowlist is duplicated in `app/schemas/learner_state.py` and
-  `ai-service/api/services/learner_observation_spool.py`: **change both**, an
-  unknown key rejects the whole batch.
-- Passive consumption (podcast, YouTube, plain reading) deliberately records
-  **nothing** — finishing an episode is not evidence of comprehension. Wire
-  those up when they gain dictation or a quiz.
-- Client-side graded surfaces go through `SkillEventRecorder`
-  (`flutter-app/lib/core/services/skill_event_recorder.dart`), fire-and-forget.
-  `vocabConceptId` there must stay in sync with `_vocab_concept_id` in
-  `backend-service/app/crud/vocabulary.py`.
-
 **The scheduler is FSRS; the mastery update is not BKT.** `ALGORITHM_VERSION`
 is `delta-fsrs-v3`. Retrievability, interval and the spacing bonus follow FSRS
 properly, but mastery moves by a delta rule with no transition probability and
@@ -117,6 +85,38 @@ wherever the format is known.
   practises. Read history from here, not from the attempts table.
 - `UserSkillScore.trend` reads `score_7d_ago`/`score_30d_ago`, which nothing
   wrote until `snapshot_skill_scores` ran weekly. Two columns, no history table.
+
+- **One entry point per engine.** Never re-implement the "ingest → look up event
+  id → apply" sequence; three copies of it had already drifted before they were
+  folded into `record_concept_observation`.
+- `record_exercise_results_for_user` feeds *both*: pass `ExerciseResult.concept_id`
+  and it also schedules the concept. Leave `concept_id` unset when something
+  else already recorded that answer — vocabulary review does, and passing it
+  there would count one answer as two pieces of evidence.
+- `award_xp=False` whenever the calling route granted XP itself (lesson, game,
+  vocab review, chat turns). The function's XP is additive.
+- **Skill comes from a label, not a guess.** `Course.skill` / `Lesson.skill`,
+  resolved by `ProficiencyService.resolve_lesson_skill` (lesson → course →
+  `infer_skill_from_tags`). The tag guess is legacy fallback only: it defaults
+  to `VOCABULARY`, which is how listening and speaking content used to be
+  mis-credited. Games map through `GAME_TYPE_SKILL`, never by splitting the
+  game_type string. Label new content; `scripts/backfill_content_skill.py`
+  reports and fixes unlabelled rows.
+- **Chat scores skills through the observation channel.** ai-service tags one
+  anchor observation per turn with `skill`/`score`/`difficulty_level`;
+  `_record_turn_skill_evidence` in `routes/learner_state.py` turns it into an
+  `ExerciseResult`. Idempotency rides on the spool's `event_id` dedup — only
+  newly inserted events are scored, so no extra table is needed. The payload
+  allowlist is duplicated in `app/schemas/learner_state.py` and
+  `ai-service/api/services/learner_observation_spool.py`: **change both**, an
+  unknown key rejects the whole batch.
+- Passive consumption (podcast, YouTube, plain reading) deliberately records
+  **nothing** — finishing an episode is not evidence of comprehension. Wire
+  those up when they gain dictation or a quiz.
+- Client-side graded surfaces go through `SkillEventRecorder`
+  (`flutter-app/lib/core/services/skill_event_recorder.dart`), fire-and-forget.
+  `vocabConceptId` there must stay in sync with `_vocab_concept_id` in
+  `backend-service/app/crud/vocabulary.py`.
 
 ## Course Content Invariant
 
@@ -207,21 +207,32 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   fall back to those templates per lesson on *any* error, so a dead key looks
   like "generation worked" while producing "Listen, then repeat the target
   phrase clearly." — check the wording before trusting a job.
-  Groq decommissions models without notice: `llama-3.1-8b-instant` (the old
-  ai-service default) and `llama-3.3-70b-versatile` (the old exercise-generator
-  default) both 404 as of 2026-08-17. List what is available with
+  List what is actually available with
   `curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $KEY"`.
-- **`GROQ_MODEL` must name a non-reasoning model.** A reasoning model spends
-  `reasoning_tokens` before it emits any content, so at the small budgets this
-  service uses it returns an empty string — a silent failure, worse than the
-  404 it replaced. Measured against `translate.py`'s own payload
-  (`max_tokens: 80`): `openai/gpt-oss-20b` → 78 reasoning tokens, content `""`;
-  `qwen/qwen3.6-27b` → `<think>` prose in the content, so the JSON parse fails;
-  `groq/compound-mini` → clean JSON, `finish_reason=stop`, ~1.2s, and it streams
-  fine at 100 and 512 tokens. `groq/compound-mini` is the default everywhere
-  `GROQ_MODEL` is read. Reasoning models are only safe where the budget is
-  uncapped, which is why generation (`CONTENT_AGENT_GROQ_MODEL`,
-  `EXERCISE_GEN_MODEL`) stays on `openai/gpt-oss-120b`.
+- **Groq is `qwen/qwen3.6-27b` everywhere, and every request must carry
+  `reasoning_effort: "none"`** (2026-08-19). Without it qwen writes `<think>`
+  prose into `content`, so every JSON parser here fails; with it the stream is
+  clean (`finish_reason=stop`) and a `max_tokens: 80` translate call answers in
+  full. `_qwen_reasoning_overrides` in `trace_cag/llm_client.py` is the one
+  place that decides this — `_throttled_post_json` injects it for every Groq
+  caller that routes through it, and the four that post with a raw httpx client
+  (`ranking_agent_insights`, `notification_agent/nodes`, `ollama_qwen_handler`,
+  the streaming path in `generate.py`) spread it into their payload by hand.
+  Add a fifth caller and you must do the same.
+- **Never set `GROQ_MODEL` to a compound model.** `groq/compound-mini` is
+  agentic: when streaming it emits the whole reply as `delta.reasoning` and
+  never as `delta.content`, and it answers out of `openai/gpt-oss-120b`'s
+  200k tokens/day org budget. On 2026-08-19 that budget ran out and 6 of 7
+  keys returned a **mid-stream SSE error frame after a 200 header** — Lexi
+  showed "Squawk! I'm temporarily unavailable" with not one line in the logs.
+  The stream loop now logs that frame; `GEMINI_API_KEY` is still unset in
+  prod, so Groq failing means there is no second provider.
+- Groq decommissions models without notice: `llama-3.1-8b-instant`,
+  `llama-3.3-70b-versatile` and `openai/gpt-oss-120b` are all gone or
+  quota-bound. Generation (`CONTENT_AGENT_GROQ_MODEL`, `EXERCISE_GEN_MODEL`)
+  is on qwen too, but keeps reasoning **on**: its budget is uncapped and
+  `response_format: json_object` pins the output, so thinking costs quality
+  nothing there.
 - `backend-service/scripts/generate_exercises_ai.py --regenerate` rewrites
   lessons that are already playable but weak (fewer than 3 distinct ui_types, no
   production task, or a generic "Match the words with their meanings" prompt). It
@@ -282,33 +293,6 @@ $COMPOSE up -d ai-service      # swap only after the image exists
 ai-service is the slow one to rebuild; backend-service is ~1 min. Losing
 ai-service costs chat/translate/STT/TRACE-CAG but **not** courses, lessons,
 auth or progress — those are backend-service.
-
-**Four ways a deploy ships nothing while looking fine** (all hit on 2026-08-17):
-
-- **`deploy-one-shot.sh` never builds.** It is pull → tag rollback → `up -d` →
-  health → smoke. Both app services are `build:`-from-source with no registry,
-  so `up -d` reuses the existing image and new code never ships. Always
-  `$COMPOSE build <svc>` first, detached, then swap.
-- **A container-name conflict aborts the whole swap.** `lexilingo-prometheus`
-  belongs to compose project `gateway`, not `lexilingo`, so
-  `up -d --remove-orphans` dies on the name clash *before* reaching
-  backend/ai-service — prod stays up on old images and the failure reads as a
-  monitoring problem. Until the monitoring stack moves into this project, swap
-  with `up -d backend-service ai-service` (no `--remove-orphans`).
-- **The script's own rollback tagging can be wrong.** Its image check reported
-  "no image" for both services while `backend-service:rollback` pointed at an
-  image *older* than the running one. Confirm `:latest` and `:rollback` resolve
-  to the same ID before you build:
-  `sudo docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep -E "(ai|backend)-service:(latest|rollback)"`
-- **Celery worker and beat are separate images.** `backend-reminder-worker` and
-  `backend-reminder-beat` build from the same context but are distinct images;
-  rebuilding backend-service alone leaves new tasks and new `beat_schedule`
-  entries silently absent. Note the compose service names differ from the
-  container names (`lexilingo-reminder-*`).
-
-Migrations run themselves: backend-service applies `alembic upgrade head` on
-start, so a deploy that swaps that container has already migrated by the time
-it is healthy. Verify with `compose exec -T backend-service alembic current`.
 
 ## Backup & Restore
 

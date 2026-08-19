@@ -93,13 +93,14 @@ def get_groq_definition(word, example, translation_en, translation_vi, tags):
     )
     
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
         "messages": [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.0,
-        "max_tokens": 150
+        "max_tokens": 150,
+        "reasoning_effort": "none",
     }
     
     max_retries = 3

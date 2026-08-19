@@ -20,7 +20,12 @@ from api.services.llama_kv_service import get_local_llama_kv_service
 
 from api.services.trace_cag.env_helpers import _env_flag
 from api.services.trace_cag.provider_state import _provider_is_disabled
-from api.services.trace_cag.llm_client import _get_httpx_client, _throttled_post_json
+from api.services.trace_cag.llm_client import (
+    _get_httpx_client,
+    _qwen_no_think_messages,
+    _qwen_reasoning_overrides,
+    _throttled_post_json,
+)
 from api.services.trace_cag.cache_utils import _write_cache_entry
 from api.services.trace_cag.dependencies import POLICY_VERSION_TOKEN, dependency_record
 
@@ -276,7 +281,7 @@ async def stream_llm_tokens(
     """
 
     groq_admitted = False
-    groq_model_used = os.getenv("GROQ_MODEL", "groq/compound-mini")
+    groq_model_used = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -291,13 +296,7 @@ async def stream_llm_tokens(
         groq_admitted = True
 
         # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
-        groq_messages = messages
-        if "qwen" in groq_model.lower():
-            groq_messages = list(messages)
-            for i, msg in enumerate(groq_messages):
-                if msg.get("role") == "user":
-                    groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
-                    break
+        groq_messages = _qwen_no_think_messages(groq_model, messages)
 
         client = _get_httpx_client("groq")
         tokens_yielded = 0
@@ -315,6 +314,7 @@ async def stream_llm_tokens(
                     "max_tokens": max_tokens,
                     "temperature": 0.7,
                     "stream": True,
+                    **_qwen_reasoning_overrides(groq_model),
                 },
                 timeout=25.0,
             ) as resp:
@@ -329,6 +329,16 @@ async def stream_llm_tokens(
                         break
                     try:
                         obj = json.loads(data)
+                        # Groq reports mid-stream failures (e.g. daily token quota)
+                        # as an SSE error frame after a 200 header. Without this the
+                        # stream just ends token-less and the caller reports a
+                        # generic outage with nothing in the logs.
+                        if "error" in obj:
+                            logger.warning(
+                                "[stream_llm_tokens] Groq mid-stream error: %s",
+                                str(obj["error"])[:300],
+                            )
+                            return
                         delta = obj["choices"][0]["delta"].get("content") or ""
                         if delta:
                             tokens_yielded += len(delta.split())
@@ -597,16 +607,11 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
             groq_key = await get_available_groq_key(estimated_tokens=512)
-            groq_model = os.getenv("GROQ_MODEL", "groq/compound-mini")
+            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
             # Disable Qwen3 thinking to keep token budget for actual response.
-            _groq_messages = list(messages)
-            if "qwen" in groq_model.lower():
-                for i, msg in enumerate(_groq_messages):
-                    if msg.get("role") == "user":
-                        _groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
-                        break
+            _groq_messages = _qwen_no_think_messages(groq_model, messages)
 
             async def _try_groq():
                 if not groq_key:
@@ -616,7 +621,13 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": _groq_messages, "max_tokens": 512, "temperature": 0.7},
+                        payload={
+                            "model": groq_model,
+                            "messages": _groq_messages,
+                            "max_tokens": 512,
+                            "temperature": 0.7,
+                            **_qwen_reasoning_overrides(groq_model),
+                        },
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:

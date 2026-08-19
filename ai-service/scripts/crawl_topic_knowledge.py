@@ -40,7 +40,7 @@ DEFAULT_QUOTA_STATE_PATH = (
     AI_SERVICE_ROOT / "model-development" / "reports" / "provider_quota_state.json"
 )
 
-DEFAULT_GROQ_MODEL = os.getenv("GROQ_TOPIC_MODEL") or os.getenv("GROQ_MODEL") or "qwen/qwen3-32b"
+DEFAULT_GROQ_MODEL = os.getenv("GROQ_TOPIC_MODEL") or os.getenv("GROQ_MODEL") or "qwen/qwen3.6-27b"
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # crawl4ai reads this at import time. Keep its SQLite/cache files inside the

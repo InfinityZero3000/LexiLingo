@@ -77,7 +77,7 @@ class RankingAgentJobCreate(BaseModel):
     config: dict[str, Any] = Field(default_factory=dict)
     use_ai_insights: bool = Field(
         False,
-        description="If True, Groq (qwen3-32b) will generate a short insight commentary "
+        description="If True, Groq (qwen3.6-27b) will generate a short insight commentary "
         "during the validating phase. Skipped gracefully if all API keys are rate-limited.",
     )
 

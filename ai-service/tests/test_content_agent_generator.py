@@ -249,14 +249,14 @@ async def test_groq_mission_generator_falls_back_when_every_key_is_throttled(
 
 
 def test_groq_mission_generator_does_not_borrow_the_short_call_model(monkeypatch):
-    """GROQ_MODEL names the small non-reasoning model the short service calls
-    need; generating a whole lesson on it would be a silent quality drop."""
+    """The short service calls run GROQ_MODEL with reasoning off; generating a
+    whole lesson that way would be a silent quality drop."""
     from api.services.content_agent.generator import GroqMissionGenerator
 
-    monkeypatch.setenv("GROQ_MODEL", "groq/compound-mini")
+    monkeypatch.setenv("GROQ_MODEL", "some/other-model")
     monkeypatch.delenv("CONTENT_AGENT_GROQ_MODEL", raising=False)
 
-    assert GroqMissionGenerator()._model == "openai/gpt-oss-120b"
+    assert GroqMissionGenerator()._model == "qwen/qwen3.6-27b"
 
     monkeypatch.setenv("CONTENT_AGENT_GROQ_MODEL", "openai/gpt-oss-20b")
     assert GroqMissionGenerator()._model == "openai/gpt-oss-20b"

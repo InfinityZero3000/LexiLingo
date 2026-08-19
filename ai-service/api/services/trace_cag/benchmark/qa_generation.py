@@ -395,9 +395,9 @@ async def _groq_chat_with_retry(messages: list, max_tokens: int, *, estimated_to
     from api.core.groq_key_pool import (
         get_available_groq_key, record_groq_key_usage, get_configured_key_count,
     )
-    from api.services.trace_cag.llm_client import _throttled_post_json
+    from api.services.trace_cag.llm_client import _qwen_reasoning_overrides, _throttled_post_json
 
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
     _max_503_retries = 5
     _max_key_tries = (get_configured_key_count() or 1) + _max_503_retries
     _tried: set = set()
@@ -412,7 +412,13 @@ async def _groq_chat_with_retry(messages: list, max_tokens: int, *, estimated_to
                 provider="groq",
                 url="https://api.groq.com/openai/v1/chat/completions",
                 headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-                payload={"model": groq_model, "messages": messages, "max_tokens": max_tokens, "temperature": 0.0},
+                payload={
+                    "model": groq_model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": 0.0,
+                    **_qwen_reasoning_overrides(groq_model),
+                },
                 timeout=30.0,
             )
             if resp is not None and resp.status_code == 200:
@@ -632,7 +638,7 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
         "context_chars_before": len(base_context or ""),
         "context_chars_after": len(base_context or ""),
     }
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
     qwen = "qwen" in groq_model.lower()
     reason_sys = (
         ("/no_think\n" if qwen else "")
@@ -688,7 +694,7 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
 
 async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
     """Generate concise QA outputs for paper-style public benchmarks."""
-    from api.services.trace_cag.llm_client import _throttled_post_json
+    from api.services.trace_cag.llm_client import _qwen_reasoning_overrides, _throttled_post_json
     from api.services.trace_cag.cache_utils import _write_cache_entry
 
     question = state.get("user_input", "")
@@ -730,7 +736,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         # picked a wrong bridge and the assertive hint forced the model to follow it
         # (New York City→Columbia University, Terry Richardson→Annie Morton).
         _hint_block = f"\n\n(\"{_ircot_hint}\" may be relevant.)" if _ircot_hint else ""
-        _bench_groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+        _bench_groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
         _no_think_prefix = "/no_think\n" if "qwen" in _bench_groq_model.lower() else ""
         # E2G ("Evidence → minimal Answer"): one bounded reasoning step before the
         # answer, grounded in the passages, with an exemplar that pins HotpotQA
@@ -795,7 +801,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
 
                 if provider == "groq":
                     from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, get_configured_key_count
-                    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3-32b")
+                    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
                     # Retry across all available keys — skip keys returning 401 (expired/invalid)
                     # 5 retries (2s..32s, ~62s worst case): Run 19 showed Groq's qwen3-32b
                     # over-capacity periods can outlast 3 retries (14s) for a sample.
@@ -813,7 +819,13 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                                 provider="groq",
                                 url="https://api.groq.com/openai/v1/chat/completions",
                                 headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                                payload={"model": groq_model, "messages": messages, "max_tokens": _bench_max_tokens, "temperature": 0.0},
+                                payload={
+                                    "model": groq_model,
+                                    "messages": messages,
+                                    "max_tokens": _bench_max_tokens,
+                                    "temperature": 0.0,
+                                    **_qwen_reasoning_overrides(groq_model),
+                                },
                                 timeout=30.0,
                             )
                             if resp is not None and resp.status_code == 200:

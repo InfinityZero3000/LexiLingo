@@ -663,11 +663,13 @@ class GroqMissionGenerator(LLMMissionGenerator):
             timeout_seconds=timeout_seconds,
             max_attempts=max_attempts,
         )
-        # Deliberately not falling back to GROQ_MODEL: that one names the small
-        # non-reasoning model the short service calls need, and generating a
-        # whole lesson on it is a silent quality drop.
+        # Deliberately not falling back to GROQ_MODEL: the short service calls
+        # run that one with reasoning switched off, and generating a whole
+        # lesson without reasoning is a silent quality drop. Here the token
+        # budget is uncapped and response_format pins the JSON, so reasoning
+        # stays on.
         self._model = (
-            model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "openai/gpt-oss-120b"
+            model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "qwen/qwen3.6-27b"
         )
 
     async def _call_model(

@@ -29,7 +29,11 @@ from api.services.trace_cag.dependencies import (
 from api.services.jit_graph_service import get_jit_graph_service
 
 # LLM client — httpx pooling and rate-limit throttling
-from api.services.trace_cag.llm_client import _throttled_post_json
+from api.services.trace_cag.llm_client import (
+    _qwen_no_think_messages,
+    _qwen_reasoning_overrides,
+    _throttled_post_json,
+)
 
 # PCC cache R/W helpers used by the generation path
 from api.services.trace_cag.cache_utils import _detect_native_request
@@ -502,19 +506,24 @@ Be encouraging and focus on the most important errors first."""
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
             groq_key = await get_available_groq_key(estimated_tokens=400)
-            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "groq/compound-mini"))
+            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"))
             if groq_key:
                 try:
-                    _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""
-                    messages = [
+                    messages = _qwen_no_think_messages(groq_model, [
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
-                        {"role": "user", "content": f"{_no_think}{diagnosis_prompt}"},
-                    ]
+                        {"role": "user", "content": diagnosis_prompt},
+                    ])
                     resp = await _throttled_post_json(
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 400, "temperature": 0.0},
+                        payload={
+                            "model": groq_model,
+                            "messages": messages,
+                            "max_tokens": 400,
+                            "temperature": 0.0,
+                            **_qwen_reasoning_overrides(groq_model),
+                        },
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:

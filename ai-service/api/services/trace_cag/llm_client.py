@@ -61,6 +61,34 @@ def _provider_rpm(provider: str) -> int:
         return defaults.get(provider, 30)
 
 
+def _is_qwen_model(model: str) -> bool:
+    return "qwen" in model.lower()
+
+
+def _qwen_no_think_messages(model: str, messages: list) -> list:
+    """Legacy qwen3 (e.g. qwen3-32b) prefix trick to suppress <think> reasoning.
+    Kept for back-compat with older Qwen deployments; verified (2026-08-16) that
+    it no longer suppresses thinking on qwen3.6 on Groq — see
+    _qwen_reasoning_overrides for the control that does."""
+    if not _is_qwen_model(model):
+        return messages
+    patched = list(messages)
+    for i, msg in enumerate(patched):
+        if msg.get("role") == "user":
+            patched[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
+            break
+    return patched
+
+
+def _qwen_reasoning_overrides(model: str) -> Dict[str, Any]:
+    """Groq-side reasoning control for current Qwen models. Verified directly
+    against the Groq API (2026-08-16): qwen3.6-27b ignores the "/no_think"
+    message-prefix trick and keeps emitting <think> blocks, but honors
+    reasoning_effort="none" in the request body (finish_reason="stop", clean
+    answer, no thinking tokens)."""
+    return {"reasoning_effort": "none"} if _is_qwen_model(model) else {}
+
+
 def _parse_retry_after_seconds(raw_value: Optional[str]) -> float:
     if not raw_value:
         return 0.0
@@ -92,6 +120,11 @@ async def _throttled_post_json(
             max_retries = max(1, int(env_retries))
         except ValueError:
             pass
+
+    # A qwen model without this override streams/returns <think> prose instead of
+    # the answer, which every JSON caller here then fails to parse.
+    if provider == "groq":
+        payload = {**payload, **_qwen_reasoning_overrides(str(payload.get("model") or ""))}
 
     state_key = provider
     if provider == "groq" and headers and headers.get("Authorization"):

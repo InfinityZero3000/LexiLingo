@@ -10,7 +10,7 @@ import urllib.error
 
 FILE_PATH = "/opt/lexilingo/backend-service/data/vocabulary_import.json"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-MODEL = "llama-3.1-8b-instant"
+MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
 
 from dotenv import load_dotenv
 from pathlib import Path
