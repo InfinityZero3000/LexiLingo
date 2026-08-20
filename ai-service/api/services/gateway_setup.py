@@ -135,10 +135,13 @@ async def _register_piper(gateway: ModelGateway) -> None:
     from api.services.handlers.piper_handler import PiperHandler, PiperConfig
     
     async def loader():
+        # Follow the TTS_* settings rather than a second set of defaults: prod
+        # sets only TTS_*, so the old en_US-lessac-low defaults pointed the
+        # gateway at a voice the image does not ship (it ships medium).
         config = PiperConfig(
-            model_path=os.getenv("PIPER_MODEL_PATH", "models/piper/en_US-lessac-low.onnx"),
-            voice=os.getenv("PIPER_VOICE", "en_US-lessac-low"),
-            sample_rate=int(os.getenv("PIPER_SAMPLE_RATE", "16000")),
+            model_path=os.getenv("PIPER_MODEL_PATH") or settings.TTS_MODEL_PATH,
+            voice=os.getenv("PIPER_VOICE") or settings.TTS_VOICE,
+            sample_rate=int(os.getenv("PIPER_SAMPLE_RATE", "22050")),
         )
         handler = PiperHandler(config)
         await handler.load()

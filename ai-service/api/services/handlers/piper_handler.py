@@ -89,6 +89,10 @@ class PiperHandler:
                 else:
                     # Try to find model in common locations
                     model_locations = [
+                        # Dockerfile.prod downloads the voice here; without this
+                        # entry the handler searches three paths that exist in
+                        # nobody's deployment and gives up.
+                        f"/opt/voice-models/piper/{self.config.voice}.onnx",
                         f"models/piper/{self.config.voice}.onnx",
                         f"/usr/share/piper-voices/{self.config.voice}.onnx",
                         os.path.expanduser(f"~/.local/share/piper-voices/{self.config.voice}.onnx"),
