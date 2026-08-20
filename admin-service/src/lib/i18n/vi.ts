@@ -64,6 +64,7 @@ const vi = {
     units: "Chương",
     lessons: "Bài học",
     topics: "Topic chat",
+    ieltsTests: "Đề thi IELTS",
     grammarTest: "Ngữ pháp & Kiểm tra",
     contentQaQueue: "QA nội dung",
     contentAnalytics: "Phân tích nội dung",

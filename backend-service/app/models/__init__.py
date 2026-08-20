@@ -65,6 +65,11 @@ from app.models.content import (
     QuestionItem,
     TestExam,
 )
+from app.models.ielts import (
+    IeltsTest,
+    IeltsAttempt,
+    IeltsGrading,
+)
 from app.models.user_grammar_item import UserGrammarItem
 
 # RBAC models
@@ -179,6 +184,9 @@ __all__ = [
     "UserGrammarItem",
     "QuestionItem",
     "TestExam",
+    "IeltsTest",
+    "IeltsAttempt",
+    "IeltsGrading",
     # RBAC
     "Role",
     "Permission",

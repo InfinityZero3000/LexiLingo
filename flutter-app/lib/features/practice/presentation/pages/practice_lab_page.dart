@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import '../../../ielts/presentation/pages/ielts_tests_page.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/premium_gate.dart';
@@ -75,6 +76,8 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                         : 0,
                     isLoading: proficiency.isLoading,
                   ),
+                  const SizedBox(height: 16),
+                  const _IeltsEntryCard(),
                   const SizedBox(height: 16),
                   _SectionHeader(
                     title: 'practiceLab.recommendedTitle'.tr(),
@@ -572,6 +575,72 @@ class _SmallChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Entry point to the IELTS mock tests.
+///
+/// Deliberately a card of its own rather than a `PracticeLabItem`: a mock test
+/// is a one-to-three-hour sitting covering all four skills, so it does not
+/// belong in a list of per-skill drills the recommender ranks.
+class _IeltsEntryCard extends StatelessWidget {
+  const _IeltsEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const IeltsTestsPage()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.school_outlined,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'IELTS mock tests',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Full four-skill papers, scored in bands with AI feedback on Writing and Speaking.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

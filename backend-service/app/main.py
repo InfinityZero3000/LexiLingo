@@ -51,6 +51,8 @@ from app.routes import (
 )
 from app.routes.learning import router as learning_router
 from app.routes.admin_courses import router as admin_courses_router
+from app.routes.admin_ielts import router as admin_ielts_router
+from app.routes.ielts import router as ielts_router
 from app.routes.admin_gamification import router as admin_gamification_router
 from app.routes.admin_system import router as admin_system_router
 from app.routes.content_agent import router as content_agent_router
@@ -393,6 +395,8 @@ app.include_router(concepts_router, prefix=f"{settings.API_V1_PREFIX}/concepts",
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
 app.include_router(admin_courses_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin IELTS"])
+app.include_router(ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["IELTS"])
 app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")

@@ -66,6 +66,7 @@ const en: Translations = {
     units: "Units",
     lessons: "Lessons",
     topics: "Topics",
+    ieltsTests: "IELTS Tests",
     grammarTest: "Grammar & Tests",
     contentQaQueue: "Content QA",
     contentAnalytics: "Content Analytics",

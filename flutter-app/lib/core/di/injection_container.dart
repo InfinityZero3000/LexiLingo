@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/gamification/di/gamification_di.dart';
 import 'package:lexilingo_app/features/home/di/home_di.dart';
 import 'package:lexilingo_app/features/learning/di/learning_di.dart';
 import 'package:lexilingo_app/features/level/di/level_di.dart';
+import '../../features/ielts/di/ielts_di.dart';
 import 'package:lexilingo_app/features/notifications/di/notification_di.dart';
 import 'package:lexilingo_app/features/profile/di/profile_di.dart';
 import 'package:lexilingo_app/features/progress/di/progress_di.dart';
@@ -42,6 +43,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerAchievementModule(); // Achievement/Badge system
   registerNotificationModule(); // Notification system
   registerLevelModule(); // Level/XP system
+  registerIeltsModule(); // IELTS mock tests
   registerGamificationModule(); // Shop, Wallet, Leaderboard
   registerSocialModule(); // Friends, Activity Feed
   initVoiceDependencies(sl);

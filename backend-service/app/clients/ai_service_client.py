@@ -40,6 +40,42 @@ async def diagnose_error(text: str, level: str | None = None) -> str | None:
         return None
 
 
+async def grade_ielts_submission(
+    *,
+    skill: str,
+    part_key: str,
+    task_prompt: str,
+    answer_text: str,
+    test_type: str = "academic",
+) -> dict | None:
+    """Grade one IELTS Writing task or Speaking part. None on any failure.
+
+    Returning None rather than a default band is deliberate: an ungraded task
+    must stay visibly ungraded so it can be retried, because a band nobody
+    computed would flow straight into the reported overall score.
+    """
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(90.0)) as client:
+            response = await client.post(
+                f"{settings.AI_SERVICE_URL.rstrip('/')}/internal/ielts/grade",
+                headers={
+                    "X-Admin-Api-Key": os.getenv("AI_ADMIN_API_KEY", "").strip()
+                },
+                json={
+                    "skill": skill,
+                    "part_key": part_key,
+                    "task_prompt": task_prompt,
+                    "answer_text": answer_text,
+                    "test_type": test_type,
+                },
+            )
+        response.raise_for_status()
+        return response.json()
+    except Exception:
+        logger.warning("IELTS grading request failed", exc_info=True)
+        return None
+
+
 class AIServiceClient:
     _shared_client: ClassVar[httpx.AsyncClient | None] = None
 

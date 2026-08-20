@@ -53,6 +53,19 @@ class ApiConfig {
         : AppConstants.apiBaseUrl;
   }
 
+  /// Host root, without the `/api/v1` suffix.
+  ///
+  /// Uploaded media (`/media/...`) is served by the backend at the host root,
+  /// not under the versioned API prefix, so joining it to [baseUrl] gives a
+  /// 404 that looks like a missing file.
+  static String get mediaBaseUrl {
+    final base = baseUrl;
+    final marker = '/api/v1';
+    return base.endsWith(marker)
+        ? base.substring(0, base.length - marker.length)
+        : base;
+  }
+
   /// URL dự phòng — thử khi [baseUrl] không kết nối được.
   /// Trống trong production mode (không có fallback về local).
   static String get fallbackBaseUrl {
