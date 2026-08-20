@@ -101,6 +101,10 @@ class Settings(BaseSettings):
         "false" if ENVIRONMENT == "production" else "true",
     ).lower() == "true"
 
+    # Ollama is not deployed anywhere yet: with it on, every chat warm-up
+    # dials a host that is not listening and logs a connection error.
+    OLLAMA_ENABLED: bool = Field(default=False)
+
     TRACE_CAG_EXTERNAL_ENABLED: bool = False
     TRACE_CAG_SERVICE_TOKEN_HASH: str = ""
     TRACE_CAG_PREVIOUS_TOKEN_HASH: str = ""

@@ -45,9 +45,20 @@ class TTSService:
 
         # Support both absolute model paths and voice IDs like "en_US-lessac-medium".
         # Use _SERVICE_ROOT (absolute) so paths resolve correctly regardless of CWD.
+        # The voice and its json ship side by side, so when TTS_CONFIG_PATH is an
+        # absolute path its directory is the first place to look. Without this,
+        # prod's TTS_MODEL_PATH="en_US-lessac-medium" (a voice id, next to
+        # TTS_CONFIG_PATH=/opt/voice-models/piper/...json) reached ONNX Runtime
+        # verbatim and every warm-up failed with NO_SUCHFILE.
+        config_dir = Path(config_path).parent if config_path else None
         model_candidates = [
             model_path,
             f"{model_path}.onnx",
+            *(
+                [str(config_dir / model_path), str(config_dir / f"{model_path}.onnx")]
+                if config_dir
+                else []
+            ),
             str(_SERVICE_ROOT / "models" / "piper" / model_path),
             str(_SERVICE_ROOT / "models" / "piper" / f"{model_path}.onnx"),
             os.path.join("models", "piper", model_path),

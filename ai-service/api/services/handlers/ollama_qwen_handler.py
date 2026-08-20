@@ -14,6 +14,7 @@ import logging
 import json
 import os
 import httpx
+from api.core.config import get_settings
 from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
@@ -70,6 +71,13 @@ class OllamaQwenHandler:
         if self._loaded:
             return True
         if self._ollama_offline:
+            return False
+        if not get_settings().OLLAMA_ENABLED:
+            # Nothing is serving Ollama yet. Dialing it anyway logs a
+            # connection error on every warm-up and delays the caller's
+            # fallback to Groq by a timeout.
+            logger.info("[OllamaQwenHandler] OLLAMA_ENABLED is off; staying offline")
+            self._ollama_offline = True
             return False
         
         try:

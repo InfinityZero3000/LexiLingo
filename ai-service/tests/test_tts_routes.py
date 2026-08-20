@@ -188,3 +188,39 @@ async def test_synthesize_all_synthesis_fails_returns_500():
             response = await client.post("/tts/synthesize", json={"text": "hello"})
 
     assert response.status_code == 500
+
+
+def test_voice_id_resolves_next_to_the_config_file(tmp_path, monkeypatch):
+    """Prod sets TTS_MODEL_PATH to a voice id and TTS_CONFIG_PATH to the json
+    beside the .onnx; resolving only under models/piper made every warm-up fail
+    with ONNXRuntime NO_SUCHFILE."""
+    from api.services import tts_service
+
+    voices = tmp_path / "piper"
+    voices.mkdir()
+    (voices / "en_US-lessac-medium.onnx").write_bytes(b"onnx")
+    config = voices / "en_US-lessac-medium.onnx.json"
+    config.write_text("{}")
+
+    monkeypatch.setattr(tts_service.settings, "TTS_MODEL_PATH", "en_US-lessac-medium")
+    monkeypatch.setattr(tts_service.settings, "TTS_CONFIG_PATH", str(config))
+
+    captured = {}
+
+    class _Voice:
+        @staticmethod
+        def load(model, config_path=None, **kwargs):
+            captured["model"] = model
+            captured["config"] = config_path
+            return object()
+
+    monkeypatch.setitem(
+        __import__("sys").modules, "piper",
+        type("piper", (), {"PiperVoice": _Voice, "PiperConfig": object}),
+    )
+    monkeypatch.setattr(tts_service.settings, "TTS_INTRA_OP_THREADS", 0)
+
+    service = tts_service.TTSService()
+    service._load_voice()
+
+    assert captured["model"] == str(voices / "en_US-lessac-medium.onnx")

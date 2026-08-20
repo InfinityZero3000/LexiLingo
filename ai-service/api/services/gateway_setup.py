@@ -19,6 +19,7 @@ async def setup_gateway(
     max_memory_mb: int = 8000,
     enable_auto_unload: bool = True,
     use_gemini_fallback: bool = True,
+    use_ollama: bool = True,
 ) -> ModelGateway:
     """
     Initialize and configure the ModelGateway with all handlers.
@@ -27,6 +28,7 @@ async def setup_gateway(
         max_memory_mb: Maximum memory for all models
         enable_auto_unload: Whether to auto-unload idle models
         use_gemini_fallback: Use Gemini as cloud fallback
+        use_ollama: Register the local Ollama chat model
         
     Returns:
         Configured ModelGateway instance
@@ -38,7 +40,10 @@ async def setup_gateway(
     gateway.enable_auto_unload = enable_auto_unload
     
     # Register all models
-    await _register_qwen(gateway)
+    if use_ollama:
+        await _register_qwen(gateway)
+    else:
+        logger.info("Skipped: qwen (OLLAMA_ENABLED is off) — chat runs on Groq")
     await _register_whisper(gateway)
     await _register_piper(gateway)
     await _register_hubert(gateway)

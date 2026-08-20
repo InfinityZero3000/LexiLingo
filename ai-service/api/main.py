@@ -237,6 +237,7 @@ async def lifespan(app: FastAPI):
                 max_memory_mb=int(os.getenv("MAX_MEMORY_MB", "8000")),
                 enable_auto_unload=True,
                 use_gemini_fallback=bool(GEMINI_API_KEY),
+                use_ollama=get_settings().OLLAMA_ENABLED,
             )
             _gateway_initialized = True
             logger.info(" ModelGateway initialized")
