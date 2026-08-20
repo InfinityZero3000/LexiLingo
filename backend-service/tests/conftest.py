@@ -79,6 +79,43 @@ async def _reset_public_schema(engine) -> None:
         await conn.run_sync(Base.metadata.create_all)
 
 
+# Rebuilding 68 tables costs ~5s, and it used to run twice per test — the whole
+# suite spent hours on DDL. The schema is built once per pytest process; every
+# later test only empties it, which is what isolation actually needs.
+_schema_built = False
+
+
+async def _empty_all_tables(engine) -> None:
+    """Empty every table in one round trip.
+
+    Ordered DELETEs inside a DO block, not TRUNCATE: every primary key here is
+    a UUID so there are no sequences to restart, and TRUNCATE rewrites 68
+    relfilenodes (~1.5s) where the DELETEs take ~0.35s.
+    """
+    statements = " ".join(
+        f'DELETE FROM "{table.name}";'
+        for table in reversed(Base.metadata.sorted_tables)
+    )
+    if not statements:
+        return
+    async with engine.begin() as conn:
+        await conn.execute(text(f"DO $$ BEGIN {statements} END $$"))
+
+
+async def _prepare_clean_schema(engine) -> None:
+    global _schema_built
+    if not _schema_built:
+        await _reset_public_schema(engine)
+        _schema_built = True
+        return
+    try:
+        await _empty_all_tables(engine)
+    except Exception:
+        # A test that altered the schema (dropped a table, added an enum value)
+        # falls back to the full rebuild rather than failing the next test.
+        await _reset_public_schema(engine)
+
+
 def _quote_pg_identifier(identifier: str) -> str:
     return f'"{identifier.replace(chr(34), chr(34) * 2)}"'
 
@@ -149,12 +186,12 @@ async def db_engine():
 
     engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool, echo=False)
 
-    await _reset_public_schema(engine)
+    await _prepare_clean_schema(engine)
 
     yield engine
 
-    await _reset_public_schema(engine)
-
+    # No teardown reset: the next test cleans before it runs, so paying for it
+    # twice bought nothing.
     await engine.dispose()
 
 

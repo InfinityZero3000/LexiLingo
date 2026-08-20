@@ -258,9 +258,10 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   seed is `admin_upload`: a word list carrying `declared_cefr` per word.
   Attaching a full corpus would also exceed `CONTENT_AGENT_MAX_RECORDS` (20,000;
   OEWN is 185,129).
-- `flutter-app/data/crawler/` (BBC) — **dead code**: unreferenced anywhere, writes
-  to a `flutter-app/courses/` directory that does not exist, and its export
-  format carries no lessons or exercises. Do not build on it.
+- `flutter-app/data/crawler/` (BBC) — **deleted 2026-08-20**. It was unreferenced
+  anywhere, wrote to a `flutter-app/courses/` directory that does not exist, and
+  its export format carried no lessons or exercises. Recover from git history if
+  it is ever wanted; do not resurrect it as a course source.
 
 ## Production Deploy — hard rules
 

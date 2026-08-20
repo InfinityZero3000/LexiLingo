@@ -23,9 +23,11 @@ if Celery is not None:
         broker=settings.effective_celery_broker_url,
         backend=settings.effective_celery_result_backend,
         include=[
+            "app.tasks.auth_tokens",
             "app.tasks.content_agent",
             "app.tasks.content_prefetch_schedule",
             "app.tasks.learner_state",
+            "app.tasks.notification_campaign",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
             "app.tasks.skill_history",
@@ -65,6 +67,11 @@ if Celery is not None:
         "cleanup-learner-observations": {
             "task": "app.tasks.learner_state.cleanup_learner_observations",
             "schedule": crontab(hour=2, minute=30),
+        },
+        # Rotation writes a row per refresh, so the table only ever grew.
+        "prune-refresh-tokens": {
+            "task": "app.tasks.auth_tokens.prune_refresh_tokens",
+            "schedule": crontab(hour=2, minute=15),
         },
         # Answer-level rows are only kept while they can still explain a
         # recent score; skill_daily_stats carries the long term.
@@ -122,6 +129,10 @@ else:
                     },
                     "cleanup-learner-observations": {
                         "task": "app.tasks.learner_state.cleanup_learner_observations",
+                        "schedule": 86400,
+                    },
+                    "prune-refresh-tokens": {
+                        "task": "app.tasks.auth_tokens.prune_refresh_tokens",
                         "schedule": 86400,
                     },
                     "auto-league-reset": {

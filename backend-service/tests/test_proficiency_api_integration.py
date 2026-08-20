@@ -68,7 +68,10 @@ def disable_rate_limiting(monkeypatch):
 @pytest.fixture(scope="module", autouse=True)
 def seed_database() -> None:
     """Reset deterministic proficiency data before this module mutates it."""
-    asyncio.run(seed_proficiency_data())
+    # Seed through this module's NullPool factory, not the app-global pool —
+    # asyncio.run() opens a loop of its own and pooled connections from an
+    # earlier test's loop fail with "attached to a different loop".
+    asyncio.run(seed_proficiency_data(_session_factory))
 
 
 @pytest.fixture
