@@ -15,6 +15,7 @@ Run:
     venv/bin/python3 scripts/backfill_content_skill.py            # report only
     venv/bin/python3 scripts/backfill_content_skill.py --apply    # write the labels
     venv/bin/python3 scripts/backfill_content_skill.py --apply --courses-only
+    venv/bin/python3 scripts/backfill_content_skill.py --from-titles  # add title guesses
 """
 
 import argparse
@@ -66,6 +67,34 @@ def _course_skill_guess(course: Course) -> str | None:
     return ProficiencyService.infer_skill_from_tags(flat).value
 
 
+# A lesson title only names a skill when it says so outright. These phrases are
+# the ones the IELTS courses use — "Speaking Part 3", "Section 3-4" (the
+# listening sections), "Task 1" (a writing task). Anything vaguer is left NULL:
+# a wrong label is worse than none, because it silently credits the wrong skill.
+_TITLE_SKILLS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("listening", ("listening", "listen ", "listen for", "section 1", "section 2",
+                   "section 3", "section 4", "accents", "lecture", "note-taking while")),
+    ("speaking", ("speaking", "pronunciation", "fluency", "interview", "cue card",
+                  "idiomatic language", "word stress", "intonation")),
+    # "Describing…" on its own is ambiguous — an A1 lesson describing objects is
+    # speaking practice. Only the chart/process phrasings name Writing Task 1.
+    ("writing", ("writing", "task 1", "task 2", "essay", "paragraph",
+                 "describing trends", "describing process", "process diagram",
+                 "bar chart", "line graph", "pie chart", "mixed graph",
+                 "double graph", "map tasks", "cohesion", "coherence")),
+    ("reading", ("reading", "passage", "skimming", "scanning", "true/false",
+                 "yes/no", "matching headings", "summary & note completion",
+                 "diagram & flow chart completion")),
+)
+
+
+def _lesson_title_guess(lesson: Lesson) -> str | None:
+    title = (lesson.title or "").lower()
+    matches = {skill for skill, needles in _TITLE_SKILLS if any(n in title for n in needles)}
+    # "Reading aloud for fluency" names two skills; a coin flip is not a label.
+    return matches.pop() if len(matches) == 1 else None
+
+
 def _lesson_skill_guess(lesson: Lesson) -> str | None:
     """Listening is the one skill a lesson's own content proves: the content
     validator requires an audio_url on listening exercises. Anything else is
@@ -82,7 +111,7 @@ def _lesson_skill_guess(lesson: Lesson) -> str | None:
     return None
 
 
-async def backfill(apply: bool, courses_only: bool) -> int:
+async def backfill(apply: bool, courses_only: bool, from_titles: bool = False) -> int:
     async with AsyncSessionLocal() as db:
         courses = (await db.execute(select(Course))).scalars().all()
         unlabelled_courses = [c for c in courses if not c.skill]
@@ -112,21 +141,34 @@ async def backfill(apply: bool, courses_only: bool) -> int:
         lesson_changes = 0
         if not courses_only:
             lessons = (await db.execute(select(Lesson))).scalars().all()
+            def guess_for(lesson: Lesson) -> str | None:
+                return _lesson_skill_guess(lesson) or (
+                    _lesson_title_guess(lesson) if from_titles else None
+                )
+
             unlabelled = [
-                lesson
-                for lesson in lessons
-                if not lesson.skill and _lesson_skill_guess(lesson)
+                lesson for lesson in lessons if not lesson.skill and guess_for(lesson)
             ]
+            source = "audio exercises or a title naming a skill" if from_titles else "audio exercises"
             print(
                 f"\nLessons: {len(lessons)} total, "
-                f"{len(unlabelled)} with audio exercises but no skill label"
+                f"{len(unlabelled)} with {source} but no skill label"
             )
             for lesson in unlabelled:
-                guess = _lesson_skill_guess(lesson)
+                guess = guess_for(lesson)
                 print(f"  {lesson.title!r} -> {guess}")
                 if apply:
                     lesson.skill = guess
                     lesson_changes += 1
+
+            if from_titles:
+                still_blank = [
+                    lesson for lesson in lessons if not lesson.skill and not guess_for(lesson)
+                ]
+                print(
+                    f"\n  {len(still_blank)} lesson(s) still unlabelled — their titles "
+                    "name no single skill. Label these in the admin dashboard."
+                )
 
         if apply and (course_changes or lesson_changes):
             await db.commit()
@@ -150,8 +192,13 @@ def main() -> int:
     parser.add_argument(
         "--courses-only", action="store_true", help="skip per-lesson labels"
     )
+    parser.add_argument(
+        "--from-titles",
+        action="store_true",
+        help="also label a lesson whose title names exactly one skill",
+    )
     args = parser.parse_args()
-    return asyncio.run(backfill(args.apply, args.courses_only))
+    return asyncio.run(backfill(args.apply, args.courses_only, args.from_titles))
 
 
 if __name__ == "__main__":
