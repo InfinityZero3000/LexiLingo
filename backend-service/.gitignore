@@ -78,5 +78,5 @@ import_*
 # exception. Keep tooling tracked instead of adding one exception per script.
 !scripts/import_*.py
 
-# Generated media: IELTS recordings and admin uploads outside the container
+# Uploaded media outside a container lands here; `data/` is already ignored.
 static/

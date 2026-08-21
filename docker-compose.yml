@@ -145,6 +145,13 @@ services:
       - "8000"
     volumes:
       - ./backend-service/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
+      # Uploaded media (IELTS listening recordings, imported audio). Without
+      # this the upload endpoint writes inside the container, /media is never
+      # mounted because the directory does not exist, and every deploy throws
+      # the files away. ai-service already mounts the same path read-only.
+      # The directory is not in git (data/ is ignored); docker creates it on
+      # first start, so check it is writable by the container's user.
+      - ./backend-service/data/media:/app/data/media
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\""]
       interval: 30s
