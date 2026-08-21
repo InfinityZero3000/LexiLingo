@@ -90,15 +90,21 @@ _IMPLIED = (
                    "lecture", "conversation", "monologue", "note-taking while")),
     ("speaking", ("fluency", "interview", "cue card", "idiomatic language",
                   "word stress", "intonation", "part 1 questions", "part 1 topics",
-                  "filler words", "longer answers", "extending answers")),
-    ("writing", ("task 1", "task 2", "letter", "bar chart", "line graph",
-                 "pie chart", "mixed graph", "double graph", "map description",
+                  "filler words", "longer answers", "extending answers",
+                  # "talking about X" alone is too loose — it caught a modal-verb
+                  # grammar lesson — so only the Part 1 topics themselves.
+                  "introducing yourself", "daily routines")),
+    # "t1"/"t2" are the courses' own shorthand for the two Writing tasks.
+    ("writing", ("task 1", "task 2", " t1 ", " t2 ", "letter", "bar chart",
+                 "line graph", "pie chart", "mixed graph", "double graph",
+                 "multiple graphs", "mixed data", "map description",
                  "process diagram", "describing trends", "cohesion", "coherence",
+                 "linking words", "connectors", "developing arguments",
                  "two-part question")),
     ("reading", ("skimming", "scanning", "not given", "true / false", "true/false",
-                 "yes / no", "yes/no", "matching headings", "paragraph headings",
-                 "summary & note completion", "diagram & flow chart completion",
-                 "advertisement", "short texts", "everyday texts", "academic texts")),
+                 "yes / no", "yes/no", "headings", "summary & note completion",
+                 "diagram & flow chart completion", "advertisement", "short texts",
+                 "everyday texts", "academic texts")),
 )
 
 
