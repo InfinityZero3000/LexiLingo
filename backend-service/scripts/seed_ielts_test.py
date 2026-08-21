@@ -14,6 +14,7 @@ part with no `audio_url` is a section nobody can answer.
 
 import argparse
 import asyncio
+import copy
 import sys
 from pathlib import Path
 
@@ -30,16 +31,43 @@ from app.services.ielts_service import iter_questions
 from ielts_paper_academic_1 import CONTENT, DESCRIPTION, SLUG, TITLE
 
 
-async def main(force_publish: bool) -> int:
-    problems = validate_test_content(CONTENT, skill_scope="full")
-    blocking = [p for p in problems if "audio_url" not in p]
+def _carry_over_audio(previous: dict | None) -> dict:
+    """Keep recordings that have already been attached.
 
+    The paper in the repo has empty `audio_url` fields, so re-seeding would
+    otherwise silence a Listening section that someone had uploaded audio for.
+    """
+    if not isinstance(previous, dict):
+        return CONTENT
+    known = {
+        part.get("part_key"): part.get("audio_url")
+        for section in previous.get("sections") or []
+        if (section.get("skill") or "").lower() == "listening"
+        for part in section.get("parts") or []
+        if isinstance(part, dict) and part.get("audio_url")
+    }
+    if not known:
+        return CONTENT
+    content = copy.deepcopy(CONTENT)
+    for section in content["sections"]:
+        if section["skill"] != "listening":
+            continue
+        for part in section["parts"]:
+            if known.get(part.get("part_key")):
+                part["audio_url"] = known[part["part_key"]]
+    return content
+
+
+async def main(force_publish: bool) -> int:
     async with AsyncSessionLocal() as db:
         existing = await db.execute(select(IeltsTest).where(IeltsTest.title == TITLE))
         test = existing.scalar_one_or_none()
+        content = _carry_over_audio(test.content if test else None)
+        problems = validate_test_content(content, skill_scope="full")
+        blocking = [p for p in problems if "audio_url" not in p]
         publishable = force_publish or not problems
         if test:
-            test.content = CONTENT
+            test.content = content
             test.description = DESCRIPTION
             # Demote deliberately: a published paper whose Listening cannot be
             # heard is a section nobody can answer.
@@ -53,7 +81,7 @@ async def main(force_publish: bool) -> int:
                 skill_scope="full",
                 target_band="6.0-7.5",
                 slug=SLUG,
-                content=CONTENT,
+                content=content,
                 is_published=publishable,
             )
             db.add(test)
@@ -63,7 +91,7 @@ async def main(force_publish: bool) -> int:
         test_id, published = test.id, test.is_published
 
     counts = {
-        skill: len(list(iter_questions(CONTENT, skill)))
+        skill: len(list(iter_questions(content, skill)))
         for skill in ("listening", "reading")
     }
     print(f"{action}: {TITLE} ({test_id})")

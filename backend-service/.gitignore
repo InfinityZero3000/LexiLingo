@@ -77,3 +77,6 @@ import_*
 # scripts/import_*.py — which is why import_kuzu_mastery.py needed its own
 # exception. Keep tooling tracked instead of adding one exception per script.
 !scripts/import_*.py
+
+# Generated media: IELTS recordings and admin uploads outside the container
+static/
