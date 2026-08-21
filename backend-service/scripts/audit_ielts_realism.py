@@ -169,6 +169,12 @@ def exercise_problems(exercise: dict, skill: str | None, where: str) -> list[str
     if _VIETNAMESE.search(answer):
         problems.append(f"{where}: Vietnamese in an IELTS task")
 
+    # ReadingComprehensionWidget splits the question on its final question mark
+    # and shows everything before it as the passage. Without one, the passage
+    # never renders and the learner reads it as an unbroken wall of prompt.
+    if ui == "reading_comprehension" and not question.rstrip().endswith("?"):
+        problems.append(f"{where}: reading passage has no closing question, so it will not render")
+
     if ui in {"fill_in_the_blank", "dictation"} and len(answer.split()) > 3:
         problems.append(
             f"{where}: completion answer is {len(answer.split())} words (limit is three)"
