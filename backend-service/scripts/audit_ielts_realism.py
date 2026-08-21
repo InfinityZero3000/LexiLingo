@@ -290,7 +290,13 @@ async def run(course_filter: str | None, verbose: bool) -> int:
             print("No IELTS courses found.")
             return 1
 
+        # Split by whether the lesson claims a skill. A finding inside a
+        # skill-labelled lesson is a defect in an exam task; the same finding
+        # inside an orientation lesson ("What Is IELTS?") may be deliberate —
+        # explaining the exam to Vietnamese learners in Vietnamese is not the
+        # same thing as putting Vietnamese inside a Reading question.
         totals: Counter[str] = Counter()
+        orientation: Counter[str] = Counter()
         for course in sorted(courses, key=lambda c: c.title or ""):
             lessons = sorted(
                 (lesson for unit in course.units for lesson in unit.lessons),
@@ -313,14 +319,22 @@ async def run(course_filter: str | None, verbose: bool) -> int:
                     print(f"    - {problem}")
                 if len(problems) > len(shown):
                     print(f"    … {len(problems) - len(shown)} more")
-            for problems in findings.values():
-                for problem in problems:
-                    totals[problem.split(":")[-1].strip()] += 1
+            for lesson in lessons:
+                bucket = totals if lesson.skill else orientation
+                for problem in findings.get(lesson.title) or []:
+                    bucket[problem.split(":")[-1].strip()] += 1
 
         print("\n" + "=" * 70)
-        print("Findings by kind")
+        print("Findings in exam-task lessons (these are defects)")
         for kind, n in totals.most_common():
             print(f"  {n:5d}  {kind}")
+        if not totals:
+            print("  none")
+        if orientation:
+            print("\nFindings in lessons with no skill label — check whether these")
+            print("are exam tasks or orientation material before rewriting them")
+            for kind, n in orientation.most_common():
+                print(f"  {n:5d}  {kind}")
     return 0
 
 
