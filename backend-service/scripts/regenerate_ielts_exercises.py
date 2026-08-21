@@ -173,15 +173,18 @@ def ielts_problems(exercises: list, skill: str) -> list[str]:
 
 async def generate(client: httpx.AsyncClient, prompt: str, label: str,
                    skill: str, attempts: int) -> tuple[list, str]:
-    # The budget is squeezed from both sides: qwen thinks before it answers, so
-    # too little room returns a 400 json_validate_failed with an empty
-    # failed_generation, while the free tier's tokens-per-minute limit counts
-    # max_tokens as reserved and answers 413 when it is too generous.
-    max_tokens = 5000
+    # Content generation normally leaves qwen's reasoning on, but not here: the
+    # free tier reserves max_tokens against the per-minute budget, so a request
+    # large enough to think in gets 413, and one small enough to pass gets a 400
+    # json_validate_failed when the thinking truncates the JSON. Measured on
+    # production, `reasoning_effort: "none"` answers this prompt in ~900
+    # completion tokens with valid JSON, which fits comfortably.
+    max_tokens = 3000
     payload = {
         "model": GROQ_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_object"},
+        "reasoning_effort": "none",
         "temperature": 0.7,
     }
     last = "no attempt made"
@@ -197,7 +200,7 @@ async def generate(client: httpx.AsyncClient, prompt: str, label: str,
                 if response.status_code in (401, 403):
                     raise SystemExit(f"Aborting: the API rejected the key — {last}")
                 if response.status_code == 413:
-                    max_tokens = max(2500, int(max_tokens * 0.7))
+                    max_tokens = max(1800, int(max_tokens * 0.7))
                     print(f"    [413] {label}: retrying with max_tokens={max_tokens}")
                 await asyncio.sleep(2 if response.status_code in (413, 429) else 5)
                 continue
