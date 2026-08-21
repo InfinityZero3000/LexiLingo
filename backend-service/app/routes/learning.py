@@ -44,7 +44,8 @@ from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
 from app.services import check_achievements_for_user
 from app.services.proficiency_service import ProficiencyService
-from app.schemas.proficiency import ExerciseResult, ProficiencyLevel
+from app.services.skill_attribution import attribute_exercises
+from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
 from app.routes.proficiency import record_exercise_results_for_user
 from app.crud.progress import ProgressCRUD
 from app.services.level_service import (
@@ -790,6 +791,78 @@ async def _find_next_lesson(db: AsyncSession, current_lesson: Lesson) -> Optiona
     return first.id if first else None
 
 
+async def _skill_results_for_attempt(
+    db: AsyncSession,
+    *,
+    attempt,
+    lesson,
+    course,
+    lesson_skill: SkillType,
+) -> List[ExerciseResult]:
+    """One ExerciseResult per skill the learner actually exercised.
+
+    A lesson mixes templates — an IELTS reading lesson carries writing tasks,
+    a vocabulary lesson carries dictation — so crediting the whole attempt to
+    `lesson.skill` measured the label instead of the work. Each answered
+    exercise is attributed from its own `ui_type` (see
+    `services/skill_attribution.py`); anything unattributable is left out.
+
+    Falls back to the single aggregate result when the attempt recorded no
+    per-question rows, which is what clients that only call /complete produce.
+    """
+    aggregate = ExerciseResult(
+        exercise_type="lesson",
+        skill=lesson_skill,
+        difficulty_level=ProficiencyLevel(course.level),
+        is_correct=attempt.passed,
+        score=float(attempt.score),
+        time_spent_seconds=attempt.time_spent_ms // 1000,
+        lesson_id=str(attempt.lesson_id),
+        course_id=str(lesson.course_id),
+    )
+
+    exercises = (
+        lesson.content.get("exercises") if isinstance(lesson.content, dict) else None
+    )
+    if not exercises:
+        return [aggregate]
+
+    rows = await db.execute(
+        select(QuestionAttempt).where(
+            QuestionAttempt.lesson_attempt_id == attempt.id
+        )
+    )
+    # Last answer wins: a retried question is stored as a second row.
+    outcomes = {
+        str(row.question_id): bool(row.is_correct)
+        for row in sorted(rows.scalars().all(), key=lambda r: r.attempt_number)
+    }
+    if not outcomes:
+        return [aggregate]
+
+    by_skill = attribute_exercises(exercises, outcomes, lesson_skill=lesson_skill)
+    if not by_skill:
+        return [aggregate]
+
+    seconds = attempt.time_spent_ms // 1000
+    total_answered = sum(len(v) for v in by_skill.values()) or 1
+    return [
+        ExerciseResult(
+            exercise_type="lesson",
+            skill=skill,
+            difficulty_level=ProficiencyLevel(course.level),
+            is_correct=all(items),
+            score=round(100.0 * sum(items) / len(items), 2),
+            # Split the attempt's time across skills by how much of the work
+            # each one carried, so a one-exercise skill cannot claim the lot.
+            time_spent_seconds=int(seconds * len(items) / total_answered),
+            lesson_id=str(attempt.lesson_id),
+            course_id=str(lesson.course_id),
+        )
+        for skill, items in by_skill.items()
+    ]
+
+
 def _normalize_answer(answer: any, question_type: str) -> str:
     """Normalize answer for comparison"""
     if answer is None:
@@ -1127,23 +1200,20 @@ async def complete_lesson(
         )
         course = course_result.scalar_one_or_none()
         if course and course.level in {lvl.value for lvl in ProficiencyLevel}:
+            lesson_skill = ProficiencyService.resolve_lesson_skill(
+                lesson.skill, course.skill, course.tags
+            )
+            results = await _skill_results_for_attempt(
+                db,
+                attempt=attempt,
+                lesson=lesson,
+                course=course,
+                lesson_skill=lesson_skill,
+            )
             await record_exercise_results_for_user(
                 db,
                 current_user,
-                [
-                    ExerciseResult(
-                        exercise_type="lesson",
-                        skill=ProficiencyService.resolve_lesson_skill(
-                            lesson.skill, course.skill, course.tags
-                        ),
-                        difficulty_level=ProficiencyLevel(course.level),
-                        is_correct=attempt.passed,
-                        score=float(attempt.score),
-                        time_spent_seconds=attempt.time_spent_ms // 1000,
-                        lesson_id=str(attempt.lesson_id),
-                        course_id=str(lesson.course_id),
-                    )
-                ],
+                results,
                 award_xp=False,  # lesson completion above already awarded XP
             )
     except Exception as e:
