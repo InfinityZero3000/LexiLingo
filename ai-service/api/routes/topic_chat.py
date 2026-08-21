@@ -788,7 +788,7 @@ async def check_llm_health():
     health = {
         "status": "ok",
         "trace-cag_mode": "enforced",
-        "gemini_configured": settings.GEMINI_API_KEY is not None,
+        "gemini_configured": bool(settings.GEMINI_API_KEY),
         "ollama_url": getattr(settings, 'OLLAMA_BASE_URL', None),
     }
     
