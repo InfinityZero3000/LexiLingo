@@ -62,7 +62,8 @@ IELTS_TASKS = {
 # App ui_types that can stand in for an IELTS task, per skill.
 _ACCEPTABLE_UI = {
     "listening": {"listen_and_choose", "dictation", "fill_in_the_blank", "multiple_choice"},
-    "reading": {"multiple_choice", "fill_in_the_blank", "categorization"},
+    "reading": {"multiple_choice", "fill_in_the_blank", "categorization",
+                "reading_comprehension"},
     "writing": {"short_writing_answer", "grammar_correction"},
     "speaking": {"speaking_repeat", "pronunciation_practice", "short_writing_answer"},
 }
@@ -97,6 +98,45 @@ def _exercises(lesson: Lesson) -> list[dict]:
     return [e for e in raw if isinstance(e, dict)] if isinstance(raw, list) else []
 
 
+def exercise_problems(exercise: dict, skill: str | None, where: str) -> list[str]:
+    """Every way one exercise departs from the exam's form.
+
+    Shared with the regenerator, so a replacement is judged by exactly the
+    rules that condemned what it replaces.
+    """
+    problems: list[str] = []
+    ui = str(exercise.get("ui_type") or exercise.get("type") or "")
+    question = str(exercise.get("question") or "")
+    options = exercise.get("options") if isinstance(exercise.get("options"), list) else []
+    answer = str(exercise.get("correct_answer") or "")
+    has_audio = bool(exercise.get("audio_url") or exercise.get("audio"))
+
+    # dictation and listen_and_choose speak their own text, so they carry their
+    # recording by definition; anything else naming one has to have a file.
+    speaks_itself = ui in {"dictation", "listen_and_choose", "pronunciation_practice",
+                           "speaking_repeat"}
+    if _AUDIO_CLAIM.search(question) and not has_audio and not speaks_itself:
+        problems.append(f"{where}: asks about a recording that is not attached")
+
+    if ui == "true_or_false":
+        problems.append(f"{where}: two-way True/False; the exam uses TRUE/FALSE/NOT GIVEN")
+
+    if _VIETNAMESE.search(question) or any(_VIETNAMESE.search(str(o)) for o in options):
+        problems.append(f"{where}: Vietnamese in an IELTS task")
+    if _VIETNAMESE.search(answer):
+        problems.append(f"{where}: Vietnamese in an IELTS task")
+
+    if ui in {"fill_in_the_blank", "dictation"} and len(answer.split()) > 3:
+        problems.append(
+            f"{where}: completion answer is {len(answer.split())} words (limit is three)"
+        )
+
+    if skill and ui and ui not in _ACCEPTABLE_UI.get(skill, set()):
+        problems.append(f"{where}: {ui} is not an IELTS {skill} task")
+
+    return problems
+
+
 def audit_lesson(lesson: Lesson) -> list[str]:
     """Every way this lesson departs from the exam's form."""
     problems: list[str] = []
@@ -116,31 +156,7 @@ def audit_lesson(lesson: Lesson) -> list[str]:
             )
 
     for index, exercise in enumerate(exercises, start=1):
-        where = f"Q{index}"
-        ui = str(exercise.get("ui_type") or exercise.get("type") or "")
-        question = str(exercise.get("question") or "")
-        options = exercise.get("options") if isinstance(exercise.get("options"), list) else []
-        answer = str(exercise.get("correct_answer") or "")
-        has_audio = bool(exercise.get("audio_url") or exercise.get("audio"))
-
-        if _AUDIO_CLAIM.search(question) and not has_audio:
-            problems.append(f"{where}: asks about a recording that is not attached")
-
-        if ui == "true_or_false":
-            problems.append(f"{where}: two-way True/False; the exam uses TRUE/FALSE/NOT GIVEN")
-        elif options and len(options) == 3 and {"true", "false"} <= {str(o).lower() for o in options}:
-            pass  # already TFNG-shaped
-
-        if _VIETNAMESE.search(question) or any(_VIETNAMESE.search(str(o)) for o in options):
-            problems.append(f"{where}: Vietnamese in an IELTS task")
-
-        if ui in {"fill_in_the_blank", "dictation"} and len(answer.split()) > 3:
-            problems.append(
-                f"{where}: completion answer is {len(answer.split())} words (limit is three)"
-            )
-
-        if skill and ui and ui not in _ACCEPTABLE_UI.get(skill, set()):
-            problems.append(f"{where}: {ui} is not an IELTS {skill} task")
+        problems.extend(exercise_problems(exercise, skill, f"Q{index}"))
 
     return problems
 
