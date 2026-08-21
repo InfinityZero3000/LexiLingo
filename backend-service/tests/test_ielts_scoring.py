@@ -124,3 +124,27 @@ def test_missing_skill_reports_no_band_rather_than_zero():
 
 def test_normalize_keeps_hyphens_and_apostrophes():
     assert normalize_answer("Mother's day-care!") == "mother's day-care"
+
+
+def _count_problems(problems: list[str], needle: str) -> int:
+    return len([p for p in problems if needle in p])
+
+
+def test_publish_gate_rejects_a_full_paper_that_is_too_short():
+    # 5/5 correct scales to 40/40 and reports band 9. A paper claiming to be a
+    # full IELTS test has to carry the real length before it can be published.
+    from app.routes.admin_ielts import validate_test_content
+
+    problems = validate_test_content(_paper(5), skill_scope="full")
+    assert _count_problems(problems, "at least 40 are needed") == 1
+
+
+def test_publish_gate_allows_a_practice_section_of_ten():
+    from app.routes.admin_ielts import validate_test_content
+
+    assert not _count_problems(
+        validate_test_content(_paper(10), skill_scope="reading"), "are needed"
+    )
+    assert _count_problems(
+        validate_test_content(_paper(9), skill_scope="reading"), "at least 10"
+    ) == 1

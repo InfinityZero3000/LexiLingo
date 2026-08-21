@@ -27,17 +27,18 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterator
 
+from app.models.ielts import PRODUCTIVE_SKILLS
 from app.services.ielts_scoring import (
     answer_matches,
     listening_band,
     overall_band,
     reading_band,
+    round_to_half_band,
 )
 
 logger = logging.getLogger(__name__)
 
 OBJECTIVE_SKILLS = ("listening", "reading")
-PRODUCTIVE_SKILLS = ("writing", "speaking")
 
 
 def iter_sections(content: dict | None, skill: str | None = None) -> Iterator[dict]:
@@ -123,7 +124,7 @@ def writing_band_from_tasks(task_bands: dict[str, float]) -> float | None:
         if not values:
             return None
         combined = sum(values) / len(values)
-    return round(combined * 2) / 2
+    return round_to_half_band(combined)
 
 
 def speaking_band_from_parts(part_bands: dict[str, float]) -> float | None:
@@ -132,7 +133,7 @@ def speaking_band_from_parts(part_bands: dict[str, float]) -> float | None:
     values = [float(v) for v in part_bands.values() if v is not None]
     if not values:
         return None
-    return round(sum(values) / len(values) * 2) / 2
+    return round_to_half_band(sum(values) / len(values))
 
 
 def compute_overall(bands: dict[str, float | None], skill_scope: str) -> float | None:

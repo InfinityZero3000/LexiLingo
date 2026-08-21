@@ -46,11 +46,15 @@ class _SittingViewState extends State<_SittingView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final provider = context.watch<IeltsProvider>();
-    final sections = provider.paper.sections;
+    // Answers change on every keystroke, so nothing here may watch the whole
+    // provider — a full paper is 80 questions and would rebuild all of them.
+    final provider = context.read<IeltsProvider>();
+    final sections = context.select<IeltsProvider, List<IeltsSection>>(
+      (p) => p.paper.sections,
+    );
+    final isLoading = context.select<IeltsProvider, bool>((p) => p.isLoading);
 
-    if (provider.isLoading && sections.isEmpty) {
+    if (isLoading && sections.isEmpty) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     if (sections.isEmpty) {
@@ -108,32 +112,14 @@ class _SittingViewState extends State<_SittingView> {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    '${provider.answeredCount} answered',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
+                const Expanded(child: _AnsweredCount()),
                 if (index < sections.length - 1)
                   FilledButton.tonal(
                     onPressed: () => setState(() => _sectionIndex = index + 1),
                     child: Text('Next: ${ieltsSkillLabel(sections[index + 1].skill)}'),
                   )
                 else
-                  FilledButton(
-                    onPressed: provider.isSubmitting
-                        ? null
-                        : () => _submit(context, provider),
-                    child: provider.isSubmitting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Submit test'),
-                  ),
+                  _SubmitButton(onSubmit: () => _submit(context, provider)),
               ],
             ),
           ),
@@ -203,6 +189,43 @@ class _SittingViewState extends State<_SittingView> {
           existingProvider: provider,
         ),
       ),
+    );
+  }
+}
+
+class _AnsweredCount extends StatelessWidget {
+  const _AnsweredCount();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final count = context.select<IeltsProvider, int>((p) => p.answeredCount);
+    return Text(
+      '$count answered',
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+    );
+  }
+}
+
+class _SubmitButton extends StatelessWidget {
+  final VoidCallback onSubmit;
+  const _SubmitButton({required this.onSubmit});
+
+  @override
+  Widget build(BuildContext context) {
+    final submitting =
+        context.select<IeltsProvider, bool>((p) => p.isSubmitting);
+    return FilledButton(
+      onPressed: submitting ? null : onSubmit,
+      child: submitting
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('Submit test'),
     );
   }
 }
@@ -442,8 +465,10 @@ class _QuestionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final provider = context.watch<IeltsProvider>();
-    final current = provider.answerFor(question.key);
+    final provider = context.read<IeltsProvider>();
+    final current = context.select<IeltsProvider, String?>(
+      (p) => p.answerFor(question.key),
+    );
 
     final options = question.options.isNotEmpty
         ? question.options
@@ -530,9 +555,12 @@ class _WritingTask extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final provider = context.watch<IeltsProvider>();
+    final provider = context.read<IeltsProvider>();
     final key = part.partKey ?? 'writing_task_${part.order}';
-    final text = provider.answerFor(key) ?? '';
+    final text = context.select<IeltsProvider, String?>(
+          (p) => p.answerFor(key),
+        ) ??
+        '';
     final words = text.trim().isEmpty
         ? 0
         : text.trim().split(RegExp(r'\s+')).length;
@@ -581,9 +609,9 @@ class _WritingTask extends StatelessWidget {
           onChanged: (value) => provider.setAnswer(key, value),
         ),
         const SizedBox(height: 8),
-        if (part.suggestedMinutesLabel != null)
+        if (part.suggestedMinutes != null)
           Text(
-            part.suggestedMinutesLabel!,
+            'Aim for about ${part.suggestedMinutes} minutes.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -592,11 +620,6 @@ class _WritingTask extends StatelessWidget {
       ],
     );
   }
-}
-
-extension on IeltsPart {
-  String? get suggestedMinutesLabel =>
-      minWords == null ? null : 'Aim for about ${minWords == 150 ? 20 : 40} minutes.';
 }
 
 // ---------------------------------------------------------------------------
@@ -628,6 +651,7 @@ class _SpeakingPart extends StatefulWidget {
 
 class _SpeakingPartState extends State<_SpeakingPart> {
   final AudioRecorder _recorder = AudioRecorder();
+  late final TextEditingController _transcriptController;
   bool _recording = false;
   bool _transcribing = false;
   String? _error;
@@ -635,7 +659,16 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   String get _key => widget.part.partKey ?? 'speaking_part_${widget.part.order}';
 
   @override
+  void initState() {
+    super.initState();
+    _transcriptController = TextEditingController(
+      text: context.read<IeltsProvider>().answerFor(_key) ?? '',
+    );
+  }
+
+  @override
   void dispose() {
+    _transcriptController.dispose();
     _recorder.dispose();
     super.dispose();
   }
@@ -659,6 +692,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
         if (transcript != null && transcript.trim().isNotEmpty) {
           // The transcript is what gets graded, so it stays editable — Whisper
           // mishearing a word must not cost the learner a band.
+          _transcriptController.text = transcript.trim();
           provider.setAnswer(_key, transcript.trim());
         } else {
           setState(() => _error = 'Nothing was transcribed. Try again.');
@@ -687,8 +721,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final provider = context.watch<IeltsProvider>();
-    final transcript = provider.answerFor(_key) ?? '';
+    final provider = context.read<IeltsProvider>();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -745,8 +778,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
         ],
         const SizedBox(height: 12),
         TextFormField(
-          key: ValueKey('$_key:${transcript.hashCode}'),
-          initialValue: transcript,
+          controller: _transcriptController,
           maxLines: 6,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),

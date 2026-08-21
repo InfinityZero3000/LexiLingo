@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from api.core.groq_key_pool import get_available_groq_key
@@ -59,7 +60,13 @@ _SYSTEM_PROMPT = (
 
 
 def _round_half_band(value: float) -> float:
-    return round(value * 2) / 2
+    """Nearest half band, with .25 and .75 going up.
+
+    Plain round() is banker's rounding, so a mean of 6.25 — four descriptors of
+    6/6/6.5/6.5 — would report 6.0 where IELTS reports 6.5.
+    """
+    doubled = Decimal(str(value)) * 2
+    return float(doubled.quantize(Decimal("1"), rounding=ROUND_HALF_UP) / 2)
 
 
 def _clamp_band(value: Any) -> float:

@@ -138,6 +138,7 @@ class IeltsPart {
   final String? cueCard;
   final String? imageUrl;
   final int? minWords;
+  final int? suggestedMinutes;
   final int? prepSeconds;
   final int? speakSeconds;
   final List<IeltsQuestionGroup> groups;
@@ -154,6 +155,7 @@ class IeltsPart {
     this.cueCard,
     this.imageUrl,
     this.minWords,
+    this.suggestedMinutes,
     this.prepSeconds,
     this.speakSeconds,
     this.groups = const [],
@@ -173,6 +175,7 @@ class IeltsPart {
       cueCard: json['cue_card']?.toString(),
       imageUrl: json['image_url']?.toString(),
       minWords: (json['min_words'] as num?)?.toInt(),
+      suggestedMinutes: (json['suggested_minutes'] as num?)?.toInt(),
       prepSeconds: (json['prep_seconds'] as num?)?.toInt(),
       speakSeconds: (json['speak_seconds'] as num?)?.toInt(),
       groups: raw is List

@@ -312,6 +312,9 @@ async def main() -> None:
     print("  writing 2 tasks, speaking 3 parts")
     print("  NOTE: the listening audio_url is a placeholder — upload a recording")
     print("        in the admin IELTS page and paste the returned URL.")
+    print("  NOTE: this is a short demo paper. It publishes itself because the")
+    print("        seed writes the row directly; the admin publish gate needs 40")
+    print("        questions per objective skill, so its bands are indicative.")
 
 
 if __name__ == "__main__":

@@ -65,6 +65,10 @@ class IeltsTestDetail(BaseModel):
     updated_at: Optional[str] = None
 
 
+_FULL_SECTION_QUESTIONS = 40
+_MIN_BAND_QUESTIONS = 10
+
+
 def validate_test_content(content: dict | None, skill_scope: str = "full") -> list[str]:
     """Blocking problems that would make the paper unsittable or ungradable."""
     problems: list[str] = []
@@ -87,6 +91,21 @@ def validate_test_content(content: dict | None, skill_scope: str = "full") -> li
         questions = list(iter_questions(content, skill))
         if skill in present and not questions:
             problems.append(f"{skill.title()} section has no questions")
+        elif skill in present:
+            # The band tables are defined on 40 questions and a shorter paper is
+            # scaled up to that equivalent, so 5/5 would report band 9. A paper
+            # that claims to be a full IELTS test has to carry the real length;
+            # a practice set may be shorter but not so short that scaling
+            # invents a band.
+            floor = (
+                _FULL_SECTION_QUESTIONS if skill_scope == "full"
+                else _MIN_BAND_QUESTIONS
+            )
+            if len(questions) < floor:
+                problems.append(
+                    f"{skill.title()} section has {len(questions)} questions; "
+                    f"at least {floor} are needed for the band to mean anything"
+                )
         for question in questions:
             key = question.get("key")
             if not key:

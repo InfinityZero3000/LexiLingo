@@ -82,7 +82,6 @@ def upgrade() -> None:
         sa.Column("skill", sa.String(20), nullable=False),
         sa.Column("part_key", sa.String(50), nullable=False),
         sa.Column("submission_text", sa.Text(), nullable=True),
-        sa.Column("audio_url", sa.String(500), nullable=True),
         sa.Column("word_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("criteria_scores", PortableJSON(), nullable=True),
         sa.Column("band", sa.Numeric(2, 1), nullable=True),

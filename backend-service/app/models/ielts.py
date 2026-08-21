@@ -165,7 +165,6 @@ class IeltsGrading(Base):
     part_key: Mapped[str] = mapped_column(String(50), nullable=False)
 
     submission_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    audio_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     word_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     criteria_scores: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
