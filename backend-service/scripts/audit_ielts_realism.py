@@ -198,6 +198,79 @@ def audit_lesson(lesson: Lesson) -> list[str]:
     return problems
 
 
+_MOCK_RENAMES = (
+    ("full listening mock test", "Listening Practice Set"),
+    ("full reading mock test", "Reading Practice Set"),
+    ("full speaking mock interview", "Speaking Practice Set"),
+    ("gt full mock test simulation", "GT Practice Set"),
+    ("full writing mock", "Writing Practice Set"),
+    ("mini mock test", "Practice Set"),
+    ("mock test", "Practice Set"),
+    ("mock interview", "Practice Set"),
+    ("full test", "Practice Set"),
+)
+
+_MOCK_POINTER = (
+    "A full IELTS mock is 40 listening and 40 reading questions and lives in "
+    "Practice Tests, not in a lesson. This is a short practice set."
+)
+
+
+def _renamed(title: str) -> str | None:
+    """A five-question lesson may not call itself a full mock.
+
+    The real thing exists now — a full-length paper in the IELTS test section —
+    so the lesson is renamed to what it is rather than padded out to 40
+    questions it was never going to have.
+    """
+    lowered = (title or "").lower()
+    for needle, replacement in _MOCK_RENAMES:
+        if needle in lowered:
+            start = lowered.index(needle)
+            return (title[:start] + replacement + title[start + len(needle):]).strip()
+    return None
+
+
+async def fix_mock_titles(course_filter: str | None, apply: bool) -> int:
+    async with AsyncSessionLocal() as db:
+        query = select(Course).options(selectinload(Course.units).selectinload(Unit.lessons))
+        courses = [
+            course
+            for course in (await db.execute(query)).scalars().all()
+            if "ielts" in (course.title or "").lower()
+            and (not course_filter or course_filter.lower() in (course.title or "").lower())
+        ]
+        changed = 0
+        for course in courses:
+            for unit in course.units:
+                for lesson in unit.lessons:
+                    title = lesson.title or ""
+                    lowered = title.lower()
+                    if "mock" not in lowered and "full test" not in lowered:
+                        continue
+                    exercises = _exercises(lesson)
+                    skill = lesson.skill or skill_from_title(title)
+                    expected = FULL_LENGTH.get(skill or "")
+                    if expected and len(exercises) >= expected:
+                        continue
+                    new_title = _renamed(title)
+                    if not new_title or new_title == title:
+                        continue
+                    print(f"  {title!r}\n    -> {new_title!r} ({len(exercises)} questions)")
+                    if apply:
+                        lesson.title = new_title
+                        description = (lesson.description or "").strip()
+                        if _MOCK_POINTER not in description:
+                            lesson.description = (
+                                f"{description} {_MOCK_POINTER}".strip()
+                            )
+                        changed += 1
+        if apply and changed:
+            await db.commit()
+        print(f"\n{'renamed' if apply else 'would rename'} {changed if apply else '(dry run)'}")
+    return 0
+
+
 async def run(course_filter: str | None, verbose: bool) -> int:
     async with AsyncSessionLocal() as db:
         query = select(Course).options(selectinload(Course.units).selectinload(Unit.lessons))
@@ -249,7 +322,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--course", help="only courses whose title contains this")
     parser.add_argument("--verbose", action="store_true", help="every finding, not the first three")
+    parser.add_argument(
+        "--fix-mock-titles",
+        action="store_true",
+        help="rename lessons that call themselves a full mock but are not one",
+    )
+    parser.add_argument("--apply", action="store_true", help="write the fixes")
     args = parser.parse_args()
+    if args.fix_mock_titles:
+        return asyncio.run(fix_mock_titles(args.course, args.apply))
     return asyncio.run(run(args.course, args.verbose))
 
 
