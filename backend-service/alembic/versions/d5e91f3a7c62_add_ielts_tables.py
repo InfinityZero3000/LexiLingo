@@ -82,6 +82,9 @@ def upgrade() -> None:
         sa.Column("skill", sa.String(20), nullable=False),
         sa.Column("part_key", sa.String(50), nullable=False),
         sa.Column("submission_text", sa.Text(), nullable=True),
+        # Dropped again by 4a7b1c9e2d30 — nothing ever wrote it. Kept here
+        # because this migration has already run on production.
+        sa.Column("audio_url", sa.String(500), nullable=True),
         sa.Column("word_count", sa.Integer(), nullable=False, server_default="0"),
         sa.Column("criteria_scores", PortableJSON(), nullable=True),
         sa.Column("band", sa.Numeric(2, 1), nullable=True),
