@@ -173,33 +173,39 @@ def ielts_problems(exercises: list, skill: str) -> list[str]:
 
 async def generate(client: httpx.AsyncClient, prompt: str, label: str,
                    skill: str, attempts: int) -> tuple[list, str]:
+    # The budget is squeezed from both sides: qwen thinks before it answers, so
+    # too little room returns a 400 json_validate_failed with an empty
+    # failed_generation, while the free tier's tokens-per-minute limit counts
+    # max_tokens as reserved and answers 413 when it is too generous.
+    max_tokens = 5000
     payload = {
         "model": GROQ_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_object"},
         "temperature": 0.7,
-        # qwen thinks before it answers and a truncated reply comes back as a
-        # 400 json_validate_failed with an empty failed_generation, which looks
-        # like a bad prompt. Reading exercises carry a passage each, so five of
-        # them need more room than the general generator's 4000.
-        "max_tokens": 8000,
     }
     last = "no attempt made"
     for attempt in range(attempts):
         try:
             headers = {"Authorization": f"Bearer {await next_groq_key()}"}
-            response = await client.post(GROQ_URL, json=payload, headers=headers,
-                                         timeout=90.0)
+            response = await client.post(
+                GROQ_URL, json={**payload, "max_tokens": max_tokens},
+                headers=headers, timeout=90.0,
+            )
             if response.status_code != 200:
                 last = f"HTTP {response.status_code}: {response.text[:160]}"
                 if response.status_code in (401, 403):
                     raise SystemExit(f"Aborting: the API rejected the key — {last}")
-                await asyncio.sleep(2 if response.status_code == 429 else 5)
+                if response.status_code == 413:
+                    max_tokens = max(2500, int(max_tokens * 0.7))
+                    print(f"    [413] {label}: retrying with max_tokens={max_tokens}")
+                await asyncio.sleep(2 if response.status_code in (413, 429) else 5)
                 continue
             data = json.loads(response.json()["choices"][0]["message"]["content"])
             exercises = sanitize_exercises(exercises_from_payload(data))
             if not exercises:
                 last = "rejected by sanitize_exercises"
+                await asyncio.sleep(1)
                 continue
             problems = ielts_problems(exercises, skill)
             if problems:
@@ -313,7 +319,7 @@ def main() -> int:
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--delay", type=float, default=6.0,
                         help="pause after each lesson; Groq's free tier rate-limits hard")
-    parser.add_argument("--attempts", type=int, default=4)
+    parser.add_argument("--attempts", type=int, default=6)
     parser.add_argument("--backup", help="where to write the previous content")
     args = parser.parse_args()
     return asyncio.run(run(args))
