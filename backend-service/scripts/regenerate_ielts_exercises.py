@@ -281,11 +281,11 @@ async def run(args) -> int:
         rewritten = failed = 0
 
         async with httpx.AsyncClient() as client:
-            async def worker(course, lesson, skill):
+            async def worker(index, course, lesson, skill):
                 nonlocal rewritten, failed
                 async with semaphore:
                     label = f"{lesson.title} [{skill}]"
-                    print(f"-> {label}")
+                    print(f"-> [{index}/{len(targets)}] {label}", flush=True)
                     exercises, status = await generate(
                         client,
                         build_prompt(course.title, course.level or "B2",
@@ -305,12 +305,16 @@ async def run(args) -> int:
                     lesson.content = {"version": 1, "exercises": exercises}
                     if not lesson.skill:
                         lesson.skill = skill
+                    # Commit per lesson. A run over 136 lessons takes the best
+                    # part of an hour on Groq's free tier, and a single commit
+                    # at the end means anything that interrupts it throws away
+                    # every generation the run has paid for.
+                    await db.commit()
                     rewritten += 1
 
-            await asyncio.gather(*(worker(c, l, s) for c, l, s, _ in targets))
-
-        if not args.dry_run and rewritten:
-            await db.commit()
+            await asyncio.gather(
+                *(worker(i, c, l, s) for i, (c, l, s, _) in enumerate(targets, 1))
+            )
 
     print(f"\nrewritten: {rewritten}, failed: {failed}")
     if not args.dry_run:
@@ -323,7 +327,10 @@ def main() -> int:
     parser.add_argument("--course", help="only courses whose title contains this")
     parser.add_argument("--limit", type=int, help="rewrite at most this many lessons")
     parser.add_argument("--dry-run", action="store_true", help="generate but do not save")
-    parser.add_argument("--concurrency", type=int, default=2)
+    # One at a time: the workers share a session, and Groq's free tier limits
+    # tokens per minute per organisation, so parallelism buys 429s rather than
+    # speed.
+    parser.add_argument("--concurrency", type=int, default=1)
     parser.add_argument("--delay", type=float, default=6.0,
                         help="pause after each lesson; Groq's free tier rate-limits hard")
     parser.add_argument("--attempts", type=int, default=6)
