@@ -184,9 +184,13 @@ async def generate(client: httpx.AsyncClient, prompt: str, label: str,
         "model": GROQ_MODEL,
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_object"},
-        "reasoning_effort": "none",
         "temperature": 0.7,
     }
+    # Only qwen accepts "none"; gpt-oss rejects the request outright with
+    # "`reasoning_effort` must be one of low, medium, or high". Same rule as
+    # _qwen_reasoning_overrides in ai-service.
+    if "qwen" in GROQ_MODEL.lower():
+        payload["reasoning_effort"] = "none"
     last = "no attempt made"
     for attempt in range(attempts):
         try:

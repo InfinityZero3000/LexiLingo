@@ -74,22 +74,59 @@ _AUDIO_CLAIM = re.compile(
     re.IGNORECASE,
 )
 _VIETNAMESE = re.compile(r"[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]", re.IGNORECASE)
-_SKILL_FROM_TITLE = (
-    ("listening", ("listening", "listen", "section 1", "section 2", "section 3", "section 4", "accents", "lecture")),
-    ("speaking", ("speaking", "pronunciation", "fluency", "interview", "cue card", "idiomatic")),
-    ("writing", ("writing", "task 1", "task 2", "essay", "describing", "diagram", "chart", "graph", "cohesion")),
-    ("reading", ("reading", "passage", "skimming", "scanning", "true/false", "yes/no", "headings", "summary & note")),
+# Two passes, because an explicit skill word must beat a positional hint. "GT
+# Reading Section 1" says Reading; without the precedence it also matches
+# "section 1", which is a Listening section, and the ambiguity loses a label
+# that the title states outright.
+_EXPLICIT = (
+    ("listening", ("listening", "listen ", "listen to", "listen for")),
+    ("reading", ("reading", "read ", "passage")),
+    ("writing", ("writing", "write ", "essay")),
+    ("speaking", ("speaking", "speak ", "pronunciation")),
 )
 
-FULL_LENGTH = {"listening": 40, "reading": 40}
+_IMPLIED = (
+    ("listening", ("section 1", "section 2", "section 3", "section 4", "accents",
+                   "lecture", "conversation", "monologue", "note-taking while")),
+    ("speaking", ("fluency", "interview", "cue card", "idiomatic language",
+                  "word stress", "intonation", "part 1 questions", "part 1 topics",
+                  "filler words", "longer answers", "extending answers")),
+    ("writing", ("task 1", "task 2", "letter", "bar chart", "line graph",
+                 "pie chart", "mixed graph", "double graph", "map description",
+                 "process diagram", "describing trends", "cohesion", "coherence",
+                 "two-part question")),
+    ("reading", ("skimming", "scanning", "not given", "true / false", "true/false",
+                 "yes / no", "yes/no", "matching headings", "paragraph headings",
+                 "summary & note completion", "diagram & flow chart completion",
+                 "advertisement", "short texts", "everyday texts", "academic texts")),
+)
+
+
+def _match(title: str, table) -> str | None:
+    matches = {skill for skill, needles in table if any(n in title for n in needles)}
+    # A title naming two skills is not a label. Guessing between them would
+    # credit the wrong skill silently, which is worse than leaving it blank.
+    return matches.pop() if len(matches) == 1 else None
 
 
 def skill_from_title(title: str) -> str | None:
-    lowered = (title or "").lower()
-    for skill, needles in _SKILL_FROM_TITLE:
-        if any(needle in lowered for needle in needles):
-            return skill
-    return None
+    """The one skill a lesson title names outright, or None.
+
+    Shared with backfill_content_skill.py — the label that gets written and the
+    label the audit expects have to come from the same table.
+    """
+    lowered = f" {(title or '').lower()} "
+    explicit = _match(lowered, _EXPLICIT)
+    # "Task 1" and "Task 2" name the Writing paper and nothing else, so a title
+    # carrying one alongside a different skill word is describing two things at
+    # once — "Task 1: Reading and Understanding Bar Charts" is a Writing lesson
+    # that happens to say Reading.
+    if explicit and explicit != "writing" and ("task 1" in lowered or "task 2" in lowered):
+        return None
+    return explicit or _match(lowered, _IMPLIED)
+
+
+FULL_LENGTH = {"listening": 40, "reading": 40}
 
 
 def _exercises(lesson: Lesson) -> list[dict]:

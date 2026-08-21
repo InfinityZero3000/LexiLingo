@@ -67,32 +67,15 @@ def _course_skill_guess(course: Course) -> str | None:
     return ProficiencyService.infer_skill_from_tags(flat).value
 
 
-# A lesson title only names a skill when it says so outright. These phrases are
-# the ones the IELTS courses use — "Speaking Part 3", "Section 3-4" (the
-# listening sections), "Task 1" (a writing task). Anything vaguer is left NULL:
-# a wrong label is worse than none, because it silently credits the wrong skill.
-_TITLE_SKILLS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("listening", ("listening", "listen ", "listen for", "section 1", "section 2",
-                   "section 3", "section 4", "accents", "lecture", "note-taking while")),
-    ("speaking", ("speaking", "pronunciation", "fluency", "interview", "cue card",
-                  "idiomatic language", "word stress", "intonation")),
-    # "Describing…" on its own is ambiguous — an A1 lesson describing objects is
-    # speaking practice. Only the chart/process phrasings name Writing Task 1.
-    ("writing", ("writing", "task 1", "task 2", "essay", "paragraph",
-                 "describing trends", "describing process", "process diagram",
-                 "bar chart", "line graph", "pie chart", "mixed graph",
-                 "double graph", "map tasks", "cohesion", "coherence")),
-    ("reading", ("reading", "passage", "skimming", "scanning", "true/false",
-                 "yes/no", "matching headings", "summary & note completion",
-                 "diagram & flow chart completion")),
-)
+# The title table lives in audit_ielts_realism, so the label that gets written
+# here and the label the audit expects cannot drift apart. Two copies had
+# already disagreed on eight lessons.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from audit_ielts_realism import skill_from_title  # noqa: E402
 
 
 def _lesson_title_guess(lesson: Lesson) -> str | None:
-    title = (lesson.title or "").lower()
-    matches = {skill for skill, needles in _TITLE_SKILLS if any(n in title for n in needles)}
-    # "Reading aloud for fluency" names two skills; a coin flip is not a label.
-    return matches.pop() if len(matches) == 1 else None
+    return skill_from_title(lesson.title)
 
 
 def _lesson_skill_guess(lesson: Lesson) -> str | None:
