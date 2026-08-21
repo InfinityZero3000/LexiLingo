@@ -178,7 +178,11 @@ async def generate(client: httpx.AsyncClient, prompt: str, label: str,
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_object"},
         "temperature": 0.7,
-        "max_tokens": 4000,
+        # qwen thinks before it answers and a truncated reply comes back as a
+        # 400 json_validate_failed with an empty failed_generation, which looks
+        # like a bad prompt. Reading exercises carry a passage each, so five of
+        # them need more room than the general generator's 4000.
+        "max_tokens": 8000,
     }
     last = "no attempt made"
     for attempt in range(attempts):
