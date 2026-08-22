@@ -1,0 +1,186 @@
+\chapter{Giao diện lập trình ứng dụng (API)}
+
+Tài liệu API đầy đủ nằm ở \code{docs/api\_docs.md} với 308 điểm cuối. Chương này trình bày
+quy ước chung và các nhóm điểm cuối tiêu biểu; danh sách đầy đủ được sinh tự động qua
+OpenAPI tại \code{/docs} của mỗi dịch vụ.
+
+\section{Quy ước chung}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Tiền tố phiên bản \code{/api/v1} cho mọi điểm cuối nghiệp vụ.
+  \item Xác thực bằng tiêu đề \code{Authorization: Bearer <access\_token>}.
+  \item Mọi lỗi trả về cùng cấu trúc \code{\{"error": \{"code", "message", "details"\}\}}.
+  \item Mọi phản hồi mang \code{X-Request-ID} để đối chiếu với nhật ký máy chủ.
+  \item Phân trang dùng tham số \code{limit} và \code{offset}.
+\end{itemize}
+
+\section{Xác thực và tài khoản}
+
+\begin{longtable}{L{2.8cm} L{5.8cm} L{5.0cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+POST & \code{/auth/register} & Đăng ký bằng email\\
+POST & \code{/auth/login} & Đăng nhập, trả cặp thẻ\\
+POST & \code{/auth/refresh} & Làm mới thẻ truy cập\\
+POST & \code{/auth/logout} & Đăng xuất, thu hồi thẻ\\
+POST & \code{/auth/google}, \code{/auth/facebook} & Đăng nhập mạng xã hội qua Firebase\\
+POST & \code{/auth/forgot-password}, \code{/auth/reset-password} & Quên và đặt lại mật khẩu\\
+POST & \code{/auth/verify-email}, \code{/auth/resend-verification} & Xác minh email\\
+POST & \code{/auth/admin/login}, \code{/auth/admin/request-otp}, \code{/auth/admin/verify-otp} & Đăng nhập quản trị có mã một lần\\
+GET, PUT,\newline DELETE & \code{/users/me} & Hồ sơ cá nhân; xoá tài khoản\\
+GET & \code{/users/me/level}, \code{/users/me/stats}, \code{/users/me/weekly-activity} & Cấp độ và thống kê\\
+POST, GET,\newline PUT, DELETE & \code{/devices} & Đăng ký thiết bị nhận thông báo\\
+GET/POST & \code{/referral/my-code}, \code{/referral/claim/\{code\}} & Giới thiệu bạn bè\\
+\bottomrule
+\caption{Điểm cuối xác thực và tài khoản}
+\end{longtable}
+
+\section{Học tập}
+
+\begin{longtable}{L{2.8cm} L{6.0cm} L{4.8cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+GET & \code{/courses}, \code{/courses/enrolled}, \code{/courses/\{id\}} & Danh mục và chi tiết khoá học\\
+POST & \code{/courses/\{id\}/enroll} & Ghi danh\\
+GET & \code{/categories}, \code{/categories/slug/\{slug\}} & Danh mục khoá học\\
+POST & \code{/learning/lessons/\{id\}/start} & Bắt đầu bài học (trả 409 nếu bài không có bài tập)\\
+GET & \code{/learning/lessons/\{id\}/content} & Nội dung bài học\\
+POST & \code{/learning/attempts/\{id\}/answer} & Nộp một câu trả lời\\
+POST & \code{/learning/attempts/\{id\}/complete} & Kết thúc lượt làm bài\\
+GET & \code{/learning/courses/\{id\}/roadmap} & Lộ trình học dạng zigzag\\
+GET & \code{/progress/me}, \code{/progress/courses/\{id\}}, \code{/progress/weekly} & Tiến độ\\
+POST & \code{/progress/lessons/\{id\}/complete} & Hoàn thành bài học\\
+GET/POST & \code{/progress/streak}, \code{/streak/update}, \code{/streak/freeze}, \code{/streak/restore} & Chuỗi ngày học\\
+\bottomrule
+\caption{Điểm cuối học tập}
+\end{longtable}
+
+\section{Năng lực CEFR}
+
+\begin{longtable}{L{2.8cm} L{6.0cm} L{4.8cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+GET & \code{/proficiency/profile} & Hồ sơ năng lực sáu kỹ năng\\
+POST & \code{/proficiency/record-exercises} & Ghi nhận kết quả bài tập (cửa vào động cơ chấm điểm)\\
+GET & \code{/proficiency/level-check} & Kiểm tra điều kiện thăng bậc\\
+GET & \code{/proficiency/level-thresholds} & Ngưỡng của từng bậc\\
+GET & \code{/proficiency/history} & Lịch sử thay đổi bậc\\
+GET/POST & \code{/proficiency/placement-test}, \code{/placement-test/submit} & Bài kiểm tra xếp lớp\\
+POST & \code{/proficiency/exam-gated/submit} & Nộp bài thi cổng thăng bậc\\
+\bottomrule
+\caption{Điểm cuối đánh giá năng lực}
+\end{longtable}
+
+\section{Từ vựng và sổ tay lỗi}
+
+\begin{longtable}{L{2.8cm} L{6.2cm} L{4.6cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+GET & \code{/vocabulary/word-of-day} & Từ trong ngày\\
+GET & \code{/vocabulary/items}, \code{/vocabulary/items/\{id\}} & Ngân hàng từ\\
+GET/POST & \code{/vocabulary/collection}, \code{/collection/quick-save}, \code{/collection/bulk} & Bộ sưu tập cá nhân\\
+GET & \code{/vocabulary/due} & Từ đến hạn ôn theo FSRS\\
+POST & \code{/vocabulary/review/\{id\}} & Ghi kết quả ôn tập\\
+POST & \code{/vocabulary/pronunciation/evaluate} & Chấm phát âm một từ\\
+GET & \code{/vocabulary/stats} & Thống kê từ vựng\\
+POST, GET,\newline DELETE & \code{/vocabulary/decks} và các điểm cuối con & Bộ thẻ tự tạo\\
+GET, POST,\newline PATCH, DELETE & \code{/mistakes}, \code{/mistakes/\{id\}/review}, \code{/reopen} & Sổ tay lỗi sai\\
+\bottomrule
+\caption{Điểm cuối từ vựng}
+\end{longtable}
+
+\section{Động lực học}
+
+\begin{longtable}{L{2.8cm} L{6.2cm} L{4.6cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+GET & \code{/gamification/achievements}, \code{/achievements/me}, \code{/achievements/recent} & Thành tích\\
+GET & \code{/gamification/wallet}, \code{/wallet/history} & Ví và lịch sử giao dịch\\
+GET & \code{/gamification/leaderboard}, \code{/leaderboard/me} & Bảng xếp hạng\\
+GET/POST & \code{/gamification/shop}, \code{/shop/purchase} & Cửa hàng\\
+GET/POST & \code{/gamification/inventory}, \code{/inventory/use}, \code{/inventory/avatar/equip} & Kho đồ\\
+GET & \code{/gamification/boosts/active}, \code{/boosts/xp-multiplier} & Hiệu ứng đang bật\\
+POST, DELETE,\newline GET & \code{/gamification/users/\{id\}/follow}, \code{/followers}, \code{/following}, \code{/feed} & Mạng xã hội trong ứng dụng\\
+POST/GET & \code{/xp/award}, \code{/xp/profile}, \code{/xp/leaderboard} & Điểm kinh nghiệm\\
+GET/POST & \code{/challenges/daily}, \code{/daily/\{id\}/claim} & Thử thách ngày\\
+GET & \code{/games/word-scramble}, \code{/matching}, \code{/spelling-bee}, \code{/hangman}, \code{/fill-blank}, \code{/grammar-quiz} & Sáu trò chơi mini\\
+POST & \code{/games/sessions/\{id\}/complete} & Nộp kết quả trò chơi\\
+\bottomrule
+\caption{Điểm cuối động lực học}
+\end{longtable}
+
+\section{Nội dung thực tế}
+
+\begin{longtable}{L{2.8cm} L{5.8cm} L{5.0cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+GET & \code{/news}, \code{/news/categories}, \code{/news/\{id\}/quiz} & Tin tức và quiz\\
+GET & \code{/podcasts/search}, \code{/curated}, \code{/episodes}; POST \code{/transcript} & Podcast và bản ghi lời\\
+GET & \code{/books/recommended}, \code{/search}, \code{/browse}, \code{/\{id\}/quiz} & Sách phân cấp\\
+GET & \code{/youtube/channels}, \code{/search}, \code{/captions/\{id\}}, \code{/translate} & Video học\\
+GET & \code{/news/proxy/image}, \code{/books/proxy/text}\ldots & Uỷ nhiệm tài nguyên bên thứ ba (tránh lộ khoá và lỗi CORS)\\
+\bottomrule
+\caption{Điểm cuối nội dung thực tế}
+\end{longtable}
+
+\section{Quản trị}
+
+Nhóm \code{/admin/*} cung cấp CRUD đầy đủ cho khoá học, chương, bài học, nội dung bài học,
+từ vựng, ngữ pháp, ngân hàng câu hỏi, đề thi, thành tích và cửa hàng; quản lý người dùng
+(xem, sửa vai trò, khoá, xoá vĩnh viễn, thao tác hàng loạt, tặng quà); và RBAC (vai trò,
+quyền, gán vai trò, kích hoạt/vô hiệu tài khoản).
+
+\begin{luuy}[Hai điểm cuối sửa bài học dùng chung một hàm]
+\code{PUT /admin/lessons/\{id\}} và \code{PUT /admin/lessons/\{id\}/content} đều đi qua
+\code{\_apply\_lesson\_update}. Nếu thêm đường sửa thứ ba, nó cũng phải đi qua hàm này,
+nếu không bộ đếm bài tập và ràng buộc xuất bản sẽ lệch.
+\end{luuy}
+
+\section{API của AI service}
+
+\begin{longtable}{L{2.8cm} L{5.4cm} L{5.4cm}}
+\toprule
+\textbf{Giao thức} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+POST & \code{/api/v1/lexi/chat} & Hội thoại TRACE-CAG đầy đủ; hỗ trợ dòng SSE\\
+POST & \code{/api/v1/chat} & Hội thoại cơ bản\\
+POST & \code{/api/v1/topics/\ldots} & Hội thoại theo chủ đề\\
+POST & \code{/api/v1/stt} & Nhận dạng giọng nói, chấm phát âm\\
+POST & \code{/api/v1/tts} & Tổng hợp giọng nói\\
+WS & \code{/api/v1/voice} & Phiên giọng nói song luồng thời gian thực\\
+POST & \code{/api/v1/ai/translate} & Dịch có ngữ cảnh học tập\\
+POST & nội bộ \code{/content-agent/\ldots} & Sinh nội dung khoá học\\
+POST & nội bộ \code{/notification-agent/\ldots} & Soạn thông báo\\
+GET & \code{/warmup}, \code{/visualizer} & Làm ấm mô hình, trực quan hoá pipeline\\
+\bottomrule
+\caption{Điểm cuối AI service}
+\end{longtable}
+
+\subsection{Định dạng dòng sự kiện}
+
+Hội thoại theo dòng dùng SSE với các loại sự kiện:
+
+\begin{lstlisting}
+{"event": "thinking",    "data": {...}}   // dang xu ly
+{"event": "chunk",       "data": "..."}   // tung manh van ban
+{"event": "corrections", "data": [...]}   // danh sach loi da sua
+{"event": "scores",      "data": {...}}   // diem so
+{"event": "done",        "data": {...}}   // ket thuc + metadata
+\end{lstlisting}
+
+Dấu \code{done} là mốc quan trọng về mặt dữ liệu: quan sát người học phải được ghi vào
+vùng đệm \textbf{trước} khi phát dấu này, nếu không một kết nối đứt giữa chừng sẽ làm mất
+bằng chứng học tập.

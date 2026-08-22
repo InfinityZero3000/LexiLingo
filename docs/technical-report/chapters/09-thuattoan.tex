@@ -1,0 +1,471 @@
+\chapter{Thuật toán và logic lõi}
+
+Chương này trình bày đầy đủ công thức của năm thuật toán quyết định hành vi hệ thống.
+Mọi hằng số đều lấy trực tiếp từ mã nguồn.
+
+\section{Lập lịch ôn tập: FSRS với luật delta}
+
+\subsection{Tên gọi chính xác}
+
+Phiên bản thuật toán là \code{delta-fsrs-v3}. Tên này cố ý dài vì hai nửa của nó đến từ
+hai họ thuật toán khác nhau:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Bộ lập lịch là FSRS}: đường quên luỹ thừa nghịch đảo, độ bền
+  (\en{stability}) và độ khó (\en{difficulty}) đúng theo FSRS.
+  \item \textbf{Cập nhật mức nắm vững là luật delta}, \textbf{không phải} \en{Bayesian
+  Knowledge Tracing}. Không có xác suất chuyển trạng thái, không có tham số trượt
+  (\en{slip}) hay đoán mò (\en{guess}). Vì vậy tuyệt đối không được giả định các tính chất
+  Bayes khi xây dựng tiếp trên nó.
+\end{itemize}
+
+Nhiễu do đoán mò được xử lý theo cách khác: hạ độ tin cậy của quan sát theo định dạng câu
+hỏi (mục~\ref{sec:format-confidence}).
+
+\subsection{Đường quên}
+
+Xác suất nhớ lại sau \(t\) ngày, với độ bền \(S\) ngày:
+
+\begin{equation}
+R(t) = \left(1 + F\cdot\frac{t}{S}\right)^{D},
+\qquad F = \frac{19}{81},\quad D = -\frac{1}{2}
+\end{equation}
+
+Hai hằng số này được chọn để \(R(S) = 0{,}9\). Nhờ vậy \code{stability\_days} đọc thẳng
+được là \textit{"số ngày cho tới khi khả năng nhớ tụt còn 90\%"}, và khoảng ôn tập tại mục
+tiêu lưu giữ mặc định đúng bằng độ bền.
+
+Khoảng cách tới lần ôn kế tiếp là nghịch đảo chính xác của \(R\), với mục tiêu lưu giữ
+\(\theta = 0{,}9\):
+
+\begin{equation}
+I(S) = \max\!\left(0{,}25,\ S\cdot\frac{\theta^{1/D} - 1}{F}\right)
+\end{equation}
+
+\begin{luuy}[Vì sao phải là nghịch đảo chính xác]
+Phiên bản v1 dùng đường quên hàm mũ và một hằng số khoảng cách riêng, dẫn tới khoảng ôn
+xấp xỉ \(S \times 0{,}105\). Một khái niệm phải đạt độ bền khoảng 200 ngày mới được khoảng
+ôn 21 ngày, trong khi độ bền chỉ tăng \(\approx 1{,}1\) lần mỗi lần ôn — kết quả là những
+lần nhớ hoàn hảo vẫn bị ghim ở mức sàn 6 giờ suốt cả chục lượt.
+\end{luuy}
+
+\subsection{Cập nhật một quan sát}
+
+Gọi trạng thái trước là \((m, S, d)\) — mức nắm vững, độ bền, độ khó — và quan sát mới là
+\((o, c)\) với \(o \in \{\text{đúng}, \text{sai}\}\), \(c \in [0,1]\) là \textbf{độ dứt
+khoát} của quan sát. Đặt \(\Delta t\) là số ngày trôi qua kể từ lần tương tác trước.
+
+\paragraph{Bước 1 — suy giảm theo thời gian.}
+\begin{equation}
+r = R(\Delta t),\qquad m_{\text{decay}} = \mathrm{clamp}\big(m \cdot r,\ 0{,}01,\ 0{,}99\big)
+\end{equation}
+
+\paragraph{Bước 2 — trọng số bằng chứng.} Khái niệm càng khó thì một câu trả lời càng ít
+nói lên điều gì:
+\begin{equation}
+e = c\,(1 - 0{,}35\,d)
+\end{equation}
+
+\paragraph{Bước 3 — luật delta cho mức nắm vững.} Với \(\eta = 0{,}45\) là tốc độ học và
+\(y = 1\) nếu đúng, \(y = 0\) nếu sai:
+\begin{equation}
+m' = \mathrm{clamp}\big(m_{\text{decay}} + e\,\eta\,(y - m_{\text{decay}}),\ 0{,}01,\ 0{,}99\big)
+\end{equation}
+
+\paragraph{Bước 4 — cập nhật độ bền.} Ba trường hợp:
+
+\begin{equation}
+S' =
+\begin{cases}
+S_0(o, c) & \text{lần quan sát đầu tiên}\\[4pt]
+S \cdot \Big[1 + 0{,}45\,e\,(1-d)\big(1 + 1{,}6(1-r)\big)\Big] & \text{nếu đúng}\\[4pt]
+\min\Big(S(1 - 0{,}55\,e),\ S_0(o,c)\Big) & \text{nếu sai}
+\end{cases}
+\end{equation}
+
+Hệ số \(1{,}6\) là \textbf{thưởng giãn cách} (\en{spacing bonus}): nhớ lại được một ký ức
+đã suy giảm (\(r\) nhỏ) củng cố trí nhớ mạnh hơn nhiều so với luyện lại một ký ức còn tươi.
+Đây chính là hiệu ứng giãn cách mà SM-2 hoàn toàn không biểu diễn được.
+
+Nhánh sai dùng \(\min\): chỉ nhân hệ số suy giảm là chưa đủ, vì một ký ức đã đạt 200 ngày
+độ bền sau khi quên vẫn còn 90 ngày. Phải kéo hẳn về mức khởi tạo để khái niệm quay lại
+giai đoạn học lại.
+
+Độ bền khởi tạo \(S_0\) phụ thuộc chất lượng câu trả lời đầu tiên:
+\begin{equation}
+S_0 =
+\begin{cases}
+2{,}0 + 4{,}0\,c & \text{nếu đúng (2 đến 6 ngày)}\\
+1{,}0 - 0{,}6\,c & \text{nếu sai (1 xuống 0,4 ngày)}
+\end{cases}
+\end{equation}
+
+Lưu ý hai nhánh đi ngược chiều nhau theo cùng một đầu vào \(c\): một câu trả lời đúng dứt
+khoát thì kéo dài độ bền, một câu sai dứt khoát thì rút ngắn nó.
+
+\paragraph{Bước 5 — cập nhật độ khó.}
+\begin{equation}
+d' = \mathrm{clamp}\big(d \mp \delta e,\ 0,\ 1\big),
+\qquad \delta = 0{,}04 \text{ (đúng)},\ 0{,}08 \text{ (sai)}
+\end{equation}
+
+Sai làm khái niệm khó lên nhanh gấp đôi so với tốc độ đúng làm nó dễ đi — thiết kế bất đối
+xứng có chủ đích.
+
+\paragraph{Bước 6 — chốt lịch.} \(S'\) được kẹp về \([0{,}25;\ 3650]\) ngày, sau đó
+\(\text{next\_review\_at} = \text{now} + I(S')\).
+
+\subsection{Quy đổi điểm 0--5 sang quan sát}
+
+Người học chấm mức nhớ theo thang SM-2 quen thuộc (0--5), nhưng động cơ cần cặp
+(kết quả, độ dứt khoát):
+
+\begin{equation}
+o = \begin{cases}\text{đúng} & q \ge 3\\ \text{sai} & q < 3\end{cases}
+\qquad
+c = 0{,}2 + 0{,}8 \cdot \frac{|q - 2{,}5|}{2{,}5}
+\end{equation}
+
+\begin{luuy}[Độ dứt khoát không phải là điểm]
+Điểm 0 (quên sạch) và điểm 5 (nhớ ngay) đều là bằng chứng \textbf{mạnh}, chỉ khác chiều.
+Điểm 2 và 3 mới là mơ hồ. Trước đây tuyến từ vựng truyền thẳng \(q/5\) làm độ tin cậy,
+biến một lần quên sạch thành quan sát vô nghĩa (\(c = 0\)) và phạt câu suýt đúng nặng hơn
+câu sai hoàn toàn.
+\end{luuy}
+
+\subsection{Độ tin cậy theo định dạng câu hỏi}
+\label{sec:format-confidence}
+
+Một câu trắc nghiệm bốn lựa chọn trả lời đúng có thể là đoán mò một phần tư số lần; một
+câu gõ đáp án thì không. Bảng \code{FORMAT\_CONFIDENCE} nhân vào \(c\):
+
+\begin{longtable}{L{4.4cm} L{2.6cm} L{6.6cm}}
+\toprule
+\textbf{Định dạng} & \textbf{Hệ số} & \textbf{Lý do}\\
+\midrule
+\endhead
+\code{true\_false} & 0,45 & Xác suất đoán trúng 50\%\\
+\code{multiple\_choice} & 0,65 & Xác suất đoán trúng \(\approx\)25\%\\
+\code{matching} & 0,85 & Khó đoán nhưng vẫn có ràng buộc\\
+\code{reorder} & 0,90 & Gần như không đoán được\\
+\code{fill\_blank} & 1,00 & Không có gì để đoán\\
+\code{translate} & 1,00 & Không có gì để đoán\\
+Không rõ & 1,00 & Mặc định trung tính\\
+\bottomrule
+\caption{Hệ số tin cậy theo định dạng câu hỏi}
+\end{longtable}
+
+Đây chính là vai trò mà tham số \en{guess} đảm nhiệm trong BKT, đạt được ở đây bằng cách
+điều chỉnh độ tin cậy mà \code{evolve\_state} vốn đã nhận vào.
+
+\section{Chấm điểm năng lực CEFR}
+
+\subsection{Trọng số kỹ năng}
+
+\begin{equation}
+w = \{\text{nghe}: 0{,}20,\ \text{nói}: 0{,}20,\ \text{đọc}: 0{,}20,\ \text{viết}: 0{,}20,\ \text{từ vựng}: 0{,}10,\ \text{ngữ pháp}: 0{,}10\}
+\end{equation}
+
+Cân bằng quanh bốn kỹ năng chính, mỗi kỹ năng 20\%. Từ vựng và ngữ pháp chỉ 10\% vì trong
+CEFR chúng là \textbf{tài nguyên} phục vụ bốn kỹ năng, không phải trụ cột độc lập.
+
+\subsection{Cập nhật điểm kỹ năng}
+
+Với mỗi bài tập \(i\) thuộc kỹ năng đang xét, điểm \(s\) được cập nhật \textbf{một bước
+cho mỗi bài tập}:
+
+\begin{equation}
+s \leftarrow s + \underbrace{\min\big(0{,}15,\ (1-\lambda)\cdot\mu_i\big)}_{\text{bước}} \cdot (x_i - s)
+\end{equation}
+
+trong đó \(\lambda = 0{,}95\) là hệ số giữ lịch sử, \(\mu_i\) là hệ số độ khó theo bậc
+(A1: 0,5; A2: 0,7; B1: 1,0; B2: 1,3; C1: 1,6; C2: 2,0), \(x_i\) là điểm của chính bài tập
+đó, và 0,15 là trần một bước.
+
+Bốn tính chất mà công thức này bắt buộc phải giữ, mỗi tính chất tương ứng một lỗi đã từng
+xảy ra:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Một bài tập không thể đẩy điểm lên tối đa.} Bản cũ bỏ qua phép trung bình
+  khi điểm đang bằng 0, nên một câu trả lời đúng duy nhất cho ra 100/100. Nay khi kỹ năng
+  chưa từng có điểm, điểm khởi đầu là \textbf{sàn của bậc hiện tại}, không phải điểm câu
+  đầu tiên.
+  \item \textbf{Gộp lô không đổi kết quả.} Trước đây phép cập nhật áp một lần cho mỗi lời
+  gọi API. Quiz tin tức gửi theo lô còn quiz sách gửi từng câu, nên cùng sáu câu trả lời
+  lại có giá trị khác nhau tới 2,4 lần. Nay áp một bước cho mỗi bài tập.
+  \item \textbf{Sai không được nửa điểm.} Mục tiêu là \(x_i\) — điểm thật của bài tập —
+  chứ không phải nhãn đúng/sai. Nhãn \code{is\_correct} chỉ dùng cho thống kê độ chính xác.
+  \item \textbf{Độ khó phải sống sót.} Bản cũ cộng thưởng độ khó vào tử số rồi kẹp ở 100,
+  khiến câu A1 và câu C2 cho kết quả y hệt. Nay độ khó nhân vào \textbf{kích thước bước}.
+\end{enumerate}
+
+\subsection{Độ tin cậy và điểm tổng hợp}
+
+\begin{equation}
+\mathrm{conf} = \min\!\left(1,\ \frac{n_{\text{tích luỹ}}}{50}\right)
+\end{equation}
+
+\(n\) là số bài tập \textbf{tích luỹ} chứ không phải số bài trong yêu cầu hiện tại. Trước
+khi sửa, giá trị này đứng yên ở 0,02 mãi mãi và dòng chú thích "50 bài là đầy đủ tin cậy"
+chưa từng đúng với bất kỳ người học nào.
+
+Điểm tổng hợp — \textbf{chỉ có một công thức duy nhất}, tại \code{weighted\_overall}:
+
+\begin{equation}
+S_{\text{tổng}} = \frac{\sum_{k \in K} w_k\, s_k}{\sum_{k \in K} w_k},
+\qquad K = \{\text{kỹ năng đã có điểm}\}
+\end{equation}
+
+Kỹ năng chưa đo được \textbf{loại khỏi} phép tính thay vì tính là 0, để một kỹ năng chưa
+chạm tới không kéo tụt tổng điểm.
+
+\begin{luuy}[Ba công thức từng cùng tồn tại]
+Đã có lúc hệ thống có ba câu trả lời khác nhau cho "điểm tổng của người học này là bao
+nhiêu": bản có trọng số (dùng để xét thăng bậc nhưng không bao giờ lưu), bản trung bình
+cộng không trọng số (ghi vào hồ sơ sau mỗi bài tập), và điểm phần trăm thô từ bài kiểm tra
+xếp lớp (ghi đè lên cả hai). Con số người học nhìn thấy không phải con số dùng để xét
+thăng bậc của chính họ.
+\end{luuy}
+
+Ngược lại, \textbf{độ tin cậy tổng hợp} tính kỹ năng chưa đo là 0. Khác biệt này là có
+chủ đích: một người chỉ luyện từ vựng thì thật sự chưa được đo đầy đủ và không nên được
+thăng bậc dựa trên bằng chứng đó.
+
+\subsection{Điều kiện thăng bậc}
+
+Thăng bậc CEFR bị chặn bởi bốn điều kiện đồng thời, nhằm chống "cày điểm":
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Mọi kỹ năng phải đạt ngưỡng của bậc đích.
+  \item Đủ số bài tập và số bài học đã hoàn thành.
+  \item Đạt tỉ lệ chính xác và số ngày chuỗi tối thiểu.
+  \item Độ tin cậy kỹ năng đạt \code{min\_skill\_confidence}: khối lượng trả lời câu
+  \textit{"đã làm đủ chưa?"}, còn độ tin cậy trả lời câu \textit{"đã hiểu đủ về người này
+  chưa?"}. Không có điều kiện thứ hai, một phiên chat dài đủ để thoả toàn bộ ngưỡng đếm.
+\end{enumerate}
+
+Ngoài ra có \textbf{cổng thi}: mỗi lần chỉ được lên tối đa một bậc, phải vượt bài thi có
+bậc không thấp hơn bậc hiện tại với điểm đạt (mặc định 70\%).
+
+\subsection{Kỹ năng đến từ nhãn, không từ phỏng đoán}
+
+Kỹ năng mà một bài học ghi công được quyết định theo thứ tự ưu tiên:
+\code{Lesson.skill} $\rightarrow$ \code{Course.skill} $\rightarrow$ suy đoán từ thẻ
+(\code{infer\_skill\_from\_tags}). Nhánh cuối chỉ là di sản: nó mặc định trả về
+\code{VOCABULARY}, và đó chính là lý do nội dung nghe/nói từng bị ghi công sai kỹ năng.
+
+Trò chơi ánh xạ qua bảng cố định \code{GAME\_TYPE\_SKILL}, không bao giờ tách chuỗi
+\code{game\_type}:
+
+\begin{longtable}{L{4.2cm} L{3.4cm} L{6.0cm}}
+\toprule
+\textbf{Loại trò chơi} & \textbf{Kỹ năng} & \textbf{Ghi chú}\\
+\midrule
+\endhead
+\code{word\_scramble} & Từ vựng & \\
+\code{matching} & Từ vựng & \\
+\code{spelling\_bee} & Từ vựng & \\
+\code{hangman} & Từ vựng & \\
+\code{fill\_blank} & \textbf{Ngữ pháp} & Rút câu từ ngân hàng ngữ pháp; trước đây bị tính nhầm sang từ vựng\\
+\code{grammar\_quiz} & Ngữ pháp & \\
+\bottomrule
+\caption{Ánh xạ trò chơi sang kỹ năng CEFR}
+\end{longtable}
+
+\section{Bộ nhớ đệm SCAR-L1}
+
+\subsection{Hai lớp đệm}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{L0} — khớp chính xác theo dấu vân tay (\en{fingerprint}) gồm: câu hỏi đã
+  chuẩn hoá, ý định, bậc CEFR, tiếng mẹ đẻ, tập khái niệm gốc và số lượt hội thoại. Thời
+  gian sống 3.600 giây.
+  \item \textbf{L1} — khớp gần theo \en{bucket} đồ thị: các yêu cầu khác chữ nhưng cùng
+  cụm khái niệm và cùng trạng thái. Thời gian sống 7.200 giây.
+\end{itemize}
+
+\subsection{Điểm rủi ro tái sử dụng}
+
+Với mỗi ứng viên trong L1, hệ thống tính điểm rủi ro \(\rho \in [0,1]\):
+
+\begin{equation}
+\rho = 0{,}20\,\delta_{\text{intent}}
+     + 0{,}30\,(1 - J_c)
+     + 0{,}15\,(1 - J_r)
+     + 0{,}20\,\delta_{\text{evidence}}
+     + 0{,}15\,\max(a,\ \delta_{\text{version}})
+\end{equation}
+
+trong đó:
+
+\begin{longtable}{L{3.0cm} L{10.6cm}}
+\toprule
+\textbf{Ký hiệu} & \textbf{Ý nghĩa}\\
+\midrule
+\endhead
+\(\delta_{\text{intent}}\) & 0 nếu cùng ý định, 1 nếu khác.\\
+\(J_c\) & Hệ số Jaccard giữa hai tập khái niệm (giao chia hợp).\\
+\(J_r\) & Hệ số Jaccard giữa hai tập gợi ý quan hệ.\\
+\(\delta_{\text{evidence}}\) & 0 nếu cùng băm bằng chứng, 1 nếu khác.\\
+\(a\) & Tỉ lệ tuổi của khoản mục so với thời gian sống, kẹp trong \([0,1]\).\\
+\(\delta_{\text{version}}\) & 1 nếu bất kỳ phiên bản nào lệch: \en{epoch} hồ sơ, phiên bản chính sách, phiên bản đồ thị, phiên bản nguồn, lớp độ tươi.\\
+\bottomrule
+\caption{Thành phần điểm rủi ro SCAR-L1}
+\end{longtable}
+
+\subsection{Quyết định ba nhánh}
+
+\begin{equation}
+\text{quyết định} =
+\begin{cases}
+\texttt{full} & \text{nếu vi phạm bất kỳ ràng buộc cứng nào}\\
+\texttt{reuse} & \text{nếu câu hỏi chuẩn hoá trùng khớp và } \rho \le \tau_0 = 0{,}25\\
+\texttt{patch} & \text{nếu } \rho \le \tau_1 = 0{,}55\\
+\texttt{full} & \text{ngược lại}
+\end{cases}
+\end{equation}
+
+\textbf{Ràng buộc cứng} được kiểm tra \textbf{trước} khi tính rủi ro, và bất kỳ vi phạm nào
+cũng buộc tính lại toàn bộ:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Phiên bản chứng chỉ phải đúng (\code{CERTIFICATE\_SCHEMA\_VERSION} = 3).
+  \item Mọi chiều bắt buộc phải có mặt ở cả hai phía. Chiều bắt buộc cơ sở gồm: ý định,
+  bậc, \en{epoch} hồ sơ, phiên bản chính sách, phiên bản đồ thị, mục tiêu câu trả lời.
+  \item Bậc CEFR, tiếng mẹ đẻ, \en{epoch} hồ sơ, ý định và mục tiêu câu trả lời phải khớp
+  \textbf{tuyệt đối}.
+  \item Băm bằng chứng, phiên bản chính sách/đồ thị/nguồn, lớp độ tươi phải khớp nếu có.
+  \item Độ chồng lấp khái niệm \(J_c\) phải \(\ge 0{,}50\).
+  \item Khoản mục không được quá hạn.
+\end{itemize}
+
+\begin{luuy}[Vì sao khoá đệm không chứa mức nắm vững]
+Nếu bỏ điểm nắm vững vào khoá đệm, mỗi người học sẽ có một không gian đệm riêng và tỉ lệ
+trúng đệm gần như bằng không. Giải pháp là dùng \code{state\_epoch} — một số nguyên duy
+nhất tăng khi trạng thái đổi. Khoản mục cá nhân hoá gắn phạm vi người dùng bằng HMAC cộng
+\en{epoch}; khoản mục đồ thị con dùng chung thì \textbf{không bao giờ} chứa mức nắm vững
+hay định danh người dùng thô.
+\end{luuy}
+
+\subsection{Vô hiệu hoá}
+
+Bộ đệm bị vô hiệu theo bộ bốn phiên bản
+\(\langle \nu_{\text{graph}}, \nu_{\text{policy}}, \nu_{\text{profile}}, t_{\text{refresh}} \rangle\):
+tăng \(\nu_{\text{graph}}\) huỷ mọi \en{bucket} L1; tăng \(\nu_{\text{policy}}\) huỷ cả L0
+lẫn L1; tăng \(\nu_{\text{profile}}\) chỉ huỷ khoản mục của người dùng đó; hết hạn
+\(t_{\text{refresh}}\) huỷ theo thời gian. Hệ thống còn duy trì \textbf{cạnh ngược}
+(\en{reverse edges}) từ phụ thuộc sang tạo tác, để khi một nguồn bằng chứng đổi thì mọi
+phản hồi đã suy ra từ nó đều bị gỡ.
+
+\section{Hoà trộn truy xuất}
+
+\subsection{Điểm hợp nhất}
+
+Mỗi mẩu bằng chứng nhận một điểm hợp nhất từ ba tín hiệu:
+
+\begin{equation}
+s = \alpha\,\underbrace{\frac{1}{1+h}}_{\text{đồ thị}} + \beta\,\underbrace{\cos(q, e)}_{\text{véc-tơ}} + \gamma\,\underbrace{e^{-\lambda \Delta t}}_{\text{độ mới}}
+\end{equation}
+
+với \(\alpha = 0{,}5\), \(\beta = 0{,}3\), \(\gamma = 0{,}2\), \(\lambda = 0{,}01\);
+\(h\) là số bước nhảy trên đồ thị tới khái niệm gốc, \(\cos(q,e)\) là độ tương đồng cô-sin
+từ MiniLM, \(\Delta t\) là số lượt hội thoại kể từ lần dùng gần nhất.
+
+Trọng số nghiêng về cấu trúc đồ thị (0,5) hơn tương đồng ngữ nghĩa (0,3), vì trong dạy
+ngôn ngữ thì quan hệ tiên quyết đáng tin hơn độ giống nhau bề mặt của câu chữ.
+
+\subsection{Bộ xếp hạng học trực tuyến}
+
+Sau hợp nhất, danh sách được xếp lại bằng bộ xếp hạng lô-gít theo cặp
+(\en{pairwise logistic ranker}) có cập nhật trực tuyến nhẹ. Mười hai đặc trưng và trọng số
+khởi tạo:
+
+\begin{longtable}{L{4.4cm} L{2.2cm} L{7.0cm}}
+\toprule
+\textbf{Đặc trưng} & \textbf{Trọng số} & \textbf{Ý nghĩa}\\
+\midrule
+\endhead
+\code{base\_score} & 0,42 & Điểm hợp nhất ở bước trước\\
+\code{body\_overlap} & 0,14 & Chồng lấp từ với thân đoạn\\
+\code{title\_overlap} & 0,11 & Chồng lấp từ với tiêu đề\\
+\code{anchor\_coverage} & 0,11 & Độ phủ các thực thể neo trong câu hỏi\\
+\code{title\_phrase} & 0,08 & Khớp cụm nguyên vẹn ở tiêu đề\\
+\code{title\_token\_recall} & 0,07 & Độ bao phủ từ khoá của tiêu đề\\
+\code{kg\_proximity} & 0,05 & Khoảng cách trên đồ thị tri thức\\
+\code{vec\_signal} & 0,05 & Tín hiệu tương đồng véc-tơ\\
+\code{graph\_signal} & 0,05 & Tín hiệu cấu trúc đồ thị\\
+\code{memory\_signal} & 0,04 & Từng dùng trong phiên này\\
+\code{recency\_signal} & 0,03 & Độ mới\\
+\code{external\_penalty} & \(-0{,}05\) & Phạt nguồn ngoài đồ thị\\
+\bottomrule
+\caption{Đặc trưng của bộ xếp hạng truy xuất}
+\end{longtable}
+
+Trọng số được cập nhật trực tuyến với chuẩn hoá \(L_2\) và kẹp trong \([-3;\ 3]\) để một
+đợt phản hồi bất thường không thể lật đổ toàn bộ mô hình.
+
+\subsection{Chỉ số đánh giá}
+
+\code{EvaluationAgent} tính hai nhóm chỉ số. Nhóm chất lượng văn bản: WER
+(\en{Word Error Rate} — tỉ lệ lỗi từ, bằng khoảng cách soạn thảo chia độ dài), TTR
+(\en{Type-Token Ratio} — số từ khác nhau chia tổng số từ, đo độ phong phú từ vựng) và mật
+độ lỗi. Nhóm chất lượng truy xuất:
+
+\begin{equation}
+\mathrm{P@}k = \frac{|\text{liên quan} \cap \text{lấy ra}|}{k},\quad
+\mathrm{R@}k = \frac{|\text{liên quan} \cap \text{lấy ra}|}{|\text{liên quan}|}
+\end{equation}
+\begin{equation}
+\mathrm{NDCG@}k = \frac{\sum_{i=1}^{k} \frac{rel_i}{\log_2(i+1)}}{\mathrm{IDCG@}k},
+\qquad
+\mathrm{MRR} = \frac{1}{\text{hạng của mẩu liên quan đầu tiên}}
+\end{equation}
+
+\section{Chống cày điểm trong gamification}
+
+Hệ thống XP có bốn tầng bảo vệ:
+
+\begin{longtable}{L{4.6cm} L{9.0cm}}
+\toprule
+\textbf{Cơ chế} & \textbf{Chi tiết}\\
+\midrule
+\endhead
+Trần ngày & \code{DAILY\_XP\_CAP} = 500 XP mỗi ngày cho toàn bộ nguồn.\\
+Trần một lần cấp & \code{MAX\_SINGLE\_AWARD} = 200 XP; vượt quá thì từ chối yêu cầu.\\
+Trần theo nguồn & Trò chơi 100, bài học 50, thử thách ngày 50, sách 25, podcast 20, tin tức 15, YouTube 15.\\
+Bắt buộc \code{source\_id} & Ba nguồn nhạy cảm lặp — \code{game}, \code{lesson}, \code{daily\_challenge} — bắt buộc kèm \code{source\_id} do máy chủ cấp. Thiếu thì trả lỗi 422. Chỉ mục duy nhất một phần trong cơ sở dữ liệu chặn cấp trùng.\\
+\bottomrule
+\caption{Cơ chế chống cày XP}
+\end{longtable}
+
+Hệ số chuỗi ngày nhân vào XP cơ sở: chuỗi \(\ge\)3 ngày nhân 1,2; \(\ge\)7 ngày nhân 1,5;
+\(\ge\)30 ngày nhân 2,0.
+
+\section{Ranh giới ghi nhận: cái gì được tính, cái gì không}
+
+Đây là quy tắc dễ vi phạm nhất khi thêm tính năng mới:
+
+\begin{longtable}{L{5.0cm} L{4.2cm} L{4.4cm}}
+\toprule
+\textbf{Hoạt động} & \textbf{Điểm kỹ năng} & \textbf{Trạng thái khái niệm}\\
+\midrule
+\endhead
+Hoàn thành bài học & Có & Có (nếu bài tập có \code{concept\_id})\\
+Trò chơi & Có & Có\\
+Ôn từ vựng & Có & Có (\textbf{không} truyền lại \code{concept\_id}, tránh đếm hai lần)\\
+Quiz tin tức / sách & Có & Có\\
+Lượt chat với AI & Có (qua kênh quan sát) & Có\\
+Nghe podcast, xem YouTube, đọc thuần tuý & \textbf{Không} & \textbf{Không}\\
+\bottomrule
+\caption{Hoạt động nào tạo bằng chứng học tập}
+\end{longtable}
+
+\begin{luuy}[Vì sao tiêu thụ thụ động không ghi nhận gì]
+Nghe hết một tập podcast không phải bằng chứng của việc hiểu. Các bề mặt này sẽ được nối
+vào hệ thống ghi nhận khi chúng có bài chính tả hoặc quiz kèm theo — nghĩa là khi có thứ
+để chấm.
+\end{luuy}
+
+Ngoài ra, tham số \code{award\_xp=False} phải được truyền bất cứ khi nào tuyến gọi đã tự
+cấp XP (bài học, trò chơi, ôn từ, lượt chat), vì XP trong hàm ghi nhận là \textbf{cộng
+thêm} chứ không thay thế.

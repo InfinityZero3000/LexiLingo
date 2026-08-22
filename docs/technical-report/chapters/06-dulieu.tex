@@ -1,0 +1,180 @@
+\chapter{Tầng dữ liệu}
+
+\section{Bốn kho lưu trữ và lý do tồn tại}
+
+\begin{longtable}{L{2.6cm} L{4.0cm} L{7.0cm}}
+\toprule
+\textbf{Kho} & \textbf{Nội dung} & \textbf{Lý do chọn}\\
+\midrule
+\endhead
+PostgreSQL & Tài khoản, khoá học, tiến độ, XP, từ vựng, trạng thái khái niệm — khoảng 70 bảng. &
+Dữ liệu có quan hệ chặt, cần giao dịch (\en{transaction}) và ràng buộc toàn vẹn. Đây là \textbf{nguồn sự thật}.\\
+Redis & Bộ nhớ đệm phản hồi, phiên, danh sách đen thẻ, hạn ngạch, môi giới Celery, đệm đồ thị con L0/L1. &
+Đọc/ghi dưới mili-giây, cấu hình \code{allkeys-lru} nên có thể mất dữ liệu — vì vậy chỉ chứa thứ tái tạo được.\\
+MongoDB & Lịch sử hội thoại, tạo tác AI, vùng đệm quan sát người học. &
+Tài liệu không đồng nhất, ghi nhiều đọc ít, không cần \en{join}.\\
+KuzuDB & Đồ thị tri thức: khái niệm, quan hệ tiên quyết/liên quan/dễ nhầm. &
+Cơ sở dữ liệu đồ thị \textbf{nhúng} (không cần máy chủ riêng), tối ưu cho duyệt theo chiều rộng trên chuỗi tiên quyết.\\
+\bottomrule
+\caption{Bốn kho lưu trữ}
+\end{longtable}
+
+\begin{luuy}[Chỉ hai kho chứa dữ liệu người dùng]
+Chính sách sao lưu chỉ bảo vệ PostgreSQL và MongoDB. Redis là bộ nhớ đệm và cố ý
+\textbf{không} sao lưu; thư mục \code{ai\_models} và \code{content\_etl\_data} tải lại được.
+\end{luuy}
+
+\section{Nhóm bảng PostgreSQL theo miền}
+
+\begin{longtable}{L{3.4cm} L{10.2cm}}
+\toprule
+\textbf{Miền} & \textbf{Bảng chính}\\
+\midrule
+\endhead
+Người dùng & \code{users}, \code{user\_devices}, \code{refresh\_tokens}, \code{partner\_api\_keys}, \code{roles}, \code{permissions}, \code{role\_permissions}, \code{audit\_logs}, \code{user\_entitlements}.\\
+Nội dung khoá học & \code{courses}, \code{units}, \code{lessons}, \code{media\_resources}, \code{lesson\_vocabulary\_items}, \code{course\_categories}, \code{content\_provenance}.\\
+Ngân hàng tri thức & \code{vocabulary\_items}, \code{grammar\_items}, \code{question\_bank}, \code{test\_exams}, \code{game\_words}.\\
+Tiến độ học & \code{user\_course\_progress}, \code{lesson\_completions}, \code{user\_progress}, \code{lesson\_attempts}, \code{question\_attempts}, \code{daily\_activities}, \code{streaks}.\\
+Từ vựng cá nhân & \code{user\_vocabulary}, \code{user\_vocab\_knowledge}, \code{vocabulary\_reviews}, \code{vocabulary\_decks}, \code{vocabulary\_deck\_items}, \code{daily\_review\_sessions}, \code{user\_grammar\_items}.\\
+Mô hình người học & \code{learner\_concept\_states}, \code{learner\_state\_profiles}, \code{learner\_observation\_events}, \code{learner\_errors}, \code{mistake\_notebook\_entries}.\\
+Năng lực CEFR & \code{user\_proficiency\_profiles}, \code{user\_skill\_scores}, \code{user\_level\_history}, \code{exercise\_attempts}, \code{skill\_daily\_stats}, \code{level\_assessment\_tests}.\\
+Động lực học & \code{xp\_transactions}, \code{achievements}, \code{user\_achievements}, \code{user\_wallets}, \code{wallet\_transactions}, \code{leaderboard\_entries}, \code{shop\_items}, \code{user\_inventory}, \code{challenge\_reward\_claims}, \code{user\_reward\_grants}, \code{game\_sessions}.\\
+Xã hội & \code{user\_following}, \code{activity\_feeds}.\\
+Thông báo & \code{notifications}, \code{notification\_campaign\_jobs}, \code{user\_reminder\_preferences}, \code{reminder\_deliveries}.\\
+Tác tử AI & \code{content\_agent\_jobs}, \code{content\_agent\_uploads}, \code{ranking\_agent\_jobs}.\\
+Vận hành & \code{api\_cache\_entries}, \code{product\_events}.\\
+\bottomrule
+\caption{Bảng PostgreSQL nhóm theo miền nghiệp vụ}
+\end{longtable}
+
+\section{Ba bảng cốt lõi của mô hình người học}
+
+\subsection{\code{learner\_concept\_states}}
+
+Mỗi dòng là trạng thái trí nhớ của một người học đối với một khái niệm:
+
+\begin{longtable}{L{4.4cm} L{2.4cm} L{6.8cm}}
+\toprule
+\textbf{Cột} & \textbf{Kiểu} & \textbf{Ý nghĩa}\\
+\midrule
+\endhead
+\code{user\_id}, \code{concept\_id} & UUID, chuỗi & Khoá tổ hợp xác định trạng thái.\\
+\code{mastery\_probability} & \code{float} & Mức nắm vững, \([0{,}01; 0{,}99]\), mặc định 0,5.\\
+\code{stability\_days} & \code{float} & Độ bền trí nhớ tính bằng ngày, \([0{,}25; 3650]\).\\
+\code{difficulty} & \code{float} & Độ khó cảm nhận của khái niệm với riêng người học này, \([0;1]\).\\
+\code{attempt\_count}, \code{correct\_count}, \code{error\_count} & \code{int} & Thống kê tích luỹ.\\
+\code{last\_interacted\_at} & thời điểm & Mốc tính thời gian trôi qua để suy giảm trí nhớ.\\
+\code{next\_review\_at} & thời điểm & Hạn ôn kế tiếp do FSRS tính.\\
+\code{state\_version} & \code{int} & Tăng sau mỗi lần cập nhật, dùng cho kiểm soát tương tranh.\\
+\code{algorithm\_version} & chuỗi & Hiện là \code{delta-fsrs-v3}; cho phép nhận biết dòng nào tính bằng phiên bản cũ.\\
+\bottomrule
+\caption{Cấu trúc \code{learner\_concept\_states}}
+\end{longtable}
+
+\subsection{\code{learner\_state\_profiles}}
+
+Chỉ hai trường có ý nghĩa: \code{user\_id} và \code{state\_epoch}. \code{state\_epoch} là
+một số nguyên tăng mỗi khi trạng thái người học thay đổi. Nó là chìa khoá làm cho bộ nhớ
+đệm cá nhân hoá an toàn: khoản mục đệm nào sinh ra ở \en{epoch} cũ sẽ bị từ chối, mà
+không cần lưu bất kỳ điểm nắm vững nào vào bộ đệm.
+
+\subsection{\code{learner\_observation\_events}}
+
+Bảng \en{outbox}. Mỗi dòng là một quan sát ("người học trả lời khái niệm X đúng/sai với
+độ tin cậy $c$ vào lúc $t$"), có \code{event\_id} \textbf{duy nhất} để chống trùng.
+Vòng đời được ghi thẳng vào cột \code{status}: \code{pending} $\rightarrow$
+\code{claimed} $\rightarrow$ \code{applied}. Các cột \code{available\_at},
+\code{claimed\_at}, \code{attempt\_count}, \code{last\_error\_code} phục vụ cơ chế thuê
+(\en{lease}) và thử lại.
+
+\begin{luuy}[Vì sao cần bảng này thay vì gọi trực tiếp]
+Hội thoại AI sinh quan sát ở ai-service, còn trạng thái nằm ở backend. Nếu gọi đồng bộ,
+một lần mạng chập sẽ mất bằng chứng học tập. Với \en{outbox}: ai-service ghi vào vùng đệm
+MongoDB trước khi trả lời người dùng; một tiến trình thuê chuyển tiếp sang backend;
+backend ghi dòng \en{outbox} \textbf{trong cùng giao dịch} rồi mới xác nhận. Nhiều tiến
+trình áp dụng song song bằng \codesp{FOR UPDATE SKIP LOCKED}, nên trạng thái, \en{epoch} và
+cờ đã-áp-dụng luôn thay đổi trong một giao dịch duy nhất.
+\end{luuy}
+
+\section{Dữ liệu năng lực CEFR}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \code{user\_skill\_scores} — một dòng cho mỗi (người học, kỹ năng); giữ điểm
+  hiện tại, độ tin cậy, và hai cột lịch sử \code{score\_7d\_ago}/\code{score\_30d\_ago}.
+  \item \code{exercise\_attempts} — \textbf{nhật ký chi tiết chỉ ghi, không đọc lại}.
+  Được cắt tỉa sau 90 ngày. Không được dùng để dựng biểu đồ lịch sử.
+  \item \code{skill\_daily\_stats} — thứ thực sự tồn tại lâu dài: một dòng cho mỗi
+  (người học, ngày, kỹ năng), ghi bằng \en{UPSERT}. Nhờ vậy một ngày học tốn tối đa sáu
+  dòng dù người học luyện tập bao nhiêu. Mọi biểu đồ lịch sử đọc từ đây.
+  \item \code{user\_level\_history} — lịch sử thăng/giáng bậc CEFR.
+  \item \code{level\_assessment\_tests} — bài kiểm tra xếp bậc.
+\end{itemize}
+
+\section{Ràng buộc dữ liệu không hiển nhiên}
+
+Những ràng buộc sau đây không đọc được từ tên cột, nên đã gây lỗi ít nhất một lần:
+
+\begin{longtable}{L{5.2cm} L{8.4cm}}
+\toprule
+\textbf{Trường} & \textbf{Ràng buộc}\\
+\midrule
+\endhead
+\code{VocabularyItem.part\_of\_speech} & Kiểu liệt kê \code{PartOfSpeech}, giá trị \textbf{chữ thường}: \code{noun}, \code{verb}, \ldots\\
+\code{VocabularyItem.difficulty\_level} & Kiểu liệt kê \code{DifficultyLevel}, giá trị \textbf{chữ hoa}: \code{A1}, \code{A2}, \ldots\\
+\code{GrammarItem.content} & Kiểu \code{Text}, không phải JSON; riêng \code{examples} mới là danh sách JSON.\\
+\code{GameWord.cefr\_level} & Chuỗi thuần \code{A1}--\code{C2}, không phải kiểu liệt kê.\\
+\code{TestExam.question\_ids} & Danh sách JSON, được điền lúc chạy chứ không phải khi gieo dữ liệu.\\
+\code{Lesson.exercise\_count} & Đồng bộ tự động qua \en{hook}; gán tay sẽ bị ghi đè.\\
+\bottomrule
+\caption{Ràng buộc dữ liệu cần nhớ}
+\end{longtable}
+
+\section{Bộ nhớ đệm Redis}
+
+\begin{longtable}{L{4.6cm} L{4.4cm} L{4.2cm}}
+\toprule
+\textbf{Mục đích} & \textbf{Mẫu khoá} & \textbf{Thời gian sống}\\
+\midrule
+\endhead
+Danh sách đen thẻ đăng xuất & \code{blacklist:\{token\}} & Đến khi thẻ hết hạn\\
+Giới hạn tần suất & \code{ratelimit:\{ip\}:\{window\}} & Cửa sổ trượt\\
+Đệm phản hồi API & \code{cache:\{endpoint\}:\{params\}} & Cấu hình theo điểm cuối\\
+Hạn ngạch người dùng & \code{quota:\{user\_id\}:\{period\}} & Theo chu kỳ\\
+Đệm TRACE-CAG lớp L0 & \code{cache\_L0:\{hash\}} & 3.600 giây\\
+Đệm TRACE-CAG lớp L1 & \code{L1:\{bucket\}} & 7.200 giây\\
+Hồ sơ / lịch sử hội thoại & \code{profile:\{user\_id\}}, \code{history:\{session\_id\}} & Theo phiên\\
+\bottomrule
+\caption{Không gian khoá Redis}
+\end{longtable}
+
+\section{MongoDB}
+
+\begin{longtable}{L{5.4cm} L{8.2cm}}
+\toprule
+\textbf{Bộ sưu tập} & \textbf{Nội dung}\\
+\midrule
+\endhead
+\code{chat\_sessions}, \code{chat\_messages} & Hội thoại thông thường theo chủ đề.\\
+\code{lexi\_sessions}, \code{lexi\_messages} & Hội thoại với trợ lý Lexi chạy TRACE-CAG.\\
+\code{learner\_observation\_spool} & Vùng đệm quan sát trước khi chuyển sang backend.\\
+\bottomrule
+\caption{Bộ sưu tập MongoDB}
+\end{longtable}
+
+Chỉ mục quan trọng: \code{session\_id} là duy nhất trên hai bảng phiên; các bảng tin nhắn
+có chỉ mục tổ hợp \code{(session\_id, timestamp)}; bảng phiên có chỉ mục
+\code{(user\_id, last\_activity)}.
+
+\section{KuzuDB — đồ thị tri thức}
+
+Lược đồ tối giản: đỉnh là \code{Concept} (mang bậc CEFR, mô tả, từ khoá), cạnh gồm
+\code{prerequisite\_of} (tiên quyết), \code{related\_to} (liên quan) và
+\code{confused\_with} (dễ nhầm lẫn). Đồ thị sản xuất hiện có khoảng 15.129 khái niệm và
+145.387 cạnh.
+
+\begin{luuy}[Đồ thị không chứa dữ liệu người dùng]
+KuzuDB chỉ lưu \textbf{cấu trúc tri thức dùng chung}, hoàn toàn không phụ thuộc người
+dùng. Trạng thái thưa của từng người học nằm ở PostgreSQL. Tách như vậy để một đồ thị
+duy nhất phục vụ được mọi người học, và để bộ nhớ đệm đồ thị con có thể chia sẻ giữa các
+người dùng mà không rò rỉ thông tin cá nhân.
+\end{luuy}

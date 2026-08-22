@@ -1,0 +1,167 @@
+\chapter{AI service}
+
+Chương này mô tả AI service ở mức tổ chức: các nhóm dịch vụ, cách quản lý vòng đời mô hình, đường ống giọng nói, các tác tử phụ trợ và danh sách điểm cuối. Bộ não của dịch vụ — pipeline TRACE-CAG — được phân tích riêng và sâu hơn nhiều ở Chương~8.
+
+\section{Vai trò và tổ chức}
+
+AI service là bộ não ngôn ngữ của hệ thống. Nó không sở hữu dữ liệu người học, nhưng
+quyết định \textbf{nội dung} mà người học nhận được: câu trả lời của gia sư ảo, chẩn đoán
+lỗi, gợi ý luyện tập, bản dịch, phản hồi phát âm và cả nội dung khoá học sinh tự động.
+
+\begin{longtable}{L{4.4cm} L{9.2cm}}
+\toprule
+\textbf{Nhóm} & \textbf{Thành phần}\\
+\midrule
+\endhead
+Pipeline chính & \code{trace\_cag/} — 19 tệp, 8.078 dòng: đồ thị trạng thái, các đỉnh xử lý, bộ nhớ đệm, truy xuất, sinh phản hồi, đánh giá.\\
+Điều phối & \code{orchestrator.py} (khởi tạo và làm ấm mô hình), \code{model\_gateway.py} (vòng đời mô hình), \code{v3\_pipeline.py}.\\
+Tri thức & \code{kg\_service\_v3.py} (đồ thị tri thức), \code{jit\_graph\_service.py} (dựng đồ thị con tức thời), \code{subgraph\_hot\_cache.py}, \code{graph\_analytics.py}, \code{kg\_data\_loader.py}.\\
+Truy xuất & \code{retrieval\_service\_v3.py}, \code{embedding\_service\_v3.py}, \code{vector\_store\_service.py}, \code{document\_intelligence.py}.\\
+Giọng nói & \code{stt/} (21 tệp: nhận dạng luồng, VAD, đóng câu, TTS luồng), \code{tts\_service.py}, \code{hubert\_service.py} (phân tích âm vị).\\
+Hội thoại chủ đề & \code{topic\_chat\_service.py}, \code{topic\_catalog\_service.py}, \code{topic\_prompt\_builder.py}, \code{topic\_llm\_gateway.py}, \code{topic\_preloader.py}.\\
+Tác tử & \code{content\_agent/} (sinh khoá học), \code{notification\_agent/} (soạn thông báo), \code{ranking\_agent\_insights.py}.\\
+Dữ liệu ngoài & \code{content\_etl/} — ETL từ vựng có kiểm soát bản quyền.\\
+Trình xử lý mô hình & \code{handlers/}: Gemini, Ollama-Qwen, Qwen, Whisper, Piper, HuBERT, MiniLM.\\
+Quan trắc & \code{metrics.py}, \code{telemetry.py}, \code{performance\_monitor.py}, \code{logging\_service.py}.\\
+\bottomrule
+\caption{Tổ chức AI service}
+\end{longtable}
+
+\section{Quản lý mô hình}
+
+\subsection{Model Gateway}
+
+\code{model\_gateway.py} là nơi duy nhất biết mô hình nào đang nằm trong bộ nhớ. Nó cung
+cấp: sổ đăng ký mô hình, nạp lười (\en{lazy loading}) có khoá bất đồng bộ, tự động gỡ mô
+hình nhàn rỗi, bảng định tuyến theo loại tác vụ, và theo dõi bộ nhớ bằng \code{psutil}.
+
+\begin{longtable}{L{2.6cm} L{2.6cm} L{2.0cm} L{6.0cm}}
+\toprule
+\textbf{Mô hình} & \textbf{Loại} & \textbf{Bộ nhớ} & \textbf{Dùng cho}\\
+\midrule
+\endhead
+Qwen & hội thoại & \(\approx\)4 GB & Phân tích ngữ pháp, hội thoại\\
+Whisper & STT & \(\approx\)1,5 GB & Nhận dạng giọng nói\\
+Piper & TTS & \(\approx\)100 MB & Tổng hợp giọng nói\\
+HuBERT & phát âm & \(\approx\)2 GB & Phân tích âm vị\\
+MiniLM & nhúng & \(\approx\)90 MB & Tìm kiếm ngữ nghĩa\\
+Llama-VI & tiếng Việt & \(\approx\)4 GB & Giải thích tiếng Việt\\
+\bottomrule
+\caption{Sổ đăng ký mô hình}
+\end{longtable}
+
+Khi tổng bộ nhớ vượt \code{MAX\_MEMORY\_MB} (mặc định 8 GB), cổng gỡ các mô hình ưu tiên
+thấp theo thứ tự lâu không dùng nhất. Vòng đời một mô hình:
+\code{Unloaded} $\rightarrow$ \code{Loading} $\rightarrow$ \code{Ready} $\rightleftarrows$
+\code{Busy} $\rightarrow$ \code{Unloading}.
+
+\subsection{Chuỗi dự phòng nhà cung cấp}
+
+Hệ thống không phụ thuộc một nhà cung cấp LLM duy nhất. Thứ tự thử: nhà cung cấp đám mây
+chính $\rightarrow$ Gemini $\rightarrow$ Ollama chạy cục bộ. Bộ định tuyến thông minh
+(\code{smart\_router}) phân loại độ phức tạp câu hỏi để chọn mô hình:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Câu chào hỏi ngắn ($\le$5 từ) $\rightarrow$ mô hình nhỏ chạy cục bộ.
+  \item Câu hỏi ngữ pháp, câu dài ($>$50 từ), hoặc chứa thuật ngữ kỹ thuật $\rightarrow$
+  mô hình đám mây.
+  \item Mặc định $\rightarrow$ mô hình đám mây.
+\end{itemize}
+
+\begin{luuy}[Nhà cung cấp gỡ mô hình không báo trước]
+Groq đã ngừng \code{llama-3.1-8b-instant} và \code{llama-3.3-70b-versatile} — cả hai đều
+từng là mặc định. Mặc định hiện tại là \code{openai/gpt-oss-20b} cho toàn dịch vụ và
+\code{openai/gpt-oss-120b} cho tác tử nội dung. Vì mọi đường sinh nội dung đều có
+\en{fallback} về khuôn mẫu tất định, một khoá chết trông giống như "sinh thành công"
+nhưng nội dung lại là câu mẫu — phải kiểm tra chữ trước khi tin một tác vụ đã chạy đúng.
+\end{luuy}
+
+\section{Đường ống giọng nói}
+
+Thư mục \code{stt/} chứa một hệ con hoàn chỉnh gồm 21 tệp, hoạt động theo mô hình
+\textbf{song luồng} (\en{dual-stream}): nghe và nói diễn ra đồng thời.
+
+\begin{longtable}{L{3.8cm} L{9.8cm}}
+\toprule
+\textbf{Thành phần} & \textbf{Vai trò}\\
+\midrule
+\endhead
+\code{audio\_ingest}, \code{ring\_buffer} & Nhận khối âm thanh từ WebSocket vào bộ đệm vòng.\\
+\code{vad\_endpointing} & Phát hiện có tiếng nói và xác định điểm kết thúc phát ngôn.\\
+\code{engines/}, \code{model\_registry} & Các động cơ nhận dạng (Faster-Whisper và tương đương) cùng sổ đăng ký.\\
+\code{sentence\_splitter}, \code{sentence\_finalizer} & Cắt và chốt câu từ dòng bản ghi tạm.\\
+\code{transcript\_normalizer}, \code{transcript\_state} & Chuẩn hoá và giữ trạng thái bản ghi.\\
+\code{duplex\_turn}, \code{session\_manager} & Quản lý lượt nói hai chiều và phiên; xử lý việc người học ngắt lời AI.\\
+\code{streaming\_tts} & Tổng hợp giọng nói theo từng đoạn để giảm độ trễ cảm nhận.\\
+\code{verifier\_router} & Định tuyến sang mô hình kiểm chứng khi bản ghi có độ tin cậy thấp.\\
+\code{trace\_cag\_adapter} & Chuyển bản ghi đã chốt vào pipeline TRACE-CAG.\\
+\code{voice\_ticket} & Vé phiên giọng nói — kiểm soát truy cập WebSocket.\\
+\bottomrule
+\caption{Thành phần đường ống giọng nói}
+\end{longtable}
+
+\subsection{Phân tích phát âm bằng HuBERT}
+
+Âm thanh 16 kHz được đưa qua HuBERT-large để nhận dạng chuỗi âm vị, so sánh với phát âm
+mục tiêu và cho điểm từng âm vị. Hệ thống nhận diện riêng các lỗi đặc trưng của người
+Việt:
+
+\begin{longtable}{L{3.4cm} L{3.0cm} L{3.0cm} L{4.0cm}}
+\toprule
+\textbf{Âm vị} & \textbf{Ví dụ} & \textbf{Lỗi thường gặp} & \textbf{Kết quả nghe được}\\
+\midrule
+\endhead
+theta (\en{th} vô thanh) & \en{think} & thay bằng /t/ & "tink"\\
+eth (\en{th} hữu thanh) & \en{this} & thay bằng /d/ & "dis"\\
+esh (\en{sh}) & \en{shoe} & thay bằng /s/ & "sue"\\
+/v/ & \en{very} & thay bằng /b/ & "bery"\\
+\bottomrule
+\caption{Lỗi phát âm đặc trưng của người học Việt Nam}
+\end{longtable}
+
+\section{Các tác tử AI khác}
+
+\begin{longtable}{L{3.4cm} L{10.2cm}}
+\toprule
+\textbf{Tác tử} & \textbf{Chức năng}\\
+\midrule
+\endhead
+\code{content\_agent} & Sinh khoá học hoàn chỉnh: \code{planner} lập chương trình theo bậc CEFR, \code{generator} sinh bài học và bài tập, \code{policies} ràng buộc hình dạng, \code{adapters} nối các nguồn từ vựng, \code{store} lưu kết quả. Backend \code{content\_agent\_apply} mới là nơi ghi vào cơ sở dữ liệu.\\
+\code{notification\_agent} & Đồ thị trạng thái riêng (\code{graph}, \code{nodes}, \code{state}) soạn nội dung thông báo cá nhân hoá.\\
+\code{ranking\_agent\_insights} & Sinh nhận định về vị trí xếp hạng và gợi ý cải thiện.\\
+\code{error\_diagnosis} & Điểm cuối nội bộ chẩn đoán lỗi độc lập, dùng cho sổ tay lỗi sai.\\
+\code{translate} & Dịch có ngữ cảnh học tập, khác dịch máy thuần tuý ở chỗ giữ mức độ khó phù hợp bậc CEFR.\\
+\code{topic\_chat} & Hội thoại theo chủ đề với lời nhắc và danh mục riêng, nhẹ hơn TRACE-CAG đầy đủ.\\
+\bottomrule
+\caption{Các tác tử AI phụ trợ}
+\end{longtable}
+
+\section{Điểm cuối AI service}
+
+\begin{longtable}{L{4.6cm} L{9.0cm}}
+\toprule
+\textbf{Tiền tố} & \textbf{Chức năng}\\
+\midrule
+\endhead
+\code{/api/v1/chat} & Phiên hội thoại cơ bản.\\
+\code{/api/v1/lexi*} & Trợ lý Lexi chạy TRACE-CAG đầy đủ, hỗ trợ dòng SSE.\\
+\code{/api/v1/stt} & Nhận dạng giọng nói và chấm điểm phát âm.\\
+\code{/api/v1/tts} & Tổng hợp giọng nói.\\
+\code{/api/v1/voice} & Phiên giọng nói thời gian thực (WebSocket).\\
+\code{/api/v1/topics} & Hội thoại theo chủ đề.\\
+\code{/api/v1/ai} & Phân tích AI, tình trạng mô hình, dịch.\\
+\code{/api/v1/admin} & Quản trị mô hình.\\
+\code{/warmup} & Kích hoạt nạp trước mô hình lúc triển khai.\\
+\code{/visualizer} & Trực quan hoá các đỉnh của pipeline.\\
+\bottomrule
+\caption{Điểm cuối AI service}
+\end{longtable}
+
+\begin{luuy}[Làm ấm khi khởi động, không phải khi có yêu cầu đầu tiên]
+Trước đây bộ điều phối và mô hình Qwen chỉ được nạp khi có yêu cầu đầu tiên, khiến người
+dùng đầu tiên sau mỗi lần triển khai phải chờ rất lâu. Việc nạp nay nằm trong hàm
+\code{lifespan()} của \code{main.py}, cộng với việc song song hoá tra cứu MongoDB/Redis
+trong \code{chat.py}. Riêng \code{RetrievalServiceV3} mất khoảng 169,5 giây để dựng đồ thị
+NetworkX và tính độ trung tâm trên đồ thị sản xuất, nên được bọc trong
+\code{asyncio.to\_thread} kèm khoá để không chặn vòng lặp sự kiện và không bị dựng hai lần.
+\end{luuy}

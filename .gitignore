@@ -172,3 +172,10 @@ ai-service/.crawl4ai/
 **/learner-state-*.html
 **/checkpoint*.json
 **/quarantine*.jsonl
+
+# Built LaTeX output of docs/technical-report (Makefile target, plus its `make cp` copy)
+docs/technical-report/*.pdf
+docs/technical-report/*.aux
+docs/technical-report/*.log
+docs/technical-report/*.toc
+docs/technical-report/*.out

@@ -1,0 +1,148 @@
+\documentclass[12pt,a4paper,oneside]{report}
+
+% ===================== FONT & NGÔN NGỮ =====================
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setmonofont{Menlo}[Scale=0.85]
+\usepackage{polyglossia}
+\setmainlanguage{vietnamese}
+
+% ===================== TRÌNH BÀY =====================
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3cm,right=2.2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[section]{placeins}  % chan hinh noi tren khong troi qua ranh gioi muc
+\usepackage[hidelinks]{hyperref}
+\input{tikz-setup}
+
+\definecolor{lexiblue}{HTML}{1D4ED8}
+\definecolor{lexigray}{HTML}{4B5563}
+\definecolor{lexilight}{HTML}{F3F4F6}
+\definecolor{lexigreen}{HTML}{047857}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=lexiblue,
+  urlcolor=lexiblue,
+  citecolor=lexiblue,
+  pdftitle={LexiLingo — Báo cáo kỹ thuật toàn hệ thống},
+  pdfauthor={Nhóm LexiLingo}
+}
+
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.25}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{lexigray}{LexiLingo — Báo cáo kỹ thuật toàn hệ thống}}
+\fancyhead[R]{\small\textcolor{lexigray}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{lexiblue}}
+  {\LARGE Chương \thechapter}{8pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{24pt}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{lexiblue}\bfseries,
+  commentstyle=\color{lexigreen},
+  stringstyle=\color{lexigray},
+  backgroundcolor=\color{lexilight},
+  frame=single,
+  rulecolor=\color{lexigray!40},
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  showstringspaces=false,
+  extendedchars=true,
+  inputencoding=utf8,
+  tabsize=2,
+  captionpos=b,
+  aboveskip=1em,
+  belowskip=1em
+}
+
+% Hộp ghi chú đơn giản, không phụ thuộc gói ngoài
+\newenvironment{luuy}[1][Ghi chú]{%
+  \par\vspace{0.5em}\noindent
+  \begin{tabular}{@{}p{0.3em}@{\hspace{0.8em}}p{0.92\textwidth}@{}}
+  \textcolor{lexiblue}{\rule{0.3em}{1.6em}} &
+  \begin{minipage}[t]{0.92\textwidth}\small\textbf{\textcolor{lexiblue}{#1.}}\ %
+}{%
+  \end{minipage}\end{tabular}\par\vspace{0.5em}
+}
+
+% Cột chuẩn cho bảng
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{seqsplit}
+\newcommand{\en}[1]{\textit{#1}}
+% Cho phep ten ham/duong dan dai ngat dong trong o bang hep
+\DeclareRobustCommand{\code}[1]{\texttt{\small\seqsplit{#1}}}
+% Bien the khong seqsplit, dung cho doan co khoang trang (lenh shell, SQL...) -
+% seqsplit an mat ky tu khoang trang khi xu ly tung ky tu.
+\DeclareRobustCommand{\codesp}[1]{\texttt{\small #1}}
+\pdfstringdefDisableCommands{\def\code#1{#1}\def\en#1{#1}\def\seqsplit#1{#1}}
+\emergencystretch=2em
+\sloppy
+
+% ===================== NỘI DUNG =====================
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{1.5cm}
+{\large\bfseries TRƯỜNG ĐẠI HỌC CÔNG THƯƠNG TP.HCM\par}
+{\large KHOA CÔNG NGHỆ THÔNG TIN\par}
+\vspace{2.5cm}
+{\Huge\bfseries\color{lexiblue} LexiLingo\par}
+\vspace{0.6cm}
+{\LARGE\bfseries BÁO CÁO KỸ THUẬT TOÀN HỆ THỐNG\par}
+\vspace{0.8cm}
+{\large\itshape Nền tảng học tiếng Anh cá nhân hoá\\ trên kiến trúc đa dịch vụ và pipeline TRACE-CAG\par}
+\vspace{2.2cm}
+
+\begin{tabular}{rl}
+\textbf{Mã đề tài} & CNTT-KLCN173\\
+\textbf{Giảng viên hướng dẫn} & TS. Phùng Thế Bảo\\
+ & Đỗ Tiến Thành\\
+\textbf{Nhóm thực hiện} & Giang Bội Nhi — 2001230621\\
+ & Nguyễn Hữu Thắng — 2001230909\\
+ & Nguyễn Trần Anh Thư — 2001230954\\
+\end{tabular}
+
+\vfill
+{\large TP. Hồ Chí Minh, tháng 8 năm 2026\par}
+\end{titlepage}
+
+\tableofcontents
+\cleardoublepage
+
+\input{chapters/01-tongquan}
+\input{chapters/02-nghiepvu}
+\input{chapters/03-kientruc}
+\input{chapters/04-thietke}
+\input{chapters/05-backend}
+\input{chapters/06-dulieu}
+\input{chapters/07-ai}
+\input{chapters/08-tracecag}
+\input{chapters/09-thuattoan}
+\input{chapters/10-pipeline}
+\input{chapters/11-api}
+\input{chapters/12-flutter}
+\input{chapters/13-admin-gateway}
+\input{chapters/14-vanhanh}
+\input{chapters/15-phuluc}
+
+\end{document}

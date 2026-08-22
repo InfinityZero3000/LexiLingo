@@ -1,0 +1,120 @@
+\chapter{Trang quản trị và cổng API}
+
+\section{Trang quản trị React}
+
+\subsection{Công nghệ}
+
+\begin{longtable}{L{4.4cm} L{9.2cm}}
+\toprule
+\textbf{Thành phần} & \textbf{Lựa chọn}\\
+\midrule
+\endhead
+Khung & React 19 + TypeScript, dựng bằng Vite 8\\
+Thư viện giao diện & Ant Design 6\\
+Truy vấn dữ liệu & TanStack Query 5 — quản lý bộ đệm, thử lại, làm mới nền\\
+Biểu mẫu & React Hook Form + bộ giải kiểm tra hợp lệ\\
+Hoạt ảnh & GSAP 3 kèm \code{@gsap/react}\\
+HTTP & Axios\\
+Xác thực & JWT chung với backend, cộng đăng nhập quản trị có mã một lần (OTP)\\
+Triển khai & Vercel\\
+\bottomrule
+\caption{Công nghệ trang quản trị}
+\end{longtable}
+
+\subsection{Hai mươi chín trang chức năng}
+
+\begin{longtable}{L{4.0cm} L{9.6cm}}
+\toprule
+\textbf{Nhóm} & \textbf{Trang}\\
+\midrule
+\endhead
+Bảng điều khiển & \code{EnhancedAdminDashboard}, \code{SuperAdminDashboard}, \code{RoleRedirectPage} (điều hướng theo vai trò).\\
+Nội dung học & \code{CoursesPage}, \code{UnitsPage}, \code{LessonsPage}, \code{LessonExercisesPage}, \code{VocabularyPage}, \code{TopicsPage}.\\
+Tác tử nội dung & \code{ContentLabPage} (chạy tác tử sinh khoá học), \code{ContentQaQueuePage} (hàng đợi kiểm duyệt), \code{ContentAnalyticsPage}.\\
+Người dùng & \code{UserManagementPage}, \code{AdminManagementPage}, \code{NoAccessPage}.\\
+Động lực học & \code{AchievementsPage}, \code{ShopPage}, \code{RankingAgentPage}.\\
+AI & \code{AiModelsPage}, \code{AiChatSettingsPage}, \code{AiQualityDashboardPage}.\\
+Vận hành & \code{MonitoringPage}, \code{DatabasePage}, \code{LogsPage}, \code{SystemSettingsPage}.\\
+Tăng trưởng & \code{NotificationCampaignPage}, \code{AdsPage}.\\
+Khác & \code{LoginPage}, \code{NotFoundPage}.\\
+\bottomrule
+\caption{Trang của bảng điều khiển quản trị}
+\end{longtable}
+
+\subsection{Quy trình kiểm duyệt nội dung}
+
+Đây là quy trình quan trọng nhất của trang quản trị, vì nó là điểm con người can thiệp vào
+nội dung do AI sinh:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item Quản trị viên tải lên danh sách từ có nhãn CEFR ở \code{ContentLabPage}.
+  \item Tác tử nội dung chạy, kết quả lưu thành khoá học \textbf{bản nháp}.
+  \item \code{ContentQaQueuePage} liệt kê bài học cần rà soát; người duyệt đọc nội dung,
+  sửa hoặc yêu cầu sinh lại.
+  \item Chỉ khi mọi bài học có bài tập, nút xuất bản mới mở
+  (\code{CourseCRUD.publish\_blockers}).
+\end{enumerate}
+
+\section{Cổng API}
+
+\subsection{Nginx}
+
+Cổng sản xuất là Nginx 1.27-alpine, cấu hình theo khuôn mẫu trong
+\code{gateway/nginx/templates/} kèm các đoạn dùng lại ở \code{snippets/}. Trách nhiệm:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Kết thúc TLS và chuyển hướng HTTP sang HTTPS.
+  \item Định tuyến \code{/api/v1/*} về backend-service, \code{/ai/*} và các đường hội thoại
+  về ai-service.
+  \item Nâng cấp giao thức cho WebSocket (giọng nói thời gian thực).
+  \item Giới hạn tần suất ở tầng biên, trước khi yêu cầu chạm ứng dụng.
+  \item Chuyển tiếp \code{X-Request-ID} và địa chỉ IP thật.
+\end{itemize}
+
+Kho mã còn giữ cấu hình Kong (\code{gateway/kong/},
+\code{docker-compose.kong.yml}) như phương án thay thế và cấu hình APIM cho môi trường
+lai.
+
+\subsection{Tường lửa ứng dụng web ở Cloudflare}
+
+Bộ quy tắc WAF (\code{gateway/cloudflare/waf-rules.md}) được rút ra từ phân tích nhật ký
+30 ngày. Quy tắc quan trọng nhất phải đặt \textbf{đầu tiên}:
+
+\begin{lstlisting}
+(http.request.method eq "OPTIONS") and (http.host eq "api.lexilingo.me")
+  -> Skip: Bot Fight Mode
+\end{lstlisting}
+
+\begin{luuy}[Vì sao quy tắc này phải đứng đầu]
+Chế độ chống bot của Cloudflare chặn yêu cầu \code{OPTIONS} (yêu cầu tiền kiểm CORS)
+\textbf{trước khi} nó tới backend và trả về \code{cf-mitigated: challenge}. Hậu quả là mọi
+lời gọi API có xác thực từ \code{www.lexilingo.me} sang \code{api.lexilingo.me} đều hỏng —
+triệu chứng nhìn giống lỗi CORS ở phía ứng dụng, nên rất dễ đi tìm sai chỗ.
+\end{luuy}
+
+Các nhóm quy tắc còn lại: chặn quét lỗ hổng theo đường dẫn quen thuộc, giới hạn tần suất
+theo IP cho điểm cuối đăng nhập, thách thức lưu lượng bất thường, và danh sách cho phép
+đối với các dịch vụ nội bộ.
+
+\section{Máy chủ MCP}
+
+\code{mcp-server/} triển khai \en{Model Context Protocol} — giao thức cho phép trợ lý lập
+trình trong IDE gọi công cụ của dự án. Các công cụ hiện có:
+
+\begin{longtable}{L{4.4cm} L{9.2cm}}
+\toprule
+\textbf{Công cụ} & \textbf{Chức năng}\\
+\midrule
+\endhead
+\code{manage\_i18n\_key} & Thêm hoặc cập nhật một khoá dịch đồng thời trên mọi tệp ngôn ngữ.\\
+\code{whisper\_handler} & Chạy nhận dạng giọng nói cục bộ.\\
+\code{hubert\_handler} & Phân tích âm vị cục bộ.\\
+\code{piper\_handler} & Tổng hợp giọng nói cục bộ.\\
+\code{qwen\_handler}, \code{ollama\_qwen\_handler} & Suy luận Qwen cục bộ.\\
+\code{gemini\_handler} & Gọi API Gemini.\\
+\bottomrule
+\caption{Công cụ của máy chủ MCP}
+\end{longtable}
+
+Đây là thành phần phục vụ đội phát triển chứ không nằm trên đường phục vụ người học, nên
+nó không có mặt trong sơ đồ triển khai sản xuất.

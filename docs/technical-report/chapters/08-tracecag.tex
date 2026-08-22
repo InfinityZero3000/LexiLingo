@@ -1,0 +1,488 @@
+\chapter{Phân tích sâu thuật toán TRACE-CAG}
+
+Đây là chương trọng tâm của báo cáo về mặt kỹ thuật AI. TRACE-CAG là bộ não sinh phản hồi
+cho toàn bộ tính năng hội thoại (Lexi Chat, luyện nói, chẩn đoán lỗi) và là điểm khác biệt
+chính của LexiLingo so với các ứng dụng học ngôn ngữ khác. Chương~9 đã trình bày công thức
+toán học của bộ nhớ đệm SCAR-L1 và hoà trộn truy xuất; chương này trình bày \textbf{toàn bộ
+pipeline xung quanh chúng} — từng đỉnh xử lý, thuật toán mở rộng đồ thị, cơ chế thích nghi,
+kỹ thuật suy luận đa bước IRCoT, và cách đánh giá chất lượng.
+
+\section{Định nghĩa và động cơ thiết kế}
+
+\textbf{TRACE-CAG} = \en{Trace}-augmented \en{Cache-Augmented Generation}, kết hợp ba ý
+tưởng vốn tách rời trong tài liệu học thuật:
+
+\begin{longtable}{L{2.6cm} L{4.2cm} L{6.4cm}}
+\toprule
+\textbf{Ý tưởng} & \textbf{Nguồn gốc} & \textbf{Vai trò trong TRACE-CAG}\\
+\midrule
+\endhead
+Đồ thị tri thức & GraphRAG & Cấu trúc hoá miền kiến thức tiếng Anh thành khái niệm và quan hệ tiên quyết/liên quan/dễ nhầm, dùng để mở rộng ngữ cảnh có kiểm soát thay vì tìm kiếm mù trên văn bản.\\
+Bộ nhớ đệm có xác thực & CAG (Chan et al., 2025) & Tái sử dụng phản hồi đã tính khi trạng thái người học chưa đổi đáng kể, thay vì luôn luôn gọi LLM.\\
+Truy vết phụ thuộc & Cung cấp nguồn gốc (\en{provenance}) & Mỗi khoản mục đệm mang theo \en{admissibility certificate} — bằng chứng có thể kiểm chứng để quyết định tái dùng, vá, hay tính lại.\\
+\bottomrule
+\caption{Ba ý tưởng cấu thành TRACE-CAG}
+\end{longtable}
+
+Khác biệt cốt lõi so với RAG kinh điển: RAG nối đất câu trả lời vào \textbf{tài liệu tĩnh}
+tìm được qua tìm kiếm véc-tơ; TRACE-CAG nối đất vào \textbf{trạng thái người học đang
+sống} (bậc CEFR, lịch sử lỗi, mức nắm vững từng khái niệm) cộng với một đồ thị tri thức
+được duyệt có định hướng theo bậc học — không phải tìm kiếm ngữ nghĩa thuần tuý.
+
+\section{Kiến trúc StateGraph}
+
+Pipeline được triển khai bằng \code{StateGraph} của LangGraph: một đồ thị trạng thái nơi
+mỗi đỉnh là một hàm bất đồng bộ nhận trạng thái, trả về phần trạng thái cập nhật, và các
+cạnh (có thể là cạnh điều kiện) quyết định đỉnh kế tiếp.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=7mm and 9mm]
+  \node[term] (in) {input\_node};
+  \node[dec, right=of in] (dvc) {voice?};
+  \node[proc, above right=6mm and 9mm of dvc] (stt) {stt\_node};
+  \node[proc, below right=6mm and 9mm of dvc, fill=cSoftO, draw=cGate] (cg) {cache\_gate\_node};
+  \node[dec, right=13mm of cg] (dch) {đệm\\trúng?};
+  \node[term, above=8mm of dch, fill=cSoftG, draw=cData] (endcache) {END\\(trả từ đệm)};
+  \node[proc, below right=6mm and 9mm of dch] (kgd) {kg\_diagnose\_node\\\scriptsize(kg\_expand $\parallel$ diagnose)};
+  \node[dec, right=13mm of kgd] (drt) {định tuyến};
+  \node[proc, above=9mm of drt] (clar) {ask\_clarify\_node};
+  \node[proc, right=13mm of drt] (retr) {retrieve\_node};
+  \node[proc, below=9mm of drt] (vn) {vietnamese\_node};
+  \node[proc, right=13mm of retr] (gen) {generate\_node};
+  \node[term, right=9mm of gen] (end2) {END};
+
+  \draw[flb] (in) -- (dvc);
+  \draw[flb] (dvc) -- node[lab]{có} (stt);
+  \draw[flb] (dvc) -- node[lab,near start]{không} (cg);
+  \draw[flb] (stt) -| (cg);
+  \draw[flb] (cg) -- (dch);
+  \draw[flb] (dch) -- node[lab]{có} (endcache);
+  \draw[flb] (dch) -- node[lab,near start]{không} (kgd);
+  \draw[flb] (kgd) -- (drt);
+  \draw[flb] (drt) -- node[lab]{$\rho_{diag}{<}0{,}5$} (clar);
+  \draw[flb] (drt) -- node[lab,near start]{A1/A2 + lỗi} (vn);
+  \draw[flb] (drt) -- node[lab,near start]{khác} (retr);
+  \draw[flb] (vn) -| (retr);
+  \draw[flb] (retr) -- (gen);
+  \draw[flb] (clar) -| (end2);
+  \draw[flb] (gen) -- (end2);
+\end{tikzpicture}}
+\caption{Đồ thị trạng thái TRACE-CAG — chín đỉnh, bốn điểm kết thúc khả dĩ}
+\label{fig:tracecag-graph}
+\end{figure}
+
+\subsection{Bảng trạng thái pipeline}
+
+\code{TraceCAGState} là một từ điển có kiểu (\code{TypedDict}), chảy qua toàn bộ đồ thị:
+
+\begin{longtable}{L{3.2cm} L{10.2cm}}
+\toprule
+\textbf{Nhóm} & \textbf{Trường tiêu biểu}\\
+\midrule
+\endhead
+Đầu vào & \code{user\_input}, \code{session\_id}, \code{user\_id}, \code{input\_type}, \code{learner\_profile}, \code{conversation\_history}.\\
+Đồ thị tri thức & \code{kg\_seed\_concepts}, \code{kg\_expanded\_nodes}, \code{kg\_paths}, \code{jit\_soft\_graph}.\\
+Chẩn đoán & \code{diagnosis\_intent}, \code{diagnosis\_errors}, \code{diagnosis\_root\_causes}, \code{diagnosis\_confidence}.\\
+Truy xuất & \code{vector\_hits}, \code{retrieved\_context}, \code{retrieval\_trace}, \code{retrieval\_meta}.\\
+Điều khiển thích nghi & \code{adaptive\_profile}, \code{adaptive\_features}, \code{adaptive\_controller}.\\
+Điều khiển đệm & \code{cache\_fingerprint}, \code{cache\_decision}, \code{cache\_layer}, \code{cache\_bucket}, \code{reuse\_risk}.\\
+Phản hồi & \code{tutor\_response}, \code{native\_hint}, \code{pronunciation\_tip}, \code{strategy}, \code{action\_plan}.\\
+Điểm số & \code{fluency\_score}, \code{grammar\_score}, \code{vocabulary\_level}, \code{overall\_score}.\\
+\bottomrule
+\caption{Nhóm trường trong \code{TraceCAGState}}
+\end{longtable}
+
+\section{Đỉnh 1 — \code{input\_node}: nạp ngữ cảnh}
+
+Nạp \code{learner\_profile} từ Redis (khoá \code{profile:\{user\_id\}}, mặc định
+\codesp{\{"level": "B1"\}} nếu chưa có) và \code{conversation\_history}
+(khoá \code{history:\{session\_id\}}), chuẩn hoá đầu vào. Với đường giọng nói, bản ghi âm
+đã được chốt câu bởi lớp STT thời gian thực trước khi vào đỉnh này.
+
+\section{Đỉnh 2 — \code{kg\_expand\_node}: mở rộng đồ thị tri thức}
+
+Đây là thuật toán phức tạp nhất trong toàn pipeline, chia hai giai đoạn.
+
+\subsection{Giai đoạn 1 — Khớp khái niệm hạt giống}
+
+Ba nguồn tín hiệu được hợp nhất để tìm khái niệm hạt giống, theo thứ tự ưu tiên:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Tra cứu từ khoá chính xác} qua chỉ mục đảo ngược — độ phức tạp
+  \(O(\text{số từ trong câu})\).
+  \item \textbf{Tương đồng ngữ nghĩa TF-IDF} (top 5), bắt được các tham chiếu gián tiếp
+  mà tra cứu từ khoá bỏ lỡ.
+  \item \textbf{So khớp mẫu lỗi ngữ pháp} bằng biểu thức chính quy — một bảng luật viết tay
+  hơn 30 mẫu, mỗi mẫu ánh xạ một cấu trúc câu sai sang một khái niệm ngữ pháp cụ thể.
+\end{enumerate}
+
+\begin{longtable}{L{5.4cm} L{6.4cm}}
+\toprule
+\textbf{Mẫu (rút gọn)} & \textbf{Khái niệm ánh xạ}\\
+\midrule
+\endhead
+\codesp{i goes} & \code{grammar.subject\_verb\_agreement}\\
+\codesp{he go} / \codesp{she go} & \code{grammar.third\_person\_s}\\
+\codesp{yesterday...(go\textbar want\textbar eat...)} & \code{grammar.past\_time\_markers}\\
+\codesp{have went} / \codesp{has came} & \code{grammar.present\_perfect}\\
+\codesp{more better} / \codesp{more faster} & \code{grammar.comparatives}\\
+\codesp{a apple} / \codesp{a hour} & \code{grammar.articles\_a\_an}\\
+\codesp{go to home} / \codesp{married with} & \code{error.preposition\_confusion}\\
+\codesp{I very like} & \code{error.word\_order\_svo} (ảnh hưởng SVO tiếng Việt)\\
+\codesp{can to} / \codesp{should to} & \code{grammar.modal\_can\_could}\\
+\codesp{if...will come} & \code{grammar.conditionals\_first}\\
+\codesp{i wish...} / \codesp{if only} & \code{grammar.wish\_regret}\\
+\codesp{said that} / \codesp{told...that} & \code{grammar.reported\_speech}\\
+\bottomrule
+\caption{Trích bảng mẫu lỗi ngữ pháp — nhận diện lỗi đặc trưng của người học Việt Nam}
+\label{tbl:grammar-patterns}
+\end{longtable}
+
+Ba nguồn được hợp nhất, loại trùng, giữ thứ tự xuất hiện đầu tiên (từ khoá chính xác đứng
+trước vì độ tin cậy cao hơn).
+
+\subsection{Giai đoạn 2 — Mở rộng tốt nhất trước có trọng số theo bậc}
+
+Với tập khái niệm hạt giống, thuật toán duyệt đồ thị bằng hàng đợi ưu tiên (giải thuật
+tốt nhất trước — \en{best-first search}), ưu tiên khái niệm gần bậc CEFR của người học.
+
+\textbf{Trọng số sư phạm (PedWeight):}
+\begin{equation}
+w(\ell) =
+\begin{cases}
+1{,}0 & |\ell - \ell_{\text{người học}}| = 0\\
+0{,}7 & |\ell - \ell_{\text{người học}}| = 1\\
+0{,}3 & |\ell - \ell_{\text{người học}}| \ge 2
+\end{cases}
+\end{equation}
+
+với \(\ell\) là thứ tự bậc CEFR (A1=1, \ldots, C2=6). Khái niệm đúng ngay bậc người học
+được ưu tiên tuyệt đối; khái niệm quá xa bậc gần như bị bỏ qua nhưng vẫn có mặt trong
+hàng đợi để không bỏ sót một quan hệ hiếm nhưng quan trọng.
+
+\begin{lstlisting}[language=Python, caption={Best-first expansion, rút gọn từ \code{kg\_service\_v3.py}}]
+frontier = []  # hang doi uu tien: (-w, hop_depth, concept_id, parent, relation)
+for s in seed_nodes:
+    heappush(frontier, (-1.0, 0, s, None, None))
+
+while frontier and len(expanded_nodes) < max_nodes:      # max_nodes = 10
+    neg_w, depth, cid, parent, rel = heappop(frontier)
+    if depth > 0:
+        expanded_nodes.append(Node(cid, relation=rel, depth=depth))
+        if parent: paths.append(Path([parent, cid], [rel]))
+    if depth >= max_hops:                                  # max_hops = 2
+        continue
+    for neighbor_id, edge_rel, neighbor_level in kuzu_neighbors(cid, limit=50):
+        if neighbor_id not in visited:
+            visited.add(neighbor_id)
+            heappush(frontier, (-ped_weight(neighbor_level), depth+1,
+                                 neighbor_id, cid, edge_rel))
+\end{lstlisting}
+
+\begin{luuy}[Vì sao giới hạn 50 hàng xóm mỗi khái niệm]
+Một khái niệm từ vựng phổ biến như "person" hay "run" có thể có 200--500 cạnh ra, trong
+khi \code{max\_nodes} chặn toàn bộ lượt duyệt ở khoảng 10. Lấy hết hàng xóm của một
+\en{hub node} rồi vứt gần hết sẽ tốn một truy vấn KuzuDB đắt một cách vô ích, nên giới
+hạn \codesp{LIMIT 50} cắt chi phí ngay tại nguồn.
+\end{luuy}
+
+Kết quả được đệm ở Redis theo khoá
+\code{kg:subgraph:sha1(sorted(seeds):level:max\_hops:max\_nodes)} với thời gian sống
+30 phút, để các yêu cầu có cùng hạt giống và cùng bậc không phải duyệt lại đồ thị.
+
+\section{Đỉnh 3 — \code{diagnose\_node}: chẩn đoán bằng LLM}
+
+Chạy \textbf{song song} với \code{kg\_expand\_node} qua \code{asyncio.gather} — hai việc
+độc lập dữ liệu đầu vào nên chạy đồng thời cắt gần một nửa độ trễ nhánh chậm. Lời nhắc gửi
+LLM có cấu trúc:
+
+\begin{lstlisting}
+"{cau cua nguoi hoc} [learner: level={bac}, native={tieng_me_de}]"
+"Identify: intent, grammar errors, fluency issues, confidence"
+\end{lstlisting}
+
+Kỳ vọng đầu ra là JSON có cấu trúc:
+
+\begin{lstlisting}
+{
+  "intent": "correct",             // correct | explain | practice | ask
+  "errors": [
+    {"span": "goes", "type": "verb_conjugation",
+     "correction": "went", "explanation": "Past simple irregular verb"}
+  ],
+  "root_cause_concepts": ["past_simple", "irregular_verbs"],
+  "confidence": 0.92,
+  "fluency_score": 0.75, "grammar_score": 0.65
+}
+\end{lstlisting}
+
+Nếu LLM lỗi hoặc trả về không đúng định dạng, \code{\_rule\_based\_diagnosis} là đường dự
+phòng dựa trên chính bảng mẫu regex ở mục~\ref{tbl:grammar-patterns} — nghĩa là hệ thống
+không bao giờ hoàn toàn im lặng ngay cả khi mọi nhà cung cấp LLM đều gặp sự cố.
+
+\section{Định tuyến sau chẩn đoán}
+
+\begin{lstlisting}[language=Python]
+def route_after_diagnosis(state):
+    confidence = state.get("diagnosis_confidence", 1.0)
+    level      = state["learner_profile"].get("level", "B1")
+    errors     = state.get("diagnosis_errors", [])
+    if confidence < 0.5:
+        return "ask_clarify_node"        # khong doan mo
+    if level in ("A1", "A2") and errors:
+        return "vietnamese_node"         # giai thich tieng me de truoc
+    return "retrieve_node"
+\end{lstlisting}
+
+\code{ask\_clarify\_node} đưa ra ba lựa chọn (Sửa lỗi / Giải thích / Luyện tập) và kết
+thúc luôn — không lãng phí một lượt gọi LLM sinh phản hồi khi hệ thống chưa đủ tin cậy về
+điều người học thực sự muốn.
+
+\section{Đỉnh 4 — \code{retrieve\_node}: truy xuất lai có ngân sách}
+
+Đây là điểm khác biệt lớn thứ hai so với RAG thường: truy xuất bị \textbf{giới hạn ngân
+sách thời gian theo từng giai đoạn}, không chạy tới khi xong mới dừng.
+
+\begin{longtable}{L{4.2cm} L{2.6cm} L{6.2cm}}
+\toprule
+\textbf{Giai đoạn} & \textbf{Ngân sách mặc định} & \textbf{Nội dung}\\
+\midrule
+\endhead
+Đồ thị (KG) & 120 ms & Lắp ráp ngữ cảnh từ \code{kg\_expanded\_nodes} và \code{jit\_soft\_graph}.\\
+Véc-tơ & 80 ms & \code{RetrievalServiceV3} (xếp hạng theo độ trung tâm và cộng đồng đồ thị), dự phòng bằng cổng MiniLM nếu lỗi.\\
+Hoà trộn & 40 ms & Tính điểm hợp nhất (công thức Chương~9) và xếp hạng lại bằng bộ xếp hạng học trực tuyến.\\
+\bottomrule
+\caption{Ngân sách ba giai đoạn của truy xuất lai}
+\end{longtable}
+
+Giai đoạn véc-tơ được khởi chạy bằng \code{asyncio.create\_task} \textbf{song song} với
+giai đoạn đồ thị, vì đầu vào của nó (\code{kg\_concepts}, \code{user\_input}) không phụ
+thuộc kết quả giai đoạn đồ thị. Nếu hết ngân sách, cờ \code{budget\_exhausted} được bật và
+pipeline đi tiếp với những gì đã có — \textbf{trễ có giới hạn trên} luôn được ưu tiên hơn
+kết quả đầy đủ nhưng không đoán trước được thời gian.
+
+Công thức hoà trộn ba tín hiệu (đồ thị, véc-tơ, độ mới) và mười hai đặc trưng của bộ xếp
+hạng học trực tuyến đã trình bày đầy đủ ở mục~6.5.
+
+\section{Đỉnh 5 — \code{generate\_node}: sinh phản hồi có chiến lược}
+
+\subsection{Chọn chiến lược sư phạm}
+
+\begin{longtable}{L{3.4cm} L{3.6cm} L{5.6cm}}
+\toprule
+\textbf{Điều kiện} & \textbf{Chiến lược} & \textbf{Hành vi}\\
+\midrule
+\endhead
+Ý định \code{explain} và độ trôi chảy $>0{,}7$ & \en{socratic} & Dẫn dắt bằng câu hỏi ngắn, không lộ đáp án ngay; chỉ đưa lỗi dưới dạng gợi ý.\\
+Không có lỗi & \en{praise} & Khen và khuyến khích tiếp tục.\\
+1--2 lỗi & \en{feedback} & Nêu lỗi kèm giải thích ngắn gọn, tự nhiên.\\
+Từ 3 lỗi trở lên & \en{scaffold} & Chia nhỏ, hỗ trợ từng bước — tránh làm người học quá tải thông tin.\\
+\bottomrule
+\caption{Bốn chiến lược sư phạm và điều kiện kích hoạt}
+\end{longtable}
+
+\subsection{Độ dốc độ khó theo tiến trình phiên}
+
+\begin{equation}
+\text{độ khó} =
+\begin{cases}
+\text{gentle} & \text{lượt} < 3 \text{ hoặc điểm tổng} < 0{,}50\\
+\text{standard} & \text{lượt} < 8 \text{ hoặc điểm tổng} < 0{,}70\\
+\text{challenging} & \text{ngược lại}
+\end{cases}
+\end{equation}
+
+Độ khó này không quyết định \textit{nội dung} mà quyết định \textit{cách trình bày} — đưa
+vào lời nhắc hệ thống để LLM điều chỉnh độ phức tạp câu chữ, có nương nhẹ ban đầu và siết
+dần theo tiến trình phiên hội thoại.
+
+\subsection{Cấu trúc lời nhắc hệ thống}
+
+\begin{lstlisting}
+You are LexiLingo, an English tutor.
+Learner: level={bac}, native={tieng_me_de}, difficulty={do_kho}
+
+--- Knowledge Graph Context ---
+{retrieved_context}
+
+Strategy: {strategy}.
+--- Errors Found ---           (neu co, khong dung cho socratic)
+- 'goes' -> 'went' (Past simple irregular verb)
+\end{lstlisting}
+
+Sau khi LLM sinh xong: trích \code{tutor\_response}, cập nhật lịch sử hội thoại, cập nhật
+điểm mức nắm vững trên đồ thị, và nếu \codesp{cache\_decision == "full"} thì ghi khoản mục
+đệm mới với chứng chỉ khả dụng (Chương~9).
+
+\section{Điều khiển thích nghi — lựa chọn cấu hình bằng bandit ràng buộc}
+
+Khi \code{retrieval\_policy} là \code{"adaptive"}, hệ thống không dùng một bộ ngưỡng cố
+định cho mọi yêu cầu mà chọn giữa ba \textbf{cấu hình} (\en{profile}), mỗi cấu hình đánh
+đổi tốc độ lấy chất lượng theo mức khác nhau:
+
+\begin{longtable}{L{2.0cm} L{2.0cm} L{2.0cm} L{2.0cm} L{2.4cm}}
+\toprule
+\textbf{Cấu hình} & \(\Delta\tau_{\text{reuse}}\) & \(\Delta\tau_{\text{patch}}\) & \textbf{Hệ số chất lượng} & \textbf{Chi phí độ trễ}\\
+\midrule
+\endhead
+fast & $-0{,}06$ & $-0{,}04$ & 0,86 & 0,40\\
+balanced & 0,00 & 0,00 & 1,00 & 0,62\\
+quality & $+0{,}04$ & $+0{,}08$ & 1,06 & 0,88\\
+\bottomrule
+\caption{Ba cấu hình thích nghi — cấu hình \en{fast} nới ngưỡng tái dùng đệm để ưu tiên tốc độ}
+\end{longtable}
+
+\subsection{Hàm mục tiêu và lựa chọn}
+
+Với mỗi yêu cầu, hệ thống tính hàm mục tiêu cho từng cấu hình dựa trên đặc trưng ngữ cảnh
+(áp lực nhà cung cấp LLM, độ dài câu, số lượt hội thoại) cộng với độ lệch học được
+(\en{bias}) từ phản hồi các lần trước, rồi chọn cấu hình có mục tiêu cao nhất — trừ
+5\% xác suất khám phá ngẫu nhiên (\(\epsilon = 0{,}03\)) để tránh kẹt cứng vào một lựa
+chọn cục bộ tối ưu.
+
+\subsection{Cập nhật trực tuyến có ràng buộc kép}
+
+Sau khi có kết quả thật (đúng cho lô \en{benchmark}), phần thưởng được tính theo thứ tự
+ưu tiên sản phẩm yêu cầu: \textbf{chất lượng trước, truy xuất sau, an toàn trôi dạt, rồi
+mới đến độ trễ}:
+
+\begin{equation}
+r_{\text{thô}} = 0{,}46\cdot F_1 + 0{,}16\cdot EM + 0{,}24\cdot(0{,}5R@1{+}0{,}3R@3{+}0{,}2R@5) + 0{,}14\cdot\mathbb{1}[\text{tái dùng an toàn}]
+\end{equation}
+
+Hai \textbf{biến đối ngẫu} (\en{dual variables}) phạt việc vượt mục tiêu độ trễ
+(380 ms) và tỉ lệ tái dùng sai (12\%):
+
+\begin{equation}
+r = r_{\text{thô}} - \lambda_{\text{trễ}}\cdot\max(0, \Delta_{\text{trễ}}) - \lambda_{\text{sai}}\cdot\max(0, \Delta_{\text{sai}})
+\end{equation}
+
+Độ lệch của cấu hình được chọn dịch chuyển theo phần thưởng \textbf{đã trừ trung bình
+chạy} (giảm phương sai), và hai biến đối ngẫu tự tăng khi mục tiêu ràng buộc bị vi phạm —
+đây là một bộ điều khiển kiểu \en{primal-dual} cỡ nhỏ, chạy hoàn toàn trong bộ nhớ tiến
+trình mà không cần huấn luyện ngoại tuyến.
+
+\begin{luuy}[Chỉ dùng trong bối cảnh đánh giá có kiểm soát]
+Cơ chế thích nghi hiện chỉ bật khi \code{retrieval\_policy="adaptive"} hoặc trong chế độ
+\en{benchmark}. Nó chưa phải đường mặc định cho lưu lượng người dùng thật.
+\end{luuy}
+
+\section{IRCoT — suy luận rồi truy xuất lại cho câu hỏi đa bước}
+
+Với những câu hỏi cần bắc cầu qua hai thực thể (ví dụ: \textit{"đạo diễn của bộ phim mà
+diễn viên X đóng chính là ai?"}), truy xuất một lượt thường bỏ lỡ thực thể trung gian. Cơ
+chế \textbf{IRCoT} (\en{Interleaving Retrieval with Chain-of-Thought}, arXiv:2212.10509)
+giải quyết bằng một vòng suy luận $\rightarrow$ truy xuất lại có định hướng:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Suy luận}: hỏi LLM "thực thể bắc cầu nào cần tra tiếp theo?", chỉ nhận về
+  một dòng tên thực thể duy nhất.
+  \item \textbf{Truy xuất lại có định hướng}: dùng thực thể đó tìm tối đa hai đoạn văn mới
+  từ toàn bộ kho ứng viên (không chỉ những gì đã có trong ngữ cảnh).
+  \item \textbf{Xác thực hợp đồng}: kiểm tra các đoạn mới tìm được có thực sự liên quan
+  câu hỏi và thực thể bắc cầu hay không trước khi chấp nhận; nếu không đạt, giữ nguyên
+  ngữ cảnh gốc.
+  \item \textbf{Hợp nhất}: đoạn bắc cầu được đặt \textbf{trước} ngữ cảnh gốc, dùng ngân
+  sách ký tự riêng lớn hơn ngân sách nền tảng để tránh đoạn chứa câu trả lời gốc bị đẩy
+  ra ngoài khi cắt bớt.
+\end{enumerate}
+
+\begin{luuy}[Khác biệt so với truy xuất một lượt]
+Đây là cơ chế lặp \textbf{suy luận$\rightarrow$truy xuất lại$\rightarrow$trả lời} đúng
+nguyên bản của IRCoT, khác với các thử nghiệm một lượt (mở rộng đồ thị tĩnh, hay chỉ tăng
+số lượng đoạn lấy về): bước suy luận \textbf{chủ động dẫn dắt} một lượt truy xuất tập
+trung vào đúng đoạn văn bước hai mà xếp hạng từ vựng thông thường bỏ sót do giới hạn ngân
+sách.
+\end{luuy}
+
+Trên bộ đánh giá đa bước nội bộ, việc thêm IRCoT sau khi sửa hai lỗi tự gây ra (ngữ cảnh
+bị đẩy ra do cắt bớt, và gợi ý định hướng quá chặt tay) đã cải thiện \textbf{Exact Match}
+thêm 3,1 điểm phần trăm, xác nhận rằng nút thắt nằm ở khâu \textbf{tổng hợp suy luận đa
+bước của bộ đọc}, không phải ở kích thước mô hình hay chất lượng truy xuất đơn bước.
+
+\section{Định dạng phản hồi cuối cùng}
+
+Điểm số luôn được \textbf{tính lại} tại \code{\_format\_response} bất kể pipeline đi
+nhánh nào (đệm hay tính mới), để hai đường này không bao giờ trả về ngữ nghĩa điểm số
+khác nhau.
+
+\begin{lstlisting}
+{
+  "tutor_response": "...",
+  "corrections":    [ {error, correction, type, explanation} ],
+  "linked_concepts": ["past_simple", "irregular_verbs"],   // tu khoa cau hoi
+  "weak_concepts":   ["past_simple"],                       // loi that su, de goi y
+  "scores": {
+    "fluency": 0.75, "grammar": 0.65, "overall": 0.69,
+    "retrieval": {"precision_k": 0.8, "recall_k": 0.6, "ndcg_k": 0.7512, "mrr": 0.6667}
+  },
+  "action":   {"strategy": "scaffold", "next": "continue"},
+  "metadata": {"latency_ms": 1250, "ttft_ms": 340, "cache_hit": false,
+               "cache_decision": "full", "reuse_risk": 1.0,
+               "models_used": ["gemini-2.0-flash"], "path": "slow"}
+}
+\end{lstlisting}
+
+\section{Đánh giá chất lượng}
+
+\subsection{Điểm tổng hợp}
+
+\begin{equation}
+\text{overall} = 0{,}40\cdot\text{grammar} + 0{,}30\cdot\text{fluency} + 0{,}30\cdot v(\text{vocab\_level})
+\end{equation}
+
+thay cho công thức \(0{,}6\cdot\text{grammar}+0{,}4\cdot\text{fluency}\) ngây thơ trước đây
+— vốn hoàn toàn bỏ qua tín hiệu từ vựng.
+
+\subsection{Chỉ số chất lượng văn bản và truy xuất}
+
+WER, TTR, mật độ lỗi, Precision@k, Recall@k, NDCG@k, MRR đã trình bày công thức đầy đủ ở
+mục~6.6. \code{EvaluationAgent} tính lại các chỉ số này cho \textbf{mọi} phản hồi, kể cả
+lấy từ đệm, để phục vụ theo dõi chất lượng theo thời gian một cách nhất quán.
+
+\subsection{Hiệu năng theo kịch bản}
+
+\begin{longtable}{L{4.4cm} L{2.0cm} L{2.4cm} L{4.0cm}}
+\toprule
+\textbf{Kịch bản} & \textbf{Nhánh} & \textbf{Độ trễ} & \textbf{Mô hình}\\
+\midrule
+\endhead
+Trúng đệm L0 (chính xác) & nhanh & $<10$ ms & không gọi\\
+Trúng đệm L1 (theo \en{bucket}) & nhanh & $<50$ ms & không gọi\\
+Câu chào đơn giản & chậm & $\approx$3 s & mô hình nhỏ cục bộ\\
+Câu hỏi ngữ pháp & chậm & $\approx$2 s & mô hình đám mây\\
+Phân tích phức tạp & chậm & $\approx$20 s & mô hình suy luận cục bộ\\
+Giọng nói đầy đủ & chậm & 5--8 s & STT + LLM + phân tích âm vị\\
+\bottomrule
+\caption{Đặc tính hiệu năng theo kịch bản sử dụng}
+\end{longtable}
+
+\begin{luuy}[Kết quả benchmark trên bộ đánh giá đa bước nội bộ]
+Cấu hình tốt nhất đo được (bật IRCoT mặc định, giữ đệm L0/L1) đạt \textbf{Exact Match
+50,0\% / F1 62,5\%} — bằng EM và vượt F1 so với đường cơ sở HippoRAG trên cùng bộ dữ liệu.
+Chín lỗi kỹ thuật đã được sửa trong quá trình đánh giá (đặt tên sai chế độ, cắt bớt tập dữ
+liệu, ngân sách bằng chứng, cắt ngữ cảnh, khoá Groq lỗi, không thử lại khi gặp lỗi 503,
+mốc thời gian tạo không đơn điệu qua Redis, chuẩn hoá SQuAD không đúng chuẩn, phân loại sai
+mô hình mạnh/yếu). Bốn lần thử tối ưu khác (trọng số đồ thị, đơn giản hoá E2G, đổi sang mô
+hình 70B) đều \textbf{làm giảm} chất lượng và bị hoàn tác trước khi IRCoT được áp dụng.
+\end{luuy}
+
+\section{Tóm tắt: vì sao mỗi thiết kế tồn tại}
+
+\begin{longtable}{L{4.0cm} L{9.6cm}}
+\toprule
+\textbf{Quyết định} & \textbf{Lý do}\\
+\midrule
+\endhead
+Chạy song song kg\_expand + diagnose & Hai việc không phụ thuộc dữ liệu của nhau; song song cắt gần một nửa độ trễ nhánh chậm.\\
+Ngân sách thời gian theo giai đoạn truy xuất & Trễ có giới hạn trên đoán trước được quan trọng hơn kết quả đầy đủ nhưng không đoán trước được.\\
+PedWeight ưu tiên đúng bậc CEFR & Một khái niệm đúng bậc hữu ích hơn nhiều khái niệm sai bậc; tránh làm loãng ngữ cảnh bằng nội dung quá dễ hoặc quá khó.\\
+Dự phòng quy tắc khi LLM lỗi & Không bao giờ để pipeline hoàn toàn im lặng, kể cả khi mọi nhà cung cấp LLM đều gặp sự cố.\\
+Ba cấu hình thích nghi thay vì một ngưỡng cố định & Đánh đổi tốc độ/chất lượng khác nhau theo áp lực hệ thống và đặc điểm câu hỏi, học trực tuyến không cần huấn luyện ngoại tuyến.\\
+IRCoT chỉ kích hoạt có chọn lọc & Suy luận thêm một lượt LLM có chi phí; chỉ đáng làm với câu hỏi thực sự cần bắc cầu qua hai thực thể.\\
+Tính lại điểm số ở \code{\_format\_response} & Phản hồi từ đệm và phản hồi tính mới không được phép khác nhau về ngữ nghĩa điểm số.\\
+\bottomrule
+\caption{Tổng hợp quyết định thiết kế của TRACE-CAG}
+\end{longtable}

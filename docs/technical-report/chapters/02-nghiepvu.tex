@@ -1,0 +1,264 @@
+\chapter{Phân tích nghiệp vụ}
+
+Chương này mô tả hệ thống ở góc nhìn nghiệp vụ: ai dùng, dùng để làm gì, quy trình chạy ra
+sao và những quy tắc nào bắt buộc phải đúng. Toàn bộ thiết kế kỹ thuật ở các chương sau
+đều truy nguyên về những nội dung trong chương này.
+
+\section{Tác nhân}
+
+\begin{longtable}{L{3.0cm} L{3.0cm} L{7.6cm}}
+\toprule
+\textbf{Tác nhân} & \textbf{Loại} & \textbf{Mục tiêu chính}\\
+\midrule
+\endhead
+Người học & Chính, con người & Nâng bậc CEFR bằng việc luyện tập hằng ngày; nhận phản hồi đúng trình độ và đúng lỗi của mình.\\
+Quản trị viên nội dung & Phụ, con người & Biên soạn, kiểm duyệt và xuất bản khoá học; bảo đảm mọi bài học đều chơi được.\\
+Quản trị viên hệ thống & Phụ, con người & Quản lý tài khoản, vai trò, cấu hình mô hình AI, theo dõi sức khoẻ dịch vụ.\\
+Trợ lý AI (Lexi) & Hệ thống & Chẩn đoán lỗi, sinh phản hồi có căn cứ, sinh quan sát học tập.\\
+Tác tử nội dung & Hệ thống & Sinh khoá học và bài tập từ danh sách từ có nhãn CEFR.\\
+Bộ lập lịch nền & Hệ thống & Nhắc ôn tập, tổng hợp thống kê, nạp trước nội dung, đặt lại giải đấu.\\
+Nhà cung cấp LLM & Ngoài & Groq, Gemini, Ollama — cung cấp năng lực sinh ngôn ngữ.\\
+Firebase & Ngoài & Xác thực mạng xã hội và thông báo đẩy.\\
+Nguồn nội dung & Ngoài & RSS tin tức, YouTube, podcast, kho sách, kho ngữ liệu mở.\\
+RevenueCat & Ngoài & Xử lý mua trong ứng dụng và quyền lợi gói trả phí.\\
+\bottomrule
+\caption{Tác nhân của hệ thống}
+\end{longtable}
+
+\section{Sơ đồ use case nghiệp vụ}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.95, transform shape]
+  \node[lane, minimum width=8.2cm, minimum height=8.6cm] (sys) at (0,0) {};
+  \node[font=\scriptsize\bfseries, anchor=north, yshift=-3pt] at (sys.north) {Hệ thống LexiLingo};
+
+  \node[uc] (u1) at (0, 3.2)  {Học theo lộ trình CEFR};
+  \node[uc] (u2) at (0, 2.3)  {Ôn tập từ vựng theo lịch};
+  \node[uc] (u3) at (0, 1.4)  {Hội thoại với trợ lý AI};
+  \node[uc] (u4) at (0, 0.5)  {Luyện nói và phát âm};
+  \node[uc] (u5) at (0,-0.4)  {Chơi trò chơi ngôn ngữ};
+  \node[uc] (u6) at (0,-1.3)  {Học qua nội dung thực tế};
+  \node[uc] (u7) at (0,-2.2)  {Theo dõi tiến độ, thành tích};
+  \node[uc] (u8) at (0,-3.1)  {Đánh giá và thăng bậc};
+
+  \node[uc, fill=cSoftO, draw=cGate] (a1) at (0,-4.0) {Biên soạn \& kiểm duyệt nội dung};
+
+  \stickman{-5.6}{1.2}{Người học}
+  \stickman{-5.6}{-2.4}{Quản trị viên\\nội dung}
+  \stickman{5.6}{2.2}{Trợ lý AI\\(Lexi)}
+  \stickman{5.6}{-1.0}{Nhà cung cấp\\LLM}
+  \stickman{5.6}{-3.4}{Firebase /\\Nguồn nội dung}
+
+  \foreach \t in {u1,u2,u3,u4,u5,u6,u7,u8}
+    \draw[draw=cInfra!60, line width=0.5pt] (-5.35,1.2) -- (\t.west);
+  \draw[draw=cGate!70, line width=0.5pt] (-5.35,-2.4) -- (a1.west);
+
+  \draw[draw=cInfra!60, line width=0.5pt] (u3.east) -- (5.35,2.2);
+  \draw[draw=cInfra!60, line width=0.5pt] (u4.east) -- (5.35,2.2);
+  \draw[draw=cInfra!60, line width=0.5pt] (u8.east) -- (5.35,-1.0);
+  \draw[draw=cInfra!60, line width=0.5pt] (a1.east) -- (5.35,-1.0);
+  \draw[draw=cInfra!60, line width=0.5pt] (u6.east) -- (5.35,-3.4);
+\end{tikzpicture}
+\caption{Sơ đồ use case nghiệp vụ — tám nghiệp vụ người học và một nghiệp vụ quản trị nội dung}
+\label{fig:uc-nghiepvu}
+\end{figure}
+
+\section{Chín nghiệp vụ chính}
+
+\subsection{NV1 — Học theo lộ trình CEFR}
+
+Người học ghi danh một khoá học, đi theo lộ trình dạng zigzag gồm các chương và bài học.
+Mỗi bài học chứa một chuỗi bài tập; hoàn thành bài học tạo ra ba loại dữ liệu: bản ghi
+hoàn thành, điểm XP và bằng chứng năng lực gửi vào hai động cơ mô hình hoá người học.
+
+\textbf{Quy tắc nghiệp vụ ràng buộc:} một bài học chỉ mở được khi có ít nhất một bài tập
+(mục~\ref{sec:qtnv}); khoá học chỉ xuất bản được khi mọi bài học đều thoả điều kiện đó.
+
+\subsection{NV2 — Ôn tập từ vựng theo lịch}
+
+Người học lưu từ vào bộ sưu tập (thủ công, hoặc lưu nhanh khi đang đọc nội dung). Hệ thống
+tính hạn ôn cho từng khái niệm theo FSRS. Đến hạn, người học ôn bằng thẻ và tự chấm mức
+nhớ 0--5; kết quả cập nhật độ bền, độ khó và mức nắm vững, từ đó sinh hạn ôn mới.
+
+\subsection{NV3 — Hội thoại với trợ lý AI}
+
+Người học nhắn tin hoặc nói với Lexi. Hệ thống chẩn đoán ý định và lỗi ngôn ngữ, truy xuất
+bằng chứng từ đồ thị tri thức, sinh phản hồi có căn cứ theo chiến lược sư phạm phù hợp
+trình độ, đồng thời ghi lại một quan sát học tập cho mỗi lượt.
+
+\subsection{NV4 — Luyện nói và phát âm}
+
+Người học nói vào micro; hệ thống nhận dạng theo dòng, phát hiện điểm kết thúc phát ngôn,
+phân tích chuỗi âm vị, so với phát âm mục tiêu và trả về điểm cùng gợi ý sửa — có nhận
+diện riêng các lỗi đặc trưng của người Việt.
+
+\subsection{NV5 — Chơi trò chơi ngôn ngữ}
+
+Sáu trò chơi mini rút dữ liệu từ ngân hàng từ vựng hoặc ngân hàng câu hỏi ngữ pháp. Kết
+quả trò chơi được quy đổi sang kỹ năng CEFR tương ứng theo bảng ánh xạ cố định, không suy
+đoán từ tên trò chơi.
+
+\subsection{NV6 — Học qua nội dung thực tế}
+
+Bốn nguồn: tin tức, podcast, sách phân cấp, video YouTube. Hệ thống nạp trước nội dung
+theo lịch và sinh quiz kèm theo. \textbf{Chỉ phần quiz tạo ra bằng chứng học tập}; việc
+nghe hoặc đọc thuần tuý cố ý không ghi nhận gì.
+
+\subsection{NV7 — Theo dõi tiến độ và thành tích}
+
+Người học xem chuỗi ngày học, bản đồ nhiệt hoạt động, điểm sáu kỹ năng, xu hướng 7 và
+30 ngày, huy hiệu, bảng xếp hạng, ví và cửa hàng vật phẩm.
+
+\subsection{NV8 — Đánh giá và thăng bậc}
+
+Có hai đường vào một bậc CEFR: bài kiểm tra xếp lớp khi mới bắt đầu, và cổng thi thăng bậc
+khi đã tích luỹ đủ bằng chứng. Cổng thi chặn việc lên quá một bậc mỗi lần.
+
+\subsection{NV9 — Biên soạn và kiểm duyệt nội dung}
+
+Quản trị viên tải lên danh sách từ có nhãn CEFR, chạy tác tử nội dung, rà soát kết quả
+trong hàng đợi kiểm duyệt, sửa hoặc yêu cầu sinh lại, rồi mới xuất bản.
+
+\section{Quy trình nghiệp vụ trọng tâm}
+
+\subsection{Quy trình hoàn thành một bài học}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=6mm and 9mm]
+  \node[term] (s) {Bắt đầu};
+  \node[proc, right=of s] (p1) {Mở bài học};
+  \node[dec, right=of p1] (d1) {Có bài\\tập?};
+  \node[proc, below=10mm of d1] (p2) {Trả lời từng\\bài tập};
+  \node[proc, left=of p2] (p3) {Chấm điểm\\từng câu};
+  \node[proc, left=of p3] (p4) {Kết thúc\\lượt làm};
+  \node[proc, below=9mm of p4] (p5) {Ghi\\LessonCompletion};
+  \node[proc, right=of p5] (p6) {Cộng XP,\\cập nhật chuỗi};
+  \node[proc, right=of p6] (p7) {Ghi điểm\\kỹ năng CEFR};
+  \node[proc, below=9mm of p7] (p8) {Lập lịch ôn\\khái niệm (FSRS)};
+  \node[proc, left=of p8] (p9) {Kiểm tra\\thành tích};
+  \node[term, left=of p9] (e) {Kết thúc};
+  \node[term, above right=4mm and 6mm of d1, fill=cSoftO, draw=cGate] (err) {Lỗi 409\\bài chưa dùng được};
+
+  \draw[fl] (s) -- (p1);
+  \draw[fl] (p1) -- (d1);
+  \draw[fl] (d1) -- node[lab,near start]{không} (err);
+  \draw[fl] (d1) -- node[lab,near start]{có} (p2);
+  \draw[fl] (p2) -- (p3);
+  \draw[fl] (p3) -- (p4);
+  \draw[fl] (p4) -- (p5);
+  \draw[fl] (p5) -- (p6);
+  \draw[fl] (p6) -- (p7);
+  \draw[fl] (p7) -- (p8);
+  \draw[fl] (p8) -- (p9);
+  \draw[fl] (p9) -- (e);
+\end{tikzpicture}
+\caption{Sơ đồ hoạt động — hoàn thành một bài học. Ba bước cuối là nơi luyện tập biến thành dữ liệu.}
+\label{fig:hoatdong-baihoc}
+\end{figure}
+
+\subsection{Quy trình một lượt hội thoại với AI}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm and 8mm]
+  \node[term] (s) {Người học gửi câu};
+  \node[proc, below=of s] (p1) {Nạp hồ sơ + lịch sử};
+  \node[dec, below=of p1] (d1) {Đệm\\trúng?};
+  \node[proc, right=16mm of d1] (p2) {Trả lời từ bộ đệm};
+  \node[proc, below=8mm of d1] (p3) {Mở rộng đồ thị\\+ chẩn đoán lỗi (song song)};
+  \node[dec, below=of p3] (d2) {Đủ\\tin cậy?};
+  \node[proc, left=14mm of d2] (p4) {Hỏi làm rõ};
+  \node[proc, below=8mm of d2] (p5) {Truy xuất bằng chứng\\(đồ thị + véc-tơ)};
+  \node[proc, below=of p5] (p6) {Sinh phản hồi\\theo chiến lược sư phạm};
+  \node[proc, below=of p6] (p7) {Ghi quan sát học tập\\vào vùng đệm};
+  \node[term, below=of p7] (e) {Trả lời + điểm số};
+
+  \draw[fl] (s) -- (p1);
+  \draw[fl] (p1) -- (d1);
+  \draw[fl] (d1) -- node[lab]{có} (p2);
+  \draw[fl] (p2.north) |- ([yshift=3mm]p2.north) -- ++(0,0);
+  \draw[fl] (d1) -- node[lab,near start]{không} (p3);
+  \draw[fl] (p3) -- (d2);
+  \draw[fl] (d2) -- node[lab]{$<0{,}5$} (p4);
+  \draw[fl] (d2) -- node[lab,near start]{$\ge 0{,}5$} (p5);
+  \draw[fl] (p5) -- (p6);
+  \draw[fl] (p6) -- (p7);
+  \draw[fl] (p7) -- (e);
+  \draw[fl] (p4.south) |- ([yshift=-3mm]p4.south) -| (e.west);
+  \draw[fl] (p2.east) -- ++(0.6,0) |- (e.east);
+\end{tikzpicture}
+\caption{Sơ đồ hoạt động — một lượt hội thoại. Ba nhánh kết thúc: đệm, hỏi lại, sinh mới.}
+\label{fig:hoatdong-chat}
+\end{figure}
+
+\subsection{Quy trình xuất bản khoá học}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=5mm and 7mm]
+  \node[term] (s) {Tải danh sách từ\\có nhãn CEFR};
+  \node[proc, right=of s] (p1) {Lập chương trình\\theo bậc};
+  \node[proc, right=of p1] (p2) {Sinh bài học\\và bài tập};
+  \node[proc, right=of p2] (p3) {Làm sạch \&\\kiểm hình dạng};
+  \node[proc, below=9mm of p3] (p4) {Lưu ở trạng thái\\bản nháp};
+  \node[proc, left=of p4] (p5) {Người duyệt\\rà soát};
+  \node[dec, left=of p5] (d1) {Mọi bài có\\bài tập?};
+  \node[proc, left=of d1] (p6) {Sinh lại /\\sửa tay};
+  \node[term, below=9mm of d1, fill=cSoftG, draw=cData] (e) {Xuất bản};
+
+  \draw[fl] (s) -- (p1); \draw[fl] (p1) -- (p2); \draw[fl] (p2) -- (p3);
+  \draw[fl] (p3) -- (p4); \draw[fl] (p4) -- (p5); \draw[fl] (p5) -- (d1);
+  \draw[fl] (d1) -- node[lab]{chưa} (p6);
+  \draw[fl] (d1) -- node[lab,near start]{rồi} (e);
+  \draw[fl] (p6.north) |- ([yshift=4mm]p6.north) -| (p2.south);
+\end{tikzpicture}
+\caption{Sơ đồ hoạt động — sinh và xuất bản khoá học. Cổng chặn nằm ở bước kiểm tra bài tập.}
+\label{fig:hoatdong-xuatban}
+\end{figure}
+
+\section{Quy tắc nghiệp vụ}
+\label{sec:qtnv}
+
+Mười quy tắc dưới đây là ràng buộc cứng của hệ thống. Mỗi quy tắc đều có mã để các chương
+sau tham chiếu, và mỗi quy tắc đều tồn tại vì đã từng bị vi phạm trong thực tế.
+
+\begin{longtable}{L{1.3cm} L{12.3cm}}
+\toprule
+\textbf{Mã} & \textbf{Nội dung}\\
+\midrule
+\endhead
+QT-01 & Một bài học chỉ dùng được khi có ít nhất một bài tập. Khoá học chỉ xuất bản được khi mọi bài học thoả điều kiện này.\\
+QT-02 & Mọi hoạt động có chấm điểm phải gửi bằng chứng tới \textbf{cả hai} động cơ: điểm kỹ năng CEFR và trạng thái khái niệm.\\
+QT-03 & Tiêu thụ thụ động (nghe podcast, xem video, đọc thuần tuý) không sinh bằng chứng học tập.\\
+QT-04 & Điểm kỹ năng dịch chuyển \textbf{một bước cho mỗi bài tập}, không phải một bước cho mỗi lần gọi API.\\
+QT-05 & Kỹ năng của nội dung đến từ nhãn (\code{lesson.skill}, \code{course.skill}), không suy đoán từ thẻ hay tên trò chơi.\\
+QT-06 & Cùng một câu trả lời không được ghi nhận hai lần: khoá chống trùng là \code{event\_id} với quan sát, và \code{source\_id} với XP.\\
+QT-07 & Người học chỉ lên tối đa một bậc CEFR mỗi lần, và phải vượt cổng thi.\\
+QT-08 & Thăng bậc cần cả khối lượng (số bài đã làm) lẫn độ tin cậy (mức độ hệ thống đã đo được người học).\\
+QT-09 & Phản hồi lấy từ bộ đệm phải cùng bậc CEFR, cùng tiếng mẹ đẻ và cùng thế hệ trạng thái với yêu cầu hiện tại.\\
+QT-10 & Quan sát học tập phải được ghi bền vững \textbf{trước} khi trả lời người dùng, không phải sau.\\
+\bottomrule
+\caption{Mười quy tắc nghiệp vụ ràng buộc toàn hệ thống}
+\end{longtable}
+
+\section{Ma trận nghiệp vụ và dữ liệu sinh ra}
+
+\begin{longtable}{L{3.6cm} L{2.2cm} L{2.4cm} L{2.0cm} L{2.4cm}}
+\toprule
+\textbf{Nghiệp vụ} & \textbf{Điểm kỹ năng} & \textbf{Trạng thái khái niệm} & \textbf{XP} & \textbf{Thành tích}\\
+\midrule
+\endhead
+NV1 — Bài học & Có & Có & Có & Có\\
+NV2 — Ôn từ vựng & Có & Có & Có & Có\\
+NV3 — Hội thoại AI & Có & Có & Có & Có\\
+NV4 — Luyện nói & Có & Có & Có & Có\\
+NV5 — Trò chơi & Có & Có & Có & Có\\
+NV6 — Nội dung thực tế (quiz) & Có & Có & Có & Có\\
+NV6 — Nội dung thực tế (nghe/đọc) & Không & Không & Không & Không\\
+NV7 — Xem tiến độ & Không & Không & Không & Không\\
+NV8 — Thi thăng bậc & Có & Không & Không & Có\\
+\bottomrule
+\caption{Nghiệp vụ nào sinh ra loại dữ liệu nào (chi tiết công thức ở Chương~9)}
+\end{longtable}

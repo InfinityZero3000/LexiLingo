@@ -1,0 +1,201 @@
+\chapter{Backend service — nghiệp vụ và API}
+
+\section{Tổ chức mã nguồn}
+
+\begin{longtable}{L{4.0cm} L{9.6cm}}
+\toprule
+\textbf{Thư mục} & \textbf{Nội dung}\\
+\midrule
+\endhead
+\code{app/main.py} & Điểm vào ứng dụng: đăng ký \en{middleware}, bộ định tuyến, bộ xử lý ngoại lệ, vòng đời khởi động/tắt.\\
+\code{app/core/} & Cấu hình (\code{config.py}), động cơ cơ sở dữ liệu bất đồng bộ, bảo mật (băm mật khẩu, JWT), xác thực Firebase, phụ thuộc FastAPI, \en{middleware}, Redis, bộ nhớ đệm, Celery.\\
+\code{app/models/} & 25 tệp mô hình ORM SQLAlchemy, khoảng 70 bảng.\\
+\code{app/schemas/} & Lược đồ Pydantic v2 — hợp đồng đầu vào/ra của API.\\
+\code{app/routes/} & 41 mô-đun định tuyến.\\
+\code{app/services/} & 45 dịch vụ nghiệp vụ (không chứa mã HTTP).\\
+\code{app/crud/} & Lớp truy cập dữ liệu tái sử dụng cho 8 miền lớn.\\
+\code{app/clients/} & \code{ai\_service\_client.py} — cửa duy nhất gọi sang AI service.\\
+\code{app/tasks/} & 9 mô-đun tác vụ nền Celery.\\
+\code{alembic/} & Di trú lược đồ cơ sở dữ liệu.\\
+\code{scripts/} & Gieo dữ liệu, kiểm toán nội dung, sinh bài tập bằng AI, sao lưu.\\
+\bottomrule
+\caption{Cấu trúc thư mục backend-service}
+\end{longtable}
+
+\section{Chuỗi middleware}
+
+\en{Middleware} là lớp bọc quanh ứng dụng: yêu cầu đi vào phải xuyên qua từ ngoài vào
+trong, phản hồi đi ra xuyên qua theo chiều ngược lại. Thứ tự đăng ký quyết định thứ tự
+chạy — lớp đăng ký sau cùng nằm ngoài cùng.
+
+\begin{center}
+\code{PrivateNetworkAccess $\rightarrow$ CORS $\rightarrow$ RateLimit $\rightarrow$ RequestID $\rightarrow$ RequestLogging $\rightarrow$ App}
+\end{center}
+
+\begin{longtable}{L{4.6cm} L{9.0cm}}
+\toprule
+\textbf{Lớp} & \textbf{Chức năng}\\
+\midrule
+\endhead
+\code{TrustedHostMiddleware} & Chỉ chấp nhận yêu cầu có tiêu đề \code{Host} nằm trong danh sách cho phép; chỉ bật ở môi trường sản xuất.\\
+\code{PrivateNetworkAccess} & Gắn tiêu đề CORS-RFC1918 để trình duyệt Chrome cho phép truy cập mạng nội bộ trong lúc phát triển.\\
+\code{CORSMiddleware} & Kiểm soát nguồn gốc chéo (\en{cross-origin}) — chỉ cho phép miền \code{lexilingo.me} và các nguồn cấu hình.\\
+\code{RateLimitMiddleware} & Cửa sổ trượt trên Redis; mặc định 300 yêu cầu/phút khi phát triển và 120 khi sản xuất, trần 5.000/giờ.\\
+\code{RequestIDMiddleware} & Sinh \code{X-Request-ID} để lần vết một yêu cầu qua toàn bộ nhật ký. Tác vụ Celery cũng nhận mã tương tự dạng \code{task:\{id\}}.\\
+\code{RequestLoggingMiddleware} & Ghi phương thức, đường dẫn, mã trạng thái và độ trễ.\\
+\code{limit\_request\_body} & Từ chối thân yêu cầu vượt \code{MAX\_REQUEST\_BODY\_BYTES}.\\
+\bottomrule
+\caption{Chuỗi middleware của backend}
+\end{longtable}
+
+\section{Nhóm định tuyến}
+
+Toàn bộ API dùng tiền tố \code{/api/v1}. Bốn mươi mốt mô-đun được nhóm theo miền:
+
+\begin{longtable}{L{3.9cm} L{9.7cm}}
+\toprule
+\textbf{Nhóm} & \textbf{Mô-đun và chức năng}\\
+\midrule
+\endhead
+Xác thực \& người dùng & \code{auth} (đăng ký, đăng nhập, làm mới thẻ, Google/Facebook qua Firebase, quên/đổi mật khẩu), \code{users} (hồ sơ, tuỳ chọn, ảnh đại diện), \code{devices} (đăng ký thiết bị nhận thông báo đẩy), \code{rbac} (vai trò, quyền), \code{entitlements} (quyền lợi gói trả phí), \code{referral} (giới thiệu bạn bè).\\
+Nội dung học & \code{courses}, \code{course\_categories}, \code{learning} (phiên học, bắt đầu/hoàn thành bài), \code{vocabulary} (ngân hàng từ, ôn tập), \code{concepts} (khái niệm tri thức), \code{mistakes} (sổ tay lỗi sai).\\
+Tiến độ \& năng lực & \code{progress} (tiến độ, chuỗi ngày, hoạt động hằng ngày), \code{proficiency} (đánh giá CEFR sáu kỹ năng, cổng thi thăng bậc), \code{learner\_state} (điểm vào nội bộ cho quan sát từ AI service).\\
+Động lực học & \code{gamification} (thành tích, ví, cửa hàng, kho đồ, bảng xếp hạng), \code{xp} (giao dịch điểm kinh nghiệm), \code{challenges} (thử thách), \code{games} (trò chơi mini — mô-đun lớn nhất).\\
+Nội dung thực tế & \code{news}, \code{podcasts}, \code{books}, \code{youtube} — nội dung ngoài đời thực kèm câu hỏi/quiz.\\
+Thông báo & \code{notifications}, \code{reminders} (tuỳ chọn nhắc học), \code{notification\_campaign} (chiến dịch gửi hàng loạt).\\
+Tác tử AI & \code{content\_agent} (sinh khoá học), \code{ranking\_agent} (xếp hạng, giải đấu), \code{admin\_ai\_proxy} (uỷ nhiệm gọi AI service từ trang quản trị), \code{ai\_audit} (nhật ký quyết định AI).\\
+Quản trị \& vận hành & \code{admin\_courses}, \code{admin\_gamification}, \code{admin\_system}, \code{user\_management}, \code{analytics}, \code{monitoring}, \code{product\_events}, \code{integrations}, \code{health}, \code{well\_known}.\\
+\bottomrule
+\caption{Bốn mươi mốt mô-đun định tuyến theo miền}
+\end{longtable}
+
+\section{Xác thực và phân quyền}
+
+\subsection{Luồng xác thực}
+
+Hệ thống hỗ trợ ba đường đăng nhập, tất cả cùng quy về một loại thẻ nội bộ:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Email/mật khẩu} — mật khẩu băm bằng \code{bcrypt} gọi trực tiếp
+  (\code{bcrypt.hashpw}), không qua \code{passlib} vì thư viện này có lỗi tương thích với
+  bcrypt 4.x.
+  \item \textbf{Google / Facebook} — client lấy thẻ Firebase, backend xác minh bằng
+  Firebase Admin SDK rồi phát hành JWT của chính hệ thống.
+  \item \textbf{Đối tác} — khoá API lưu ở bảng \code{partner\_api\_keys}.
+\end{enumerate}
+
+Thẻ truy cập (\en{access token}) có tuổi thọ ngắn, thẻ làm mới (\en{refresh token}) lưu ở
+bảng \code{refresh\_tokens} và có thể thu hồi. Ứng dụng Flutter chủ động làm mới
+\textbf{trước khi} thẻ hết hạn thay vì đợi lỗi 401 — thay đổi này (commit
+\code{557d29c4}) vừa giảm độ trễ vừa cắt chi phí gọi Firebase.
+
+\subsection{Phân quyền theo vai trò}
+
+Bốn bảng \code{roles}, \code{permissions}, \code{role\_permissions} và \code{audit\_logs}
+tạo nên hệ RBAC đầy đủ. Quyền được kiểm tra bằng \en{dependency} của FastAPI, tức là khai
+báo ngay trên chữ ký hàm định tuyến chứ không nằm rải rác trong thân hàm. Mọi thao tác
+quản trị nhạy cảm ghi lại vào \code{audit\_logs}.
+
+\section{Các dịch vụ nghiệp vụ chính}
+
+\begin{longtable}{L{5.0cm} L{8.6cm}}
+\toprule
+\textbf{Dịch vụ} & \textbf{Trách nhiệm}\\
+\midrule
+\endhead
+\code{proficiency\_service} & Chấm điểm sáu kỹ năng CEFR, tính điểm tổng hợp có trọng số, quyết định điều kiện thăng bậc. Xem Chương~9.\\
+\code{learner\_state} & Tiến hoá trạng thái khái niệm theo FSRS + luật delta; điểm vào duy nhất \code{record\_concept\_observation}.\\
+\code{learner\_state\_outbox} & Mẫu \en{outbox}: ghi sự kiện quan sát vào cùng giao dịch rồi mới xác nhận, tránh mất dữ liệu khi mạng đứt.\\
+\code{fsrs\_scheduler\_service}, \code{game\_fsrs\_service} & Lập lịch ôn tập cho từ vựng và cho trò chơi.\\
+\code{xp\_service} & Cấp điểm kinh nghiệm, áp trần theo ngày và theo nguồn, hệ số chuỗi ngày, chống cấp trùng.\\
+\code{achievement\_checker\_service} & Kiểm tra và mở khoá thành tích theo \en{trigger} (sự kiện kích hoạt) thay vì quét toàn bộ.\\
+\code{streak\_service} & Chuỗi ngày học liên tiếp, khiên bảo vệ chuỗi.\\
+\code{rank\_service}, \code{ranking\_agent} & Xếp hạng, giải đấu theo tuần, đặt lại bảng xếp hạng.\\
+\code{game\_scoring\_service} & Chấm điểm trò chơi, quy đổi sang kỹ năng CEFR tương ứng.\\
+\code{content\_agent\_apply} & Đường duy nhất dựng khoá học $\rightarrow$ chương $\rightarrow$ bài học kèm bài tập từ kết quả của tác tử nội dung.\\
+\code{content\_agent\_validation} & Làm sạch và kiểm tra hình dạng bài tập trước khi ghi.\\
+\code{vocabulary\_catalog} & Danh mục từ vựng và chính sách chọn từ.\\
+\code{skill\_history\_service} & Tổng hợp thống kê kỹ năng theo ngày; cắt tỉa nhật ký chi tiết.\\
+\code{entitlement\_service}, \code{revenuecat\_client} & Quyền lợi gói trả phí, đồng bộ với RevenueCat.\\
+\code{push\_notification\_service}, \code{reminder\_service} & Thông báo đẩy và nhắc học theo lịch FSRS.\\
+\code{user\_deletion\_service} & Xoá tài khoản và dữ liệu liên quan theo yêu cầu quyền riêng tư.\\
+\code{quota\_manager}, \code{api\_cache\_service} & Hạn ngạch gọi API theo người dùng; bộ nhớ đệm phản hồi trên Redis.\\
+\bottomrule
+\caption{Dịch vụ nghiệp vụ backend}
+\end{longtable}
+
+\section{Bất biến nội dung khoá học}
+
+Một bài học chỉ \textbf{chơi được} khi \code{content.exercises} không rỗng. Bất biến này
+được thực thi ở nhiều tầng, vì mỗi tầng từng bị vi phạm:
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Cột \code{Lesson.exercise\_count} được đồng bộ tự động bằng \en{hook}
+  \code{@validates("content")}; không được gán tay. Mọi câu hỏi "bài này học được chưa?"
+  phải dùng cột này, không dùng \code{total\_exercises}.
+  \item Các điểm cuối hướng người học (lộ trình, chi tiết khoá học) ẩn bài học rỗng;
+  \code{/learning/lessons/\{id\}/start} và \code{/content} trả lỗi 409 ở môi trường sản xuất.
+  \item Xuất bản khoá học bị chặn nếu còn bài học rỗng
+  (\code{CourseCRUD.publish\_blockers}), chỉ kiểm tra tại thời điểm chuyển
+  bản nháp $\rightarrow$ đã xuất bản.
+  \item Mọi chỉnh sửa bài học từ trang quản trị đều đi qua \code{\_apply\_lesson\_update}
+  — dùng chung bởi \code{PUT /lessons/\{id\}} và \code{PUT /lessons/\{id\}/content}.
+\end{itemize}
+
+\begin{luuy}[Hình dạng bài tập không được kiểm tra khi ghi]
+Hệ thống kiểm tra "có bài tập hay không" nhưng không kiểm tra "bài tập có đúng hình dạng
+không". Ba dạng đã từng hỏng: dạng ghép cặp phải nối bằng dấu \code{", "} vì bộ chấm tách
+theo dấu phẩy; dạng \code{arrange\_the\_sentence} có đáp án \textbf{không} nằm trong danh
+sách lựa chọn nên không dùng được phép kiểm tra chung; dạng \code{image\_based\_choice}
+không có đường ống ảnh nên tuyệt đối không được sinh ra.
+\end{luuy}
+
+\section{Tác vụ nền Celery}
+
+Celery chạy hai tiến trình riêng: \code{worker} (thực thi) và \code{beat} (hẹn giờ), dùng
+Redis làm môi giới. Cấu hình đặt \code{task\_acks\_late=True} và
+\code{worker\_prefetch\_multiplier=1} để tác vụ chỉ được xác nhận sau khi hoàn thành.
+
+\begin{longtable}{L{5.6cm} L{3.2cm} L{4.6cm}}
+\toprule
+\textbf{Tác vụ} & \textbf{Lịch} & \textbf{Mục đích}\\
+\midrule
+\endhead
+\code{scan\_fsrs\_reminders} & theo chu kỳ cấu hình & Tìm khái niệm đến hạn ôn, đẩy nhắc nhở.\\
+\code{send\_streak\_alerts} & 20:00 hằng ngày & Cảnh báo sắp mất chuỗi ngày học.\\
+\code{send\_word\_of\_day} & 08:00 hằng ngày & Từ vựng trong ngày.\\
+\code{cleanup\_expired\_content\_agent\_uploads} & 03:15 hằng ngày & Dọn tệp tải lên hết hạn.\\
+\code{cleanup\_learner\_observations} & 02:30 hằng ngày & Dọn quan sát đã áp dụng.\\
+\code{prune\_exercise\_attempts} & 02:45 hằng ngày & Cắt nhật ký trả lời cũ hơn 90 ngày.\\
+\code{snapshot\_skill\_scores} & 03:00 thứ Hai & Chụp ảnh điểm kỹ năng để tính xu hướng 7/30 ngày.\\
+\code{auto\_league\_reset} & 00:05 thứ Hai & Đặt lại giải đấu tuần.\\
+\code{prefetch\_news} & mỗi 6 giờ & Nạp trước tin tức.\\
+\code{prefetch\_youtube} & mỗi 12 giờ & Nạp trước video.\\
+\code{prefetch\_podcasts} & 00:00 hằng ngày & Nạp trước podcast.\\
+\bottomrule
+\caption{Lịch tác vụ nền}
+\end{longtable}
+
+\begin{luuy}[Vì sao có \code{snapshot\_skill\_scores}]
+Cột \code{UserSkillScore.trend} đọc \code{score\_7d\_ago} và \code{score\_30d\_ago} —
+hai cột mà trước đó \textbf{không có tiến trình nào ghi vào}. Xu hướng vì thế luôn bằng
+không. Tác vụ tuần này là cách rẻ nhất để có lịch sử mà không cần thêm bảng lịch sử riêng.
+\end{luuy}
+
+\section{Xử lý lỗi}
+
+Ba bộ xử lý ngoại lệ được đăng ký ở \code{main.py}, đảm bảo mọi lỗi trả về cùng một hình
+dạng JSON:
+
+\begin{lstlisting}[language=Python]
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "...",
+    "details": [ ... ]
+  }
+}
+\end{lstlisting}
+
+Nhờ vậy client chỉ cần một bộ phân tích lỗi duy nhất, và mã lỗi (\code{code}) là hằng số
+ổn định để so khớp thay vì phải đọc thông điệp tiếng Anh.

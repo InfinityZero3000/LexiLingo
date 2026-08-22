@@ -1,0 +1,185 @@
+\appendix
+\chapter{Phụ lục A — Từ điển thuật ngữ}
+
+Bảng dưới liệt kê đầy đủ thuật ngữ tiếng Anh xuất hiện trong mã nguồn và trong báo cáo,
+kèm giải thích tiếng Việt.
+
+\section{Kiến trúc và hạ tầng}
+
+\begin{longtable}{L{4.2cm} L{9.4cm}}
+\toprule
+\textbf{Thuật ngữ} & \textbf{Giải thích}\\
+\midrule
+\endhead
+\en{Monorepo} & Một kho mã duy nhất chứa nhiều dịch vụ, cho phép sửa xuyên dịch vụ trong một lần \en{commit}.\\
+\en{Microservice} & Dịch vụ nhỏ, triển khai độc lập, giao tiếp qua mạng.\\
+\en{API Gateway} & Cổng duy nhất nhận mọi yêu cầu từ bên ngoài rồi phân phối tới dịch vụ phía sau.\\
+\en{Middleware} & Lớp bọc quanh ứng dụng, xử lý mọi yêu cầu trước và sau ứng dụng.\\
+\en{Reverse proxy} & Máy chủ đứng trước ứng dụng, nhận yêu cầu thay cho ứng dụng.\\
+\en{Rate limiting} & Giới hạn số yêu cầu trong một khoảng thời gian.\\
+\en{Sliding window} & Cửa sổ trượt — cách tính giới hạn tần suất theo khoảng thời gian trôi liên tục.\\
+\en{WAF} (\en{Web Application Firewall}) & Tường lửa ứng dụng web, lọc yêu cầu độc hại ở tầng biên.\\
+\en{CORS} (\en{Cross-Origin Resource Sharing}) & Cơ chế cho phép trang web ở miền này gọi API ở miền khác.\\
+\en{Preflight} & Yêu cầu \code{OPTIONS} trình duyệt gửi trước để hỏi phép trong CORS.\\
+\en{Container} & Đơn vị đóng gói ứng dụng cùng phụ thuộc, chạy cách ly.\\
+\en{Health check} & Điểm cuối để hệ thống điều phối biết dịch vụ còn sống và sẵn sàng.\\
+\en{Liveness / Readiness} & Còn sống / sẵn sàng nhận lưu lượng — hai câu hỏi khác nhau.\\
+\en{Smoke test} & Kiểm thử khói — bộ kiểm tra nhanh xem hệ thống có hoạt động ở mức cơ bản.\\
+\en{Rollback} & Quay lui về phiên bản trước.\\
+\en{CI/CD} & Tích hợp liên tục / triển khai liên tục.\\
+\bottomrule
+\end{longtable}
+
+\section{Dữ liệu và độ tin cậy}
+
+\begin{longtable}{L{4.2cm} L{9.4cm}}
+\toprule
+\textbf{Thuật ngữ} & \textbf{Giải thích}\\
+\midrule
+\endhead
+\en{ORM} (\en{Object-Relational Mapping}) & Ánh xạ bảng cơ sở dữ liệu thành lớp trong ngôn ngữ lập trình.\\
+\en{Migration} & Di trú — kịch bản thay đổi lược đồ cơ sở dữ liệu có phiên bản.\\
+\en{Transaction} & Giao dịch — nhóm thao tác hoặc thành công toàn bộ hoặc không có gì xảy ra.\\
+\en{UPSERT} & Chèn nếu chưa có, cập nhật nếu đã có.\\
+\en{Idempotent} & Bất biến khi lặp — gọi nhiều lần cho cùng một kết quả.\\
+\en{Outbox pattern} & Ghi sự kiện vào cùng giao dịch với dữ liệu, rồi mới phát đi — bảo đảm không mất sự kiện.\\
+\en{Spool} & Vùng đệm ghi trước, dùng như hàng đợi bền vững.\\
+\en{Lease} & Thuê — cơ chế một tiến trình giữ quyền xử lý một mục trong thời gian giới hạn.\\
+\codesp{FOR UPDATE SKIP LOCKED} & Câu lệnh SQL cho phép nhiều tiến trình lấy các dòng khác nhau mà không chờ nhau.\\
+\en{Epoch} & Số nguyên đánh dấu thế hệ trạng thái; tăng lên khiến mọi thứ gắn thế hệ cũ bị coi là lỗi thời.\\
+\en{TTL} (\en{Time To Live}) & Thời gian sống của một mục trong bộ nhớ đệm.\\
+\en{LRU} (\en{Least Recently Used}) & Chính sách loại bỏ mục lâu không dùng nhất.\\
+\en{Cache invalidation} & Vô hiệu hoá bộ đệm — làm cho dữ liệu đệm cũ không còn được dùng.\\
+\en{Checksum / sha256} & Tổng kiểm tra, dùng để xác minh tệp không bị đổi.\\
+\en{Provenance} & Xuất xứ dữ liệu — vì sao, từ đâu và bằng cách nào một dữ liệu có mặt.\\
+\bottomrule
+\end{longtable}
+
+\section{Trí tuệ nhân tạo}
+
+\begin{longtable}{L{4.2cm} L{9.4cm}}
+\toprule
+\textbf{Thuật ngữ} & \textbf{Giải thích}\\
+\midrule
+\endhead
+\en{LLM} & Mô hình ngôn ngữ lớn.\\
+\en{Prompt} & Lời nhắc — văn bản đầu vào định hướng mô hình.\\
+\en{System prompt} & Lời nhắc hệ thống, đặt vai trò và ràng buộc cho mô hình.\\
+\en{Token} & Đơn vị văn bản mô hình xử lý; chi phí và giới hạn đều tính theo đơn vị này.\\
+\en{Context window} & Cửa sổ ngữ cảnh — lượng token tối đa mô hình xử lý một lần.\\
+\en{Inference} & Suy luận — chạy mô hình để sinh kết quả.\\
+\en{Quantization} & Lượng tử hoá — giảm độ chính xác số để mô hình nhẹ và nhanh hơn.\\
+\en{Embedding} & Véc-tơ số biểu diễn ngữ nghĩa của văn bản.\\
+\en{Cosine similarity} & Độ tương đồng cô-sin giữa hai véc-tơ, đo mức giống nhau về ngữ nghĩa.\\
+\en{Vector store} & Kho véc-tơ hỗ trợ tìm kiếm theo độ tương đồng.\\
+\en{RAG} & Sinh có truy xuất tài liệu.\\
+\en{CAG} & Sinh có bộ nhớ đệm.\\
+\en{GraphRAG} & RAG kết hợp đồ thị tri thức.\\
+\en{Grounding} & Nối đất — buộc câu trả lời dựa trên bằng chứng cụ thể thay vì bịa.\\
+\en{Hallucination} & Ảo giác — mô hình bịa ra thông tin không có căn cứ.\\
+\en{Fallback} & Đường dự phòng khi lựa chọn chính thất bại.\\
+\en{Lazy loading} & Nạp lười — chỉ nạp khi thực sự cần dùng.\\
+\en{Warmup} & Làm ấm — nạp trước mô hình để yêu cầu đầu tiên không bị chậm.\\
+\en{TTFT} (\en{Time To First Token}) & Thời gian tới token đầu tiên — chỉ số cảm nhận độ nhanh.\\
+\en{Streaming} & Phát theo dòng — trả kết quả từng mảnh thay vì đợi trọn vẹn.\\
+\en{StateGraph} & Đồ thị trạng thái điều phối các bước xử lý.\\
+\en{Agent} & Tác tử — chương trình dùng mô hình để tự quyết định chuỗi hành động.\\
+\en{BFS} (\en{Breadth-First Search}) & Duyệt đồ thị theo chiều rộng.\\
+\en{Jaccard index} & Hệ số Jaccard — kích thước giao chia kích thước hợp của hai tập hợp.\\
+\en{NDCG, MRR, Precision@k, Recall@k} & Bốn chỉ số đánh giá chất lượng xếp hạng kết quả truy xuất.\\
+\en{WER} (\en{Word Error Rate}) & Tỉ lệ lỗi từ.\\
+\en{TTR} (\en{Type-Token Ratio}) & Tỉ lệ từ khác nhau trên tổng số từ, đo độ phong phú từ vựng.\\
+\bottomrule
+\end{longtable}
+
+\section{Sư phạm và mô hình người học}
+
+\begin{longtable}{L{4.2cm} L{9.4cm}}
+\toprule
+\textbf{Thuật ngữ} & \textbf{Giải thích}\\
+\midrule
+\endhead
+\en{CEFR} & Khung tham chiếu ngôn ngữ chung châu Âu, sáu bậc A1--C2.\\
+\en{Spaced repetition} & Lặp lại ngắt quãng.\\
+\en{Forgetting curve} & Đường quên — mô tả xác suất nhớ giảm theo thời gian.\\
+\en{Spacing effect} & Hiệu ứng giãn cách — ôn cách quãng hiệu quả hơn ôn dồn.\\
+\en{FSRS} & Bộ lập lịch lặp lại ngắt quãng tự do, mô hình hoá trí nhớ qua độ bền và độ khó.\\
+\en{SM-2} & Thuật toán lặp lại ngắt quãng của SuperMemo, thế hệ trước FSRS.\\
+\en{Stability} & Độ bền trí nhớ tính bằng ngày.\\
+\en{Retrievability} & Xác suất nhớ lại tại thời điểm hiện tại.\\
+\en{Mastery} & Mức nắm vững một khái niệm.\\
+\en{BKT} (\en{Bayesian Knowledge Tracing}) & Mô hình theo dõi tri thức kiểu Bayes, có tham số trượt và đoán mò — \textbf{không} phải thứ hệ thống này dùng.\\
+\en{Delta rule} & Luật delta — cập nhật giá trị theo sai lệch giữa mục tiêu và giá trị hiện tại.\\
+\en{Slip / Guess} & Trượt (biết nhưng làm sai) / đoán mò (không biết nhưng làm đúng).\\
+\en{Scaffolding} & Giàn giáo — chiến lược dạy chia nhỏ hỗ trợ rồi rút dần.\\
+\en{Socratic} & Kiểu hỏi gợi mở dẫn người học tự tìm ra câu trả lời.\\
+\en{Prerequisite} & Kiến thức tiên quyết.\\
+\en{Gamification} & Trò chơi hoá — dùng cơ chế trò chơi để tạo động lực học.\\
+\en{Streak} & Chuỗi ngày học liên tiếp.\\
+\en{XP} (\en{Experience Points}) & Điểm kinh nghiệm.\\
+\en{Leaderboard} & Bảng xếp hạng.\\
+\en{Grinding} & Cày điểm — lặp hành động dễ để tăng chỉ số mà không thực sự học.\\
+\bottomrule
+\end{longtable}
+
+\chapter{Phụ lục B — Bảng tra nhanh}
+
+\section{Hằng số thuật toán}
+
+\begin{longtable}{L{5.4cm} L{2.6cm} L{5.6cm}}
+\toprule
+\textbf{Hằng số} & \textbf{Giá trị} & \textbf{Nơi dùng}\\
+\midrule
+\endhead
+\code{ALGORITHM\_VERSION} & \code{delta-fsrs-v3} & Trạng thái khái niệm\\
+\code{LEARNING\_RATE} \(\eta\) & 0,45 & Luật delta\\
+\code{FORGETTING\_DECAY} \(D\) & \(-0{,}5\) & Đường quên\\
+\code{FORGETTING\_FACTOR} \(F\) & \(19/81\) & Đường quên\\
+\code{TARGET\_RETENTION} & 0,9 & Khoảng ôn tập\\
+\code{STABILITY\_GROWTH} & 0,45 & Tăng độ bền khi đúng\\
+\code{SPACING\_BONUS} & 1,6 & Thưởng giãn cách\\
+\code{LAPSE\_DECAY} & 0,55 & Giảm độ bền khi sai\\
+\code{DIFFICULTY\_EASE\_STEP} & 0,04 & Giảm độ khó khi đúng\\
+\code{DIFFICULTY\_LAPSE\_STEP} & 0,08 & Tăng độ khó khi sai\\
+\code{MIN/MAX\_MASTERY} & 0,01 / 0,99 & Kẹp mức nắm vững\\
+\code{MIN/MAX\_STABILITY\_DAYS} & 0,25 / 3650 & Kẹp độ bền\\
+\code{CONFIDENCE\_FULL\_EXERCISES} & 50 & Độ tin cậy điểm kỹ năng\\
+\code{MAX\_SCORE\_STEP} & 0,15 & Trần một bước EMA\\
+\code{decay\_factor} \(\lambda\) & 0,95 & Trọng số lịch sử EMA\\
+\code{\_TAU\_REUSE} \(\tau_0\) & 0,25 & Ngưỡng tái dùng đệm\\
+\code{\_TAU\_PATCH} \(\tau_1\) & 0,55 & Ngưỡng vá đệm\\
+\code{concept\_floor} & 0,50 & Sàn chồng lấp khái niệm\\
+\code{\_FUSION\_ALPHA/BETA/GAMMA} & 0,5 / 0,3 / 0,2 & Hoà trộn truy xuất\\
+\code{\_RECENCY\_LAMBDA} & 0,01 & Suy giảm độ mới\\
+\code{DAILY\_XP\_CAP} & 500 & Trần XP ngày\\
+\code{MAX\_SINGLE\_AWARD} & 200 & Trần một lần cấp XP\\
+\bottomrule
+\caption{Hằng số thuật toán và nơi sử dụng}
+\end{longtable}
+
+\section{Tệp cần biết}
+
+\begin{longtable}{L{7.6cm} L{6.0cm}}
+\toprule
+\textbf{Đường dẫn} & \textbf{Vai trò}\\
+\midrule
+\endhead
+\code{backend-service/app/services/learner\_state.py} & Động cơ FSRS + luật delta\\
+\code{backend-service/app/services/proficiency\_service.py} & Chấm điểm CEFR\\
+\code{backend-service/app/services/xp\_service.py} & XP và chống cày điểm\\
+\code{backend-service/app/services/content\_agent\_apply.py} & Đường duy nhất ghi khoá học\\
+\code{backend-service/app/routes/admin\_courses.py} & \code{\_apply\_lesson\_update}\\
+\code{backend-service/scripts/audit\_course\_content.py} & Kiểm toán và sửa nội dung\\
+\code{backend-service/scripts/generate\_exercises\_ai.py} & Sinh và sinh lại bài tập\\
+\code{ai-service/api/services/trace\_cag/graph.py} & Đồ thị pipeline\\
+\code{ai-service/api/services/trace\_cag/cache\_utils.py} & Cổng đệm RAPID\\
+\code{ai-service/api/services/trace\_cag/l1\_state\_cache.py} & Quyết định SCAR-L1\\
+\code{ai-service/api/services/trace\_cag/retrieve.py} & Hoà trộn truy xuất\\
+\code{ai-service/api/services/content\_etl/} & ETL ngữ liệu\\
+\code{flutter-app/lib/features/learning/presentation/screens/learning\_roadmap\_screen.dart} & Lộ trình học\\
+\code{flutter-app/lib/core/services/skill\_event\_recorder.dart} & Gửi sự kiện học tập\\
+\code{scripts/deploy-one-shot.sh} & Triển khai chuẩn\\
+\code{scripts/restore-prod.sh} & Khôi phục có kiểm tra trước\\
+\bottomrule
+\caption{Tệp then chốt trong kho mã}
+\end{longtable}

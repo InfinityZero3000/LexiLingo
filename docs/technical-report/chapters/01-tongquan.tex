@@ -1,0 +1,135 @@
+\chapter{Tổng quan hệ thống}
+
+\section{Bài toán và động cơ}
+
+LexiLingo là nền tảng học tiếng Anh theo mô hình \en{gamified microlearning} (học chia
+nhỏ có yếu tố trò chơi) tương tự Duolingo, nhưng bổ sung một lớp \textbf{cá nhân hoá dựa
+trên đồ thị tri thức người học}. Bài toán trung tâm mà hệ thống giải quyết không phải là
+"trình bày nội dung tiếng Anh", mà là:
+
+\begin{quote}
+\itshape Làm sao để mọi hoạt động luyện tập của người học — làm bài, chơi game, ôn từ,
+nói chuyện với AI — đều trở thành \textbf{bằng chứng đo lường được} về năng lực, và
+được dùng ngay để quyết định nội dung kế tiếp cũng như nội dung phản hồi của trợ lý AI?
+\end{quote}
+
+Hầu hết ứng dụng học ngôn ngữ dừng ở mức cộng điểm kinh nghiệm và đếm bài đã học.
+LexiLingo đi xa hơn ở ba điểm:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Hai động cơ mô hình hoá người học chạy song song.} Một động cơ chấm
+  điểm kỹ năng theo khung CEFR (\en{Common European Framework of Reference} — Khung
+  tham chiếu ngôn ngữ chung châu Âu), một động cơ lập lịch ôn tập theo trạng thái trí
+  nhớ của từng khái niệm. Mọi hoạt động có chấm điểm đều phải chảy vào cả hai.
+  \item \textbf{Trợ lý AI được "nối đất" (\en{grounded}) vào trạng thái người học} thay
+  vì chỉ vào tài liệu tĩnh. Đây là kiến trúc TRACE-CAG được trình bày ở Chương~8.
+  \item \textbf{Nội dung khoá học sinh bởi tác tử AI} (\en{content agent}) có kiểm duyệt,
+  thay vì nhập tay toàn bộ.
+\end{enumerate}
+
+\section{Phạm vi hệ thống}
+
+Hệ thống là một \en{monorepo} (kho mã nguồn hợp nhất — nhiều dịch vụ trong cùng một kho
+Git) gồm sáu thành phần triển khai được và một số thành phần hỗ trợ:
+
+\begin{longtable}{L{3.2cm} L{4.2cm} L{6.2cm}}
+\toprule
+\textbf{Thành phần} & \textbf{Công nghệ} & \textbf{Trách nhiệm}\\
+\midrule
+\endhead
+\code{flutter-app/} & Flutter 3.x, Dart \(\ge\)3.8.1, Provider, GetIt &
+Ứng dụng người học đa nền tảng (Android, iOS, Web). Phiên bản hiện tại 1.7.0+17, 26 mô-đun tính năng.\\
+\code{backend-service/} & FastAPI, SQLAlchemy 2.0 \en{async}, PostgreSQL, Redis, Celery &
+Toàn bộ nghiệp vụ: xác thực, khoá học, tiến độ, từ vựng, trò chơi, gamification, đánh giá năng lực, quản trị.\\
+\code{ai-service/} & FastAPI, LangGraph, KuzuDB, MongoDB, Redis &
+Pipeline TRACE-CAG, hội thoại, giọng nói (STT/TTS/phát âm), dịch, sinh nội dung, tác tử xếp hạng và thông báo.\\
+\code{admin-service/} & React 19, TypeScript, Vite, Ant Design &
+Bảng điều khiển quản trị: quản lý nội dung, người dùng, mô hình AI, giám sát.\\
+\code{gateway/} & Nginx 1.27 (kèm cấu hình Kong, Cloudflare WAF) &
+Cổng API duy nhất: định tuyến, giới hạn tần suất, chống tấn công biên.\\
+\code{mcp-server/} & Model Context Protocol &
+Công cụ cho lập trình viên và tác tử AI trong IDE (quản lý khoá i18n, gọi mô hình cục bộ).\\
+\bottomrule
+\caption{Sáu thành phần triển khai của LexiLingo}
+\end{longtable}
+
+Ngoài ra: \code{contracts/} (hợp đồng dữ liệu dùng chung giữa các dịch vụ),
+\code{monitoring/} (Prometheus + Grafana), \code{deploy/} và \code{scripts/}
+(triển khai, sao lưu, kiểm thử khói), \code{system-testing/} (kiểm thử liên dịch vụ).
+
+\section{Giải thích thuật ngữ tiếng Anh cốt lõi}
+
+Báo cáo dùng nhiều thuật ngữ tiếng Anh vì đó là tên gọi trong mã nguồn. Bảng dưới giải
+thích các thuật ngữ xuất hiện xuyên suốt; phụ lục A liệt kê đầy đủ hơn.
+
+\begin{longtable}{L{3.6cm} L{10.2cm}}
+\toprule
+\textbf{Thuật ngữ} & \textbf{Giải thích}\\
+\midrule
+\endhead
+\en{CEFR} & Khung tham chiếu ngôn ngữ chung châu Âu, sáu bậc A1--C2. LexiLingo dùng làm thang đo năng lực chính.\\
+\en{LLM} (\en{Large Language Model}) & Mô hình ngôn ngữ lớn — mạng nơ-ron sinh văn bản, ví dụ Qwen, Gemini, Llama.\\
+\en{RAG} (\en{Retrieval-Augmented Generation}) & Sinh văn bản có truy xuất: tìm tài liệu liên quan rồi đưa vào ngữ cảnh cho LLM.\\
+\en{CAG} (\en{Cache-Augmented Generation}) & Sinh văn bản có bộ nhớ đệm: tái sử dụng ngữ cảnh/kết quả đã tính thay vì truy xuất lại từ đầu.\\
+\en{Knowledge Graph} (KG) & Đồ thị tri thức — biểu diễn khái niệm là đỉnh, quan hệ (tiên quyết, liên quan, dễ nhầm) là cạnh.\\
+\en{Pipeline} & Chuỗi bước xử lý nối tiếp, đầu ra bước trước là đầu vào bước sau.\\
+\en{StateGraph} & Đồ thị trạng thái của LangGraph: mỗi đỉnh là một hàm biến đổi trạng thái, cạnh quyết định bước kế tiếp.\\
+\en{FSRS} (\en{Free Spaced Repetition Scheduler}) & Bộ lập lịch lặp lại ngắt quãng thế hệ mới, mô hình hoá trí nhớ bằng \en{stability} và \en{difficulty}.\\
+\en{Spaced repetition} & Lặp lại ngắt quãng — ôn lại ngay trước thời điểm dự đoán sẽ quên.\\
+\en{Retrievability} & Xác suất nhớ lại tại một thời điểm, ký hiệu \(R(t)\).\\
+\en{Stability} & Độ bền trí nhớ, tính bằng ngày; càng lớn thì quên càng chậm.\\
+\en{Mastery} & Mức độ nắm vững một khái niệm, giá trị trong \([0,1]\).\\
+\en{EMA} (\en{Exponential Moving Average}) & Trung bình trượt luỹ thừa — cập nhật điểm mới bằng cách pha trộn có trọng số với điểm cũ.\\
+\en{Idempotent} & Bất biến khi lặp — gọi nhiều lần cho cùng kết quả như gọi một lần, quan trọng khi mạng gửi lại yêu cầu.\\
+\en{Outbox} & Mẫu thiết kế "hộp thư đi": ghi sự kiện vào cùng giao dịch cơ sở dữ liệu rồi mới phát đi, tránh mất sự kiện.\\
+\en{Spool} & Vùng đệm ghi trước — hàng đợi bền vững lưu quan sát trước khi chuyển tiếp.\\
+\en{Middleware} & Lớp trung gian xử lý mọi yêu cầu HTTP trước/sau khi vào ứng dụng.\\
+\en{RBAC} (\en{Role-Based Access Control}) & Phân quyền theo vai trò.\\
+\en{ETL} (\en{Extract–Transform–Load}) & Rút trích – biến đổi – nạp dữ liệu từ nguồn ngoài vào hệ thống.\\
+\en{STT / TTS} & \en{Speech-to-Text} (nhận dạng giọng nói) / \en{Text-to-Speech} (tổng hợp giọng nói).\\
+\en{VAD} (\en{Voice Activity Detection}) & Phát hiện có tiếng nói, dùng để biết khi nào người học bắt đầu/dừng nói.\\
+\en{SSE} (\en{Server-Sent Events}) & Kênh một chiều máy chủ đẩy dữ liệu về trình duyệt, dùng cho phản hồi AI theo dòng.\\
+\en{Latency} & Độ trễ; \en{p95/p99} là phân vị 95\%/99\% của độ trễ.\\
+\en{Throughput} & Thông lượng — số yêu cầu xử lý được mỗi đơn vị thời gian.\\
+\bottomrule
+\caption{Thuật ngữ tiếng Anh cốt lõi}
+\end{longtable}
+
+\section{Con số tổng quan}
+
+Các con số dưới đây được đếm trực tiếp từ mã nguồn tại thời điểm viết báo cáo
+(nhánh \code{dev}, tháng 8/2026):
+
+\begin{longtable}{L{7.2cm} L{6.4cm}}
+\toprule
+\textbf{Hạng mục} & \textbf{Số lượng}\\
+\midrule
+\endhead
+Mô-đun định tuyến backend (\code{app/routes/}) & 41 tệp\\
+Mô hình ORM backend (\code{app/models/}) & 25 tệp, khoảng 70 bảng\\
+Dịch vụ nghiệp vụ backend (\code{app/services/}) & 45 tệp\\
+Tác vụ nền Celery (\code{app/tasks/}) & 9 mô-đun, 12 lịch định kỳ\\
+Mô-đun định tuyến AI service & 17 tệp\\
+Dịch vụ AI (\code{api/services/}) & 45 tệp + 5 gói con\\
+Mã nguồn TRACE-CAG (\code{trace\_cag/}) & 8.078 dòng trên 19 tệp\\
+Mô-đun tính năng Flutter (\code{lib/features/}) & 26 mô-đun\\
+Phụ thuộc Flutter & 63 gói\\
+Trang quản trị React & hơn 25 trang\\
+Bộ kiểm thử & 102 tệp (backend), 61 (AI), 120 (Flutter)\\
+\bottomrule
+\caption{Quy mô mã nguồn}
+\end{longtable}
+
+\section{Cấu trúc báo cáo}
+
+Chương~2 phân tích hệ thống ở góc nhìn nghiệp vụ: tác nhân, use case, quy trình và
+quy tắc ràng buộc. Chương~3 trình bày kiến trúc tổng thể và luồng yêu cầu. Chương~4 là
+thiết kế hệ thống: use case hệ thống, ERD, sơ đồ lớp, sơ đồ tuần tự và sơ đồ triển khai.
+Chương~5 đi sâu vào backend-service, Chương~6 mô tả toàn bộ tầng dữ liệu (PostgreSQL,
+Redis, MongoDB, KuzuDB). Chương~7 giới thiệu AI service ở mức tổ chức; Chương~8 phân
+tích sâu thuật toán TRACE-CAG — từng đỉnh xử lý, thuật toán mở rộng đồ thị, điều khiển
+thích nghi, IRCoT. Chương~9 là chương thuật toán nền tảng: công thức đầy đủ của FSRS
+delta-rule, chấm điểm CEFR, bộ nhớ đệm SCAR-L1, hoà trộn truy xuất và chống cày điểm.
+Chương~10 mô tả các pipeline dữ liệu. Chương~11 tổng hợp API. Chương~12 và~13 trình
+bày phía người dùng (Flutter, admin web, gateway). Chương~14 nói về kiểm thử, triển
+khai và vận hành. Chương~15 là phụ lục thuật ngữ và bảng dữ liệu.

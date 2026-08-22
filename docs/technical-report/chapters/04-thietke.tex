@@ -1,0 +1,297 @@
+\chapter{Thiết kế hệ thống}
+
+\section{Sơ đồ use case hệ thống}
+
+So với use case nghiệp vụ ở Chương~2 (điều người dùng \textit{muốn}), use case hệ thống
+gắn nghiệp vụ với cơ chế kỹ thuật cụ thể (điều hệ thống \textit{làm}) và biểu diễn quan hệ
+\en{include}/\en{extend} giữa chúng.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.92, transform shape]
+  \node[lane, minimum width=9.6cm, minimum height=9.6cm] (sys) at (0,0) {};
+  \node[font=\scriptsize\bfseries, anchor=north, yshift=-3pt] at (sys.north) {Backend + AI service};
+
+  \node[uc] (uc1) at (-2.6, 3.6) {Đăng nhập};
+  \node[uc] (uc2) at ( 2.6, 3.6) {Xác thực JWT};
+  \node[uc] (uc3) at (-2.6, 2.4) {Hoàn thành bài học};
+  \node[uc] (uc4) at ( 2.6, 2.4) {Ghi nhận điểm CEFR};
+  \node[uc] (uc5) at (-2.6, 1.2) {Ôn từ vựng};
+  \node[uc] (uc6) at ( 2.6, 1.2) {Lập lịch FSRS};
+  \node[uc] (uc7) at (-2.6, 0.0) {Chat với Lexi};
+  \node[uc] (uc8) at ( 2.6, 0.0) {Chạy pipeline TRACE-CAG};
+  \node[uc] (uc9) at (-2.6,-1.2) {Luyện nói};
+  \node[uc] (uc10) at ( 2.6,-1.2) {STT + phân tích âm vị};
+  \node[uc] (uc11) at (-2.6,-2.4) {Xem tiến độ};
+  \node[uc] (uc12) at ( 2.6,-2.4) {Đọc \code{skill\_daily\_stats}};
+  \node[uc, fill=cSoftO, draw=cGate] (uc13) at (-2.6,-3.6) {Xuất bản khoá học};
+  \node[uc, fill=cSoftO, draw=cGate] (uc14) at ( 2.6,-3.6) {Kiểm tra \code{publish\_blockers}};
+
+  \draw[fl, dashed] (uc1) -- node[lab]{«include»} (uc2);
+  \draw[fl, dashed] (uc3) -- node[lab]{«include»} (uc4);
+  \draw[fl, dashed] (uc5) -- node[lab]{«include»} (uc6);
+  \draw[fl, dashed] (uc7) -- node[lab]{«include»} (uc8);
+  \draw[fl, dashed] (uc9) -- node[lab]{«include»} (uc10);
+  \draw[fl, dashed] (uc11) -- node[lab]{«include»} (uc12);
+  \draw[fl, dashed] (uc13) -- node[lab]{«include»} (uc14);
+  \draw[fl, dashed, draw=cGate] (uc8) .. controls (0.5,0.9) .. (uc4);
+  \node[lab, draw=cGate, text=cGate, rotate=28] at (0.55,0.75) {«extend»};
+
+  \stickman{-5.4}{1.4}{Người học}
+  \stickman{-5.4}{-3.6}{Quản trị viên}
+  \stickman{5.4}{-1.2}{Whisper /\\HuBERT}
+  \stickman{5.4}{2.4}{PostgreSQL}
+
+  \foreach \t in {uc1,uc3,uc5,uc7,uc9,uc11}
+    \draw[draw=cInfra!60, line width=0.5pt] (-5.15,1.4) -- (\t.west);
+  \draw[draw=cGate!70, line width=0.5pt] (-5.15,-3.6) -- (uc13.west);
+  \draw[draw=cInfra!60, line width=0.5pt] (uc10.east) -- (5.15,-1.2);
+  \draw[draw=cInfra!60, line width=0.5pt] (uc4.east) -- (5.15,2.4);
+  \draw[draw=cInfra!60, line width=0.5pt] (uc6.east) -- (5.15,2.4);
+  \draw[draw=cInfra!60, line width=0.5pt] (uc12.east) -- (5.15,2.4);
+\end{tikzpicture}
+\caption{Sơ đồ use case hệ thống — quan hệ \en{include}/\en{extend} giữa use case nghiệp vụ và cơ chế kỹ thuật}
+\label{fig:uc-hethong}
+\end{figure}
+
+\section{Sơ đồ thực thể quan hệ (ERD)}
+
+ERD dưới đây chỉ vẽ các thực thể trung tâm và khoá ngoại giữa chúng — bảng dữ liệu đầy đủ
+(khoảng 70 bảng) nằm ở Chương~6. Mọi khoá ngoại trỏ về người dùng đều
+\codesp{ON DELETE CASCADE} trừ khi ghi chú khác.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[node distance=15mm]
+  \node[ent] (user) {\textbf{User}\\[2pt] id (PK)\\ email\\ password\_hash\\ role};
+  \node[ent, right=28mm of user] (course) {\textbf{Course}\\[2pt] id (PK)\\ title\\ cefr\_level\\ status};
+  \node[ent, below=of course] (unit) {\textbf{Unit}\\[2pt] id (PK)\\ course\_id (FK)\\ order};
+  \node[ent, below=of unit] (lesson) {\textbf{Lesson}\\[2pt] id (PK)\\ unit\_id (FK)\\ content (JSON)\\ exercise\_count};
+
+  \node[ent, below=of user] (progress) {\textbf{UserCourseProgress}\\[2pt] id (PK)\\ user\_id (FK)\\ course\_id (FK)};
+  \node[ent, below=of progress] (completion) {\textbf{LessonCompletion}\\[2pt] id (PK)\\ user\_id (FK)\\ lesson\_id (FK)\\ score};
+
+  \node[ent, right=28mm of lesson] (concept) {\textbf{LearnerConceptState}\\[2pt] user\_id (FK)\\ concept\_id\\ mastery\_probability\\ stability\_days\\ next\_review\_at};
+  \node[ent, above=of concept] (obsevt) {\textbf{LearnerObservationEvent}\\[2pt] event\_id (UNIQUE)\\ user\_id (FK)\\ concept\_id\\ status};
+  \node[ent, right=28mm of concept] (profile) {\textbf{LearnerStateProfile}\\[2pt] user\_id (PK, FK)\\ state\_epoch};
+
+  \node[ent, below=of completion] (skill) {\textbf{UserSkillScore}\\[2pt] id (PK)\\ user\_id (FK)\\ skill\\ score\\ confidence};
+  \node[ent, below=of skill] (attempt) {\textbf{ExerciseAttempt}\\[2pt] id (PK)\\ user\_id (FK)\\ skill\\ score\\ (cắt tỉa 90 ngày)};
+  \node[ent, right=28mm of attempt] (daily) {\textbf{SkillDailyStat}\\[2pt] user\_id (FK)\\ day\\ skill\\ score\_avg};
+
+  \node[ent, right=28mm of daily] (xp) {\textbf{XPTransaction}\\[2pt] id (PK)\\ user\_id (FK)\\ source\\ source\_id\\ amount};
+
+  \draw[fl] (course.south) -- (unit.north);
+  \draw[fl] (unit.south) -- (lesson.north);
+  \draw[fl] (user.south) -- (progress.north);
+  \draw[fl] (progress.south) -- (completion.north);
+  \draw[fl] (completion.east) -- (lesson.west);
+  \draw[fl] (progress.east) -- (course.west);
+  \draw[fl] (obsevt.south) -- (concept.north);
+  \draw[fl] (concept.east) -- (profile.west);
+  \draw[fl] (user.south) .. controls (2,-6) .. (obsevt.west);
+  \draw[fl] (completion.south) -- (skill.north);
+  \draw[fl] (skill.south) -- (attempt.north);
+  \draw[fl] (attempt.east) -- (daily.west);
+  \draw[fl] (daily.east) -- (xp.west);
+  \draw[fl] (user.south) .. controls (10,2) and (10,-8) .. (xp.north);
+\end{tikzpicture}}
+\caption{ERD rút gọn — quan hệ giữa nội dung khoá học, tiến độ và hai động cơ mô hình người học}
+\label{fig:erd}
+\end{figure}
+
+\begin{luuy}[Vì sao \code{LearnerStateProfile} tách khỏi \code{LearnerConceptState}]
+Mỗi người học có nhiều dòng \code{LearnerConceptState} (một cho mỗi khái niệm đã học) nhưng
+chỉ có \textbf{một} dòng \code{LearnerStateProfile}. Tách riêng để tăng \code{state\_epoch}
+là một phép ghi một dòng duy nhất, không phải cập nhật hàng loạt — đây là điều kiện để vô
+hiệu hoá bộ đệm cá nhân hoá diễn ra tức thời và rẻ (Chương~9).
+\end{luuy}
+
+\section{Sơ đồ lớp — lõi mô hình người học}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[node distance=8mm and 14mm]
+  \node[ent, align=left] (svc) {\textbf{learner\_state.py}\\[2pt]
+    + evolve\_state(state, outcome,\\ \ \ confidence, now)\\
+    + grade\_to\_observation(quality)\\
+    - \_retrievability(t, S)\\
+    - \_interval\_days(S)\\
+    - \_initial\_stability(outcome, c)};
+  \node[ent, align=left, right=of svc] (snap) {\textbf{LearnerStateSnapshot}\\[2pt]
+    mastery\_probability: float\\
+    stability\_days: float\\
+    difficulty: float\\
+    attempt/correct/error\_count: int\\
+    last\_interacted\_at: datetime\\
+    algorithm\_version: str};
+  \node[ent, align=left, below=of svc] (model) {\textbf{LearnerConceptState (ORM)}\\[2pt]
+    user\_id, concept\_id: PK\\
+    + mọi trường của Snapshot\\
+    state\_version: int};
+  \node[ent, align=left, below=of snap] (input) {\textbf{ObservationInput}\\[2pt]
+    event\_id: str (UNIQUE)\\
+    user\_id, concept\_id: str\\
+    outcome: "correct"|"incorrect"\\
+    confidence: float\\
+    session\_id, payload};
+
+  \draw[fl] (svc) -- node[lab,above]{tạo/đọc} (snap);
+  \draw[fl] (model.north) -- node[lab,left]{\_snapshot\_from\_model} (svc.south);
+  \draw[fl] (input) -- node[lab,below]{nạp vào} (svc);
+  \draw[fl, dashed] (snap.south) -- node[lab,right]{\_apply\_snapshot} (model.east |- snap.south);
+\end{tikzpicture}
+\caption{Sơ đồ lớp — hàm thuần \code{evolve\_state} tách khỏi lớp ORM để kiểm thử không phụ thuộc cơ sở dữ liệu}
+\label{fig:class-learnerstate}
+\end{figure}
+
+Thiết kế tách \code{LearnerStateSnapshot} (bất biến, không phụ thuộc cơ sở dữ liệu) khỏi
+\code{LearnerConceptState} (ORM, có trạng thái) là có chủ đích: hàm \code{evolve\_state}
+là một hàm thuần — cùng đầu vào luôn cho cùng đầu ra — nên kiểm thử được bằng
+\code{assert} thuần tuý mà không cần dựng cơ sở dữ liệu. Tầng gọi (\code{record\_concept\_observation})
+mới chịu trách nhiệm đọc/ghi ORM.
+
+\section{Sơ đồ tuần tự}
+
+\subsection{Hoàn thành bài học — đường đi hai động cơ}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  actor/.style={rectangle, draw=cInfra, fill=cSoftGray, rounded corners=2pt,
+                minimum height=6mm, font=\scriptsize, align=center},
+  seq/.style={-{Stealth[length=3.5pt]}, draw=cInfra!80, line width=0.5pt, font=\tiny},
+  seqret/.style={{Stealth[length=3.5pt]}-, draw=cInfra!50, dashed, line width=0.5pt, font=\tiny},
+  ]
+  \node[actor] (a0) at (0,0) {Flutter};
+  \node[actor] (a1) at (2.3,0) {Route\\\code{/learning}};
+  \node[actor] (a2) at (4.6,0) {\code{xp\_service}};
+  \node[actor] (a3) at (6.9,0) {\code{proficiency\_service}};
+  \node[actor] (a4) at (9.2,0) {\code{learner\_state}};
+  \node[actor] (a5) at (11.5,0) {PostgreSQL};
+
+  \foreach \a in {a0,a1,a2,a3,a4,a5}
+    \draw[draw=cInfra!40, line width=0.4pt] (\a.south) -- ++(0,-8.2);
+
+  \draw[seq] ([yshift=-0.8cm]a0.south) -- node[lab,above]{POST attempts/complete} ([yshift=-0.8cm]a1.south);
+  \draw[seq] ([yshift=-1.4cm]a1.south) -- node[lab,above]{award\_xp\_transaction} ([yshift=-1.4cm]a2.south);
+  \draw[seqret] ([yshift=-1.9cm]a2.south) -- node[lab,above]{xp\_awarded} ([yshift=-1.9cm]a1.south);
+  \draw[seq] ([yshift=-2.5cm]a1.south) -- node[lab,above]{record\_exercise\_results\_for\_user} ([yshift=-2.5cm]a3.south);
+  \draw[seq] ([yshift=-3.1cm]a3.south) -- node[lab,above]{cập nhật EMA} ([yshift=-3.1cm]a5.south);
+  \draw[seq] ([yshift=-3.7cm]a3.south) -- node[lab,above]{record\_concept\_observation (nếu có concept\_id)} ([yshift=-3.9cm]a4.south);
+  \draw[seq] ([yshift=-4.6cm]a4.south) -- node[lab,above]{evolve\_state + ghi} ([yshift=-4.6cm]a5.south);
+  \draw[seqret] ([yshift=-5.2cm]a5.south) -- node[lab,above]{state\_epoch++} ([yshift=-5.2cm]a4.south);
+  \draw[seqret] ([yshift=-5.8cm]a3.south) -- node[lab,above]{kết quả} ([yshift=-5.8cm]a1.south);
+  \draw[seqret] ([yshift=-6.4cm]a1.south) -- node[lab,above]{200 OK} ([yshift=-6.4cm]a0.south);
+\end{tikzpicture}
+\caption{Sơ đồ tuần tự — hoàn thành bài học chạm cả hai động cơ mô hình người học trong cùng một yêu cầu}
+\label{fig:seq-lesson}
+\end{figure}
+
+\subsection{Hội thoại AI — dòng SSE và ghi quan sát}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  actor/.style={rectangle, draw=cInfra, fill=cSoftGray, rounded corners=2pt,
+                minimum height=6mm, font=\scriptsize, align=center},
+  seq/.style={-{Stealth[length=3.5pt]}, draw=cInfra!80, line width=0.5pt, font=\tiny},
+  seqret/.style={{Stealth[length=3.5pt]}-, draw=cInfra!50, dashed, line width=0.5pt, font=\tiny},
+  ]
+  \node[actor] (a0) at (0,0)    {Flutter};
+  \node[actor] (a1) at (2.4,0)  {\code{lexi\_chat.py}};
+  \node[actor] (a2) at (4.8,0)  {TRACE-CAG\\StateGraph};
+  \node[actor] (a3) at (7.2,0)  {LLM\\(Groq/Gemini)};
+  \node[actor] (a4) at (9.6,0)  {Mongo\\spool};
+  \node[actor] (a5) at (12.0,0) {Backend\\\code{learner\_state}};
+
+  \foreach \a in {a0,a1,a2,a3,a4,a5}
+    \draw[draw=cInfra!40, line width=0.4pt] (\a.south) -- ++(0,-6.6);
+
+  \draw[seq] ([yshift=-0.7cm]a0.south) -- node[lab,above]{SSE: gửi câu} ([yshift=-0.7cm]a1.south);
+  \draw[seq] ([yshift=-1.3cm]a1.south) -- node[lab,above]{analyze()} ([yshift=-1.3cm]a2.south);
+  \node[lab, fill=cSoft, draw=cService, rounded corners=1pt] at ([yshift=-2.0cm,xshift=6mm]a2.south) {diagnose + retrieve};
+  \draw[seq] ([yshift=-2.5cm]a2.south) -- node[lab,above]{sinh phản hồi (dòng)} ([yshift=-2.5cm]a3.south);
+  \draw[seqret] ([yshift=-3.1cm]a3.south) -- node[lab,above]{token} ([yshift=-3.1cm]a2.south);
+  \draw[seq] ([yshift=-3.7cm]a2.south) -- node[lab,above]{event: chunk} ([yshift=-3.7cm]a1.south);
+  \draw[seq] ([yshift=-4.0cm]a1.south) -- node[lab,above]{} ([yshift=-4.0cm]a0.south);
+  \draw[seq] ([yshift=-4.7cm]a2.south) -- node[lab,above]{bulk upsert quan sát} ([yshift=-4.7cm]a4.south);
+  \draw[seqret] ([yshift=-5.2cm]a4.south) -- node[lab,above]{ACK} ([yshift=-5.2cm]a2.south);
+  \draw[seq] ([yshift=-5.7cm]a2.south) -- node[lab,above]{event: done} ([yshift=-5.7cm]a1.south);
+  \draw[seq] ([yshift=-6.0cm]a1.south) -- node[lab,above]{} ([yshift=-6.0cm]a0.south);
+  \draw[seq, dashed, draw=cGate] ([yshift=-6.5cm]a4.south) -- node[lab,above,text=cGate]{lease worker (bất đồng bộ)} ([yshift=-6.5cm]a5.south);
+\end{tikzpicture}
+\caption{Sơ đồ tuần tự — quan sát được ghi vào vùng đệm \textbf{trước} dấu \code{done}, việc chuyển sang backend là bất đồng bộ}
+\label{fig:seq-chat}
+\end{figure}
+
+\section{Sơ đồ triển khai}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[scale=0.9, transform shape]
+  \node[lane, minimum width=11.6cm, minimum height=8.4cm] (vps) at (0,0) {};
+  \node[font=\scriptsize\bfseries, anchor=north, yshift=-3pt] at (vps.north) {Máy chủ ảo — /opt/lexilingo};
+
+  \node[gat] (gw) at (0,3.2) {Nginx 1.27\\:80 / :443};
+
+  \node[svc] (be) at (-3.6,1.6) {backend-service\\FastAPI :8000};
+  \node[svc] (ai) at (0,1.6) {ai-service\\FastAPI :8080};
+  \node[inf] (adm) at (3.6,1.6) {admin (Vercel)\\ngoài VPS};
+
+  \node[svc] (wk) at (-3.6,0.1) {reminder-worker\\Celery};
+  \node[svc] (bt) at (0,0.1) {reminder-beat\\Celery};
+
+  \node[dat] (pg) at (-4.2,-1.6) {PostgreSQL};
+  \node[dat] (rd) at (-1.4,-1.6) {Redis};
+  \node[dat] (mg) at (1.4,-1.6) {MongoDB};
+  \node[dat] (kz) at (4.2,-1.6) {KuzuDB\\(nhúng)};
+
+  \node[inf] (pr) at (-2.4,-3.2) {Prometheus};
+  \node[inf] (gr) at (2.4,-3.2) {Grafana};
+
+  \draw[fl] (gw) -- (be); \draw[fl] (gw) -- (ai);
+  \draw[flb] (be) -- (ai);
+  \draw[fl] (wk) -- (rd); \draw[fl] (bt) -- (rd);
+  \draw[fl] (be) -- (pg); \draw[fl] (be) -- (rd);
+  \draw[fl] (ai) -- (mg); \draw[fl] (ai) -- (kz); \draw[fl] (ai) -- (rd);
+  \draw[fl] (be) -- (pr); \draw[fl] (ai) -- (pr);
+  \draw[fl] (pr) -- (gr);
+  \draw[fl, dashed, draw=cInfra] (gw) .. controls (5.5,3.5) and (5.5,1.8) .. (adm);
+
+  \stickman{-6.6}{2.8}{Flutter\\(Android/iOS/Web)}
+  \draw[fl] (-6.2,2.55) -- (gw.west);
+\end{tikzpicture}
+\caption{Sơ đồ triển khai sản xuất — một VPS chạy Docker Compose, admin triển khai riêng trên Vercel}
+\label{fig:deploy}
+\end{figure}
+
+\section{Đặc tả use case chi tiết — hai use case trung tâm}
+
+\begin{longtable}{L{3.2cm} L{9.6cm}}
+\toprule
+\multicolumn{2}{l}{\textbf{UC-01 — Hoàn thành bài học}}\\
+\midrule
+\endhead
+Tác nhân chính & Người học\\
+Điều kiện trước & Đã đăng nhập; bài học có \code{exercise\_count} $>0$\\
+Luồng chính & 1. Người học mở bài học. 2. Trả lời tuần tự các bài tập. 3. Hệ thống chấm điểm từng câu theo hình dạng bài tập (Chương~5). 4. Nộp lượt làm. 5. Hệ thống ghi \code{LessonCompletion}, cộng XP, cập nhật điểm kỹ năng, lập lịch FSRS cho khái niệm liên quan, kiểm tra thành tích.\\
+Luồng phụ & 3a. Bài học không có bài tập $\rightarrow$ hệ thống trả lỗi 409 ngay ở bước mở bài, không cho vào luồng chính.\\
+Điều kiện sau & \code{UserSkillScore}, \code{LearnerConceptState}, \code{XPTransaction} đều được cập nhật trong cùng luồng xử lý yêu cầu.\\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{L{3.2cm} L{9.6cm}}
+\toprule
+\multicolumn{2}{l}{\textbf{UC-02 — Hội thoại với trợ lý AI}}\\
+\midrule
+\endhead
+Tác nhân chính & Người học\\
+Tác nhân phụ & Nhà cung cấp LLM\\
+Điều kiện trước & Đã đăng nhập; có phiên hội thoại hoặc phiên mới được tạo\\
+Luồng chính & 1. Người học gửi câu. 2. Hệ thống kiểm tra bộ đệm hai lớp. 3. Nếu trượt: mở rộng đồ thị và chẩn đoán song song. 4. Truy xuất bằng chứng. 5. Sinh phản hồi theo chiến lược sư phạm phù hợp bậc. 6. Ghi quan sát học tập vào vùng đệm \textbf{trước} khi trả lời. 7. Trả phản hồi theo dòng SSE.\\
+Luồng phụ & 3a. Độ tin cậy chẩn đoán $<0{,}5$ $\rightarrow$ hỏi làm rõ, bỏ qua bước 4--5. \newline 2a. Đệm trúng $\rightarrow$ bỏ qua bước 3--6, trả thẳng phản hồi đã lưu.\\
+Điều kiện sau & Một khoản mục đệm mới được ghi (nếu tính lại); \code{learner\_observation\_spool} có thêm sự kiện.\\
+\bottomrule
+\end{longtable}

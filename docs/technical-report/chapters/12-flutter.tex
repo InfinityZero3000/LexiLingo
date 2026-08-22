@@ -1,0 +1,180 @@
+\chapter{Ứng dụng Flutter}
+
+\section{Tổng quan}
+
+\begin{longtable}{L{4.4cm} L{9.2cm}}
+\toprule
+\textbf{Thuộc tính} & \textbf{Giá trị}\\
+\midrule
+\endhead
+Phiên bản & 1.7.0+17\\
+Dart SDK & \(\ge\)3.8.1\\
+Nền tảng & Android, iOS, Web (kèm macOS, Linux, Windows ở mức thử nghiệm)\\
+Quản lý trạng thái & Provider (\code{ChangeNotifier}) — 31 provider đăng ký ở \code{main.dart}\\
+Tiêm phụ thuộc & GetIt, khởi tạo theo mô-đun tính năng\\
+Kiến trúc & Clean Architecture cho từng tính năng\\
+Lưu trữ cục bộ & \code{sqflite} (di động), \code{sqflite\_ffi\_web} (web), \code{flutter\_secure\_storage} (thẻ)\\
+Đa ngữ & \code{easy\_localization}, tệp JSON trong \code{assets/i18n/}\\
+Số mô-đun tính năng & 26\\
+Số màn hình & khoảng 90\\
+Số gói phụ thuộc & 63\\
+Số tệp kiểm thử & 120\\
+\bottomrule
+\caption{Thông số ứng dụng Flutter}
+\end{longtable}
+
+\section{Kiến trúc sạch theo tính năng}
+
+Mỗi tính năng trong \code{lib/features/\{ten\}/} có cùng một hình dạng:
+
+\begin{lstlisting}
+{feature}/
+  data/
+    datasources/     # nguon xa (HTTP/WS) va nguon cuc bo (SQLite)
+    models/          # model JSON, fromJson/toJson
+    repositories/    # cai dat cua interface o domain
+  domain/
+    entities/        # thuc the Dart thuan, khong phu thuoc gi
+    repositories/    # interface truu tuong
+    usecases/        # moi use case mot trach nhiem
+  presentation/
+    screens/ | pages/
+    providers/       # ChangeNotifier
+    widgets/
+  di/
+    {feature}_module.dart   # dang ky GetIt
+\end{lstlisting}
+
+Luật bất di bất dịch: \code{domain/} \textbf{không được} nhập bất cứ thứ gì từ
+\code{presentation/} hay \code{data/}. Chiều phụ thuộc luôn hướng vào trong.
+
+Luồng dữ liệu một lần chạm màn hình:
+
+\begin{center}
+\code{Widget $\rightarrow$ Provider $\rightarrow$ UseCase $\rightarrow$ Repository $\rightarrow$
+RemoteDataSource $\rightarrow$ Gateway}
+\end{center}
+
+với \code{LocalDataSource} làm bộ đệm song song ở tầng repository.
+
+\section{Hai mươi sáu mô-đun tính năng}
+
+\begin{longtable}{L{3.2cm} L{10.4cm}}
+\toprule
+\textbf{Mô-đun} & \textbf{Nội dung}\\
+\midrule
+\endhead
+\code{auth} & Đăng nhập email, Google, Facebook; đăng ký; đặt lại mật khẩu; lớp bảo vệ tuyến.\\
+\code{home} & Bảng điều khiển chính, tổng hợp dữ liệu nhiều nguồn.\\
+\code{learning} & Lộ trình học kiểu Duolingo: các nút zigzag vẽ trên \code{CustomPaint} với đường Bézier bậc ba, nút bài học hiện tại có hoạt ảnh nhấp nháy.\\
+\code{course} & Danh mục khoá học theo bậc CEFR.\\
+\code{vocabulary} & Thẻ từ, ôn tập theo lịch FSRS, bộ thẻ tự tạo.\\
+\code{practice} & Phòng luyện tập tổng hợp.\\
+\code{mistakes} & Sổ tay lỗi sai, đánh dấu đã ôn hoặc mở lại.\\
+\code{lexi\_chat} & Trợ lý Lexi chạy TRACE-CAG, nhận phản hồi theo dòng.\\
+\code{chat} & Hội thoại theo chủ đề.\\
+\code{voice} & Luyện nói thời gian thực, phản hồi âm vị.\\
+\code{level} & Theo dõi bậc CEFR và hồ sơ năng lực.\\
+\code{progress} & Thống kê, chuỗi ngày, bản đồ nhiệt hoạt động.\\
+\code{games} & Sáu trò chơi mini.\\
+\code{gamification} & XP, ví, cửa hàng, kho đồ, bảng xếp hạng.\\
+\code{achievements} & Hệ thống huy hiệu.\\
+\code{social} & Theo dõi bạn bè, bảng tin hoạt động.\\
+\code{books}, \code{news}, \code{podcast}, \code{youtube} & Bốn loại nội dung thực tế kèm quiz.\\
+\code{notifications} & Thông báo trong ứng dụng và đẩy qua FCM.\\
+\code{premium} & Gói trả phí, quyền lợi.\\
+\code{offline} & Chế độ ngoại tuyến và đồng bộ lại.\\
+\code{profile}, \code{user} & Hồ sơ, cài đặt, quản lý tài khoản.\\
+\code{admin} & Màn hình quản trị nhúng cho vai trò quản trị viên.\\
+\bottomrule
+\caption{Mô-đun tính năng của ứng dụng Flutter}
+\end{longtable}
+
+\section{Trình tự khởi động}
+
+\begin{lstlisting}[language=Java]
+main() async
+  EasyLocalization.ensureInitialized()
+  LocaleService.getSavedLocale()
+  databaseFactory = ffiWebNoWebWorker        // chi tren web
+  dotenv.load(.env | .env.production)
+  Firebase.initializeApp()
+  LocalStateMigrationService().runIfNeeded()  // di tru du lieu cuc bo
+  di.initializeDependencies(skipDatabase: kIsWeb)
+  NotificationService.ensureInitialized()
+  StartupCoordinator.run()                    // kiem tra suc khoe backend
+  runApp(EasyLocalization -> LexiLingoApp)
+
+// sau khung hinh dau tien
+WidgetsBinding.addPostFrameCallback:
+  FirebaseMessagingService.initialize()       // xin quyen + dang ky token
+\end{lstlisting}
+
+Việc khởi tạo FCM được hoãn tới sau khung hình đầu tiên vì hộp thoại xin quyền thông báo
+sẽ chặn giao diện nếu bật ngay lúc khởi động.
+
+\section{Dịch vụ lõi}
+
+\begin{longtable}{L{4.8cm} L{8.8cm}}
+\toprule
+\textbf{Dịch vụ} & \textbf{Chức năng}\\
+\midrule
+\endhead
+\code{ApiClient} & Máy khách HTTP có ba bộ chặn: gắn thẻ xác thực, thử lại khi 401 kèm làm mới thẻ, ghi nhật ký gỡ lỗi.\\
+\code{skill\_event\_recorder} & Gửi sự kiện học tập lên backend theo kiểu bắn-và-quên.\\
+\code{sync\_queue\_lifecycle\_runner}, \code{background\_sync\_queue\_service} & Hàng đợi hành động ngoại tuyến; đồng bộ khi ứng dụng quay lại tiền cảnh.\\
+\code{progress\_sync\_service}, \code{progress\_firestore\_data\_source} & Đồng bộ tiến độ, có đường dự phòng Firestore.\\
+\code{encrypted\_local\_cache\_service}, \code{local\_cache\_service} & Bộ đệm cục bộ, có mã hoá cho dữ liệu nhạy cảm.\\
+\code{user\_scope\_service} & Cô lập dữ liệu cục bộ theo từng tài khoản, tránh rò dữ liệu giữa hai lần đăng nhập khác nhau.\\
+\code{session\_expired\_service} & Xử lý tập trung khi phiên hết hạn.\\
+\code{deep\_link\_service} & Liên kết sâu, ví dụ đặt lại mật khẩu qua email.\\
+\code{podcast\_audio\_handler} & Phát âm thanh nền qua \code{audio\_service}.\\
+\code{known\_words\_service}, \code{quick\_save\_vocabulary\_service} & Đánh dấu từ đã biết, lưu nhanh từ mới khi đang đọc.\\
+\code{purchases\_service}, \code{entitlement\_service} & Mua trong ứng dụng và quyền lợi gói.\\
+\code{firebase\_messaging\_service}, \code{notification\_service} & Thông báo đẩy và thông báo cục bộ.\\
+\code{health\_check\_service} & Kiểm tra backend còn sống trước khi vào ứng dụng.\\
+\code{sound\_service}, \code{rating\_service}, \code{analytics\_service} & Âm thanh phản hồi, nhắc đánh giá ứng dụng, đo lường.\\
+\bottomrule
+\caption{Dịch vụ lõi phía client}
+\end{longtable}
+
+\section{Hoạt động ngoại tuyến}
+
+Ứng dụng phải dùng được khi mạng chập chờn. Cơ chế gồm ba phần:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Bộ đệm đọc}: dữ liệu khoá học, từ vựng và tiến độ được lưu vào SQLite;
+  màn hình đọc từ bộ đệm trước rồi làm mới nền.
+  \item \textbf{Hàng đợi ghi}: mọi hành động thay đổi dữ liệu khi ngoại tuyến được xếp vào
+  \code{sync\_queue} cục bộ.
+  \item \textbf{Đồng bộ theo vòng đời}: \code{SyncQueueLifecycleRunner} chạy khi ứng dụng
+  quay lại tiền cảnh (\code{didChangeAppLifecycleState}) và theo chu kỳ, đẩy hàng đợi lên
+  máy chủ.
+\end{enumerate}
+
+Trên nền web, SQLite dùng bản \code{ffi} không có \en{web worker}, nên một số bước bị bỏ
+qua có chủ đích: nạp hồ sơ XP và danh sách podcast tuyển chọn được hoãn lại, kiểm tra sức
+khoẻ backend bị bỏ.
+
+\section{Giao diện và trải nghiệm}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Chủ đề}: \code{AppTheme.lightTheme} / \code{darkTheme}; mọi widget lấy màu
+  và cỡ chữ từ \code{Theme.of(context)}, không mã hoá cứng giá trị.
+  \item \textbf{Lộ trình học}: các nút được đặt bằng \code{Positioned} trong một
+  \code{Stack}, toạ độ ngang theo chu kỳ hình sin
+  \([0{,}14;\ 0{,}32;\ 0{,}50;\ 0{,}68;\ 0{,}86;\ 0{,}68;\ 0{,}50;\ 0{,}32]\);
+  \code{RoadmapPathPainter} vẽ đường Bézier bậc ba với ba lớp (bóng, đường chính, nét đứt
+  làm điểm nhấn).
+  \item \textbf{Cuộn}: \code{BouncingScrollPhysics} trên iOS, \code{ClampingScrollPhysics}
+  trên Android để hợp quy ước từng nền tảng.
+  \item \textbf{Trạng thái tải}: \code{shimmer} làm khung xương, \code{lottie} cho hoạt ảnh
+  thành tích, \code{confetti} khi hoàn thành mục tiêu.
+\end{itemize}
+
+\section{Đa ngôn ngữ}
+
+Tệp dịch nằm ở \code{assets/i18n/*.json}, ngôn ngữ dự phòng là tiếng Anh. Khoá dịch được
+đồng bộ với Crowdin qua quy trình CI (\code{crowdin-sync.yml}), và máy chủ MCP cung cấp
+công cụ \code{manage\_i18n\_key} để thêm hoặc sửa một khoá trên tất cả tệp ngôn ngữ cùng
+lúc — tránh tình trạng khoá tồn tại ở tệp này nhưng thiếu ở tệp khác.

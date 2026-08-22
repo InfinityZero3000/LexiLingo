@@ -1,0 +1,251 @@
+\chapter{Các pipeline dữ liệu}
+
+Hệ thống có bốn đường ống dữ liệu độc lập. Nhầm lẫn giữa chúng là nguồn gốc của nhiều lỗi,
+nên chương này bắt đầu bằng việc phân biệt rõ vai trò.
+
+\begin{longtable}{L{3.4cm} L{4.6cm} L{5.6cm}}
+\toprule
+\textbf{Pipeline} & \textbf{Đầu vào} & \textbf{Đầu ra}\\
+\midrule
+\endhead
+Content ETL & Kho ngữ liệu mở (OEWN, CMUdict\ldots) & Bản ghi \textbf{từ vựng và phát âm} — \textbf{không bao giờ} là bài học\\
+Content Agent & Danh sách từ có nhãn CEFR & Khoá học $\rightarrow$ chương $\rightarrow$ bài học kèm bài tập, ở trạng thái bản nháp\\
+Learner Observation & Lượt chat, bài làm & Trạng thái khái niệm và điểm kỹ năng\\
+Content Prefetch & RSS, YouTube, podcast & Nội dung thực tế đã lưu đệm\\
+\bottomrule
+\caption{Bốn pipeline dữ liệu}
+\end{longtable}
+
+\section{Content ETL — ngữ liệu từ vựng có kiểm soát bản quyền}
+
+\subsection{Nguồn và giấy phép}
+
+Thư mục \code{ai-service/api/services/content\_etl/} triển khai ETL cho bảy nguồn, mỗi
+nguồn có một bộ tiếp hợp (\en{adapter}) riêng:
+
+\begin{longtable}{L{2.8cm} L{3.4cm} L{3.0cm} L{4.0cm}}
+\toprule
+\textbf{Nguồn} & \textbf{Nội dung} & \textbf{Giấy phép} & \textbf{Trạng thái}\\
+\midrule
+\endhead
+OEWN & Định nghĩa, quan hệ nghĩa & CC BY 4.0 & Bật, ghim bản 2025, 185.129 bản ghi\\
+CMUdict & Phiên âm & LicenseRef-CMUdict & Bật, ghim \code{74790861\ldots}, 126.052 bản ghi\\
+CEFR-J & Nhãn bậc CEFR & Thương mại & \textbf{Tắt có chủ đích}\\
+Wikidata & Thực thể, chủ đề & Mở & Cần ghim mới bật\\
+Tatoeba & Câu ví dụ & Mở & Cần ghim mới bật\\
+LibriSpeech & Âm thanh đọc sách & Mở & Cần ghim mới bật\\
+Common Voice & Âm thanh cộng đồng & Mở & Cần ghim mới bật\\
+\code{admin\_upload} & Danh sách từ do quản trị viên tải lên & Thuộc sở hữu & Bật\\
+\bottomrule
+\caption{Nguồn ngữ liệu và trạng thái ghim}
+\end{longtable}
+
+\subsection{Nguyên tắc "ghim mới chạy"}
+
+Một nguồn chỉ được bật khi \textbf{cả} tham chiếu/phiên bản \textbf{và} tổng kiểm tra
+sha256 đều được ghim trong biến môi trường. Nguồn chưa ghim bị bỏ qua trong im lặng chứ
+không chặn khởi động dịch vụ. Lệnh chạy:
+
+\begin{lstlisting}[language=bash]
+python -m api.services.content_etl.cli sync \
+    --sources cmudict,oewn --write --storage-root /duong/dan/ngoai/container
+\end{lstlisting}
+
+\begin{luuy}[Dữ liệu mẫu dễ dãi hơn dữ liệu thật]
+Cả ba bộ tiếp hợp đầu tiên đều xuất xưởng ở trạng thái hỏng và cùng báo "0 bản ghi được
+duyệt", vì tệp mẫu trong kiểm thử không giống tệp tải về thật: \code{cmudict.dict} thật
+viết chữ thường và có chú thích sau dấu \code{\#} (mẫu thì viết hoa); bản phát hành OEWN
+thật được nén gzip và không có \en{namespace} XML (mẫu thì là XML thuần có namespace); và
+từ đa âm tiết của OEWN cần mã hoá phần trăm cho \code{source\_url}, nếu không bộ kiểm tra
+URL sẽ viết lại giá trị và tổng kiểm tra bản ghi không còn khớp. Bài học: tệp mẫu phải có
+\textbf{cùng hình dạng} với tệp thật.
+\end{luuy}
+
+\subsection{Vì sao ETL không tự gieo được khoá học}
+
+Đây là hiểu nhầm phổ biến nhất về hệ thống. Hàm \code{plan\_curriculum} chọn từ
+\textbf{nghiêm ngặt theo} \code{declared\_cefr}, trong khi bản ghi OEWN và CMUdict
+\textbf{không mang nhãn CEFR} — chúng là dữ liệu làm giàu (định nghĩa, ví dụ, phát âm),
+không phải danh sách hạt giống. Nguồn duy nhất có nhãn trong sổ đăng ký là CEFR-J, mà
+giấy phép của nó là thương mại. Ngoài ra, đính kèm cả kho ngữ liệu sẽ vượt
+\code{CONTENT\_AGENT\_MAX\_RECORDS} (20.000, trong khi OEWN có 185.129 bản ghi).
+
+Vì vậy nguồn hạt giống đang dùng thực tế là \code{admin\_upload}: một danh sách từ mang
+\code{declared\_cefr} cho từng từ.
+
+\section{Content Agent — sinh khoá học}
+
+\subsection{Kiến trúc hai nửa}
+
+\begin{longtable}{L{5.2cm} L{8.4cm}}
+\toprule
+\textbf{Phía AI service} & \textbf{Phía backend}\\
+\midrule
+\endhead
+\code{content\_agent/planner.py} — lập chương trình theo bậc CEFR từ danh sách từ. &
+\code{content\_agent\_apply.py} — \textbf{đường duy nhất} ghi khoá học, chương, bài học và bài tập vào cơ sở dữ liệu.\\
+\code{generator.py} — sinh nội dung bài học và bài tập bằng LLM. &
+\code{content\_agent\_validation.py} — làm sạch, kiểm tra hình dạng bài tập.\\
+\code{policies.py} — ràng buộc dạng bài tập được phép. &
+\code{content\_agent\_jobs.py} — vòng đời tác vụ, trạng thái, thử lại.\\
+\code{adapters.py}, \code{store.py} — nối nguồn dữ liệu, lưu tạo tác. &
+\code{content\_agent\_uploads.py} — nhận và kiểm tra tệp tải lên.\\
+\bottomrule
+\caption{Phân chia trách nhiệm của tác tử nội dung}
+\end{longtable}
+
+Khoá học sinh ra luôn ở trạng thái \textbf{chưa xuất bản}. Việc xuất bản là quyết định của
+con người và bị chặn nếu còn bài học không có bài tập.
+
+\subsection{Mô hình nào thực sự sinh nội dung}
+
+Tác tử chọn theo thứ tự: \code{GroqMissionGenerator} nếu có khoá Groq $\rightarrow$ Gemini
+$\rightarrow$ khuôn mẫu tất định. \textbf{Cả hai đường LLM đều rơi về khuôn mẫu cho từng
+bài học khi gặp bất kỳ lỗi nào}, nên một khoá API chết trông giống hệt như "sinh nội dung
+thành công" — chỉ khác ở chỗ nội dung là câu mẫu kiểu \textit{"Listen, then repeat the
+target phrase clearly."} Phải đọc chữ trước khi tin một tác vụ đã chạy đúng.
+
+\subsection{Sinh lại nội dung yếu}
+
+\code{scripts/generate\_exercises\_ai.py --regenerate} viết lại những bài học tuy chơi
+được nhưng yếu: dưới ba loại giao diện bài tập khác nhau, không có bài tập sản sinh
+(\en{production task}), hoặc dùng câu lệnh chung chung kiểu "Match the words with their
+meanings". Nội dung mới chỉ ghi đè sau khi vượt \code{sanitize\_exercises}, nên một lời gọi
+thất bại để lại nội dung cũ nguyên vẹn.
+
+\begin{luuy}[Hạn mức tần suất của tầng miễn phí rất chặt]
+Cấu hình \code{--concurrency=2 --delay=6} hoàn thành 93/93 bài. Cấu hình
+\code{--concurrency=4 --delay=1} mất 93 trong 249 bài vì lỗi 429.
+\end{luuy}
+
+\section{Learner Observation — từ luyện tập thành dữ liệu}
+
+Đây là pipeline quan trọng nhất về mặt kiến trúc, vì nó bắc cầu giữa hai dịch vụ mà không
+được phép mất dữ liệu.
+
+\subsection{Bốn chặng}
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Ghi vùng đệm.} Hội thoại AI ghi hàng loạt (\en{bulk upsert}) các sự kiện
+  tất định vào bộ sưu tập MongoDB \code{learner\_observation\_spool} \textbf{trước khi}
+  trả về phản hồi không-luồng, hoặc trước dấu kết thúc SSE với phản hồi luồng.
+  \item \textbf{Chuyển tiếp có thuê.} Một tiến trình thuê (\en{lease worker}) lấy lô sự
+  kiện và gửi sang điểm cuối nội bộ của backend.
+  \item \textbf{Ghi outbox rồi mới xác nhận.} Backend ghi dòng \en{outbox} bất biến-khi-lặp
+  vào PostgreSQL, xác nhận với tiến trình gửi, rồi mới xử lý.
+  \item \textbf{Áp dụng song song.} Nhiều tiến trình áp dụng sự kiện bằng
+  \codesp{FOR UPDATE SKIP LOCKED}. Trạng thái khái niệm, \code{state\_epoch} và cờ đã-áp-dụng
+  đổi trong \textbf{một giao dịch duy nhất}.
+\end{enumerate}
+
+\subsection{Chấm điểm kỹ năng từ hội thoại}
+
+Mỗi lượt chat gắn \textbf{một} quan sát neo mang \code{skill}, \code{score} và
+\code{difficulty\_level}. Hàm \code{\_record\_turn\_skill\_evidence} ở
+\code{routes/learner\_state.py} chuyển nó thành một \code{ExerciseResult}. Tính bất
+biến-khi-lặp dựa hoàn toàn vào cơ chế chống trùng \code{event\_id} của vùng đệm: chỉ những
+sự kiện \textbf{mới được chèn} mới được chấm điểm, nên không cần thêm bảng phụ nào.
+
+\begin{luuy}[Danh sách khoá được phép nằm ở hai nơi]
+Danh sách khoá hợp lệ của tải trọng quan sát được khai báo cả ở
+\code{app/schemas/learner\_state.py} lẫn
+\code{ai-service/api/services/learner\_observation\_spool.py}. Một khoá lạ khiến
+\textbf{cả lô} bị từ chối. Khi thêm trường mới, phải sửa cả hai.
+\end{luuy}
+
+\subsection{Giới hạn an toàn}
+
+Các giới hạn hiện hành là \textbf{ranh giới an toàn}, không phải năng lực đã đo:
+60 khái niệm ứng viên mỗi yêu cầu, 100 quan sát mỗi lô gửi backend, hạn chót đọc trạng
+thái người học 40 ms, lô dọn dẹp 5.000 dòng. Số liệu p95/p99 thật, mức đồng thời an toàn
+và tỉ lệ trúng đệm phải được ghi vào
+\code{docs/operations/learner-state-rollout.md} sau các đợt thử tải theo giai đoạn; việc
+nâng cấp lên sản xuất bị cấm khi các ô đó còn trống.
+
+\subsection{Phía client}
+
+Các bề mặt có chấm điểm ở Flutter đi qua \code{SkillEventRecorder}
+(\code{lib/core/services/skill\_event\_recorder.dart}) theo kiểu bắn-và-quên
+(\en{fire-and-forget}) để không chặn giao diện. Hằng số \code{vocabConceptId} ở đây phải
+luôn khớp với \code{\_vocab\_concept\_id} trong
+\code{backend-service/app/crud/vocabulary.py}.
+
+\section{Content Prefetch — nội dung thực tế}
+
+Ba tác vụ Celery nạp trước nội dung ngoài đời thực để người học không phải chờ nguồn bên
+thứ ba: tin tức mỗi 6 giờ, YouTube mỗi 12 giờ, podcast mỗi ngày. Nội dung được lưu đệm
+kèm câu hỏi/quiz sinh sẵn; riêng phần quiz mới là thứ tạo ra bằng chứng học tập.
+
+\section{Gieo dữ liệu và kiểm toán}
+
+\subsection{Thứ tự chạy}
+
+\begin{lstlisting}[language=bash]
+seed_courses_directly.py -> seed_analytics.py -> seed_demo_data.py -> seed_questions.py
+\end{lstlisting}
+
+Trạng thái cơ sở dữ liệu kỳ vọng sau khi gieo đầy đủ: 109 người dùng, 1.614 hoạt động hằng
+ngày, 98 câu hỏi. Các kịch bản đều bất biến-khi-lặp: mỗi kịch bản xoá tập người dùng của
+chính nó trước rồi mới gieo lại.
+
+\begin{luuy}[Chỉ hai khoá học nhỏ tái tạo được từ kho mã]
+\code{seed\_courses\_directly.py} chỉ gieo hai khoá học mẫu trong
+\code{app/core/sample\_data\_catalog.py}. Mười ba khoá học lớn (IELTS, Business,
+Advanced\ldots) \textbf{chỉ tồn tại trong cơ sở dữ liệu} và không tái tạo được từ kho mã —
+chúng đến từ tác tử nội dung.
+\end{luuy}
+
+\subsection{Kiểm toán khả năng chơi được}
+
+Sau mỗi lần gieo khoá học, phải xác minh trước khi tin vào ứng dụng:
+
+\begin{lstlisting}[language=bash]
+venv/bin/python3 scripts/audit_course_content.py                 # bao cao
+venv/bin/python3 scripts/generate_exercises_ai.py                # lap bai hoc rong
+venv/bin/python3 scripts/audit_course_content.py --fix-counters  # dong bo bo dem
+\end{lstlisting}
+
+Kịch bản kiểm toán có ba chế độ sửa: \code{--fix-counters} (đồng bộ
+\code{exercise\_count}), \code{--fix-matching} (sửa danh sách lựa chọn của bài ghép cặp),
+\code{--fix-unplayable} (xử lý bài học không chơi được).
+
+\section{Sao lưu như một pipeline}
+
+Dữ liệu người dùng nằm ở đúng hai kho, nên sao lưu chỉ có hai đối tượng:
+
+\begin{longtable}{L{5.0cm} L{3.0cm} L{5.6cm}}
+\toprule
+\textbf{Đơn vị systemd} & \textbf{Lịch} & \textbf{Hành động}\\
+\midrule
+\endhead
+\code{lexilingo-backup.timer} & 02:30 hằng ngày & Kết xuất cả hai kho, sinh bảng kê sha256, xoá bản cũ hơn 14 ngày.\\
+\code{lexilingo-backup-verify.timer} & 04:00 Chủ nhật & Khôi phục bản mới nhất vào container dùng một lần và kiểm tra dữ liệu người dùng.\\
+\code{lexilingo-backup-alert@.service} & Khi \code{OnFailure} & Đặt cờ vào \code{/var/lib/lexilingo/}, ghi log mức nghiêm trọng, gọi webhook nếu có.\\
+\bottomrule
+\caption{Lịch sao lưu}
+\end{longtable}
+
+Bốn quy tắc tồn tại vì từng bị vi phạm:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Khôi phục kiểm tra trước khi phá.} \code{restore-prod.sh} kiểm tra tính
+  toàn vẹn gzip, tổng kiểm tra bảng kê và phần đầu tệp kết xuất, chụp ảnh dữ liệu sản xuất
+  hiện tại vào \code{backups/pre-restore/}, rồi mới xoá lược đồ. Nó in ra chính xác lệnh
+  quay lui nếu có sự cố.
+  \item \textbf{Một bản kết xuất chưa phải bản sao lưu cho tới khi nó được khôi phục
+  thành công.} Đợt kiểm chứng hằng tuần là thứ duy nhất khiến các bản kết xuất hằng ngày
+  đáng tin.
+  \item \textbf{Ngưỡng kích thước phải theo từng kho và mang tính tương đối.} PostgreSQL
+  sản xuất khoảng 1,9 MB sau nén, MongoDB khoảng 79 KB. Một ngưỡng tuyệt đối chung đã từng
+  loại bỏ một bản kết xuất MongoDB hợp lệ; ngưỡng đúng là "dưới 50\% bản tốt trước đó".
+  \item \textbf{\code{OnFailure} phải đặt trong khối \code{[Unit]}.} Đặt trong
+  \code{[Service]} thì systemd bỏ qua và chỉ ghi một dòng log — nghĩa là không ai được
+  báo động. Kiểm chứng bằng \codesp{systemctl show -p OnFailure --value <unit>}; kết quả
+  rỗng nghĩa là đang hỏng.
+\end{enumerate}
+
+\begin{luuy}[Sao lưu hiện vẫn nằm cùng đĩa]
+Các bản sao lưu nằm trên cùng ổ đĩa với cơ sở dữ liệu. Cần đặt
+\code{OFFSITE\_RCLONE\_REMOTE} cho \code{lexilingo-backup.service} để khắc phục; kịch bản
+cảnh báo ở mỗi lần chạy cho tới khi việc này hoàn tất.
+\end{luuy}
