@@ -221,12 +221,17 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                         candidate_labels.append(label)
 
                 if candidate_labels:
+                    # Call `similarity` directly, not the handler's own
+                    # `invoke`: gateway.invoke already wraps the return in
+                    # {"success", "data"}, so routing through invoke() nested
+                    # the payload twice and this read {} every time — the
+                    # MiniLM fallback silently contributed zero hits.
                     result = await gateway.invoke(
-                        "minilm", "invoke",
-                        {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+                        "minilm", "similarity",
+                        {"query": user_input, "candidates": candidate_labels},
                     )
                     if result.get("success"):
-                        sim_results = result.get("data", {}).get("results", [])
+                        sim_results = result.get("data") or []
                         for r in sim_results:
                             if r["score"] >= threshold:
                                 local_vector_hits.append({"text": r["text"], "score": r["score"]})
@@ -563,7 +568,17 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         for item in retrieval_trace
     ]
     evidence_version = stable_version_token(evidence_projection, prefix="evidence")
-    query_scope = stable_version_token(user_input.strip().lower(), prefix="query")
+    # Scope by retrieval_policy, not just the question text: "full" (cag_vanilla)
+    # and "rapid" (tracecag_rapid) select different top-k evidence for the SAME
+    # question, but observe_dependency_tokens uses setdefault (first-write-wins)
+    # on this key — without the policy in the key, whichever mode processes a
+    # question first "poisons" the shared token, so every later mode's cache
+    # entry for that question fails its own freshness recheck against a token
+    # it never wrote (confirmed: retrieval_trace identical, only the recorded
+    # dependency version differs across modes for the same query).
+    query_scope = stable_version_token(
+        f"{retrieval_policy}:{user_input.strip().lower()}", prefix="query"
+    )
     state_hints = (state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}
     source_version = str(state_hints.get("source_version") or evidence_version)
 
