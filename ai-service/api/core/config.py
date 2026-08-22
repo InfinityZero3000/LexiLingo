@@ -9,18 +9,32 @@ import os
 import json
 import re
 from datetime import date
+from pathlib import Path
 from typing import List, Optional, Union
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from functools import lru_cache
 from urllib.parse import urlparse
+
+# pydantic's env_file only populates Settings — it never touches os.environ,
+# and the internal routes (recommendations, error_diagnosis, notification
+# agent) read their admin key with os.getenv. Under Docker compose passes the
+# real variables so that works; running uvicorn directly it did not, and those
+# routes answered 503 with a .env sitting right there. Load the file into the
+# environment so both ways behave the same.
+#
+# Never override: a real container variable must win over a .env baked into
+# the image (load_dotenv defaults to override=False; kept explicit).
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=False)
 
 
 class Settings(BaseSettings):
     """Application settings."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
