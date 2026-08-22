@@ -273,7 +273,14 @@
       "startAction": "Start",
       "doneAction": "Done",
       "chatAction": "Chat"
-    }
+    },
+    "recommendedForYou": "为你推荐",
+    "recTypeCourse": "课程",
+    "recTypeLesson": "课时",
+    "recTypeVocab": "词汇",
+    "recTypeVideo": "视频",
+    "recTypeNews": "新闻",
+    "recTypeOther": "推荐"
   },
   "course": {
     "title": "课程",

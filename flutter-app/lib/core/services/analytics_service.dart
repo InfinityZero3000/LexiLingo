@@ -17,6 +17,30 @@ void trackProductEvent(
   );
 }
 
+/// The single interaction signal the recommender learns topic affinity from.
+/// Every graded or browsable surface should report one; `topic` is what makes
+/// "the topic this learner picks most" computable at all.
+void trackContentInteraction({
+  required String itemType,
+  required String itemId,
+  required String action,
+  String? topic,
+  String source = 'app',
+  int? dwellMs,
+}) {
+  trackProductEvent(
+    'content_interaction',
+    source: source,
+    properties: {
+      'item_type': itemType,
+      'item_id': itemId,
+      'action': action,
+      if (topic != null && topic.isNotEmpty) 'topic': topic,
+      if (dwellMs != null) 'dwell_ms': dwellMs,
+    },
+  );
+}
+
 class AnalyticsService {
   AnalyticsService({
     required ApiClient apiClient,

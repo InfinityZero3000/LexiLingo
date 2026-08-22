@@ -273,7 +273,14 @@
     "pointsCalendar": "Points Calendar",
     "setupCheckinReminder": "Set up check-in reminder",
     "checkinReminder": "Check-in reminder",
-    "setTime": "Set time"
+    "setTime": "Set time",
+    "recommendedForYou": "Recommended for you",
+    "recTypeCourse": "Course",
+    "recTypeLesson": "Lesson",
+    "recTypeVocab": "Vocabulary",
+    "recTypeVideo": "Video",
+    "recTypeNews": "News",
+    "recTypeOther": "Suggestion"
   },
   "course": {
     "title": "Courses",

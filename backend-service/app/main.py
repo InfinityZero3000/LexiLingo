@@ -83,6 +83,7 @@ from app.routes.concepts import router as concepts_router
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
 from app.routes.product_events import router as product_events_router
+from app.routes.recommendations import router as recommendations_router
 from app.core.partner_auth import require_partner_api_key
 from app.clients.ai_service_client import AIServiceClient
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
@@ -429,6 +430,7 @@ app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=[
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
 app.include_router(learner_state_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(product_events_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(recommendations_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Recommendations"])
 
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:

@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -360,6 +361,13 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   }
 
   Future<void> _handleTopicSelection(StoryListItem story) async {
+    trackContentInteraction(
+      itemType: 'topic',
+      itemId: story.storyId,
+      action: 'open',
+      topic: story.category,
+      source: 'story_selection',
+    );
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/services/rating_service.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
@@ -136,6 +137,12 @@ class LearningProvider with ChangeNotifier {
           _currentAttempt = attempt;
           _livesRemaining = attempt.livesRemaining;
           _hintsRemaining = attempt.hintsAvailable;
+          trackContentInteraction(
+            itemType: 'lesson',
+            itemId: lessonId,
+            action: 'start',
+            source: 'learning_session',
+          );
         },
       );
 

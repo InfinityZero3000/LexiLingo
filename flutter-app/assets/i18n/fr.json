@@ -273,7 +273,14 @@
       "startAction": "Start",
       "doneAction": "Done",
       "chatAction": "Chat"
-    }
+    },
+    "recommendedForYou": "Recommandé pour vous",
+    "recTypeCourse": "Cours",
+    "recTypeLesson": "Leçon",
+    "recTypeVocab": "Vocabulaire",
+    "recTypeVideo": "Vidéo",
+    "recTypeNews": "Actualités",
+    "recTypeOther": "Suggestion"
   },
   "course": {
     "title": "Cours",

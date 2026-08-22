@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -680,8 +681,15 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
         final isSaved = provider.isVideoSaved(video.videoId);
 
         return GestureDetector(
-          onTap: () =>
-              Navigator.pushNamed(context, '/youtube/player', arguments: video),
+          onTap: () {
+            trackContentInteraction(
+              itemType: 'video',
+              itemId: video.videoId,
+              action: 'open',
+              source: 'youtube_explore',
+            );
+            Navigator.pushNamed(context, '/youtube/player', arguments: video);
+          },
           child: Container(
             decoration: BoxDecoration(
               color: isDark

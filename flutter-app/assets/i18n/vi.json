@@ -273,7 +273,14 @@
     "pointsCalendar": "Lịch Điểm Danh",
     "setupCheckinReminder": "Cài đặt nhắc nhở điểm danh",
     "checkinReminder": "Nhắc nhở điểm danh",
-    "setTime": "Đặt giờ"
+    "setTime": "Đặt giờ",
+    "recommendedForYou": "Gợi ý cho bạn",
+    "recTypeCourse": "Khóa học",
+    "recTypeLesson": "Bài học",
+    "recTypeVocab": "Từ vựng",
+    "recTypeVideo": "Video",
+    "recTypeNews": "Tin tức",
+    "recTypeOther": "Gợi ý"
   },
   "course": {
     "title": "Khóa học",

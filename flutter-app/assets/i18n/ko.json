@@ -273,7 +273,14 @@
       "startAction": "Start",
       "doneAction": "Done",
       "chatAction": "Chat"
-    }
+    },
+    "recommendedForYou": "추천 콘텐츠",
+    "recTypeCourse": "코스",
+    "recTypeLesson": "레슨",
+    "recTypeVocab": "어휘",
+    "recTypeVideo": "비디오",
+    "recTypeNews": "뉴스",
+    "recTypeOther": "추천"
   },
   "course": {
     "title": "행동",

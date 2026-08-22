@@ -273,7 +273,14 @@
       "startAction": "Start",
       "doneAction": "Done",
       "chatAction": "Chat"
-    }
+    },
+    "recommendedForYou": "あなたへのおすすめ",
+    "recTypeCourse": "コース",
+    "recTypeLesson": "レッスン",
+    "recTypeVocab": "語彙",
+    "recTypeVideo": "動画",
+    "recTypeNews": "ニュース",
+    "recTypeOther": "おすすめ"
   },
   "course": {
     "title": "コース",

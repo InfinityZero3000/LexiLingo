@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -352,6 +353,13 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
   // ──────────────────────────────────────
 
   void _openDetail(Podcast podcast) {
+    trackContentInteraction(
+      itemType: 'podcast',
+      itemId: podcast.id,
+      action: 'open',
+      topic: podcast.categories.isNotEmpty ? podcast.categories.first : null,
+      source: 'podcast_explore',
+    );
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => PodcastDetailScreen(podcast: podcast)),

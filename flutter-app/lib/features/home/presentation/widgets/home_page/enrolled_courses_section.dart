@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
@@ -123,6 +124,13 @@ class _EnrolledCourseCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
+        trackContentInteraction(
+          itemType: 'course',
+          itemId: course.id,
+          action: 'open',
+          topic: course.tags.isNotEmpty ? course.tags.first : null,
+          source: 'home_enrolled',
+        );
         LearnerRoute.push(
           context,
           (_) => CourseDetailScreen(courseId: course.id),

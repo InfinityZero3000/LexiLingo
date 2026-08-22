@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/user_vocabulary_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/get_due_vocabulary_usecase.dart';
@@ -340,6 +341,16 @@ class FlashcardProvider extends ChangeNotifier {
       final timeSpentMs = _cardStartTime != null
           ? DateTime.now().difference(_cardStartTime!).inMilliseconds
           : null;
+
+      final tags = currentCard.vocabularyItem.tags;
+      trackContentInteraction(
+        itemType: 'vocab',
+        itemId: currentCard.userVocabulary.vocabularyId,
+        action: 'review',
+        topic: (tags != null && tags.isNotEmpty) ? tags.first : null,
+        source: 'flashcard',
+        dwellMs: timeSpentMs,
+      );
 
       final result = await submitReviewUseCase(
         SubmitReviewParams(
