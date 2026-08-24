@@ -24,7 +24,7 @@ python-jose[cryptography]>=3.5.0
 passlib[bcrypt]>=1.7.4
 
 # Environment
-python-dotenv>=1.2.2
+python-dotenv>=1.2.3
 
 # Logging and Error Tracking
 loguru>=0.7.3
