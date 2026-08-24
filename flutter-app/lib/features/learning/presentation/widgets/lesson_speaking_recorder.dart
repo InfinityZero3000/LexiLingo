@@ -22,6 +22,12 @@ class LessonSpeakingRecorder extends StatefulWidget {
   final String targetText;
   final bool isAnswered;
   final ValueChanged<String> onApproved;
+
+  /// Every take, approved or not, reports the best transcript so far. Without
+  /// it a rejected take submits nothing, the learner re-records until they
+  /// pass, and the pipeline only ever sees successes — speaking accuracy is
+  /// then 100% by construction rather than by ability.
+  final ValueChanged<String>? onAttempt;
   final Color? primaryColor;
   final Color? secondaryTextColor;
   final StartLessonRecording? startRecording;
@@ -33,6 +39,7 @@ class LessonSpeakingRecorder extends StatefulWidget {
     required this.targetText,
     required this.isAnswered,
     required this.onApproved,
+    this.onAttempt,
     this.primaryColor,
     this.secondaryTextColor,
     this.startRecording,
@@ -53,6 +60,8 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
   String? _transcript;
   String? _errorMessage;
   double? _similarity;
+  String? _bestTranscript;
+  double _bestSimilarity = -1;
 
   bool get _isRecording => _state == _SpeakingRecorderState.recording;
   bool get _isProcessing => _state == _SpeakingRecorderState.processing;
@@ -68,6 +77,8 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
       _transcript = null;
       _errorMessage = null;
       _similarity = null;
+      _bestTranscript = null;
+      _bestSimilarity = -1;
       _state = _SpeakingRecorderState.idle;
     }
   }
@@ -180,8 +191,19 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
             : _SpeakingRecorderState.rejected;
       });
 
+      final spoken = transcript.trim();
+      if (match.similarity > _bestSimilarity) {
+        _bestSimilarity = match.similarity;
+        _bestTranscript = spoken;
+      }
+
       if (match.isApproved) {
-        widget.onApproved(transcript.trim());
+        widget.onApproved(spoken);
+      } else {
+        // Offer the best take so far as the answer. The learner keeps
+        // retrying; if they move on instead, what they managed is recorded
+        // rather than discarded.
+        widget.onAttempt?.call(_bestTranscript ?? spoken);
       }
     } catch (error) {
       _showError(_friendlyRecordingError(error));

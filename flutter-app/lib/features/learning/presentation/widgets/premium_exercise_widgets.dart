@@ -2540,6 +2540,9 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
 class PronunciationPracticeWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  /// Reports the best take while the learner is still below the pass mark, so
+  /// a session they never pass is still measured instead of discarded.
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -2548,6 +2551,7 @@ class PronunciationPracticeWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -2638,6 +2642,7 @@ class _PronunciationPracticeWidgetState
                   : widget.exercise.question,
               isAnswered: widget.isAnswered,
               onApproved: widget.onAnswer,
+              onAttempt: widget.onInputChanged,
               primaryColor: colors.primary,
               secondaryTextColor: colors.textSecondary,
             ),
@@ -2939,6 +2944,9 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
 class SpeakingRepeatWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  /// Reports the best take while the learner is still below the pass mark, so
+  /// a session they never pass is still measured instead of discarded.
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -2947,6 +2955,7 @@ class SpeakingRepeatWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -3036,6 +3045,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                   : widget.exercise.question,
               isAnswered: widget.isAnswered,
               onApproved: widget.onAnswer,
+              onAttempt: widget.onInputChanged,
               primaryColor: colors.primary,
               secondaryTextColor: colors.textSecondary,
             ),

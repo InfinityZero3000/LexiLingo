@@ -457,6 +457,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           return PronunciationPracticeWidget(
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
             userAnswer: provider.currentUserAnswer,
             isCorrect: provider.isCurrentCorrect,
@@ -481,6 +482,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           return SpeakingRepeatWidget(
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
             userAnswer: provider.currentUserAnswer,
             isCorrect: provider.isCurrentCorrect,
