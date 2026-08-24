@@ -65,7 +65,7 @@ langchain-core>=1.6.0
 langchain-community>=0.4.2
 
 # LLaMA.cpp for GGUF model inference (Vietnamese explanation)
-llama-cpp-python>=0.3.34
+llama-cpp-python>=0.3.35
 
 # Audio Processing (for HuBERT resampling)
 # scipy 1.18+ requires Python 3.12; CI runs Python 3.11.
