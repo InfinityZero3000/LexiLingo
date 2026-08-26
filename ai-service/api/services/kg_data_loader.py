@@ -176,6 +176,46 @@ def merge_knowledge_payload(connection: Any, payload: Mapping[str, Any]) -> Merg
     return MergeStats(concepts=concepts_inserted, edges=edges_inserted)
 
 
+# 12_lexical_relations.json is a ConceptNet dump. Its `related_to` edges are
+# co-occurrence, not meaning ("Booking -> Performance", "Culture -> road"), and
+# they wire every CEFR level node to arbitrary words, which made cefrlevel:b1 a
+# 652-edge hub that best-first expansion walks into. The file's typed relations
+# (is_a, antonym, at_location, …) are kept. Other files use `related_to`
+# meaningfully, so this is scoped by filename rather than applied globally.
+_NOISY_EDGE_SOURCES = {"12_lexical_relations.json"}
+
+
+def _is_noisy_lexical_edge(edge: Mapping[str, Any]) -> bool:
+    if str(edge.get("relation") or "") == "related_to":
+        return True
+    return str(edge.get("from") or "").startswith("cefrlevel:") or str(
+        edge.get("to") or ""
+    ).startswith("cefrlevel:")
+
+
+def drop_noisy_edges(path: str, payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Strip meaningless edges from known-noisy KG sources before merging."""
+    if os.path.basename(path) not in _NOISY_EDGE_SOURCES:
+        return payload
+    edges = payload.get("edges")
+    if not isinstance(edges, list):
+        return payload
+    kept = [
+        edge
+        for edge in edges
+        if not (isinstance(edge, dict) and _is_noisy_lexical_edge(edge))
+    ]
+    if len(kept) == len(edges):
+        return payload
+    logger.info(
+        "[KG] %s: dropped %d noisy edges, kept %d",
+        os.path.basename(path),
+        len(edges) - len(kept),
+        len(kept),
+    )
+    return {**payload, "edges": kept}
+
+
 def sync_knowledge_files(
     connection: Any,
     paths: Iterable[str],
@@ -205,7 +245,7 @@ def sync_knowledge_files(
             payload = load_json_object(path)
             if forbidden_concept_prefixes:
                 validate_runtime_knowledge_payload(payload, source_path=path)
-            pending.append((path, current_hash, payload))
+            pending.append((path, current_hash, drop_noisy_edges(path, payload)))
         except RuntimeKnowledgeIsolationError:
             raise
         except (OSError, ValueError, json.JSONDecodeError) as exc:
