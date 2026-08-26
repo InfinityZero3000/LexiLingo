@@ -287,8 +287,20 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
 
     for node in kg_expanded:
         depth = node.get("depth", 1) if isinstance(node, dict) else 1
+        title = str(node.get("title") or "").strip()
+        if not title:
+            # No title means nothing readable to ground on — the id alone
+            # ("concept:vocab.word.nerve") is noise in the prompt.
+            continue
+        keywords = str(node.get("keywords") or "").strip()
+        relation = str(node.get("relation") or "related_to")
+        text = f"Related concept ({relation}): {title}"
+        if keywords:
+            text = f"{text}. Keywords: {keywords}"
         evidence_items.append({
-            "text": f"Related: {node.get('id', '')} ({node.get('relation', '')})",
+            "item_id": str(node.get("id") or title),
+            "title": title,
+            "text": text,
             "kg_depth": depth,
             "vec_sim": 0.0,
             "turns_ago": session_turn,

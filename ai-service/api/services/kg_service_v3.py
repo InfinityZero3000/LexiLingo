@@ -633,6 +633,7 @@ class KnowledgeGraphServiceV3:
         expanded_nodes: List[KGExpandedNode] = []
         paths: List[KGPath] = []
         visited: set = set(seed_nodes)
+        node_titles: Dict[str, Tuple[str, str]] = {}
 
         # Priority queue: (-weight, hop_depth, concept_id, parent_id, relation)
         # Negate weight because heapq is a min-heap
@@ -645,9 +646,15 @@ class KnowledgeGraphServiceV3:
                 neg_w, depth, cid, parent, rel = heapq.heappop(frontier)
 
                 if depth > 0:  # don't add seeds themselves as expanded
+                    title, keywords = node_titles.get(cid, ("", ""))
                     expanded_nodes.append(KGExpandedNode(
                         id=cid, type=rel or "related_to",
-                        properties={"relation": rel or "related_to", "depth": depth},
+                        properties={
+                            "relation": rel or "related_to",
+                            "depth": depth,
+                            "title": title,
+                            "keywords": keywords,
+                        },
                     ))
                     if parent:
                         paths.append(KGPath(nodes=[parent, cid], edges=[rel or "related_to"]))
@@ -661,7 +668,7 @@ class KnowledgeGraphServiceV3:
                 # multiple of that is fetched from Kuzu and thrown away)
                 result = await self._execute(
                     "MATCH (a:Concept)-[e:Edge]->(b:Concept) "
-                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level "
+                    "WHERE a.id = $cid RETURN b.id, e.relation, b.level, b.title, b.keywords "
                     "LIMIT 50",
                     {"cid": cid},
                 )
@@ -671,6 +678,7 @@ class KnowledgeGraphServiceV3:
                     if neighbor_id not in visited:
                         visited.add(neighbor_id)
                         w = ped_weight(neighbor_level)
+                        node_titles[neighbor_id] = (row[3] or "", row[4] or "")
                         heapq.heappush(frontier, (-w, depth + 1, neighbor_id, cid, edge_rel))
         except Exception as e:
             if self._recover_and_retry("expand_best_first", e):
