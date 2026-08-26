@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import math
 from typing import Any, Dict, List, Optional, Tuple
 import os
 import time
@@ -46,6 +47,10 @@ _RUNTIME_KG_SOURCE_FILES = (
     "11_idioms.json",
     "12_lexical_relations.json",
 )
+
+
+# A full-title match in the query outranks partial keyword overlap.
+_TITLE_MATCH_BOOST = 1.8
 
 
 def _env_enabled(name: str) -> bool:
@@ -86,8 +91,11 @@ class KnowledgeGraphServiceV3:
         # ── In-memory caches (Phase 1) ─────────────────────────────────────
         # _concepts_cache: None = cold (not yet built); Dict = warm
         self._concepts_cache: Optional[Dict[str, Dict[str, str]]] = None
-        # inverted index: keyword → [concept_id, ...]  (O(1) lookup)
+        # inverted index: keyword → [concept_id, ...]  (O(1) lookup, deduped)
         self._keyword_index: Dict[str, List[str]] = {}
+        # keyword → log-scaled IDF, and concept_id → tokens of its title
+        self._keyword_idf: Dict[str, float] = {}
+        self._title_tokens: Dict[str, frozenset] = {}
         # TF-IDF structures (Phase 3, pure Python)
         self._tfidf_concept_ids: List[str] = []
         self._tfidf_idf: Dict[str, float] = {}
@@ -375,6 +383,7 @@ class KnowledgeGraphServiceV3:
         """Query KuzuDB once, populate _concepts_cache + _keyword_index + TF-IDF."""
         cache: Dict[str, Dict[str, str]] = {}
         keyword_index: Dict[str, List[str]] = {}
+        title_tokens: Dict[str, frozenset] = {}
         try:
             result = self._conn.execute(
                 "MATCH (c:Concept) RETURN c.id, c.title, c.keywords, c.level"
@@ -386,14 +395,33 @@ class KnowledgeGraphServiceV3:
                 keywords: str = row[2] or ""
                 level: str = row[3] or "B1"
                 cache[cid] = {"title": title, "keywords": keywords, "level": level}
-                # Build inverted keyword index
-                for tok in re.findall(r"[a-z0-9_']+", (f"{title} {keywords}").lower()):
-                    if len(tok) >= 3:
-                        keyword_index.setdefault(tok, []).append(cid)
+                # Build inverted keyword index. The set() matters: a concept
+                # repeating a token in its keywords used to be appended once
+                # per occurrence, so query_concepts counted it that many times
+                # — one 20k-character keyword blob sat in the posting list for
+                # "the" 194 times and outscored every real match.
+                tokens = {
+                    tok
+                    for tok in re.findall(r"[a-z0-9_']+", (f"{title} {keywords}").lower())
+                    if len(tok) >= 3
+                }
+                for tok in tokens:
+                    keyword_index.setdefault(tok, []).append(cid)
+                title_tokens[cid] = frozenset(
+                    tok
+                    for tok in re.findall(r"[a-z0-9_']+", title.lower())
+                    if len(tok) >= 2
+                )
         except Exception as exc:
             logger.warning("[KG] _build_concept_cache failed: %s", exc)
             return
 
+        total = max(len(cache), 1)
+        self._keyword_idf = {
+            tok: math.log((total + 1) / (len(ids) + 1)) + 1.0
+            for tok, ids in keyword_index.items()
+        }
+        self._title_tokens = title_tokens
         self._concepts_cache = cache
         self._keyword_index = keyword_index
         logger.info(
@@ -406,6 +434,8 @@ class KnowledgeGraphServiceV3:
         """Clear concept cache so next get_concepts() rebuilds from KuzuDB."""
         self._concepts_cache = None
         self._keyword_index = {}
+        self._keyword_idf = {}
+        self._title_tokens = {}
         self._tfidf_concept_ids = []
         self._tfidf_idf = {}
         self._tfidf_vectors = []
@@ -929,25 +959,39 @@ class KnowledgeGraphServiceV3:
             return []
 
         token_set = set(tokens)
-        overlap_counts: Dict[str, int] = {}
+        # Weight each matched token by its IDF: without it, a query's common
+        # words ("what", "does", "the") count as much as its rare ones, and the
+        # long ELL-question concepts that contain every common word win every
+        # query. Matching on "hotel" must beat matching on "the".
+        matched_weight: Dict[str, float] = {}
         for tok in token_set:
+            weight = self._keyword_idf.get(tok, 1.0)
             for concept_id in self._keyword_index.get(tok, ()):
-                overlap_counts[concept_id] = overlap_counts.get(concept_id, 0) + 1
-        if not overlap_counts:
+                matched_weight[concept_id] = matched_weight.get(concept_id, 0.0) + weight
+        if not matched_weight:
             return []
+
+        query_weight = sum(self._keyword_idf.get(tok, 1.0) for tok in token_set) or 1.0
 
         CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
         learner_ord = CEFR_ORD.get(str(learner_level or "B1").upper(), 3)
 
         scored: List[Tuple[float, str, Dict[str, str]]] = []
-        for concept_id, overlap in overlap_counts.items():
+        for concept_id, weight in matched_weight.items():
             meta = concepts.get(concept_id)
             if not meta:
                 continue
             level = str(meta.get("level") or "B1").upper()
             diff = abs(CEFR_ORD.get(level, 3) - learner_ord)
             level_boost = 1.0 if diff == 0 else (0.8 if diff == 1 else 0.6)
-            score = (overlap / max(len(token_set), 1)) * level_boost
+            score = (weight / query_weight) * level_boost
+            # A concept whose whole title appears in the query is what the
+            # learner named. Without this a topic loses to its own children,
+            # which share its words and add their own: no topic node ever
+            # reached the top 8, not even when the query was its exact title.
+            title_tokens = self._title_tokens.get(concept_id)
+            if title_tokens and title_tokens <= token_set:
+                score *= _TITLE_MATCH_BOOST
             scored.append((score, concept_id, meta))
 
         scored.sort(key=lambda item: item[0], reverse=True)
