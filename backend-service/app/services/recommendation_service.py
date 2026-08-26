@@ -6,6 +6,7 @@ generation happens here in SQL; ranking happens in ai-service (RecGraph).
 
 from __future__ import annotations
 
+import logging
 import math
 import uuid
 from collections import defaultdict
@@ -15,6 +16,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.redis import get_redis
 from app.crud.vocabulary import _vocab_concept_id
 from app.models.course import Course, Lesson
 from app.models.learner_state import LearnerConceptState, LearnerStateProfile
@@ -24,6 +26,8 @@ from app.models.progress import LessonCompletion, UserCourseProgress
 from app.models.vocabulary import UserVocabulary, VocabularyItem
 from app.routes.youtube import CURATED_CHANNELS
 from app.services.learner_state import get_due_concepts_for_user
+
+logger = logging.getLogger(__name__)
 
 # Weight of each interaction when building topic affinity. A completion says
 # far more about interest than an impression does.
@@ -43,6 +47,23 @@ AFFINITY_WINDOW_DAYS = 60
 AFFINITY_EVENT_LIMIT = 2000
 
 CANDIDATES_PER_TYPE = 40
+
+# Bumped by app.routes.product_events on every content_interaction batch —
+# a separate counter from LearnerStateProfile.state_epoch so browsing doesn't
+# also invalidate TraceCAG's chat cache, which keys off the same epoch.
+INTERACTION_EPOCH_PREFIX = "rec:interaction_epoch:"
+
+
+async def _get_interaction_epoch(user_id: uuid.UUID) -> int:
+    try:
+        client = await get_redis()
+        if client is None:
+            return 0
+        value = await client.get(f"{INTERACTION_EPOCH_PREFIX}{user_id}")
+        return int(value) if value else 0
+    except Exception as exc:  # cache must never fail the request
+        logger.warning("interaction epoch read failed: %s", exc)
+        return 0
 
 
 async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
@@ -81,6 +102,7 @@ async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         "due_concepts": [row.concept_id for row in due],
         "topic_affinity": await build_topic_affinity(db, user_id),
         "state_epoch": int(epoch or 0),
+        "interaction_epoch": await _get_interaction_epoch(user_id),
         "required_types": ["course", "lesson", "vocab", "video"],
     }
 

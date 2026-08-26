@@ -8,10 +8,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 ALLOWED_PROPERTY_KEYS = {
     "achievement_count",
+    "action",
     "completed",
     "destination",
     "due_count",
+    "dwell_ms",
     "error_type",
+    "item_id",
+    "item_type",
     "level",
     "message_id",
     "mistakes_saved",
@@ -20,6 +24,7 @@ ALLOWED_PROPERTY_KEYS = {
     "streak",
     "surface",
     "task_type",
+    "topic",
     "total_xp",
     "words_saved",
 }

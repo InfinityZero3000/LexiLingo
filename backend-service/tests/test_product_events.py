@@ -61,6 +61,89 @@ async def test_ingests_authenticated_event_batch(
 
 
 @pytest.mark.asyncio
+async def test_content_interaction_is_ingested_and_bumps_interaction_epoch(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+    test_user: User,
+    auth_headers: dict[str, str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from app.core.redis import RedisClient
+    from app.services.recommendation_service import _get_interaction_epoch
+
+    class FakeRedis:
+        def __init__(self):
+            self.store: dict[str, int] = {}
+
+        async def get(self, key):
+            return self.store.get(key)
+
+        async def incr(self, key):
+            self.store[key] = self.store.get(key, 0) + 1
+            return self.store[key]
+
+    fake = FakeRedis()
+
+    async def fake_get_instance():
+        return fake
+
+    monkeypatch.setattr(RedisClient, "get_instance", fake_get_instance)
+
+    before = await _get_interaction_epoch(test_user.id)
+
+    response = await async_client.post(
+        BASE,
+        headers=auth_headers,
+        json={
+            "events": [
+                {
+                    "event_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                    "event_name": "content_interaction",
+                    "source": "app",
+                    "properties": {
+                        "item_type": "course",
+                        "item_id": "c1",
+                        "action": "open",
+                        "topic": "travel",
+                        "dwell_ms": 1200,
+                    },
+                    "client_timestamp": "2026-08-11T01:02:03Z",
+                }
+            ]
+        },
+    )
+
+    assert response.status_code == 202
+    result = await db_session.execute(select(ProductEvent))
+    events = result.scalars().all()
+    assert events[0].properties["topic"] == "travel"
+    assert await _get_interaction_epoch(test_user.id) == before + 1
+
+    # Resending the exact same event_id is a pure conflict — nothing new was
+    # written, so the epoch must not bump again.
+    replay = await async_client.post(BASE, headers=auth_headers, json={
+        "events": [
+            {
+                "event_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                "event_name": "content_interaction",
+                "source": "app",
+                "properties": {
+                    "item_type": "course",
+                    "item_id": "c1",
+                    "action": "open",
+                    "topic": "travel",
+                    "dwell_ms": 1200,
+                },
+                "client_timestamp": "2026-08-11T01:02:03Z",
+            }
+        ]
+    })
+
+    assert replay.status_code == 202
+    assert await _get_interaction_epoch(test_user.id) == before + 1
+
+
+@pytest.mark.asyncio
 async def test_ingestion_requires_authentication(async_client: AsyncClient) -> None:
     response = await async_client.post(
         BASE,

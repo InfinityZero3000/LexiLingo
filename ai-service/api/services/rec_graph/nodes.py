@@ -35,14 +35,15 @@ class RecState(TypedDict, total=False):
 
 
 def build_cache_key(state: RecState) -> str:
-    """Keyed on state_epoch so a learner-state change invalidates on its own —
-    the same epoch LearnerStateProfile already maintains for this purpose."""
+    """Keyed on state_epoch (graded activity) and interaction_epoch (browsing)
+    so either kind of learner change invalidates on its own."""
     profile = state.get("profile") or {}
     parts = [
         state.get("user_id", ""),
         state.get("surface", "home"),
         str(state.get("k", 10)),
         str(profile.get("state_epoch", 0)),
+        str(profile.get("interaction_epoch", 0)),
         str(profile.get("catalog_version", 0)),
     ]
     return "rec:v1:" + hashlib.sha256(":".join(parts).encode()).hexdigest()[:32]
