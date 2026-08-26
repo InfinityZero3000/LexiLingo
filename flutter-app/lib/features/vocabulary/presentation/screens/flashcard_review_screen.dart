@@ -181,56 +181,58 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             return Center(child: Text('flashcard.sessionComplete'.tr()));
           }
 
-          return Column(
-            children: [
-              // Session Header (Progress, Stats)
-              SessionHeader(session: session),
+          return SafeArea(
+            child: Column(
+              children: [
+                // Session Header (Progress, Stats)
+                SessionHeader(session: session),
 
-              // Flashcard — fixed position, never shifts when buttons appear
-              Expanded(
-                child: Align(
-                  alignment: const Alignment(0, -0.15),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: FlashcardWidget(
-                        card: currentCard,
-                        isFlipped: provider.isCardFlipped,
-                        onTap: () {
-                          provider.flipCard();
-                        },
+                // Flashcard — fixed position, never shifts when buttons appear
+                Expanded(
+                  child: Align(
+                    alignment: const Alignment(0, -0.15),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: FlashcardWidget(
+                          card: currentCard,
+                          isFlipped: provider.isCardFlipped,
+                          onTap: () {
+                            provider.flipCard();
+                          },
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
-              // Review Quality Buttons — always occupies space to keep card fixed
-              Visibility(
-                visible: provider.isCardFlipped,
-                maintainSize: true,
-                maintainAnimation: true,
-                maintainState: true,
-                child: AnimatedSlide(
-                  offset: provider.isCardFlipped
-                      ? Offset.zero
-                      : const Offset(0, 0.3),
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                  child: AnimatedOpacity(
-                    opacity: provider.isCardFlipped ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 250),
-                    child: ReviewQualityButtons(
-                      onQualitySelected: _handleReview,
-                      isLoading: provider.isLoading,
+                // Review Quality Buttons — always occupies space to keep card fixed
+                Visibility(
+                  visible: provider.isCardFlipped,
+                  maintainSize: true,
+                  maintainAnimation: true,
+                  maintainState: true,
+                  child: AnimatedSlide(
+                    offset: provider.isCardFlipped
+                        ? Offset.zero
+                        : const Offset(0, 0.3),
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOutCubic,
+                    child: AnimatedOpacity(
+                      opacity: provider.isCardFlipped ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 250),
+                      child: ReviewQualityButtons(
+                        onQualitySelected: _handleReview,
+                        isLoading: provider.isLoading,
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           );
         },
       ),

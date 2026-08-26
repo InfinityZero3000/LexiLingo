@@ -4,6 +4,18 @@ import 'background_sync_queue_service.dart';
 import 'encrypted_local_cache_service.dart';
 import 'local_cache_service.dart';
 
+/// App-wide SQLite helper (`lexilingo.db`: users, settings, courses,
+/// vocabulary, progress…). Unrelated to `core/database/database_helper.dart`,
+/// which is chat's own `DatabaseHelper` (`lexilingo_chat.db`) — two
+/// same-named classes on purpose, see that file's doc comment.
+///
+/// `chat_history` (below) is dead: its only writer/reader was deleted
+/// (`features/chat/data/datasources/chat_local_data_source.dart`, an
+/// orphaned predecessor to `chat_local_datasource.dart`, which persists chat
+/// through the *other* DatabaseHelper instead). Left in place rather than
+/// dropped from the live migration chain — removing a CREATE/ALTER from an
+/// `onUpgrade` path needs a real device to verify against every prior
+/// installed version, not a blind edit.
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;

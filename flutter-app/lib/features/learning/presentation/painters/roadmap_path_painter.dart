@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 
 /// Paints the winding bezier path that connects lesson nodes in the roadmap.
@@ -36,7 +37,13 @@ class RoadmapPathPainter extends CustomPainter {
     }
   }
 
-  void _drawSegment(Canvas canvas, Offset from, Offset to, Color color, bool solid) {
+  void _drawSegment(
+    Canvas canvas,
+    Offset from,
+    Offset to,
+    Color color,
+    bool solid,
+  ) {
     // Connection starts at bottom of first node, ends at top of second node
     final start = Offset(from.dx, from.dy + nodeRadius * 0.85);
     final end = Offset(to.dx, to.dy - nodeRadius * 0.85);
@@ -82,7 +89,7 @@ class RoadmapPathPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(RoadmapPathPainter oldDelegate) =>
-      nodeCenters != oldDelegate.nodeCenters ||
-      segmentColors != oldDelegate.segmentColors ||
-      segmentSolid != oldDelegate.segmentSolid;
+      !listEquals(nodeCenters, oldDelegate.nodeCenters) ||
+      !listEquals(segmentColors, oldDelegate.segmentColors) ||
+      !listEquals(segmentSolid, oldDelegate.segmentSolid);
 }

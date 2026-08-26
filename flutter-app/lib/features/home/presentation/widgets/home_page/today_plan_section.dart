@@ -40,9 +40,12 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final accent = AppColorRoles.primary(isDark);
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return Consumer3<
       HomeProvider,
@@ -65,25 +68,20 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
               onTap: () {
-                trackProductEvent(
-                  'card_tapped',
-                  source: 'today_plan',
-                );
+                trackProductEvent('card_tapped', source: 'today_plan');
                 Navigator.of(context).pushNamed('/today-plan');
               },
               child: Container(
                 padding: const EdgeInsets.all(16),
-                decoration: Theme.of(context)
-                    .extension<AppTactileTheme>()!
-                    .decoration(
-                      variant: TactileSurfaceVariant.interactive,
-                      fill: isDark
-                          ? colorScheme.surfaceContainerHighest
-                          : Colors.white,
-                      accent: accent,
-                      borderRadius: BorderRadius.circular(20),
-                      diagnosticId: 'home-today-plan',
-                    ),
+                decoration: tactile.decoration(
+                  variant: TactileSurfaceVariant.interactive,
+                  fill: isDark
+                      ? colorScheme.surfaceContainerHighest
+                      : Colors.white,
+                  accent: accent,
+                  borderRadius: BorderRadius.circular(20),
+                  diagnosticId: 'home-today-plan',
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

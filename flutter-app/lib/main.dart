@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:lexilingo_app/core/widgets/error_widget.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -468,14 +469,17 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 (context) => const PodcastExploreScreen(),
               ),
               '/podcast/detail': LearnerRoute.builder((context) {
-                final podcast =
-                    ModalRoute.of(context)!.settings.arguments as Podcast;
-                return PodcastDetailScreen(podcast: podcast);
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args is! Podcast) return const _MissingRouteArgs();
+                return PodcastDetailScreen(podcast: args);
               }),
               '/podcast/player': LearnerRoute.builder((context) {
-                final args =
-                    ModalRoute.of(context)!.settings.arguments
-                        as Map<String, dynamic>;
+                final args = ModalRoute.of(context)?.settings.arguments;
+                if (args is! Map<String, dynamic> ||
+                    args['episode'] is! PodcastEpisode ||
+                    args['artworkUrl'] is! String) {
+                  return const _MissingRouteArgs();
+                }
                 return PodcastPlayerScreen(
                   episode: args['episode'] as PodcastEpisode,
                   artworkUrl: args['artworkUrl'] as String,
@@ -501,6 +505,24 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             },
           );
         },
+      ),
+    );
+  }
+}
+
+/// Shown when a named route is pushed without the arguments its screen
+/// requires, instead of crashing on an unchecked `as` cast.
+class _MissingRouteArgs extends StatelessWidget {
+  const _MissingRouteArgs();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: ErrorDisplayWidget(
+          errorType: ErrorType.notFound,
+          onRetry: () => Navigator.of(context).pop(),
+        ),
       ),
     );
   }

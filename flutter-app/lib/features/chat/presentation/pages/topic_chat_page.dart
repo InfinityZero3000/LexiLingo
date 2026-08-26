@@ -62,11 +62,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
     // The save sheet only reports "dismissed", not "saved vs cancelled" —
     // listen to the service's own success stream instead so the session
     // summary only counts words that were actually saved.
-    _savedWordsSubscription = sl<QuickSaveVocabularyService>().savedWords.listen((
-      _,
-    ) {
-      if (mounted) context.read<StoryProvider>().recordWordSaved();
-    });
+    _savedWordsSubscription = sl<QuickSaveVocabularyService>().savedWords
+        .listen((_) {
+          if (mounted) context.read<StoryProvider>().recordWordSaved();
+        });
     // ProficiencyProvider isn't auto-loaded on app start (unlike
     // StreakProvider), so the AppBar level badge needs its own fetch.
     final proficiency = context.read<ProficiencyProvider>();
@@ -297,8 +296,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                     _StoryContextHeader(session: provider.currentSession!),
 
                   // 1.5 SRS due-review reminder
-                  if (!_srsReminderDismissed &&
-                      (_dueVocabularyCount ?? 0) > 0)
+                  if (!_srsReminderDismissed && (_dueVocabularyCount ?? 0) > 0)
                     _buildSrsReminderBanner(isDark),
 
                   // 2. Messages list
@@ -323,6 +321,23 @@ class _TopicChatPageState extends State<TopicChatPage> {
                               final message = provider.messages[index];
                               final isLast =
                                   index == provider.messages.length - 1;
+                              // Streaming placeholder: AI message added with
+                              // empty content while the response is still
+                              // coming in — show the typing dots right here
+                              // instead of an empty bubble.
+                              if (isLast &&
+                                  !message.isUser &&
+                                  provider.isSendingMessage &&
+                                  message.displayContent.trim().isEmpty) {
+                                return LexiTypingIndicator(
+                                  isThinking: true,
+                                  name:
+                                      provider.currentSession?.rolePersona.name
+                                          .split(' ')
+                                          .first ??
+                                      'AI',
+                                );
+                              }
                               final suggestion =
                                   isLast &&
                                       !message.isUser &&
@@ -347,18 +362,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                       !provider.isSendingMessage)
                     _buildSuggestedPrompts(isDark),
 
-                  // 4. Typing indicator
-                  if (provider.isSendingMessage)
-                    LexiTypingIndicator(
-                      isThinking: true,
-                      name:
-                          provider.currentSession?.rolePersona.name
-                              .split(' ')
-                              .first ??
-                          'AI',
-                    ),
-
-                  // 5. Task banner (collapses to zero height when hidden)
+                  // 4. Task banner (collapses to zero height when hidden)
                   if (!_taskBannerDismissedByUser)
                     AnimatedSize(
                       duration: const Duration(milliseconds: 260),
@@ -422,7 +426,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
                   ),
                 ),
                 Text(
-                  'topicChat.levelMinutesLeft'.tr(namedArgs: {'level': widget.story.difficultyLevel.shortName, 'minutes': '${widget.story.estimatedMinutes}'}),
+                  'topicChat.levelMinutesLeft'.tr(
+                    namedArgs: {
+                      'level': widget.story.difficultyLevel.shortName,
+                      'minutes': '${widget.story.estimatedMinutes}',
+                    },
+                  ),
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColorRoles.textSecondary(isDark),
@@ -915,10 +924,7 @@ class _ChatStatusBadge extends StatelessWidget {
             Tooltip(
               message: 'topicChat.levelBadgeTooltip'.tr(),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -1170,10 +1176,7 @@ class _TopicMessageBubble extends StatelessWidget {
                   trackProductEvent(
                     'vocabulary_save_tapped',
                     source: 'topic_chat',
-                    properties: {
-                      'message_id': message.id,
-                      'surface': 'hint',
-                    },
+                    properties: {'message_id': message.id, 'surface': 'hint'},
                   );
                   showQuickSaveWordSheet(
                     context,

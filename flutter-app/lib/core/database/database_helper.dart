@@ -1,8 +1,12 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
-/// Database helper for managing SQLite database
-/// Handles table creation, migrations, and database initialization
+/// SQLite helper for the chat feature only (`lexilingo_chat.db`: chat_sessions,
+/// chat_messages, ai_analysis_results). Unrelated to the app-wide
+/// `core/services/database_helper.dart` `DatabaseHelper` (`lexilingo.db`) —
+/// two same-named classes, two different files, on purpose: chat's schema
+/// evolved independently and nothing here reads the other's tables or vice
+/// versa. Import the one your feature actually needs.
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._internal();
   static Database? _database;

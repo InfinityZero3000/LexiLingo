@@ -112,15 +112,18 @@ class _EnrolledCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final progress = course.userProgress ?? 0;
     final progressColor = progress >= 80
         ? AppColors.greenSuccessBright
         : progress >= 50
         ? AppColors.orange
         : AppColorRoles.primary(isDark);
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = theme.colorScheme;
     final surfaceBg = colorScheme.surfaceContainerHighest;
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return GestureDetector(
       onTap: () {
@@ -139,7 +142,7 @@ class _EnrolledCourseCard extends StatelessWidget {
       child: Container(
         width: 240,
         margin: const EdgeInsets.only(right: 16),
-        decoration: Theme.of(context).extension<AppTactileTheme>()!.decoration(
+        decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
           fill: surfaceBg,
           accent: progressColor,

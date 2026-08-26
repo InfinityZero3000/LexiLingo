@@ -909,6 +909,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _showReferralSheet(BuildContext context) async {
     final settingsProvider = context.read<SettingsProvider>();
     String? code;
+    var referralFuture = settingsProvider.getReferralCode();
 
     showModalBottomSheet(
       context: context,
@@ -954,10 +955,29 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 24),
               FutureBuilder<Map<String, dynamic>>(
-                future: settingsProvider.getReferralCode(),
+                future: referralFuture,
                 builder: (ctx, snap) {
-                  if (!snap.hasData) {
+                  if (snap.connectionState == ConnectionState.waiting) {
                     return const CircularProgressIndicator();
+                  }
+                  if (snap.hasError || !snap.hasData) {
+                    return Column(
+                      children: [
+                        Text(
+                          'notifications.somethingWentWrong'.tr(),
+                          style: const TextStyle(color: Colors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: Text('home.reload'.tr()),
+                          onPressed: () => setSheetState(() {
+                            referralFuture = settingsProvider.getReferralCode();
+                          }),
+                        ),
+                      ],
+                    );
                   }
                   code = snap.data!['referral_code'] as String? ?? '';
                   final total =

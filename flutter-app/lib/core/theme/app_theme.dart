@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'app_tactile_theme.dart';
 
 /// Applies CJK font fallbacks to every style in a [TextTheme].
 /// Lexend has no Chinese/Japanese/Korean glyphs; these fallbacks prevent □ boxes.
@@ -307,6 +308,11 @@ class AppTheme {
   }
 
   static ThemeData get lightTheme {
+    final base = _lightThemeBase;
+    return base.copyWith(extensions: [AppTactileTheme.from(base)]);
+  }
+
+  static ThemeData get _lightThemeBase {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.backgroundLight,
@@ -353,6 +359,11 @@ class AppTheme {
   }
 
   static ThemeData get darkTheme {
+    final base = _darkThemeBase;
+    return base.copyWith(extensions: [AppTactileTheme.from(base)]);
+  }
+
+  static ThemeData get _darkThemeBase {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.backgroundDark,

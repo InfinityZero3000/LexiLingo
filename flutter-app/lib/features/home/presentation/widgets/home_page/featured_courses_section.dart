@@ -144,8 +144,11 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final levelColor = getLevelColor(course.level, isDark: isDark);
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return GestureDetector(
       onTap: () {
@@ -169,7 +172,7 @@ class _CourseCard extends StatelessWidget {
       child: Container(
         width: 240,
         margin: const EdgeInsets.only(right: 16),
-        decoration: Theme.of(context).extension<AppTactileTheme>()!.decoration(
+        decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
           fill: isDark ? AppColors.surfaceDarkMuted : Colors.white,
           accent: levelColor,

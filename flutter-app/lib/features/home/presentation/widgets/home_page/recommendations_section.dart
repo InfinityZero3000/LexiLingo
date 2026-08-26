@@ -119,8 +119,10 @@ class _RecommendationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return GestureDetector(
       onTap: () => _open(context),
@@ -128,7 +130,7 @@ class _RecommendationCard extends StatelessWidget {
         width: 220,
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(14),
-        decoration: theme.extension<AppTactileTheme>()!.decoration(
+        decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
           fill: theme.colorScheme.surface,
         ),
@@ -207,10 +209,8 @@ class _RecommendationCard extends StatelessWidget {
         if (courseId == null) return;
         LearnerRoute.push(
           context,
-          (_) => LearningSessionScreen(
-            lessonId: item.itemId,
-            courseId: courseId,
-          ),
+          (_) =>
+              LearningSessionScreen(lessonId: item.itemId, courseId: courseId),
         );
       case 'vocab':
         Navigator.pushNamed(context, '/vocabulary/review');
