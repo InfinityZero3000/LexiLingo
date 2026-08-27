@@ -85,3 +85,6 @@ model-development/
 
 # Licensed-content ETL snapshots — re-downloadable, 320MB and growing
 content_etl_data/
+
+# derived embedding cache for scripts/eval_kg_retrieval.py
+data/eval/concept_emb.npy

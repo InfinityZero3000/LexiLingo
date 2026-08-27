@@ -1,0 +1,542 @@
+[
+  {
+    "topic_id": "topic:story_ai_product_demo",
+    "title": "AI Product Demo",
+    "level": "C1",
+    "queries": [
+      "I want to practice demonstrating a new software product to potential clients.",
+      "Can we roleplay a scenario where I present an AI tool to investors?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_app_bug_report",
+    "title": "Reporting an App Bug",
+    "level": "B1",
+    "queries": [
+      "I want to practice telling support about a bug in my favorite app.",
+      "Can we roleplay me explaining why the app keeps crashing on my phone?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_asking_for_directions",
+    "title": "Asking for Directions Downtown",
+    "level": "A1",
+    "queries": [
+      "Can you tell me how to get to the city center?",
+      "I need help finding my way around downtown."
+    ]
+  },
+  {
+    "topic_id": "topic:story_bakery_order",
+    "title": "Ordering at a Bakery",
+    "level": "A1",
+    "queries": [
+      "I want to practice buying bread at a bakery.",
+      "Help me order a cake in a shop."
+    ]
+  },
+  {
+    "topic_id": "topic:story_bank_account_opening",
+    "title": "Opening a Bank Account",
+    "level": "B1",
+    "queries": [
+      "Can we roleplay opening a new bank account?",
+      "I want to practice talking to a bank teller."
+    ]
+  },
+  {
+    "topic_id": "topic:story_budgeting_conversation",
+    "title": "Monthly Budget Planning",
+    "level": "B2",
+    "queries": [
+      "Can we roleplay how to plan my monthly spending?",
+      "I want to practice talking about my monthly budget."
+    ]
+  },
+  {
+    "topic_id": "topic:story_buying_laptop",
+    "title": "Buying a Laptop",
+    "level": "B1",
+    "queries": [
+      "I need to practice buying a new laptop with you.",
+      "Can we roleplay a shop conversation about getting a computer?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_car_rental_pickup",
+    "title": "Car Rental Pickup",
+    "level": "B1",
+    "queries": [
+      "I need to practice getting my rental car at the airport.",
+      "Can we roleplay picking up a car from a rental agency?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_city_tour_booking",
+    "title": "Booking a City Tour",
+    "level": "A2",
+    "queries": [
+      "I want to practice booking a tour of the city.",
+      "Can we roleplay a conversation about hiring a city guide?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_classroom_debate",
+    "title": "Classroom Debate Practice",
+    "level": "B2",
+    "queries": [
+      "I need to practice debating with you in a classroom.",
+      "Can we simulate a debate session for my English class?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_cleaning_service_booking",
+    "title": "Cleaning Service Booking",
+    "level": "A2",
+    "queries": [
+      "I want to practice booking a house cleaning service with you.",
+      "Can we roleplay a phone call to schedule a cleaner?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_client_presentation",
+    "title": "Client Presentation Practice",
+    "level": "B2",
+    "queries": [
+      "Can we roleplay a situation where I present a project to a client?",
+      "I want to practice giving a formal presentation to a potential customer."
+    ]
+  },
+  {
+    "topic_id": "topic:story_comparing_prices",
+    "title": "Comparing Prices at a Store",
+    "level": "A2",
+    "queries": [
+      "Can we practice talking about prices in a shop?",
+      "I want to roleplay comparing costs at the store."
+    ]
+  },
+  {
+    "topic_id": "topic:story_cooking_class",
+    "title": "Cooking Class Instructions",
+    "level": "A2",
+    "queries": [
+      "I want to practice a roleplay where I follow cooking instructions.",
+      "Can you give me directions for making a cake and I will follow them?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_customer_support_call",
+    "title": "Customer Support Call",
+    "level": "B1",
+    "queries": [
+      "I would like to practice a phone call with customer service.",
+      "Can we roleplay a situation where I call tech support?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_customs_immigration",
+    "title": "Customs and Immigration Questions",
+    "level": "B1",
+    "queries": [
+      "I need to practice answering questions at the airport border control.",
+      "Can we roleplay a conversation with an immigration officer please?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_cybersecurity_awareness",
+    "title": "Cybersecurity Awareness Chat",
+    "level": "B2",
+    "queries": [
+      "Can we roleplay a chat about online safety tips?",
+      "I want to practice discussing cybersecurity topics with you."
+    ]
+  },
+  {
+    "topic_id": "topic:story_data_privacy_settings",
+    "title": "Changing Data Privacy Settings",
+    "level": "B2",
+    "queries": [
+      "Can we practice changing my data privacy settings?",
+      "I want to role-play adjusting privacy controls."
+    ]
+  },
+  {
+    "topic_id": "topic:story_dental_appointment",
+    "title": "Dental Appointment Checkup",
+    "level": "B1",
+    "queries": [
+      "I want to practice talking to a dentist about my teeth.",
+      "Can we roleplay a visit to the dentist for a checkup?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_dietary_restrictions",
+    "title": "Explaining Dietary Restrictions",
+    "level": "B1",
+    "queries": [
+      "I need to explain my food allergies to a waiter.",
+      "Can we practice telling a chef about my diet?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_dinner_party_planning",
+    "title": "Planning a Dinner Party",
+    "level": "B1",
+    "queries": [
+      "I want to practice planning a dinner party with you.",
+      "Let's roleplay throwing a dinner party for my friends."
+    ]
+  },
+  {
+    "topic_id": "topic:story_emergency_room_triage",
+    "title": "Emergency Room Triage",
+    "level": "B2",
+    "queries": [
+      "I want to roleplay checking patients in a hospital emergency room.",
+      "Let's practice a conversation about sorting sick people at the ER."
+    ]
+  },
+  {
+    "topic_id": "topic:story_exam_preparation",
+    "title": "Exam Preparation Strategy",
+    "level": "B2",
+    "queries": [
+      "I want to roleplay a discussion about my plan for the final exam.",
+      "Let's practice talking about how I prepare for upcoming tests and exams."
+    ]
+  },
+  {
+    "topic_id": "topic:story_fitness_class_signup",
+    "title": "Fitness Class Sign-Up",
+    "level": "A2",
+    "queries": [
+      "I would like to practice signing up for a gym class.",
+      "Can we roleplay joining a fitness session at the gym?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_food_delivery_problem",
+    "title": "Food Delivery Problem",
+    "level": "B1",
+    "queries": [
+      "I lost my food delivery. Help me talk to support.",
+      "Can we roleplay complaining about a late pizza delivery?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_grocery_market",
+    "title": "Grocery Market Shopping",
+    "level": "A1",
+    "queries": [
+      "I would like to practice buying food at the supermarket.",
+      "Can we roleplay a trip to the grocery store together?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_health_insurance_call",
+    "title": "Health Insurance Phone Call",
+    "level": "B2",
+    "queries": [
+      "Can we do a roleplay where I call an insurance company?",
+      "I want to practice making a phone call about health coverage."
+    ]
+  },
+  {
+    "topic_id": "topic:story_home_internet_installation",
+    "title": "Home Internet Installation",
+    "level": "B1",
+    "queries": [
+      "I need to talk about setting up home internet.",
+      "Let's practice a conversation with an internet installation technician."
+    ]
+  },
+  {
+    "topic_id": "topic:story_hotel_check_in",
+    "title": "Hotel Check-In Conversation",
+    "level": "A2",
+    "queries": [
+      "I need to practice checking into a hotel with you.",
+      "Let's do a roleplay where I arrive at a hotel."
+    ]
+  },
+  {
+    "topic_id": "topic:story_library_assistance",
+    "title": "Asking for Library Help",
+    "level": "A2",
+    "queries": [
+      "Can you help me practice talking to someone at the library for help?",
+      "I need to practice asking a librarian for assistance with finding books."
+    ]
+  },
+  {
+    "topic_id": "topic:story_loan_application",
+    "title": "Applying for a Small Loan",
+    "level": "C1",
+    "queries": [
+      "Can we do a role-play about applying for a small loan?",
+      "I want to practice how to ask for a small loan."
+    ]
+  },
+  {
+    "topic_id": "topic:story_lost_luggage_claim",
+    "title": "Lost Luggage Claim",
+    "level": "B1",
+    "queries": [
+      "Can we practice talking about lost baggage at the airport?",
+      "I want to roleplay a situation where my suitcase is missing."
+    ]
+  },
+  {
+    "topic_id": "topic:story_mental_health_checkin",
+    "title": "Mental Health Check-In",
+    "level": "B2",
+    "queries": [
+      "I'd like to practice a conversation where someone asks a friend how they are feeling.",
+      "Can we roleplay a scenario about having a serious talk regarding emotional well-being?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_moving_day_coordination",
+    "title": "Moving Day Coordination",
+    "level": "A2",
+    "queries": [
+      "I want to practice talking about moving to a new house.",
+      "Can we roleplay the day I move into my apartment?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_museum_visit",
+    "title": "Museum Visit Conversation",
+    "level": "A2",
+    "queries": [
+      "Let's pretend we are visiting a museum together right now.",
+      "I want to practice talking about art with you please."
+    ]
+  },
+  {
+    "topic_id": "topic:story_neighborhood_complaint",
+    "title": "Neighborhood Complaint",
+    "level": "B2",
+    "queries": [
+      "I want to practice complaining about my noisy neighbors.",
+      "Can we roleplay a situation where I have a problem with my neighbor?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_networking_event",
+    "title": "Professional Networking Event",
+    "level": "B1",
+    "queries": [
+      "I want to practice talking to people at a work party.",
+      "Can we roleplay meeting new colleagues at a professional gathering?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_news_interview",
+    "title": "Giving a Short News Interview",
+    "level": "C1",
+    "queries": [
+      "Can we roleplay a brief news interview scenario with me?",
+      "I'd like to practice answering questions during a short TV interview."
+    ]
+  },
+  {
+    "topic_id": "topic:story_online_order_support",
+    "title": "Online Order Support Chat",
+    "level": "A2",
+    "queries": [
+      "I want to roleplay a chat with customer service about my online order.",
+      "Let's practice talking to support because my delivery is late."
+    ]
+  },
+  {
+    "topic_id": "topic:story_parent_teacher_meeting",
+    "title": "Parent-Teacher Meeting",
+    "level": "B1",
+    "queries": [
+      "I want to roleplay a meeting with my child's teacher at school.",
+      "Can we simulate a parent-teacher conference to practice my English skills?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_password_reset_support",
+    "title": "Password Reset Support",
+    "level": "A2",
+    "queries": [
+      "I want to practice talking about resetting my password.",
+      "Can we simulate a chat about changing my login password?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_performance_review",
+    "title": "Performance Review Discussion",
+    "level": "B2",
+    "queries": [
+      "I need to prepare for my upcoming performance review meeting.",
+      "Can we practice talking about my work achievements and goals?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_pharmacy_visit",
+    "title": "At the Pharmacy",
+    "level": "A2",
+    "queries": [
+      "I want to practice buying medicine at a pharmacy.",
+      "Can we roleplay a visit to the chemist?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_phone_plan_subscription",
+    "title": "Choosing a Phone Plan",
+    "level": "B1",
+    "queries": [
+      "Let's roleplay a conversation about picking a new mobile phone plan.",
+      "I need to practice talking about selecting a cell phone contract."
+    ]
+  },
+  {
+    "topic_id": "topic:story_plumber_appointment",
+    "title": "Booking a Plumber",
+    "level": "B1",
+    "queries": [
+      "I need to fix a leak, can we practice calling a plumber?",
+      "Help me roleplay booking a repairman for my broken sink today."
+    ]
+  },
+  {
+    "topic_id": "topic:story_project_update_meeting",
+    "title": "Project Update Meeting",
+    "level": "B2",
+    "queries": [
+      "I want to practice talking about my project progress with you.",
+      "Can we role-play a meeting where I give a status update?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_remote_work_sync",
+    "title": "Remote Work Sync",
+    "level": "B1",
+    "queries": [
+      "I need to practice talking about my work from home routine.",
+      "Help me roleplay a meeting where we discuss remote work tasks."
+    ]
+  },
+  {
+    "topic_id": "topic:story_returning_electronics",
+    "title": "Returning Electronics",
+    "level": "B1",
+    "queries": [
+      "I want to return a broken laptop. Can you help me practice?",
+      "Let's roleplay a scene where I go back to the store with faulty headphones."
+    ]
+  },
+  {
+    "topic_id": "topic:story_salary_negotiation",
+    "title": "Salary Negotiation Conversation",
+    "level": "C1",
+    "queries": [
+      "I need to practice negotiating my salary with a potential employer.",
+      "Can we roleplay a tricky salary negotiation scene at work?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_scholarship_interview",
+    "title": "Scholarship Interview",
+    "level": "C1",
+    "queries": [
+      "I need to practice for an upcoming scholarship interview. Can we simulate the experience?",
+      "Help me prepare for a scholarship interview by acting as the panelist."
+    ]
+  },
+  {
+    "topic_id": "topic:story_software_sprint_planning",
+    "title": "Software Sprint Planning",
+    "level": "C1",
+    "queries": [
+      "Can we roleplay a sprint planning meeting?",
+      "Help me practice discussing agile sprint goals."
+    ]
+  },
+  {
+    "topic_id": "topic:story_sports_club_signup",
+    "title": "Joining a Sports Club",
+    "level": "A2",
+    "queries": [
+      "I would like to practice a conversation about joining a gym.",
+      "Can we roleplay a scenario where I sign up for a sports club?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_study_group_planning",
+    "title": "Study Group Planning",
+    "level": "A2",
+    "queries": [
+      "I want to practice talking about organizing a study session with friends.",
+      "Can we roleplay planning a group study for my upcoming exam?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_tax_appointment",
+    "title": "Tax Appointment Questions",
+    "level": "B2",
+    "queries": [
+      "Can we practice asking questions for a tax appointment?",
+      "I want to roleplay a conversation with my accountant."
+    ]
+  },
+  {
+    "topic_id": "topic:story_team_standup",
+    "title": "Daily Team Standup",
+    "level": "B1",
+    "queries": [
+      "Let's roleplay my daily team meeting.",
+      "I want to practice my morning standup."
+    ]
+  },
+  {
+    "topic_id": "topic:story_train_ticket_purchase",
+    "title": "Buying a Train Ticket",
+    "level": "A2",
+    "queries": [
+      "I would like to practice how to buy a train ticket with you.",
+      "Can we roleplay a situation where I need to purchase a train ticket?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_travel_emergency_help",
+    "title": "Travel Emergency Help Desk",
+    "level": "B2",
+    "queries": [
+      "I need to practice handling a travel emergency at a help desk.",
+      "Can we role-play calling customer support for a flight cancellation?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_university_orientation",
+    "title": "University Orientation",
+    "level": "B1",
+    "queries": [
+      "Can we roleplay my first day at a new university?",
+      "I need practice talking to a student advisor please."
+    ]
+  },
+  {
+    "topic_id": "topic:story_utility_bill_dispute",
+    "title": "Utility Bill Dispute",
+    "level": "B2",
+    "queries": [
+      "I need to practice arguing about a high electricity bill.",
+      "Can we roleplay a phone call to complain about my water charges?"
+    ]
+  },
+  {
+    "topic_id": "topic:story_volunteering_event",
+    "title": "Volunteering Event Sign-Up",
+    "level": "B1",
+    "queries": [
+      "Can we practice signing up for a charity event together?",
+      "I want to roleplay registering for a volunteer opportunity please."
+    ]
+  }
+]
