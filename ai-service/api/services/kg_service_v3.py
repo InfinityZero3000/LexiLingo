@@ -52,6 +52,24 @@ _RUNTIME_KG_SOURCE_FILES = (
 # A full-title match in the query outranks partial keyword overlap.
 _TITLE_MATCH_BOOST = 1.8
 
+# Relations that form hubs or teach nothing. Every concept points at its CEFR
+# level, its domain, and — from the ConceptNet import — a field-of-study word,
+# so cefrlevel:b1 holds 651 edges, concept:vocab.word.us 449 and domain:work
+# 184. Best-first expansion scored only CEFR distance, so it walked into one of
+# those and surfaced 651 unrelated concepts as "related". Deprioritised rather
+# than forbidden: a concept with nothing else attached still expands through
+# them.
+_LOW_VALUE_RELATIONS = frozenset({
+    "has_cefr_level",
+    "has_context",
+    "belongs_to_domain",
+    "includes_topic",
+    "related_to",
+    "etymologically_related_to",
+    "etymologically_derived_from",
+})
+_LOW_VALUE_RELATION_WEIGHT = 0.15
+
 
 def _env_enabled(name: str) -> bool:
     return os.getenv(name, "").strip().lower() in {"1", "true", "yes", "on"}
@@ -628,7 +646,7 @@ class KnowledgeGraphServiceV3:
 
         # ── Phase 2: Redis subgraph result cache ──────────────────────────
         _cache_key = (
-            "kg:subgraph:"
+            "kg:subgraph:v2:"
             + hashlib.sha1(
                 f"{sorted(seed_nodes)}:{learner_level}:{max_hops}:{max_nodes}".encode()
             ).hexdigest()
@@ -708,6 +726,8 @@ class KnowledgeGraphServiceV3:
                     if neighbor_id not in visited:
                         visited.add(neighbor_id)
                         w = ped_weight(neighbor_level)
+                        if edge_rel in _LOW_VALUE_RELATIONS:
+                            w *= _LOW_VALUE_RELATION_WEIGHT
                         node_titles[neighbor_id] = (row[3] or "", row[4] or "")
                         heapq.heappush(frontier, (-w, depth + 1, neighbor_id, cid, edge_rel))
         except Exception as e:

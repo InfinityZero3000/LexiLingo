@@ -22,8 +22,15 @@ def kg(monkeypatch, tmp_path):
         "CREATE (:Concept {id: 'concept:b', title: 'Past Simple', keywords: 'yesterday ago', level: 'B1'})"
     )
     conn.execute(
+        "CREATE (:Concept {id: 'cefrlevel:b1', title: 'B1', keywords: 'b1 cefr', level: 'B1'})"
+    )
+    conn.execute(
         "MATCH (a:Concept), (b:Concept) WHERE a.id = 'concept:a' AND b.id = 'concept:b' "
         "CREATE (a)-[:Edge {relation: 'contrasts_with'}]->(b)"
+    )
+    conn.execute(
+        "MATCH (a:Concept), (b:Concept) WHERE a.id = 'concept:a' AND b.id = 'cefrlevel:b1' "
+        "CREATE (a)-[:Edge {relation: 'has_cefr_level'}]->(b)"
     )
 
     service = kg_module.KnowledgeGraphServiceV3.__new__(kg_module.KnowledgeGraphServiceV3)
@@ -39,6 +46,23 @@ def kg(monkeypatch, tmp_path):
     return service
 
 
+def _no_redis(monkeypatch):
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "api.core.redis_client",
+        type("_M", (), {"RedisClient": type("_R", (), {"get_instance": staticmethod(lambda: (_ for _ in ()).throw(RuntimeError("no redis")))})}),
+    )
+
+
+def test_hub_relations_rank_below_teaching_relations(kg, monkeypatch):
+    _no_redis(monkeypatch)
+    hits = asyncio.run(
+        kg.expand_best_first(seed_nodes=["concept:a"], learner_level="B1", max_hops=1, max_nodes=5)
+    )
+    ids = [n.id for n in hits.expanded_nodes]
+    assert ids.index("concept:b") < ids.index("cefrlevel:b1")
+
+
 def test_expanded_nodes_carry_title_and_keywords(kg, monkeypatch):
     # Redis is optional here; force the miss path so the test never needs a server.
     monkeypatch.setitem(
@@ -51,8 +75,9 @@ def test_expanded_nodes_carry_title_and_keywords(kg, monkeypatch):
         kg.expand_best_first(seed_nodes=["concept:a"], learner_level="B1", max_hops=1, max_nodes=5)
     )
 
-    assert [n.id for n in hits.expanded_nodes] == ["concept:b"]
-    props = hits.expanded_nodes[0].properties
+    by_id = {n.id: n for n in hits.expanded_nodes}
+    assert "concept:b" in by_id
+    props = by_id["concept:b"].properties
     assert props["title"] == "Past Simple"
     assert props["keywords"] == "yesterday ago"
     assert props["relation"] == "contrasts_with"
