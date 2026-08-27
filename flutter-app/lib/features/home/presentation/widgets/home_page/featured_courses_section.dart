@@ -415,6 +415,8 @@ class _FeaturedCourseThumbnail extends StatelessWidget {
 
     return CachedNetworkImage(
       imageUrl: candidates[index],
+      cacheKey: 'featured-course-image-${course.id}|${candidates[index]}',
+      memCacheWidth: 480,
       fit: BoxFit.cover,
       placeholder: (_, __) =>
           Container(color: levelColor.withValues(alpha: 0.1)),

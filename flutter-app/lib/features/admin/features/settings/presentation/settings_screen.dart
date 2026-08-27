@@ -86,10 +86,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: CircleAvatar(
                                 radius: 38,
                                 backgroundColor: AppColors.primaryContainer,
-                                backgroundImage: user?.avatarUrl != null
-                                    ? NetworkImage(user!.avatarUrl!)
+                                backgroundImage:
+                                    user?.avatarUrl?.trim().isNotEmpty == true
+                                    ? NetworkImage(user!.avatarUrl!.trim())
                                     : null,
-                                child: user?.avatarUrl == null
+                                onBackgroundImageError:
+                                    user?.avatarUrl?.trim().isNotEmpty == true
+                                    ? (_, __) {}
+                                    : null,
+                                child: user?.avatarUrl?.trim().isNotEmpty != true
                                     ? Text(
                                         user?.displayName.isNotEmpty == true
                                             ? user!.displayName[0].toUpperCase()

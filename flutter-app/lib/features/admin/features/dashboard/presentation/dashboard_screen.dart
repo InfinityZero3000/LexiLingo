@@ -152,12 +152,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               actions: [
-                if (user?.avatarUrl != null)
+                if (user?.avatarUrl?.trim().isNotEmpty == true)
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: CircleAvatar(
                       radius: 16,
-                      backgroundImage: NetworkImage(user!.avatarUrl!),
+                      backgroundImage: NetworkImage(user!.avatarUrl!.trim()),
+                      onBackgroundImageError: (_, __) {},
                     ),
                   )
                 else

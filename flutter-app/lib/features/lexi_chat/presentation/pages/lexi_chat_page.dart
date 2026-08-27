@@ -14,7 +14,6 @@ import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_data.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
@@ -69,8 +68,6 @@ class _LexiChatPageState extends State<LexiChatPage>
       _isDuplexVoiceActive;
 
   int _lastMessageCount = 0;
-  int? _dueVocabularyCount;
-  bool _srsReminderDismissed = false;
   List<String> get _quickReplies => [
     'lexiChat.quickReply1'.tr(),
     'lexiChat.quickReply2'.tr(),
@@ -94,17 +91,6 @@ class _LexiChatPageState extends State<LexiChatPage>
     });
 
     _scrollController.addListener(_handleTopReached);
-    fetchDueVocabularyCount().then((count) {
-      if (!mounted) return;
-      setState(() => _dueVocabularyCount = count);
-      if ((count ?? 0) > 0) {
-        trackProductEvent(
-          'srs_reminder_shown',
-          source: 'lexi_chat',
-          properties: {'due_count': count},
-        );
-      }
-    });
   }
 
   @override
@@ -312,6 +298,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     try {
       final path = await _recorder.stop();
+      if (!mounted) return;
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
@@ -439,73 +426,9 @@ class _LexiChatPageState extends State<LexiChatPage>
           child: Column(
             children: [
               _buildHeader(isDark),
-              if (!_srsReminderDismissed && (_dueVocabularyCount ?? 0) > 0)
-                _buildSrsReminderBanner(isDark),
               Expanded(child: _buildMessageList(isDark)),
               _buildInputBar(isDark),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSrsReminderBanner(bool isDark) {
-    final accent = AppColorRoles.primary(isDark);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () {
-            trackProductEvent(
-              'srs_reminder_tapped',
-              source: 'lexi_chat',
-              properties: {'due_count': _dueVocabularyCount},
-            );
-            Navigator.of(context).pushNamed('/vocabulary/review');
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: accent.withValues(alpha: 0.25)),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.style_rounded, size: 18, color: accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'topicChat.srsReminderMessage'.tr(
-                      namedArgs: {'count': '$_dueVocabularyCount'},
-                    ),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: accent,
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    trackProductEvent(
-                      'srs_reminder_dismissed',
-                      source: 'lexi_chat',
-                      properties: {'due_count': _dueVocabularyCount},
-                    );
-                    setState(() => _srsReminderDismissed = true);
-                  },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(Icons.close_rounded, size: 16, color: accent),
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ),

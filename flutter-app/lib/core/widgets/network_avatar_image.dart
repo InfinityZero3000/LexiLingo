@@ -49,6 +49,7 @@ class NetworkAvatarImage extends StatelessWidget {
             child: LottieLoadingWidget.tiny(),
           ),
         ),
+        errorBuilder: (_, __, ___) => fallbackWidget,
       );
     }
 

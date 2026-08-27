@@ -60,7 +60,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
           ? 'Kích hoạt lại tài khoản của $name?'
           : 'Tạm dừng tài khoản của $name? Người dùng sẽ không thể đăng nhập cho đến khi được kích hoạt lại.',
     );
-    if (!ok) return;
+    if (!ok || !mounted) return;
     setState(() => _acting = true);
     try { await _repo.setUserActive(widget.userId, next); await _load(); _notice(next ? 'Đã kích hoạt tài khoản' : 'Đã tạm dừng tài khoản', false); }
     catch (_) { _notice('Không thể cập nhật trạng thái', true); }
@@ -70,7 +70,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
   Future<void> _setRole(int level) async {
     final name = _user?['display_name'] ?? _user?['email'] ?? 'người dùng này';
     final ok = await _confirm('Đổi vai trò?', 'Đổi vai trò của $name thành "${_roleLabel(level)}"?');
-    if (!ok) return;
+    if (!ok || !mounted) return;
     setState(() => _acting = true);
     try { await _repo.updateRole(widget.userId, level); await _load(); _notice('Đã cập nhật vai trò', false); }
     catch (_) { _notice('Chỉ Super Admin mới có thể đổi vai trò', true); }

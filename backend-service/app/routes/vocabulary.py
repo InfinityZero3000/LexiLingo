@@ -712,16 +712,27 @@ async def submit_review(
     except Exception as e:
         logging.getLogger(__name__).error(f"Error updating streak on vocabulary review: {e}", exc_info=True)
 
-    # Invalidate user's progress caches
-    _uid = str(user_id)
-    await delete_cached(build_cache_key("progress_me", user_id=_uid))
-    await delete_cached(build_cache_key("progress_xp", user_id=_uid))
-    await delete_cached(build_cache_key("progress_streak", user_id=_uid))
-    await delete_cached(build_cache_key("vocab_stats", user_id=_uid))
+    # Invalidate user's progress caches (best-effort — Redis being down must
+    # not roll back the review that was already recorded above)
+    try:
+        _uid = str(user_id)
+        await delete_cached(build_cache_key("progress_me", user_id=_uid))
+        await delete_cached(build_cache_key("progress_xp", user_id=_uid))
+        await delete_cached(build_cache_key("progress_streak", user_id=_uid))
+        await delete_cached(build_cache_key("vocab_stats", user_id=_uid))
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Cache invalidation error on vocabulary review: {e}", exc_info=True)
 
-    # --- Check vocabulary achievements ---
-    from app.services import check_achievements_for_user
-    await check_achievements_for_user(db, current_user.id, "vocab_review")
+    # --- Check vocabulary achievements (best-effort, same reason as above).
+    # Runs in a savepoint so a bug in achievement evaluation can't poison the
+    # outer transaction and roll back the XP/streak/daily-activity updates
+    # above it. ---
+    try:
+        from app.services import check_achievements_for_user
+        async with db.begin_nested():
+            await check_achievements_for_user(db, current_user.id, "vocab_review")
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Achievement check error on vocabulary review: {e}", exc_info=True)
 
     # CEFR proficiency tracking. submit_review above only fed the BKT/FSRS
     # schedule, so a learner who reviewed hundreds of cards still showed a

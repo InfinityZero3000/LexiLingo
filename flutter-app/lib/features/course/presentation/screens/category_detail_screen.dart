@@ -392,7 +392,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 }
 
 String _courseImageUrl(CourseEntity course) {
-  if (course.thumbnailUrl != null) return course.thumbnailUrl!;
+  final thumbnailUrl = course.thumbnailUrl?.trim();
+  if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) return thumbnailUrl;
   final tags = course.tags.map((t) => t.toLowerCase()).toSet();
   final level = course.level.toLowerCase();
   final pick = course.id.hashCode.abs();
@@ -532,6 +533,7 @@ class _CourseCard extends StatelessWidget {
                   child: Image.network(
                     _courseImageUrl(course),
                     fit: BoxFit.cover,
+                    cacheWidth: 400,
                     errorBuilder: (_, __, ___) =>
                         _buildPlaceholderImage(context),
                   ),
@@ -665,6 +667,7 @@ class _CourseGridCard extends StatelessWidget {
                   child: Image.network(
                     _courseImageUrl(course),
                     fit: BoxFit.cover,
+                    cacheWidth: 400,
                     errorBuilder: (_, __, ___) =>
                         _buildPlaceholderImage(context),
                   ),

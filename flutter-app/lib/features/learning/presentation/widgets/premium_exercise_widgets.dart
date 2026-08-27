@@ -1890,6 +1890,16 @@ class ImageBasedChoiceWidget extends StatelessWidget {
     final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
     final imageUrl = exercise.metadata?['image_url'] as String?;
+    final hasImageUrl = imageUrl != null && imageUrl.trim().isNotEmpty;
+
+    Widget imagePlaceholder() => Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Icon(Icons.image_outlined, size: 64, color: colors.border),
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -1910,20 +1920,14 @@ class ImageBasedChoiceWidget extends StatelessWidget {
           // Image area
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: imageUrl != null
-                ? Image.network(imageUrl, height: 200, fit: BoxFit.cover)
-                : Container(
-                    height: 180,
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      Icons.image_outlined,
-                      size: 64,
-                      color: colors.border,
-                    ),
-                  ),
+            child: hasImageUrl
+                ? Image.network(
+                    imageUrl,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => imagePlaceholder(),
+                  )
+                : imagePlaceholder(),
           ),
           const SizedBox(height: 20),
           // 2x2 grid options
@@ -2349,6 +2353,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
     final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options ?? [];
     final imageUrl = widget.exercise.metadata?['image_url'] as String?;
+    final hasImageUrl = imageUrl != null && imageUrl.trim().isNotEmpty;
     final word = _word;
 
     // If options is just ["Got it!"], show simple flashcard
@@ -2398,7 +2403,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                       textAlign: TextAlign.center,
                     ),
                   ],
-                  if (imageUrl != null) ...[
+                  if (hasImageUrl) ...[
                     const SizedBox(height: 16),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -2406,6 +2411,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                         imageUrl,
                         height: 140,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
                   ],
@@ -2479,7 +2485,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                if (imageUrl != null) ...[
+                if (hasImageUrl) ...[
                   const SizedBox(height: 12),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -2488,6 +2494,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                       height: 120,
                       fit: BoxFit.cover,
                       width: double.infinity,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
                 ],

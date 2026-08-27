@@ -117,9 +117,11 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         Navigator.of(context).pop(true);
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'profile.profileUpdatedFailed'.tr();
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'profile.profileUpdatedFailed'.tr();
+        });
+      }
     } finally {
       if (mounted) {
         setState(() {

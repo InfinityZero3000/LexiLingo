@@ -635,10 +635,10 @@ class _CurrentLessonLabel extends StatelessWidget {
               ],
             ),
             child: Text(
-              lesson.title.length > 28
-                  ? '${lesson.title.substring(0, 26)}…'
-                  : lesson.title,
+              lesson.title,
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.surface,
                 fontSize: 12,

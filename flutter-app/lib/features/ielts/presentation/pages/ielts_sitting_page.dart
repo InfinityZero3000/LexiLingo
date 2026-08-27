@@ -677,6 +677,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     final provider = context.read<IeltsProvider>();
     if (_recording) {
       final path = await _recorder.stop();
+      if (!mounted) return;
       setState(() {
         _recording = false;
         _transcribing = path != null;
@@ -688,6 +689,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           audioData: bytes,
           filename: 'speaking.m4a',
         );
+        if (!mounted) return;
         final transcript = (response['text'] ?? response['transcript'])?.toString();
         if (transcript != null && transcript.trim().isNotEmpty) {
           // The transcript is what gets graded, so it stays editable — Whisper
@@ -698,7 +700,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           setState(() => _error = 'Nothing was transcribed. Try again.');
         }
       } catch (e) {
-        setState(() => _error = 'Could not transcribe the recording.');
+        if (mounted) setState(() => _error = 'Could not transcribe the recording.');
       } finally {
         if (mounted) setState(() => _transcribing = false);
       }
@@ -706,12 +708,13 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     }
 
     if (!await _recorder.hasPermission()) {
-      setState(() => _error = 'Microphone permission is required.');
+      if (mounted) setState(() => _error = 'Microphone permission is required.');
       return;
     }
     final dir = await getTemporaryDirectory();
     final path = '${dir.path}/ielts_$_key.m4a';
     await _recorder.start(const RecordConfig(), path: path);
+    if (!mounted) return;
     setState(() {
       _recording = true;
       _error = null;

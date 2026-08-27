@@ -1083,10 +1083,16 @@ class _HorizontalCourseCard extends StatelessWidget {
   }
 
   Widget _buildCourseThumbnail(BuildContext context) {
-    final primaryUrl = course.thumbnailUrl;
+    final primaryUrl = course.thumbnailUrl?.trim();
     final fallbackUrl = _getCourseImageUrl();
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
+    // Same course can render in two category sections at once (see
+    // heroTag comment above) — two Hero widgets loading the identical
+    // network image concurrently have been observed to render black
+    // instead of the photo, so scope the cache entry per Hero instance
+    // rather than sharing one keyed only by URL.
+    const targetWidth = 400;
 
     Widget gradientLoading() => Container(
       decoration: BoxDecoration(
@@ -1123,13 +1129,17 @@ class _HorizontalCourseCard extends StatelessWidget {
     );
 
     // DB thumbnail exists: try it first, fall back to computed URL on error
-    if (primaryUrl != null) {
+    if (primaryUrl != null && primaryUrl.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: primaryUrl,
+        cacheKey: '$heroTag|$primaryUrl',
+        memCacheWidth: targetWidth,
         fit: BoxFit.cover,
         placeholder: (_, __) => gradientLoading(),
         errorWidget: (_, __, ___) => CachedNetworkImage(
           imageUrl: fallbackUrl,
+          cacheKey: '$heroTag|$fallbackUrl',
+          memCacheWidth: targetWidth,
           fit: BoxFit.cover,
           placeholder: (_, __) => gradientLoading(),
           errorWidget: (ctx, __, ___) => finalFallback(ctx),
@@ -1139,6 +1149,8 @@ class _HorizontalCourseCard extends StatelessWidget {
 
     return CachedNetworkImage(
       imageUrl: fallbackUrl,
+      cacheKey: '$heroTag|$fallbackUrl',
+      memCacheWidth: targetWidth,
       fit: BoxFit.cover,
       placeholder: (_, __) => gradientLoading(),
       errorWidget: (ctx, __, ___) => finalFallback(ctx),

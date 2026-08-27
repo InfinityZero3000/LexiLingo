@@ -124,6 +124,7 @@ class _EnrolledCourseCard extends StatelessWidget {
     final surfaceBg = colorScheme.surfaceContainerHighest;
     final tactile =
         theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
+    final hasThumbnail = course.thumbnailUrl?.trim().isNotEmpty ?? false;
 
     return GestureDetector(
       onTap: () {
@@ -160,17 +161,18 @@ class _EnrolledCourseCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: colorScheme.surface,
-                  image: course.thumbnailUrl != null
+                  image: hasThumbnail
                       ? DecorationImage(
-                          image: NetworkImage(course.thumbnailUrl!),
+                          image: NetworkImage(course.thumbnailUrl!.trim()),
                           fit: BoxFit.cover,
+                          onError: (_, __) {},
                         )
                       : null,
                   border: Border.all(color: colorScheme.outlineVariant),
                 ),
-                child: course.thumbnailUrl == null
-                    ? Icon(Icons.school, size: 32, color: progressColor)
-                    : null,
+                child: hasThumbnail
+                    ? null
+                    : Icon(Icons.school, size: 32, color: progressColor),
               ),
               const SizedBox(width: 16),
               // Info section

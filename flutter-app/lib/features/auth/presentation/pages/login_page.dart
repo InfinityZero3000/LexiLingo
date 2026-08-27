@@ -385,6 +385,7 @@ class _LoginPageState extends State<LoginPage> {
 
                                   if (authProvider.isAuthenticated) {
                                     await _persistCredentialPreference();
+                                    if (!mounted) return;
                                     setState(() => _failedAttempts = 0);
                                   } else if (_isEmailNotVerifiedMessage(
                                     authProvider.errorMessage,
