@@ -258,20 +258,23 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     if not benchmark_candidates:
         _errors = state.get("diagnosis_errors", [])
         _confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
-        _is_multihop_task = benchmark_task == "multihop_qa"
-
-        _do_vector_search = True
         _max_hits = 5
         if retrieval_policy == "rapid":
-            if len(_errors) == 0 and _confidence >= 0.85 and not _is_multihop_task:
-                _do_vector_search = False
-            elif len(_errors) <= 2 and _confidence >= 0.72:
+            # Rapid used to skip the vector stage entirely for a turn with no
+            # grammar errors and a confident diagnosis. Error count measures
+            # the learner's accuracy, not whether the tutor has anything to
+            # ground on — and skipping it left query_concepts as the only
+            # source of KG evidence. Measured over 120 learner-phrased queries
+            # against the production graph, lexical puts on-topic material in
+            # the top 5 for 55.8% of them and the dense stage for 90.8%, so a
+            # correctly-worded question was exactly the case being starved.
+            # Narrow the budget instead of cutting the stage.
+            if len(_errors) <= 2 and _confidence >= 0.72:
                 _max_hits = 3
 
-        if _do_vector_search:
-            stage2_task = asyncio.create_task(
-                _run_vector_stage(_max_hits, _errors, _confidence)
-            )
+        stage2_task = asyncio.create_task(
+            _run_vector_stage(_max_hits, _errors, _confidence)
+        )
 
     # ── Stage 1: Graph-local evidence (cheap) ────────────────────────
     # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
@@ -414,8 +417,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             budget_exhausted = True
             logger.warning("[retrieve_node] Vector stage exceeded budget, skipping its results")
     elif not benchmark_candidates:
-        # do_vector_search was False (rapid-policy short-circuit) — not a
-        # budget miss, nothing to flag.
+        # No stage2 task: benchmark candidates are pre-ranked, nothing to flag.
         pass
 
     # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
