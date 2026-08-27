@@ -176,12 +176,13 @@ def merge_knowledge_payload(connection: Any, payload: Mapping[str, Any]) -> Merg
     return MergeStats(concepts=concepts_inserted, edges=edges_inserted)
 
 
-# 12_lexical_relations.json is a ConceptNet dump. Its `related_to` edges are
-# co-occurrence, not meaning ("Booking -> Performance", "Culture -> road"), and
-# they wire every CEFR level node to arbitrary words, which made cefrlevel:b1 a
-# 652-edge hub that best-first expansion walks into. The file's typed relations
-# (is_a, antonym, at_location, …) are kept. Other files use `related_to`
-# meaningfully, so this is scoped by filename rather than applied globally.
+# 12_lexical_relations.json is a bulk lexical-association import. Its
+# `related_to` edges are co-occurrence, not meaning ("Booking -> Performance",
+# "Culture -> road"), and they wire every CEFR level node to arbitrary words,
+# which made cefrlevel:b1 a 652-edge hub that best-first expansion walks into.
+# The file's typed relations (is_a, antonym, at_location, …) are kept. Other
+# files use `related_to` meaningfully, so this is scoped by filename rather
+# than applied globally.
 _NOISY_EDGE_SOURCES = {"12_lexical_relations.json"}
 
 

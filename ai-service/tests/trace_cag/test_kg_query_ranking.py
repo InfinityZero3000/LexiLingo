@@ -95,3 +95,15 @@ def test_long_common_word_concept_does_not_win_unrelated_query(kg):
 def test_scores_stay_within_their_documented_range(kg):
     for node in kg.query_concepts("hotel check in travel", learner_level="A2", top_k=8):
         assert 0.0 <= node["score"] <= kg_module._TITLE_MATCH_BOOST
+
+
+def test_seed_concepts_are_capped_and_ranked(kg):
+    # "the" alone sits in 41 posting lists here; on the production graph
+    # "about" sat in 553 and a normal turn produced 1,000 seeds, one KuzuDB
+    # neighbour query each.
+    assert len(kg._keyword_index["the"]) > kg_module._SEED_LIMIT
+    seeds = kg.get_seed_concepts_fast(
+        "the hotel check in", learner_level="A2", limit=kg_module._SEED_LIMIT
+    )
+    assert len(seeds) <= kg_module._SEED_LIMIT
+    assert seeds[0] == "topic:hotel_check_in"

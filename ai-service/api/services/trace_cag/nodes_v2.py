@@ -232,12 +232,15 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
         # ── Phase 1: Seed concept matching (fast O(words) lookup) ──────
         user_text = state.get("user_input", "").lower()
 
-        # Phase 1a: Exact keyword lookup via inverted index (O(words_in_text))
-        seed_exact = kg.get_seed_concepts_fast(user_text)
+        # Phase 1a: IDF-ranked keyword lookup via inverted index
+        seed_exact = kg.get_seed_concepts_fast(user_text, learner_level=learner_level)
         # Phase 1a-semantic: TF-IDF cosine similarity (catches indirect references)
         seed_semantic = kg.semantic_seed_concepts(user_text, top_k=5)
-        # Merge: exact first (higher confidence), then semantic fills gaps
-        seed_concepts = list(dict.fromkeys(seed_exact + seed_semantic))
+        # Semantic first. retrieve_node seeds its vector stage from
+        # kg_seed_concepts[:5], and keyword overlap put five arbitrary
+        # vocab.word.* concepts there while the TF-IDF seeds — which named the
+        # right topic node outright — sat behind hundreds of them.
+        seed_concepts = list(dict.fromkeys(seed_semantic + seed_exact))
 
         # Grammar error patterns (Phase 1b)
         grammar_patterns = {

@@ -51,9 +51,12 @@ _RUNTIME_KG_SOURCE_FILES = (
 
 # A full-title match in the query outranks partial keyword overlap.
 _TITLE_MATCH_BOOST = 1.8
+# Seeds are popped one-per-KuzuDB-query before expansion begins, so this cap is
+# the graph-expansion latency knob, not a recall knob.
+_SEED_LIMIT = 12
 
 # Relations that form hubs or teach nothing. Every concept points at its CEFR
-# level, its domain, and — from the ConceptNet import — a field-of-study word,
+# level, its domain, and — from 12_lexical_relations.json — a field-of-study word,
 # so cefrlevel:b1 holds 651 edges, concept:vocab.word.us 449 and domain:work
 # 184. Best-first expansion scored only CEFR distance, so it walked into one of
 # those and surfaced 651 unrelated concepts as "related". Deprioritised rather
@@ -118,6 +121,7 @@ class KnowledgeGraphServiceV3:
         self._tfidf_concept_ids: List[str] = []
         self._tfidf_idf: Dict[str, float] = {}
         self._tfidf_vectors: List[Dict[str, float]] = []
+        self._tfidf_postings: Dict[str, List[Tuple[int, float]]] = {}
         # ──────────────────────────────────────────────────────────────────
 
         # Create parent directory if doesn't exist
@@ -457,25 +461,31 @@ class KnowledgeGraphServiceV3:
         self._tfidf_concept_ids = []
         self._tfidf_idf = {}
         self._tfidf_vectors = []
+        self._tfidf_postings = {}
 
-    def get_seed_concepts_fast(self, text: str) -> List[str]:
-        """O(words_in_text) concept seeding via inverted keyword index.
+    def get_seed_concepts_fast(
+        self,
+        text: str,
+        learner_level: str = "B1",
+        limit: int = _SEED_LIMIT,
+    ) -> List[str]:
+        """Top-``limit`` seed concepts for a learner turn, ranked by IDF overlap.
 
-        Replaces the O(n_concepts × n_keywords) loop in kg_expand_node Phase 1.
+        This used to return *every* concept sharing any token with the sentence
+        — unranked and uncapped. A normal 12-word turn produced 1,000 seeds
+        because "about" alone sits in 553 posting lists, and expand_best_first
+        pops every seed before it expands anything, so each one cost a KuzuDB
+        neighbour query: 1,010 queries and 12.2s per turn measured on the
+        production box, against 10 queries and 0.20s for a capped list.
+        query_concepts already ranks the same posting lists by IDF and CEFR
+        distance, so this is now that ranking, truncated.
         """
-        if not self._keyword_index:
-            return []
-        tokens = re.findall(r"[a-z0-9_']+", text.lower())
-        seen: set = set()
-        seeds: List[str] = []
-        for tok in tokens:
-            if len(tok) < 3:
-                continue
-            for cid in self._keyword_index.get(tok, []):
-                if cid not in seen:
-                    seen.add(cid)
-                    seeds.append(cid)
-        return seeds
+        return [
+            concept["id"]
+            for concept in self.query_concepts(
+                text, learner_level=learner_level, top_k=max(1, limit)
+            )
+        ]
 
     # ── Phase 3: Pure-Python TF-IDF Semantic Matching ─────────────────────────
 
@@ -538,9 +548,15 @@ class KnowledgeGraphServiceV3:
                 vec = {t: v / sqrt_norm for t, v in vec.items()}
             vectors.append(vec)
 
+        postings: Dict[str, List[Tuple[int, float]]] = {}
+        for idx, vec in enumerate(vectors):
+            for tok, weight in vec.items():
+                postings.setdefault(tok, []).append((idx, weight))
+
         self._tfidf_concept_ids = concept_ids
         self._tfidf_idf = idf
         self._tfidf_vectors = vectors
+        self._tfidf_postings = postings
         logger.info("[KG] TF-IDF index built: %d concepts, %d unique terms", N, len(idf))
 
     def semantic_seed_concepts(self, text: str, top_k: int = 5) -> List[str]:
@@ -574,13 +590,20 @@ class KnowledgeGraphServiceV3:
         sqrt_norm = norm ** 0.5
         query_vec = {t: v / sqrt_norm for t, v in query_vec.items()}
 
-        # Cosine similarity (dot product of pre-normalised vectors)
-        scores: List[Tuple[float, str]] = []
-        for idx, doc_vec in enumerate(self._tfidf_vectors):
-            sim = sum(query_vec.get(t, 0.0) * w for t, w in doc_vec.items())
-            if sim > 0.05:
-                scores.append((sim, self._tfidf_concept_ids[idx]))
+        # Cosine similarity over the posting lists of the query's own terms.
+        # Both vectors are pre-normalised, so a term the query does not contain
+        # contributes zero — walking all 15,129 document vectors to add those
+        # zeros cost 0.48s per turn.
+        sims: Dict[int, float] = {}
+        for tok, qw in query_vec.items():
+            for idx, w in self._tfidf_postings.get(tok, ()):  # type: ignore[union-attr]
+                sims[idx] = sims.get(idx, 0.0) + qw * w
 
+        scores = [
+            (sim, self._tfidf_concept_ids[idx])
+            for idx, sim in sims.items()
+            if sim > 0.05
+        ]
         scores.sort(key=lambda x: x[0], reverse=True)
         return [cid for _, cid in scores[:top_k]]
 

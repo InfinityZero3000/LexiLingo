@@ -164,10 +164,14 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             from api.models.v3_schemas import V3PipelineContext
 
             retrieval_v3 = await _get_retrieval_v3()
+            # V3PipelineContext.user_id is a required str and analyze()'s is
+            # Optional, so a turn without one raised a pydantic error here —
+            # caught by the except below and reported as "RetrievalServiceV3
+            # unavailable", which silently dropped the whole dense stage.
             ctx = V3PipelineContext(
                 user_input=user_input,
                 session_id=state.get("session_id", ""),
-                user_id=state.get("user_id"),
+                user_id=state.get("user_id") or "",
             )
             seed_nodes = [
                 c if isinstance(c, str) else c.get("id", "")
@@ -258,19 +262,15 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     if not benchmark_candidates:
         _errors = state.get("diagnosis_errors", [])
         _confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
+        # Rapid used to skip the vector stage entirely for a turn with no
+        # grammar errors and a confident diagnosis, then to keep only 3 of its
+        # hits. Both throttles read grammar accuracy as a proxy for "does the
+        # tutor need material", which starves exactly the well-written turns.
+        # The stage supplies 87 of the 106 on-topic prompts across the 120
+        # learner phrasings in data/eval/topic_paraphrases.json; truncating it
+        # to 3 cost a further point of coverage for no compute, since all ten
+        # hits are already ranked by the time this runs.
         _max_hits = 5
-        if retrieval_policy == "rapid":
-            # Rapid used to skip the vector stage entirely for a turn with no
-            # grammar errors and a confident diagnosis. Error count measures
-            # the learner's accuracy, not whether the tutor has anything to
-            # ground on — and skipping it left query_concepts as the only
-            # source of KG evidence. Measured over 120 learner-phrased queries
-            # against the production graph, lexical puts on-topic material in
-            # the top 5 for 55.8% of them and the dense stage for 90.8%, so a
-            # correctly-worded question was exactly the case being starved.
-            # Narrow the budget instead of cutting the stage.
-            if len(_errors) <= 2 and _confidence >= 0.72:
-                _max_hits = 3
 
         stage2_task = asyncio.create_task(
             _run_vector_stage(_max_hits, _errors, _confidence)
