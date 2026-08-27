@@ -152,33 +152,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               actions: [
-                if (user?.avatarUrl?.trim().isNotEmpty == true)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundImage: NetworkImage(user!.avatarUrl!.trim()),
-                      onBackgroundImageError: (_, __) {},
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: CircleAvatar(
-                      radius: 16,
-                      backgroundColor: AppColors.primaryContainer,
-                      child: Text(
-                        (user?.displayName.isNotEmpty == true)
-                            ? user!.displayName[0].toUpperCase()
-                            : 'A',
-                        style: GoogleFonts.spaceGrotesk(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.primaryContainer,
+                    // Initial is always the child so it still shows if the
+                    // network avatar below fails to load — onBackgroundImageError
+                    // only silences the exception, it can't swap in a fallback.
+                    backgroundImage:
+                        user?.avatarUrl?.trim().isNotEmpty == true
+                        ? NetworkImage(user!.avatarUrl!.trim())
+                        : null,
+                    onBackgroundImageError:
+                        user?.avatarUrl?.trim().isNotEmpty == true
+                        ? (_, __) {}
+                        : null,
+                    child: Text(
+                      (user?.displayName.isNotEmpty == true)
+                          ? user!.displayName[0].toUpperCase()
+                          : 'A',
+                      style: GoogleFonts.spaceGrotesk(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
                       ),
                     ),
                   ),
+                ),
               ],
             ),
             SliverPadding(

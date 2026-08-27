@@ -22,6 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     final isSuperAdmin = auth.isSuperAdmin;
+    final hasAvatar = user?.avatarUrl?.trim().isNotEmpty == true;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -86,25 +87,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               child: CircleAvatar(
                                 radius: 38,
                                 backgroundColor: AppColors.primaryContainer,
-                                backgroundImage:
-                                    user?.avatarUrl?.trim().isNotEmpty == true
+                                backgroundImage: hasAvatar
                                     ? NetworkImage(user!.avatarUrl!.trim())
                                     : null,
-                                onBackgroundImageError:
-                                    user?.avatarUrl?.trim().isNotEmpty == true
+                                // Initial is always the child so it still shows
+                                // if the network avatar fails to load —
+                                // onBackgroundImageError only silences the
+                                // exception, it can't swap in a fallback.
+                                onBackgroundImageError: hasAvatar
                                     ? (_, __) {}
                                     : null,
-                                child: user?.avatarUrl?.trim().isNotEmpty != true
-                                    ? Text(
-                                        user?.displayName.isNotEmpty == true
-                                            ? user!.displayName[0].toUpperCase()
-                                            : 'A',
-                                        style: GoogleFonts.spaceGrotesk(
-                                            fontSize: 28,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.primary),
-                                      )
-                                    : null,
+                                child: Text(
+                                  user?.displayName.isNotEmpty == true
+                                      ? user!.displayName[0].toUpperCase()
+                                      : 'A',
+                                  style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.primary),
+                                ),
                               ),
                             ),
                             Positioned(

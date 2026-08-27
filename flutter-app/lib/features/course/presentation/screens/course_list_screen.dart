@@ -1128,33 +1128,28 @@ class _HorizontalCourseCard extends StatelessWidget {
       ),
     );
 
-    // DB thumbnail exists: try it first, fall back to computed URL on error
-    if (primaryUrl != null && primaryUrl.isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: primaryUrl,
-        cacheKey: '$heroTag|$primaryUrl',
-        memCacheWidth: targetWidth,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => gradientLoading(),
-        errorWidget: (_, __, ___) => CachedNetworkImage(
-          imageUrl: fallbackUrl,
-          cacheKey: '$heroTag|$fallbackUrl',
+    Widget networkThumbnail(String url, {required Widget Function() onError}) =>
+        CachedNetworkImage(
+          imageUrl: url,
+          cacheKey: '$heroTag|$url',
           memCacheWidth: targetWidth,
           fit: BoxFit.cover,
           placeholder: (_, __) => gradientLoading(),
-          errorWidget: (ctx, __, ___) => finalFallback(ctx),
+          errorWidget: (_, __, ___) => onError(),
+        );
+
+    // DB thumbnail exists: try it first, fall back to computed URL on error
+    if (primaryUrl != null && primaryUrl.isNotEmpty) {
+      return networkThumbnail(
+        primaryUrl,
+        onError: () => networkThumbnail(
+          fallbackUrl,
+          onError: () => finalFallback(context),
         ),
       );
     }
 
-    return CachedNetworkImage(
-      imageUrl: fallbackUrl,
-      cacheKey: '$heroTag|$fallbackUrl',
-      memCacheWidth: targetWidth,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => gradientLoading(),
-      errorWidget: (ctx, __, ___) => finalFallback(ctx),
-    );
+    return networkThumbnail(fallbackUrl, onError: () => finalFallback(context));
   }
 
   static const Set<String> _hiddenCourseTagKeys = {

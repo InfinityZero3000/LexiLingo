@@ -16,7 +16,7 @@ import logging
 import math
 import uuid
 from datetime import date, datetime, timezone
-from typing import List, Optional
+from typing import Awaitable, Callable, List, Optional
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -576,6 +576,30 @@ async def get_due_vocabulary(
     )
 
 
+async def _best_effort_step(
+    db: AsyncSession,
+    label: str,
+    action: Callable[[], Awaitable[None]],
+    *,
+    isolate: bool = False,
+    level: int = logging.ERROR,
+) -> None:
+    """Run a non-critical side effect without letting it fail the request.
+
+    Set isolate=True when `action` writes to the DB, so a failure rolls back
+    only its own savepoint instead of poisoning the caller's transaction
+    (and whatever it already recorded before this step ran).
+    """
+    try:
+        if isolate:
+            async with db.begin_nested():
+                await action()
+        else:
+            await action()
+    except Exception as e:
+        logging.getLogger(__name__).log(level, f"{label} error: {e}", exc_info=True)
+
+
 @router.post("/review/{user_vocabulary_id}", response_model=ReviewResponse)
 async def submit_review(
     user_vocabulary_id: uuid.UUID,
@@ -706,42 +730,44 @@ async def submit_review(
             daily_goal_met=daily_goal_met
         ))
         
-    # Update user streak on vocab review
-    try:
-        await update_user_streak(db, current_user.id)
-    except Exception as e:
-        logging.getLogger(__name__).error(f"Error updating streak on vocabulary review: {e}", exc_info=True)
+    # Below this point every step is a best-effort side effect (streak,
+    # cache, achievements, proficiency) — none of them may roll back the
+    # review recorded above, so each runs through _best_effort_step.
+    await _best_effort_step(
+        db, "Streak update", lambda: update_user_streak(db, current_user.id)
+    )
 
-    # Invalidate user's progress caches (best-effort — Redis being down must
-    # not roll back the review that was already recorded above)
-    try:
+    async def _invalidate_progress_caches() -> None:
         _uid = str(user_id)
         await delete_cached(build_cache_key("progress_me", user_id=_uid))
         await delete_cached(build_cache_key("progress_xp", user_id=_uid))
         await delete_cached(build_cache_key("progress_streak", user_id=_uid))
         await delete_cached(build_cache_key("vocab_stats", user_id=_uid))
-    except Exception as e:
-        logging.getLogger(__name__).error(f"Cache invalidation error on vocabulary review: {e}", exc_info=True)
 
-    # --- Check vocabulary achievements (best-effort, same reason as above).
-    # Runs in a savepoint so a bug in achievement evaluation can't poison the
-    # outer transaction and roll back the XP/streak/daily-activity updates
-    # above it. ---
-    try:
-        from app.services import check_achievements_for_user
-        async with db.begin_nested():
-            await check_achievements_for_user(db, current_user.id, "vocab_review")
-    except Exception as e:
-        logging.getLogger(__name__).error(f"Achievement check error on vocabulary review: {e}", exc_info=True)
+    await _best_effort_step(db, "Cache invalidation", _invalidate_progress_caches)
+
+    # isolate=True: runs in a savepoint so a bug in achievement evaluation
+    # can't poison the outer transaction and roll back the XP/streak/daily
+    # activity updates above it.
+    from app.services import check_achievements_for_user
+
+    await _best_effort_step(
+        db,
+        "Achievement check",
+        lambda: check_achievements_for_user(db, current_user.id, "vocab_review"),
+        isolate=True,
+    )
 
     # CEFR proficiency tracking. submit_review above only fed the BKT/FSRS
     # schedule, so a learner who reviewed hundreds of cards still showed a
     # vocabulary skill score of zero. award_xp=False — this route already
     # granted XP above and this function's bonus is additive.
-    try:
-        await _record_review_proficiency(db, current_user, updated_vocab, review.quality)
-    except Exception as e:
-        logging.getLogger(__name__).warning("Proficiency update error: %s", e)
+    await _best_effort_step(
+        db,
+        "Proficiency update",
+        lambda: _record_review_proficiency(db, current_user, updated_vocab, review.quality),
+        level=logging.WARNING,
+    )
 
 
     # Generate message
