@@ -11,6 +11,7 @@ from app.core.redis import get_redis
 from app.models.product_event import ProductEvent
 from app.models.user import User
 from app.schemas.product_event import ProductEventBatchCreate, ProductEventBatchResponse
+from app.services.feature_processor import STREAM_KEY
 from app.services.recommendation_service import INTERACTION_EPOCH_PREFIX
 
 logger = logging.getLogger(__name__)
@@ -54,18 +55,26 @@ async def ingest_product_events(
     if result.rowcount and any(
         event.event_name == "content_interaction" for event in request.events
     ):
-        await _bump_interaction_epoch(current_user.id)
+        await _signal_content_interaction(current_user.id)
 
     return ProductEventBatchResponse(accepted=len(request.events))
 
 
-async def _bump_interaction_epoch(user_id: uuid.UUID) -> None:
-    """Cheap freshness signal for the rec cache key — content_interaction
-    doesn't bump the learner-state epoch (that would also invalidate
-    TraceCAG's chat cache on every browse action), so it needs its own."""
+async def _signal_content_interaction(user_id: uuid.UUID) -> None:
+    """Two signals for one trigger: bump the cache-freshness epoch (cheap,
+    read synchronously on the next request), and XADD to the Event Worker's
+    stream so it recomputes this user's insights off the request path — see
+    app.tasks.event_worker. content_interaction doesn't bump the
+    learner-state epoch (that would also invalidate TraceCAG's chat cache on
+    every browse action), so it needs its own."""
     try:
         client = await get_redis()
-        if client is not None:
-            await client.incr(f"{INTERACTION_EPOCH_PREFIX}{user_id}")
+        if client is None:
+            return
+        await client.incr(f"{INTERACTION_EPOCH_PREFIX}{user_id}")
+        # Bounded so a stalled/dead worker can't grow this stream forever.
+        await client.xadd(
+            STREAM_KEY, {"user_id": str(user_id)}, maxlen=100_000, approximate=True
+        )
     except Exception as exc:
-        logger.warning("interaction epoch bump failed: %s", exc)
+        logger.warning("content_interaction signal failed: %s", exc)

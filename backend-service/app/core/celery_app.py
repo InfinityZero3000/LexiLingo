@@ -26,6 +26,7 @@ if Celery is not None:
             "app.tasks.auth_tokens",
             "app.tasks.content_agent",
             "app.tasks.content_prefetch_schedule",
+            "app.tasks.event_worker",
             "app.tasks.learner_state",
             "app.tasks.notification_campaign",
             "app.tasks.ranking_agent",
@@ -51,6 +52,10 @@ if Celery is not None:
         "scan-fsrs-reminders": {
             "task": "app.tasks.reminders.scan_fsrs_reminders",
             "schedule": settings.REMINDER_SCAN_INTERVAL_SECONDS,
+        },
+        "drain-content-interaction-stream": {
+            "task": "app.tasks.event_worker.drain_content_interaction_stream",
+            "schedule": settings.EVENT_WORKER_DRAIN_INTERVAL_SECONDS,
         },
         "send-streak-alerts": {
             "task": "app.tasks.streak_reminders.send_streak_alerts",
@@ -78,6 +83,12 @@ if Celery is not None:
         "prune-exercise-attempts": {
             "task": "app.tasks.skill_history.prune_exercise_attempts",
             "schedule": crontab(hour=2, minute=45),
+        },
+        # Append-only and the highest-volume table here; the recommender only
+        # ever reads its newest 60 days.
+        "prune-product-events": {
+            "task": "app.tasks.event_worker.prune_product_events",
+            "schedule": crontab(hour=3, minute=45),
         },
         # Feeds UserSkillScore.trend, which read two columns nothing wrote.
         "snapshot-skill-scores": {

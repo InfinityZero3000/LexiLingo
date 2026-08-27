@@ -317,6 +317,11 @@ class Settings(BaseSettings):
     REMINDER_SCAN_BATCH_SIZE: int = 250
     REMINDER_SCAN_INTERVAL_SECONDS: int = 300
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
+
+    # Event Worker — drains the content_interaction Redis Stream and
+    # recomputes recommender insights off the request path.
+    EVENT_WORKER_DRAIN_INTERVAL_SECONDS: int = 10
+    EVENT_WORKER_DRAIN_BATCH_SIZE: int = 500
     REMINDER_REVIEW_ROUTE: str = "/vocabulary/review"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
 

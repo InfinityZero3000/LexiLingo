@@ -11,7 +11,11 @@ from app.models.user import User
 from app.schemas.common import ApiResponse
 from app.schemas.recommendation import RecommendationItem, RecommendationResponse
 from app.services.recommendation_client import RecommendationClient
-from app.services.recommendation_service import build_candidates, build_profile
+from app.services.recommendation_service import (
+    attach_mastery,
+    build_candidates,
+    build_profile,
+)
 
 router = APIRouter(prefix="/recommendations", tags=["Recommendations"])
 
@@ -26,6 +30,7 @@ async def get_recommendations(
     """Top-K personalized items, ranked by RecGraph in ai-service."""
     profile = await build_profile(db, current_user.id)
     candidates = await build_candidates(db, current_user.id, profile)
+    profile = await attach_mastery(db, current_user.id, profile, candidates)
 
     ranked = await RecommendationClient().rank(
         user_id=str(current_user.id),

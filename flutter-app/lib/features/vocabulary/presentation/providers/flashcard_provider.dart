@@ -346,7 +346,7 @@ class FlashcardProvider extends ChangeNotifier {
       trackContentInteraction(
         itemType: 'vocab',
         itemId: currentCard.userVocabulary.vocabularyId,
-        action: 'review',
+        action: quality.isCorrect ? 'review_correct' : 'review_incorrect',
         topic: (tags != null && tags.isNotEmpty) ? tags.first : null,
         source: 'flashcard',
         dwellMs: timeSpentMs,

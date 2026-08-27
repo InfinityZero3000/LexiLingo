@@ -27,6 +27,8 @@ DEFAULT_WEIGHTS = {
     "mastery_gap": 0.30,
     "due": 0.25,
     "topic": 0.20,
+    "vocab_weakness": 0.15,
+    "difficulty_fit": 0.10,
 }
 
 
@@ -39,6 +41,23 @@ def cefr_fit(user_level: str | None, item_level: str | None) -> float:
     if user_idx is None or item_idx is None:
         return 0.85
     return _CEFR_FIT.get(item_idx - user_idx, 0.10)
+
+
+def difficulty_alignment(
+    preference: float, item_level: str | None, user_level: str | None
+) -> float:
+    """Reward items whose difficulty matches the Feature Processor's
+    difficulty_preference (harder-vs-easier revealed by engage/skip
+    patterns). Neutral (0.5) whenever there is no signal either way — this is
+    a bonus on top of the cefr_fit gate, not a second gate."""
+    if not preference or not item_level:
+        return 0.5
+    user_idx = CEFR_ORDER.get((user_level or "A1").upper())
+    item_idx = CEFR_ORDER.get(item_level.upper())
+    if user_idx is None or item_idx is None:
+        return 0.5
+    delta = max(-2, min(2, item_idx - user_idx)) / 2.0
+    return _clip01(0.5 + 0.5 * preference * delta)
 
 
 def topic_affinity_score(
@@ -104,6 +123,16 @@ def score_candidate(
             candidate.get("topic"),
             candidate.get("tags"),
             profile.get("topic_affinity") or {},
+        ),
+        "vocab_weakness": topic_affinity_score(
+            candidate.get("topic"),
+            candidate.get("tags"),
+            profile.get("vocabulary_weakness") or {},
+        ),
+        "difficulty_fit": difficulty_alignment(
+            profile.get("difficulty_preference") or 0.0,
+            candidate.get("level"),
+            profile.get("level"),
         ),
     }
 
@@ -225,6 +254,24 @@ def demo() -> None:
         "due_concepts": ["grammar:past_simple"],
         "topic_affinity": {"travel": 1.0, "business": 0.2},
     }
+
+    # difficulty_alignment: a positive preference (wants harder) must reward
+    # a harder item and penalize an easier one, relative to no preference.
+    wants_harder = difficulty_alignment(1.0, "B1", "A2")
+    wants_easier = difficulty_alignment(-1.0, "B1", "A2")
+    neutral = difficulty_alignment(0.0, "B1", "A2")
+    assert wants_harder > neutral > wants_easier, (wants_harder, neutral, wants_easier)
+    assert difficulty_alignment(1.0, None, "A2") == 0.5  # no item level: no opinion
+
+    # vocab_weakness reuses topic_affinity_score's lookup — a weak topic must
+    # score in score_candidate() exactly like a strong topic_affinity would.
+    weak_topic_profile = {**profile, "vocabulary_weakness": {"grammar": 1.0}}
+    weak_item = score_candidate(
+        {"item_id": "w", "item_type": "vocab", "topic": "grammar", "level": "A2",
+         "concept_ids": []},
+        weak_topic_profile,
+    )
+    assert weak_item["features"]["vocab_weakness"] == 1.0
 
     # The CEFR gate is multiplicative: a perfect topic match at C1 must lose
     # to a mediocre topic match at the learner's own level.

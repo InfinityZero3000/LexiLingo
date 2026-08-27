@@ -6,11 +6,10 @@ generation happens here in SQL; ranking happens in ai-service (RecGraph).
 
 from __future__ import annotations
 
+import json
 import logging
-import math
 import uuid
-from collections import defaultdict
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
@@ -20,31 +19,18 @@ from app.core.redis import get_redis
 from app.crud.vocabulary import _vocab_concept_id
 from app.models.course import Course, Lesson
 from app.models.learner_state import LearnerConceptState, LearnerStateProfile
-from app.models.product_event import ProductEvent
 from app.models.proficiency import UserProficiencyProfile, UserSkillScore
 from app.models.progress import LessonCompletion, UserCourseProgress
 from app.models.vocabulary import UserVocabulary, VocabularyItem
 from app.routes.youtube import CURATED_CHANNELS
+from app.services.feature_processor import (
+    INSIGHTS_CACHE_PREFIX,
+    INSIGHTS_CACHE_TTL_SECONDS,
+    compute_insights,
+)
 from app.services.learner_state import get_due_concepts_for_user
 
 logger = logging.getLogger(__name__)
-
-# Weight of each interaction when building topic affinity. A completion says
-# far more about interest than an impression does.
-ACTION_WEIGHTS = {
-    "complete": 1.0,
-    "start": 0.7,
-    "review": 0.7,
-    "open": 0.4,
-    "impression": 0.05,
-    "skip": -0.5,
-}
-AFFINITY_HALF_LIFE_DAYS = 14.0
-AFFINITY_WINDOW_DAYS = 60
-# ponytail: events are aggregated in Python from a bounded window rather than
-# in SQL, so this works identically on SQLite (tests) and JSONB. Materialize
-# into a user_topic_affinity table when this scan shows up in slow queries.
-AFFINITY_EVENT_LIMIT = 2000
 
 CANDIDATES_PER_TYPE = 40
 
@@ -66,6 +52,45 @@ async def _get_interaction_epoch(user_id: uuid.UUID) -> int:
         return 0
 
 
+async def get_assessed_level(db: AsyncSession, user_id: uuid.UUID) -> str:
+    proficiency = await db.scalar(
+        select(UserProficiencyProfile).where(UserProficiencyProfile.user_id == user_id)
+    )
+    return (proficiency.assessed_level if proficiency else None) or "A1"
+
+
+async def _read_cached_insights(user_id: uuid.UUID) -> dict[str, Any] | None:
+    """The Event Worker (app.tasks.event_worker) writes here after draining
+    the content_interaction stream. A miss means either a first-time user or
+    the worker hasn't caught up yet — the caller recomputes synchronously."""
+    try:
+        client = await get_redis()
+        if client is None:
+            return None
+        raw = await client.get(f"{INSIGHTS_CACHE_PREFIX}{user_id}")
+        return json.loads(raw) if raw else None
+    except Exception as exc:  # cache must never fail the request
+        logger.warning("insights cache read failed: %s", exc)
+        return None
+
+
+async def _write_cached_insights(user_id: uuid.UUID, insights: dict[str, Any]) -> None:
+    """Write-through on a synchronous recompute, so a burst of requests for
+    the same cold user doesn't each hit Postgres again before the worker
+    would have caught up anyway."""
+    try:
+        client = await get_redis()
+        if client is None:
+            return
+        await client.setex(
+            f"{INSIGHTS_CACHE_PREFIX}{user_id}",
+            INSIGHTS_CACHE_TTL_SECONDS,
+            json.dumps(insights),
+        )
+    except Exception as exc:
+        logger.warning("insights cache write failed: %s", exc)
+
+
 async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
     proficiency = await db.scalar(
         select(UserProficiencyProfile).where(UserProficiencyProfile.user_id == user_id)
@@ -83,11 +108,6 @@ async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
             )
         )
 
-    states = list(
-        await db.scalars(
-            select(LearnerConceptState).where(LearnerConceptState.user_id == user_id)
-        )
-    )
     due = await get_due_concepts_for_user(db, user_id)
     epoch = await db.scalar(
         select(LearnerStateProfile.state_epoch).where(
@@ -95,60 +115,55 @@ async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         )
     )
 
+    insights = await _read_cached_insights(user_id)
+    if insights is None:
+        insights = await compute_insights(db, user_id, level=level)
+        await _write_cached_insights(user_id, insights)
+
     return {
         "level": level,
         "weak_skills": [row.skill.value for row in skill_rows],
-        "mastery": {row.concept_id: row.mastery_probability for row in states},
+        # `mastery` is filled in by attach_mastery() once candidates are known
+        # — see the note there for why it is not loaded here.
+        "mastery": {},
         "due_concepts": [row.concept_id for row in due],
-        "topic_affinity": await build_topic_affinity(db, user_id),
         "state_epoch": int(epoch or 0),
         "interaction_epoch": await _get_interaction_epoch(user_id),
         "required_types": ["course", "lesson", "vocab", "video"],
+        **insights,
     }
 
 
-async def build_topic_affinity(
-    db: AsyncSession, user_id: uuid.UUID, *, now: datetime | None = None
-) -> dict[str, float]:
-    """Time-decayed topic preference, normalized to [0,1].
+async def attach_mastery(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    profile: dict[str, Any],
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Load mastery for the concepts these candidates actually reference.
 
-    This is the "topic the learner picks most often" signal: every surface
-    reports `content_interaction` with a `topic`, and recent picks outweigh old
-    ones on a 14-day half-life.
+    LearnerConceptState is never pruned — it is the FSRS schedule — so a
+    long-running learner accumulates thousands of rows. The ranker only ever
+    looks up the concept_ids carried by the candidates in front of it
+    (scoring.mastery_gap), so loading the whole table meant fetching and
+    shipping thousands of entries to use a couple hundred.
     """
-    now = now or datetime.now(UTC)
-    since = now - timedelta(days=AFFINITY_WINDOW_DAYS)
-    rows = list(
-        await db.scalars(
-            select(ProductEvent)
-            .where(
-                ProductEvent.user_id == user_id,
-                ProductEvent.event_name == "content_interaction",
-                ProductEvent.created_at >= since,
-            )
-            .order_by(ProductEvent.created_at.desc())
-            .limit(AFFINITY_EVENT_LIMIT)
+    concept_ids = {
+        concept_id
+        for candidate in candidates
+        for concept_id in (candidate.get("concept_ids") or [])
+    }
+    if not concept_ids:
+        return profile
+
+    rows = await db.scalars(
+        select(LearnerConceptState).where(
+            LearnerConceptState.user_id == user_id,
+            LearnerConceptState.concept_id.in_(concept_ids),
         )
     )
-
-    totals: dict[str, float] = defaultdict(float)
-    for row in rows:
-        properties = row.properties or {}
-        topic = str(properties.get("topic") or "").strip().lower()
-        if not topic:
-            continue
-        weight = ACTION_WEIGHTS.get(str(properties.get("action") or "open"), 0.4)
-        age_days = max((now - _as_utc(row.created_at)).total_seconds() / 86400.0, 0.0)
-        decay = math.exp(-age_days * math.log(2) / AFFINITY_HALF_LIFE_DAYS)
-        totals[topic] += weight * decay
-
-    positives = [value for value in totals.values() if value > 0]
-    if not positives:
-        return {}
-    peak = max(positives)
-    return {
-        topic: round(value / peak, 4) for topic, value in totals.items() if value > 0
-    }
+    profile["mastery"] = {row.concept_id: row.mastery_probability for row in rows}
+    return profile
 
 
 async def build_candidates(
@@ -339,7 +354,3 @@ def _first_tag(raw: Any) -> str | None:
 
 def _level_value(level: Any) -> str | None:
     return getattr(level, "value", level)
-
-
-def _as_utc(value: datetime) -> datetime:
-    return value if value.tzinfo else value.replace(tzinfo=UTC)

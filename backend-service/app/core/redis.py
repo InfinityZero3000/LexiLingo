@@ -110,5 +110,14 @@ class RedisClient:
 
 # Convenience function for FastAPI dependency injection
 async def get_redis() -> Optional[redis.Redis]:
-    """Get Redis client (for use as FastAPI dependency)."""
+    """Get Redis client (for use as FastAPI dependency).
+
+    Does NOT connect lazily — RedisClient.connect() is called once by the
+    FastAPI lifespan at process startup. A process that never runs that
+    lifespan (a Celery worker) must call RedisClient.connect() itself before
+    its first use; see app.tasks.event_worker for that bootstrap. Making
+    this getter auto-connect would mean any caller — including a route
+    handler under test with no Redis mocked — silently opens a real
+    connection on first use, which is worse than a clear None.
+    """
     return await RedisClient.get_instance()

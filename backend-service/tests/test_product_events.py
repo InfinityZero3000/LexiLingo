@@ -74,6 +74,7 @@ async def test_content_interaction_is_ingested_and_bumps_interaction_epoch(
     class FakeRedis:
         def __init__(self):
             self.store: dict[str, int] = {}
+            self.stream: list[tuple[str, dict]] = []
 
         async def get(self, key):
             return self.store.get(key)
@@ -81,6 +82,10 @@ async def test_content_interaction_is_ingested_and_bumps_interaction_epoch(
         async def incr(self, key):
             self.store[key] = self.store.get(key, 0) + 1
             return self.store[key]
+
+        async def xadd(self, key, fields, **kwargs):
+            self.stream.append((key, dict(fields)))
+            return f"{len(self.stream)}-0"
 
     fake = FakeRedis()
 
@@ -118,6 +123,9 @@ async def test_content_interaction_is_ingested_and_bumps_interaction_epoch(
     events = result.scalars().all()
     assert events[0].properties["topic"] == "travel"
     assert await _get_interaction_epoch(test_user.id) == before + 1
+    from app.services.feature_processor import STREAM_KEY
+
+    assert fake.stream == [(STREAM_KEY, {"user_id": str(test_user.id)})]
 
     # Resending the exact same event_id is a pure conflict — nothing new was
     # written, so the epoch must not bump again.
@@ -141,6 +149,7 @@ async def test_content_interaction_is_ingested_and_bumps_interaction_epoch(
 
     assert replay.status_code == 202
     assert await _get_interaction_epoch(test_user.id) == before + 1
+    assert len(fake.stream) == 1  # the replay must not XADD a duplicate signal
 
 
 @pytest.mark.asyncio

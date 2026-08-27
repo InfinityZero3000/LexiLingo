@@ -1,79 +1,114 @@
-"""Topic affinity: the signal the recommender reads a learner's interests from."""
+"""Recommendation route behavior. Feature-derived signals (topic_affinity,
+vocabulary_weakness, difficulty_preference) are covered in
+test_feature_processor.py."""
 
-import uuid
-from datetime import UTC, datetime, timedelta
+import json
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.product_event import ProductEvent
-from app.models.user import User
-from app.services.recommendation_service import build_topic_affinity
+from app.core.redis import RedisClient
+from app.models.learner_state import LearnerConceptState
+from app.services.feature_processor import INSIGHTS_CACHE_PREFIX
+from app.services.recommendation_service import attach_mastery, build_profile
 
 pytestmark = pytest.mark.asyncio
 
 
-async def _event(
-    db: AsyncSession,
-    user: User,
-    topic: str,
-    action: str,
-    *,
-    days_ago: float = 0.0,
-    name: str = "content_interaction",
-) -> None:
-    created = datetime.now(UTC) - timedelta(days=days_ago)
-    db.add(
-        ProductEvent(
-            event_id=uuid.uuid4(),
-            user_id=user.id,
-            event_name=name,
-            source="test",
-            properties={"item_type": "course", "item_id": "x", "action": action, "topic": topic},
-            client_timestamp=created,
-            created_at=created,
+class _FakeRedis:
+    def __init__(self):
+        self.store: dict[str, str] = {}
+
+    async def get(self, key):
+        return self.store.get(key)
+
+    async def setex(self, key, ttl, value):
+        self.store[key] = value
+
+
+async def test_build_profile_uses_cached_insights_without_recomputing(
+    db_session, test_user, monkeypatch
+):
+    """A cache hit from the Event Worker must short-circuit compute_insights
+    entirely — proven with a marker value no recompute could ever produce."""
+    fake = _FakeRedis()
+    marker = {
+        "topic_affinity": {"__from_cache__": 1.0},
+        "vocabulary_weakness": {},
+        "difficulty_preference": 0.0,
+    }
+    fake.store[f"{INSIGHTS_CACHE_PREFIX}{test_user.id}"] = json.dumps(marker)
+
+    async def fake_get_instance():
+        return fake
+
+    monkeypatch.setattr(RedisClient, "get_instance", fake_get_instance)
+
+    async def _boom(*_args, **_kwargs):
+        raise AssertionError("compute_insights must not run on a cache hit")
+
+    import app.services.recommendation_service as recommendation_service
+
+    monkeypatch.setattr(recommendation_service, "compute_insights", _boom)
+
+    profile = await build_profile(db_session, test_user.id)
+
+    assert profile["topic_affinity"] == {"__from_cache__": 1.0}
+
+
+async def test_build_profile_writes_through_on_cache_miss(
+    db_session, test_user, monkeypatch
+):
+    fake = _FakeRedis()
+
+    async def fake_get_instance():
+        return fake
+
+    monkeypatch.setattr(RedisClient, "get_instance", fake_get_instance)
+
+    profile = await build_profile(db_session, test_user.id)
+
+    assert profile["topic_affinity"] == {}
+    cached = json.loads(fake.store[f"{INSIGHTS_CACHE_PREFIX}{test_user.id}"])
+    assert cached["topic_affinity"] == {}
+
+
+async def test_attach_mastery_loads_only_concepts_the_candidates_reference(
+    db_session, test_user
+):
+    """LearnerConceptState is never pruned, so a long-running learner has
+    thousands of rows. Only the ones the ranker will actually look up may be
+    loaded and shipped."""
+    for index in range(5):
+        db_session.add(
+            LearnerConceptState(
+                user_id=test_user.id,
+                concept_id=f"vocab:word{index}",
+                mastery_probability=0.1 * index,
+            )
+        )
+    await db_session.flush()
+
+    candidates = [
+        {"item_id": "a", "concept_ids": ["vocab:word1"]},
+        {"item_id": "b", "concept_ids": ["vocab:word3"]},
+    ]
+    profile = await attach_mastery(db_session, test_user.id, {"mastery": {}}, candidates)
+
+    assert set(profile["mastery"]) == {"vocab:word1", "vocab:word3"}
+
+
+async def test_attach_mastery_is_a_noop_without_concept_labels(db_session, test_user):
+    db_session.add(
+        LearnerConceptState(
+            user_id=test_user.id, concept_id="vocab:x", mastery_probability=0.9
         )
     )
-    await db.flush()
+    await db_session.flush()
 
+    candidates = [{"item_id": "a", "concept_ids": []}]
+    profile = await attach_mastery(db_session, test_user.id, {"mastery": {}}, candidates)
 
-async def test_most_picked_topic_wins(db_session: AsyncSession, test_user: User):
-    for _ in range(3):
-        await _event(db_session, test_user, "travel", "complete")
-    await _event(db_session, test_user, "business", "open")
-
-    affinity = await build_topic_affinity(db_session, test_user.id)
-
-    assert affinity["travel"] == 1.0  # normalized to the peak
-    assert affinity["business"] < affinity["travel"]
-
-
-async def test_recent_interest_outweighs_old(db_session: AsyncSession, test_user: User):
-    # Same action, same count — only age differs.
-    for _ in range(2):
-        await _event(db_session, test_user, "music", "complete", days_ago=45)
-        await _event(db_session, test_user, "cooking", "complete", days_ago=1)
-
-    affinity = await build_topic_affinity(db_session, test_user.id)
-
-    assert affinity["cooking"] > affinity["music"]
-
-
-async def test_skips_do_not_earn_affinity(db_session: AsyncSession, test_user: User):
-    await _event(db_session, test_user, "sports", "skip")
-    await _event(db_session, test_user, "travel", "complete")
-
-    affinity = await build_topic_affinity(db_session, test_user.id)
-
-    # A negative signal must drop out entirely, never rank as mild interest.
-    assert "sports" not in affinity
-    assert affinity["travel"] == 1.0
-
-
-async def test_ignores_other_event_names(db_session: AsyncSession, test_user: User):
-    await _event(db_session, test_user, "travel", "open", name="srs_reminder_shown")
-
-    assert await build_topic_affinity(db_session, test_user.id) == {}
+    assert profile["mastery"] == {}
 
 
 async def test_endpoint_degrades_instead_of_failing(
