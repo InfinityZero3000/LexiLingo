@@ -65,9 +65,15 @@ _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
 
 def _personalization_hint(state: Dict[str, Any]) -> str:
     learner_profile = state.get("learner_profile") or {}
+    # Authoritative facts about the learner themselves (name, level, XP,
+    # enrolled courses), injected only on turns that ask about them — see
+    # api.services.learner_card. Goes first so the model treats it as ground
+    # truth rather than as one more stylistic hint.
+    hint = str(learner_profile.get("learner_facts") or "").strip()
+    if hint:
+        hint += "\n"
     goal = str(learner_profile.get("goal") or "").strip()
     interest = str(learner_profile.get("interest") or "").strip()
-    hint = ""
     if goal or interest:
         if goal and interest:
             who = f"is learning for {goal} and is into {interest}"

@@ -78,6 +78,7 @@ from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
+from app.routes.learner_card import router as learner_card_router
 from app.routes.learner_state import router as learner_state_router
 from app.routes.concepts import router as concepts_router
 from app.routes.mistakes import router as mistakes_router
@@ -429,6 +430,7 @@ app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["A
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
 app.include_router(learner_state_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(learner_card_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(product_events_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(recommendations_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Recommendations"])
 

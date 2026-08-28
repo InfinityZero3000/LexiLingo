@@ -275,9 +275,23 @@ class LexiChatDataSource {
       corrections: corrections,
       linkedConcepts: linkedConcepts,
       suggestedPractice: _parseSuggestedPractice(data['suggested_practice']),
+      suggestedCourses: _parseSuggestedCourses(data['suggested_courses']),
       nativeHint: data['native_hint'],
       scores: scores,
     );
+  }
+
+  /// Shared by both the non-streaming and streaming response paths.
+  static List<LexiCourseSuggestion> _parseSuggestedCourses(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map(
+          (item) =>
+              LexiCourseSuggestion.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .where((course) => course.courseId.isNotEmpty && course.title.isNotEmpty)
+        .toList();
   }
 
   /// Shared by both the non-streaming and streaming response paths.
@@ -584,6 +598,9 @@ class LexiChatDataSource {
                   linkedConcepts: linkedConcepts,
                   suggestedPractice: _parseSuggestedPractice(
                     json['suggested_practice'],
+                  ),
+                  suggestedCourses: _parseSuggestedCourses(
+                    json['suggested_courses'],
                   ),
                   nativeHint: json['native_hint'] as String?,
                   scores: scores,

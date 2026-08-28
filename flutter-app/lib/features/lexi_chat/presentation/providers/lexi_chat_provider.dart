@@ -664,6 +664,7 @@ class LexiChatProvider extends ChangeNotifier {
             :final corrections,
             :final linkedConcepts,
             :final suggestedPractice,
+            :final suggestedCourses,
             :final nativeHint,
             :final scores,
             :final audioBase64,
@@ -689,6 +690,7 @@ class LexiChatProvider extends ChangeNotifier {
                 corrections: corrections,
                 linkedConcepts: linkedConcepts,
                 suggestedPractice: suggestedPractice,
+                suggestedCourses: suggestedCourses,
                 nativeHint: nativeHint,
                 scores: scores,
                 syncStatus: 'synced',
@@ -1171,6 +1173,9 @@ class LexiChatProvider extends ChangeNotifier {
                       'concept_title': m.suggestedPractice!.conceptTitle,
                       'prompt': m.suggestedPractice!.prompt,
                     },
+              'suggested_courses': m.suggestedCourses
+                  .map((c) => c.toJson())
+                  .toList(),
               'scores': m.scores,
               'sync_status': m.syncStatus,
               'client_request_id': m.clientRequestId,
@@ -1253,6 +1258,12 @@ class _CachedChatPage {
                     '',
               )
             : null,
+        suggestedCourses: (m['suggested_courses'] as List<dynamic>? ?? const [])
+            .whereType<Map>()
+            .map(
+              (c) => LexiCourseSuggestion.fromJson(Map<String, dynamic>.from(c)),
+            )
+            .toList(),
         nativeHint: m['native_hint']?.toString(),
         scores: m['scores'] is Map
             ? Map<String, dynamic>.from(m['scores'] as Map)

@@ -1259,7 +1259,8 @@
     "practiceMoreButton": "Pratiquer {concept}",
     "correctionsSection": "Corrections",
     "nativeHintSection": "Indice en langue maternelle",
-    "relatedConceptsSection": "Concepts liés"
+    "relatedConceptsSection": "Concepts liés",
+    "suggestedCoursesLabel": "Cours pour vous"
   },
   "youtube": {
     "subtitles": "Sous-titres",

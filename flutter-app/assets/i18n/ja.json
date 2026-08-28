@@ -1259,7 +1259,8 @@
     "practiceMoreButton": "{concept}を練習",
     "correctionsSection": "修正",
     "nativeHintSection": "母語のヒント",
-    "relatedConceptsSection": "関連概念"
+    "relatedConceptsSection": "関連概念",
+    "suggestedCoursesLabel": "あなたにおすすめのコース"
   },
   "youtube": {
     "subtitles": "字幕",

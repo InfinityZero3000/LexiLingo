@@ -1259,7 +1259,8 @@
     "practiceMoreButton": "{concept} 연습하기",
     "correctionsSection": "수정",
     "nativeHintSection": "모국어 힌트",
-    "relatedConceptsSection": "관련 개념"
+    "relatedConceptsSection": "관련 개념",
+    "suggestedCoursesLabel": "추천 코스"
   },
   "youtube": {
     "subtitles": "자막",

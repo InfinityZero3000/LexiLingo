@@ -1259,7 +1259,8 @@
     "practiceMoreButton": "练习 {concept}",
     "correctionsSection": "纠错",
     "nativeHintSection": "母语提示",
-    "relatedConceptsSection": "相关概念"
+    "relatedConceptsSection": "相关概念",
+    "suggestedCoursesLabel": "为你推荐的课程"
   },
   "youtube": {
     "subtitles": "字幕",
