@@ -31,11 +31,17 @@ _MAX_ENROLLED = 6
 _MAX_SUGGESTED = 4
 
 
-def _level_index(level: Any) -> int:
+def _level_index(level: Any) -> int | None:
+    """None for anything that is not a CEFR band.
+
+    Older rows carry values like "beginner". Mapping those to A1 would let a
+    course we know nothing about outrank one labelled at the learner's own
+    level, so they sort last instead.
+    """
     try:
         return _CEFR_ORDER.index(str(level).strip().upper())
     except ValueError:
-        return 0
+        return None
 
 
 @router.get("/{user_id}")
@@ -99,15 +105,24 @@ async def get_learner_card(
     # turn the learner is waiting on. Swap in RecommendationClient.rank if the
     # ordering ever needs to beat "closest to your level first".
     catalog = list(
-        await db.scalars(select(Course).where(Course.is_published.is_(True)).limit(200))
+        await db.scalars(
+            select(Course)
+            .where(Course.is_published.is_(True))
+            .order_by(Course.created_at.desc())
+            .limit(200)
+        )
     )
-    learner_index = _level_index(assessed_level)
+    learner_index = _level_index(assessed_level) or 0
+
+    def _distance(course: Course) -> tuple[int, int, str]:
+        index = _level_index(course.level)
+        if index is None:
+            return (len(_CEFR_ORDER), 0, course.title)
+        return (abs(index - learner_index), index, course.title)
+
     suggested = sorted(
         (course for course in catalog if str(course.id) not in enrolled_ids),
-        key=lambda course: (
-            abs(_level_index(course.level) - learner_index),
-            _level_index(course.level),
-        ),
+        key=_distance,
     )[:_MAX_SUGGESTED]
 
     return {

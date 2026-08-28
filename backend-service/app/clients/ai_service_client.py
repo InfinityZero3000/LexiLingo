@@ -27,12 +27,19 @@ async def invalidate_learner_card(user_id: Any) -> None:
     Fire-and-forget: the card also carries a short TTL, so a lost call costs a
     couple of minutes of staleness, never a failed promotion or enrolment.
     Callers must not await this in a way that can fail their own request.
+
+    ponytail: awaited inline with a 1s ceiling rather than handed to
+    BackgroundTasks, which would mean threading a parameter through four
+    endpoints. Normally an intra-cluster Redis delete of a few ms — but
+    ai-service cold starts are a known slow path here, so the ceiling is what
+    the learner actually waits in the worst case. Move it to BackgroundTasks
+    if that second ever shows up in enrolment latency.
     """
     api_key = os.getenv("AI_ADMIN_API_KEY", "").strip()
     if not api_key:
         return
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(2.0)) as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(1.0)) as client:
             response = await client.post(
                 f"{settings.AI_SERVICE_URL.rstrip('/')}/internal/learner-card/invalidate",
                 headers={"X-Admin-Api-Key": api_key},

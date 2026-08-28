@@ -61,6 +61,25 @@ async def test_card_suggests_nearest_level_and_hides_enrolled(
 
 
 @pytest.mark.asyncio
+async def test_a_course_with_a_legacy_level_sorts_last_not_as_a1(
+    db_session: AsyncSession, test_user: User
+) -> None:
+    """Older rows carry values like "beginner". Treating those as A1 would let
+    a course we cannot place outrank one labelled at the learner's own level."""
+    test_user.level = "B1"
+    await _make_course(db_session, "Legacy Course", "beginner")
+    await _make_course(db_session, "At My Level", "B1")
+    await _make_course(db_session, "One Band Up", "B2")
+    await db_session.commit()
+
+    card = await get_learner_card(str(test_user.id), _caller="ai-service", db=db_session)
+    titles = [item["title"] for item in card["suggested_courses"]]
+
+    assert titles.index("At My Level") < titles.index("Legacy Course")
+    assert titles.index("One Band Up") < titles.index("Legacy Course")
+
+
+@pytest.mark.asyncio
 async def test_card_rejects_a_non_uuid_user_id(db_session: AsyncSession) -> None:
     from fastapi import HTTPException
 
