@@ -64,6 +64,10 @@ class RetrievalBundleV3(BaseModel):
     vector_hits: List[VectorHit] = Field(default_factory=list)
     kg_hits: KGHits = Field(default_factory=KGHits)
     examples: List[ExamplePair] = Field(default_factory=list)
+    # Tier-1 routing: the topics this turn was narrowed to, empty when the
+    # turn is not topic-shaped and the corpus-wide path ran instead.
+    routed_topics: List[str] = Field(default_factory=list)
+    topic_similarity: float = 0.0
 
 
 class Correction(BaseModel):

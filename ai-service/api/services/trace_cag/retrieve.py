@@ -160,26 +160,33 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         1's output), so sharing mutable lists across both would race."""
         local_vector_hits: List[Dict[str, Any]] = []
         local_evidence: List[Dict[str, Any]] = []
+        routed_topics: List[str] = []
+        from api.models.v3_schemas import V3PipelineContext
+
+        # Built outside the try on purpose. V3PipelineContext.user_id is a
+        # required str while analyze()'s is Optional, so a turn without one
+        # raised a pydantic error in here, was reported as "RetrievalServiceV3
+        # unavailable", and silently dropped the whole dense stage. A bad
+        # context is a bug and must surface; only the service call below is
+        # allowed to degrade.
+        ctx = V3PipelineContext(
+            user_input=user_input,
+            session_id=state.get("session_id", ""),
+            user_id=state.get("user_id") or "",
+        )
+        seed_nodes = [
+            c if isinstance(c, str) else c.get("id", "")
+            for c in kg_concepts[:5]
+        ]
         try:
-            from api.models.v3_schemas import V3PipelineContext
-
             retrieval_v3 = await _get_retrieval_v3()
-            # V3PipelineContext.user_id is a required str and analyze()'s is
-            # Optional, so a turn without one raised a pydantic error here —
-            # caught by the except below and reported as "RetrievalServiceV3
-            # unavailable", which silently dropped the whole dense stage.
-            ctx = V3PipelineContext(
-                user_input=user_input,
-                session_id=state.get("session_id", ""),
-                user_id=state.get("user_id") or "",
-            )
-            seed_nodes = [
-                c if isinstance(c, str) else c.get("id", "")
-                for c in kg_concepts[:5]
-            ]
             bundle = await retrieval_v3.retrieve(user_input, seed_nodes, ctx)
+            routed_topics = list(bundle.routed_topics)
+            # A routed turn draws its whole prompt from one topic subgraph, so
+            # it needs enough hits to fill the evidence budget on its own.
+            hit_budget = max(max_hits, 8) if routed_topics else max_hits
 
-            for hit in bundle.vector_hits[:max_hits]:
+            for hit in bundle.vector_hits[:hit_budget]:
                 snippet = getattr(hit, "snippet", hit.id)
                 local_vector_hits.append({"text": snippet, "score": hit.score})
                 local_evidence.append({
@@ -192,8 +199,12 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 })
 
             logger.info(
-                f"[retrieve_node] RetrievalServiceV3: {len(local_vector_hits)} hits "
-                f"(centrality+community ranked)"
+                f"[retrieve_node] RetrievalServiceV3: {len(local_vector_hits)} hits"
+                + (
+                    f" from topics {routed_topics} (sim={bundle.topic_similarity:.2f})"
+                    if routed_topics
+                    else " (centrality+community ranked)"
+                )
             )
 
         except Exception as e:
@@ -251,13 +262,14 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             except Exception as e2:
                 logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
 
-        return local_vector_hits, local_evidence
+        return local_vector_hits, local_evidence, routed_topics
 
     # Decide + start Stage 2 now (before Stage 1 runs) — the decision only
     # depends on diagnosis_errors/confidence/policy, all already available,
     # never on Stage 1's output, so it can run concurrently with Stage 1
     # instead of waiting for it to finish first.
     vector_hits: List[Dict[str, Any]] = []
+    routed_topics: List[str] = []
     stage2_task = None
     if not benchmark_candidates:
         _errors = state.get("diagnosis_errors", [])
@@ -280,8 +292,14 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
     evidence_items: List[Dict[str, Any]] = []
 
+    # Diagnosis evidence carries an item_id because rank_with_learner_overlay
+    # drops any candidate without one, and LEARNER_STATE_MODE is "read" in
+    # production — so the corrections this turn just computed were being
+    # deleted from the prompt before the tutor ever saw them.
     for concept_id in state.get("diagnosis_root_causes", []):
         evidence_items.append({
+            "item_id": str(concept_id),
+            "title": str(concept_id),
             "text": f"Grammar concept: {concept_id}",
             "kg_depth": 0,
             "vec_sim": 0.0,
@@ -358,9 +376,12 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         except Exception as kg_exc:
             logger.warning(f"[retrieve_node] KG top-K query skipped: {kg_exc}")
 
-    for error in state.get("diagnosis_errors", [])[:3]:
+    for idx, error in enumerate(state.get("diagnosis_errors", [])[:3]):
+        span = str(error.get("span", ""))
         evidence_items.append({
-            "text": f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
+            "item_id": f"error:{span or idx}",
+            "title": f"Correction: {span}" if span else "Correction",
+            "text": f"Error: '{span}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
             "kg_depth": 0,
             "vec_sim": 0.0,
             "turns_ago": 0,
@@ -410,7 +431,21 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     if stage2_task is not None:
         remaining_s = max(0.0, vector_budget_ms / 1000.0 - (time.monotonic() - retrieve_start))
         try:
-            vector_hits, stage2_evidence = await asyncio.wait_for(stage2_task, timeout=remaining_s)
+            vector_hits, stage2_evidence, stage2_topics = await asyncio.wait_for(
+                stage2_task, timeout=remaining_s
+            )
+            routed_topics = stage2_topics
+            if routed_topics:
+                # The turn named a topic, so its subgraph is the whole corpus.
+                # Keyword overlap and best-first expansion only dilute it —
+                # judged on their own lists over the 120 learner phrasings the
+                # dense stage scores 91.7% recall at 82.9% precision, lexical
+                # 36.7/59.5 and expansion 60.0/42.5, and blending all three
+                # lands below the dense stage alone on both. Diagnosis items
+                # stay: they are this turn's own corrections, not retrieval.
+                evidence_items = [
+                    item for item in evidence_items if item["kg_depth"] == 0
+                ]
             evidence_items.extend(stage2_evidence)
         except asyncio.TimeoutError:
             stage2_task.cancel()
@@ -619,6 +654,10 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "beta": _FUSION_BETA,
                 "gamma": _FUSION_GAMMA,
                 "recency_lambda": _RECENCY_LAMBDA,
+            },
+            "topic_routing": {
+                "routed": bool(routed_topics),
+                "topics": routed_topics,
             },
             "kg_topk": {
                 "top_k": max(1, _env_int("TRACECAG_KG_TOPK", 8)),
