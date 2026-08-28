@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clients.ai_service_client import invalidate_learner_card
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_current_user_optional
 from app.core.cache import build_cache_key, get_cached, set_cached
@@ -359,7 +360,11 @@ async def enroll_in_course(
             )
         )
     await db.refresh(progress)
-    
+
+    # Closes the loop on Lexi's course cards: tap one, enrol, then ask Lexi
+    # what you are studying and get the new course rather than the old list.
+    await invalidate_learner_card(current_user.id)
+
     return ApiResponse(
         data=EnrollmentResponse(
             course_id=course_id,

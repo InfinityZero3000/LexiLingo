@@ -249,6 +249,14 @@ async def _resolve_learner_card(
         if not intents:
             return "", []
         card = await get_learner_card(user_id)
+        # INFO, not debug: this is how you tell from production logs whether
+        # the feature is reaching learners at all, or silently degrading
+        # because the internal channel is misconfigured.
+        logger.info(
+            "[lexi_chat] learner card intents=%s resolved=%s",
+            sorted(intents),
+            bool(card),
+        )
         if not card:
             return "", []
         return (

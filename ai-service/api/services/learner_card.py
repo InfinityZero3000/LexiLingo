@@ -47,14 +47,20 @@ _PROGRESS_PATTERNS = (
     "điểm của tôi", "điểm của mình", "kết quả học", "streak", "chuỗi ngày",
     "xp của", "tôi học được", "mình học được", "tôi giỏi", "tôi yếu",
     "mình yếu", "điểm mạnh", "điểm yếu", "học tới đâu", "học đến đâu",
+    "bao nhiêu bài", "bao nhiêu xp", "bao nhiêu điểm", "lên level", "lên trình",
+    "tôi tiến bộ", "mình tiến bộ", "tôi đang học gì", "mình đang học gì",
     "my level", "my progress", "my score", "my streak", "my xp", "how am i doing",
-    "my strengths", "my weaknesses", "am i improving",
+    "my strengths", "my weaknesses", "am i improving", "how many lessons",
+    "what am i studying", "what am i learning",
 )
 _COURSE_PATTERNS = (
     "khóa học", "khoá học", "học khóa", "học khoá", "nên học gì", "học gì tiếp",
     "học gì tiếp theo", "lộ trình", "gợi ý khóa", "gợi ý khoá", "phù hợp với tôi",
-    "phù hợp với mình", "course", "courses", "what should i learn",
+    "phù hợp với mình", "nên bắt đầu từ đâu", "bắt đầu từ đâu", "học gì bây giờ",
+    "nên học cái gì", "khoá nào", "khóa nào",
+    "course", "courses", "what should i learn",
     "what should i study", "recommend", "suggestion", "learning path",
+    "where should i start", "what to learn next",
 )
 
 _SKILL_LABELS = {
@@ -129,6 +135,9 @@ async def get_learner_card(user_id: str) -> dict[str, Any] | None:
     if cached is not None:
         return cached
 
+    # A miss is the interesting event — steady state should be mostly hits, so
+    # a flood of these in production means the cache or the TTL is not working.
+    logger.info("learner_card cache miss, fetching from backend")
     base_url = settings.LEARNER_STATE_API_URL.rstrip("/")
     try:
         async with httpx.AsyncClient(timeout=_FETCH_TIMEOUT_SECONDS) as client:

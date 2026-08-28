@@ -41,6 +41,14 @@ def test_only_relevant_turns_pull_the_card():
     assert "course" in detect_learner_intents("what should I learn next?")
 
 
+def test_gate_catches_the_natural_phrasings_keyword_matching_first_missed():
+    assert "course" in detect_learner_intents("Mình nên bắt đầu từ đâu?")
+    assert "course" in detect_learner_intents("Khoá nào hợp với em bây giờ?")
+    assert "progress" in detect_learner_intents("Mình học được bao nhiêu bài rồi?")
+    assert "progress" in detect_learner_intents("Tôi đang học gì vậy?")
+    assert "progress" in detect_learner_intents("Where should I start? no — how am I doing?")
+
+
 def test_facts_render_only_the_slice_the_turn_asked_for():
     courses_only = render_card_facts(CARD, {"course"})
     assert "IELTS Prep" in courses_only

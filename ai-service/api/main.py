@@ -356,6 +356,7 @@ from api.routes import (  # noqa: E402
     chat,
     content_agent,
     error_diagnosis,
+    learner_card_cache,
     ielts_grading,
     integration_trace_cag,
     lexi_chat,
@@ -387,6 +388,7 @@ app.include_router(integration_trace_cag.router)
 app.include_router(notification_agent_router.router, tags=["Notification Agent"])
 app.include_router(ranking_agent_router.router, tags=["Internal Ranking Agent"])
 app.include_router(error_diagnosis.router, tags=["Internal Error Diagnosis"])
+app.include_router(learner_card_cache.router, tags=["Internal Learner Card Cache"])
 app.include_router(ielts_grading.router, tags=["Internal IELTS Grading"])
 app.include_router(recommendations_router.router, tags=["Internal Recommendations"])
 

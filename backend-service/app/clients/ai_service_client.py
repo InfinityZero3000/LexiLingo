@@ -21,6 +21,28 @@ from app.schemas.ai import AIChatRequest, AIChatResponse
 logger = logging.getLogger(__name__)
 
 
+async def invalidate_learner_card(user_id: Any) -> None:
+    """Drop ai-service's cached learner card after we changed what it says.
+
+    Fire-and-forget: the card also carries a short TTL, so a lost call costs a
+    couple of minutes of staleness, never a failed promotion or enrolment.
+    Callers must not await this in a way that can fail their own request.
+    """
+    api_key = os.getenv("AI_ADMIN_API_KEY", "").strip()
+    if not api_key:
+        return
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(2.0)) as client:
+            response = await client.post(
+                f"{settings.AI_SERVICE_URL.rstrip('/')}/internal/learner-card/invalidate",
+                headers={"X-Admin-Api-Key": api_key},
+                json={"user_id": str(user_id)},
+            )
+        response.raise_for_status()
+    except Exception as exc:
+        logger.warning("Learner-card invalidation failed for %s: %s", user_id, exc)
+
+
 async def diagnose_error(text: str, level: str | None = None) -> str | None:
     """Return the primary diagnosed error type, or None on any failure."""
     try:
