@@ -38,11 +38,11 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
     String? diagnosticId,
   }) {
     final effectiveFill = intermediateFill ?? fill;
-    final borderColor = _contrastingBorder(
-      accent: accent,
-      fill: effectiveFill,
-      background: pageBackground,
-      diagnosticId: diagnosticId,
+    // ponytail: soft tinted border instead of WCAG-forced high-contrast
+    // border — that path picked near-black on light fills, reading as a
+    // harsh black frame around every card.
+    final borderColor = (accent ?? onSurface).withValues(
+      alpha: brightness == Brightness.dark ? 0.28 : 0.14,
     );
     final disabled = states.contains(WidgetState.disabled);
     final pressed = states.contains(WidgetState.pressed);

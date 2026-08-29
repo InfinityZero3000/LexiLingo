@@ -948,6 +948,9 @@
   },
   "assessment": {
     "placementTest": "배치 시험",
+    "confirmStartTitle": "배치고사를 시작할까요?",
+    "confirmStartMessage": "모든 문항에 한 번에 답해야 합니다. 시작할 준비가 되셨나요?",
+    "startNow": "시작",
     "cefrLevel": "CEFR 레벨",
     "readingSpeed": "읽기 속도",
     "retakeTest": "시험 다시 보기",

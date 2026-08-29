@@ -948,6 +948,9 @@
   },
   "assessment": {
     "placementTest": "クラス分けテスト",
+    "confirmStartTitle": "プレイスメントテストを開始しますか？",
+    "confirmStartMessage": "すべての質問に一度に答える必要があります。始めてもよろしいですか？",
+    "startNow": "開始",
     "cefrLevel": "CEFRレベル",
     "readingSpeed": "読解速度",
     "retakeTest": "テストを再受験する",

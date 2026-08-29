@@ -1077,6 +1077,9 @@
   },
   "assessment": {
     "placementTest": "Placement test",
+    "confirmStartTitle": "Start placement test?",
+    "confirmStartMessage": "You'll need to answer every question in one sitting. Ready to begin?",
+    "startNow": "Start",
     "cefrLevel": "CEFR Level",
     "readingSpeed": "Reading speed",
     "retakeTest": "Retake test",
