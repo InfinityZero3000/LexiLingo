@@ -9,18 +9,40 @@ import os
 import json
 import re
 from datetime import date
+from pathlib import Path
 from typing import List, Optional, Union
+from dotenv import dotenv_values
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from functools import lru_cache
 from urllib.parse import urlparse
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# The six internal routes read their admin key with os.getenv, but pydantic's
+# env_file only ever populates Settings — os.environ stays empty. Under Docker
+# compose passes the real variables so that works; running uvicorn directly it
+# did not, and those routes answered 503 with a .env sitting right there.
+#
+# Only this one key is exported, not the whole file. A blanket load_dotenv()
+# leaks every setting into os.environ, which silently defeats the config tests
+# that pass _env_file=None to prove a setting is unset — one of them exists to
+# guarantee production refuses to enable the ETL with no dataset pinned.
+#
+# A real container variable always wins: we only fill a gap, never overwrite.
+if "AI_ADMIN_API_KEY" not in os.environ:
+    _env_path = PROJECT_ROOT / ".env"
+    if _env_path.is_file():
+        _admin_key = (dotenv_values(_env_path).get("AI_ADMIN_API_KEY") or "").strip()
+        if _admin_key:
+            os.environ["AI_ADMIN_API_KEY"] = _admin_key
 
 
 class Settings(BaseSettings):
     """Application settings."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(PROJECT_ROOT / ".env"),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",

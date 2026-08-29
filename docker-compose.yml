@@ -260,6 +260,7 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
+      BACKEND_AUDIT_INGEST_URL: http://backend-service:8000/api/v1/ai-audit/events
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys}
