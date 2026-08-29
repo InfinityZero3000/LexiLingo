@@ -689,11 +689,12 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
         "context_chars_before": len(base_context or ""),
         "context_chars_after": len(base_context or ""),
     }
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
-    qwen = "qwen" in groq_model.lower()
+    # No "/no_think" prefix: verified against Groq (2026-08-16) that qwen3.6
+    # ignores it and keeps emitting <think>. reasoning_effort="none" is the
+    # control that works, and _throttled_post_json injects it for every Groq
+    # caller — see _qwen_reasoning_overrides in llm_client.py.
     reason_sys = (
-        ("/no_think\n" if qwen else "")
-        + "You are solving a multi-hop question. From the question and passages, name the SINGLE "
+        "You are solving a multi-hop question. From the question and passages, name the SINGLE "
         "intermediate 'bridge' entity you must look up next to connect the question to its answer "
         "(e.g. the person/film/place the question refers to indirectly). Output ONLY that entity "
         "name on one line — no explanation. If the answer is already directly in the passages, "
@@ -798,8 +799,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         # picked a wrong bridge and the assertive hint forced the model to follow it
         # (New York City→Columbia University, Terry Richardson→Annie Morton).
         _hint_block = f"\n\n(\"{_ircot_hint}\" may be relevant.)" if _ircot_hint else ""
-        _bench_groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
-        _no_think_prefix = "/no_think\n" if "qwen" in _bench_groq_model.lower() else ""
         # E2G ("Evidence → minimal Answer"): one bounded reasoning step before the
         # answer, grounded in the passages, with an exemplar that pins HotpotQA
         # answer granularity. Targets the dominant failure buckets (2-hop synthesis
@@ -816,7 +815,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         _bench_max_tokens = _env_int("TRACECAG_BENCHMARK_MAX_TOKENS", 220 if _use_e2g else 96)
         if _use_e2g:
             system_prompt = (
-                _no_think_prefix +
                 "You are a precise multi-hop QA system. Read ALL passages, find the "
                 "supporting fact(s), and chain them across passages to reach the answer.\n"
                 "Then give the MINIMAL final answer copied in the gold style: a short "
@@ -841,7 +839,6 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
             user_prompt = f"Context:\n{truncated_context}\n\nQuestion: {question}"
         else:
             system_prompt = (
-                _no_think_prefix +
                 "You are a precise QA system for multi-hop reasoning benchmarks. "
                 "The context spans multiple passages — read ALL of them, identify key entities and facts, "
                 "then chain the evidence to reach the answer. "

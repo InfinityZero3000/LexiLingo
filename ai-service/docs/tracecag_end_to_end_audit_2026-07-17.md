@@ -1,6 +1,7 @@
 # TRACE-CAG end-to-end audit — 2026-07-17
 
-> **Superseded in part (2026-08-26).** Blockers 3–4 below are resolved and the
+> **Superseded in part (2026-08-26, revised 2026-08-29).** Blockers 3–4 below are
+> resolved and the
 > multi-hop claim is now measured: see `tracecag_benchmark_report_2026-08-26.md`
 > for n=64 results against the real HippoRAG package, the new
 > `all_support_at_k` / `answer_in_context_at_k` metrics, and the four ranking
@@ -30,7 +31,8 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 | Learner mutation hook | shared mastery writer | mutation test | Connected |
 | KG mutation hook | no shared writer hook found | caller audit | Missing |
 | Policy mutation hook | no shared writer hook found | caller audit | Missing |
-| Multi-hop interleaving | benchmark candidate path, flag off by default | offline n=64 probes; end-to-end n=5 | Research validated, not production default |
+| Multi-hop interleaving | ~~benchmark candidate path~~ | — | **Removed 2026-08-29**: the flag was off *and* the reordering was discarded by the score-sort in `_select_diverse_multihop_evidence`, so it could not affect output even when enabled |
+| Coverage-first evidence selection | `retrieve.py`, benchmark multi-hop only | n=64 `all_support_at_5` | Replaces the above; reserves one slot per question anchor |
 | Drift route gate | benchmark protocol | deterministic metric tests | Code complete; frozen DriftBench pending |
 
 ## Dead/redundant code audit
@@ -47,13 +49,37 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 1. Connect KG and policy mutation boundaries to token increment plus targeted invalidation, or narrow the claim to learner-state mutations.
 2. Run frozen DriftBench with observed L1 reuse, typed patch, unsafe rejection, and validate/serve mutation race.
 3. ~~Run multi-hop interleaving on a full locked split~~ — done 2026-08-26 at n=64; see the new report.
-4. Keep `TRACECAG_SECOND_HOP_INTERLEAVE=false` until paired EM/F1 and latency gates pass.
+4. ~~Keep `TRACECAG_SECOND_HOP_INTERLEAVE=false`~~ — the flag and its code were
+   deleted on 2026-08-29 as provably inert (see the mechanism table).
+5. **The architectural gap is no longer measurable at n=64.** The 2026-08-28
+   ranker and IRCoT fixes are generic, so they lifted the vanilla-CAG baseline
+   more than the graph path: `tracecag_rapid` minus `cag_vanilla` fell from
+   +3.1 EM / +3.4 F1 to **0.0 EM / +0.4 F1**. TRACE-CAG still retrieves better
+   (`all_support@5` 59.4% vs 50.0%), but that advantage no longer converts into
+   answer quality — the reader is now the binding constraint.
 
 ## Defensible current claim
 
 TRACE-CAG has a continuous certificate-gated routing implementation with canonical SCAR, dependency-aware cache artifacts, optimistic pre-serve recheck, learner-mutation invalidation, and provenance-preserving L2 reconstruction. General KG/policy mutation safety remains unverified.
 
-Multi-hop quality is no longer unverified: at n=64 on HotpotQA, TRACE-CAG scores
-EM 62.5% / F1 74.7%, above vanilla CAG (59.4% / 71.3%) and the **real** HippoRAG 2
-package (48.4% / 59.3%) at ~46× lower latency. The claim is bounded by a single
-n=64 split — see the standing caveats in `tracecag_benchmark_report_2026-08-26.md`.
+Multi-hop quality is no longer unverified, but the honest reading is narrower
+than the one first written here. At n=64 on HotpotQA (validated run, 0 provider
+fallbacks):
+
+| System | EM | F1 | latency/question |
+|---|---|---|---|
+| `tracecag_rapid` | 62.5% | 74.7% | 2.2s (cold) |
+| `cag_vanilla` | 62.5% | 74.3% | 2.1s (cold) |
+| HippoRAG 2 (real package) | 56.2% | 73.0% | 80.8s |
+
+TRACE-CAG beats the real HippoRAG package on both headline metrics at ~37x
+lower latency. It does **not** currently beat vanilla CAG on EM: the two are
+tied, and the F1 margin of 0.4pp is inside run-to-run noise. Any claim that the
+graph architecture drives the answer-quality win is unsupported at this n.
+
+**Do not compare the published R@5 numbers.** HippoRAG's adapter scored recall by
+searching the *joined body text* of the retrieved passages for the gold title,
+and on HotpotQA bridge questions one passage names the other's title by
+construction: 46.9% of gold titles in this 64-question set are quotable from
+some other pool document. That credited passages it never retrieved. The adapter
+now matches on document identity, but the corrected number needs a re-run.

@@ -472,17 +472,34 @@ hàm chuẩn hoá SQuAD của repo.
 \textbf{Hệ thống} & \textbf{EM} & \textbf{F1} & \textbf{Đệm} & \textbf{Độ trễ}\\
 \midrule
 \endhead
-CAG thuần & 59,4\% & 71,3\% & 47,7\% & 1,38 s\\
-\textbf{TRACE-CAG} & \textbf{62,5\%} & \textbf{74,7\%} & 48,4\% & 1,38 s\\
-HippoRAG~2 (bản chính thức) & 48,4--50,0\% & 59,3--64,2\% & không có & $\approx$64 s\\
+CAG thuần & 62,5\% & 74,3\% & 47,7\% & 2,1 s\\
+\textbf{TRACE-CAG} & \textbf{62,5\%} & \textbf{74,7\%} & 48,4\% & 2,2 s\\
+HippoRAG~2 (bản chính thức) & 56,2\% & 73,0\% & không có & 80,8 s\\
 \bottomrule
-\caption{So sánh trên HotpotQA, n=64, cùng mô hình đọc}
+\caption{So sánh trên HotpotQA, n=64, cùng mô hình đọc (cập nhật 2026-08-29).
+Độ trễ là trung bình lượt lạnh; HippoRAG lập chỉ mục lại kho 10 đoạn cho mỗi câu.}
 \end{longtable}
 
-Con số HippoRAG là \textbf{khoảng giá trị qua hai lần chạy cùng cấu hình}, phản ánh
-phương sai thật của thiết lập này ($\pm$1,6 EM / $\pm$4,9 F1 ở n=64): mô hình hoặc
-trả lời gọn 1--3 từ, hoặc đổ ra 150--180 từ lập luận, và 8/64 câu đổi giữa hai kiểu
-đó giữa các lần chạy. Không nên trích dẫn một đầu của khoảng.
+Bảng này thay cho bảng cũ và \textbf{thu hẹp kết luận}. HippoRAG~2 chạy đủ 64/64 với
+ngân sách sinh đáp án 1024 token thực sự có hiệu lực --- trước đó phải đặt
+\code{max\_completion\_tokens} chứ không phải \code{max\_tokens}, nên tham số bị
+thư viện ghi đè âm thầm và hai lần chạy đầu thực chất cùng một cấu hình. Nhờ vậy
+số của HippoRAG tăng lên 56,2\%/73,0\%.
+
+TRACE-CAG vẫn vượt gói HippoRAG chính thức ở cả hai chỉ số chính với độ trễ thấp
+hơn $\approx$37 lần. Nhưng sau khi sửa lỗi gán nhãn của bộ xếp hạng và lỗi IRCoT
+(2026-08-28), \textbf{TRACE-CAG không còn vượt CAG thuần về EM}: hai bên bằng nhau,
+và chênh lệch F1 0,4 điểm nằm trong nhiễu giữa các lần chạy. Các bản sửa đó mang
+tính chung nên nâng đường cơ sở nhiều hơn nâng nhánh đồ thị. Lợi thế truy xuất thì
+vẫn còn (\code{all\_support@5} 59,4\% so với 50,0\%), nhưng \textbf{không còn chuyển
+hoá thành chất lượng câu trả lời} --- nút thắt đã dời sang bộ đọc.
+
+\textbf{Không so sánh chỉ số R@5 giữa hai hệ.} Bộ đo của HippoRAG tìm tiêu đề vàng
+trong \emph{toàn văn gộp} của các đoạn lấy về; trên câu bắc cầu HotpotQA thì thân
+đoạn này gọi tên tiêu đề đoạn kia theo đúng định nghĩa, và 46,9\% tiêu đề vàng
+trong bộ 64 câu có thể trích từ thân một đoạn khác. Nó tính công cho những đoạn
+chưa hề được truy hồi. Bộ đo đã được sửa về so khớp danh tính tài liệu, nhưng con
+số đúng cần một lần chạy lại.
 
 \begin{luuy}[Nút thắt thực sự là khả năng với tới bằng chứng, không phải suy luận]
 Ba chỉ số truy xuất được bổ sung vì không chỉ số cũ nào phân biệt được ``tìm thấy
@@ -506,6 +523,35 @@ là ràng buộc''. Lần thử trước nâng \emph{trọng số} đồ thị -
 một ngân sách cố định --- và EM giảm; nâng \emph{ngân sách} lại làm EM tăng mạnh.
 Sắp xếp lại và mở rộng khả năng với tới là hai đòn bẩy khác nhau, không được suy
 diễn kết quả của cái này sang cái kia.
+\end{luuy}
+
+\begin{luuy}[Cập nhật 2026-08-29: nút thắt đã dời sang bộ đọc, và ba kỹ thuật bị bác bỏ]
+Con số ``chuyển hoá 90\%'' ở trên thuộc về điểm vận hành cũ (ngân sách 5 đoạn).
+Ở ngân sách 9--10 đoạn hiện tại, \code{answer\_in\_context} là 82,8\% còn EM là
+62,5\%, tức chuyển hoá \textbf{75,5\%}: gần một phần tư số câu có sẵn đáp án trong
+ngữ cảnh mà bộ đọc vẫn trả sai. Dư địa còn lại là 20,3 điểm và nó nằm ở bộ đọc.
+
+Phân loại 24 câu sai (\code{benchmark/analyze\_failures.py}): 10 câu sai độ chi tiết
+của span, 7 câu chọn nhầm span, 4 câu đáp án không có trong ngữ cảnh, 2 câu bị hậu
+xử lý bác bỏ, 1 câu đúng/sai. Quan trọng nhất: \textbf{18 trong 24 câu sai có đáp án
+là span nguyên văn trong ngữ cảnh} --- mô hình chọn nhầm span chứ không cắt sai biên.
+
+Ba kỹ thuật đã đo và \textbf{bác bỏ}, ghi lại để không ai thử lại:
+\begin{itemize}
+  \item \emph{Ép về span}: lỗi hai chiều (đáp án vàng khi dài hơn, khi ngắn hơn dự
+        đoán) và nhiều đáp án là số hoặc chữ thường, nên luật dựa vào chữ hoa không
+        phủ được. Khớp với lần thử trước: 0 câu thắng, 3--4 câu thua.
+  \item \emph{Cò ``không phải span nguyên văn''}: chỉ 46\% chính xác --- đụng vào 7
+        câu đang đúng mà chỉ với tới 6 trong 24 câu sai.
+  \item \emph{Tự nhất quán} (5 mẫu, nhiệt độ 0,7): 0 câu thắng, 1 câu thua. Tỉ lệ đổi
+        đáp án chỉ 2/85: với 4--5 phiếu, đáp án tham lam thắng 83/85 lần. Chi phí
+        175 giây mỗi câu.
+\end{itemize}
+
+Kết luận: \textbf{lỗi của bộ đọc là có hệ thống, không ngẫu nhiên}. Mô hình chọn cùng
+một span sai một cách nhất quán, nên mọi kỹ thuật dựa trên lấy mẫu và bỏ phiếu đều
+không sửa được. Phần dư địa còn lại đòi hỏi bộ đọc mạnh hơn hoặc giám sát ở mức span,
+không phải một lớp bọc quanh cùng mô hình.
 \end{luuy}
 
 Chín lỗi kỹ thuật đã được sửa trong quá trình đánh giá (đặt tên sai chế độ, cắt bớt tập dữ
