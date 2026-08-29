@@ -1,5 +1,12 @@
 # TRACE-CAG end-to-end audit — 2026-07-17
 
+> **Superseded in part (2026-08-26).** Blockers 3–4 below are resolved and the
+> multi-hop claim is now measured: see `tracecag_benchmark_report_2026-08-26.md`
+> for n=64 results against the real HippoRAG package, the new
+> `all_support_at_k` / `answer_in_context_at_k` metrics, and the four ranking
+> and evidence-budget fixes. The mechanism table and the KG/policy mutation
+> blockers in this document still stand.
+
 ## Outcome
 
 The main request path is continuous and testable:
@@ -39,9 +46,14 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 
 1. Connect KG and policy mutation boundaries to token increment plus targeted invalidation, or narrow the claim to learner-state mutations.
 2. Run frozen DriftBench with observed L1 reuse, typed patch, unsafe rejection, and validate/serve mutation race.
-3. Run multi-hop interleaving on a full locked split; n=5 shows no regression but does not prove answer-quality gain.
+3. ~~Run multi-hop interleaving on a full locked split~~ — done 2026-08-26 at n=64; see the new report.
 4. Keep `TRACECAG_SECOND_HOP_INTERLEAVE=false` until paired EM/F1 and latency gates pass.
 
 ## Defensible current claim
 
-TRACE-CAG has a continuous certificate-gated routing implementation with canonical SCAR, dependency-aware cache artifacts, optimistic pre-serve recheck, learner-mutation invalidation, and provenance-preserving L2 reconstruction. General KG/policy mutation safety and full multi-hop superiority remain unverified.
+TRACE-CAG has a continuous certificate-gated routing implementation with canonical SCAR, dependency-aware cache artifacts, optimistic pre-serve recheck, learner-mutation invalidation, and provenance-preserving L2 reconstruction. General KG/policy mutation safety remains unverified.
+
+Multi-hop quality is no longer unverified: at n=64 on HotpotQA, TRACE-CAG scores
+EM 62.5% / F1 74.7%, above vanilla CAG (59.4% / 71.3%) and the **real** HippoRAG 2
+package (48.4% / 59.3%) at ~46× lower latency. The claim is bounded by a single
+n=64 split — see the standing caveats in `tracecag_benchmark_report_2026-08-26.md`.
