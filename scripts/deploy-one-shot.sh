@@ -121,6 +121,32 @@ check_prerequisites() {
   [[ -x "${SMOKE_SCRIPT}" ]] || { echo "Smoke script is not executable: ${SMOKE_SCRIPT}"; exit 1; }
 }
 
+# Both of these degrade silently when unset: ai-service calls backend directly
+# over the Docker network and swallows the failure, so the only symptom is a
+# feature quietly doing nothing. Warn at the start rather than after the build.
+check_internal_channel_config() {
+  local warned=false
+
+  if ! grep -E "^ALLOWED_HOSTS=" "${ENV_FILE}" | grep -q "backend-service"; then
+    echo "WARNING: ALLOWED_HOSTS in ${ENV_FILE} does not list 'backend-service'."
+    echo "         TrustedHostMiddleware will answer 400 to every ai-service ->"
+    echo "         backend call, disabling Lexi's learner card and AI audit ingest."
+    warned=true
+  fi
+
+  local audit_secret
+  audit_secret="$(grep -hE "^AI_AUDIT_INGEST_SECRET=" "${SECRET_ENV_FILE}" "${ENV_FILE}" 2>/dev/null | tail -n 1 | cut -d '=' -f 2-)"
+  if [[ -z "${audit_secret}" ]]; then
+    echo "WARNING: AI_AUDIT_INGEST_SECRET is unset. The audit ingest endpoint will"
+    echo "         answer 403 and the admin AI Quality page will stay empty."
+    echo "         Generate one with: openssl rand -hex 32"
+    warned=true
+  fi
+
+  [[ "${warned}" == true ]] && echo ""
+  return 0
+}
+
 check_required_secrets() {
   local required_vars=(
     POSTGRES_PASSWORD
@@ -218,6 +244,7 @@ perform_git_pull() {
 main() {
   check_prerequisites
   check_required_secrets
+  check_internal_channel_config
 
   log "Starting one-shot deployment at ${TIMESTAMP_UTC}"
   log "Branch: ${CURRENT_BRANCH}"
