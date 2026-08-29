@@ -62,6 +62,20 @@ FastAPI + SQLAlchemy async (PostgreSQL) + Celery + Redis. Tất cả route dư�
 
 `/proficiency` — hồ sơ trình độ, ghi nhận kết quả bài tập, kiểm tra level, ngưỡng level, lịch sử, bài test xếp lớp (lấy + nộp), nộp bài thi có kiểm soát (`exam-gated/submit`).
 
+`/recommendations` — gợi ý nội dung cá nhân hoá (RecGraph/EASE/SKNN, xem [[project_recsys_phases]]).
+
+## 5b. IELTS
+
+| Nhóm | Endpoint | Chức năng |
+|------|----------|-----------|
+| `/ielts` | `tests`, `tests/{id}` | Danh sách & chi tiết đề thi IELTS |
+| `/ielts` | `tests/{id}/start` | Bắt đầu lượt làm bài |
+| `/ielts` | `attempts/{id}/answers` (PATCH) | Lưu câu trả lời theo lượt |
+| `/ielts` | `attempts/{id}/submit`, `attempts/{id}/result` | Nộp bài & xem kết quả |
+| `/ielts` | `attempts` | Lịch sử lượt làm bài của tôi |
+| `/admin/ielts` | `tests` (CRUD), `tests/{id}/validate` | Quản trị đề thi + kiểm tra hợp lệ (40 câu/đề) |
+| `/admin/ielts` | `attempts`, `upload-audio` | Xem lượt làm bài, upload audio nghe |
+
 ## 6. Nội dung ngoài (content hub)
 
 | Endpoint | Chức năng |
@@ -119,10 +133,15 @@ Có cache (`api_cache`) + quota manager cho API bên thứ ba, và Celery prefet
 | Task | Lịch |
 |------|------|
 | `reminders.scan_fsrs_reminders` | Theo `REMINDER_SCAN_INTERVAL_SECONDS` |
+| `event_worker.drain_content_interaction_stream` | Theo `EVENT_WORKER_DRAIN_INTERVAL_SECONDS` |
 | `streak_reminders.send_streak_alerts` | 20:00 hằng ngày |
 | `word_of_day.send_word_of_day` | 08:00 hằng ngày |
 | `content_agent.cleanup_expired_content_agent_uploads` | 03:15 hằng ngày |
 | `learner_state.cleanup_learner_observations` | 02:30 hằng ngày |
+| `auth_tokens.prune_refresh_tokens` | 02:15 hằng ngày |
+| `skill_history.prune_exercise_attempts` | 02:45 hằng ngày |
+| `event_worker.prune_product_events` | 03:45 hằng ngày |
+| `skill_history.snapshot_skill_scores` | 03:00 thứ Hai |
 | `ranking_agent.auto_league_reset` | 00:05 thứ Hai |
 | `content_prefetch_schedule.prefetch_news` | Mỗi 6 giờ |
 | `content_prefetch_schedule.prefetch_youtube` | Mỗi 12 giờ |
