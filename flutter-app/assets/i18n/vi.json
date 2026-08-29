@@ -1391,7 +1391,8 @@
     "practiceMoreButton": "Luyện thêm '{concept}'",
     "correctionsSection": "Sửa lỗi",
     "nativeHintSection": "Gợi ý ngôn ngữ mẹ đẻ",
-    "relatedConceptsSection": "Khái niệm liên quan"
+    "relatedConceptsSection": "Khái niệm liên quan",
+    "suggestedCoursesLabel": "Khóa học dành cho bạn"
   },
   "youtube": {
     "subtitles": "Phụ đề",

@@ -1,33 +1,12 @@
 """Internal endpoint for standalone learner-error diagnosis."""
 
-import hmac
-import os
-
-from fastapi import APIRouter, HTTPException, Security, status
-from fastapi.security import APIKeyHeader
+from fastapi import APIRouter, Security
 from pydantic import BaseModel
 
+from api.core.auth import verify_internal_admin_key
 from api.services.trace_cag.nodes_v2 import diagnose_node
 
 router = APIRouter(prefix="/api/v1/internal/diagnose")
-
-_admin_key_header = APIKeyHeader(name="X-Admin-Api-Key", auto_error=False)
-
-
-async def _verify_admin_key(
-    provided: str | None = Security(_admin_key_header),
-) -> None:
-    expected = os.getenv("AI_ADMIN_API_KEY", "").strip()
-    if not expected:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="AI_ADMIN_API_KEY is not configured",
-        )
-    if not provided or not hmac.compare_digest(provided, expected):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid admin API key",
-        )
 
 
 class DiagnosisRequest(BaseModel):
@@ -51,7 +30,7 @@ class DiagnosisResponse(BaseModel):
 @router.post(
     "",
     response_model=DiagnosisResponse,
-    dependencies=[Security(_verify_admin_key)],
+    dependencies=[Security(verify_internal_admin_key)],
 )
 async def diagnose_error(body: DiagnosisRequest) -> DiagnosisResponse:
     result = await diagnose_node(

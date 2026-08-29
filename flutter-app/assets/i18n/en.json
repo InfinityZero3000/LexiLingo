@@ -1391,7 +1391,8 @@
     "practiceMoreButton": "Practice {concept}",
     "correctionsSection": "Corrections",
     "nativeHintSection": "Native-Language Hint",
-    "relatedConceptsSection": "Related Concepts"
+    "relatedConceptsSection": "Related Concepts",
+    "suggestedCoursesLabel": "Courses for you"
   },
   "youtube": {
     "subtitles": "Subtitles",

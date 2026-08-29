@@ -206,6 +206,7 @@ async def lexi_chat(
         corrections=result.corrections,
         linked_concepts=result.linked_concepts,
         suggested_practice=result.suggested_practice,
+        suggested_courses=result.suggested_courses,
         native_hint=result.native_hint,
         scores=result.scores,
         story_context=result.story_ctx,

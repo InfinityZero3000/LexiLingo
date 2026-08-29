@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/presentation/widgets/markdown_message_content.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/pronunciation_score_card.dart';
 
@@ -116,6 +117,9 @@ class LexiDialogueBubble extends StatelessWidget {
             children: [
               // Message text
               _buildLexiMessageContent(context, isDark),
+              // Real catalog rows, attached by the server when the learner
+              // asked what to study — see LexiCourseSuggestions.
+              LexiCourseSuggestions(courses: message.suggestedCourses),
               // Action buttons row
               if (message.hasAudio ||
                   onShowCorrections != null ||

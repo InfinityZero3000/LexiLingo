@@ -54,7 +54,7 @@ from app.services.rank_service import apply_rank_info_to_user, calculate_rank
 from app.services.level_service import calculate_numeric_level
 from app.services.learner_error_service import record_learner_error
 from app.services.learner_state import record_concept_observation
-from app.clients.ai_service_client import diagnose_error
+from app.clients.ai_service_client import diagnose_error, invalidate_learner_card
 
 
 logger = logging.getLogger(__name__)
@@ -716,7 +716,14 @@ async def record_exercise_results_for_user(
         apply_rank_info_to_user(current_user, rank_info)
 
     await db.commit()
-    
+
+    # Only on a level change, and only after the commit — Lexi re-reads the
+    # card the moment it is dropped, so dropping it earlier would just cache
+    # the old level again. XP and streak drift is what the card's TTL is for;
+    # invalidating on every exercise batch would be one request per answer.
+    if level_changed:
+        await invalidate_learner_card(current_user.id)
+
     return {
         "exercises_recorded": len(results),
         "skill_updates": skill_updates,
@@ -1035,6 +1042,7 @@ async def submit_placement_test(
     apply_rank_info_to_user(current_user, new_rank)
 
     await db.commit()
+    await invalidate_learner_card(current_user.id)
 
     return {
         "assessed_level": assessed_level,
@@ -1119,6 +1127,7 @@ async def submit_exam_gated_progression(
         db.add(history)
         await db.commit()
         await db.refresh(profile)
+        await invalidate_learner_card(current_user.id)
 
     return ExamGatedProgressionResponse(
         previous_level=previous_level,
