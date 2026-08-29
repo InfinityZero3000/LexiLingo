@@ -75,12 +75,16 @@ void main() {
   });
 
   test('impossible contrast tuple fails with actionable diagnostics', () {
+    // A black fill on a mid-grey page: the "3:1 from the fill" band starts
+    // above the "3:1 from the page" band ends, so no candidate can satisfy
+    // both. Black-on-white no longer qualifies — decoration() now seeds the
+    // candidate list with primary, whose lightness variants reach 3.98 there.
     final impossible = AppTactileTheme(
       brightness: Brightness.light,
       primary: const Color(0xFF137FEC),
       onPrimary: Colors.white,
       onSurface: Colors.black,
-      pageBackground: Colors.white,
+      pageBackground: const Color(0xFF989898),
     );
 
     expect(

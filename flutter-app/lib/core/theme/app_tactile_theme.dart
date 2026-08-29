@@ -38,11 +38,15 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
     String? diagnosticId,
   }) {
     final effectiveFill = intermediateFill ?? fill;
-    // ponytail: soft tinted border instead of WCAG-forced high-contrast
-    // border — that path picked near-black on light fills, reading as a
-    // harsh black frame around every card.
-    final borderColor = (accent ?? onSurface).withValues(
-      alpha: brightness == Brightness.dark ? 0.28 : 0.14,
+    // Without an accent the candidate list is only [onSurface, black, white],
+    // so on a light fill the best-contrast pick was black — a harsh frame
+    // around every card. Seeding it with primary keeps the 3:1 guarantee and
+    // lets a tinted border win it.
+    final borderColor = _contrastingBorder(
+      accent: accent ?? primary,
+      fill: effectiveFill,
+      background: pageBackground,
+      diagnosticId: diagnosticId,
     );
     final disabled = states.contains(WidgetState.disabled);
     final pressed = states.contains(WidgetState.pressed);
@@ -186,6 +190,11 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
     }
     candidates.addAll([onSurface, Colors.black, Colors.white]);
 
+    // Satisfy 3:1, do not maximise it. Maximising made this always return the
+    // extreme: on a white fill black scores 21:1 and no accent-derived colour
+    // can beat that, so every card got a black frame however brand-coloured
+    // its accent was. Candidates are ordered accent-first, so the first one
+    // that is legible enough wins and onSurface/black/white stay the net.
     var winner = candidates.first;
     var winnerScore = -1.0;
     for (final candidate in candidates) {
@@ -193,6 +202,7 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
         contrastRatio(candidate, fill),
         contrastRatio(candidate, background),
       );
+      if (score >= 3) return candidate;
       if (score > winnerScore) {
         winner = candidate;
         winnerScore = score;
