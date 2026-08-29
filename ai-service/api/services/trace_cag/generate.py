@@ -612,7 +612,17 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             import asyncio as _asyncio
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_key = await get_available_groq_key(estimated_tokens=512)
+            # The pool debits this against each key's per-minute budget, so it
+            # has to cover the whole request, not just the reply. `messages`
+            # already holds the system prompt, the KG context inside it and up
+            # to 12 history turns; a grounded first turn alone measures ~850
+            # tokens, so the flat 512 under-counted it by at least 1.7x and the
+            # pool handed out keys it had already spent, which Groq answered
+            # with 429 and a several-minute Retry-After.
+            _prompt_chars = sum(len(str(m.get("content") or "")) for m in messages)
+            groq_key = await get_available_groq_key(
+                estimated_tokens=512 + _prompt_chars // 4
+            )
             groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 

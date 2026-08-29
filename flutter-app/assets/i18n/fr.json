@@ -948,6 +948,9 @@
   },
   "assessment": {
     "placementTest": "Test de niveau",
+    "confirmStartTitle": "Commencer le test de positionnement ?",
+    "confirmStartMessage": "Vous devrez répondre à toutes les questions en une seule fois. Prêt à commencer ?",
+    "startNow": "Commencer",
     "cefrLevel": "Niveau CECR",
     "readingSpeed": "Vitesse de lecture",
     "retakeTest": "Repasser le test",

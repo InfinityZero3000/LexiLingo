@@ -948,6 +948,9 @@
   },
   "assessment": {
     "placementTest": "分级测试",
+    "confirmStartTitle": "开始分班测试？",
+    "confirmStartMessage": "你需要一次性回答所有问题。准备好开始了吗？",
+    "startNow": "开始",
     "cefrLevel": "CEFR 等级",
     "readingSpeed": "阅读速度",
     "retakeTest": "重新测试",

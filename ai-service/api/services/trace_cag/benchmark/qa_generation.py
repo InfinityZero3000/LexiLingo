@@ -492,6 +492,37 @@ def _ircot_support_titles(state: TraceCAGState) -> list[str]:
     return [str(item).strip() for item in raw if str(item).strip()]
 
 
+def _ircot_uncovered_question_entities(question: str, base_context: str) -> list[str]:
+    """Named entities the question asks about that the context never mentions.
+
+    Oracle-free stand-in for "am I missing a hop". The gold `supporting_titles`
+    the gate was originally written against are NOT passed to the pipeline at
+    runtime (`tracecag_bench/runtime/ai_service.py` builds benchmark_metadata
+    without them), so every support-coverage branch below was dead and the gate
+    collapsed to a question-shape guess. An entity named in the question with no
+    passage mentioning it is the same signal without reading the answer key.
+    """
+    haystack = str(base_context or "").lower()
+    if not haystack:
+        return []
+    # Capitalised runs, skipping the sentence-initial word (usually "Who"/"What").
+    spans = re.findall(r"\b[A-Z][\w.'’-]*(?:\s+[A-Z][\w.'’-]*)*", str(question or "")[1:])
+    uncovered = []
+    for span in spans:
+        span = span.strip()
+        if len(span) < 3 or span.lower() in _IRCOT_ENTITY_STOPWORDS:
+            continue
+        if span.lower() not in haystack:
+            uncovered.append(span)
+    return uncovered
+
+
+_IRCOT_ENTITY_STOPWORDS = frozenset({
+    "the", "a", "an", "who", "what", "which", "when", "where", "why", "how",
+    "was", "were", "is", "are", "did", "does", "do", "in", "of", "and", "or",
+})
+
+
 def _ircot_question_type(question: str) -> str:
     text = str(question or "").strip().lower()
     if not text:
@@ -528,8 +559,10 @@ def _ircot_should_run(question: str, base_context: str, state: TraceCAGState) ->
     support_total = len(support_titles)
     support_coverage = (support_hits / support_total) if support_total else 0.0
     question_type = _ircot_question_type(question)
+    uncovered = _ircot_uncovered_question_entities(question, base_context)
     selective = _env_flag("TRACECAG_BENCHMARK_IRCOT_SELECTIVE", True)
     meta: dict[str, Any] = {
+        "uncovered_entities": uncovered[:5],
         "evaluated": True,
         "selected": False,
         "reason": "not_selected",
@@ -550,6 +583,19 @@ def _ircot_should_run(question: str, base_context: str, state: TraceCAGState) ->
     if not docs:
         meta["reason"] = "no_candidate_pool"
         return False, meta
+    unselected = [
+        doc for doc in docs
+        if str(doc.get("title") or "").strip().lower() not in context_titles
+    ]
+    meta["unselected_docs"] = len(unselected)
+    if not unselected:
+        # The reason call can only pay for itself by pulling in a passage that
+        # is not already in context. Since the evidence budget was raised to
+        # 9–10 of the 10-document pool, that is usually empty: measured 41 of 53
+        # reason calls returned `no_bridge_passages` — an LLM call, its latency
+        # and its quota spent on a retrieval that had nothing left to retrieve.
+        meta["reason"] = "no_unselected_candidates"
+        return False, meta
     if not selective:
         meta.update({"selected": True, "reason": "all_multihop"})
         return True, meta
@@ -561,6 +607,11 @@ def _ircot_should_run(question: str, base_context: str, state: TraceCAGState) ->
         return False, meta
     if support_total >= 2 and support_coverage < 1.0:
         meta.update({"selected": True, "reason": "missing_support_bridge"})
+        return True, meta
+    if uncovered:
+        # A hop the question names but the context never mentions — the case
+        # a second, reasoning-driven retrieval exists for.
+        meta.update({"selected": True, "reason": "uncovered_question_entity"})
         return True, meta
     if question_type in {"bridge", "comparison"} and (support_total >= 2 or len(docs) >= 4):
         meta.update({"selected": True, "reason": "question_shape_multihop"})
@@ -692,6 +743,7 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
 
 # ── Async QA generation (benchmark entry point) ───────────────────────────────
 
+
 async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
     """Generate concise QA outputs for paper-style public benchmarks."""
     from api.services.trace_cag.llm_client import _qwen_reasoning_overrides, _throttled_post_json
@@ -700,6 +752,9 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     question = state.get("user_input", "")
     context = state.get("retrieved_context", "") or (state.get("benchmark_context") or "")
     clean_context = _strip_jit_soft_graph_block(context)
+    # The context the answer is actually grounded in. IRCoT appends a passage
+    # that clean_context never sees, so grounding/cache checks run against it.
+    answer_context = clean_context
     generation_policy = state.get("generation_policy", "auto")
 
     if generation_policy == "template":
@@ -728,6 +783,13 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         if _use_ircot:
             truncated_context, _ircot_hint, _augment_meta = await _ircot_augment(question, truncated_context, state)
             _ircot_meta.update(_augment_meta)
+            if _augment_meta.get("added_titles"):
+                # Ground against the UNION. The augmented context puts the bridge
+                # block first and re-caps, so it drops the tail of the original —
+                # it is not a superset of clean_context. Grounding against it
+                # alone turned a correct long answer into "unknown" because the
+                # passage supporting it had been cut to make room.
+                answer_context = f"{truncated_context}\n{clean_context}"
             _reason_model = str(_ircot_meta.get("reason_model") or "")
             if _reason_model:
                 auxiliary_models.append(f"ircot_reason:{_reason_model}")
@@ -960,7 +1022,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     response = _postprocess_benchmark_qa_answer(
         question,
         response,
-        clean_context,
+        answer_context,
         support_floor=max(0.2, min(0.8, support_floor)),
         grounding_margin=max(0.02, min(0.35, grounding_margin)),
         model_used=model_used,
@@ -969,7 +1031,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
     overall_score = 1.0 if response and response.lower() != "unknown" else 0.0
     if state.get("cache_policy", "on") == "on":
         try:
-            if _is_low_quality_benchmark_answer(response, clean_context, model_used):
+            if _is_low_quality_benchmark_answer(response, answer_context, model_used):
                 logger.info("[_generate_benchmark_qa_response] Skip cache write for low-quality benchmark answer")
             else:
                 await _write_cache_entry(
@@ -978,7 +1040,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                     "benchmark_qa",
                     [],
                     overall_score,
-                    clean_context,
+                    answer_context,
                     model_used=model_used,
                 )
         except Exception as e:

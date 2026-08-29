@@ -65,3 +65,48 @@ def test_benchmark_evidence_snippet_keeps_definition_and_question_match():
     assert "Avery Stone is a Canadian film director" in snippet
     assert "directed Moon Harbor" in snippet
     assert "unrelated awards" not in snippet
+
+
+def test_all_support_distinguishes_half_retrieved_multihop_from_fully_retrieved():
+    """recall@k averages over hops, so a 2-hop question with only one hop
+    retrieved scores 0.5 — indistinguishable from genuine partial progress even
+    though the question is unanswerable. all_support_at_k is the gate that
+    separates them."""
+    trace = [
+        {"title": "Hop One", "text": "first supporting passage"},
+        {"title": "Distractor", "text": "irrelevant"},
+        {"title": "Hop Two", "text": "second supporting passage"},
+    ]
+    supporting = ("Hop One", "Hop Two")
+
+    half = retrieval_metrics(trace[:2], supporting)
+    assert half["recall_at_5"] == 0.5
+    assert half["hit_at_5"] == 1.0
+    assert half["all_support_at_5"] == 0.0
+
+    full = retrieval_metrics(trace, supporting)
+    assert full["recall_at_5"] == 1.0
+    assert full["all_support_at_5"] == 1.0
+
+
+def test_answer_in_context_tracks_reader_ceiling_not_title_overlap():
+    trace = [{"title": "Hop One", "text": "The arena seats 3,677 people."}]
+    reachable = retrieval_metrics(trace, ("Hop One",), gold_answers=("3,677",))
+    assert reachable["answer_in_context_at_5"] == 1.0
+
+    # Right passage retrieved, but the gold string is not in it: the reader
+    # cannot win this one, and EM=0 here is not a reader defect.
+    unreachable = retrieval_metrics(trace, ("Hop One",), gold_answers=("9,984",))
+    assert unreachable["recall_at_5"] == 1.0
+    assert unreachable["answer_in_context_at_5"] == 0.0
+
+
+def test_map_rewards_ranking_supporting_passages_higher():
+    supporting = ("A", "B")
+    top = [{"title": "A"}, {"title": "B"}, {"title": "X"}]
+    bottom = [{"title": "X"}, {"title": "A"}, {"title": "B"}]
+
+    assert retrieval_metrics(top, supporting)["recall_at_5"] == retrieval_metrics(bottom, supporting)["recall_at_5"]
+    assert retrieval_metrics(top, supporting)["map_at_5"] > retrieval_metrics(bottom, supporting)["map_at_5"]
+
+

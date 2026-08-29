@@ -226,6 +226,7 @@ services:
       DEBUG: ${DEBUG:-False}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
       AI_SERVICE_URL: http://ai-service:8001/api/v1
+      AI_AUDIT_INGEST_SECRET: ${AI_AUDIT_INGEST_SECRET:-}
       # Redis (use container hostname, not localhost)
       REDIS_URL: redis://redis:6379/0
       REDIS_HOST: redis
@@ -339,6 +340,8 @@ services:
       DEBUG: ${DEBUG:-false}
       LEARNER_STATE_MODE: ${LEARNER_STATE_MODE:-off}
       LEARNER_STATE_API_URL: http://backend-service:8000/api/v1/internal
+      BACKEND_AUDIT_INGEST_URL: http://backend-service:8000/api/v1/ai-audit/events
+      AI_AUDIT_INGEST_SECRET: ${AI_AUDIT_INGEST_SECRET:-}
       LEARNER_STATE_INTERNAL_TOKEN: ${LEARNER_STATE_INTERNAL_TOKEN:-}
       LEARNER_STATE_INTERNAL_AUDIENCE: lexilingo-backend
       KUZU_USER_MASTERY_WRITES_ENABLED: ${KUZU_USER_MASTERY_WRITES_ENABLED:-true}

@@ -69,6 +69,15 @@ def _token_overlap_count(query: str, candidate: str) -> int:
     return len(query_tokens & candidate_tokens)
 
 
+_QUESTION_HEAD_WORDS = frozenset(
+    {
+        "who", "what", "which", "when", "where", "why", "how",
+        "was", "were", "is", "are", "did", "does", "do",
+        "the", "a", "an",
+    }
+)
+
+
 def _extract_query_anchors(question: str) -> list[str]:
     text = str(question or "")
     anchors: list[str] = []
@@ -78,9 +87,22 @@ def _extract_query_anchors(question: str) -> list[str]:
         if q:
             anchors.append(q)
 
-    # Consecutive title-cased words often represent entities in HotpotQA-style questions.
-    for phrase in re.findall(r"\b[A-Z][a-z0-9''.-]*(?:\s+[A-Z][a-z0-9''.-]*)+\b", text):
+    # Consecutive title-cased words often represent entities in HotpotQA-style
+    # questions. The character classes must cover accented letters: with plain
+    # [A-Z][a-z...] "Téa Leoni" matched nothing at all, so that hop had no anchor.
+    for phrase in re.findall(
+        r"\b[A-ZÀ-ÞĀ-Ž][a-z0-9à-öø-ÿā-ž''.-]*(?:\s+[A-ZÀ-ÞĀ-Ž][a-z0-9à-öø-ÿā-ž''.-]*)+\b",
+        text,
+    ):
         p = phrase.strip().lower()
+        # A question opens with a capitalised interrogative/auxiliary, which the
+        # title-case run then glues onto the first entity: "Were Scott Derrickson
+        # and Ed Wood..." yielded the anchor "were scott derrickson", which no
+        # passage can ever contain — so that hop silently had no anchor at all
+        # and every anchor-driven score treated it as uncoverable.
+        head, _, rest = p.partition(" ")
+        if rest and head in _QUESTION_HEAD_WORDS:
+            p = rest
         if p:
             anchors.append(p)
 
@@ -91,6 +113,11 @@ def _extract_query_anchors(question: str) -> list[str]:
             seen.add(anchor)
             deduped.append(anchor)
     return deduped[:8]
+
+
+def _anchors_present(anchors: list[str], title: str, body: str) -> set[str]:
+    haystack = f"{title} {body}".lower()
+    return {anchor for anchor in anchors if anchor and anchor in haystack}
 
 
 def _anchor_coverage_score(anchors: list[str], title: str, body: str) -> float:
@@ -198,7 +225,40 @@ def _select_diverse_multihop_evidence(
     anchors = _extract_query_anchors(question)
     remaining = list(items)
     selected: list[Dict[str, Any]] = []
+    covered_anchors: set[str] = set()
 
+    # Phase 1 — guarantee one slot per question anchor while slots remain.
+    # A weighted coverage bonus is not enough: with 0.30 marginal weight a
+    # redundant passage about the covered hop still outranks the missing hop's
+    # passage whenever its score is ~0.35 higher, which is common. A question
+    # naming two entities is unanswerable without both, so coverage is a
+    # constraint here, not a preference — this is what moves all_support_at_k.
+    for anchor in anchors:
+        if len(selected) >= budget:
+            break
+        if anchor in covered_anchors:
+            continue
+        best = max(
+            (
+                item
+                for item in remaining
+                if anchor
+                in _anchors_present(
+                    anchors, str(item.get("title") or ""), str(item.get("text") or "")
+                )
+            ),
+            key=lambda item: float(item.get("fusion_score") or 0.0),
+            default=None,
+        )
+        if best is None:
+            continue
+        remaining.remove(best)
+        selected.append(best)
+        covered_anchors |= _anchors_present(
+            anchors, str(best.get("title") or ""), str(best.get("text") or "")
+        )
+
+    # Phase 2 — fill the rest on the usual relevance/diversity objective.
     while remaining and len(selected) < budget:
         best_idx = 0
         best_score = float("-inf")
@@ -206,7 +266,10 @@ def _select_diverse_multihop_evidence(
             base = float(item.get("fusion_score") or 0.0)
             title = str(item.get("title") or "")
             text = str(item.get("text") or "")
-            anchor_cov = _anchor_coverage_score(anchors, title, text)
+            item_anchors = _anchors_present(anchors, title, text)
+            marginal = (
+                len(item_anchors - covered_anchors) / max(len(anchors), 1) if anchors else 0.0
+            )
 
             max_sim = 0.0
             for prev in selected:
@@ -214,54 +277,22 @@ def _select_diverse_multihop_evidence(
                 if sim > max_sim:
                     max_sim = sim
 
-            # MMR-like objective: keep strong evidence while avoiding near-duplicate titles.
-            mmr = (0.78 * base) + (0.30 * anchor_cov) - (0.22 * max_sim)
+            # MMR-like objective: keep strong evidence while avoiding near-duplicate
+            # titles, and prefer a passage covering an anchor nothing else covers.
+            mmr = (0.78 * base) + (0.30 * marginal) - (0.22 * max_sim)
             if mmr > best_score:
                 best_score = mmr
                 best_idx = idx
 
-        selected.append(remaining.pop(best_idx))
-
-    return selected
-
-
-def _interleave_explicit_second_hop(
-    items: list[Dict[str, Any]],
-    *,
-    seeds: int = 3,
-    enabled: bool | None = None,
-) -> list[Dict[str, Any]]:
-    """Keep rank one, then surface candidates explicitly named by top seeds."""
-    if enabled is None:
-        enabled = _env_flag("TRACECAG_SECOND_HOP_INTERLEAVE", False)
-    if not enabled or len(items) < 2:
-        return items
-
-    seed_docs = [
-        (_normalize_benchmark_surface(item.get("title", "")), _normalize_benchmark_surface(item.get("text", "")))
-        for item in items[:seeds]
-    ]
-    linked = []
-    for index, item in enumerate(items[1:], 1):
-        title = _normalize_benchmark_surface(item.get("title", ""))
-        link_count = sum(
-            bool(title and title != seed_title and f" {title} " in f" {seed_text} ")
-            for seed_title, seed_text in seed_docs
+        chosen = remaining.pop(best_idx)
+        selected.append(chosen)
+        covered_anchors |= _anchors_present(
+            anchors, str(chosen.get("title") or ""), str(chosen.get("text") or "")
         )
-        if link_count:
-            linked.append((link_count, float(item.get("fusion_score") or 0.0), -index, item))
 
-    ordered = items[:1] + [row[-1] for row in sorted(linked, reverse=True)] + items[1:]
-    seen: set[str] = set()
-    result = []
-    for index, item in enumerate(ordered):
-        key = _normalize_benchmark_surface(item.get("title", ""))
-        key = key or _normalize_benchmark_surface(str(item.get("item_id") or ""))
-        key = key or f"untitled:{index}"
-        if key not in seen:
-            seen.add(key)
-            result.append(item)
-    return result
+    # Coverage decided membership; relevance decides the order the reader sees.
+    selected.sort(key=lambda item: float(item.get("fusion_score") or 0.0), reverse=True)
+    return selected
 
 
 def _benchmark_evidence_snippet(
@@ -272,7 +303,13 @@ def _benchmark_evidence_snippet(
     max_sentences: int = 2,
     max_chars: int = 520,
 ) -> str:
-    """Keep benchmark evidence reader-friendly without changing ranking."""
+    """Keep benchmark evidence reader-friendly without changing ranking.
+
+    ponytail: clipping from rank 3 deletes the answer outright in 3 of 54 span
+    questions (n=64), but retaining bridge sentences (link_titles, measured
+    2026-08-28) cost more F1 than it recovered in BOTH modes and was reverted.
+    Fixing this needs a larger context budget, not a smarter snippet.
+    """
     body = str(text or "").strip()
     if not body:
         return ""
@@ -835,6 +872,7 @@ def _update_ranker_from_generation(
 
     ranker = get_retrieval_ranker()
     training_payload: List[Dict[str, Any]] = []
+    anchors = _extract_query_anchors(question)
 
     for item in retrieval_trace[:8]:
         item_id = str(item.get("item_id") or item.get("title") or "")
@@ -846,7 +884,17 @@ def _update_ranker_from_generation(
         label: Optional[float] = None
         if support >= 0.52:
             label = 1.0
-        elif support <= 0.10:
+        elif support <= 0.10 and _anchor_coverage_score(
+            anchors, str(item.get("title") or ""), item_text
+        ) <= 0.0:
+            # "Does not contain the answer" is not "irrelevant". On a bridge
+            # question the answer lives in hop 2, so the hop-1 passage — the one
+            # naming the bridge entity — scored ~0 support and was trained as a
+            # negative: 31.4% of gold supporting passages in the n=64 run were
+            # labelled 0.0, teaching the ranker to demote exactly what multi-hop
+            # retrieval needs. A passage carrying a question anchor is evidence
+            # wherever the answer sits; only anchor-free passages are true
+            # distractors (442 of those remain, so negatives stay plentiful).
             label = 0.0
 
         if label is None:

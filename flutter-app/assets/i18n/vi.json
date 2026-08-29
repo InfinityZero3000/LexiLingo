@@ -1077,6 +1077,9 @@
   },
   "assessment": {
     "placementTest": "Bài kiểm tra trình độ",
+    "confirmStartTitle": "Bắt đầu bài kiểm tra xếp lớp?",
+    "confirmStartMessage": "Bạn sẽ cần trả lời tất cả câu hỏi trong một lượt. Sẵn sàng bắt đầu chưa?",
+    "startNow": "Bắt đầu",
     "cefrLevel": "Trình độ CEFR",
     "readingSpeed": "Tốc độ đọc",
     "retakeTest": "Làm lại bài kiểm tra",

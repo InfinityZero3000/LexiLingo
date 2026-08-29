@@ -948,6 +948,9 @@
   },
   "assessment": {
     "placementTest": "Prueba de nivel",
+    "confirmStartTitle": "¿Comenzar la prueba de nivel?",
+    "confirmStartMessage": "Deberás responder todas las preguntas de una sola vez. ¿Listo para empezar?",
+    "startNow": "Comenzar",
     "cefrLevel": "Nivel MCER",
     "readingSpeed": "Velocidad de lectura",
     "retakeTest": "Repetir prueba",

@@ -14968,6 +14968,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/features/level/presentation/widgets/proficiency_card.dart::ProficiencyCard::showDialog::0",
+      "path": "lib/features/level/presentation/widgets/proficiency_card.dart",
+      "entryPoint": "overlay",
+      "symbol": "ProficiencyCard",
+      "callKind": "showDialog",
+      "ordinal": 0,
+      "line": 263,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/lexi_chat/presentation/pages/lexi_chat_page.dart::_LexiChatPageState::BoxDecoration::0",
       "path": "lib/features/lexi_chat/presentation/pages/lexi_chat_page.dart",
       "entryPoint": "surface",
