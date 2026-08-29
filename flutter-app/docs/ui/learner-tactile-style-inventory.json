@@ -18036,6 +18036,122 @@
       }
     },
     {
+      "id": "lib/features/practice/presentation/pages/practice_lab_page.dart::_IeltsEntryCard::BoxDecoration::0",
+      "path": "lib/features/practice/presentation/pages/practice_lab_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_IeltsEntryCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 608,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/practice/presentation/pages/practice_lab_page.dart::_IeltsEntryCard::Card::0",
+      "path": "lib/features/practice/presentation/pages/practice_lab_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_IeltsEntryCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 590,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/practice/presentation/pages/practice_lab_page.dart::_IeltsEntryCard::Card::1",
+      "path": "lib/features/practice/presentation/pages/practice_lab_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_IeltsEntryCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 595,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/practice/presentation/pages/practice_lab_page.dart::_IeltsEntryCard::MaterialPageRoute::0",
+      "path": "lib/features/practice/presentation/pages/practice_lab_page.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_IeltsEntryCard",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 599,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/practice/presentation/pages/practice_lab_page.dart::_PracticeLabPageState::Card::0",
+      "path": "lib/features/practice/presentation/pages/practice_lab_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_PracticeLabPageState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 80,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/practice/presentation/widgets/practice_lab_navigation.dart::<top-level>::MaterialPageRoute::0",
       "path": "lib/features/practice/presentation/widgets/practice_lab_navigation.dart",
       "entryPoint": "imperativeRoute",
@@ -27009,6 +27125,752 @@
           "accent": "0xFFFFFFFF",
           "fill": "0xFF121212",
           "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::_RecommendationCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "_RecommendationCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 116,
+      "category": "eligible",
+      "group": 1,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::_RecommendationCard::Navigator.pushNamed::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 0,
+      "line": 216,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::_RecommendationCard::Navigator.pushNamed::1",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 1,
+      "line": 218,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::_RecommendationCard::Navigator.pushNamed::2",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 2,
+      "line": 220,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::_RecommendationsSectionState::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "_RecommendationsSectionState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 107,
+      "category": "eligible",
+      "group": 1,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_GradingCard::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_GradingCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 173,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_GradingCard::Card::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_GradingCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 185,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_GradingCard::Card::2",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_GradingCard",
+      "callKind": "Card",
+      "ordinal": 2,
+      "line": 200,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_GradingCard::Card::3",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_GradingCard",
+      "callKind": "Card",
+      "ordinal": 3,
+      "line": 211,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_OverallCard::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_OverallCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 105,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_OverallCard::Card::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_OverallCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 112,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_ResultView::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_ResultView",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 61,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_ResultView::Card::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_ResultView",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 64,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_ResultView::Card::2",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_ResultView",
+      "callKind": "Card",
+      "ordinal": 2,
+      "line": 89,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_result_page.dart::_ReviewSection::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_result_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_ReviewSection",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 319,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_AudioPlayerBarState::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_AudioPlayerBarState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 327,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_AudioPlayerBarState::Card::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_AudioPlayerBarState",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 336,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_ReadingSection::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_ReadingSection",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 409,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_SittingViewState::MaterialPageRoute::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_SittingViewState",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 186,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_SittingViewState::showDialog::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "overlay",
+      "symbol": "_SittingViewState",
+      "callKind": "showDialog",
+      "ordinal": 0,
+      "line": 132,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_SittingViewState::showDialog::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "overlay",
+      "symbol": "_SittingViewState",
+      "callKind": "showDialog",
+      "ordinal": 1,
+      "line": 154,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_SpeakingPartState::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_SpeakingPartState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 737,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_WritingTask::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_WritingTask",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 577,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_HistoryTile::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_HistoryTile",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 193,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_HistoryTile::MaterialPageRoute::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_HistoryTile",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 216,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_IeltsTestsView::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_IeltsTestsView",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 45,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_IeltsTestsView::Card::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_IeltsTestsView",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 79,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_TestCard::Card::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_TestCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 89,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_TestCard::Card::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_TestCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 94,
+      "category": "eligible",
+      "group": 2,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_TestCard::MaterialPageRoute::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_TestCard",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 99,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart::LexiCourseSuggestions::Card::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart",
+      "entryPoint": "surface",
+      "symbol": "LexiCourseSuggestions",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 46,
+      "category": "eligible",
+      "group": 5,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart::_CourseCard::BoxDecoration::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart",
+      "entryPoint": "surface",
+      "symbol": "_CourseCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 89,
+      "category": "eligible",
+      "group": 5,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart::_CourseCard::Card::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart",
+      "entryPoint": "surface",
+      "symbol": "_CourseCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 58,
+      "category": "eligible",
+      "group": 5,
+      "status": "planned",
+      "colors": {
+        "light": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": null,
+          "fill": null,
+          "pageBackground": null,
           "intermediateFill": null
         }
       }
