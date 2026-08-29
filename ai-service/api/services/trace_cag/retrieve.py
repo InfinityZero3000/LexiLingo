@@ -36,7 +36,6 @@ from api.services.trace_cag.benchmark.ranking import (
     _rank_benchmark_candidates,
     _rank_with_online_ranker,
     _ranker_enabled,
-    _interleave_explicit_second_hop,
     _select_diverse_multihop_evidence,
 )
 
@@ -551,7 +550,6 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         benchmark_task=benchmark_task,
     )
     if benchmark_candidates and benchmark_task in {"multihop_qa", "retrieval_qa"}:
-        evidence_items = _interleave_explicit_second_hop(evidence_items)
         top_evidence = _select_diverse_multihop_evidence(
             items=evidence_items,
             question=user_input,
