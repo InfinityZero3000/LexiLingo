@@ -5,20 +5,35 @@ per question), canonical SQuAD normalisation. All runs `Validation: PASS`.
 
 ## Headline
 
-| Mode | EM | F1 | RougeL | Cache hit | Latency |
+> **Revised 2026-08-29.** Every number below is from a validated n=64 run with
+> zero provider fallbacks. The HippoRAG figures replace the ones first published
+> here: its QA token budget had been silently overwritten, and its recall metric
+> was measured with the wrong rule. Both are fixed and re-run.
+
+| Mode | EM | F1 | R@5 | Cache hit | Latency |
 |---|---|---|---|---|---|
-| cag_vanilla | 59.4% | 71.3% | 71.3% | 47.7% | 1384 ms |
-| **tracecag_rapid** | **62.5%** | **74.7%** | **74.7%** | 48.4% | 1382 ms |
-| HippoRAG 2 (real, `pip install hipporag`) | 48.4–50.0% | 59.3–64.2% | — | n/a (no cache) | ~64 s |
+| cag_vanilla | 62.5% | 74.3% | 74.2% | 47.7% | 2.1 s (cold) |
+| **tracecag_rapid** | **62.5%** | **74.7%** | 78.9% | 48.4% | 2.2 s (cold) |
+| HippoRAG 2 (real, `pip install hipporag`) | 53.1–56.2% | 69.7–73.0% | **85.9%** | n/a (no cache) | 66–81 s |
 
-The HippoRAG row is a **range across two runs of an identical configuration**
-(EM 50.0/F1 64.2 and EM 48.4/F1 59.3). The two were believed to differ by a QA
-token budget; that patch turned out to be a no-op (see "Measuring the baseline"
-below), so the spread is run-to-run nondeterminism: **±1.6 EM / ±4.9 F1 at n=64**.
-Quote the range, not either endpoint.
+The HippoRAG EM/F1 row is a **range across two runs of an identical
+configuration** (53.1/69.7 and 56.2/73.0). 4 of 64 answers differ between them —
+ordinary LLM nondeterminism, not a config effect. Quote the range, not either
+endpoint.
 
-TRACE-CAG is +3.1 EM / +3.4 F1 over vanilla CAG and +12.5 to +14.1 EM /
-+10.5 to +15.4 F1 over the real HippoRAG baseline, at ~46× lower latency.
+TRACE-CAG is **+6.3 to +9.4 EM / +1.7 to +5.0 F1** over the real HippoRAG
+baseline at **~30–37× lower latency**, and **tied with vanilla CAG** (0.0 EM,
++0.4 F1 — inside noise).
+
+Two readings that matter more than the headline:
+
+1. **The architectural gap closed.** Before the 2026-08-28 ranker/IRCoT fixes,
+   `tracecag_rapid` led `cag_vanilla` by +3.1 EM / +3.4 F1. Those fixes are
+   generic, so they lifted the baseline more than the graph path. Nothing here
+   supports a claim that the graph architecture drives the answer-quality win.
+2. **HippoRAG retrieves better and answers worse** (R@5 85.9% vs 78.9%, EM
+   53.1–56.2% vs 62.5%) — the same reachability-vs-conversion split measured
+   *inside* TRACE-CAG, now visible across systems.
 
 Previous best on this pipeline was EM 50.0% (Run 27, `qwen3-32b`, IRCoT).
 
@@ -161,17 +176,44 @@ baseline:
    obtained by accident. **Assert an injected runtime parameter reaches the
    wire before attributing any metric change to it.**
 
-HippoRAG retrieves better (recall@5 ~90%) and answers worse — the same
-reachability-vs-conversion trade-off, from the other side. Its F1 is especially
-unstable because failures are bimodal: the model either emits a 1–3 word answer
-or a 150–180 word reasoning dump, and 8 of 64 questions flipped between those two
-modes across identical runs.
+4. **Its recall metric credited passages it never retrieved.** `recall_at_k`
+   searched the *joined body text* of the retrieved passages for the gold title.
+   Documents are indexed as `"Title: body"`, and on HotpotQA bridge questions one
+   passage names the other's title by construction — that IS the bridge. So a
+   gold passage counted as retrieved whenever any *other* retrieved passage
+   happened to mention it. Fixed to match on document identity and re-run at
+   n=64 (2026-08-29, 0 errors):
+
+   | | R@5 |
+   |---|---|
+   | old (joined-text match) | 93.8% |
+   | new (document identity) | **85.9%** |
+
+   The old rule inflated by **7.8pp** and disagreed on 13 of 64 questions. It was
+   noisy in *both* directions, not merely generous: on 2 questions the gold
+   passage was retrieved but its title never appears in any body text, so the old
+   rule scored a miss on a hit. An earlier estimate here put the exposure at
+   "46.9% of gold titles are quotable from another passage" — that is the
+   *opportunity* for inflation, not the inflation, and overstated it by ~6x.
+   Measure the metric against a re-run, do not infer it from the corpus.
+
+HippoRAG retrieves better (R@5 85.9% vs TRACE-CAG's 78.9%) and answers worse —
+the same reachability-vs-conversion trade-off, from the other side. Its F1 is
+especially unstable because failures are bimodal: the model either emits a 1–3
+word answer or a 150–180 word reasoning dump, and 8 of 64 questions flipped
+between those two modes across identical runs.
 
 ## Standing caveats
 
 - n=64 single split. Run-to-run EM variance measured at ~1 question for
   tracecag_rapid, ~5–6pp for cag_vanilla/hipporag. Do not read a 1-question delta
   as a ranking.
+- **Do not read a cumulative average mid-run as a trend.** During the 2026-08-29
+  HippoRAG run its running EM fell 75% → 50% and looked like degradation. It was
+  not: replayed against the previous run, 36 of the first 37 questions scored
+  identically and the per-block EM oscillated (62.5 / 50.0 / 62.5 / 25.0 / …)
+  rather than declining. The running mean was simply converging from a lucky
+  4-question start toward the true ~53%.
 - `answer_in_context` is 82.8%, so ~17% of questions remain unreachable at this
   budget and no reader change can recover them.
 - The budget increase costs 29% more prompt tokens. It is a benchmark-protocol

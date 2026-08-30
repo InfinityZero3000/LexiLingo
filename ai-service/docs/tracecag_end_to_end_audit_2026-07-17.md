@@ -66,20 +66,36 @@ Multi-hop quality is no longer unverified, but the honest reading is narrower
 than the one first written here. At n=64 on HotpotQA (validated run, 0 provider
 fallbacks):
 
-| System | EM | F1 | latency/question |
-|---|---|---|---|
-| `tracecag_rapid` | 62.5% | 74.7% | 2.2s (cold) |
-| `cag_vanilla` | 62.5% | 74.3% | 2.1s (cold) |
-| HippoRAG 2 (real package) | 56.2% | 73.0% | 80.8s |
+| System | EM | F1 | R@5 | latency/question |
+|---|---|---|---|---|
+| `tracecag_rapid` | 62.5% | 74.7% | 78.9% | 2.2s (cold) |
+| `cag_vanilla` | 62.5% | 74.3% | 74.2% | 2.1s (cold) |
+| HippoRAG 2 (real package) | 53.1–56.2% | 69.7–73.0% | **85.9%** | 66–81s |
 
-TRACE-CAG beats the real HippoRAG package on both headline metrics at ~37x
+HippoRAG's EM/F1 are given as a range over two runs of the *same* configuration
+(53.1/69.7 and 56.2/73.0): 4 of 64 answers differ between them, which is
+ordinary LLM nondeterminism, not a config effect. Quote the range.
+
+TRACE-CAG beats the real HippoRAG package on both headline metrics at ~30–37x
 lower latency. It does **not** currently beat vanilla CAG on EM: the two are
 tied, and the F1 margin of 0.4pp is inside run-to-run noise. Any claim that the
 graph architecture drives the answer-quality win is unsupported at this n.
+HippoRAG still retrieves better than either (85.9% vs 78.9%) and still converts
+that advantage into a worse answer — the same reachability-vs-conversion split
+seen inside TRACE-CAG.
 
-**Do not compare the published R@5 numbers.** HippoRAG's adapter scored recall by
-searching the *joined body text* of the retrieved passages for the gold title,
-and on HotpotQA bridge questions one passage names the other's title by
-construction: 46.9% of gold titles in this 64-question set are quotable from
-some other pool document. That credited passages it never retrieved. The adapter
-now matches on document identity, but the corrected number needs a re-run.
+**The R@5 figure was corrected on 2026-08-29 and the old one must not be
+quoted.** HippoRAG's adapter scored recall by searching the *joined body text*
+of the retrieved passages for the gold title, and on HotpotQA bridge questions
+one passage names the other's title by construction. The adapter now matches on
+document identity, and a full n=64 re-run measured the damage directly:
+
+| | R@5 |
+|---|---|
+| old (joined-text match) | 93.8% |
+| new (document identity) | **85.9%** |
+
+so the old rule inflated by **7.8pp**, disagreeing on 13 of 64 questions. Note
+it was noisy in *both* directions, not merely generous: on 2 questions the gold
+passage was retrieved but its title never appears in the body text, so the old
+rule scored a miss on a hit.

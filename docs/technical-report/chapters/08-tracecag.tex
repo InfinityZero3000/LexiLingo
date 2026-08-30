@@ -469,15 +469,17 @@ hàm chuẩn hoá SQuAD của repo.
 
 \begin{longtable}{L{3.8cm} R{1.8cm} R{1.8cm} R{2.0cm} R{2.2cm}}
 \toprule
-\textbf{Hệ thống} & \textbf{EM} & \textbf{F1} & \textbf{Đệm} & \textbf{Độ trễ}\\
+\textbf{Hệ thống} & \textbf{EM} & \textbf{F1} & \textbf{R@5} & \textbf{Độ trễ}\\
 \midrule
 \endhead
-CAG thuần & 62,5\% & 74,3\% & 47,7\% & 2,1 s\\
-\textbf{TRACE-CAG} & \textbf{62,5\%} & \textbf{74,7\%} & 48,4\% & 2,2 s\\
-HippoRAG~2 (bản chính thức) & 56,2\% & 73,0\% & không có & 80,8 s\\
+CAG thuần & 62,5\% & 74,3\% & 74,2\% & 2,1 s\\
+\textbf{TRACE-CAG} & \textbf{62,5\%} & \textbf{74,7\%} & 78,9\% & 2,2 s\\
+HippoRAG~2 (bản chính thức) & 53,1--56,2\% & 69,7--73,0\% & \textbf{85,9\%} & 66--81 s\\
 \bottomrule
 \caption{So sánh trên HotpotQA, n=64, cùng mô hình đọc (cập nhật 2026-08-29).
-Độ trễ là trung bình lượt lạnh; HippoRAG lập chỉ mục lại kho 10 đoạn cho mỗi câu.}
+Cột thứ tư là R@5. Độ trễ là trung bình lượt lạnh; HippoRAG lập chỉ mục lại kho
+10 đoạn cho mỗi câu. Số EM/F1 của HippoRAG là khoảng qua hai lần chạy cùng cấu
+hình --- 4/64 câu khác nhau do nhiễu mô hình, không phải do cấu hình.}
 \end{longtable}
 
 Bảng này thay cho bảng cũ và \textbf{thu hẹp kết luận}. HippoRAG~2 chạy đủ 64/64 với
@@ -486,20 +488,28 @@ ngân sách sinh đáp án 1024 token thực sự có hiệu lực --- trước 
 thư viện ghi đè âm thầm và hai lần chạy đầu thực chất cùng một cấu hình. Nhờ vậy
 số của HippoRAG tăng lên 56,2\%/73,0\%.
 
-TRACE-CAG vẫn vượt gói HippoRAG chính thức ở cả hai chỉ số chính với độ trễ thấp
-hơn $\approx$37 lần. Nhưng sau khi sửa lỗi gán nhãn của bộ xếp hạng và lỗi IRCoT
+TRACE-CAG vẫn vượt gói HippoRAG chính thức ở cả hai chỉ số chính (hơn 6,3--9,4
+điểm EM) với độ trễ thấp hơn $\approx$30--37 lần. Nhưng sau khi sửa lỗi gán nhãn của bộ xếp hạng và lỗi IRCoT
 (2026-08-28), \textbf{TRACE-CAG không còn vượt CAG thuần về EM}: hai bên bằng nhau,
 và chênh lệch F1 0,4 điểm nằm trong nhiễu giữa các lần chạy. Các bản sửa đó mang
 tính chung nên nâng đường cơ sở nhiều hơn nâng nhánh đồ thị. Lợi thế truy xuất thì
 vẫn còn (\code{all\_support@5} 59,4\% so với 50,0\%), nhưng \textbf{không còn chuyển
 hoá thành chất lượng câu trả lời} --- nút thắt đã dời sang bộ đọc.
 
-\textbf{Không so sánh chỉ số R@5 giữa hai hệ.} Bộ đo của HippoRAG tìm tiêu đề vàng
+\textbf{Chỉ số R@5 của HippoRAG đã được sửa và đo lại.} Bộ đo cũ tìm tiêu đề vàng
 trong \emph{toàn văn gộp} của các đoạn lấy về; trên câu bắc cầu HotpotQA thì thân
-đoạn này gọi tên tiêu đề đoạn kia theo đúng định nghĩa, và 46,9\% tiêu đề vàng
-trong bộ 64 câu có thể trích từ thân một đoạn khác. Nó tính công cho những đoạn
-chưa hề được truy hồi. Bộ đo đã được sửa về so khớp danh tính tài liệu, nhưng con
-số đúng cần một lần chạy lại.
+đoạn này gọi tên tiêu đề đoạn kia theo đúng định nghĩa, nên nó tính công cho cả
+những đoạn chưa hề được truy hồi. Sau khi sửa về so khớp danh tính tài liệu và
+chạy lại đủ n=64 (0 lỗi): R@5 giảm từ 93,8\% xuống \textbf{85,9\%}, tức bộ đo cũ
+thổi phồng \textbf{7,8 điểm} và lệch ở 13/64 câu. Đáng chú ý nó nhiễu \emph{hai
+chiều} chứ không chỉ rộng rãi một chiều: ở 2 câu, đoạn vàng có được truy hồi
+nhưng tiêu đề của nó không xuất hiện trong phần thân nào, nên bộ đo cũ lại chấm
+trượt một lần trúng.
+
+Một ước lượng trước đó trong tài liệu này ghi ``46,9\% tiêu đề vàng có thể trích
+từ đoạn khác''. Đó là \emph{cơ hội} thổi phồng chứ không phải mức thổi phồng, và
+nó phóng đại khoảng 6 lần. Bài học: đo chỉ số bằng một lần chạy lại, đừng suy ra
+từ đặc điểm của kho ngữ liệu.
 
 \begin{luuy}[Nút thắt thực sự là khả năng với tới bằng chứng, không phải suy luận]
 Ba chỉ số truy xuất được bổ sung vì không chỉ số cũ nào phân biệt được ``tìm thấy
