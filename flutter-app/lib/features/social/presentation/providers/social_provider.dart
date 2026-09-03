@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:lexilingo_app/features/social/data/repositories/social_repository.dart';
 import 'package:lexilingo_app/features/social/domain/entities/social_entities.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 /// Social Provider
 /// Manages followers, following, and activity feed state
@@ -309,7 +308,7 @@ class SocialProvider extends ChangeNotifier {
       if (!granted) {
         _nearbyUsers = [];
         _isNearbyEnabled = false;
-        _nearbyError = 'Location permission denied';
+        _nearbyError ??= 'Location permission denied';
         return;
       }
 
@@ -343,8 +342,14 @@ class SocialProvider extends ChangeNotifier {
   }
 
   Future<bool> _syncLocationAndCheckPermission() async {
-    final locationPermission = await Permission.locationWhenInUse.request();
-    if (!locationPermission.isGranted) return false;
+    var locationPermission = await Geolocator.checkPermission();
+    if (locationPermission == LocationPermission.denied) {
+      locationPermission = await Geolocator.requestPermission();
+    }
+    if (locationPermission == LocationPermission.denied ||
+        locationPermission == LocationPermission.deniedForever) {
+      return false;
+    }
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {

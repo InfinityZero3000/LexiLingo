@@ -7,6 +7,15 @@
 > `all_support_at_k` / `answer_in_context_at_k` metrics, and the four ranking
 > and evidence-budget fixes. The mechanism table and the KG/policy mutation
 > blockers in this document still stand.
+>
+> **Per-metric comparison (2026-08-30):** see
+> `tracecag_metrics_comparison_2026-08-30.md`. It settles one row of the
+> mechanism table with measurement: **L1 has never fired** — `l1_rate` is 0.0
+> in every mode of every run since 2026-05-30. The 48.4% cache hit rate is
+> entirely L0 exact-repeat on the protocol's warm pass, so "L1 validated in
+> tests; no frozen Day 1-2 hit" now reads: no hit anywhere, on any workload
+> measured to date. HotpotQA cannot produce one — 64 unrelated questions never
+> share a graph bucket. Measuring L1 needs a clustered question set.
 
 ## Outcome
 
@@ -26,11 +35,11 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 | SCAR | `l1_state_cache.py`; compatibility re-exports only | parity tests | Canonical and continuous |
 | Typed patch | declared slots plus factual/provenance hashes | patch contract tests | Validated in tests; no frozen workload observation |
 | Dependency capture | learner/KG/evidence/source/policy resolver events | resolver/certificate tests | Validated in tests |
-| Optimistic recheck | immediately before L0/L1 service | race tests | Validated in tests |
+| Optimistic recheck | immediately before L0/L1 service | race tests | Validated; **inert for KG until 2026-08-31** (nothing published the token) |
 | Reverse invalidation | dependency reverse sets and Redis sets | focused invalidation tests | Partial production coverage |
 | Learner mutation hook | shared mastery writer | mutation test | Connected |
-| KG mutation hook | no shared writer hook found | caller audit | Missing |
-| Policy mutation hook | no shared writer hook found | caller audit | Missing |
+| KG mutation hook | `kg_service_v3.sync_knowledge_files` publishes the new content token | mutation/recheck tests | **Connected 2026-08-31** |
+| Policy mutation hook | not needed — `POLICY_VERSION_TOKEN` is a deploy-time constant the certificate compares | `mismatch:policy_version` test | **Covered by certificate** |
 | Multi-hop interleaving | ~~benchmark candidate path~~ | — | **Removed 2026-08-29**: the flag was off *and* the reordering was discarded by the score-sort in `_select_diverse_multihop_evidence`, so it could not affect output even when enabled |
 | Coverage-first evidence selection | `retrieve.py`, benchmark multi-hop only | n=64 `all_support_at_5` | Replaces the above; reserves one slot per question anchor |
 | Drift route gate | benchmark protocol | deterministic metric tests | Code complete; frozen DriftBench pending |
@@ -46,7 +55,19 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 
 ## Submission/production blockers
 
-1. Connect KG and policy mutation boundaries to token increment plus targeted invalidation, or narrow the claim to learner-state mutations.
+1. ~~Connect KG and policy mutation boundaries~~ — **done 2026-08-31**, and the
+   audit understated it. This was not merely a missing hook: it was a live
+   staleness hole. `get_kg_content_version()` produces a real content hash and
+   `kg_expand_node` emits it, but the only consumer was
+   `observe_dependency_tokens`, which is `setdefault` by design so a stale
+   artifact cannot roll a token back. Nothing ever called the publisher, so the
+   store kept the first version forever, `recheck_dependency_snapshot` compared a
+   stale entry against its own token, matched, and **L0 served the pre-change
+   answer**. The certificate could not catch it either — its `kg_version` is the
+   hardcoded schema constant `kg_schema_v2`, not the content hash. Proven
+   end-to-end, then fixed by publishing the token from the sync path.
+   Policy needed no hook: `POLICY_VERSION_TOKEN` is a deploy-time constant and
+   `decide_l1_reuse` rejects on `mismatch:policy_version` (verified).
 2. Run frozen DriftBench with observed L1 reuse, typed patch, unsafe rejection, and validate/serve mutation race.
 3. ~~Run multi-hop interleaving on a full locked split~~ — done 2026-08-26 at n=64; see the new report.
 4. ~~Keep `TRACECAG_SECOND_HOP_INTERLEAVE=false`~~ — the flag and its code were
@@ -69,7 +90,7 @@ fallbacks):
 | System | EM | F1 | R@5 | latency/question |
 |---|---|---|---|---|
 | `tracecag_rapid` | 62.5% | 74.7% | 78.9% | 2.2s (cold) |
-| `cag_vanilla` | 62.5% | 74.3% | 74.2% | 2.1s (cold) |
+| `cag_vanilla` | 62.5% | 74.5% | 74.2% | 2.1s (cold) |
 | HippoRAG 2 (real package) | 53.1–56.2% | 69.7–73.0% | **85.9%** | 66–81s |
 
 HippoRAG's EM/F1 are given as a range over two runs of the *same* configuration

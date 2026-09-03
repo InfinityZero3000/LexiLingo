@@ -12,7 +12,7 @@ per question), canonical SQuAD normalisation. All runs `Validation: PASS`.
 
 | Mode | EM | F1 | R@5 | Cache hit | Latency |
 |---|---|---|---|---|---|
-| cag_vanilla | 62.5% | 74.3% | 74.2% | 47.7% | 2.1 s (cold) |
+| cag_vanilla | 62.5% | 74.5% | 74.2% | 47.7% | 2.1 s (cold) |
 | **tracecag_rapid** | **62.5%** | **74.7%** | 78.9% | 48.4% | 2.2 s (cold) |
 | HippoRAG 2 (real, `pip install hipporag`) | 53.1–56.2% | 69.7–73.0% | **85.9%** | n/a (no cache) | 66–81 s |
 
@@ -36,6 +36,19 @@ Two readings that matter more than the headline:
    *inside* TRACE-CAG, now visible across systems.
 
 Previous best on this pipeline was EM 50.0% (Run 27, `qwen3-32b`, IRCoT).
+
+> **Số nguồn, 2026-08-30.** Bảng trên nay trích **một lần chạy duy nhất**
+> (`hotpotqa_n64_cleanup.json`, 29/08) cho cả hai chế độ. Bản trước ghi
+> `cag_vanilla` F1 = 74.3%, lấy từ lần chạy `nolink` (28/08); lần chạy cuối cho
+> 74.5%. Không kết luận nào đổi, nhưng đừng trộn hai lần chạy trong một bảng.
+>
+> Phần đối sánh chỉ số đầy đủ — từng câu một, phân rã tầng đệm, phân tách lỗi
+> định dạng khỏi lỗi kiến thức — nằm ở
+> **`tracecag_metrics_comparison_2026-08-30.md`**. Ba điều nó phát hiện mà báo
+> cáo này không có: (1) TRACE-CAG và CAG thuần trả lời **giống hệt 92% số câu**;
+> (2) **L1 chưa trúng một lần nào** trong mọi lần chạy, nên 48.4% "trúng đệm"
+> hoàn toàn là L0 lượt ấm; (3) khoảng **một nửa** số câu HippoRAG thua là **lỗi
+> định dạng đáp án**, không phải lỗi kiến thức.
 
 ## Retrieval metrics
 

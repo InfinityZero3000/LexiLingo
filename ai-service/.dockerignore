@@ -59,6 +59,7 @@ Dockerfile*
 # Docs
 *.md
 docs/
+!data/external_docs/**
 
 # OS files
 .DS_Store

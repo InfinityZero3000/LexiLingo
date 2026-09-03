@@ -95,3 +95,19 @@ async def test_submit_review_incorrect_answer_resets_streak_and_stays_learning(
 
     assert updated.streak == 0
     assert updated.status == VocabularyStatus.LEARNING
+
+
+@pytest.mark.asyncio
+async def test_submit_review_endpoint_succeeds_with_real_database(
+    async_client, auth_headers, db_session: AsyncSession, test_user
+):
+    user_vocab = await _seed_user_vocab(db_session, test_user.id)
+    db_session.sync_session.autoflush = False
+
+    response = await async_client.post(
+        f"/api/v1/vocabulary/review/{user_vocab.id}",
+        json={"quality": 5, "time_spent_ms": 1200},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200, response.text

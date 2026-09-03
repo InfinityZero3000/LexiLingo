@@ -472,7 +472,7 @@ hàm chuẩn hoá SQuAD của repo.
 \textbf{Hệ thống} & \textbf{EM} & \textbf{F1} & \textbf{R@5} & \textbf{Độ trễ}\\
 \midrule
 \endhead
-CAG thuần & 62,5\% & 74,3\% & 74,2\% & 2,1 s\\
+CAG thuần & 62,5\% & 74,5\% & 74,2\% & 2,1 s\\
 \textbf{TRACE-CAG} & \textbf{62,5\%} & \textbf{74,7\%} & 78,9\% & 2,2 s\\
 HippoRAG~2 (bản chính thức) & 53,1--56,2\% & 69,7--73,0\% & \textbf{85,9\%} & 66--81 s\\
 \bottomrule
@@ -577,10 +577,229 @@ truyền vào. Bốn lần thử tối ưu khác (trọng số đồ thị, đơ
 \begin{luuy}[Giới hạn cần nêu khi công bố]
 Kết quả dựa trên một lát cắt n=64 duy nhất. Phần lớn mức tăng đến từ ngân sách bằng
 chứng --- một \textbf{tham số giao thức đánh giá}, không phải đóng góp kiến trúc.
-Đóng góp kiến trúc riêng của TRACE-CAG là \textbf{+3,1 EM / +3,4 F1} so với CAG thuần
-ở cùng ngân sách, cộng với tỉ lệ trúng đệm 48,4\% mà HippoRAG không có. Ngoài ra
-\code{answer\_in\_context} là 82,8\%, nghĩa là $\approx$17\% câu hỏi nằm ngoài tầm với
-ngay cả khi lấy toàn bộ 10 đoạn --- không thay đổi nào ở bộ đọc cứu được nhóm này.
+
+Con số \textbf{+3,1 EM / +3,4 F1} từng được ghi ở đây như ``đóng góp kiến trúc riêng''
+\textbf{không còn đúng} và đã bị gỡ: sau các bản sửa 2026-08-28, khoảng cách so với CAG
+thuần là \textbf{0,0 EM / +0,3 F1}. Tương tự, tỉ lệ trúng đệm 48,4\% không phải một đóng
+góp kiến trúc --- xem mục~\ref{sec:tracecag-cache-decomp}: toàn bộ là đệm trùng khớp
+chính xác ở lượt ấm, còn tầng L1 theo bucket đồ thị chưa trúng lần nào.
+
+Ngoài ra \code{answer\_in\_context} là 82,8\%, nghĩa là $\approx$17\% câu hỏi nằm ngoài
+tầm với ngay cả khi lấy toàn bộ 10 đoạn --- không thay đổi nào ở bộ đọc cứu được nhóm này.
+\end{luuy}
+
+\section{Phân rã chỉ số: điều bảng tổng không cho thấy}
+\label{sec:tracecag-cache-decomp}
+
+Bảng so sánh ở trên trả lời ``hệ nào cao điểm hơn''. Ba phép phân rã dưới đây trả lời câu
+hỏi khó hơn --- \emph{vì sao} --- và cả ba đều thu hẹp tuyên bố. Số liệu lấy từ cùng một
+lần chạy \code{hotpotqa\_n64\_cleanup} cho hai chế độ nội bộ.
+
+\subsection{TRACE-CAG thắng mọi chỉ số truy xuất và không thắng chỉ số đáp án}
+
+\begin{longtable}{L{4.6cm} R{2.6cm} R{2.6cm} R{2.0cm}}
+\toprule
+\textbf{Chỉ số} & \textbf{CAG thuần} & \textbf{TRACE-CAG} & \textbf{$\Delta$}\\
+\midrule
+\endhead
+EM & 62,5\% & 62,5\% & \textbf{$\pm$0,0}\\
+F1 & 74,5\% & 74,7\% & +0,3\\
+\midrule
+recall@5 & 74,2\% & 78,9\% & +4,7\\
+precision@5 & 30,6\% & 32,5\% & +1,9\\
+\code{all\_support@5} & 50,0\% & 59,4\% & \textbf{+9,4}\\
+\code{answer\_in\_context@5} & 57,8\% & 62,5\% & +4,7\\
+MRR@5 & 84,4\% & 87,0\% & +2,6\\
+nDCG@5 & 71,3\% & 74,7\% & +3,4\\
+MAP@5 & 63,3\% & 66,4\% & +3,1\\
+\bottomrule
+\caption{Hai chế độ chạy trong cùng một tiến trình benchmark, cùng seed, cùng nhà cung
+cấp; khác nhau đúng một thứ là nhánh đồ thị. Đơn vị $\Delta$ là điểm phần trăm.}
+\end{longtable}
+
+Nhánh đồ thị đưa thêm 9,4 điểm số câu vào trạng thái ``đủ cả hai đoạn hỗ trợ'' --- điều
+kiện cần để trả lời một câu hai bước --- mà EM không nhúc nhích. Không thể đổ cho khâu cắt
+ngữ cảnh, vì \code{answer\_in\_context@5} cũng tăng 4,7 điểm: chuỗi đáp án \emph{thật sự}
+lọt vào cửa sổ mô hình nhìn thấy thường xuyên hơn.
+
+Đối sánh từng câu ở lượt lạnh cho thấy lý do trực tiếp: \textbf{hai chế độ trả lời giống hệt
+nhau ở 59 trong 64 câu} (92\%). Chỉ 5 câu khác chuỗi, và 4 câu trong đó đổi điểm --- chia
+đều hai chiều, hai câu mỗi bên. EM bằng nhau ở đây không phải hai hệ khác nhau tình cờ trùng
+điểm: ngữ cảnh tốt hơn đi vào bộ đọc, cùng một câu trả lời đi ra.
+
+\subsection{Tỉ lệ trúng đệm 48,4\% đo cái gì}
+
+Giao thức đặt \code{cache\_repeats: 2}: mỗi câu chạy hai lượt, một lạnh một ấm (64 câu
+$\to$ 128 quan sát mỗi chế độ). Phân rã theo tầng đệm trên toàn bộ 128 quan sát:
+
+\begin{longtable}{L{5.6cm} R{3.0cm} R{3.0cm}}
+\toprule
+\textbf{Tầng} & \textbf{CAG thuần} & \textbf{TRACE-CAG}\\
+\midrule
+\endhead
+L0 --- trùng khớp chính xác & 61 & 62\\
+\textbf{L1 --- theo bucket đồ thị} & \textbf{0} & \textbf{0}\\
+không trúng & 67 & 66\\
+\bottomrule
+\caption{Trúng đệm ở lượt lạnh bằng 0 cho cả hai chế độ; toàn bộ số trúng nằm ở lượt ấm.}
+\end{longtable}
+
+Nên 48,4\% \textbf{không phải tỉ lệ tái dùng ngữ nghĩa}. Nó là trần 50\% do giao thức áp
+đặt, và TRACE-CAG chạm 96,9\% của trần đó. Điều đo được là ``hỏi lại đúng câu vừa hỏi thì
+trả lại được'' --- một tính chất của L0, mà bất kỳ hệ nào cũng cài được.
+
+Đây là điểm phải nói thẳng trong mọi bản công bố: \textbf{L1 mới là cơ chế phân biệt
+TRACE-CAG với một CAG có đệm thường}, và \code{l1\_rate} bằng 0 ở mọi chế độ của mọi lần
+chạy kể từ 2026-05-30.
+
+\subsection{Vì sao L1 bằng 0: đường ghi bị đóng, không phải thiếu dữ liệu}
+
+Lời giải thích lưu truyền từ 2026-05-31 là ``benchmark dùng mẫu độc nhất nên không có trùng
+lặp ngữ nghĩa; L1 sẽ hiệu quả trong production''. Lời giải thích đó \textbf{sai}, và bằng
+chứng phản bác nằm sẵn trong repo: bộ dữ liệu \code{query\_clusters} được tạo đúng để kiểm
+L1 --- gồm các cụm câu hỏi diễn đạt lại của cùng một câu --- đã chạy ngày 2026-07-10 với
+validation PASS, và vẫn cho \code{l1\_rate} bằng 0.
+
+Truy vết trong dữ liệu chạy: cả 64/64 quan sát lạnh kết thúc với
+\code{cache\_gate\_meta.reasons} bằng \code{('no\_compatible\_candidate',)}. Trong
+\code{cache\_gate\_node}, đó là nhánh mặc định khi biến \code{best\_rejection} vẫn là
+\code{None} --- nghĩa là \textbf{vòng lặp duyệt ứng viên chưa chạy dù chỉ một lần}. Không có
+ứng viên nào để mà từ chối; vấn đề nằm \emph{trước} cổng PCC chứ không phải tại cổng PCC.
+
+Ngược lên khâu ghi: \code{\_register\_l1\_bucket\_aliases} chỉ được gọi khi
+\code{\_is\_pcc\_stable(state)} đúng, và hàm đó chấp nhận theo một trong hai lối --- cả hai
+đều đóng trong benchmark:
+
+\begin{longtable}{L{3.0cm} L{5.4cm} L{5.6cm}}
+\toprule
+\textbf{Lối} & \textbf{Điều kiện} & \textbf{Benchmark cấp gì}\\
+\midrule
+\endhead
+oracle & \code{\_tracecag\_state["concepts"]} khác rỗng & \code{\_public\_qa\_state()} chỉ
+trả \code{evidence\_hash}, \code{source\_version}, \code{freshness\_class} --- \textbf{không
+có \code{concepts}}\\
+chẩn đoán & \code{diagnosis\_confidence} $\geq$ 0,70 \textbf{và}
+\code{diagnosis\_root\_causes} khác rỗng & nhánh bypass đặt \code{confidence} bằng 1,0 nhưng
+\code{root\_causes} bằng rỗng\\
+\bottomrule
+\caption{Hai lối mở cho việc ghi L1, và lý do benchmark không đi được lối nào. Kiểm chứng
+bằng thực thi trực tiếp: \code{\_is\_pcc\_stable} trả \code{False} trên trạng thái đúng như
+harness tạo ra, và trả \code{True} khi thêm một trong hai khoá còn thiếu.}
+\end{longtable}
+
+Nên \textbf{L1 không thể trúng trong benchmark theo đúng cấu tạo}: không bucket nào từng
+được ghi, nên không ứng viên nào để đọc. Đó là lý do \code{query\_clusters} cũng cho 0\%, và
+là lý do mọi kế hoạch kiểu ``chạy thêm một tập dữ liệu khác để đo L1'' đều sẽ cho 0\%.
+
+Cần nói rõ sắc thái: tài liệu nội hàm của \code{\_is\_pcc\_stable} \emph{mô tả đúng} ý định
+--- nhánh bypass bỏ qua chẩn đoán, và ``khái niệm do oracle cung cấp sẽ neo bucket thay
+thế''. Lối thoát oracle đã được thiết kế; chỉ là harness không bao giờ cấp khoá
+\code{concepts}. Đây là lệch pha giữa hai module, không phải thiếu sót thiết kế.
+
+\subsection{Sửa và đo: L1 chạy lần đầu tiên}
+
+Ba thay đổi, mỗi thay đổi đo riêng trên \code{query\_clusters} (32 mẫu, một lượt mỗi câu, để
+câu diễn đạt lại buộc phải trúng L1 chứ không phải L0).
+
+\begin{longtable}{L{6.2cm} R{2.2cm} R{2.2cm} R{2.2cm}}
+\toprule
+\textbf{Giai đoạn} & \textbf{EM} & \textbf{F1} & \textbf{L1}\\
+\midrule
+\endhead
+1. mở cổng ghi L1 & 50,0\% & 68,4\% & \textbf{0,0\%}\\
+2. + khai báo \code{patchable\_slots} & 25,0\% & 52,3\% & \textbf{75,0\%}\\
+3. + lọc token nội bộ khỏi bản vá & \textbf{50,0\%} & 67,9\% & \textbf{75,0\%}\\
+\bottomrule
+\caption{Cả ba lần đều 0 lỗi, validation PASS.}
+\end{longtable}
+
+\textbf{Giai đoạn 1} cho \code{\_is\_pcc\_stable} chấp nhận \code{kg\_seed\_concepts} mà
+\code{kg\_expand\_node} thực sự sinh ra. Lý do từ chối đổi hẳn --- từ 64/64
+\code{no\_compatible\_candidate} sang 28/32 ca đánh giá ứng viên thật, risk 0,046--0,152 ---
+nhưng L1 vẫn 0\%, vì tái dùng thẳng đòi \code{query\_norm} giống hệt nên câu diễn đạt lại
+luôn rơi vào nhánh vá, mà không slot nào được khai báo.
+
+\textbf{Giai đoạn 2} khai báo slot ở tầng harness. L1 trúng 75\% --- đúng bằng thiết kế bộ dữ
+liệu (8 cụm $\times$ 4 biến thể) --- nhưng EM sụp một nửa. Nội dung tái dùng \emph{đúng};
+thứ phá điểm là đuôi \code{(Also related: …)} mà \code{\_patch\_response} nối thêm, chứa
+\code{token:that}, \code{token:ab} --- các mảnh từ vựng nội bộ dùng để gom bucket, không bao
+giờ được thành văn. Hàng rào an toàn không chặn vì \code{\_factual\_projection} \emph{cố ý}
+cắt đúng đuôi đó trước khi băm: hợp lý cho phản hồi gia sư, sai cho QA nơi toàn bộ phản hồi
+chính là đáp án.
+
+\textbf{Giai đoạn 3} lọc, chỉ giữ \code{concept:}/\code{intent:}. Đây không phải vấn đề riêng
+của benchmark: người học cũng sẽ đọc thấy ``(Also related: token:that)''.
+
+\begin{luuy}[Cái L1 đem lại, và hai điều kèm theo]
+Ở giai đoạn 3, TRACE-CAG phục vụ \textbf{75\% yêu cầu từ đệm mà chất lượng không đổi}
+(EM 50,0\% ở cả hai; F1 lệch 0,5 điểm, trong nhiễu): độ trễ trung bình 1\,735\,ms $\to$
+\textbf{397\,ms} (4,4$\times$), p50 479\,ms $\to$ \textbf{5\,ms}, prompt token giảm
+\textbf{73\%}.
+
+Đối sánh từng câu với lần chạy không có L1: \textbf{28/32 câu trả lời giống hệt}, số câu đúng
+bằng nhau. L1 phát lại trung thành cái mà đường tính đầy đủ sinh ra --- \emph{kể cả đáp án
+sai}. Một đáp án lạnh sai sẽ lan ra toàn cụm thay vì chỉ sai một lần.
+
+Chạy lại HotpotQA n=64 với cả ba bản vá cho kết quả \textbf{giống hệt đến từng chỉ số}
+(EM 62,5\%, F1 74,7\%, R@5 78,9\%, đệm 48,4\%) và \textbf{L1 vẫn đúng 0\%}. Đó không phải
+bản vá thất bại mà là chứng chỉ làm đúng việc: 64 câu hỏi không liên quan, mỗi câu mang ảnh
+chụp ngữ cảnh riêng, nên ứng viên chéo câu hỏi bị loại ở \code{mismatch:evidence\_hash}
+trước khi chấm risk. L1 kích hoạt ở nơi có câu gần nghĩa và im lặng ở nơi không có.
+\end{luuy}
+
+Hai giới hạn phải nêu kèm. Thứ nhất, \code{patchable\_slots} là \textbf{tham số giao thức},
+phải công bố cùng chỉ số đệm đúng như ngân sách bằng chứng. Thứ hai, việc khai báo đó nằm
+trong \code{model-development/} --- thư mục mà repo LexiLingo bỏ qua, nhưng bản thân nó lại
+là một kho git riêng. Thay đổi vẫn theo dõi được ở kho đó, song tính đến 2026-08-30 nó chưa
+được commit, nên khi công bố phải nêu mốc commit của \emph{cả hai} kho.
+
+Bản vá cổng ghi và bản lọc token nằm trong \code{api/} nên có hiệu lực ở production. Việc
+khai báo slot thì \textbf{chưa}, và không nên bật cho người dùng thật trước khi trả lời được
+câu hỏi: một câu hỏi diễn đạt khác có được phép nhận lại câu trả lời đã đệm không? Trong
+benchmark thì an toàn nhờ \code{evidence\_hash}; chat production không có mốc cố định tương
+đương.
+
+\subsection{Cách biệt so với HippoRAG phần lớn là kỷ luật định dạng}
+
+Đối sánh từng câu với HippoRAG, nối theo chuỗi đáp án vàng duy nhất (52/64 câu; 12 câu bị
+loại vì gold trùng lặp \code{yes}/\code{no}/\code{2000}). Nối theo thứ tự dòng là sai --- đã
+kiểm chứng: chỉ 1/64 câu khớp gold, đúng như lỗi chỉ số tương đối đã ghi nhận.
+
+Trên 52 câu đó: 24 câu cả hai đúng, 20 câu cả hai sai, \textbf{6 câu chỉ TRACE-CAG đúng, 2
+câu chỉ HippoRAG đúng}. Nhưng đọc nội dung 8 câu lệch thì \textbf{6 câu là tranh chấp về
+ranh giới span}, chỉ 3 câu là sai kiến thức thật. HippoRAG trả \code{1969-1974} khi vàng là
+\code{1969 until 1974}; trả \code{IFFHS World's Best Goalkeeper} khi vàng là
+\code{world's best goalkeeper}; một câu trả nguyên một đoạn suy luận. Chiều ngược lại,
+TRACE-CAG trả \code{Mumbai, Maharashtra} khi vàng là \code{Mumbai}.
+
+Xác nhận trên toàn tập:
+
+\begin{longtable}{L{4.2cm} R{2.6cm} R{3.4cm} R{2.6cm}}
+\toprule
+& \textbf{số câu sai EM} & \textbf{F1 $\geq$ 0,5 (gần đúng)} & \textbf{F1 = 0}\\
+\midrule
+\endhead
+HippoRAG~2 & 30 & \textbf{14 (47\%)} & 11\\
+TRACE-CAG & 24 & 10 (42\%) & 12\\
+\bottomrule
+\caption{Gần một nửa số câu HippoRAG mất điểm EM vẫn giữ F1 cao --- đúng dấu hiệu của đáp án
+đúng nội dung nhưng sai định dạng.}
+\end{longtable}
+
+Độ dài đáp án giải thích phần còn lại: trung vị của cả hai đều là 2 từ, nhưng trung bình của
+HippoRAG là \textbf{53,5 từ} (dài nhất 754 từ, 5/64 câu vượt 20 từ) so với 2,3 từ của
+TRACE-CAG (dài nhất 12 từ, \textbf{0/64} câu vượt 20 từ). HippoRAG lưỡng cực: hoặc trả lời
+ngắn gọn, hoặc xả ra một đoạn suy luận mà EM chấm 0 bất kể nội dung.
+
+\begin{luuy}[Phát biểu đúng về cách biệt với HippoRAG]
+Câu ``TRACE-CAG hơn HippoRAG 9,4 điểm EM'' đúng về số nhưng gây hiểu nhầm về nguyên nhân.
+Phát biểu chịu được phản biện: \emph{TRACE-CAG có kỷ luật định dạng đáp án tốt hơn ở cùng
+mức chất lượng suy luận, với chi phí thấp hơn khoảng 30 lần}. Khoảng cách F1 (5,0 điểm) nhỏ
+hơn khoảng cách EM (9,4 điểm) đúng vì lý do này --- F1 tha thứ lỗi định dạng, EM thì không.
+
+Điều này không làm mất giá trị của hệ: trả về span sạch là yêu cầu thật của sản phẩm, và
+hậu xử lý trích span của TRACE-CAG đáp ứng được. Nhưng đóng góp đo được nằm ở khâu hậu xử lý
+đầu ra, không phải ở kiến trúc đồ thị.
 \end{luuy}
 
 \section{Tóm tắt: vì sao mỗi thiết kế tồn tại}

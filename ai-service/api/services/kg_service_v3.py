@@ -357,7 +357,28 @@ class KnowledgeGraphServiceV3:
             cache_path,
             forbidden_concept_prefixes=() if self._allow_benchmark else ("concept:benchmark.",),
         )
+        # getattr, not attribute access: a partially constructed instance (as in
+        # test_production_kg_isolation) reaches this sync path before __init__
+        # sets the field. A falsy previous version also means "first load",
+        # which must not publish a mutation.
+        previous_version = getattr(self, "_kg_content_version", "")
         self._kg_content_version = self._compute_kg_content_version(cache_path)
+        if previous_version and previous_version != self._kg_content_version:
+            # Publish the mutation. Without this the new token only ever
+            # reaches observe_dependency_tokens, which is setdefault by design
+            # ("a stale artifact must never roll a token back"), so the store
+            # kept the first version forever: recheck_dependency_snapshot then
+            # compared a stale entry against its own token, matched, and L0
+            # served the pre-change answer. The certificate cannot catch it
+            # either — its kg_version is the hardcoded schema constant, not
+            # this content hash.
+            from api.services.trace_cag.invalidation import set_dependency_token
+
+            detached = set_dependency_token("kg:tracecag:main", self._kg_content_version)
+            logger.info(
+                "[kg_service_v3] KG content changed %s -> %s, detached %d cached artifact(s)",
+                previous_version, self._kg_content_version, len(detached),
+            )
 
     def _compute_kg_content_version(self, cache_path: str) -> str:
         """Stable fingerprint of the currently loaded KG source files.

@@ -24,6 +24,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy application code
 COPY api ./api
 
+# The L2 external-knowledge corpus. DocumentIntelligenceService reads
+# data/external_docs at startup and silently indexes nothing when the directory
+# is absent, so leaving it out of the image disabled L2's local arm in
+# production while the code kept reporting success.
+COPY data/external_docs ./data/external_docs
+
 # Fail the image build if direct ETL runtime imports are missing.
 RUN python -c "import defusedxml, typer; from api.services.content_etl.cli import app"
 

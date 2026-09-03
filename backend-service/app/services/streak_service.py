@@ -100,15 +100,28 @@ async def update_user_streak(db: AsyncSession, user_id: UUID) -> tuple[Streak, b
                 streak.longest_streak = streak.current_streak
                 
     # Ensure a DailyActivity record exists for today so weekly_activity is accurate
-    daily_result = await db.execute(
-        select(DailyActivity).where(
-            and_(
-                DailyActivity.user_id == user_id,
-                DailyActivity.activity_date == today,
+    # Production sessions disable autoflush, so another service may already
+    # have staged today's row without making it visible to this SELECT yet.
+    daily_activity = next(
+        (
+            row
+            for row in db.new
+            if isinstance(row, DailyActivity)
+            and row.user_id == user_id
+            and row.activity_date == today
+        ),
+        None,
+    )
+    if daily_activity is None:
+        daily_result = await db.execute(
+            select(DailyActivity).where(
+                and_(
+                    DailyActivity.user_id == user_id,
+                    DailyActivity.activity_date == today,
+                )
             )
         )
-    )
-    daily_activity = daily_result.scalar_one_or_none()
+        daily_activity = daily_result.scalar_one_or_none()
     if not daily_activity:
         daily_activity = DailyActivity(
             user_id=user_id,

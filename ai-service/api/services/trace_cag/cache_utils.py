@@ -352,9 +352,20 @@ def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
 
     cur_concepts = set(fingerprint.get("root_concepts") or [])
     cached_concepts = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
-    new_concepts = cur_concepts - cached_concepts
+    # Only real graph concepts may surface. _extract_lightweight_graph_concepts
+    # also emits `token:<word>` lexical shingles so near-miss queries land in the
+    # same bucket; they are matching material, never prose. Unfiltered, a learner
+    # was shown "(Also related: token:that, token:true)" and a benchmark answer
+    # became "Pedro Rodríguez\n\n(Also related: token:ab)" — which is why
+    # activating L1 halved EM the first time it ever served a request.
+    new_concepts = {
+        c for c in (cur_concepts - cached_concepts)
+        if str(c).startswith(("concept:", "intent:"))
+    }
     if new_concepts:
-        extras = ", ".join(c.split(".")[-1].replace("_", " ") for c in new_concepts)
+        extras = ", ".join(
+            sorted(c.split(":", 1)[-1].split(".")[-1].replace("_", " ") for c in new_concepts)
+        )
         response += f"\n\n(Also related: {extras})"
 
     return response
@@ -456,8 +467,9 @@ def _is_pcc_stable(state: TraceCAGState) -> bool:
     """
     WriteL1(x) = PCCStable ∧ Confident ∧ ¬HighlySpecific  (paper §4.1).
 
-    PCCStable  — diagnosis produced at least one root-cause concept so the
-                 bucket is anchored to a stable graph neighbourhood.
+    PCCStable  — the turn resolved to at least one graph concept, so the bucket
+                 is anchored to a stable neighbourhood rather than to one
+                 phrasing.
     Confident  — diagnosis_confidence ≥ 0.70 (arbitrary but conservative).
     ¬HighlySpec— input is at least 3 words long; single-word or two-word queries
                  are too instance-specific to be useful L1 artifacts.
@@ -472,6 +484,15 @@ def _is_pcc_stable(state: TraceCAGState) -> bool:
         return True
     if state.get("diagnosis_confidence", 0.0) < 0.70:
         return False
+    # The anchor kg_expand_node actually produced. This is the general case:
+    # root causes only exist when the learner
+    # made one of five mapped grammar mistakes, so gating L1 on them meant a
+    # correct sentence or any plain question could never write a bucket. That
+    # is why l1_rate was 0.0 in every benchmark run since 2026-05-30 and why
+    # the query_clusters paraphrase set — built specifically to exercise L1 —
+    # also measured 0.0: nothing was ever registered for the read side to find.
+    if state.get("kg_seed_concepts"):
+        return True
     return bool(state.get("diagnosis_root_causes"))
 
 
