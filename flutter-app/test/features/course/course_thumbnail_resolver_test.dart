@@ -39,6 +39,17 @@ void main() {
         courseFallbackThumbnailUrl(second),
       );
     });
+
+    test('does not select the removed Unsplash image', () {
+      final urls = List.generate(
+        30,
+        (index) => courseFallbackThumbnailUrl(
+          _course(id: 'ielts-$index', tags: const ['ielts']),
+        ),
+      );
+
+      expect(urls, everyElement(isNot(contains('photo-1523050854058'))));
+    });
   });
 
   group('buildCourseCardThumbnailCandidates', () {

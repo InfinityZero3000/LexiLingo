@@ -663,7 +663,6 @@ async def submit_review(
     from app.models.games import XPTransaction
     from app.models.progress import DailyActivity
     from sqlalchemy import select
-    from datetime import date
     
     user_id = current_user.id
     old_xp = current_user.total_xp or 0
@@ -699,7 +698,7 @@ async def submit_review(
     db.add(tx)
     
     # Update DailyActivity
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     result = await db.execute(
         select(DailyActivity).where(
             DailyActivity.user_id == user_id,

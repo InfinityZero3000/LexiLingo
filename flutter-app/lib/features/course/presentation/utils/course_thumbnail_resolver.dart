@@ -3,7 +3,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 const _ieltsImages = [
   'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80',
   'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80',
-  'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80',
+  'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80',
 ];
 const _businessImages = [
   'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',

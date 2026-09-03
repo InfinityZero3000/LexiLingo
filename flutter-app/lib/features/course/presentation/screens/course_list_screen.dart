@@ -980,7 +980,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     const ielts = [
       'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam pencil
       'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
-      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', // graduation cap
+      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', // classroom
     ];
     const business = [
       'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
