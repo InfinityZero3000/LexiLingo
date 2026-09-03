@@ -239,7 +239,7 @@ main() {
 
   log "Step 3/4: Docker up with orphan cleanup"
   tag_rollback_images
-  run "${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
+  run "${DOCKER_COMPOSE_CMD} up -d --build --remove-orphans"
 
   if [[ "${DRY_RUN}" == false ]]; then
     wait_for_service "postgres" 180
