@@ -98,6 +98,7 @@ docs/cmd
 !.env.production.example
 .env.production.secrets
 .env.production.secrets.*
+!.env.production.secrets.example
 
 # AI Models (too large for git)
 **/models/whisper/*.pt
