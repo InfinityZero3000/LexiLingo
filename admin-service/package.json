@@ -29,7 +29,7 @@
     "react-router-dom": "^7.18.3",
     "recharts": "^3.10.1",
     "three": "^0.185.1",
-    "zod": "^4.4.3",
+    "zod": "^4.5.4",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
