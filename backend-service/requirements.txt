@@ -13,7 +13,7 @@ aiosqlite>=0.22.1
 
 # SQLAlchemy (Async ORM)
 sqlalchemy[asyncio]>=2.0.52
-alembic>=1.19.1
+alembic>=1.19.2
 
 # Data Validation
 pydantic>=2.13.5
