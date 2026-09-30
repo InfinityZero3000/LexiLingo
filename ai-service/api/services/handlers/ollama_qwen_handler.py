@@ -14,6 +14,7 @@ import logging
 import json
 import os
 import httpx
+from api.core.groq_key_pool import resolve_groq_model
 from api.core.config import get_settings
 from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
 from typing import Optional, Dict, Any, List
@@ -153,7 +154,7 @@ class OllamaQwenHandler:
         """Attempt to call Groq or Gemini API directly, returning the response or None on failure."""
         from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-        groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+        groq_model = resolve_groq_model()
 
         # Build message list up front so we can estimate tokens accurately
         full_messages: List[Dict[str, str]] = []
@@ -268,7 +269,7 @@ class OllamaQwenHandler:
             logger.info("[OllamaQwenHandler] Ollama is offline, falling back to Groq...")
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+            groq_model = resolve_groq_model()
             fallback_messages: List[Dict[str, str]] = []
             if system_prompt:
                 fallback_messages.append({"role": "system", "content": system_prompt})

@@ -17,6 +17,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.routes.admin import verify_admin_api_key
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[di
     # Must be a non-reasoning model: this call caps max_tokens at 80, and a
     # reasoning model spends that budget before emitting any content —
     # openai/gpt-oss-20b burns 78 reasoning tokens and returns "".
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    groq_model = resolve_groq_model()
     messages = [
         {"role": "system", "content": _SYSTEM_PROMPT},
         {"role": "user", "content": _build_user_prompt(word, lang, context)},

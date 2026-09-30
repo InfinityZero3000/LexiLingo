@@ -19,6 +19,48 @@ _GROQ_FREE_TPM = 6_000
 _GROQ_FREE_RPD = 14_400
 _VOICE_LEASE_MS = 45_000
 
+# The model every Groq caller uses. It lived as a repeated
+# `os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")` default in ten call sites, so a
+# stale GROQ_MODEL in one deployed env file silently pointed all of them at a
+# model Groq had already decommissioned.
+DEFAULT_GROQ_MODEL = "qwen/qwen3.6-27b"
+
+# Groq removed these without notice; `llama-3.1-8b-instant` and
+# `llama-3.3-70b-versatile` are gone, and `openai/gpt-oss-120b` is quota-bound
+# on a shared org budget. A compound model is worse than dead: `groq/compound-*`
+# is agentic and emits its whole reply as `delta.reasoning`, so a streaming
+# caller receives nothing at all.
+_RETIRED_GROQ_MODELS = frozenset({
+    "llama-3.1-8b-instant",
+    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
+})
+
+
+def resolve_groq_model(*env_vars: str) -> str:
+    """The Groq model to call, ignoring a configured value we know is dead.
+
+    Reads the given env vars in order and takes the first one set, so a caller
+    with its own override passes it first: `resolve_groq_model(
+    "GROQ_MODEL_DIAGNOSE", "GROQ_MODEL")`.
+
+    Falling back beats honouring a retired name: a dead model fails every
+    request, while the LLM paths here degrade to deterministic templates on
+    error, so the failure reads as "generation worked" and ships filler text.
+    """
+    for env_var in env_vars or ("GROQ_MODEL",):
+        configured = os.getenv(env_var, "").strip()
+        if not configured:
+            continue
+        if configured in _RETIRED_GROQ_MODELS or configured.startswith("groq/compound"):
+            logger.warning(
+                "%s=%s is decommissioned or unsupported; using %s instead",
+                env_var, configured, DEFAULT_GROQ_MODEL,
+            )
+            return DEFAULT_GROQ_MODEL
+        return configured
+    return DEFAULT_GROQ_MODEL
+
 
 def parse_groq_keys(raw: str, *, require_seven: bool = False) -> List[str]:
     """Parse configured keys without ever logging their values."""

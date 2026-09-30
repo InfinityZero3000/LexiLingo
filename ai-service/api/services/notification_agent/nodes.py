@@ -10,6 +10,7 @@ from typing import Any
 
 import httpx
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.services.notification_agent.state import NotificationAgentState, NotificationVariant
 
 from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
@@ -52,7 +53,7 @@ async def generate_variants_node(state: NotificationAgentState) -> dict:
             "retries": state.get("retries", 0),
         }
 
-    model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    model = resolve_groq_model()
     audience = state["audience_summary"]
     orig_title = state["original_title"]
     orig_body = state["original_body"]

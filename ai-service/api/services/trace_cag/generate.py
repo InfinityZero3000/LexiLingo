@@ -13,6 +13,7 @@ import time
 from collections import Counter
 from typing import Any, AsyncGenerator, Dict, List
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.services.trace_cag.state import TraceCAGState
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.document_intelligence import get_doc_intel_service
@@ -287,7 +288,7 @@ async def stream_llm_tokens(
     """
 
     groq_admitted = False
-    groq_model_used = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    groq_model_used = resolve_groq_model()
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -623,7 +624,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             groq_key = await get_available_groq_key(
                 estimated_tokens=512 + _prompt_chars // 4
             )
-            groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+            groq_model = resolve_groq_model()
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
             # Disable Qwen3 thinking to keep token budget for actual response.

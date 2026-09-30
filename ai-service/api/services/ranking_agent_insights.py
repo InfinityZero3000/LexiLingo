@@ -8,6 +8,7 @@ from typing import Any, Optional
 
 import httpx
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,7 @@ async def get_ranking_insights(
         return None
 
     api_key, limiter = slot
-    model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    model = resolve_groq_model()
 
     try:
         prompt = _build_prompt(job_type, artifact)

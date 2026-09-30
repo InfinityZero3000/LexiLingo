@@ -19,6 +19,7 @@ import json
 import time
 from typing import Dict, Any, List, Optional
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
@@ -509,7 +510,7 @@ Be encouraging and focus on the most important errors first."""
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
             groq_key = await get_available_groq_key(estimated_tokens=400)
-            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"))
+            groq_model = resolve_groq_model("GROQ_MODEL_DIAGNOSE", "GROQ_MODEL")
             if groq_key:
                 try:
                     messages = _qwen_no_think_messages(groq_model, [

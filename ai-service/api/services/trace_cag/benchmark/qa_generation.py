@@ -16,6 +16,7 @@ import re
 import time
 from typing import Any, Dict
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.services.trace_cag.env_helpers import _env_float, _env_flag, _env_int
 from api.services.trace_cag.benchmark.ranking import (
     _answer_support_score,
@@ -397,7 +398,7 @@ async def _groq_chat_with_retry(messages: list, max_tokens: int, *, estimated_to
     )
     from api.services.trace_cag.llm_client import _qwen_reasoning_overrides, _throttled_post_json
 
-    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    groq_model = resolve_groq_model()
     _max_503_retries = 5
     _max_key_tries = (get_configured_key_count() or 1) + _max_503_retries
     _tried: set = set()
@@ -860,7 +861,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
 
                 if provider == "groq":
                     from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, get_configured_key_count
-                    groq_model = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+                    groq_model = resolve_groq_model()
                     # Retry across all available keys — skip keys returning 401 (expired/invalid)
                     # 5 retries (2s..32s, ~62s worst case): Run 19 showed Groq's qwen3-32b
                     # over-capacity periods can outlast 3 retries (14s) for a sample.
