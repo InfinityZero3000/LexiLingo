@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 
@@ -24,9 +26,21 @@ class _PremiumGateState extends State<PremiumGate> {
     _check();
   }
 
+  /// Asks the backend, which reads the row it synced from RevenueCat itself.
+  ///
+  /// The local RevenueCat SDK is only consulted when the backend cannot be
+  /// reached: it lives in the app, so a patched build can claim anything, and
+  /// it was the sole source here. Backend routes enforce the same entitlement
+  /// through `require_premium`, so lying to this widget no longer buys access
+  /// to a premium-gated endpoint — only to the UI around it.
   Future<void> _check() async {
-    final v = await PurchasesService.instance.isPremium;
-    if (mounted) setState(() => _isPremium = v);
+    bool value;
+    if (sl.isRegistered<EntitlementService>()) {
+      value = await sl<EntitlementService>().fetchCached();
+    } else {
+      value = await PurchasesService.instance.isPremium;
+    }
+    if (mounted) setState(() => _isPremium = value);
   }
 
   @override

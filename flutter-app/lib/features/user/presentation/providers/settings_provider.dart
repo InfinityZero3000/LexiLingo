@@ -36,7 +36,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<Map<String, dynamic>> getReferralCode() {
-    return _apiClient.get('/api/v1/referral/my-code');
+    return _apiClient.get('/referral/my-code');
   }
 
   Settings? get settings => _settings;

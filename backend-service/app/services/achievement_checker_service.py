@@ -19,6 +19,7 @@ from app.models.progress import UserCourseProgress, LessonCompletion, Streak, Da
 from app.models.vocabulary import UserVocabulary, VocabularyStatus
 from app.models.user import User
 from app.models.games import GameSession
+from app.models.proficiency import SkillDailyStat, SkillType
 
 logger = logging.getLogger(__name__)
 
@@ -287,10 +288,23 @@ class AchievementCheckerService:
             )
             stats["quiz_completed"] = result.scalar() or 0
 
-        # Fetch voice practice count
-        # Note: Voice practices not tracked separately yet, return 0 for now
+        # Fetch voice practice count.
+        #
+        # Voice practice and pronunciation assessment post one speaking result
+        # per attempt through SkillEventRecorder, which the proficiency engine
+        # rolls up into SkillDailyStat. This was hardcoded to 0, so the seeded
+        # `voice_beginner` (10) and `voice_talent` (100) achievements were
+        # visible and permanently unreachable.
         if need_voice:
-            stats["voice_practices"] = 0
+            result = await self.db.execute(
+                select(func.coalesce(func.sum(SkillDailyStat.attempts), 0)).where(
+                    and_(
+                        SkillDailyStat.user_id == user_id,
+                        SkillDailyStat.skill == SkillType.SPEAKING,
+                    )
+                )
+            )
+            stats["voice_practices"] = int(result.scalar() or 0)
 
         # Fetch numeric level from User model
         if need_level:

@@ -52,7 +52,7 @@ router = APIRouter()
 
 
 def _safe_str(value, default: str) -> str:
-    if value is None or type(value).__name__ == "MagicMock":
+    if value is None:
         return default
     text = str(value).strip()
     return text if text else default

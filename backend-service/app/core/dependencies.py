@@ -203,3 +203,29 @@ async def get_current_super_admin(
             detail="Super admin privileges required",
         )
     return current_user
+
+
+async def require_premium(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Require an active `premium` entitlement, verified server-side.
+
+    The Flutter client also gates premium UI, but it reads the local
+    RevenueCat SDK, which a patched build can simply lie about — that check is
+    a UX hint, and this is the boundary. `EntitlementService.is_active` reads
+    the row the backend itself synced from RevenueCat, never a client claim.
+
+    Usage:
+        @router.get("/some-premium-thing")
+        async def handler(user: User = Depends(require_premium)):
+            ...
+    """
+    from app.services.entitlement_service import EntitlementService
+
+    if not await EntitlementService.is_active(db, current_user.id):
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail="An active premium subscription is required.",
+        )
+    return current_user
