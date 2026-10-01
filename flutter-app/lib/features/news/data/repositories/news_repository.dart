@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_config.dart';
 import '../../../../core/services/local_cache_service.dart';
 import '../../domain/entities/news_entities.dart';
@@ -13,10 +15,42 @@ import '../../domain/entities/news_entities.dart';
 class NewsRepository {
   final http.Client _client;
   final LocalCacheService _cache;
+  final ApiClient? _apiClient;
 
-  NewsRepository({http.Client? client, LocalCacheService? cache})
-    : _client = client ?? http.Client(),
-      _cache = cache ?? LocalCacheService.instance;
+  NewsRepository({
+    http.Client? client,
+    LocalCacheService? cache,
+    ApiClient? apiClient,
+  }) : _client = client ?? http.Client(),
+       _cache = cache ?? LocalCacheService.instance,
+       _apiClient = apiClient;
+
+  /// Award XP for a finished news quiz.
+  ///
+  /// `/proficiency/record-exercises` records the skill evidence but grants no
+  /// XP — it takes a score graded on the device. XP goes through `/xp/award`
+  /// instead, which caps per source, caps the day and dedups on `source_id`.
+  /// Silently returns on failure: XP must never block the result screen.
+  Future<void> awardQuizXp({
+    required int baseXp,
+    required String sourceId,
+  }) async {
+    final client = _apiClient;
+    if (client == null) return;
+    try {
+      await client.post(
+        '/xp/award',
+        body: {
+          'source': 'news',
+          'base_xp': baseXp,
+          'source_id': sourceId,
+          'source_detail': 'news_quiz',
+        },
+      );
+    } catch (e) {
+      debugPrint('NewsRepository.awardQuizXp: $e');
+    }
+  }
 
   String get _baseUrl => '${ApiConfig.baseUrl}/news';
 

@@ -182,7 +182,28 @@ class NewsProvider extends ChangeNotifier {
     _recordSubmittedMistakes();
     unawaited(_recordSubmittedSkillEvents());
     _quizSubmitted = true;
+    _awardQuizXp();
     notifyListeners();
+  }
+
+  /// Award XP proportional to the score (fire-and-forget).
+  ///
+  /// Reads [quizScore], so it must run after `_quizSubmitted` is set.
+  /// `/proficiency/record-exercises` no longer grants XP, so this is the only
+  /// place a news quiz earns any; `/xp/award` dedups on `source_id`, which
+  /// keeps a re-taken article from paying twice.
+  void _awardQuizXp() {
+    final quiz = _currentQuiz;
+    final articleId = _currentQuizArticleId;
+    if (quiz == null || articleId == null) return;
+    if (quiz.questions.isEmpty || quizScore <= 0) return;
+
+    final xp = (quiz.xpReward * quizScore / quiz.questions.length)
+        .round()
+        .clamp(5, quiz.xpReward);
+    unawaited(
+      _repository.awardQuizXp(baseXp: xp, sourceId: 'news_quiz_$articleId'),
+    );
   }
 
   /// Reset quiz state.

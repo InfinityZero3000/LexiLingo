@@ -124,9 +124,10 @@ class LevelProvider with ChangeNotifier {
 
   /// Add XP and check for level changes.
   ///
-  /// @deprecated XP is owned by the backend. Call the `/users/me/xp` endpoint
-  /// to award XP, then refresh via [fetchLevelFull]. This method only mutates
-  /// local state and will be out of sync with the server after a page reload.
+  /// @deprecated XP is owned by the backend. Award XP through `POST /xp/award`
+  /// — it caps per source, caps the day, dedups on `source_id` and records an
+  /// XPTransaction — then refresh via [fetchLevelFull]. This method only
+  /// mutates local state and will be out of sync after a page reload.
   @Deprecated(
     'XP is owned by the backend. Award XP via the API and call fetchLevelFull() to refresh.',
   )

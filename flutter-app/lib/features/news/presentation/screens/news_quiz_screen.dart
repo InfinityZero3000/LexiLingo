@@ -2,9 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/di/service_locator.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../games/data/repositories/games_repository.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
 
@@ -173,16 +171,11 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             child: FilledButton.icon(
               onPressed: provider.answers.length == quiz.totalQuestions
                   ? () {
+                      // submitQuiz awards the XP, proportional to the score and
+                      // under one source_id. Awarding here too sent a second
+                      // request with a different source_id, which the backend's
+                      // dedup could not recognise as the same quiz.
                       provider.submitQuiz();
-                      // Award XP via the shared XP endpoint (skill: progress-xp-system)
-                      sl<GamesRepository>()
-                          .awardXP(
-                            source: 'news',
-                            baseXp: quiz.xpReward,
-                            sourceId: widget.article.id,
-                          )
-                          .then((_) {})
-                          .catchError((_) {});
                     }
                   : null,
               icon: const Icon(Icons.check_circle_rounded, size: 20),
