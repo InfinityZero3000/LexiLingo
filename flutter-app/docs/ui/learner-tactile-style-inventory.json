@@ -26692,6 +26692,32 @@
       }
     },
     {
+      "id": "lib/features/progress/presentation/widgets/content_activity_tab.dart::_SourceRow::BoxDecoration::0",
+      "path": "lib/features/progress/presentation/widgets/content_activity_tab.dart",
+      "entryPoint": "surface",
+      "symbol": "_SourceRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 126,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/user/presentation/pages/settings_page.dart::_SettingsPageState::showDialog::1",
       "path": "lib/features/user/presentation/pages/settings_page.dart",
       "entryPoint": "overlay",

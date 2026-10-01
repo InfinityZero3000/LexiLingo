@@ -680,7 +680,10 @@
     "lessonsOfTotal": "{completed}/{total} lecciones",
     "streakMilestone": "🔥 ¡Hito de racha!",
     "daysInARow": "días seguidos",
-    "emptyChart": "¡Empieza a aprender para ver tu gráfico de progreso!"
+    "emptyChart": "¡Empieza a aprender para ver tu gráfico de progreso!",
+    "tabLessons": "Lecciones",
+    "tabActivity": "Actividad",
+    "tabContent": "Contenido"
   },
   "settings": {
     "title": "Configuración",
@@ -1741,5 +1744,19 @@
   },
   "dailyChallenges": {
     "rewardClaimed": "¡Recompensa reclamada!"
+  },
+  "contentActivity": {
+    "summary": "Últimos {days} días: {minutes} min, {sessions} actividades, {xp} XP",
+    "minutes": "{value} min",
+    "sessions": "{value} actividades",
+    "notYet": "Aún no hay registros",
+    "empty": "Mira un vídeo, escucha un podcast o completa un cuestionario: aparecerá aquí.",
+    "loadFailed": "No se pudo cargar tu actividad de contenido.",
+    "source": {
+      "youtube": "Vídeo",
+      "podcast": "Podcast",
+      "news": "Noticias",
+      "book": "Libros"
+    }
   }
 }

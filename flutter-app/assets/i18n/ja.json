@@ -680,7 +680,10 @@
     "lessonsOfTotal": "{completed}/{total}レッスン",
     "streakMilestone": "🔥 連続記録の達成！",
     "daysInARow": "日連続",
-    "emptyChart": "学習を始めると進捗グラフが表示されます！"
+    "emptyChart": "学習を始めると進捗グラフが表示されます！",
+    "tabLessons": "レッスン",
+    "tabActivity": "アクティビティ",
+    "tabContent": "コンテンツ"
   },
   "settings": {
     "title": "設定",
@@ -1741,5 +1744,19 @@
   },
   "dailyChallenges": {
     "rewardClaimed": "報酬を受け取りました！"
+  },
+  "contentActivity": {
+    "summary": "過去{days}日間：{minutes}分、{sessions}回、{xp} XP",
+    "minutes": "{value}分",
+    "sessions": "{value}回",
+    "notYet": "まだ記録がありません",
+    "empty": "動画を見る、ポッドキャストを聴く、クイズに挑戦する — ここに表示されます。",
+    "loadFailed": "コンテンツの利用状況を読み込めませんでした。",
+    "source": {
+      "youtube": "動画",
+      "podcast": "ポッドキャスト",
+      "news": "ニュース",
+      "book": "本"
+    }
   }
 }

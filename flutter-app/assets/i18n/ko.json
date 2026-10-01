@@ -680,7 +680,10 @@
     "lessonsOfTotal": "레슨 {completed}/{total}개",
     "streakMilestone": "🔥 연속 학습 기록 달성!",
     "daysInARow": "일 연속",
-    "emptyChart": "학습을 시작하면 진행 그래프가 표시됩니다!"
+    "emptyChart": "학습을 시작하면 진행 그래프가 표시됩니다!",
+    "tabLessons": "레슨",
+    "tabActivity": "활동",
+    "tabContent": "콘텐츠"
   },
   "settings": {
     "title": "설정",
@@ -1741,5 +1744,19 @@
   },
   "dailyChallenges": {
     "rewardClaimed": "보상을 받았습니다!"
+  },
+  "contentActivity": {
+    "summary": "최근 {days}일: {minutes}분, {sessions}회, {xp} XP",
+    "minutes": "{value}분",
+    "sessions": "{value}회",
+    "notYet": "아직 기록이 없습니다",
+    "empty": "영상을 보거나 팟캐스트를 듣거나 퀴즈를 완료하면 여기에 표시됩니다.",
+    "loadFailed": "콘텐츠 활동을 불러올 수 없습니다.",
+    "source": {
+      "youtube": "영상",
+      "podcast": "팟캐스트",
+      "news": "뉴스",
+      "book": "도서"
+    }
   }
 }

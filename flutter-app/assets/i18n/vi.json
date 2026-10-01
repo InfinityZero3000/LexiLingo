@@ -680,7 +680,10 @@
     "lessonsOfTotal": "{completed}/{total} bài học",
     "streakMilestone": "🔥 Cột mốc chuỗi ngày!",
     "daysInARow": "ngày liên tiếp",
-    "emptyChart": "Bắt đầu học để xem biểu đồ tiến độ của bạn!"
+    "emptyChart": "Bắt đầu học để xem biểu đồ tiến độ của bạn!",
+    "tabLessons": "Bài học",
+    "tabActivity": "Hoạt động",
+    "tabContent": "Nội dung"
   },
   "settings": {
     "title": "Cài đặt",
@@ -1741,5 +1744,19 @@
   },
   "dailyChallenges": {
     "rewardClaimed": "Đã nhận thưởng thành công!"
+  },
+  "contentActivity": {
+    "summary": "{days} ngày qua: {minutes} phút, {sessions} lượt, {xp} XP",
+    "minutes": "{value} phút",
+    "sessions": "{value} lượt",
+    "notYet": "Chưa ghi nhận",
+    "empty": "Xem video, nghe podcast hoặc hoàn thành một bài quiz — kết quả sẽ hiện ở đây.",
+    "loadFailed": "Không tải được hoạt động nội dung.",
+    "source": {
+      "youtube": "Video",
+      "podcast": "Podcast",
+      "news": "Tin tức",
+      "book": "Sách"
+    }
   }
 }

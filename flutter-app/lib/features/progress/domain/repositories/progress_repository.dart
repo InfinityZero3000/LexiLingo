@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 
@@ -68,4 +69,9 @@ abstract class ProgressRepository {
   Future<Either<Failure, Map<String, dynamic>>> claimChallengeReward(
     String challengeId,
   );
+
+  /// Credited activity on the library, podcast, video and news surfaces.
+  Future<Either<Failure, ContentActivityEntity>> getContentActivity({
+    int days,
+  });
 }

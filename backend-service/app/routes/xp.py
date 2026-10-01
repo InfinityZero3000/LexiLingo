@@ -23,7 +23,11 @@ from app.models.user import User
 from app.models.progress import Streak
 from app.models.games import XPTransaction
 from app.services.level_service import get_numeric_level_progress
-from app.services.xp_service import award_xp_transaction
+from app.services.xp_service import (
+    MAX_STUDY_MINUTES_PER_AWARD,
+    award_xp_transaction,
+    capped_duration_seconds,
+)
 from app.crud.leaderboard import competition_ranks
 
 router = APIRouter(prefix="/xp", tags=["XP System"])
@@ -172,6 +176,7 @@ async def award_xp(
         base_xp=body.base_xp,
         source_id=body.source_id,
         source_detail=body.source_detail,
+        duration_seconds=body.duration_seconds,
         daily_xp_loader=_get_daily_xp,
         streak_loader=_get_streak_days,
     )
@@ -215,6 +220,7 @@ async def get_xp_profile(
             "amount": t.amount,
             "source": t.source,
             "source_detail": t.source_detail,
+            "duration_seconds": t.duration_seconds,
             "leveled_up": t.leveled_up,
             "created_at": t.created_at.isoformat(),
         }
@@ -233,6 +239,109 @@ async def get_xp_profile(
         streak_days=streak_days,
         best_streak=best_streak,
         recent_transactions=recent,
+    )
+
+
+# Which content sources report how long the learner spent.
+#
+# All four do now. Reading was the last gap: the article screen and the reader
+# report time the same way the players do, counting only while the learner is in
+# the foreground and something happened recently (`ContentTimeTracker` on the
+# client). A source left at False here would have its real minutes hidden by the
+# UI, so this must follow what the clients actually send.
+CONTENT_SOURCE_TRACKS_MINUTES: dict[str, bool] = {
+    "youtube": True,
+    "podcast": True,
+    "news": True,
+    "book": True,
+}
+CONTENT_SOURCES: tuple[str, ...] = tuple(CONTENT_SOURCE_TRACKS_MINUTES)
+
+
+class ContentSourceActivity(BaseModel):
+    source: str
+    sessions: int = Field(..., description="Awarded activities in the window")
+    minutes: int = Field(..., description="Reported time, capped per activity")
+    tracks_minutes: bool = Field(
+        ...,
+        description="False means this source is credited per activity, not by time",
+    )
+    xp_earned: int
+    last_active_at: Optional[str] = None
+
+
+class ContentActivityResponse(BaseModel):
+    days: int
+    since: str
+    total_minutes: int
+    total_sessions: int
+    total_xp: int
+    by_source: list[ContentSourceActivity]
+
+
+@router.get("/content-activity", response_model=ContentActivityResponse)
+async def get_content_activity(
+    days: int = Query(7, ge=1, le=90),
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """What this learner got credited for on the library/podcast/video/news surfaces.
+
+    Read straight off `XPTransaction`, the immutable row each award already
+    writes — so what a learner is shown here is exactly what the system counted,
+    and a missing entry is evidence the activity never registered rather than a
+    reporting gap. Every content source is listed even at zero, so "nothing was
+    recorded" is visible instead of absent.
+
+    `minutes` applies the same per-activity ceiling the daily quests use: the
+    duration is reported by the client and nothing verifies it.
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    capped_seconds = capped_duration_seconds()
+
+    result = await db.execute(
+        select(
+            XPTransaction.source,
+            func.count(XPTransaction.id),
+            func.coalesce(func.sum(capped_seconds), 0),
+            func.coalesce(func.sum(XPTransaction.amount), 0),
+            func.max(XPTransaction.created_at),
+        )
+        .where(
+            XPTransaction.user_id == current_user.id,
+            XPTransaction.source.in_(CONTENT_SOURCES),
+            XPTransaction.created_at >= since,
+        )
+        .group_by(XPTransaction.source)
+    )
+    rows = {
+        source: (sessions, seconds, xp, last)
+        for source, sessions, seconds, xp, last in result.all()
+    }
+
+    by_source = [
+        ContentSourceActivity(
+            source=source,
+            sessions=rows.get(source, (0, 0, 0, None))[0],
+            minutes=int(rows.get(source, (0, 0, 0, None))[1] or 0) // 60,
+            tracks_minutes=CONTENT_SOURCE_TRACKS_MINUTES[source],
+            xp_earned=int(rows.get(source, (0, 0, 0, None))[2] or 0),
+            last_active_at=(
+                rows[source][3].isoformat()
+                if source in rows and rows[source][3] is not None
+                else None
+            ),
+        )
+        for source in CONTENT_SOURCES
+    ]
+
+    return ContentActivityResponse(
+        days=days,
+        since=since.isoformat(),
+        total_minutes=sum(s.minutes for s in by_source),
+        total_sessions=sum(s.sessions for s in by_source),
+        total_xp=sum(s.xp_earned for s in by_source),
+        by_source=by_source,
     )
 
 

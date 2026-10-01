@@ -2,6 +2,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
@@ -73,6 +74,11 @@ class _StubProgressRepository implements ProgressRepository {
   Future<Either<Failure, Map<String, dynamic>>> claimChallengeReward(
     String challengeId,
   ) async => throw UnimplementedError();
+
+  @override
+  Future<Either<Failure, ContentActivityEntity>> getContentActivity({
+    int days = 7,
+  }) async => throw UnimplementedError();
 }
 
 StreakUpdateResult _result(int streak) => StreakUpdateResult(

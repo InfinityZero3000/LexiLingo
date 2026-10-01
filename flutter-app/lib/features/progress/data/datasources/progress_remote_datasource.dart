@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/progress/data/models/progress_model.dart';
 import 'package:lexilingo_app/features/progress/data/models/streak_model.dart';
+import 'package:lexilingo_app/features/progress/data/models/content_activity_model.dart';
 import 'package:lexilingo_app/features/progress/data/models/daily_challenge_model.dart';
 import 'package:lexilingo_app/features/progress/data/models/weekly_progress_model.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
@@ -31,6 +32,9 @@ abstract class ProgressRemoteDataSource {
   // Daily Challenges methods
   Future<DailyChallengesResponseModel> getDailyChallenges();
   Future<Map<String, dynamic>> claimChallengeReward(String challengeId);
+
+  // Entertainment surfaces: what the learner was actually credited for.
+  Future<ContentActivityModel> getContentActivity({int days});
 }
 
 /// Progress Remote Data Source Implementation
@@ -180,6 +184,12 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<ContentActivityModel> getContentActivity({int days = 7}) async {
+    final response = await apiClient.get('/xp/content-activity?days=$days');
+    return ContentActivityModel.fromJson(response);
   }
 
   @override

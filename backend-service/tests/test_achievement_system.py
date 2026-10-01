@@ -596,9 +596,15 @@ class TestDailyChallengeTemplates:
     """Test the daily challenge template configuration."""
 
     def test_template_count(self):
-        """Should have 13 templates."""
+        """16 templates: 11 study + 5 content quests.
+
+        `voice_practice` and `chat_practice` were removed — nothing in this
+        service records a voice session or a chat turn, so both reported a hard 0
+        forever. See TestEveryTemplateIsMeasurable in test_challenges_routes.py:
+        a template only belongs here once something can measure it.
+        """
         from app.routes.challenges import DAILY_CHALLENGE_TEMPLATES
-        assert len(DAILY_CHALLENGE_TEMPLATES) == 13
+        assert len(DAILY_CHALLENGE_TEMPLATES) == 16
 
     def test_all_templates_have_required_fields(self):
         """Every template must have id, title, description, icon, category, targets, xp_rewards."""
@@ -634,7 +640,7 @@ class TestDailyChallengeTemplates:
         from app.routes.challenges import DAILY_CHALLENGE_TEMPLATES
         ids = {t["id"] for t in DAILY_CHALLENGE_TEMPLATES}
         new_expected = {
-            "review_flashcards", "chat_practice", "voice_practice",
+            "review_flashcards",
             "quiz_accuracy", "time_spent", "new_words",
             "grammar_drill", "listening_drill",
         }

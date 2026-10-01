@@ -680,7 +680,10 @@
     "lessonsOfTotal": "{completed}/{total} lessons",
     "streakMilestone": "🔥 Streak Milestone!",
     "daysInARow": "days in a row",
-    "emptyChart": "Start learning to see your progress chart!"
+    "emptyChart": "Start learning to see your progress chart!",
+    "tabLessons": "Lessons",
+    "tabActivity": "Activity",
+    "tabContent": "Content"
   },
   "settings": {
     "title": "Settings",
@@ -1741,5 +1744,19 @@
   },
   "dailyChallenges": {
     "rewardClaimed": "Reward claimed successfully!"
+  },
+  "contentActivity": {
+    "summary": "Last {days} days: {minutes} min, {sessions} activities, {xp} XP",
+    "minutes": "{value} min",
+    "sessions": "{value} activities",
+    "notYet": "Nothing recorded yet",
+    "empty": "Watch a video, listen to a podcast or finish a quiz — it shows up here.",
+    "loadFailed": "Could not load your content activity.",
+    "source": {
+      "youtube": "Video",
+      "podcast": "Podcast",
+      "news": "News",
+      "book": "Books"
+    }
   }
 }

@@ -119,17 +119,20 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     final ratio = position.inMilliseconds / _duration.inMilliseconds;
     if (ratio >= 0.8) {
       _xpAwarded = true;
-      _awardXp();
+      _awardXp(position);
     }
   }
 
-  Future<void> _awardXp() async {
+  Future<void> _awardXp(Duration listened) async {
     try {
       await sl<GamesRepository>().awardXP(
         source: 'podcast',
         baseXp: 20,
         sourceId: widget.episode.guid,
-        durationSeconds: _duration.inSeconds,
+        // How far they actually got, not the episode's full length — the
+        // backend turns this into study-time minutes, and the award fires at
+        // 80% played, so the full length would overstate every listen.
+        durationSeconds: listened.inSeconds,
       );
     } catch (_) {
       // Silently ignore — XP award must never crash the player.

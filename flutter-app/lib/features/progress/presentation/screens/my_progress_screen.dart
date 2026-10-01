@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/home/presentation/providers/home_provider
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/course_progress_card.dart';
+import 'package:lexilingo_app/features/progress/presentation/widgets/content_activity_tab.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/xp_line_chart.dart';
 
 /// My Progress Screen
@@ -245,7 +246,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -300,10 +301,13 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
-                tabs: const [
-                  Tab(text: 'XP'),
-                  Tab(text: 'Lessons'),
-                  Tab(text: 'Activity'),
+                isScrollable: false,
+                labelPadding: EdgeInsets.zero,
+                tabs: [
+                  const Tab(text: 'XP'),
+                  Tab(text: 'progress.tabLessons'.tr()),
+                  Tab(text: 'progress.tabActivity'.tr()),
+                  Tab(text: 'progress.tabContent'.tr()),
                 ],
               ),
             ),
@@ -319,6 +323,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                     padding: const EdgeInsets.only(top: 20),
                     child: WeekActivityHeatmap(weeklyProgress: weekly),
                   ),
+                  const ContentActivityTab(),
                 ],
               ),
             ),

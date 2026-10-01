@@ -62,6 +62,7 @@ import 'package:lexilingo_app/features/voice/presentation/providers/voice_provid
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/content_activity_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/features/social/presentation/screens/social_screen.dart';
 import 'package:lexilingo_app/features/youtube/presentation/providers/youtube_provider.dart';
@@ -338,6 +339,10 @@ class _LexiLingoAppState extends State<LexiLingoApp>
         ),
         ChangeNotifierProvider(
           create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges(),
+        ),
+        // No eager load: the Content tab calls load() when first opened.
+        ChangeNotifierProvider(
+          create: (_) => di.sl<ContentActivityProvider>(),
         ),
         ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<NotificationProvider>()),

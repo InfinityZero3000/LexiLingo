@@ -680,7 +680,10 @@
     "lessonsOfTotal": "{completed}/{total} 节课",
     "streakMilestone": "🔥 连续学习里程碑！",
     "daysInARow": "天连续",
-    "emptyChart": "开始学习后即可看到进度图表！"
+    "emptyChart": "开始学习后即可看到进度图表！",
+    "tabLessons": "课程",
+    "tabActivity": "活动",
+    "tabContent": "内容"
   },
   "settings": {
     "title": "设置",
@@ -1741,5 +1744,19 @@
   },
   "dailyChallenges": {
     "rewardClaimed": "奖励已领取！"
+  },
+  "contentActivity": {
+    "summary": "最近 {days} 天：{minutes} 分钟，{sessions} 次，{xp} XP",
+    "minutes": "{value} 分钟",
+    "sessions": "{value} 次",
+    "notYet": "尚无记录",
+    "empty": "看视频、听播客或完成一次测验，结果会显示在这里。",
+    "loadFailed": "无法加载你的内容活动。",
+    "source": {
+      "youtube": "视频",
+      "podcast": "播客",
+      "news": "新闻",
+      "book": "书籍"
+    }
   }
 }

@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/streak_pr
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/services/known_words_service.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
@@ -38,6 +39,15 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   double _playbackSpeed = 1.0;
   bool _streakUpdated = false;
 
+  /// Watch time, credited in idempotent chunks by the shared tracker.
+  ///
+  /// Fed position *advances* rather than wall-clock ticks: a tick can only ever
+  /// contribute as much as a tick covers, so dragging the scrubber forward
+  /// credits nothing because the jump is clamped to [_kWatchTickCapMs].
+  late final ContentTimeTracker _watchTime;
+
+  static const _kWatchTickCapMs = 1000;
+
   static const _kSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
   @override
@@ -63,6 +73,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       ),
     );
 
+    // No start(): the tracker's own ticker would count wall clock, and watching
+    // is measured from playback advancing instead.
+    _watchTime = ContentTimeTracker(
+      source: 'youtube',
+      sourceIdPrefix: widget.video.videoId,
+      sourceDetail: 'video_watch',
+    );
+
     _positionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       _syncPosition();
     });
@@ -84,11 +102,20 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     super.dispose();
   }
 
+  /// Credit each completed chunk of watching. Fire-and-forget: a learner has
+  /// already watched the video by the time this runs, and a failed award must
+  /// never interrupt playback.
   Future<void> _syncPosition() async {
     try {
       final seconds = await _ytController.currentTime;
       final posMs = (seconds * 1000).round();
       if (!mounted || posMs == _currentPositionMs) return;
+
+      _watchTime.add(
+        Duration(
+          milliseconds: (posMs - _currentPositionMs).clamp(0, _kWatchTickCapMs),
+        ),
+      );
 
       // Update streak once per session after 30 seconds of watching
       if (!_streakUpdated && posMs >= 30000) {

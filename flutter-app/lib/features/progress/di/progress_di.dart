@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/progress/domain/usecases/get_my_progress_
 import 'package:lexilingo_app/features/progress/domain/usecases/get_weekly_progress_usecase.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/content_activity_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 
 /// Registers all progress-related dependencies
@@ -32,6 +33,12 @@ void registerProgressModule() {
   // Daily Challenges Provider
   sl.registerLazySingleton<DailyChallengesProvider>(
     () => DailyChallengesProvider(repository: sl()),
+  );
+
+  // Content Activity Provider — loaded lazily by the Progress screen's Content
+  // tab rather than at startup; nothing outside that tab reads it.
+  sl.registerLazySingleton<ContentActivityProvider>(
+    () => ContentActivityProvider(repository: sl()),
   );
 
   // Use cases
