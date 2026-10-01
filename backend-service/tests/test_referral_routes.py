@@ -9,12 +9,9 @@ Covers:
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import AsyncClient, ASGITransport
-
-from app.core.cache import build_cache_key
 
 
 BASE = "/api/v1/referral"
@@ -43,13 +40,6 @@ def _make_user(
     u.is_admin = False
     u.is_super_admin = False
     return u
-
-
-def _make_wallet(user_id: uuid.UUID, gems: int = 100) -> MagicMock:
-    w = MagicMock()
-    w.user_id = user_id
-    w.gems = gems
-    return w
 
 
 def _make_mock_session() -> MagicMock:
@@ -155,52 +145,10 @@ class TestGetMyCode:
 # ---------------------------------------------------------------------------
 
 class TestClaimCode:
-    @pytest.mark.asyncio
-    async def test_successful_claim_awards_gems(self, authed_client, monkeypatch):
-        client, session, claimer = authed_client
-        claimer.referred_by = None
-
-        referrer = _make_user(referral_code="REFER123")
-        referrer_wallet = _make_wallet(referrer.id, gems=50)
-        claimer_wallet = _make_wallet(claimer.id, gems=0)
-        deleted = []
-
-        async def fake_delete_cached(key):
-            deleted.append(key)
-
-        monkeypatch.setattr("app.routes.referral.delete_cached", fake_delete_cached)
-
-        # Sequence: with_for_update user, referrer lookup, referrer wallet, claimer wallet
-        results = [
-            _scalar_one_result(claimer),   # locked user (with_for_update)
-            _scalar_one_or_none_result(referrer),  # referrer lookup
-            _scalar_one_or_none_result(referrer_wallet),  # referrer wallet
-            _scalar_one_or_none_result(claimer_wallet),   # claimer wallet
-        ]
-        idx = [0]
-
-        async def fake_execute(query):
-            r = results[min(idx[0], len(results) - 1)]
-            idx[0] += 1
-            return r
-
-        session.execute = fake_execute
-
-        resp = await client.post(f"{BASE}/claim/REFER123")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["gems_awarded"] == 50
-        # Referrer wallet should have been updated
-        assert referrer_wallet.gems == 100  # 50 + 50
-        # Claimer wallet should have been updated
-        assert claimer_wallet.gems == 50
-        # referred_by should be set
-        assert claimer.referred_by == referrer.id
-        session.commit.assert_called_once()
-        assert deleted == [
-            build_cache_key("wallet", user_id=str(referrer.id)),
-            build_cache_key("wallet", user_id=str(claimer.id)),
-        ]
+    # Payout behaviour (both wallets credited, missing wallets created, the
+    # daily referrer cap, account-age and circular guards) is covered against
+    # a real database in test_referral_claim_db.py. The mocked versions that
+    # lived here asserted the bug: gems skipped when no wallet row existed.
 
     @pytest.mark.asyncio
     async def test_self_referral_returns_400(self, authed_client):
@@ -271,38 +219,7 @@ class TestClaimCode:
         resp = await client.post(f"{BASE}/claim/ABC")
         assert resp.status_code == 422
 
-    @pytest.mark.asyncio
-    async def test_referred_by_set_only_after_wallet_checks(self, authed_client):
-        """referred_by must not be committed if an exception occurs mid-transaction."""
-        client, session, claimer = authed_client
-        claimer.referred_by = None
-        referrer = _make_user(referral_code="REFCODE1")
 
-        results = [
-            _scalar_one_result(claimer),
-            _scalar_one_or_none_result(referrer),
-            _scalar_one_or_none_result(None),  # referrer has no wallet
-            _scalar_one_or_none_result(None),  # claimer has no wallet
-        ]
-        idx = [0]
-
-        async def fake_execute(query):
-            r = results[min(idx[0], len(results) - 1)]
-            idx[0] += 1
-            return r
-
-        session.execute = fake_execute
-
-        resp = await client.post(f"{BASE}/claim/REFCODE1")
-        # Claim still succeeds (referred_by is set, gems silently skipped)
-        assert resp.status_code == 200
-        assert claimer.referred_by == referrer.id
-        assert resp.json()["gems_awarded"] == 0
-
-
-# ---------------------------------------------------------------------------
-# Streak reminder task unit tests
-# ---------------------------------------------------------------------------
 
 class TestStreakReminderTask:
     def test_uses_utc_date_not_local(self):
