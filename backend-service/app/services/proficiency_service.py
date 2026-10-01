@@ -641,6 +641,11 @@ class ProficiencyService:
         results: list[ExerciseResult],
     ) -> ProficiencyAssessmentResult:
         """
+        UNUSED. Nothing calls this, in app or tests; the live path is
+        `record_exercise_results_for_user` in routes/proficiency.py, which
+        persists rows instead of returning a computed result. Kept only because
+        it is pure and writes nothing — delete it rather than wiring it up.
+
         Process exercise results and update proficiency profile.
 
         This is called after a user completes exercises to update their
@@ -723,6 +728,13 @@ class ProficiencyService:
     @staticmethod
     def _calculate_xp_from_exercises(results: list[ExerciseResult]) -> int:
         """
+        UNUSED by production code — its only caller was the `award_xp` branch of
+        `record_exercise_results_for_user`, which was removed because it raised
+        `User.total_xp` with no XPTransaction, DailyActivity or LeaderboardEntry
+        to account for it. Reachable now only from tests and from the unused
+        `process_exercise_results`. Awarding XP from here again means routing it
+        through `award_xp_transaction`, not calling this directly.
+
         Calculate XP earned from exercises.
 
         XP is for gamification/rewards and is separate from proficiency.

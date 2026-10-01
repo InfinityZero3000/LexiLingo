@@ -468,8 +468,6 @@ async def record_exercise_results_for_user(
     db: AsyncSession,
     current_user: User,
     results: List[ExerciseResult],
-    *,
-    award_xp: bool = True,
 ) -> dict:
     """
     Record exercise results and update proficiency scores.
@@ -481,10 +479,13 @@ async def record_exercise_results_for_user(
     its own transaction — call after the caller's own completion write has
     already committed.
 
-    Updates skill scores and checks for level changes. `award_xp=False`
-    when the caller already granted gamification XP for this same
-    completion (lesson/game routes do) — this function's own XP bonus is
-    additive and would otherwise double-award.
+    Updates skill scores and checks for level changes. **Awards no XP.** It used
+    to, behind an `award_xp` flag, but every caller passed False because each
+    had already granted its own XP — and the flag's own path raised
+    `User.total_xp` without writing an XPTransaction, today's DailyActivity or
+    the weekly leaderboard, so any future caller that forgot the flag would
+    have minted XP that no other table could account for. XP belongs to the
+    calling route (lesson, game, vocab) or to `award_xp_transaction`.
     """
     # Get profile
     result = await db.execute(
@@ -679,12 +680,7 @@ async def record_exercise_results_for_user(
         profile.assessed_level = new_level.value
         profile.last_level_change_at = datetime.now(timezone.utc)
     
-    # Calculate XP earned (separate from proficiency). Skipped when the
-    # caller already awarded gamification XP for this same completion.
     xp_earned = 0
-    if award_xp:
-        xp_earned = ProficiencyService._calculate_xp_from_exercises(results)
-        profile.total_xp = (profile.total_xp or 0) + xp_earned
 
     # Update overall score
     if all_skill_scores:
@@ -694,21 +690,14 @@ async def record_exercise_results_for_user(
 
     profile.last_assessment_at = datetime.now(timezone.utc)
 
-    # Sync current_user's CEFR level — always, regardless of award_xp.
     current_user.level = new_level.value
 
-    if award_xp:
-        old_xp = current_user.total_xp or 0
-        new_xp = old_xp + xp_earned
-        current_user.total_xp = new_xp
-        current_user.numeric_level = calculate_numeric_level(new_xp)
-
-    if level_changed or award_xp:
+    if level_changed:
         # Rank depends on proficiency_level (current_user.level, just synced
-        # above) — recalculate whenever that changed, even when award_xp is
-        # False and no XP moved. Otherwise a lesson/game completion that
-        # levels up CEFR leaves the rank badge computed against the old
-        # level until the user's next XP-earning event.
+        # above), so it has to be recomputed whenever that changed even though
+        # no XP moved here. Otherwise a lesson/game completion that levels up
+        # CEFR leaves the rank badge computed against the old level until the
+        # user's next XP-earning event.
         rank_info = calculate_rank(
             numeric_level=current_user.numeric_level or 1,
             proficiency_level=current_user.level,
@@ -737,6 +726,14 @@ async def record_exercise_results_for_user(
     }
 
 
+# The client grades news/book quizzes and pronunciation on the device, so this
+# route accepts a score nothing on the server verified. It therefore never
+# grants XP — that goes through POST /xp/award, which caps per source, caps the
+# day and dedups on source_id. Without that split a token holder could POST an
+# unbounded list of perfect results and both reach C2 and mint XP.
+MAX_CLIENT_REPORTED_RESULTS = 50
+
+
 @router.post("/record-exercises", response_model=dict)
 async def record_exercise_results(
     results: List[ExerciseResult],
@@ -750,7 +747,17 @@ async def record_exercise_results(
     game) call `record_exercise_results_for_user` directly instead of
     hitting this route.
     """
-    return await record_exercise_results_for_user(db, current_user, results)
+    if len(results) > MAX_CLIENT_REPORTED_RESULTS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                f"At most {MAX_CLIENT_REPORTED_RESULTS} results per request; "
+                f"got {len(results)}."
+            ),
+        )
+    return await record_exercise_results_for_user(
+        db, current_user, results
+    )
 
 
 @router.get("/level-check", response_model=dict)

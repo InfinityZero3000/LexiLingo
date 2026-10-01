@@ -1633,6 +1633,9 @@ async def complete_game_session(
         base_xp=score.final_base_xp,
         source_id=str(session.id),
         source_detail=session.game_type,
+        # Computed above from the server's own start/finish times, not from
+        # body.client_duration_seconds.
+        duration_seconds=duration_seconds,
         commit=False,
         item_multiplier=item_multiplier,
     )
@@ -1685,7 +1688,6 @@ async def complete_game_session(
                         time_spent_seconds=duration_seconds,
                     )
                 ],
-                award_xp=False,  # game completion above already awarded XP
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)

@@ -56,7 +56,6 @@ async def test_a_days_practice_costs_one_row_per_skill(
                 _result(SkillType.READING, True, 100.0),
                 _result(SkillType.SPEAKING, False, 40.0),
             ],
-            award_xp=False,
         )
 
     rows = await _rollups(db_session, test_user.id)
@@ -113,7 +112,6 @@ async def test_rollup_outlives_the_pruned_detail(db_session: AsyncSession, test_
         db_session,
         test_user,
         [_result(SkillType.READING, True, 90.0)],
-        award_xp=False,
     )
 
     # Age the detail row past the window, then prune.
@@ -144,7 +142,6 @@ async def test_snapshot_populates_the_trend_columns(
         db_session,
         test_user,
         [_result(SkillType.READING, True, 100.0)],
-        award_xp=False,
     )
 
     from app.models.proficiency import UserProficiencyProfile, UserSkillScore

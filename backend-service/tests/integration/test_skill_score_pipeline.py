@@ -129,7 +129,6 @@ async def test_exercise_with_concept_id_feeds_both_engines(
                 concept_id="vocab:departure_lounge",
             )
         ],
-        award_xp=False,
     )
 
     score = await _skill_score(db_session, test_user.id, ModelSkillType.SPEAKING)
@@ -163,7 +162,6 @@ async def test_exercise_without_concept_id_still_scores_the_skill(
                 score=40.0,
             )
         ],
-        award_xp=False,
     )
 
     score = await _skill_score(db_session, test_user.id, ModelSkillType.READING)

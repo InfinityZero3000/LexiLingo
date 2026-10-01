@@ -17,7 +17,7 @@ from app.core.cache import build_cache_key, delete_cached
 from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.services.learner_state import record_concept_observation
-from app.services.streak_service import update_user_streak
+from app.services.streak_service import record_daily_activity, update_user_streak
 from app.models.user import User
 from app.models.course import Course, Unit, Lesson
 from app.models.progress import (
@@ -1113,55 +1113,24 @@ async def complete_lesson(
         apply_rank_info_to_user(current_user, new_rank_info)
         
         # --- Update DailyActivity ---
-        from datetime import date as date_type
-        today = date_type.today()
-        daily_result = await db.execute(
-            select(DailyActivity).where(
-                and_(
-                    DailyActivity.user_id == current_user.id,
-                    DailyActivity.activity_date == today,
-                )
-            )
+        await record_daily_activity(
+            db,
+            current_user.id,
+            xp_earned=xp_to_award,
+            lessons_completed=1,
+            study_time_minutes=attempt.time_spent_ms // 60_000,
         )
-        daily_activity = daily_result.scalar_one_or_none()
-        
-        if daily_activity:
-            daily_activity.xp_earned = (daily_activity.xp_earned or 0) + xp_to_award
-            daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
-        else:
-            daily_activity = DailyActivity(
-                user_id=current_user.id,
-                activity_date=today,
-                xp_earned=xp_to_award,
-                lessons_completed=1,
-            )
-            db.add(daily_activity)
     elif attempt.passed:
-        # If passed but no new XP was awarded (already passed before),
-        # still increment completed lessons in DailyActivity for active engagement.
-        from datetime import date as date_type
-        today = date_type.today()
-        daily_result = await db.execute(
-            select(DailyActivity).where(
-                and_(
-                    DailyActivity.user_id == current_user.id,
-                    DailyActivity.activity_date == today,
-                )
-            )
+        # Passed before, so no new XP — but the lesson was still played, and
+        # both the completion count and the time at it are real.
+        await record_daily_activity(
+            db,
+            current_user.id,
+            lessons_completed=1,
+            study_time_minutes=attempt.time_spent_ms // 60_000,
         )
-        daily_activity = daily_result.scalar_one_or_none()
-        
-        if daily_activity:
-            daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
-        else:
-            daily_activity = DailyActivity(
-                user_id=current_user.id,
-                activity_date=today,
-                xp_earned=0,
-                lessons_completed=1,
-            )
-            db.add(daily_activity)
-            
+
+
     # Update streak
     await update_user_streak(db, current_user.id)
     
@@ -1214,7 +1183,6 @@ async def complete_lesson(
                 db,
                 current_user,
                 results,
-                award_xp=False,  # lesson completion above already awarded XP
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)

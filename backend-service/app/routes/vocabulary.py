@@ -28,7 +28,7 @@ from app.core.cache import build_cache_key, get_cached, set_cached, delete_cache
 from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
-from app.services.streak_service import update_user_streak
+from app.services.streak_service import record_daily_activity, update_user_streak
 from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
@@ -122,7 +122,6 @@ async def _record_review_proficiency(
                 # time from the same answer.
             )
         ],
-        award_xp=False,
     )
 
 
@@ -698,36 +697,14 @@ async def submit_review(
     db.add(tx)
     
     # Update DailyActivity
-    today = datetime.now(timezone.utc).date()
-    result = await db.execute(
-        select(DailyActivity).where(
-            DailyActivity.user_id == user_id,
-            DailyActivity.activity_date == today,
-        )
+    await record_daily_activity(
+        db,
+        user_id,
+        xp_earned=xp_awarded,
+        vocabulary_reviewed=1,
+        study_time_minutes=(review.time_spent_ms or 0) // 60_000,
+        today=datetime.now(timezone.utc).date(),
     )
-    daily = result.scalar_one_or_none()
-    if daily:
-        from unittest.mock import Mock
-        if isinstance(daily.xp_earned, Mock) or isinstance(daily.daily_goal_xp, Mock):
-            daily.xp_earned = xp_awarded
-            daily.daily_goal_met = True
-        else:
-            daily.xp_earned += xp_awarded
-            if daily.xp_earned >= daily.daily_goal_xp:
-                daily.daily_goal_met = True
-        daily.vocabulary_reviewed += 1
-        db.add(daily)
-    else:
-        daily_goal_xp = 20  # default
-        daily_goal_met = xp_awarded >= daily_goal_xp
-        db.add(DailyActivity(
-            user_id=user_id,
-            activity_date=today,
-            xp_earned=xp_awarded,
-            vocabulary_reviewed=1,
-            daily_goal_xp=daily_goal_xp,
-            daily_goal_met=daily_goal_met
-        ))
         
     # Below this point every step is a best-effort side effect (streak,
     # cache, achievements, proficiency) — none of them may roll back the
@@ -757,10 +734,10 @@ async def submit_review(
         isolate=True,
     )
 
-    # CEFR proficiency tracking. submit_review above only fed the BKT/FSRS
-    # schedule, so a learner who reviewed hundreds of cards still showed a
-    # vocabulary skill score of zero. award_xp=False — this route already
-    # granted XP above and this function's bonus is additive.
+    # CEFR proficiency tracking. submit_review above only fed the delta-rule
+    # and FSRS schedule, so a learner who reviewed hundreds of cards still
+    # showed a vocabulary skill score of zero. Records skills only — XP for
+    # this review was granted above.
     await _best_effort_step(
         db,
         "Proficiency update",

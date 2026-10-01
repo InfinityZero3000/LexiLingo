@@ -118,22 +118,6 @@ class WeeklyProgressResponse(BaseModel):
 # XP & Level Operations
 # =====================
 
-class XPAwardRequest(BaseModel):
-    """Request to award XP to a user."""
-    amount: int = Field(..., gt=0, description="Amount of XP to award")
-    reason: str = Field(..., description="Reason for XP award (e.g., 'Completed lesson')")
-    metadata: Optional[dict] = Field(None, description="Additional metadata")
-
-
-class XPAwardResponse(BaseModel):
-    """Response after awarding XP."""
-    total_xp: int
-    xp_gained: int
-    new_level: LevelStatus
-    level_up: bool = Field(default=False, description="True if user leveled up")
-    previous_tier: Optional[str] = Field(None, description="Previous tier code if leveled up")
-
-
 class LevelInfoResponse(BaseModel):
     """Detailed level information."""
     all_tiers: list[LevelTier]

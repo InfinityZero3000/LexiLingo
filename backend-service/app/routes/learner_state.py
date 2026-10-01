@@ -98,7 +98,6 @@ async def _record_turn_skill_evidence(
                         # scheduling this concept through the outbox.
                     )
                 ],
-                award_xp=False,
             )
         except Exception:
             logger.exception(

@@ -237,9 +237,15 @@ class TestRecordExercises:
         data = (await auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)).json()
         assert data["exercises_recorded"] == len(sample_exercises)
 
-    async def test_xp_earned_positive(self, auth_client, sample_exercises):
+    async def test_route_grants_no_xp(self, auth_client, sample_exercises):
+        """The client grades these, so XP must come from /xp/award instead."""
         data = (await auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)).json()
-        assert data["xp_earned"] > 0, "Correct exercises should earn XP"
+        assert data["xp_earned"] == 0
+
+    async def test_oversized_batch_rejected(self, auth_client, sample_exercises):
+        oversized = (sample_exercises * 20)[:51]
+        response = await auth_client.post(f"{BASE}/record-exercises", json=oversized)
+        assert response.status_code == 422
 
     async def test_skill_updates_contain_changed_skills(self, auth_client, sample_exercises):
         data = (await auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)).json()

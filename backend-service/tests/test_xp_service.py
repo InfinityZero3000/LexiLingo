@@ -1,10 +1,12 @@
 import uuid
+from datetime import date
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
 
+from app.models.progress import DailyActivity
 from app.services.xp_service import REPEAT_SENSITIVE_SOURCES, award_xp_transaction
 
 
@@ -12,6 +14,24 @@ def _result(*, scalar_one_or_none=None):
     result = MagicMock()
     result.scalar_one_or_none.return_value = scalar_one_or_none
     return result
+
+
+def _make_daily(xp_earned: int) -> DailyActivity:
+    """A real DailyActivity, not a namespace with only the fields in use.
+
+    award_xp_transaction now routes this row through record_daily_activity,
+    which touches every counter — a stand-in carrying just `xp_earned` is
+    narrower than the real model and fails on the first new field.
+    """
+    return DailyActivity(
+        user_id=uuid.uuid4(),
+        activity_date=date.today(),
+        xp_earned=xp_earned,
+        lessons_completed=0,
+        study_time_minutes=0,
+        vocabulary_reviewed=0,
+        daily_goal_xp=20,
+    )
 
 
 def _make_user(user_id: uuid.UUID | None = None) -> SimpleNamespace:
@@ -48,7 +68,7 @@ async def test_award_locks_user_and_updates_weekly_leaderboard():
         rank_level_score=0,
         rank_proficiency_score=0,
     )
-    daily = SimpleNamespace(xp_earned=5)
+    daily = _make_daily(5)
     leaderboard = SimpleNamespace(xp_earned=20, league="bronze")
     db = MagicMock()
     # With source_id provided, there are 5 db.execute calls:
@@ -144,7 +164,7 @@ async def test_game_xp_award_applies_item_multiplier_on_top_of_streak():
     players who only play the mini-games."""
     user_id = uuid.uuid4()
     user = _make_user(user_id)
-    daily = SimpleNamespace(xp_earned=0)
+    daily = _make_daily(0)
     leaderboard = SimpleNamespace(xp_earned=0, league="bronze")
     db = MagicMock()
     db.execute = AsyncMock(
@@ -179,7 +199,7 @@ async def test_item_multiplier_below_one_does_not_reduce_xp():
     """A missing/invalid boost (item_multiplier < 1.0) must never penalize XP."""
     user_id = uuid.uuid4()
     user = _make_user(user_id)
-    daily = SimpleNamespace(xp_earned=0)
+    daily = _make_daily(0)
     leaderboard = SimpleNamespace(xp_earned=0, league="bronze")
     db = MagicMock()
     db.execute = AsyncMock(
