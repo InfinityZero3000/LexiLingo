@@ -171,12 +171,21 @@ async def _ensure_mongo_indexes() -> None:
         [("status", ASCENDING), ("available_at", ASCENDING)],
         name="learner_observation_spool_claim_idx",
     )
-    # TTL applies only after delivery. Pending/retry rows have no delivered_at
-    # and therefore never expire.
+    # Pending and retry rows carry neither timestamp and so never expire — that
+    # is deliberate, they are learner evidence still waiting to ship. A row only
+    # becomes expirable once it is finished: delivered, or abandoned by
+    # `_reschedule_after_failure`. Without the second index an undeliverable
+    # observation lived in the collection forever.
     await _create_index_safe(
         "learner_observation_spool",
         [("delivered_at", ASCENDING)],
         name="learner_observation_spool_delivered_ttl",
+        expireAfterSeconds=90 * 24 * 60 * 60,
+    )
+    await _create_index_safe(
+        "learner_observation_spool",
+        [("dead_at", ASCENDING)],
+        name="learner_observation_spool_dead_ttl",
         expireAfterSeconds=90 * 24 * 60 * 60,
     )
     await _create_index_safe(
@@ -218,17 +227,44 @@ async def lifespan(app: FastAPI):
     _http_client = httpx.AsyncClient(timeout=30.0)
 
     if settings.LEARNER_STATE_MODE != "off":
-        from api.services.learner_observation_spool import (
-            start_learner_observation_forwarder,
-        )
+        # Degraded, not fatal. The forwarder only ships observations on to
+        # backend-service, and it grabs `mongodb_manager.db` as it starts — so a
+        # Mongo that is not ready yet used to take the whole service down with
+        # it, costing chat, translate, STT and TRACE-CAG to save skill evidence.
+        try:
+            from api.services.learner_observation_spool import (
+                start_learner_observation_forwarder,
+            )
 
-        start_learner_observation_forwarder()
+            start_learner_observation_forwarder()
+            logger.info(
+                " Learner observation forwarder started (mode=%s)",
+                settings.LEARNER_STATE_MODE,
+            )
+        except Exception as e:
+            logger.error(
+                "Learner observation forwarder failed to start; chat continues "
+                "but its skill evidence will not be forwarded: %s",
+                e,
+                exc_info=True,
+            )
 
     if settings.CONTENT_ETL_ENABLED:
-        from api.services.content_etl.staleness import run_staleness_loop
+        # The ETL's optional dependencies are not installed in every image, so
+        # the import itself can fail. Corpus refresh is the most skippable thing
+        # this service does; it must not be the reason chat is down.
+        try:
+            from api.services.content_etl.staleness import run_staleness_loop
 
-        asyncio.create_task(run_staleness_loop())
-        logger.info(" content_etl staleness watch started")
+            asyncio.create_task(run_staleness_loop())
+            logger.info(" content_etl staleness watch started")
+        except Exception as e:
+            logger.error(
+                "content_etl staleness watch failed to start; corpora will go "
+                "stale until it is fixed: %s",
+                e,
+                exc_info=True,
+            )
 
     if USE_GATEWAY:
         try:
@@ -282,10 +318,23 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Piper TTS warmup failed; continuing without warm cache: {e}")
 
     if settings.VOICE_DUPLEX_ENABLED:
-        from api.routes.voice import voice_readiness
+        # Degraded, not fatal — same reasoning as the forwarder above. Duplex
+        # voice already fails closed per request: `GET /voice/ready` runs this
+        # very check and answers 503, and no client starts a session without it.
+        # So raising here gates nothing that is not already gated, while costing
+        # chat, translate, STT and TRACE-CAG the whole process.
+        try:
+            from api.routes.voice import voice_readiness
 
-        await voice_readiness()
-        logger.info(" Duplex voice dependencies ready")
+            await voice_readiness()
+            logger.info(" Duplex voice dependencies ready")
+        except Exception as e:
+            logger.error(
+                "Duplex voice dependencies unavailable; /voice/ready will report "
+                "503 until they recover: %s",
+                e,
+                exc_info=True,
+            )
     
     yield
     
