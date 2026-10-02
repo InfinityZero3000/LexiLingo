@@ -7,7 +7,9 @@ Language learning app (Duolingo-style). Stack:
 - `backend-service/` — FastAPI + SQLAlchemy async (PostgreSQL)
 - `ai-service/` — Python AI/ML (sentence-transformers, Whisper STT, TRACE-CAG pipeline)
 - `admin-service/` — React admin dashboard
-- `gateway/` — API gateway (Kong or Traefik)
+- `gateway/` — API gateway. **nginx** is what actually runs: `docker-compose.yml`
+  mounts `gateway/nginx/`. The `gateway/kong/` and `gateway/apim/` configs are
+  not referenced by any compose file or deploy script.
 - `mcp-server/` — Custom MCP server for LexiLingo tools
 
 ## Architecture Rules
@@ -93,8 +95,58 @@ wherever the format is known.
   and it also schedules the concept. Leave `concept_id` unset when something
   else already recorded that answer — vocabulary review does, and passing it
   there would count one answer as two pieces of evidence.
-- `award_xp=False` whenever the calling route granted XP itself (lesson, game,
-  vocab review, chat turns). The function's XP is additive.
+- **`record_exercise_results_for_user` awards no XP, and has no flag to make
+  it.** The old `award_xp` parameter is gone: every caller passed `False`, and
+  its `True` path raised `User.total_xp` while writing no `XPTransaction`, no
+  `DailyActivity` and no `LeaderboardEntry` — XP nothing else could account for.
+  XP belongs to the calling route or to `award_xp_transaction`.
+- **One accounting point for XP: `record_daily_activity`** in
+  `app/services/streak_service.py`.
+  It is additive, never commits, and updates *both* today's `DailyActivity` and
+  the current week's `LeaderboardEntry`. Only 2 of the 8 places that raised
+  `User.total_xp` used to touch the leaderboard, so a learner who did lessons
+  and vocabulary — the core loop — ranked below anyone who had played one game,
+  however much XP their profile showed. Never write either row by hand.
+  `ranking_agent/apply.py` is the one exception: it batch-UPSERTs both.
+- **Daily quests must be measurable before they exist.** `DAILY_CHALLENGE_TEMPLATES`
+  draws 4-5 a day, of which **exactly one is a `content` quest** — one pool would
+  let a day come up mostly content, and `claim_daily_bonus` needs every challenge
+  done, so a lessons-only learner would lose the bonus through no fault of theirs.
+  Content progress is read from `XPTransaction` via `CONTENT_QUEST_SOURCES`:
+  `unit="minutes"` sums `duration_seconds`, `unit="events"` counts rows, and
+  `sources` is a tuple so `read_minutes` can span news and books — a learner
+  thinks of it as one thing. **`source_detail` is what keeps two quests on the
+  same source apart**: a book awards XP for reading time, for a milestone *and*
+  for a chapter quiz. A template whose category nothing measures reports a hard 0
+  forever; `voice_practice` and `chat_practice` did exactly that for months. Tests
+  in `test_challenges_routes.py` fail if a template has no counter, or if two
+  quests share a source without distinct `source_detail`s.
+- **`XPTransaction.duration_seconds` is a client claim, not a measurement.**
+  Video and podcast report how far they got; nothing verifies it. Every total
+  derived from it caps each award at `MAX_STUDY_MINUTES_PER_AWARD` (60) through
+  `capped_duration_seconds()` — a **CASE, not `least()`**, because `least` does
+  not exist in SQLite and the tests run on SQLite, so it would have failed only
+  in production.
+- **One client-side tracker for all time spent on content:**
+  `ContentTimeTracker` (`flutter-app/lib/core/services/`). It reports in
+  idempotent 5-minute chunks (`source_id = "<prefix>:<chunk>"`) because
+  `/xp/award` dedups on `source_id` — one award per article or video could never
+  carry a growing total. A part-finished chunk is dropped, not rounded up.
+  The reader and article screen drive it with its own ticker, which counts a
+  second only while the app is in the foreground **and** a scroll or page turn
+  happened within `idleAfter` (2 min — a reading-speed knob, not a technical
+  limit: too short undercounts the slowest readers, too long pays a phone left
+  face-up). The video player instead feeds it position *advances* clamped to one
+  tick, so dragging the scrubber credits nothing.
+- **`GET /xp/content-activity`** is the learner-facing record of the
+  library/podcast/video/news surfaces, read straight off `XPTransaction`. Every
+  content source is listed even at zero, and `tracks_minutes` must follow what
+  the clients actually send — all four report time now, so a source left False
+  would have its real minutes hidden by the UI. Shown in the Progress screen's
+  **Content** tab.
+- **There is exactly one XP endpoint: `POST /xp/award`.** `POST /users/me/xp`
+  took any `amount` the client sent with no cap, no dedup and no audit row; it
+  was deleted (2026-10-01) and no client had ever called it.
 - **Skill comes from a label, not a guess.** `Course.skill` / `Lesson.skill`,
   resolved by `ProficiencyService.resolve_lesson_skill` (lesson → course →
   `infer_skill_from_tags`). The tag guess is legacy fallback only: it defaults
@@ -262,6 +314,66 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   anywhere, wrote to a `flutter-app/courses/` directory that does not exist, and
   its export format carried no lessons or exercises. Recover from git history if
   it is ever wanted; do not resurrect it as a course source.
+
+## ai-service startup — what may and may not kill it
+
+`lifespan` in `ai-service/api/main.py` warms several optional subsystems. Losing
+any one of them degrades a feature; losing the process costs chat, translate, STT
+and TRACE-CAG all at once. So **every optional subsystem is wrapped**, and new
+ones must be:
+
+- Redis / Groq key pool — caught and logged (unless `GROQ_REQUIRE_SEVEN_KEYS`).
+- Piper TTS warmup — caught and logged.
+- **Learner observation forwarder** — caught and logged since 2026-10-02. It only
+  forwards skill evidence to backend-service; chat has to keep working without it.
+- **Duplex voice readiness** — caught and logged. `GET /voice/ready` runs the same
+  check per request and answers 503, so raising at boot gated nothing that was not
+  already gated while costing the whole process.
+- **content_etl staleness watch** — caught and logged; its optional dependencies
+  are not in every image, so the import itself can fail.
+
+`test_main_lifespan.py::test_every_optional_subsystem_catches_its_own_failure`
+fails if a fifth flag-gated subsystem arrives unguarded, and
+`test_mongo_remains_the_one_fatal_dependency` stops the Mongo `raise` being
+softened into a warning.
+
+## Learner observation spool — what a failed delivery means
+
+`SpoolForwarder` in `ai-service/api/services/learner_observation_spool.py` is
+lease-based with exponential backoff; the part that was wrong was treating every
+failure as "retry in a moment". Three outcomes now, and the distinction is the
+whole point:
+
+| Failure | Meaning | Outcome |
+|---|---|---|
+| 401 / 403 / 404 | The receiver is switched off (`LEARNER_STATE_ENABLED=false` 404s the whole route) or the shared token is wrong | Park for `RECEIVER_OFF_BACKOFF_SECONDS` (300) and **hand the attempt back** — the data is good and a week of downtime must not exhaust its budget |
+| 400 / 422 | The payload was refused; the allowlist rejects an unknown key, so a replay cannot help | `dead` immediately |
+| 5xx, 429, timeout, no status | Transient | Backoff, `dead` after `MAX_DELIVERY_ATTEMPTS` (10) |
+
+- **Only `delivered_at` and `dead_at` carry a TTL.** Pending and retry rows
+  deliberately never expire — they are evidence still waiting to ship. Before
+  `dead_at` existed, a row that could never be delivered lived forever *and*
+  retried every 30s, and with the receiver off that was every row.
+- **Queue depth is emitted by the worker loop on a 60s timer**, not after a
+  successful delivery: the backlog matters most when nothing is being delivered,
+  which is exactly when the old gauge went stale. It reaches operators through
+  `/api/v1/ai/monitoring/dashboard`, so no extra endpoint is needed.
+- The feature needs **both** switches agreeing — `LEARNER_STATE_MODE` on
+  ai-service and `LEARNER_STATE_ENABLED` on backend-service — plus a byte-identical
+  `LEARNER_STATE_INTERNAL_TOKEN` and audience. A mismatch now shows up as the
+  `learner_state_degraded_total.receiver_off` counter rather than a silent spin.
+
+**Run the ai-service suite in slices.** The whole thing in one `pytest` gets
+killed (SIGTERM, no output at all, which looks like a hang rather than a limit):
+`tests/` minus the big dirs, then `tests/stt`, `tests/trace_cag`,
+`tests/benchmark`, `tests/load`, `tests/content_etl` separately.
+
+**`tests/test_main_lifespan.py` reads `ai-service/.env`.** `Settings` loads that
+file, so a local `LEARNER_STATE_MODE` used to decide whether a lifespan test
+passed. Pin any setting a startup branch keys off, rather than inheriting it from
+whatever the machine has.
+
+---
 
 ## Production Deploy — hard rules
 

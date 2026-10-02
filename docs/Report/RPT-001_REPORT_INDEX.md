@@ -40,7 +40,7 @@ Bộ tài liệu Report được đánh mã theo thứ tự để theo dõi rõ 
 
 | # | File | Mô tả |
 |---|------|--------|
-| 18 | `RPT-018_FEATURE_ANALYSIS.md` | **Phân tích tính năng toàn diện** — AI, Learning, Gamification, Content, Voice |
+| 18 | `RPT-018_FEATURE_ANALYSIS.md` | **Phân tích tính năng toàn diện** + **bảng tra trạng thái triển khai** (hệ thống nào đã xong / một phần / chưa, kèm chức năng và endpoint) — AI, Learning, Gamification, Content, Voice |
 | 19 | `RPT-019_AI_SERVICE_DEEP_DIVE.md` | **AI Service chuyên sâu** — TRACECAG, Model Gateway, Smart Router, toàn bộ AI services |
 | 20 | `RPT-020_BACKEND_SERVICE_REPORT.md` | **Backend Service** — 24 route modules, services, kiến trúc database |
 | 21 | `RPT-021_GRAPHCAG_ALGORITHM_FLOW.md` | **TRACECAG algorithm flow** — từng node, thuật toán cache, scoring metrics |
