@@ -29,7 +29,7 @@ google-auth>=2.58.1
 google-auth-oauthlib>=1.5.0
 
 # Environment
-python-dotenv>=1.2.3
+python-dotenv>=1.2.4
 
 # Logging and Error Tracking
 loguru>=0.7.3
