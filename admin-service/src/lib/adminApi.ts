@@ -307,6 +307,52 @@ export const deleteShopItem = async (id: string) =>
   });
 
 // ============================================================================
+// Banner Management
+// ============================================================================
+
+export type BannerPosition = "hero" | "sidebar" | "interstitial";
+
+export type BannerType = {
+  id: string;
+  title: string;
+  description?: string | null;
+  image_url: string;
+  link_url?: string | null;
+  position: BannerPosition;
+  priority: number;
+  is_active: boolean;
+  start_at?: string | null;
+  end_at?: string | null;
+  target_min_level?: string | null;
+  target_max_level?: string | null;
+  target_language?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const listBanners = async () =>
+  apiFetch<AdminResponse<BannerType[]>>(`${ENV.backendUrl}/banners?limit=200`);
+
+export const createBanner = async (
+  params: Omit<BannerType, "id" | "created_at" | "updated_at">
+) =>
+  apiFetch<AdminResponse<BannerType>>(`${ENV.backendUrl}/banners`, {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+
+export const updateBanner = async (id: string, params: Partial<BannerType>) =>
+  apiFetch<AdminResponse<BannerType>>(`${ENV.backendUrl}/banners/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
+
+export const deleteBanner = async (id: string) =>
+  apiFetch<AdminResponse<{ id: string }>>(`${ENV.backendUrl}/banners/${id}`, {
+    method: "DELETE",
+  });
+
+// ============================================================================
 // Course Management
 // ============================================================================
 

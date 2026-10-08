@@ -61,6 +61,8 @@ from app.routes.ranking_agent import router as ranking_agent_router
 from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
+from app.routes.banners import router as banners_router
+from app.routes.internal_entitlements import router as internal_entitlements_router
 from app.routes.proficiency import router as proficiency_router
 from app.routes.entitlements import router as entitlements_router
 from app.routes.rbac import router as rbac_router
@@ -390,6 +392,8 @@ app.include_router(
     tags=["Partner Integrations"],
 )
 app.include_router(course_categories_router, prefix=f"{settings.API_V1_PREFIX}/categories", tags=["Course Categories"])
+app.include_router(banners_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Banners"])
+app.include_router(internal_entitlements_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Internal Entitlements"])
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])

@@ -18,6 +18,7 @@ parses requests, enforces auth/quota, and shapes responses.
 
 import asyncio
 import logging
+import os
 import time
 import uuid
 from datetime import datetime, timezone
@@ -27,9 +28,10 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Header, Request
 from fastapi.responses import StreamingResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure
+from api.clients.entitlement_client import is_premium
 from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
-from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
+from api.core.quota_guard import QuotaDecision, default_token_cost_for_endpoint, enforce_user_quota
 from api.core.database import get_database
 from api.utils.cursor import (
     build_pagination,
@@ -52,6 +54,38 @@ from api.services.lexi_chat_service import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/lexi", tags=["lexi-chat"])
+
+# Premium's whole pitch is "unlimited Lexi chat" — this is the free-tier cap
+# that makes that true. It rides the same per-endpoint Redis quota as the
+# existing abuse ceiling, just under its own key and a much lower rpd_limit.
+LEXI_CHAT_FREE_DAILY_LIMIT = int(os.getenv("LEXI_CHAT_FREE_DAILY_LIMIT", "30"))
+
+
+async def _enforce_free_tier_chat_cap(user_id: str) -> None:
+    if await is_premium(user_id):
+        return
+    await enforce_user_quota(
+        user_id,
+        "lexi.chat.free_tier",
+        fail_closed=True,
+        rpd_limit=LEXI_CHAT_FREE_DAILY_LIMIT,
+    )
+
+
+async def _enforce_chat_quota(user_id: str, message: str) -> QuotaDecision:
+    """The abuse ceiling and the premium/free-tier cap are independent of
+    each other, so run them concurrently rather than adding their latencies
+    in series on every chat turn."""
+    quota, _ = await asyncio.gather(
+        enforce_user_quota(
+            user_id,
+            "lexi.chat",
+            token_cost=default_token_cost_for_endpoint("lexi.chat", text=message),
+            fail_closed=True,
+        ),
+        _enforce_free_tier_chat_cap(user_id),
+    )
+    return quota
 
 
 def _serialize_lexi_message(doc: Dict[str, Any]) -> Dict[str, Any]:
@@ -137,12 +171,7 @@ async def lexi_chat(
     auth_user_id = enforce_user_scope(current_user, request.user_id)
     request = request.model_copy(update={"user_id": auth_user_id})
 
-    quota = await enforce_user_quota(
-        current_user.user_id,
-        "lexi.chat",
-        token_cost=default_token_cost_for_endpoint("lexi.chat", text=request.message),
-        fail_closed=True,
-    )
+    quota = await _enforce_chat_quota(current_user.user_id, request.message)
 
     # ── 1. Session management ──
     if request.session_id:
@@ -254,15 +283,7 @@ async def lexi_stream_chat(
     quota_timeout_s = svc.env_float("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", 5.0, minimum=0.5)
     try:
         quota = await asyncio.wait_for(
-            enforce_user_quota(
-                current_user.user_id,
-                "lexi.chat",
-                token_cost=default_token_cost_for_endpoint(
-                    "lexi.chat",
-                    text=request.message,
-                ),
-                fail_closed=True,
-            ),
+            _enforce_chat_quota(current_user.user_id, request.message),
             timeout=quota_timeout_s,
         )
     except asyncio.TimeoutError as exc:

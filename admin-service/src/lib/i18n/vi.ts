@@ -509,6 +509,16 @@ const vi = {
     targetUrl: "URL đích",
     clickCount: "Lượt nhấn",
     impressions: "Lượt hiển thị",
+    titleRequired: "Tiêu đề *",
+    imageUrlRequired: "URL hình ảnh *",
+    priorityLabel: "Độ ưu tiên",
+    targetMinLevel: "Trình độ tối thiểu",
+    targetMaxLevel: "Trình độ tối đa",
+    targetLanguage: "Ngôn ngữ mục tiêu",
+    anyLevelPlaceholder: "Không giới hạn",
+    anyLanguagePlaceholder: "Mọi ngôn ngữ",
+    show: "Hiện",
+    hide: "Ẩn",
   },
 
   // ============== Logs ==============

@@ -511,6 +511,16 @@ const en: Translations = {
     targetUrl: "Target URL",
     clickCount: "Clicks",
     impressions: "Impressions",
+    titleRequired: "Title *",
+    imageUrlRequired: "Image URL *",
+    priorityLabel: "Priority",
+    targetMinLevel: "Min level",
+    targetMaxLevel: "Max level",
+    targetLanguage: "Target language",
+    anyLevelPlaceholder: "No restriction",
+    anyLanguagePlaceholder: "All languages",
+    show: "Show",
+    hide: "Hide",
   },
 
   // ============== Logs ==============

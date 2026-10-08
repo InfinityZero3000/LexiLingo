@@ -41,9 +41,14 @@ class UserQuotaGuard:
         endpoint_key: str,
         token_cost: int = 0,
         fail_closed: bool = False,
+        rpd_limit: int | None = None,
     ) -> QuotaDecision:
         redis_client = await get_redis()
         normalized_token_cost = max(int(token_cost), 0)
+        # Lets a caller apply a tighter daily cap on its own endpoint_key
+        # (e.g. a free-tier chat cap) without affecting the shared abuse
+        # ceiling every other call to this guard still uses.
+        effective_rpd_limit = self.rpd_limit if rpd_limit is None else rpd_limit
 
         if redis_client is None:
             # Default is fail-open for resilience; sensitive endpoints can opt into fail-closed.
@@ -52,7 +57,7 @@ class UserQuotaGuard:
                 rpm_used=0,
                 rpd_used=0,
                 rpm_limit=self.rpm_limit,
-                rpd_limit=self.rpd_limit,
+                rpd_limit=effective_rpd_limit,
                 tpm_used=0,
                 tpd_used=0,
                 tpm_limit=self.tpm_limit,
@@ -86,7 +91,7 @@ class UserQuotaGuard:
         tpd_used = int(result[6])
         allowed = (
             rpm_used <= self.rpm_limit
-            and rpd_used <= self.rpd_limit
+            and rpd_used <= effective_rpd_limit
             and tpm_used <= self.tpm_limit
             and tpd_used <= self.tpd_limit
         )
@@ -96,7 +101,7 @@ class UserQuotaGuard:
             rpm_used=rpm_used,
             rpd_used=rpd_used,
             rpm_limit=self.rpm_limit,
-            rpd_limit=self.rpd_limit,
+            rpd_limit=effective_rpd_limit,
             tpm_used=tpm_used,
             tpd_used=tpd_used,
             tpm_limit=self.tpm_limit,
@@ -138,12 +143,14 @@ async def enforce_user_quota(
     *,
     token_cost: int = 0,
     fail_closed: bool = False,
+    rpd_limit: int | None = None,
 ) -> QuotaDecision:
     decision = await _guard.check_and_consume(
         user_id=user_id,
         endpoint_key=endpoint_key,
         token_cost=token_cost,
         fail_closed=fail_closed,
+        rpd_limit=rpd_limit,
     )
     if not decision.backend_available and fail_closed:
         raise HTTPException(

@@ -27,8 +27,8 @@ const TopicsPage = lazy(() => import("./pages/TopicsPage").then(m => ({ default:
 const VocabularyPage = lazy(() => import("./pages/VocabularyPage").then(m => ({ default: m.VocabularyPage })));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage").then(m => ({ default: m.AchievementsPage })));
 const ShopPage = lazy(() => import("./pages/ShopPage").then(m => ({ default: m.ShopPage })));
-const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const AdsPage = lazy(() => import("./pages/AdsPage").then(m => ({ default: m.AdsPage })));
+const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const LogsPage = lazy(() => import("./pages/LogsPage").then(m => ({ default: m.LogsPage })));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage").then(m => ({ default: m.MonitoringPage })));
 const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ default: m.ContentLabPage })));

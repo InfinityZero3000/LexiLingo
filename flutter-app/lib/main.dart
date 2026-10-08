@@ -57,6 +57,7 @@ import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/pages/today_plan_page.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
@@ -319,6 +320,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
         ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<UserProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<HomeProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<PromoBannerProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ProfileProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<ChatProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<StoryProvider>()),

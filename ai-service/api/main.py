@@ -357,6 +357,12 @@ async def lifespan(app: FastAPI):
         await close_learner_state_client()
     except Exception as e:
         logger.warning(f"Failed to close learner-state client cleanly: {e}")
+    try:
+        from api.clients.entitlement_client import close_entitlement_client
+
+        await close_entitlement_client()
+    except Exception as e:
+        logger.warning(f"Failed to close entitlement client cleanly: {e}")
     if _gateway_initialized:
         from api.services.gateway_setup import shutdown_gateway
         await shutdown_gateway()

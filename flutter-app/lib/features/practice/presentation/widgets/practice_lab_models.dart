@@ -188,6 +188,9 @@ const List<PracticeLabItem> _basePracticeLabItems = [
     icon: Icons.drive_file_rename_outline_rounded,
     color: AppColors.deepOrange,
     destination: PracticeLabDestination.lexi,
-    premiumOnly: true,
+    // Not premiumOnly: Lexi chat is reachable free from its own tab too, so
+    // gating entry here was a dead end for free users. The real premium perk
+    // is server-side now — a daily message cap, enforced per-message in
+    // ai-service's lexi_chat route, not an all-or-nothing navigation block.
   ),
 ];

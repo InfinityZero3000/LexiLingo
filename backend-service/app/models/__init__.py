@@ -11,6 +11,7 @@ from app.models.user import User, UserDevice, RefreshToken
 # Course models (Phase 2)
 from app.models.course import Course, Unit, Lesson, MediaResource
 from app.models.course_category import CourseCategory
+from app.models.banner import Banner
 
 # Vocabulary models (Phase 3)
 from app.models.vocabulary import (
