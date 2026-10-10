@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, datetime
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -97,3 +97,47 @@ class TestActiveBannerRoute:
         assert "priority" not in data[0]
         assert "target_language" not in data[0]
         assert "is_active" not in data[0]
+
+    @pytest.mark.asyncio
+    async def test_free_logged_in_user_still_sees_banners(self, public_client, monkeypatch):
+        from app.main import app
+        from app.core.dependencies import get_current_user_optional
+        from app.routes import banners as banners_module
+
+        monkeypatch.setattr(
+            banners_module.EntitlementService, "is_active", AsyncMock(return_value=False)
+        )
+        user = MagicMock(id=uuid.uuid4(), level="B1", target_language="en")
+
+        async def mock_get_current_user_optional():
+            return user
+
+        app.dependency_overrides[get_current_user_optional] = mock_get_current_user_optional
+
+        resp = await public_client.get(f"{BASE}/active")
+
+        assert resp.status_code == 200
+        assert len(resp.json()["data"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_premium_user_sees_no_ads(self, public_client, monkeypatch):
+        """Ad-free is the whole point of this check — a premium subscriber
+        must get an empty list without even reaching BannerCRUD.list_active."""
+        from app.main import app
+        from app.core.dependencies import get_current_user_optional
+        from app.routes import banners as banners_module
+
+        monkeypatch.setattr(
+            banners_module.EntitlementService, "is_active", AsyncMock(return_value=True)
+        )
+        user = MagicMock(id=uuid.uuid4(), level="B1", target_language="en")
+
+        async def mock_get_current_user_optional():
+            return user
+
+        app.dependency_overrides[get_current_user_optional] = mock_get_current_user_optional
+
+        resp = await public_client.get(f"{BASE}/active")
+
+        assert resp.status_code == 200
+        assert resp.json()["data"] == []

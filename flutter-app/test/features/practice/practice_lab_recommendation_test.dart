@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
@@ -82,14 +83,29 @@ void main() {
 
   group('recommendations', () {
     test('a free learner is never handed a locked card', () {
-      // Writing is premium-only and is almost always among the weakest, so the
-      // first thing a free learner saw under "recommended" was a padlock.
-      final items = buildPracticeLabItems(
-        weakestSkills: [
-          _score(SkillType.writing, score: 10, exercises: 4),
-          _score(SkillType.reading, score: 30, exercises: 9),
-        ],
+      // No catalog skill is premiumOnly today (writing's lock was removed —
+      // it just navigated to Lexi chat, which is free from its own tab
+      // anyway), but the filter itself must still hold for whenever a
+      // premium-only item exists, so this builds one synthetically rather
+      // than relying on the catalog to carry one.
+      const lockedItem = PracticeLabItem(
+        skill: SkillType.writing,
+        titleKey: 'x',
+        subtitleKey: 'x',
+        actionKey: 'x',
+        estimateKey: 'x',
+        icon: Icons.lock_rounded,
+        color: Colors.black,
+        destination: PracticeLabDestination.lexi,
+        recommended: true,
+        premiumOnly: true,
       );
+      final items = [
+        lockedItem,
+        ...buildPracticeLabItems(
+          weakestSkills: [_score(SkillType.reading, score: 30, exercises: 9)],
+        ),
+      ];
 
       final free = recommendedPracticeItems(items: items, hasPremium: false);
       expect(free.any((item) => item.premiumOnly), isFalse);
