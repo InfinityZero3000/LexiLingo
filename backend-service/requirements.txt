@@ -5,7 +5,7 @@ python-multipart>=0.0.32
 pypdf
 
 # PostgreSQL (production)
-asyncpg>=0.31.0
+asyncpg>=0.32.0
 psycopg2-binary>=2.9.13
 
 # SQLite (dev/test only)
