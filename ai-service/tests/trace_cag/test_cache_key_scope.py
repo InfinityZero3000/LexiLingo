@@ -2,12 +2,12 @@ from api.services.trace_cag.cache_utils import _benchmark_cache_scope, _build_ca
 
 
 def test_two_benchmark_modes_do_not_share_a_cache_entry():
-    """cag_vanilla and tracecag_rapid answer the SAME question from different
+    """rag_topk and tracecag answer the SAME question from different
     evidence. The harness clearing the in-process cache between modes hid this,
     but a Redis entry survives that clear — and the identical omission in the
     dependency-token key already poisoned a run (cache hit 46.9%->6.2%)."""
-    flat = _build_cache_key(None, "Who wrote it?", "B1", "cag_vanilla")
-    graph = _build_cache_key(None, "Who wrote it?", "B1", "tracecag_rapid")
+    flat = _build_cache_key(None, "Who wrote it?", "B1", "rag_topk")
+    graph = _build_cache_key(None, "Who wrote it?", "B1", "tracecag")
     assert flat != graph
 
 
@@ -27,4 +27,6 @@ def test_user_scope_still_separates_learners():
 
 def test_scope_reads_the_benchmark_mode_off_the_state():
     assert _benchmark_cache_scope({}) == ""
-    assert _benchmark_cache_scope({"benchmark_metadata": {"_benchmark_mode": "TraceCAG_Rapid"}}) == "tracecag_rapid"
+    # Mixed case on purpose: this asserts the scope lowercases the mode name,
+    # so the literal here is arbitrary input, not a reference to a real mode.
+    assert _benchmark_cache_scope({"benchmark_metadata": {"_benchmark_mode": "TraceCAG"}}) == "tracecag"

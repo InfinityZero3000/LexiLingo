@@ -36,7 +36,7 @@ def _benchmark_cache_quality_score(answer: str, context: str, model_used: str) -
     word_count = len(text.split())
     concise_bonus = 0.14 if word_count <= 8 else (0.08 if word_count <= 16 else 0.0)
     model_name = str(model_used or "").strip().lower()
-    provider_bonus = 0.10 if model_name.startswith(("groq/", "gemini", "ollama/")) else 0.0
+    provider_bonus = 0.10 if model_name.startswith(("groq/", "gemini")) else 0.0
     yes_no_bonus = 0.10 if low in {"yes", "no"} else 0.0
     fallback_penalty = -0.04 if model_name == "extractive_fallback" else 0.0
 
@@ -89,7 +89,7 @@ def _benchmark_provider_order() -> list[str]:
             "[benchmark] provider='template' is deprecated; switching to auto/extractive fallback"
         )
         provider = "auto"
-    if provider in {"groq", "gemini", "ollama"}:
+    if provider in {"groq", "gemini"}:
         return [provider]
 
     order: list[str] = []
@@ -97,8 +97,11 @@ def _benchmark_provider_order() -> list[str]:
         order.append("groq")
     if _env_flag("TRACECAG_ENABLE_GEMINI_FALLBACK", False) and os.getenv("GEMINI_API_KEY", ""):
         order.append("gemini")
-    if _env_flag("TRACECAG_ENABLE_OLLAMA_FALLBACK", False):
-        order.append("ollama")
+    # No Ollama arm here. It was reachable from the benchmark reader and would
+    # answer a sample with lexilingo-qwen3-1.7b while its neighbours were
+    # answered by qwen3.8-27b -- a 16x reader difference inside one run, which
+    # makes those samples incomparable. Ollama stays in the production chat
+    # path; it has no place in a measurement.
 
     order = [p for p in order if not _provider_is_disabled(p)]
 

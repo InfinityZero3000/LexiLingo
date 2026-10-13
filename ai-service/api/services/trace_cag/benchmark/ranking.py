@@ -426,10 +426,17 @@ def _compute_evidence_budget(
     benchmark_candidates: bool,
     adaptive_profile: str = "",
     benchmark_task: str = "",
+    declared_budget: int = 0,
 ) -> int:
-    # Lazy import to avoid circular dependency at module load time.
-    from api.services.trace_cag.benchmark.adaptive import _ADAPTIVE_PROFILES
+    """Passages the reader sees.
 
+    `declared_budget` comes from the arm's ModeSpec and wins outright when
+    set: a comparison in which two arms read different numbers of passages for
+    the same question varies two things at once. The complexity-derived
+    fallback below is for non-benchmark callers.
+    """
+    if declared_budget > 0:
+        return int(declared_budget)
     base = max(2, _env_int("TRACECAG_EVIDENCE_BUDGET_BASE", 5))
     max_budget = max(base, _env_int("TRACECAG_EVIDENCE_BUDGET_MAX", 9))
     complexity = _question_complexity_score(question)
@@ -439,16 +446,13 @@ def _compute_evidence_budget(
         # Keep full evidence budget for multihop-style questions in rapid mode.
         if benchmark_task != "multihop_qa":
             budget -= 1
-    elif retrieval_policy == "adaptive":
-        config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
-        if config is not None:
-            budget += int(config.evidence_budget_delta)
-
-    if benchmark_candidates and benchmark_mode == "tracecag_adaptive":
-        config = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
-        if config is not None:
-            budget = max(4, min(max_budget, budget + int(config.evidence_budget_delta)))
-
+    # The two adaptive branches that stood here added evidence_budget_delta
+    # twice for the same arm -- once via retrieval_policy == "adaptive", once
+    # via benchmark_mode == "tracecag_adaptive" -- and both keyed on a mode
+    # that no longer exists. Removed rather than fixed: the window a reader
+    # sees is now declared per arm (ModeSpec.window / read_all) and passed in
+    # as `declared_budget`, so two arms cannot silently read different numbers
+    # of passages for the same question.
     return max(2, min(max_budget, budget))
 
 
@@ -461,9 +465,6 @@ def _rank_benchmark_candidates(
     benchmark_mode: str = "",
     adaptive_profile: str = "",
 ) -> list[Dict[str, Any]]:
-    # Lazy import to avoid circular dependency at module load time.
-    from api.services.trace_cag.benchmark.adaptive import _ADAPTIVE_PROFILES
-
     if not candidates:
         return []
 
@@ -494,11 +495,24 @@ def _rank_benchmark_candidates(
         )
 
     if ranker == "flat":
+        # Keep the retriever's order. Measured on 200 MuSiQue questions, the
+        # shared retriever's top-5 holds the whole support chain for 0.265 of
+        # them while the window the reader actually received held it for 0.145:
+        # re-scoring BM25 + dense + cross-encoder output with a max() of eight
+        # lexical formulas threw away 45% of the retrieval it was handed. A flat
+        # ranker is the arm that is supposed to add nothing.
+        total = max(len(candidates), 1)
         scored = []
         for candidate in candidates:
             item_id = str(candidate["item_id"])
             enriched = dict(candidate)
-            enriched["vec_sim"] = base_scores[item_id]
+            rank = candidate.get("retrieval_rank")
+            # No rank means no upstream retrieval to preserve -- candidate_pool
+            # mode and production chat both land here, and both keep the old
+            # lexical score.
+            enriched["vec_sim"] = (
+                base_scores[item_id] if rank is None else 1.0 - (float(rank) / total)
+            )
             enriched["graph_score"] = 0.0
             enriched["memory_score"] = 0.0
             scored.append(enriched)
@@ -553,87 +567,35 @@ def _rank_benchmark_candidates(
         title_phrase = _question_title_phrase_score(question, title)
 
         if ranker == "graph":
-            # Keep proxy modes intentionally distinct in benchmark runs.
-            if benchmark_mode == "graphrag_proxy":
-                final_score = (
-                    (0.28 * base_score)
-                    + (0.56 * graph_score)
-                    + (0.08 * query_coverage)
-                    + (0.08 * anchor_coverage)
-                )
-            elif benchmark_mode == "tracecag_rapid":
-                # Keep the full lexical base score (matches flat ranker's strength on
-                # single-hop docs) and add the bridge/graph signal on top instead of
-                # diluting base_score — diluting it previously made multi-hop bridge
-                # targets win at the cost of demoting strong direct matches.
-                final_score = (
-                    base_score
-                    + (_RAPID_GRAPH_WEIGHT * graph_score)
-                    + (0.06 * memory_score)
-                    + (0.06 * query_coverage)
-                    + (0.05 * anchor_coverage)
-                    + (0.03 * anchor_title_exact)
-                    + (0.03 * title_token_recall)
-                )
-                if title_phrase >= 0.9:
-                    final_score += 0.04
-                elif title_phrase >= 0.6:
-                    final_score += 0.03
-                else:
-                    final_score += 0.01 * title_phrase
-            elif benchmark_mode == "tracecag_adaptive":
-                profile = _ADAPTIVE_PROFILES.get(adaptive_profile or "balanced")
-                if profile is None:
-                    profile = _ADAPTIVE_PROFILES["balanced"]
-
-                if profile.name == "quality":
-                    final_score = (
-                        (0.30 * base_score)
-                        + (0.18 * graph_score)
-                        + (0.14 * query_coverage)
-                        + (0.10 * anchor_coverage)
-                        + (0.08 * memory_score)
-                        + (0.12 * anchor_title_exact)
-                        + (0.08 * title_token_recall)
-                    )
-                    if title_phrase >= 0.9:
-                        final_score += 0.22
-                    elif title_phrase >= 0.6:
-                        final_score += 0.12
-                    else:
-                        final_score += 0.05 * title_phrase
-                elif profile.name == "fast":
-                    final_score = (
-                        (0.40 * base_score)
-                        + (0.20 * graph_score)
-                        + (0.14 * query_coverage)
-                        + (0.10 * anchor_coverage)
-                        + (0.08 * anchor_title_exact)
-                        + (0.08 * title_phrase)
-                    )
-                else:  # balanced
-                    final_score = (
-                        (0.30 * base_score)
-                        + (0.18 * graph_score)
-                        + (0.14 * query_coverage)
-                        + (0.10 * anchor_coverage)
-                        + (0.08 * memory_score)
-                        + (0.12 * anchor_title_exact)
-                        + (0.08 * title_token_recall)
-                    )
-                    if title_phrase >= 0.9:
-                        final_score += 0.18
-                    elif title_phrase >= 0.6:
-                        final_score += 0.10
-                    else:
-                        final_score += 0.04 * title_phrase
+            # One graph formula, not a per-mode dispatch.
+            #
+            # This block used to branch on benchmark_mode into three variants,
+            # two of which were dead: one named a mode that was never in MODES
+            # and one whose evidence_budget_delta was applied twice. A ranker
+            # whose arithmetic depends on the name of the arm under test cannot
+            # be compared across arms, so what remains is the single formula
+            # that was actually measured and tuned.
+            #
+            # The full lexical base score is kept and the bridge/graph signal
+            # added on top rather than diluting it: diluting base_score made
+            # multi-hop bridge targets win at the cost of demoting strong
+            # direct matches.
+            final_score = (
+                base_score
+                + (_RAPID_GRAPH_WEIGHT * graph_score)
+                + (0.06 * memory_score)
+                + (0.06 * query_coverage)
+                + (0.05 * anchor_coverage)
+                + (0.03 * anchor_title_exact)
+                + (0.03 * title_token_recall)
+            )
+            if title_phrase >= 0.9:
+                final_score += 0.04
+            elif title_phrase >= 0.6:
+                final_score += 0.03
             else:
-                final_score = (
-                    (0.50 * base_score)
-                    + (0.32 * graph_score)
-                    + (0.10 * query_coverage)
-                    + (0.08 * anchor_coverage)
-                )
+                final_score += 0.01 * title_phrase
+
         elif ranker == "memory":
             final_score = (
                 (0.36 * base_score)
@@ -743,16 +705,13 @@ def _rank_with_online_ranker(
     ranker = get_retrieval_ranker()
     blended_weight = _clip01(_env_float("TRACECAG_RANKER_BLEND", 0.42))
 
-    # Keep graph/title heuristic dominant until online ranker has enough updates.
+    # The online ranker learns across samples, so its score depends on how
+    # many questions ran before this one. That makes a benchmark run
+    # order-dependent and non-reproducible, which is why quality arms must not
+    # use it. The warmup clamp that stood here keyed on a mode name
+    # (`tracecag_rapid`) and so applied to one arm and not its neighbours --
+    # a difference in ranking arithmetic between arms being compared.
     mode = str(benchmark_mode or "").strip().lower()
-    if mode == "tracecag_rapid":
-        snapshot = ranker.snapshot()
-        updates = int(snapshot.get("updates", 0) or 0)
-        warmup_updates = max(1, _env_int("TRACECAG_RANKER_WARMUP_UPDATES", 40))
-        if updates < warmup_updates:
-            blended_weight = min(blended_weight, 0.22)
-        else:
-            blended_weight = min(blended_weight, 0.35)
 
     base_weight = 1.0 - blended_weight
 
@@ -816,7 +775,10 @@ def _build_benchmark_candidates(state: TraceCAGState) -> tuple[list[Dict[str, An
         for idx, doc in enumerate(benchmark_metadata.get("context_docs") or []):
             title = str(doc.get("title") or f"doc_{idx}").strip()
             text = str(doc.get("text") or "").strip()
-            item_id = title.lower()
+            # A corpus passage carries its own id; an article can have several
+            # distinct paragraphs, and keying them all by title merged them.
+            # candidate_pool docs have none, and keep the title as before.
+            item_id = str(doc.get("passage_id") or title).strip().lower()
             if text:
                 candidates.append({
                     "item_id": item_id,
@@ -824,6 +786,12 @@ def _build_benchmark_candidates(state: TraceCAGState) -> tuple[list[Dict[str, An
                     "text": text,
                     "kg_depth": 1,
                     "turns_ago": 0,
+                    # The retriever's own position. `retrieval_score` itself is
+                    # not carried because it is an RRF value in one setting and
+                    # an unbounded cross-encoder logit in another, and `_clip01`
+                    # downstream would flatten the logits to 0 and 1. The rank is
+                    # monotone in the score and already bounded.
+                    "retrieval_rank": idx,
                 })
     elif benchmark_task == "retrieval_qa":
         relevant_ids = {str(item).strip() for item in (benchmark_metadata.get("relevant_passage_ids") or []) if str(item).strip()}

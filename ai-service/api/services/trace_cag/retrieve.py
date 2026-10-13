@@ -548,6 +548,9 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         benchmark_candidates=bool(benchmark_candidates),
         adaptive_profile=adaptive_profile,
         benchmark_task=benchmark_task,
+        # The arm declares its own window, so two arms being compared cannot
+        # read different numbers of passages for the same question.
+        declared_budget=int(benchmark_metadata.get("_evidence_budget") or 0),
     )
     if benchmark_candidates and benchmark_task in {"multihop_qa", "retrieval_qa"}:
         top_evidence = _select_diverse_multihop_evidence(
@@ -575,7 +578,12 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             "title": str(item.get("title") or item.get("item_id") or ""),
             "text": str(item.get("text") or ""),
             "rank": idx + 1,
+            # fusion_score is the score BEFORE the coverage-constrained selector
+            # reorders; on its own it does not explain the rank, which made the
+            # trace look unsorted. Keep both so a report can say which is which.
             "score": float(item.get("fusion_score") or 0.0),
+            "selection_rank": idx + 1,
+            "score_basis": "fusion_pre_selection",
         }
         if "is_relevant" in item:
             trace_item["is_relevant"] = bool(item["is_relevant"])

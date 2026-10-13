@@ -22,6 +22,7 @@ from api.services.trace_cag.provider_state import (
     _PROVIDER_QUEUE_LOCKS,
     _PROVIDER_NEXT_REQUEST_AT,
     _PROVIDER_LAST_WAIT_LOG_AT,
+    _PROVIDER_TOKEN_WINDOW,
     _provider_is_disabled,
     _disable_provider,
 )
@@ -89,6 +90,15 @@ def _qwen_reasoning_overrides(model: str) -> Dict[str, Any]:
     return {"reasoning_effort": "none"} if _is_qwen_model(model) else {}
 
 
+# Values that actually enable thinking, probed against Groq 2026-10-10 on
+# qwen/qwen3.8-27b: "default" is a no-op indistinguishable from "none" (5
+# completion tokens, empty reasoning), while low/medium/high each produce ~89
+# completion tokens and a 351-386 char `message.reasoning`. On this model the
+# trace arrives in that separate field and `content` stays clean, so the
+# JSON-parsing hazard that `reasoning_effort="none"` exists for does not apply.
+QWEN_THINKING_EFFORTS = frozenset({"low", "medium", "high"})
+
+
 def _parse_retry_after_seconds(raw_value: Optional[str]) -> float:
     if not raw_value:
         return 0.0
@@ -96,6 +106,54 @@ def _parse_retry_after_seconds(raw_value: Optional[str]) -> float:
         return max(0.0, float(raw_value))
     except ValueError:
         return 0.0
+
+
+def _provider_tpm(provider: str) -> int:
+    """Input tokens per minute per key.
+
+    Groq's 429 names the limit it enforces: "input tokens per minute (ITPM):
+    Limit 7000". 6000 leaves headroom, matching groq_key_pool's own constant.
+    """
+    defaults = {"groq": 6000, "gemini": 32000}
+    raw = os.getenv(f"TRACECAG_{provider.upper()}_TPM", str(defaults.get(provider, 0)))
+    try:
+        return max(0, int(raw))
+    except ValueError:
+        return defaults.get(provider, 0)
+
+
+def _estimate_payload_tokens(payload: Dict[str, Any]) -> int:
+    chars = sum(len(str(m.get("content") or "")) for m in payload.get("messages") or [])
+    return (chars // 4) + int(payload.get("max_tokens") or 256)
+
+
+def _token_window_wait(state_key: str, provider: str, tokens: int) -> float:
+    """Seconds to wait so `tokens` fits inside this key's per-minute budget."""
+    budget = _provider_tpm(provider)
+    if budget <= 0:
+        return 0.0
+    now = time.monotonic()
+    window = [(t, n) for t, n in _PROVIDER_TOKEN_WINDOW.get(state_key, []) if now - t < 60.0]
+    _PROVIDER_TOKEN_WINDOW[state_key] = window
+    spent = sum(n for _, n in window)
+    if spent + tokens <= budget:
+        return 0.0
+    need = spent + tokens - budget
+    freed = 0
+    for timestamp, n in window:
+        freed += n
+        if freed >= need:
+            return max(0.0, 60.0 - (now - timestamp))
+    return 60.0
+
+
+def _token_window_record(state_key: str, tokens: int) -> None:
+    _PROVIDER_TOKEN_WINDOW.setdefault(state_key, []).append((time.monotonic(), tokens))
+
+
+# Upper bound on a per-minute 429 backoff. Daily/quota 429s take the
+# _disable_provider path instead, so capping here cannot mask an exhausted key.
+_TPM_BACKOFF_CAP_SECONDS = float(os.getenv("TRACECAG_TPM_BACKOFF_CAP", "30"))
 
 
 async def _throttled_post_json(
@@ -123,7 +181,11 @@ async def _throttled_post_json(
 
     # A qwen model without this override streams/returns <think> prose instead of
     # the answer, which every JSON caller here then fails to parse.
-    if provider == "groq":
+    if provider == "groq" and "reasoning_effort" not in payload:
+        # Only when the caller has not asked for a specific effort. This used to
+        # overwrite it unconditionally, so a caller could not turn reasoning on
+        # even deliberately -- and the benchmark reader answers multi-hop
+        # questions, which is the one task where thinking should earn its cost.
         payload = {**payload, **_qwen_reasoning_overrides(str(payload.get("model") or ""))}
 
     state_key = provider
@@ -141,12 +203,16 @@ async def _throttled_post_json(
 
         rpm = _provider_rpm(provider)
         min_interval = 60.0 / max(rpm, 1)
+        est_tokens = _estimate_payload_tokens(payload)
 
         # Wait outside the lock, then retry admission without consuming an HTTP
         # retry when another coroutine reserved the next provider slot first.
         while True:
             now = time.monotonic()
             wait = max(0.0, _PROVIDER_NEXT_REQUEST_AT.get(state_key, now) - now)
+            # Pace on tokens too: at 8 req/min a 700-token arm stays inside the
+            # budget while a 3,900-token arm exceeds it on the second request.
+            wait = max(wait, _token_window_wait(state_key, provider, est_tokens))
             if wait > 0:
                 last_log_at = _PROVIDER_LAST_WAIT_LOG_AT.get(state_key, 0.0)
                 if (now - last_log_at) >= 10.0 or wait <= 3.0:
@@ -165,6 +231,7 @@ async def _throttled_post_json(
 
                 client = _get_httpx_client(provider)
                 response = await client.post(url, headers=headers, json=payload, timeout=timeout)
+                _token_window_record(state_key, est_tokens)
                 _PROVIDER_NEXT_REQUEST_AT[state_key] = time.monotonic() + min_interval
 
                 if response.status_code != 429:
@@ -172,10 +239,21 @@ async def _throttled_post_json(
 
                 retry_after = _parse_retry_after_seconds(response.headers.get("Retry-After"))
                 error_text = str(getattr(response, "text", "") or "").lower()
-                if any(marker in error_text for marker in ["tokens per day", "quota", "billing", "resource_exhausted"]):
+                daily = any(marker in error_text for marker in ["tokens per day", "requests per day", "quota", "billing", "resource_exhausted"])
+                if daily:
                     _disable_provider(state_key, max(retry_after, 300.0))
                 if retry_after <= 0:
                     retry_after = max(min_interval * 2.0, 15.0)
+                elif not daily:
+                    # Groq's per-minute token bucket refills continuously --
+                    # measured 10-21s to recover after a 1.4k-token request --
+                    # but its Retry-After on a TPM breach can say 246s. Callers
+                    # here are sequential, so one such header stalled an entire
+                    # 500-question run: 2h36m of wall clock for 75s of CPU and
+                    # no output. A per-minute limit cannot need more than the
+                    # window itself; a daily limit is the branch above, which
+                    # disables the key instead of sleeping on it.
+                    retry_after = min(retry_after, _TPM_BACKOFF_CAP_SECONDS)
                 _PROVIDER_NEXT_REQUEST_AT[state_key] = max(
                     _PROVIDER_NEXT_REQUEST_AT.get(state_key, time.monotonic()),
                     time.monotonic() + retry_after,

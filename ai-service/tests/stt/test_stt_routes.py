@@ -9,7 +9,12 @@ from starlette.websockets import WebSocketDisconnect
 from jose import jwt
 
 # api.routes eagerly imports analytics routes that require optional KuzuDB.
-sys.modules.setdefault("kuzu", MagicMock())
+# Stub only when it is missing: a session-wide MagicMock leaks into the KG tests,
+# where `result.has_next()` is always truthy and expansion loops until OOM.
+try:
+    import kuzu  # noqa: F401
+except ImportError:
+    sys.modules["kuzu"] = MagicMock()
 from api.routes import stt as stt_route
 from api.services.stt.audio_ingest import HEADER
 from api.services.stt.config import STTConfig

@@ -1,4 +1,5 @@
 from tracecag_bench.metrics.retrieval import retrieval_metrics
+from tracecag_bench.reporting.console import print_summary
 from tracecag_bench.metrics.safety import calibrate_thresholds, safety_metrics
 from tracecag_bench.metrics.text import exact_match, token_f1
 from tracecag_bench.schemas import RunObservation
@@ -109,4 +110,22 @@ def test_map_rewards_ranking_supporting_passages_higher():
     assert retrieval_metrics(top, supporting)["recall_at_5"] == retrieval_metrics(bottom, supporting)["recall_at_5"]
     assert retrieval_metrics(top, supporting)["map_at_5"] > retrieval_metrics(bottom, supporting)["map_at_5"]
 
+
+def test_console_summary_tolerates_empty_mode(capsys):
+    print_summary({
+        "protocol": "public_qa",
+        "dataset": {"name": "query_clusters"},
+        "summaries": {
+            "tracecag": {
+                "exact_match": 0.0,
+                "token_f1": 0.0,
+                "rouge_l": 0.0,
+                "retrieval": {},
+                "cache": {"cache_hit_rate": 0.0},
+                "latency": {"mean_ms": 0.0, "routing_overhead_mean_ms": None},
+            }
+        },
+        "run_validation": {"passed": True},
+    })
+    assert "R@5=n/a" in capsys.readouterr().out
 

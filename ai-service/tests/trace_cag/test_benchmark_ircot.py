@@ -81,7 +81,12 @@ def test_ircot_bridge_selection_prefers_entity_title_and_excludes_existing():
 
 @pytest.mark.asyncio
 async def test_ircot_augment_returns_contract_telemetry(monkeypatch):
-    async def fake_reason_call(messages, max_tokens, *, estimated_tokens=96):
+    # Mirrors _groq_chat_with_retry exactly. A narrower double is the same
+    # trap as a more permissive one: it passes until the real callee grows a
+    # keyword, then fails on a signature rather than on behaviour.
+    async def fake_reason_call(
+        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none"
+    ):
         return "Bridge Target", "groq/qwen/qwen3-32b"
 
     monkeypatch.setattr(qa_generation, "_groq_chat_with_retry", fake_reason_call)
@@ -104,7 +109,12 @@ async def test_ircot_augment_returns_contract_telemetry(monkeypatch):
 @pytest.mark.asyncio
 async def test_benchmark_response_exposes_ircot_metadata_and_reason_model(monkeypatch):
     monkeypatch.setenv("TRACECAG_BENCHMARK_FAIL_ON_PROVIDER_ERROR", "false")
-    async def fake_reason_call(messages, max_tokens, *, estimated_tokens=96):
+    # Mirrors _groq_chat_with_retry exactly. A narrower double is the same
+    # trap as a more permissive one: it passes until the real callee grows a
+    # keyword, then fails on a signature rather than on behaviour.
+    async def fake_reason_call(
+        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none"
+    ):
         return "Bridge Target", "groq/qwen/qwen3-32b"
 
     monkeypatch.setattr(qa_generation, "_groq_chat_with_retry", fake_reason_call)
@@ -160,7 +170,7 @@ def test_ircot_gate_uses_context_coverage_not_the_answer_key():
     state = {
         "benchmark_task": "multihop_qa",
         "benchmark_metadata": {
-            "_benchmark_mode": "tracecag_rapid",
+            "_benchmark_mode": "tracecag",
             "context_docs": [
                 {"item_id": f"d{i}", "title": f"Doc {i}", "text": "x"} for i in range(10)
             ],
@@ -193,7 +203,7 @@ def test_ircot_skips_the_reason_call_when_nothing_is_left_to_retrieve():
     docs = [{"item_id": f"d{i}", "title": f"Doc {i}", "text": "x"} for i in range(3)]
     state = {
         "benchmark_task": "multihop_qa",
-        "benchmark_metadata": {"_benchmark_mode": "tracecag_rapid", "context_docs": docs, "source_id": "q1"},
+        "benchmark_metadata": {"_benchmark_mode": "tracecag", "context_docs": docs, "source_id": "q1"},
     }
     question = "Which director of Doc 1 also made Doc 2?"
 
@@ -220,7 +230,12 @@ async def test_answer_grounded_only_in_the_ircot_passage_survives_postprocessing
     postprocessor threw it out."""
     monkeypatch.setenv("TRACECAG_BENCHMARK_FAIL_ON_PROVIDER_ERROR", "false")
 
-    async def fake_reason_call(messages, max_tokens, *, estimated_tokens=96):
+    # Mirrors _groq_chat_with_retry exactly. A narrower double is the same
+    # trap as a more permissive one: it passes until the real callee grows a
+    # keyword, then fails on a signature rather than on behaviour.
+    async def fake_reason_call(
+        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none"
+    ):
         return "Bridge Target", "groq/qwen"
 
     monkeypatch.setattr(qa_generation, "_groq_chat_with_retry", fake_reason_call)

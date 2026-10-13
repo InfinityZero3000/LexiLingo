@@ -50,13 +50,13 @@ class _FixedKGService:
 async def test_evidence_dependency_key_scoped_by_retrieval_policy(monkeypatch):
     """Regression for the "one mode poisons another mode's cache" bug: two
     modes retrieving different top-k evidence for the SAME question (e.g.
-    cag_vanilla's "full" vs tracecag_rapid's "rapid" retrieval_policy) must not
+    rag_topk's "full" vs tracecag's "rapid" retrieval_policy) must not
     share an "evidence:retrieval:query:<hash>" dependency key. Before the fix,
     query_scope hashed only the question text, so observe_dependency_tokens's
     setdefault let whichever mode ran first lock the token — every other
     mode's later cache-freshness recheck for that question then failed
-    (measured live: tracecag_rapid Hit dropped from ~47% to ~6% when run right
-    after cag_vanilla over the same question set)."""
+    (measured live: tracecag Hit dropped from ~47% to ~6% when run right
+    after rag_topk over the same question set)."""
     import api.services.trace_cag.retrieve as retrieve_mod
 
     monkeypatch.setattr("api.services.kg_service_v3.get_kg_service", lambda: _FixedKGService())

@@ -88,7 +88,9 @@ _ADAPTIVE_UPDATE_STEPS: int = 0
 
 
 def _provider_pressure_score() -> float:
-    providers = ("groq", "gemini", "ollama")
+    # No ollama: it can no longer answer a benchmark sample, so counting its
+    # cooldown state moved an adaptive feature on a provider that never runs.
+    providers = ("groq", "gemini")
     disabled = sum(1 for provider in providers if _provider_is_disabled(provider))
     max_cooldown = max((_provider_cooldown_seconds(provider) for provider in providers), default=0.0)
     cooldown_component = min(1.0, max_cooldown / max(1.0, _env_float("TRACECAG_ADAPTIVE_COOLDOWN_SCALE", 120.0)))
@@ -97,12 +99,14 @@ def _provider_pressure_score() -> float:
 
 
 def _adaptive_mode_enabled(state: TraceCAGState, benchmark_mode: str = "") -> bool:
-    retrieval_policy = str(state.get("retrieval_policy") or "").strip().lower()
-    if retrieval_policy == "adaptive":
-        return True
-    if str(benchmark_mode or "").strip().lower() == "tracecag_adaptive":
-        return True
-    return False
+    """Adaptive retrieval is a policy, never a mode name.
+
+    The `benchmark_mode == "tracecag_adaptive"` clause that stood here turned
+    the arm's own name into a behaviour switch, which is how the same arm
+    ended up applying evidence_budget_delta twice. `benchmark_mode` is kept in
+    the signature because callers pass it positionally.
+    """
+    return str(state.get("retrieval_policy") or "").strip().lower() == "adaptive"
 
 
 def _adaptive_context_features(
