@@ -179,3 +179,12 @@ docs/technical-report/*.aux
 docs/technical-report/*.log
 docs/technical-report/*.toc
 docs/technical-report/*.out
+
+# Thesis / report deliverables and their figures (41MB of .docx, .pdf, .png).
+# Source documents the author keeps locally; the repo tracks the LaTeX in
+# docs/technical-report/ instead.
+docs/report-KLCN/
+
+# Generated artifacts: benchmark stats and plots, matplotlib's font cache, and
+# the .pdf/.docx the report build emits. All reproducible from source.
+output/
