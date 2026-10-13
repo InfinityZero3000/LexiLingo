@@ -7,8 +7,11 @@ Bốn nguyên tắc chi phối mọi quyết định thiết kế trong hệ th�
 \begin{enumerate}[leftmargin=1.4em]
   \item \textbf{Không gọi chéo dịch vụ trực tiếp.} Ứng dụng và trang quản trị luôn đi
   qua gateway. Backend gọi AI service qua một \en{client} duy nhất
-  (\code{app/clients/ai\_service\_client.py}); AI service gọi ngược backend qua một
-  đường nội bộ duy nhất (\code{LEARNER\_STATE\_API\_URL}). Không có ngoại lệ nào khác.
+  (\code{app/clients/ai\_service\_client.py}). AI service gọi ngược backend chỉ qua
+  các đường nội bộ đã khai báo, không có ngoại lệ nào khác: chuyển tiếp quan sát
+  người học tới \code{LEARNER\_STATE\_API\_URL}, và từ 2026-10, đọc trạng thái
+  Premium qua \code{GET /internal/entitlements/\{user\_id\}}. Cả hai dùng chung một
+  \en{token} dịch vụ-tới-dịch vụ, xem minh hoạ ở mục~\ref{sec:ranh-gioi-be-ai}.
   \item \textbf{Bất đồng bộ toàn phần ở tầng dịch vụ.} Mọi truy vấn cơ sở dữ liệu ở
   backend đều \code{async}/\code{await} với SQLAlchemy 2.0; không tồn tại phiên đồng bộ.
   \item \textbf{Một cửa vào cho mỗi động cơ mô hình hoá người học.} Trạng thái khái niệm
@@ -21,6 +24,10 @@ Bốn nguyên tắc chi phối mọi quyết định thiết kế trong hệ th�
 \end{enumerate}
 
 \section{Sơ đồ kiến trúc}
+
+Hình dưới đây là góc nhìn cao nhất: bốn tầng (client, gateway, dịch vụ, dữ liệu) và
+hướng mũi tên cho biết ai gọi ai — luồng yêu cầu chi tiết hơn, từng bước một, nằm ở
+mục kế tiếp.
 
 \begin{figure}[htbp]
 \centering
@@ -55,12 +62,13 @@ Ví dụ: người học hoàn thành một bài học.
   \item Backend chạy chuỗi \en{middleware}: kiểm tra máy chủ tin cậy $\rightarrow$ CORS
   $\rightarrow$ giới hạn tần suất $\rightarrow$ sinh mã yêu cầu $\rightarrow$ ghi nhật ký.
   \item Bộ định tuyến giải mã JWT, nạp người dùng, kiểm tra quyền.
-  \item Tầng dịch vụ ghi \code{LessonCompletion}, cộng XP (\code{xp\_service}), cập nhật
-  chuỗi ngày học (\code{streak\_service}), kiểm tra thành tích
+  \item Tầng dịch vụ ghi \code{LessonCompletion} rồi cộng XP (\code{xp\_service}). Nó
+  cũng cập nhật chuỗi ngày học (\code{streak\_service}) và kiểm tra thành tích
   (\code{achievement\_checker\_service}).
-  \item Kết quả từng bài tập được đẩy vào \code{record\_exercise\_results\_for\_user}:
-  cập nhật \code{UserSkillScore} (điểm kỹ năng CEFR) và, nếu bài tập có
-  \code{concept\_id}, gọi tiếp \code{record\_concept\_observation} để lập lịch ôn tập FSRS.
+  \item Kết quả từng bài tập được đẩy vào \code{record\_exercise\_results\_for\_user},
+  hàm này cập nhật \code{UserSkillScore} (điểm kỹ năng CEFR). Nếu bài tập có
+  \code{concept\_id}, nó gọi tiếp \code{record\_concept\_observation} để lập lịch ôn
+  tập FSRS.
   \item Phản hồi trả về client; các tác vụ chậm (thông báo đẩy, tổng hợp thống kê) được
   đưa sang Celery.
 \end{enumerate}
@@ -73,6 +81,7 @@ nhật và ngữ nghĩa khác nhau, nên gộp chung sẽ làm hỏng cả hai. 
 \end{luuy}
 
 \section{Ranh giới trách nhiệm giữa backend và AI service}
+\label{sec:ranh-gioi-be-ai}
 
 Đây là ranh giới hay bị hiểu nhầm nhất, nên được nêu rõ:
 
@@ -91,11 +100,40 @@ Thời gian dựng lại ảnh Docker: khoảng 1 phút. & Khoảng 15--30 phút
 \caption{Ranh giới trách nhiệm giữa hai dịch vụ lõi}
 \end{longtable}
 
+\subsection{Ví dụ: đọc trạng thái Premium qua token dịch vụ-tới-dịch vụ}
+
+Dòng "không sở hữu dữ liệu người học" ở bảng trên không chỉ là quy tắc trên giấy. AI
+service cần biết một người dùng có đang là Premium hay không, để quyết định giới hạn
+lượt chat AI. Nhưng dữ liệu Premium — đồng bộ từ RevenueCat — chỉ tồn tại ở backend,
+trong PostgreSQL. Cách sai, vi phạm ranh giới, là cho AI service đọc thẳng bảng đó: khi
+đó hai dịch vụ cùng phụ thuộc một lược đồ CSDL, và một migration ở backend có thể làm
+AI service vỡ mà không ai hay. Cách đã chọn là mở một route nội bộ ở backend,
+\code{GET /api/v1/internal/entitlements/\{user\_id\}}, xác thực bằng cặp tiêu đề
+\code{X-LexiLingo-Service-Token} và \code{X-LexiLingo-Audience} — không phải JWT của
+người dùng, mà là "chứng minh thư" giữa hai dịch vụ với nhau.
+
+Route này tái sử dụng chính \code{LEARNER\_STATE\_INTERNAL\_TOKEN} và
+\code{LEARNER\_STATE\_INTERNAL\_AUDIENCE} đã có sẵn cho cơ chế chuyển tiếp quan sát
+người học (AI service $\rightarrow$ backend). Vì vậy việc triển khai không cần thêm bí
+mật mới. Phía gọi, \code{api/clients/entitlement\_client.py}, dùng một
+\en{client} HTTP nhẹ với thời hạn chờ 1,5 giây và luôn coi người dùng là
+\textit{chưa trả tiền} nếu lời gọi lỗi hoặc hết giờ — một lỗi hạ tầng ở backend không
+được phép chặn đứng một cuộc chat đang diễn ra.
+
+\begin{luuy}[Vì sao không gọi thẳng CSDL]
+Nguyên tắc "không gọi chéo dịch vụ trực tiếp" tồn tại chính xác để tránh tình huống
+này: nếu AI service đọc bảng Premium trực tiếp, nó phải biết trước lược đồ bảng đó, và
+mọi lần backend đổi lược đồ sẽ là một lần phải nhớ sửa AI service theo — một ràng buộc
+ẩn, không được kiểm thử ở đâu cả. Một route nội bộ có hợp đồng rõ ràng
+(\textit{user\_id} vào, \textit{active: bool} ra) giữ cho hai dịch vụ độc lập thật, không
+chỉ độc lập trên sơ đồ.
+\end{luuy}
+
 \section{Hợp đồng dữ liệu dùng chung}
 
 Thư mục \code{contracts/} chứa các định nghĩa dữ liệu mà nhiều dịch vụ cùng dựa vào.
 Trường hợp điển hình là \textbf{danh sách khoá được phép} (\en{allowlist}) của tải trọng
 quan sát người học: nó được khai báo hai nơi — \code{app/schemas/learner\_state.py} phía
 backend và \code{api/services/learner\_observation\_spool.py} phía AI service. Một khoá lạ
-sẽ làm cả lô quan sát bị từ chối, nên khi thêm trường mới phải sửa đồng thời cả hai; bộ
-kiểm thử \code{test\_content\_contract\_parity.py} tồn tại để chặn việc quên.
+sẽ làm cả lô quan sát bị từ chối, nên khi thêm trường mới phải sửa đồng thời cả hai. Bộ
+kiểm thử \code{test\_content\_contract\_parity.py} tồn tại để chặn việc quên điều đó.

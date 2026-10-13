@@ -11,7 +11,7 @@
 \code{app/core/} & Cấu hình (\code{config.py}), động cơ cơ sở dữ liệu bất đồng bộ, bảo mật (băm mật khẩu, JWT), xác thực Firebase, phụ thuộc FastAPI, \en{middleware}, Redis, bộ nhớ đệm, Celery.\\
 \code{app/models/} & 25 tệp mô hình ORM SQLAlchemy, khoảng 70 bảng.\\
 \code{app/schemas/} & Lược đồ Pydantic v2 — hợp đồng đầu vào/ra của API.\\
-\code{app/routes/} & 41 mô-đun định tuyến.\\
+\code{app/routes/} & 47 mô-đun định tuyến.\\
 \code{app/services/} & 45 dịch vụ nghiệp vụ (không chứa mã HTTP).\\
 \code{app/crud/} & Lớp truy cập dữ liệu tái sử dụng cho 8 miền lớn.\\
 \code{app/clients/} & \code{ai\_service\_client.py} — cửa duy nhất gọi sang AI service.\\
@@ -50,23 +50,23 @@ chạy — lớp đăng ký sau cùng nằm ngoài cùng.
 
 \section{Nhóm định tuyến}
 
-Toàn bộ API dùng tiền tố \code{/api/v1}. Bốn mươi mốt mô-đun được nhóm theo miền:
+Toàn bộ API dùng tiền tố \code{/api/v1}. Bốn mươi sáu mô-đun được nhóm theo miền:
 
 \begin{longtable}{L{3.9cm} L{9.7cm}}
 \toprule
 \textbf{Nhóm} & \textbf{Mô-đun và chức năng}\\
 \midrule
 \endhead
-Xác thực \& người dùng & \code{auth} (đăng ký, đăng nhập, làm mới thẻ, Google/Facebook qua Firebase, quên/đổi mật khẩu), \code{users} (hồ sơ, tuỳ chọn, ảnh đại diện), \code{devices} (đăng ký thiết bị nhận thông báo đẩy), \code{rbac} (vai trò, quyền), \code{entitlements} (quyền lợi gói trả phí), \code{referral} (giới thiệu bạn bè).\\
-Nội dung học & \code{courses}, \code{course\_categories}, \code{learning} (phiên học, bắt đầu/hoàn thành bài), \code{vocabulary} (ngân hàng từ, ôn tập), \code{concepts} (khái niệm tri thức), \code{mistakes} (sổ tay lỗi sai).\\
-Tiến độ \& năng lực & \code{progress} (tiến độ, chuỗi ngày, hoạt động hằng ngày), \code{proficiency} (đánh giá CEFR sáu kỹ năng, cổng thi thăng bậc), \code{learner\_state} (điểm vào nội bộ cho quan sát từ AI service).\\
+Xác thực \& người dùng & \code{auth} (đăng ký, đăng nhập, làm mới thẻ, Google/Facebook qua Firebase, quên/đổi mật khẩu), \code{users} (hồ sơ, tuỳ chọn, ảnh đại diện), \code{devices} (đăng ký thiết bị nhận thông báo đẩy), \code{rbac} (vai trò, quyền), \code{entitlements} (đọc/đồng bộ quyền lợi Premium — client gọi khi vào app và ngay sau khi mua), \code{referral} (giới thiệu bạn bè), \code{banners} (banner quảng cáo công khai theo vị trí, tự tắt khi người gọi đang có Premium active; CRUD cho admin), \code{internal\_entitlements} (ai-service tra trạng thái Premium qua token dịch vụ dùng chung — không dành cho client).\\
+Nội dung học & \code{courses}, \code{course\_categories}, \code{learning} (phiên học, bắt đầu/hoàn thành bài), \code{vocabulary} (ngân hàng từ, ôn tập), \code{concepts} (khái niệm tri thức), \code{mistakes} (sổ tay lỗi sai), \code{ielts} (người học duyệt/làm/nộp/xem lại đề mock IELTS), \code{admin\_ielts} (admin soạn đề mock IELTS, có cổng xuất bản kiểm tra đề làm được).\\
+Tiến độ \& năng lực & \code{progress} (tiến độ, chuỗi ngày, hoạt động hằng ngày), \code{proficiency} (đánh giá CEFR sáu kỹ năng, cổng thi thăng bậc), \code{learner\_state} (điểm vào nội bộ cho quan sát từ AI service), \code{learner\_card} (điểm vào nội bộ khác: một ảnh chụp hồ sơ người học gộp sẵn cho Lexi, tránh AI service phải gọi dò nhiều điểm cuối).\\
 Động lực học & \code{gamification} (thành tích, ví, cửa hàng, kho đồ, bảng xếp hạng), \code{xp} (giao dịch điểm kinh nghiệm), \code{challenges} (thử thách), \code{games} (trò chơi mini — mô-đun lớn nhất).\\
-Nội dung thực tế & \code{news}, \code{podcasts}, \code{books}, \code{youtube} — nội dung ngoài đời thực kèm câu hỏi/quiz.\\
+Nội dung thực tế & \code{news}, \code{podcasts}, \code{books}, \code{youtube} — nội dung ngoài đời thực kèm câu hỏi/quiz; \code{recommendations} (gợi ý nội dung cá nhân hoá trên các nguồn này).\\
 Thông báo & \code{notifications}, \code{reminders} (tuỳ chọn nhắc học), \code{notification\_campaign} (chiến dịch gửi hàng loạt).\\
 Tác tử AI & \code{content\_agent} (sinh khoá học), \code{ranking\_agent} (xếp hạng, giải đấu), \code{admin\_ai\_proxy} (uỷ nhiệm gọi AI service từ trang quản trị), \code{ai\_audit} (nhật ký quyết định AI).\\
 Quản trị \& vận hành & \code{admin\_courses}, \code{admin\_gamification}, \code{admin\_system}, \code{user\_management}, \code{analytics}, \code{monitoring}, \code{product\_events}, \code{integrations}, \code{health}, \code{well\_known}.\\
 \bottomrule
-\caption{Bốn mươi mốt mô-đun định tuyến theo miền}
+\caption{Bốn mươi sáu mô-đun định tuyến theo miền}
 \end{longtable}
 
 \section{Xác thực và phân quyền}
@@ -96,6 +96,30 @@ tạo nên hệ RBAC đầy đủ. Quyền được kiểm tra bằng \en{depend
 báo ngay trên chữ ký hàm định tuyến chứ không nằm rải rác trong thân hàm. Mọi thao tác
 quản trị nhạy cảm ghi lại vào \code{audit\_logs}.
 
+\subsection{Chặn truy cập theo gói Premium}
+
+\code{require\_premium} là một \en{dependency} FastAPI riêng cho các điểm cuối chỉ dành
+cho người dùng trả phí. Dùng nó rất đơn giản — khai báo ngay trên chữ ký hàm:
+
+\begin{lstlisting}[language=Python]
+@router.get("/some-premium-thing")
+async def handler(user: User = Depends(require_premium)):
+    ...
+\end{lstlisting}
+
+Bên trong, nó gọi \code{EntitlementService.is\_active}, hàm đọc lại bảng
+\code{UserEntitlement} trong Postgres — bảng do backend tự đồng bộ từ RevenueCat, không
+phải trạng thái do ứng dụng Flutter gửi lên. Ứng dụng cũng tự đọc SDK RevenueCat cục bộ để
+ẩn/hiện UI ngay lập tức cho mượt, nhưng đó chỉ là gợi ý trải nghiệm: một bản dựng đã bị vá
+có thể giả mạo SDK đó. Vì vậy \code{require\_premium} luôn kiểm tra lại phía server, và trả
+lỗi \textbf{402 Payment Required} nếu không có gói hoạt động.
+
+\code{GET /api/v1/banners/active} áp đúng kiểm tra này theo cách khác: điểm cuối vẫn phải
+trả lời cả người dùng miễn phí nên không thể chặn bằng \code{require\_premium}, nó tự gọi
+\code{EntitlementService.is\_active} rồi trả danh sách rỗng nếu người gọi đang có Premium.
+Đây chính là cách tính năng "không quảng cáo" của Premium được thực thi ở phía server,
+không phải một cờ ẩn banner ở client.
+
 \section{Các dịch vụ nghiệp vụ chính}
 
 \begin{longtable}{L{5.0cm} L{8.6cm}}
@@ -116,13 +140,22 @@ quản trị nhạy cảm ghi lại vào \code{audit\_logs}.
 \code{content\_agent\_validation} & Làm sạch và kiểm tra hình dạng bài tập trước khi ghi.\\
 \code{vocabulary\_catalog} & Danh mục từ vựng và chính sách chọn từ.\\
 \code{skill\_history\_service} & Tổng hợp thống kê kỹ năng theo ngày; cắt tỉa nhật ký chi tiết.\\
-\code{entitlement\_service}, \code{revenuecat\_client} & Quyền lợi gói trả phí, đồng bộ với RevenueCat.\\
+\code{entitlement\_service}, \code{revenuecat\_client} & Quyền lợi gói trả phí (\code{UserEntitlement}), đồng bộ với RevenueCat; nền cho \code{require\_premium} và cho \code{/internal/entitlements} mà ai-service gọi.\\
 \code{push\_notification\_service}, \code{reminder\_service} & Thông báo đẩy và nhắc học theo lịch FSRS.\\
 \code{user\_deletion\_service} & Xoá tài khoản và dữ liệu liên quan theo yêu cầu quyền riêng tư.\\
 \code{quota\_manager}, \code{api\_cache\_service} & Hạn ngạch gọi API theo người dùng; bộ nhớ đệm phản hồi trên Redis.\\
 \bottomrule
 \caption{Dịch vụ nghiệp vụ backend}
 \end{longtable}
+
+\begin{luuy}[Khoá dòng ví khi cộng/trừ gems]
+\code{WalletCRUD.add\_gems} và \code{WalletCRUD.spend\_gems} đọc dòng ví bằng
+\code{SELECT ... FOR UPDATE} trước khi cộng/trừ số dư, để hai yêu cầu đồng thời — ví dụ
+bấm mua hai lần liên tiếp trong cửa hàng — không thể cùng tiêu một vật phẩm hoặc được cộng
+gems hai lần. Cả hai hàm còn từ chối ngay \code{amount <= 0}: thiếu kiểm tra này, một số
+lượng âm gửi lên từ client sẽ biến phép "mua" (\code{spend\_gems}) thành phép cộng gems
+miễn phí, hoặc một lượt "cộng" (\code{add\_gems}) thành phép trừ không bị kiểm tra số dư.
+\end{luuy}
 
 \section{Bất biến nội dung khoá học}
 

@@ -13,18 +13,28 @@ nói chuyện với AI — đều trở thành \textbf{bằng chứng đo lườ
 được dùng ngay để quyết định nội dung kế tiếp cũng như nội dung phản hồi của trợ lý AI?
 \end{quote}
 
-Hầu hết ứng dụng học ngôn ngữ dừng ở mức cộng điểm kinh nghiệm và đếm bài đã học.
-LexiLingo đi xa hơn ở ba điểm:
+Hầu hết ứng dụng học ngôn ngữ dừng ở mức cộng điểm kinh nghiệm và đếm bài đã học. Cách
+làm đó không cho biết người học có thực sự tiến bộ hay chỉ đang tích điểm. LexiLingo đi
+xa hơn ở ba điểm, mỗi điểm giải quyết một thiếu sót cụ thể của cách làm cũ:
 
 \begin{enumerate}[leftmargin=1.4em]
   \item \textbf{Hai động cơ mô hình hoá người học chạy song song.} Một động cơ chấm
   điểm kỹ năng theo khung CEFR (\en{Common European Framework of Reference} — Khung
   tham chiếu ngôn ngữ chung châu Âu), một động cơ lập lịch ôn tập theo trạng thái trí
-  nhớ của từng khái niệm. Mọi hoạt động có chấm điểm đều phải chảy vào cả hai.
+  nhớ của từng khái niệm. Lý do cần hai động cơ riêng là vì chúng trả lời hai câu hỏi
+  khác nhau: động cơ CEFR trả lời "người học đang ở trình độ nào", còn động cơ lập lịch
+  trả lời "khái niệm nào sắp bị quên và cần ôn lại ngay". Một động cơ duy nhất không thể
+  trả lời tốt cả hai câu hỏi cùng lúc. Vì vậy mọi hoạt động có chấm điểm đều phải chảy
+  vào cả hai, không được chỉ cập nhật một bên.
   \item \textbf{Trợ lý AI được "nối đất" (\en{grounded}) vào trạng thái người học} thay
-  vì chỉ vào tài liệu tĩnh. Đây là kiến trúc TRACE-CAG được trình bày ở Chương~8.
+  vì chỉ vào tài liệu tĩnh. Nối đất vào trạng thái người học có nghĩa là câu trả lời của
+  AI phải tham chiếu được năng lực và lịch sử học tập thật của người đó, để không đưa ra
+  lời khuyên chung chung không khớp trình độ. Đây là kiến trúc TRACE-CAG được trình bày
+  ở Chương~8.
   \item \textbf{Nội dung khoá học sinh bởi tác tử AI} (\en{content agent}) có kiểm duyệt,
-  thay vì nhập tay toàn bộ.
+  thay vì nhập tay toàn bộ. Sinh tự động giúp mở rộng số lượng bài học nhanh hơn nhập tay,
+  nhưng vẫn cần kiểm duyệt vì nội dung sinh ra có thể sai cấu trúc hoặc sai ngữ pháp nếu
+  không được kiểm tra trước khi xuất bản.
 \end{enumerate}
 
 \section{Phạm vi hệ thống}
@@ -56,6 +66,29 @@ Công cụ cho lập trình viên và tác tử AI trong IDE (quản lý khoá i
 Ngoài ra: \code{contracts/} (hợp đồng dữ liệu dùng chung giữa các dịch vụ),
 \code{monitoring/} (Prometheus + Grafana), \code{deploy/} và \code{scripts/}
 (triển khai, sao lưu, kiểm thử khói), \code{system-testing/} (kiểm thử liên dịch vụ).
+
+\begin{luuy}[Hai nghiệp vụ hoàn thiện sau khi báo cáo khởi tạo]
+Báo cáo bắt đầu viết ngày 30/08/2026. Tính đến 10/2026, hai nghiệp vụ dưới đây đã đi từ
+"hạ tầng có sẵn nhưng chưa gắn vào đâu" thành chức năng thật, mô tả đầy đủ ở Chương~2
+(nghiệp vụ NV10, NV11) và Chương~5 (backend):
+\begin{itemize}[leftmargin=1.4em]
+  \item \textbf{Premium} có ba lợi ích thật: không quảng cáo (ẩn hoàn toàn banner); chat
+  AI với Lexi không giới hạn (gói miễn phí bị chặn ở 30 tin/ngày, gói Premium bỏ qua
+  ngưỡng đó nhưng vẫn chịu ngưỡng chống lạm dụng chung 500 tin/ngày — ngưỡng này áp cho
+  mọi người dùng, kể cả Premium, để một tài khoản bị chiếm đoạt không gọi mô hình vô hạn);
+  và tải sách về đọc \en{offline} (sách đã tải trước đó vẫn đọc được dù gói hết hạn, vì
+  việc tải diễn ra khi còn quyền lợi, không phải khi mở sách). Cả ba đều được xác thực ở
+  phía máy chủ qua \code{EntitlementService} và \code{require\_premium}: ứng dụng không
+  tin vào trạng thái của SDK RevenueCat chạy trên máy người dùng, vì một bản dựng đã bị
+  sửa có thể tự khai bất kỳ trạng thái cục bộ nào.
+  \item \textbf{Banner quảng cáo} là tính năng quản lý banner trong admin, xây mới hoàn
+  toàn — trước đó màn hình này chỉ là một trang "Coming Soon". Admin tạo/sửa/xoá banner
+  (ảnh, liên kết, vị trí hiển thị \en{hero}/\en{sidebar}/\en{interstitial}, lịch chạy,
+  nhắm mục tiêu theo trình độ CEFR và ngôn ngữ học). Banner hiện ở đầu trang chủ cho người
+  học thường và ẩn hoàn toàn với người dùng Premium, vì không quảng cáo là một trong ba
+  lợi ích Premium nói trên.
+\end{itemize}
+\end{luuy}
 
 \section{Giải thích thuật ngữ tiếng Anh cốt lõi}
 
@@ -98,15 +131,16 @@ thích các thuật ngữ xuất hiện xuyên suốt; phụ lục A liệt kê 
 \section{Con số tổng quan}
 
 Các con số dưới đây được đếm trực tiếp từ mã nguồn tại thời điểm viết báo cáo
-(nhánh \code{dev}, tháng 8/2026):
+(nhánh \code{dev}, tháng 8/2026); hàng route/model/kiểm thử đã đếm lại ngày 10/10/2026
+sau khi Premium và Banner quảng cáo hoàn thiện, nên lớn hơn số ở lần đếm đầu:
 
 \begin{longtable}{L{7.2cm} L{6.4cm}}
 \toprule
 \textbf{Hạng mục} & \textbf{Số lượng}\\
 \midrule
 \endhead
-Mô-đun định tuyến backend (\code{app/routes/}) & 41 tệp\\
-Mô hình ORM backend (\code{app/models/}) & 25 tệp, khoảng 70 bảng\\
+Mô-đun định tuyến backend (\code{app/routes/}) & 47 tệp (có thêm \code{banners.py}, \code{internal\_entitlements.py})\\
+Mô hình ORM backend (\code{app/models/}) & 27 tệp, khoảng 70 bảng (có thêm \code{banner.py})\\
 Dịch vụ nghiệp vụ backend (\code{app/services/}) & 45 tệp\\
 Tác vụ nền Celery (\code{app/tasks/}) & 9 mô-đun, 12 lịch định kỳ\\
 Mô-đun định tuyến AI service & 17 tệp\\
@@ -115,21 +149,40 @@ Mã nguồn TRACE-CAG (\code{trace\_cag/}) & 8.078 dòng trên 19 tệp\\
 Mô-đun tính năng Flutter (\code{lib/features/}) & 26 mô-đun\\
 Phụ thuộc Flutter & 63 gói\\
 Trang quản trị React & hơn 25 trang\\
-Bộ kiểm thử & 102 tệp (backend), 61 (AI), 120 (Flutter)\\
+Bộ kiểm thử (số tệp) & 102 tệp (backend), 61 (AI), 120 (Flutter)\\
+Kết quả kiểm thử gần nhất (10/10/2026) & 1.723 test backend-service pass, 0 fail; 910 test flutter-app pass, 0 fail; Alembic chỉ 1 head (không xung đột migration)\\
 \bottomrule
 \caption{Quy mô mã nguồn}
 \end{longtable}
 
 \section{Cấu trúc báo cáo}
 
-Chương~2 phân tích hệ thống ở góc nhìn nghiệp vụ: tác nhân, use case, quy trình và
-quy tắc ràng buộc. Chương~3 trình bày kiến trúc tổng thể và luồng yêu cầu. Chương~4 là
-thiết kế hệ thống: use case hệ thống, ERD, sơ đồ lớp, sơ đồ tuần tự và sơ đồ triển khai.
-Chương~5 đi sâu vào backend-service, Chương~6 mô tả toàn bộ tầng dữ liệu (PostgreSQL,
-Redis, MongoDB, KuzuDB). Chương~7 giới thiệu AI service ở mức tổ chức; Chương~8 phân
-tích sâu thuật toán TRACE-CAG — từng đỉnh xử lý, thuật toán mở rộng đồ thị, điều khiển
-thích nghi, IRCoT. Chương~9 là chương thuật toán nền tảng: công thức đầy đủ của FSRS
-delta-rule, chấm điểm CEFR, bộ nhớ đệm SCAR-L1, hoà trộn truy xuất và chống cày điểm.
-Chương~10 mô tả các pipeline dữ liệu. Chương~11 tổng hợp API. Chương~12 và~13 trình
-bày phía người dùng (Flutter, admin web, gateway). Chương~14 nói về kiểm thử, triển
-khai và vận hành. Chương~15 là phụ lục thuật ngữ và bảng dữ liệu.
+Mười bốn chương còn lại đi theo thứ tự từ góc nhìn nghiệp vụ xuống chi tiết kỹ thuật, rồi
+quay lại vận hành thực tế. Thứ tự này có chủ đích: đọc tuần tự từ Chương~2 sẽ hiểu hệ
+thống từ "làm gì cho ai" trước khi tới "cài đặt như thế nào". Bảng~\ref{tab:cautruc-baocao}
+tóm tắt nội dung từng chương; mỗi hàng là một chương để tra cứu nhanh không phải đọc lại
+toàn bộ đoạn văn.
+
+\begin{longtable}{L{1.6cm} L{11.0cm}}
+\toprule
+\textbf{Chương} & \textbf{Nội dung}\\
+\midrule
+\endhead
+2 & Góc nhìn nghiệp vụ: tác nhân, use case, quy trình hoạt động và quy tắc ràng buộc.\\
+3 & Kiến trúc tổng thể và luồng yêu cầu giữa các dịch vụ.\\
+4 & Thiết kế hệ thống: use case hệ thống, ERD, sơ đồ lớp, sơ đồ tuần tự, sơ đồ triển khai.\\
+5 & Backend-service: FastAPI, middleware, route, dịch vụ nghiệp vụ, Celery.\\
+6 & Toàn bộ tầng dữ liệu: PostgreSQL, Redis, MongoDB, KuzuDB.\\
+7 & AI service ở mức tổ chức: model gateway, giọng nói, tác tử phụ trợ.\\
+8 & Phân tích sâu thuật toán TRACE-CAG — từng đỉnh xử lý, thuật toán mở rộng đồ thị, điều khiển thích nghi, IRCoT.\\
+9 & Thuật toán nền tảng: công thức đầy đủ của FSRS delta-rule, chấm điểm CEFR, bộ nhớ đệm SCAR-L1, hoà trộn truy xuất, chống cày điểm.\\
+10 & Các pipeline dữ liệu: content ETL, content agent, learner observation, sao lưu.\\
+11 & Tổng hợp API backend và AI service.\\
+12 & Phía người dùng: Flutter (Clean Architecture, 26 mô-đun, offline, i18n).\\
+13 & Phía người dùng: admin web (React) và gateway (Nginx, WAF).\\
+14 & Kiểm thử, triển khai, quan trắc và hạn chế đã biết.\\
+15 & Phụ lục: từ điển thuật ngữ và bảng tra hằng số/tệp then chốt.\\
+\bottomrule
+\caption{Cấu trúc báo cáo theo chương}
+\label{tab:cautruc-baocao}
+\end{longtable}

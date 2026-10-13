@@ -1,5 +1,14 @@
 # TRACE-CAG end-to-end audit — 2026-07-17
 
+> **Current benchmark update (2026-09-23).** A production-backed five-cluster
+> DriftBench smoke observed safe cache reuse, L1 patching, unsafe rejection,
+> and optimistic recheck; validation and the complete route-coverage gate
+> passed. The standalone `model-development/tracecag_benchmark` package is now
+> historical and is not called by the canonical daily runner. See
+> `model-development/benchmark/README.md` and artifact
+> `model-development/reports/benchmarks/drift-production-n5-final-20260922.json`.
+> The dated findings below remain useful historical evidence.
+
 > **Superseded in part (2026-08-26, revised 2026-08-29).** Blockers 3–4 below are
 > resolved and the
 > multi-hop claim is now measured: see `tracecag_benchmark_report_2026-08-26.md`
@@ -10,12 +19,12 @@
 >
 > **Per-metric comparison (2026-08-30):** see
 > `tracecag_metrics_comparison_2026-08-30.md`. It settles one row of the
-> mechanism table with measurement: **L1 has never fired** — `l1_rate` is 0.0
-> in every mode of every run since 2026-05-30. The 48.4% cache hit rate is
+> mechanism table for the public-QA runs available at that date: **L1 had never
+> fired** — `l1_rate` was 0.0 in every measured mode. The 48.4% cache hit rate is
 > entirely L0 exact-repeat on the protocol's warm pass, so "L1 validated in
-> tests; no frozen Day 1-2 hit" now reads: no hit anywhere, on any workload
-> measured to date. HotpotQA cannot produce one — 64 unrelated questions never
-> share a graph bucket. Measuring L1 needs a clustered question set.
+> tests; no frozen Day 1-2 hit" applies to that workload. HotpotQA cannot
+> produce one — 64 unrelated questions never share a graph bucket. The
+> clustered production smoke on 2026-09-23 later observed two L1 patches.
 
 ## Outcome
 
@@ -33,7 +42,7 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 | L1 candidate discovery | graph buckets in `cache_utils` | L1 routing tests | Validated in tests; no frozen Day 1–2 hit |
 | PCC | hard constraints inside canonical `decide_l1_reuse` | mismatch/fail-closed tests | Validated |
 | SCAR | `l1_state_cache.py`; compatibility re-exports only | parity tests | Canonical and continuous |
-| Typed patch | declared slots plus factual/provenance hashes | patch contract tests | Validated in tests; no frozen workload observation |
+| Typed patch | declared slots plus factual/provenance hashes | patch contract tests and 2026-09-23 production smoke | Validated; two L1 patches observed in smoke |
 | Dependency capture | learner/KG/evidence/source/policy resolver events | resolver/certificate tests | Validated in tests |
 | Optimistic recheck | immediately before L0/L1 service | race tests | Validated; **inert for KG until 2026-08-31** (nothing published the token) |
 | Reverse invalidation | dependency reverse sets and Redis sets | focused invalidation tests | Partial production coverage |
@@ -42,14 +51,14 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
 | Policy mutation hook | not needed — `POLICY_VERSION_TOKEN` is a deploy-time constant the certificate compares | `mismatch:policy_version` test | **Covered by certificate** |
 | Multi-hop interleaving | ~~benchmark candidate path~~ | — | **Removed 2026-08-29**: the flag was off *and* the reordering was discarded by the score-sort in `_select_diverse_multihop_evidence`, so it could not affect output even when enabled |
 | Coverage-first evidence selection | `retrieve.py`, benchmark multi-hop only | n=64 `all_support_at_5` | Replaces the above; reserves one slot per question anchor |
-| Drift route gate | benchmark protocol | deterministic metric tests | Code complete; frozen DriftBench pending |
+| Drift route gate | benchmark protocol | deterministic metric tests and n=5 production smoke | Smoke passed all checks; full DriftBench pending |
 
 ## Dead/redundant code audit
 
 - Removed the unused `httpx_module` argument from `_throttled_post_json` and all callers; the function already owns its pooled client.
 - Removed four imports that existed only to satisfy that dead argument.
 - Kept `AsyncGenerator`: it is used by streaming annotations.
-- Kept legacy `tracecag_benchmark/tracecag/pcc.py`: the legacy router and benchmark runner still call it.
+- Retained the standalone `tracecag_benchmark` tree as historical research code; the canonical daily runner no longer imports it.
 - Kept service SCAR re-export modules: active portable-service imports use them; they do not duplicate the formula.
 - Kept research flags with one read site because they are active protocol inputs; single-use is not proof of dead code.
 
@@ -68,7 +77,9 @@ Focused verification: `94 passed`; Ruff unused/import/name checks, `py_compile`,
    end-to-end, then fixed by publishing the token from the sync path.
    Policy needed no hook: `POLICY_VERSION_TOKEN` is a deploy-time constant and
    `decide_l1_reuse` rejects on `mismatch:policy_version` (verified).
-2. Run frozen DriftBench with observed L1 reuse, typed patch, unsafe rejection, and validate/serve mutation race.
+2. Run the full frozen DriftBench. The n=5 production smoke already observed
+   typed L1 patch, unsafe rejection, and optimistic recheck, but is too small
+   for final comparative claims.
 3. ~~Run multi-hop interleaving on a full locked split~~ — done 2026-08-26 at n=64; see the new report.
 4. ~~Keep `TRACECAG_SECOND_HOP_INTERLEAVE=false`~~ — the flag and its code were
    deleted on 2026-08-29 as provably inert (see the mechanism table).

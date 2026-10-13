@@ -1,5 +1,10 @@
 # TRACE-CAG — báo cáo so sánh chỉ số
 
+> **Kết quả lịch sử.** Báo cáo giữ nguyên giao thức HotpotQA tháng 08/2026 và
+> số đo của `qwen/qwen3.6-27b`; không đối sánh trực tiếp với lịch chạy hằng ngày
+> hiện tại dùng `qwen/qwen3.8-27b`. Hướng dẫn chạy hiện hành nằm tại
+> `model-development/benchmark/README.md`.
+
 **Ngày:** 2026-08-30 · **Tập:** HotpotQA distractor, n=64, seed=42 · **Mô hình đọc:**
 `qwen/qwen3.6-27b` (Groq) chung cho cả ba hệ · **Chuẩn hoá:** SQuAD canonical
 (`tracecag_bench/metrics/text.py`) · **Validation:** PASS, 0 lỗi, 0 fallback nhà cung cấp.
@@ -20,7 +25,7 @@ CAG thuần, cùng một lần chạy) và
 |---|---|---|---|---|---|---|
 | CAG thuần | 62,5% | 74,5% | 74,2% | 50,0% | 47,7% | 2 112 ms |
 | **TRACE-CAG** | **62,5%** | **74,7%** | **78,9%** | **59,4%** | **48,4%** | 2 225 ms |
-| HippoRAG 2 (gói chính thức) | 53,1% | 69,7% | **85,9%** | — | không có | 65 700 ms |
+| HippoRAG 2 | 53,1% | 69,7% | **85,9%** | — | không có | 65 700 ms |
 
 Ba câu đọc được từ bảng này, và không câu nào là "TRACE-CAG thắng":
 

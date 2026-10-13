@@ -136,6 +136,55 @@ esh (\en{sh}) & \en{shoe} & thay bằng /s/ & "sue"\\
 \caption{Các tác tử AI phụ trợ}
 \end{longtable}
 
+\section{Kiểm soát định mức và quyền Premium}
+
+Mỗi lượt chat đi qua hai lớp kiểm tra độc lập: một \textbf{định mức chống lạm dụng} áp
+dụng cho mọi người dùng không phân biệt Premium, và một \textbf{giới hạn tầng miễn phí}
+chỉ áp dụng khi người dùng chưa trả tiền.
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Định mức chống lạm dụng (\code{AI\_USER\_RPD\_LIMIT}, mặc định 500 yêu cầu/ngày)
+  áp dụng cho \textbf{mọi} người dùng và tồn tại để chặn lạm dụng kỹ thuật (gọi API dồn
+  dập), không phải để giới hạn tính năng.
+  \item Giới hạn tầng miễn phí (\code{LEXI\_CHAT\_FREE\_DAILY\_LIMIT}, mặc định 30
+  tin/ngày) chỉ áp dụng cho trò chuyện với Lexi và chỉ khi người dùng \textbf{không} phải
+  Premium — đây là cơ chế hiện thực lời chào bán "chat không giới hạn" của Premium.
+\end{itemize}
+
+Cả hai dùng chung \code{UserQuotaGuard} đếm bằng Redis, nhưng dưới hai
+\code{endpoint\_key} khác nhau (\code{lexi.chat} và \code{lexi.chat.free\_tier}), nên hạ
+giới hạn tầng miễn phí không đụng tới trần chống lạm dụng chung, và ngược lại.
+
+\subsection{\code{EntitlementClient} — xác định Premium}
+
+Để biết một người dùng có đang là Premium hay không, AI service gọi route nội bộ của
+backend-service qua \code{api/clients/entitlement\_client.py}. Client này được thiết kế
+\textbf{nhẹ hơn hẳn} \code{LearnerStateClient} — vốn có \en{circuit breaker} và
+\en{bulkhead} vì nằm trong vòng lặp suy luận nóng của TRACE-CAG, được gọi nhiều lần trong
+một lượt trả lời. \code{EntitlementClient} chỉ được gọi \textbf{đúng một lần} mỗi lượt
+chat và nằm ngoài vòng lặp đó, nên không cần cơ chế bảo vệ nặng đó — thứ duy nhất nó phải
+tuyệt đối đảm bảo là không bao giờ chặn cuộc chat.
+
+\begin{itemize}[leftmargin=1.4em]
+  \item Dùng chung một \code{httpx.AsyncClient} (một \en{connection pool}) cho mọi lần
+  gọi, thay vì mở kết nối mới mỗi lượt — vì hàm \code{is\_premium} chạy trên
+  \textbf{mỗi} tin nhắn chat, nên chi phí mở kết nối mới sẽ nhân theo số lượt chat.
+  \item Thời hạn chờ 1,5 giây.
+  \item \textbf{Bất kỳ lỗi nào} — hết thời gian chờ, mã trạng thái khác 200, lỗi phân
+  tích JSON — đều trả về \code{False} (coi là chưa trả tiền), không bao giờ ném lỗi lên
+  trên. Một lần kiểm tra Premium bị lỗi chỉ khiến người dùng đó tạm thời bị áp giới hạn
+  tầng miễn phí trong đúng lượt đó, không bao giờ làm hỏng cuộc trò chuyện vì lý do kỹ
+  thuật.
+\end{itemize}
+
+\subsection{Chạy đồng thời, không chạy tuần tự}
+
+Route \code{/lexi/chat} và \code{/lexi/stream} gọi cả hai kiểm tra — định mức chống lạm
+dụng, và kiểm tra Premium cùng giới hạn tầng miễn phí nếu cần — bằng
+\code{asyncio.gather}, không chạy lần lượt. Nếu chạy tuần tự, độ trễ của lệnh gọi HTTP
+sang backend-service để kiểm tra Premium sẽ cộng dồn vào thời gian phản hồi của
+\textbf{mọi} lượt chat, kể cả của người dùng Premium không bao giờ thực sự bị giới hạn.
+
 \section{Điểm cuối AI service}
 
 \begin{longtable}{L{4.6cm} L{9.0cm}}

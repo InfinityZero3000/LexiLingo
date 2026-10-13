@@ -7,9 +7,9 @@
 \textbf{Phạm vi} & \textbf{Số tệp} & \textbf{Lệnh và nội dung}\\
 \midrule
 \endhead
-Backend & 102 & \code{pytest} từ \code{backend-service/} — kiểm thử đơn vị dịch vụ, kiểm thử tuyến API với cơ sở dữ liệu SQLite bất đồng bộ.\\
-AI service & 61 & \codesp{pytest tests/} — trong đó \code{tests/trace\_cag/} là kiểm thử tích hợp pipeline, \code{tests/content\_etl/} kiểm thử bộ tiếp hợp ETL.\\
-Flutter & 120 & \codesp{flutter test} từ \code{flutter-app/} — widget, provider, use case.\\
+Backend & 138 & \code{pytest} từ \code{backend-service/} — kiểm thử đơn vị dịch vụ, kiểm thử tuyến API với cơ sở dữ liệu SQLite bất đồng bộ. 1.723 trường hợp kiểm thử được thu thập (\code{pytest --collect-only}, 10/2026).\\
+AI service & 146 & \codesp{pytest tests/} — trong đó \code{tests/trace\_cag/} là kiểm thử tích hợp pipeline, \code{tests/content\_etl/} kiểm thử bộ tiếp hợp ETL. Toàn bộ thư mục chạy chung một lệnh sẽ bị hệ điều hành dừng (\code{SIGTERM}) không báo lỗi — trông như treo máy, không phải như vượt giới hạn — nên chạy theo lát: \code{tests/} trừ các thư mục lớn, rồi \code{tests/stt}, \code{tests/trace\_cag}, \code{tests/benchmark}, \code{tests/load}, \code{tests/content\_etl} từng lệnh riêng.\\
+Flutter & 128 & \codesp{flutter test} từ \code{flutter-app/} — widget, provider, use case. 910 kiểm thử qua, 0 thất bại (10/2026).\\
 Liên dịch vụ & — & \code{system-testing/} và \code{scripts/smoke-prod.sh}.\\
 \bottomrule
 \caption{Bộ kiểm thử}
@@ -19,9 +19,9 @@ Liên dịch vụ & — & \code{system-testing/} và \code{scripts/smoke-prod.sh
 
 \begin{luuy}[Bản giả không được dễ dãi hơn bản thật]
 Phải dùng \code{autospec=True} khi vá hàm. Một \code{AsyncMock} trần đã chấp nhận tham số
-\code{httpx\_module=} không còn tồn tại suốt nhiều tháng, trong khi
-\code{/api/v1/ai/translate} trả về rỗng cho mọi từ. Kiểm thử vẫn xanh vì bản giả nhận mọi
-tham số; chỉ có người dùng thật mới phát hiện ra.
+\code{httpx\_module=} không còn tồn tại trong hàm thật. Suốt nhiều tháng,
+\code{/api/v1/ai/translate} trả về rỗng cho mọi từ, mà kiểm thử vẫn xanh — vì bản giả nhận
+mọi tham số, kể cả tham số sai. Chỉ người dùng thật mới phát hiện ra.
 \end{luuy}
 
 Tương tự với dữ liệu mẫu: tệp mẫu của ETL phải có \textbf{cùng hình dạng} với tệp tải về
@@ -64,7 +64,10 @@ Các dịch vụ trong \code{docker-compose.yml}: \code{gateway}, \code{postgres
 \end{lstlisting}
 
 Compose chỉ dựng lại container nào thực sự thay đổi và giữ container cũ chạy cho tới khi
-container mới sẵn sàng.
+container mới sẵn sàng. Bỏ qua script này và gọi \code{docker-compose up} trực tiếp thì
+mất luôn bước khoẻ-từng-dịch-vụ và smoke test: một bản mới lỗi vẫn được coi là "đã triển
+khai" và nhận lưu lượng ngay, vì không có gì đứng chặn giữa lúc container khởi động và lúc
+nó thực sự sẵn sàng phục vụ.
 
 \subsection{Ba điều cấm tuyệt đối}
 
@@ -78,7 +81,7 @@ Mỗi điều bị cấm độc lập:
 \endhead
 \code{--force-recreate} & Phá container đang chạy \textbf{trước khi} container thay thế được chứng minh là hoạt động. Khi bản mới không khởi động được, không còn gì phục vụ. & \code{up -d} thuần; compose tự dựng lại khi có thay đổi thật.\\
 \codesp{timeout N} bọc quanh lệnh dựng ảnh & Bánh xe \code{llama-cpp-python} mất 15--30 phút trên 2 vCPU. \code{timeout 240} huỷ giữa chừng, để lại thẻ \code{:latest} trỏ vào hư không — ảnh quay lui biến mất. & Không đặt thời hạn; chạy tách rời rồi theo dõi nhật ký.\\
-Dựng ảnh trong lệnh SSH tiền cảnh & Ống dữ liệu đứt giữa chừng giết tiến trình từ xa; ảnh dựng xong nhưng container không được đổi. & \codesp{setsid nohup ... > /tmp/deploy.log 2>\&1 < /dev/null \&} rồi theo dõi tệp nhật ký.\\
+Dựng ảnh trong lệnh SSH tiền cảnh & Ống dữ liệu đứt giữa chừng giết tiến trình từ xa. Ảnh dựng xong nhưng container không được đổi. & \codesp{setsid nohup ... > /tmp/deploy.log 2>\&1 < /dev/null \&} rồi theo dõi tệp nhật ký.\\
 \bottomrule
 \caption{Ba thao tác bị cấm khi triển khai}
 \end{longtable}
@@ -114,15 +117,24 @@ backend-service. Thời gian dựng lại ai-service là 15--30 phút, backend-s
 \begin{itemize}[leftmargin=1.4em]
   \item \textbf{Chỉ số}: Prometheus thu thập từ cả hai dịch vụ; Grafana hiển thị. Bảng
   điều khiển gồm độ trễ theo phân vị, tỉ lệ lỗi, tỉ lệ trúng bộ đệm, mức dùng bộ nhớ mô
-  hình.
+  hình. Không có các số này, hiệu năng suy giảm dần (độ trễ tăng, tỉ lệ trúng bộ đệm giảm)
+  sẽ không ai biết tới cho đến khi người dùng phàn nàn, lúc đó điểm xuất phát của sự suy
+  giảm đã mất.
   \item \textbf{Nhật ký}: có cấu trúc, mang \code{X-Request-ID}; tác vụ Celery mang
-  \code{task:\{id\}} nên chuỗi log của một tác vụ nền cũng gom được thành một khối.
-  \item \textbf{Vết}: \code{telemetry.py} phía AI service dùng OpenTelemetry.
+  \code{task:\{id\}} nên chuỗi log của một tác vụ nền cũng gom được thành một khối. Không
+  có mã tương quan này, lần theo một lỗi qua nhiều tiến trình (API, worker, AI service)
+  phải dò log bằng tay theo mốc thời gian — chậm và dễ ghép nhầm log của hai yêu cầu khác
+  nhau.
+  \item \textbf{Vết}: \code{telemetry.py} phía AI service dùng OpenTelemetry để theo một
+  yêu cầu qua từng giai đoạn của pipeline (truy xuất, mở rộng đồ thị, sinh câu trả lời).
+  Không có vết theo giai đoạn, một yêu cầu chậm chỉ cho biết tổng thời gian, không cho
+  biết giai đoạn nào trong pipeline nhiều bước là nơi gây chậm.
   \item \textbf{Kiểm tra sức khoẻ}: \code{/health} (còn sống) và \code{/health/ready}
   (sẵn sàng nhận lưu lượng) — phân biệt này quan trọng vì ai-service cần thời gian nạp mô
   hình trước khi thực sự phục vụ được.
   \item \textbf{Cảnh báo bảo mật}: \code{scripts/gateway-security-alerts.sh} và
-  \code{scripts/lexilingo-sentinel.py}.
+  \code{scripts/lexilingo-sentinel.py}. Không có cảnh báo chủ động, một đợt dò quét hay
+  khai thác gateway chỉ được phát hiện sau khi đã gây thiệt hại, qua việc đọc log thủ công.
 \end{itemize}
 
 \section{Quy trình phát triển}
@@ -142,9 +154,16 @@ Kiểm tra ngăn xếp cục bộ & \code{./scripts/validate\_local\_stack.sh}\\
 \caption{Lệnh phát triển thường dùng}
 \end{longtable}
 
-Quy trình CI trên GitHub Actions: chạy kiểm thử cho mỗi \en{pull request}, triển khai khi
-gộp vào nhánh chính, đồng bộ chuỗi dịch với Crowdin, rà soát mã bằng AI, và tự động gộp
-cập nhật phụ thuộc.
+Quy trình CI trên GitHub Actions gồm năm việc tự động. Mỗi \en{pull request} được chạy
+kiểm thử trước khi gộp. Gộp vào nhánh chính thì triển khai. Chuỗi dịch được đồng bộ với
+Crowdin, cập nhật phụ thuộc được tự động gộp, và mã được rà soát bằng AI.
+
+Vòng rà soát mã không chỉ chạy hình thức: các thay đổi gần đây cho Premium và Banner \&
+Ads được một vòng rà soát nhiều góc nhìn tự động kiểm tra — đúng-sai logic, hiệu năng,
+trùng lặp, tuân thủ quy ước — trước khi gộp. Vòng đó đã bắt được một vấn đề hiệu năng
+thật: mỗi lượt chat kiểm tra quyền premium và kiểm tra trần lạm dụng bằng hai lệnh gọi
+tuần tự, cộng dồn độ trễ của cả hai vào mỗi lượt; sửa thành chạy đồng thời bằng
+\code{asyncio.gather} loại bỏ phần cộng dồn đó.
 
 \section{Hạn chế hiện tại và hướng phát triển}
 
@@ -162,6 +181,14 @@ cập nhật phụ thuộc.
   đồng nghĩa với việc phần lớn thời gian dùng ứng dụng ở các mục nội dung không được đo.
   \item \textbf{Đường sinh nội dung im lặng rơi về khuôn mẫu} khi LLM lỗi, khiến sự cố khó
   phát hiện.
+  \item \textbf{Premium chưa thể mua thật trên thiết bị thật.} Hai biến môi trường
+  \code{REVENUECAT\_API\_KEY\_IOS} và \code{REVENUECAT\_API\_KEY\_ANDROID} — khoá của dịch
+  vụ thanh toán RevenueCat — chưa được khai báo trong bất kỳ tệp \code{.env*} nào của kho
+  mã. Logic Premium ở phía server đã được xác thực đầy đủ: các tuyến chặn đúng quyền, và cơ
+  chế giới hạn/không giới hạn (ví dụ trần 30 tin nhắn Lexi/ngày cho người dùng miễn phí)
+  hoạt động đúng khi giả lập trạng thái premium. Nhưng vì thiếu cấu hình sản xuất trên bảng
+  điều khiển RevenueCat, chưa ai thực hiện được một giao dịch mua Premium thật trên thiết
+  bị thật — khoảng cách giữa \en{"đã kiểm thử"} và \en{"đã bán được"} vẫn còn.
 \end{enumerate}
 
 \subsection{Hướng phát triển}
@@ -174,6 +201,9 @@ cập nhật phụ thuộc.
   \item Hoàn tất đợt thử tải theo giai đoạn cho pipeline quan sát và ghi kết quả vào
   \code{docs/operations/learner-state-rollout.md}.
   \item Đưa sao lưu ra ngoài máy chủ.
+  \item Cấu hình \code{REVENUECAT\_API\_KEY\_IOS}/\code{\_ANDROID} trên bảng điều khiển
+  RevenueCat và chạy một giao dịch mua thật trên thiết bị thật để đóng khoảng cách còn lại
+  của Premium.
   \item Mở rộng đánh giá TRACE-CAG: so sánh có kiểm soát với các mô hình cơ sở, báo cáo
   chất lượng, độ phù hợp cá nhân hoá, độ an toàn tái sử dụng, độ trễ và chi phí bằng
   phương pháp kiểm định thống kê phù hợp.

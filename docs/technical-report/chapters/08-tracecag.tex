@@ -9,6 +9,14 @@ kỹ thuật suy luận đa bước IRCoT, và cách đánh giá chất lượng
 
 \section{Định nghĩa và động cơ thiết kế}
 
+\textbf{Trực giác trước khi vào thuật ngữ:} khi người học gửi một câu, Lexi không bật LLM
+ngay. Nó tự hỏi ba câu đơn giản theo thứ tự: "câu này có giống câu vừa hỏi gần đây không,
+dùng lại câu trả lời cũ được không?"; nếu không, "cần tra thêm kiến thức ngữ pháp/từ vựng
+liên quan nào trước khi hỏi LLM?"; và luôn ghi lại "vì sao mình quyết định tái dùng, vá, hay
+tính lại" để có thể kiểm chứng sau này. Ba câu hỏi đó chính là ba ý tưởng học thuật dưới đây
+— đồ thị tri thức, bộ nhớ đệm có xác thực, và truy vết nguồn gốc — được ghép lại thành một
+hệ thống.
+
 \textbf{TRACE-CAG} = \en{Trace}-augmented \en{Cache-Augmented Generation}, kết hợp ba ý
 tưởng vốn tách rời trong tài liệu học thuật:
 
@@ -34,6 +42,14 @@ sống} (bậc CEFR, lịch sử lỗi, mức nắm vững từng khái niệm) 
 Pipeline được triển khai bằng \code{StateGraph} của LangGraph: một đồ thị trạng thái nơi
 mỗi đỉnh là một hàm bất đồng bộ nhận trạng thái, trả về phần trạng thái cập nhật, và các
 cạnh (có thể là cạnh điều kiện) quyết định đỉnh kế tiếp.
+
+\textbf{Trực giác:} hình~\ref{fig:tracecag-graph} đọc như một lưu đồ quyết định thông
+thường, không phải sơ đồ thuật toán khó hiểu. Mỗi hình chữ nhật là một bước xử lý cụ thể
+(ví dụ "gọi LLM chẩn đoán lỗi"); mỗi hình thoi là một điểm rẽ nhánh dựa trên một điều kiện
+đơn giản (ví dụ "độ tin cậy chẩn đoán có thấp không?"). Yêu cầu đi vào từ đỉnh \code{input\_node}
+bên trái, rẽ qua tối đa vài bước, rồi kết thúc ở một trong bốn điểm \code{END} — đường đi
+ngắn nhất (trúng đệm) chỉ mất hai bước và không gọi LLM lần nào, còn đường dài nhất mới cần
+đủ cả chẩn đoán, truy xuất và sinh phản hồi.
 
 \begin{figure}[htbp]
 \centering
@@ -96,6 +112,10 @@ Phản hồi & \code{tutor\_response}, \code{native\_hint}, \code{pronunciation\
 
 \section{Đỉnh 1 — \code{input\_node}: nạp ngữ cảnh}
 
+\textbf{Trực giác:} đỉnh đầu tiên chỉ làm một việc — nhớ lại "người học này là ai và đang
+nói chuyện gì", giống một giáo viên mở lại hồ sơ học sinh trước khi vào buổi học, thay vì
+bắt đầu từ con số không mỗi lượt hỏi.
+
 Nạp \code{learner\_profile} từ Redis (khoá \code{profile:\{user\_id\}}, mặc định
 \codesp{\{"level": "B1"\}} nếu chưa có) và \code{conversation\_history}
 (khoá \code{history:\{session\_id\}}), chuẩn hoá đầu vào. Với đường giọng nói, bản ghi âm
@@ -148,6 +168,13 @@ trước vì độ tin cậy cao hơn).
 Với tập khái niệm hạt giống, thuật toán duyệt đồ thị bằng hàng đợi ưu tiên (giải thuật
 tốt nhất trước — \en{best-first search}), ưu tiên khái niệm gần bậc CEFR của người học.
 
+\textbf{Trực giác:} thuật toán này giống việc dò bản đồ xuất phát từ một vài địa điểm đã
+biết (khái niệm hạt giống), lan dần ra các địa điểm lân cận — nhưng luôn ưu tiên ghé những
+nơi \textit{vừa đúng trình độ} người học trước, giống hệ thống định tuyến chọn đường gần
+nhất thay vì duyệt mọi ngã rẽ theo thứ tự ngẫu nhiên. Nhờ vậy đồ thị mở rộng ra không tràn
+sang những khái niệm quá dễ hoặc quá khó so với bậc CEFR hiện tại, dù những khái niệm đó
+vẫn được "nhìn thấy" và có thể được chọn nếu không còn lựa chọn nào gần bậc hơn.
+
 \textbf{Trọng số sư phạm (PedWeight):}
 \begin{equation}
 w(\ell) =
@@ -193,6 +220,11 @@ Kết quả được đệm ở Redis theo khoá
 30 phút, để các yêu cầu có cùng hạt giống và cùng bậc không phải duyệt lại đồ thị.
 
 \section{Đỉnh 3 — \code{diagnose\_node}: chẩn đoán bằng LLM}
+
+\textbf{Trực giác:} đỉnh này giống một giáo viên đọc nhanh câu của học sinh và ghi chú lại
+ba điều — học sinh đang muốn gì (sửa lỗi, giải thích, luyện tập, hay chỉ hỏi), mắc lỗi gì,
+và mức độ tự tin của giáo viên vào chẩn đoán đó — tất cả trong một lần gọi LLM với đầu ra ép
+buộc đúng khuôn dạng JSON, chứ không phải một đoạn văn tự do.
 
 Chạy \textbf{song song} với \code{kg\_expand\_node} qua \code{asyncio.gather} — hai việc
 độc lập dữ liệu đầu vào nên chạy đồng thời cắt gần một nửa độ trễ nhánh chậm. Lời nhắc gửi
@@ -245,6 +277,13 @@ thúc luôn — không lãng phí một lượt gọi LLM sinh phản hồi khi 
 Đây là điểm khác biệt lớn thứ hai so với RAG thường: truy xuất bị \textbf{giới hạn ngân
 sách thời gian theo từng giai đoạn}, không chạy tới khi xong mới dừng.
 
+\textbf{Trực giác:} giống việc đặt đồng hồ bấm giờ cho một cuộc họp — hết giờ của một mục
+là chuyển sang mục tiếp theo với những gì đã có, chứ không kéo dài chờ "xong hẳn". Lưu ý
+đây là \textbf{ngân sách theo thời gian} (tính bằng mili-giây, áp cho từng giai đoạn của một
+lượt truy xuất); phần đánh giá chất lượng ở cuối chương còn nói tới một loại ngân sách khác —
+\textbf{ngân sách bằng chứng} (tính bằng số đoạn văn được phép đưa vào ngữ cảnh) — hai khái
+niệm cùng tên "ngân sách" nhưng không phải một thứ.
+
 \begin{longtable}{L{4.2cm} L{2.6cm} L{6.2cm}}
 \toprule
 \textbf{Giai đoạn} & \textbf{Ngân sách mặc định} & \textbf{Nội dung}\\
@@ -269,6 +308,11 @@ hạng học trực tuyến đã trình bày đầy đủ ở mục~6.5.
 \section{Đỉnh 5 — \code{generate\_node}: sinh phản hồi có chiến lược}
 
 \subsection{Chọn chiến lược sư phạm}
+
+\textbf{Trực giác:} Lexi không trả lời theo một giọng điệu cố định. Tuỳ số lỗi mắc phải và
+mục đích câu hỏi, nó chọn một trong bốn "vai" dạy khác nhau — từ khen ngợi đơn giản khi
+không có lỗi, tới hỏi dẫn dắt kiểu Socrates khi người học đang muốn hiểu bản chất, tới chia
+nhỏ từng bước khi lỗi dồn lại quá nhiều để tránh làm người học choáng ngợp.
 
 \begin{longtable}{L{3.4cm} L{3.6cm} L{5.6cm}}
 \toprule
@@ -334,6 +378,13 @@ quality & $+0{,}04$ & $+0{,}08$ & 1,06 & 0,88\\
 \caption{Ba cấu hình thích nghi — cấu hình \en{fast} nới ngưỡng tái dùng đệm để ưu tiên tốc độ}
 \end{longtable}
 
+\textbf{Trực giác:} hãy nghĩ ba cấu hình này như ba "chế độ lái" của ô tô — tiết kiệm
+(\en{fast}), bình thường (\en{balanced}), và thể thao (\en{quality}). Xe không cố định một
+chế độ mà tự chọn chế độ phù hợp cho mỗi chuyến đi, dựa trên điều kiện hiện tại (đường có
+tắc không, cần tiết kiệm hay cần tốc độ) và kinh nghiệm học được từ các chuyến trước.
+Thỉnh thoảng xe vẫn thử một chế độ ít dùng, để không bỏ lỡ trường hợp chế độ quen thuộc
+không còn là lựa chọn tốt nhất.
+
 \subsection{Hàm mục tiêu và lựa chọn}
 
 Với mỗi yêu cầu, hệ thống tính hàm mục tiêu cho từng cấu hình dựa trên đặc trưng ngữ cảnh
@@ -344,9 +395,11 @@ chọn cục bộ tối ưu.
 
 \subsection{Cập nhật trực tuyến có ràng buộc kép}
 
-Sau khi có kết quả thật (đúng cho lô \en{benchmark}), phần thưởng được tính theo thứ tự
-ưu tiên sản phẩm yêu cầu: \textbf{chất lượng trước, truy xuất sau, an toàn trôi dạt, rồi
-mới đến độ trễ}:
+Nói đơn giản, "phần thưởng" (\en{reward}) là một điểm số tổng hợp: thưởng nặng nhất cho
+chất lượng câu trả lời đúng, thưởng nhẹ hơn cho truy xuất đúng bằng chứng và cho tái dùng
+đệm an toàn, và trừ điểm nếu độ trễ hoặc tỉ lệ tái dùng sai vượt ngưỡng cho phép. Sau khi có
+kết quả thật (đúng cho lô \en{benchmark}), phần thưởng được tính theo thứ tự ưu tiên sản
+phẩm yêu cầu: \textbf{chất lượng trước, truy xuất sau, an toàn trôi dạt, rồi mới đến độ trễ}:
 
 \begin{equation}
 r_{\text{thô}} = 0{,}46\cdot F_1 + 0{,}16\cdot EM + 0{,}24\cdot(0{,}5R@1{+}0{,}3R@3{+}0{,}2R@5) + 0{,}14\cdot\mathbb{1}[\text{tái dùng an toàn}]
@@ -360,9 +413,9 @@ r = r_{\text{thô}} - \lambda_{\text{trễ}}\cdot\max(0, \Delta_{\text{trễ}}) 
 \end{equation}
 
 Độ lệch của cấu hình được chọn dịch chuyển theo phần thưởng \textbf{đã trừ trung bình
-chạy} (giảm phương sai), và hai biến đối ngẫu tự tăng khi mục tiêu ràng buộc bị vi phạm —
-đây là một bộ điều khiển kiểu \en{primal-dual} cỡ nhỏ, chạy hoàn toàn trong bộ nhớ tiến
-trình mà không cần huấn luyện ngoại tuyến.
+chạy} (giảm phương sai). Hai biến đối ngẫu tự tăng khi mục tiêu ràng buộc bị vi phạm, tạo
+thành một bộ điều khiển kiểu \en{primal-dual} cỡ nhỏ. Toàn bộ chạy trong bộ nhớ của tiến
+trình xử lý, không cần huấn luyện ngoại tuyến.
 
 \begin{luuy}[Chỉ dùng trong bối cảnh đánh giá có kiểm soát]
 Cơ chế thích nghi hiện chỉ bật khi \code{retrieval\_policy="adaptive"} hoặc trong chế độ
@@ -374,7 +427,11 @@ Cơ chế thích nghi hiện chỉ bật khi \code{retrieval\_policy="adaptive"}
 Với những câu hỏi cần bắc cầu qua hai thực thể (ví dụ: \textit{"đạo diễn của bộ phim mà
 diễn viên X đóng chính là ai?"}), truy xuất một lượt thường bỏ lỡ thực thể trung gian. Cơ
 chế \textbf{IRCoT} (\en{Interleaving Retrieval with Chain-of-Thought}, arXiv:2212.10509)
-giải quyết bằng một vòng suy luận $\rightarrow$ truy xuất lại có định hướng:
+giải quyết bằng một vòng suy luận $\rightarrow$ truy xuất lại có định hướng.
+
+\textbf{Trực giác:} giống việc tra từ điển hai lần liên tiếp — tra xong mục thứ nhất mới
+biết chính xác cần tra tiếp mục gì, chứ không thể tra cả hai mục cùng lúc ngay từ đầu vì
+chưa biết mục thứ hai là gì. Bốn bước dưới đây:
 
 \begin{enumerate}[leftmargin=1.4em]
   \item \textbf{Suy luận}: hỏi LLM "thực thể bắc cầu nào cần tra tiếp theo?", chỉ nhận về
@@ -459,6 +516,10 @@ Giọng nói đầy đủ & chậm & 5--8 s & STT + LLM + phân tích âm vị\\
 \caption{Đặc tính hiệu năng theo kịch bản sử dụng}
 \end{longtable}
 
+Với người dùng, khác biệt giữa hai nhánh là cảm nhận được trực tiếp: câu hỏi lặp lại (trúng
+đệm) trả lời gần như ngay lập tức, còn câu hỏi mới — đặc biệt khi cần phân tích ngữ pháp
+phức tạp hoặc đi kèm giọng nói — có thể phải chờ vài giây đến khoảng 20 giây.
+
 \subsection{Kết quả benchmark HotpotQA (n=64, \code{qwen/qwen3.6-27b})}
 
 Đường cơ sở HippoRAG trong các lần đo trước là bản \textbf{tự cài lại}
@@ -482,6 +543,13 @@ Cột thứ tư là R@5. Độ trễ là trung bình lượt lạnh; HippoRAG l�
 hình --- 4/64 câu khác nhau do nhiễu mô hình, không phải do cấu hình.}
 \end{longtable}
 
+Với người dùng cuối, các số này có thể đọc như sau: trên những câu hỏi khó cần nối hai sự
+kiện hoặc hai nhân vật lại với nhau, Lexi (nhánh TRACE-CAG/CAG) trả lời đúng khoảng 6 trên
+10 câu, và nhanh hơn hệ so sánh dùng đồ thị tri thức tự xây (HippoRAG~2) tới hàng chục lần.
+Phần dưới đây cho thấy thêm một sắc thái quan trọng: nhánh đồ thị tri thức riêng của
+TRACE-CAG tìm đúng bằng chứng tốt hơn, nhưng điều đó \textbf{chưa chắc} làm tăng số câu trả
+lời đúng — đây chính là điều bảng tổng một mình không nói hết.
+
 Bảng này thay cho bảng cũ và \textbf{thu hẹp kết luận}. HippoRAG~2 chạy đủ 64/64 với
 ngân sách sinh đáp án 1024 token thực sự có hiệu lực --- trước đó phải đặt
 \code{max\_completion\_tokens} chứ không phải \code{max\_tokens}, nên tham số bị
@@ -497,7 +565,8 @@ vẫn còn (\code{all\_support@5} 59,4\% so với 50,0\%), nhưng \textbf{không
 hoá thành chất lượng câu trả lời} --- nút thắt đã dời sang bộ đọc.
 
 \textbf{Chỉ số R@5 của HippoRAG đã được sửa và đo lại.} Bộ đo cũ tìm tiêu đề vàng
-trong \emph{toàn văn gộp} của các đoạn lấy về; trên câu bắc cầu HotpotQA thì thân
+trong \emph{toàn văn gộp} của các đoạn lấy về; trên câu bắc cầu HotpotQA (câu cần tra qua
+một thực thể trung gian mới tới được đáp án, xem mục IRCoT) thì thân
 đoạn này gọi tên tiêu đề đoạn kia theo đúng định nghĩa, nên nó tính công cho cả
 những đoạn chưa hề được truy hồi. Sau khi sửa về so khớp danh tính tài liệu và
 chạy lại đủ n=64 (0 lỗi): R@5 giảm từ 93,8\% xuống \textbf{85,9\%}, tức bộ đo cũ
@@ -512,7 +581,10 @@ nó phóng đại khoảng 6 lần. Bài học: đo chỉ số bằng một lầ
 từ đặc điểm của kho ngữ liệu.
 
 \begin{luuy}[Nút thắt thực sự là khả năng với tới bằng chứng, không phải suy luận]
-Ba chỉ số truy xuất được bổ sung vì không chỉ số cũ nào phân biệt được ``tìm thấy
+Nói đơn giản: mô hình đọc trả lời sai không phải vì nó suy luận kém, mà thường vì đáp án
+đúng chưa bao giờ được đưa vào trong những đoạn văn mà nó nhìn thấy — giống một học sinh bị
+hỏi thi mà đúng trang sách có câu trả lời lại bị thiếu trong đề cương ôn tập. Ba chỉ số
+truy xuất được bổ sung vì không chỉ số cũ nào phân biệt được ``tìm thấy
 một bước'' với ``tìm thấy câu trả lời'': \code{hit@k} (có ít nhất một đoạn hỗ trợ),
 \code{all\_support@k} (có \textbf{đủ} mọi đoạn hỗ trợ) và \code{answer\_in\_context@k}
 (chuỗi đáp án nằm trong cửa sổ mà mô hình đọc thấy --- trần cứng của bộ đọc).
@@ -524,8 +596,10 @@ thực chất không thể trả lời được. Tỉ lệ chuyển hoá của b
 (EM chia \code{answer\_in\_context}) khi đó là \textbf{90\%} --- bộ đọc đã khai thác
 gần hết những gì nó nhìn thấy.
 
-Nâng ngân sách bằng chứng từ 5 lên 9--10 đoạn đưa \code{answer\_in\_context} từ
-62,5\% lên 82,8\% và EM từ 56,2\% lên \textbf{62,5\%} (chênh lệch được giải thích
+Nâng \textbf{ngân sách bằng chứng} (số đoạn văn tối đa đưa vào ngữ cảnh cho mô hình đọc —
+khác với ngân sách \textit{thời gian} theo giai đoạn ở mục Đỉnh~4) từ 5 lên 9--10 đoạn đưa
+\code{answer\_in\_context} từ 62,5\% lên 82,8\% và EM từ 56,2\% lên \textbf{62,5\%} (chênh
+lệch được giải thích
 trọn vẹn ở mức từng câu: 6 câu thắng, 2 câu thua), đổi lại 29\% token đầu vào.
 
 Kết quả này \textbf{bác bỏ} kết luận trước đó rằng ``suy luận đa bước của bộ đọc mới

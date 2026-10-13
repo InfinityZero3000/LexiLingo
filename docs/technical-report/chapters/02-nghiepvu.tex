@@ -13,7 +13,7 @@ sao và những quy tắc nào bắt buộc phải đúng. Toàn bộ thiết k�
 \endhead
 Người học & Chính, con người & Nâng bậc CEFR bằng việc luyện tập hằng ngày; nhận phản hồi đúng trình độ và đúng lỗi của mình.\\
 Quản trị viên nội dung & Phụ, con người & Biên soạn, kiểm duyệt và xuất bản khoá học; bảo đảm mọi bài học đều chơi được.\\
-Quản trị viên hệ thống & Phụ, con người & Quản lý tài khoản, vai trò, cấu hình mô hình AI, theo dõi sức khoẻ dịch vụ.\\
+Quản trị viên hệ thống & Phụ, con người & Quản lý tài khoản, vai trò, cấu hình mô hình AI, theo dõi sức khoẻ dịch vụ; quản lý banner quảng cáo hiển thị trên trang chủ.\\
 Trợ lý AI (Lexi) & Hệ thống & Chẩn đoán lỗi, sinh phản hồi có căn cứ, sinh quan sát học tập.\\
 Tác tử nội dung & Hệ thống & Sinh khoá học và bài tập từ danh sách từ có nhãn CEFR.\\
 Bộ lập lịch nền & Hệ thống & Nhắc ôn tập, tổng hợp thống kê, nạp trước nội dung, đặt lại giải đấu.\\
@@ -26,6 +26,10 @@ RevenueCat & Ngoài & Xử lý mua trong ứng dụng và quyền lợi gói tr�
 \end{longtable}
 
 \section{Sơ đồ use case nghiệp vụ}
+
+Sơ đồ dưới đây đặt từng tác nhân ở bảng trên cạnh các nghiệp vụ họ tham gia, để thấy
+ngay một nghiệp vụ nào đó có bao nhiêu tác nhân liên quan và một tác nhân nào đó chạm
+tới bao nhiêu nghiệp vụ — không phải mọi tác nhân đều tham gia mọi nghiệp vụ.
 
 \begin{figure}[htbp]
 \centering
@@ -64,16 +68,27 @@ RevenueCat & Ngoài & Xử lý mua trong ứng dụng và quyền lợi gói tr�
 \label{fig:uc-nghiepvu}
 \end{figure}
 
-\section{Chín nghiệp vụ chính}
+\section{Mười một nghiệp vụ chính}
+
+\begin{luuy}[Vì sao có 11 nghiệp vụ mà Hình~\ref{fig:uc-nghiepvu} chỉ vẽ 9]
+Hình~\ref{fig:uc-nghiepvu} được vẽ khi báo cáo khởi tạo (30/08/2026). Hai nghiệp vụ
+Premium (NV10) và Banner quảng cáo (NV11) hoàn thiện sau đó, vào 10/2026. Việc thêm vào
+hình sẽ phải xếp lại toàn bộ bố cục chín nút hiện có nên hai nghiệp vụ này chỉ được mô tả
+bằng văn bản ở đây; chúng tuân theo đúng quy ước use case nghiệp vụ như bảy nghiệp vụ còn lại.
+\end{luuy}
 
 \subsection{NV1 — Học theo lộ trình CEFR}
 
 Người học ghi danh một khoá học, đi theo lộ trình dạng zigzag gồm các chương và bài học.
-Mỗi bài học chứa một chuỗi bài tập; hoàn thành bài học tạo ra ba loại dữ liệu: bản ghi
-hoàn thành, điểm XP và bằng chứng năng lực gửi vào hai động cơ mô hình hoá người học.
+Mỗi bài học chứa một chuỗi bài tập. Hoàn thành một bài học tạo ra ba loại dữ liệu trong
+cùng một lượt xử lý: bản ghi hoàn thành, điểm XP, và bằng chứng năng lực gửi vào hai động
+cơ mô hình hoá người học (điểm kỹ năng CEFR và trạng thái khái niệm FSRS).
 
 \textbf{Quy tắc nghiệp vụ ràng buộc:} một bài học chỉ mở được khi có ít nhất một bài tập
-(mục~\ref{sec:qtnv}); khoá học chỉ xuất bản được khi mọi bài học đều thoả điều kiện đó.
+(mục~\ref{sec:qtnv}); khoá học chỉ xuất bản được khi mọi bài học đều thoả điều kiện đó. Nếu
+không có ràng buộc này, tác tử nội dung hoàn toàn có thể sinh ra một bài học "rỗng" —
+có tiêu đề, có trong lộ trình, nhưng người học bấm vào thì không có gì để làm; lỗi đó chỉ
+bị phát hiện khi một người học thật gặp phải, không phải lúc xuất bản.
 
 \subsection{NV2 — Ôn tập từ vựng theo lịch}
 
@@ -83,27 +98,39 @@ nhớ 0--5; kết quả cập nhật độ bền, độ khó và mức nắm v�
 
 \subsection{NV3 — Hội thoại với trợ lý AI}
 
-Người học nhắn tin hoặc nói với Lexi. Hệ thống chẩn đoán ý định và lỗi ngôn ngữ, truy xuất
-bằng chứng từ đồ thị tri thức, sinh phản hồi có căn cứ theo chiến lược sư phạm phù hợp
-trình độ, đồng thời ghi lại một quan sát học tập cho mỗi lượt.
+Người học nhắn tin hoặc nói với Lexi. Hệ thống chẩn đoán ý định và lỗi ngôn ngữ của câu vừa
+gửi, rồi truy xuất bằng chứng từ đồ thị tri thức. Từ đó, hệ thống sinh phản hồi có căn cứ
+theo chiến lược sư phạm phù hợp trình độ người học. Mỗi lượt hội thoại đều ghi lại một quan
+sát học tập — đây là lý do chat không chỉ là tiện ích trò chuyện mà còn là một kênh chấm
+điểm kỹ năng song song với bài học.
 
 \subsection{NV4 — Luyện nói và phát âm}
 
-Người học nói vào micro; hệ thống nhận dạng theo dòng, phát hiện điểm kết thúc phát ngôn,
-phân tích chuỗi âm vị, so với phát âm mục tiêu và trả về điểm cùng gợi ý sửa — có nhận
-diện riêng các lỗi đặc trưng của người Việt.
+Người học nói vào micro. Hệ thống nhận dạng giọng nói theo dòng thời gian thực, tự phát
+hiện điểm kết thúc phát ngôn, rồi phân tích chuỗi âm vị để so với phát âm mục tiêu. Kết quả
+trả về là điểm số cùng gợi ý sửa, có nhận diện riêng các lỗi phát âm đặc trưng của người
+Việt (ví dụ lẫn phụ âm cuối) — vì lỗi phát âm phổ biến của người Việt khác với người học
+tiếng Anh nói chung, một bộ gợi ý sửa chung sẽ kém hữu ích hơn.
 
 \subsection{NV5 — Chơi trò chơi ngôn ngữ}
 
 Sáu trò chơi mini rút dữ liệu từ ngân hàng từ vựng hoặc ngân hàng câu hỏi ngữ pháp. Kết
-quả trò chơi được quy đổi sang kỹ năng CEFR tương ứng theo bảng ánh xạ cố định, không suy
-đoán từ tên trò chơi.
+quả trò chơi được quy đổi sang kỹ năng CEFR tương ứng theo một bảng ánh xạ cố định
+(\code{GAME\_TYPE\_SKILL}), không suy đoán từ tên trò chơi. Lý do phải cố định bảng này:
+suy đoán từ tên (ví dụ chuỗi "listening" trong tên trò chơi) từng mặc định quy mọi nội
+dung không rõ loại về kỹ năng từ vựng, khiến các trò chơi nghe và nói bị ghi điểm sai kỹ
+năng trong một thời gian dài trước khi bị phát hiện.
 
 \subsection{NV6 — Học qua nội dung thực tế}
 
 Bốn nguồn: tin tức, podcast, sách phân cấp, video YouTube. Hệ thống nạp trước nội dung
 theo lịch và sinh quiz kèm theo. \textbf{Chỉ phần quiz tạo ra bằng chứng học tập}; việc
-nghe hoặc đọc thuần tuý cố ý không ghi nhận gì.
+nghe hoặc đọc thuần tuý cố ý không ghi nhận gì, vì nghe xong một tập podcast hay lướt hết
+một bài báo không chứng minh được người học đã hiểu nội dung — chỉ có trả lời đúng câu hỏi
+mới là bằng chứng có thể tin được.
+
+Dù không sinh bằng chứng năng lực, thời gian tiêu thụ ở cả bốn nguồn (sách, podcast, video,
+tin tức) đều được tính vào nhiệm vụ ngày và thời gian học tích lũy — xem QT-11.
 
 \subsection{NV7 — Theo dõi tiến độ và thành tích}
 
@@ -113,16 +140,50 @@ Người học xem chuỗi ngày học, bản đồ nhiệt hoạt động, đi�
 \subsection{NV8 — Đánh giá và thăng bậc}
 
 Có hai đường vào một bậc CEFR: bài kiểm tra xếp lớp khi mới bắt đầu, và cổng thi thăng bậc
-khi đã tích luỹ đủ bằng chứng. Cổng thi chặn việc lên quá một bậc mỗi lần.
+khi đã tích luỹ đủ bằng chứng. Cổng thi chặn việc lên quá một bậc mỗi lần — nếu không có
+giới hạn này, một người học gặp may với vài câu dễ có thể nhảy từ A1 lên B2 trong một lần
+thi, trong khi hệ thống chưa có bằng chứng nào cho thấy họ nắm được các bậc ở giữa.
 
 \subsection{NV9 — Biên soạn và kiểm duyệt nội dung}
 
 Quản trị viên tải lên danh sách từ có nhãn CEFR, chạy tác tử nội dung, rà soát kết quả
 trong hàng đợi kiểm duyệt, sửa hoặc yêu cầu sinh lại, rồi mới xuất bản.
 
+\subsection{NV10 — Nâng cấp Premium}
+
+Người học mua gói Premium qua RevenueCat (App Store hoặc Play Store tuỳ nền tảng). Gói
+mang lại ba lợi ích: không hiển thị banner quảng cáo, hội thoại với Lexi không giới hạn số
+tin mỗi ngày (gói miễn phí bị giới hạn 30 tin/ngày), và tải sách đọc về máy để dùng offline.
+Sách đã tải trước khi mua Premium vẫn được giữ lại nếu sau đó người học hạ về gói miễn phí —
+việc hạ gói chỉ chặn tải sách mới, không thu hồi nội dung đã tải.
+
+Giao dịch mua diễn ra hoàn toàn trong App Store/Play Store; backend không xử lý thanh toán,
+mà xác thực lại trạng thái quyền lợi (\en{entitlement}) từ RevenueCat qua
+\code{EntitlementService} mỗi khi cần biết người học có đang là Premium hay không.
+\textbf{Backend không tin trạng thái premium mà client tự khai báo} — nếu tin, một client
+đã chỉnh sửa (hoặc đơn giản là một lỗi hiển thị cũ trên máy) có thể tự cho mình quyền lợi
+mà chưa từng trả tiền.
+
+\subsection{NV11 — Quản lý banner quảng cáo}
+
+Quản trị viên hệ thống tạo, sửa, hoặc xoá banner hiển thị ở trang chủ: ảnh, liên kết đích,
+vị trí hiển thị, thứ tự ưu tiên, lịch chạy (ngày bắt đầu/kết thúc), và tiêu chí nhắm mục
+tiêu theo trình độ CEFR và ngôn ngữ của người học. Khi người học mở trang chủ, hệ thống lọc
+ra banner còn hiệu lực và phù hợp với hồ sơ của họ — trừ người học Premium, nhóm này không
+thấy banner nào, kể cả banner còn hiệu lực và nhắm đúng mục tiêu. Đây là lợi ích "không
+quảng cáo" của NV10, nhìn từ phía nghiệp vụ hiển thị nội dung.
+
 \section{Quy trình nghiệp vụ trọng tâm}
 
+Ba quy trình dưới đây được chọn vì chúng là nơi các quy tắc nghiệp vụ ở mục~\ref{sec:qtnv}
+thực sự được thực thi theo từng bước, không chỉ nêu trên giấy: một lượt làm bài học, một
+lượt hội thoại với Lexi, và một khoá học được sinh ra rồi xuất bản.
+
 \subsection{Quy trình hoàn thành một bài học}
+
+Mỗi câu trả lời đúng/sai đều phải chảy vào bốn nơi cùng lúc — bản ghi lượt làm, điểm kinh
+nghiệm (XP), điểm kỹ năng CEFR, và lịch ôn tập theo khái niệm — nếu thiếu một trong bốn,
+dữ liệu về người học sẽ không đầy đủ dù bài học vẫn "xong" trên giao diện.
 
 \begin{figure}[htbp]
 \centering
@@ -160,6 +221,10 @@ trong hàng đợi kiểm duyệt, sửa hoặc yêu cầu sinh lại, rồi m�
 
 \subsection{Quy trình một lượt hội thoại với AI}
 
+Không phải câu nào cũng cần suy luận đầy đủ: một câu hỏi đã gặp trước đó được trả lời
+thẳng từ bộ đệm, còn một câu mới phải đi qua mở rộng đồ thị tri thức và truy xuất bằng
+chứng trước khi Lexi trả lời — chi tiết kỹ thuật của từng bước nằm ở Chương~8.
+
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[node distance=5mm and 8mm]
@@ -195,6 +260,10 @@ trong hàng đợi kiểm duyệt, sửa hoặc yêu cầu sinh lại, rồi m�
 
 \subsection{Quy trình xuất bản khoá học}
 
+Nội dung do tác tử AI sinh ra không được xuất bản thẳng: nó phải qua một cổng kiểm tra
+"mọi bài học đều có bài tập" trước khi tới tay người duyệt, vì một khoá học xuất bản mà
+có bài học rỗng là lỗi người học gặp phải, không phải lỗi admin có thể sửa sau.
+
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[node distance=5mm and 7mm]
@@ -221,8 +290,9 @@ trong hàng đợi kiểm duyệt, sửa hoặc yêu cầu sinh lại, rồi m�
 \section{Quy tắc nghiệp vụ}
 \label{sec:qtnv}
 
-Mười quy tắc dưới đây là ràng buộc cứng của hệ thống. Mỗi quy tắc đều có mã để các chương
-sau tham chiếu, và mỗi quy tắc đều tồn tại vì đã từng bị vi phạm trong thực tế.
+Mười ba quy tắc dưới đây là ràng buộc cứng của hệ thống. Mỗi quy tắc đều có mã để các
+chương sau tham chiếu, và mỗi quy tắc đều tồn tại vì đã từng bị vi phạm trong thực tế —
+nói cách khác, bảng này vừa là đặc tả vừa là danh sách lỗi đã từng xảy ra và được vá.
 
 \begin{longtable}{L{1.3cm} L{12.3cm}}
 \toprule
@@ -239,8 +309,11 @@ QT-07 & Người học chỉ lên tối đa một bậc CEFR mỗi lần, và ph
 QT-08 & Thăng bậc cần cả khối lượng (số bài đã làm) lẫn độ tin cậy (mức độ hệ thống đã đo được người học).\\
 QT-09 & Phản hồi lấy từ bộ đệm phải cùng bậc CEFR, cùng tiếng mẹ đẻ và cùng thế hệ trạng thái với yêu cầu hiện tại.\\
 QT-10 & Quan sát học tập phải được ghi bền vững \textbf{trước} khi trả lời người dùng, không phải sau.\\
+QT-11 & Cả bốn nguồn nội dung thực tế (sách, podcast, video, tin tức) đều tính vào nhiệm vụ ngày và thời gian học tích luỹ, không chỉ bài học và trò chơi — nếu không, nhiệm vụ ngày sẽ hệ thống hoá thiên vị cho một kiểu luyện tập.\\
+QT-12 & Gem thưởng giới thiệu bạn (referral) phải được cộng cho \textbf{cả hai} bên qua một hàm tập trung, có khoá dòng (\en{row lock}). Thiếu khoá, hai yêu cầu đến cùng lúc có thể vừa làm một bên mất phần thưởng, vừa làm bên kia được cộng hai lần.\\
+QT-13 & Không thể mua vật phẩm với số lượng âm. Cho phép số lượng âm tương đương cho người dùng tự "đúc" gems bằng một giao dịch mua ngược.\\
 \bottomrule
-\caption{Mười quy tắc nghiệp vụ ràng buộc toàn hệ thống}
+\caption{Mười ba quy tắc nghiệp vụ ràng buộc toàn hệ thống}
 \end{longtable}
 
 \section{Ma trận nghiệp vụ và dữ liệu sinh ra}
@@ -259,6 +332,10 @@ NV6 — Nội dung thực tế (quiz) & Có & Có & Có & Có\\
 NV6 — Nội dung thực tế (nghe/đọc) & Không & Không & Không & Không\\
 NV7 — Xem tiến độ & Không & Không & Không & Không\\
 NV8 — Thi thăng bậc & Có & Không & Không & Có\\
+NV10 — Mua Premium & Không & Không & Không & Không\\
 \bottomrule
-\caption{Nghiệp vụ nào sinh ra loại dữ liệu nào (chi tiết công thức ở Chương~9)}
+\caption{Nghiệp vụ nào sinh ra loại dữ liệu nào (chi tiết công thức ở Chương~9). NV10 không
+sinh bằng chứng năng lực — nó chỉ ghi một \code{UserEntitlement} mới, không chạm vào mô hình
+người học. NV9 và NV11 đứng ngoài bảng này vì là nghiệp vụ quản trị, không phải hoạt động
+luyện tập của người học.}
 \end{longtable}

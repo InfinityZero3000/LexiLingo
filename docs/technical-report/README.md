@@ -37,7 +37,7 @@ ngoài lần tải gói LaTeX đầu tiên.
 | 9 | `chapters/09-thuattoan.tex` | FSRS delta-rule, chấm điểm CEFR, SCAR-L1, hoà trộn truy xuất, chống cày điểm |
 | 10 | `chapters/10-pipeline.tex` | Content ETL, content agent, learner observation, sao lưu |
 | 11 | `chapters/11-api.tex` | Tổng hợp API backend + AI service |
-| 12 | `chapters/12-flutter.tex` | Clean Architecture, 26 mô-đun, offline, i18n |
+| 12 | `chapters/12-flutter.tex` | Clean Architecture, 27 mô-đun, offline, i18n |
 | 13 | `chapters/13-admin-gateway.tex` | Admin React, Nginx, Cloudflare WAF, MCP server |
 | 14 | `chapters/14-vanhanh.tex` | Kiểm thử, triển khai, quan trắc, hạn chế |
 | 15 | `chapters/15-phuluc.tex` | Từ điển thuật ngữ, bảng tra hằng số và tệp then chốt |

@@ -27,6 +27,10 @@ kèm giải thích tiếng Việt.
 \en{Smoke test} & Kiểm thử khói — bộ kiểm tra nhanh xem hệ thống có hoạt động ở mức cơ bản.\\
 \en{Rollback} & Quay lui về phiên bản trước.\\
 \en{CI/CD} & Tích hợp liên tục / triển khai liên tục.\\
+\en{Entitlement} & Quyền lợi — một khả năng cụ thể mà hệ thống cho phép một người dùng dùng (ví dụ \en{premium}), ghi lại ở phía máy chủ thay vì suy ra từ ứng dụng.\\
+\en{RevenueCat} & Dịch vụ ngoài xử lý mua trong ứng dụng (App Store/Play Store) và báo lại gói nào đang hoạt động; backend đồng bộ về rồi tự giữ bản ghi, không hỏi lại mỗi lần cần kiểm tra.\\
+\en{Paywall} & Màn hình chặn, mời mua gói trả phí khi người dùng chạm vào một tính năng chỉ Premium mới dùng được.\\
+\en{Banner} & Hình quảng cáo/thông báo admin đặt ở một vị trí cố định trên trang chủ, có lịch chạy và điều kiện nhắm mục tiêu riêng; không phải ảnh tĩnh nhúng cứng vào giao diện.\\
 \bottomrule
 \end{longtable}
 
@@ -124,6 +128,13 @@ kèm giải thích tiếng Việt.
 
 \chapter{Phụ lục B — Bảng tra nhanh}
 
+Phụ lục này không giải thích lại thuật toán — Chương~8 và~9 đã làm việc đó — mà dùng để
+tra cứu nhanh khi đọc các chương đó mà không muốn lật lại toàn bộ công thức. Bảng
+\ref{tab:hangso} nói một hằng số có giá trị bao nhiêu và được dùng ở bước nào; Bảng
+\ref{tab:tepthenchot} nói một hành vi cụ thể (ví dụ "chống cày điểm") được cài ở tệp nào
+trong kho mã. Danh sách không phủ hết toàn bộ mã nguồn, chỉ gồm những hằng số và tệp đã
+được nhắc tới trực tiếp ở các chương trước.
+
 \section{Hằng số thuật toán}
 
 \begin{longtable}{L{5.4cm} L{2.6cm} L{5.6cm}}
@@ -155,6 +166,7 @@ kèm giải thích tiếng Việt.
 \code{MAX\_SINGLE\_AWARD} & 200 & Trần một lần cấp XP\\
 \bottomrule
 \caption{Hằng số thuật toán và nơi sử dụng}
+\label{tab:hangso}
 \end{longtable}
 
 \section{Tệp cần biết}
@@ -178,8 +190,16 @@ kèm giải thích tiếng Việt.
 \code{ai-service/api/services/content\_etl/} & ETL ngữ liệu\\
 \code{flutter-app/lib/features/learning/presentation/screens/learning\_roadmap\_screen.dart} & Lộ trình học\\
 \code{flutter-app/lib/core/services/skill\_event\_recorder.dart} & Gửi sự kiện học tập\\
+\code{backend-service/app/models/banner.py} & Mô hình \en{Banner}\\
+\code{backend-service/app/routes/banners.py} & Lấy banner đang hoạt động + CRUD admin\\
+\code{backend-service/app/routes/internal\_entitlements.py} & Entitlement nội bộ cho ai-service gọi\\
+\code{backend-service/app/services/entitlement\_service.py} & \code{EntitlementService}, đồng bộ RevenueCat\\
+\code{ai-service/api/clients/entitlement\_client.py} & Kiểm tra Premium từ ai-service, fail open\\
+\code{flutter-app/lib/core/widgets/premium\_gate.dart} & Khoá UI theo quyền lợi Premium\\
+\code{flutter-app/lib/features/home/presentation/widgets/home\_page/promo\_banner\_section.dart} & Hiển thị banner ở trang chủ\\
 \code{scripts/deploy-one-shot.sh} & Triển khai chuẩn\\
 \code{scripts/restore-prod.sh} & Khôi phục có kiểm tra trước\\
 \bottomrule
 \caption{Tệp then chốt trong kho mã}
+\label{tab:tepthenchot}
 \end{longtable}

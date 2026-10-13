@@ -15,7 +15,7 @@ Tiêm phụ thuộc & GetIt, khởi tạo theo mô-đun tính năng\\
 Kiến trúc & Clean Architecture cho từng tính năng\\
 Lưu trữ cục bộ & \code{sqflite} (di động), \code{sqflite\_ffi\_web} (web), \code{flutter\_secure\_storage} (thẻ)\\
 Đa ngữ & \code{easy\_localization}, tệp JSON trong \code{assets/i18n/}\\
-Số mô-đun tính năng & 26\\
+Số mô-đun tính năng & 27\\
 Số màn hình & khoảng 90\\
 Số gói phụ thuộc & 63\\
 Số tệp kiểm thử & 120\\
@@ -48,6 +48,14 @@ Mỗi tính năng trong \code{lib/features/\{ten\}/} có cùng một hình dạn
 Luật bất di bất dịch: \code{domain/} \textbf{không được} nhập bất cứ thứ gì từ
 \code{presentation/} hay \code{data/}. Chiều phụ thuộc luôn hướng vào trong.
 
+Lý do tách ba tầng không chỉ là quy ước: \code{domain/} không phụ thuộc Flutter hay bất
+kỳ gói mạng/lưu trữ nào, nên có thể viết unit test cho logic nghiệp vụ mà không cần dựng
+widget hay giả lập HTTP. Đổi nguồn dữ liệu — ví dụ chuyển một tính năng từ gọi REST sang
+đọc cache cục bộ — chỉ sửa \code{data/repositories/}, không đụng tới màn hình hay
+use case. Ngược lại, đổi giao diện (theme, bố cục) chỉ nằm trong \code{presentation/} và
+không thể vô tình kéo theo thay đổi ở tầng dữ liệu, vì chiều phụ thuộc không cho phép
+\code{presentation/} bị tầng dưới biết tới.
+
 Luồng dữ liệu một lần chạm màn hình:
 
 \begin{center}
@@ -57,7 +65,7 @@ RemoteDataSource $\rightarrow$ Gateway}
 
 với \code{LocalDataSource} làm bộ đệm song song ở tầng repository.
 
-\section{Hai mươi sáu mô-đun tính năng}
+\section{Hai mươi bảy mô-đun tính năng}
 
 \begin{longtable}{L{3.2cm} L{10.4cm}}
 \toprule
@@ -65,7 +73,12 @@ với \code{LocalDataSource} làm bộ đệm song song ở tầng repository.
 \midrule
 \endhead
 \code{auth} & Đăng nhập email, Google, Facebook; đăng ký; đặt lại mật khẩu; lớp bảo vệ tuyến.\\
-\code{home} & Bảng điều khiển chính, tổng hợp dữ liệu nhiều nguồn.\\
+\code{home} & Bảng điều khiển chính, tổng hợp dữ liệu nhiều nguồn; gồm
+\code{promo\_banner\_section.dart} — banner quảng cáo hero đặt ở đầu trang chủ, tự ẩn khi
+không có banner, đang tải hoặc lỗi; nút đóng ghi vào \code{SharedPreferences} nên banner
+đã đóng không hiện lại trên máy đó.\\
+\code{ielts} & Luyện thi IELTS: bốn kỹ năng riêng biệt theo cấu trúc data/domain/presentation
+như các mô-đun khác.\\
 \code{learning} & Lộ trình học kiểu Duolingo: các nút zigzag vẽ trên \code{CustomPaint} với đường Bézier bậc ba, nút bài học hiện tại có hoạt ảnh nhấp nháy.\\
 \code{course} & Danh mục khoá học theo bậc CEFR.\\
 \code{vocabulary} & Thẻ từ, ôn tập theo lịch FSRS, bộ thẻ tự tạo.\\
@@ -82,10 +95,21 @@ với \code{LocalDataSource} làm bộ đệm song song ở tầng repository.
 \code{social} & Theo dõi bạn bè, bảng tin hoạt động.\\
 \code{books}, \code{news}, \code{podcast}, \code{youtube} & Bốn loại nội dung thực tế kèm quiz.\\
 \code{notifications} & Thông báo trong ứng dụng và đẩy qua FCM.\\
-\code{premium} & Gói trả phí, quyền lợi.\\
+\code{premium} & \code{PaywallScreen} — hiển thị gói tháng/năm lấy từ RevenueCat qua
+\code{PurchasesService}, nút khôi phục mua hàng (\code{restore}), đồng bộ quyền lợi về
+backend sau khi mua/khôi phục bằng \code{EntitlementService.sync()}. Widget bọc
+\code{PremiumGate} (\code{core/widgets/premium\_gate.dart}) nằm ở \code{core/} vì được
+dùng xuyên mô-đun: bọc bất kỳ widget nào cần Premium, hiện khoá và chạm vào mở paywall
+nếu chưa mua, hiện nội dung thật nếu đã mua. \code{PremiumGate} đọc trạng thái qua
+\code{EntitlementService} (gọi \code{/entitlements/me} ở backend, nơi đã đồng bộ với
+RevenueCat), chỉ rơi về SDK RevenueCat cục bộ khi không gọi được backend — vì SDK cục bộ
+nằm trong ứng dụng nên một bản dựng đã sửa có thể tự khai man, còn endpoint backend đã có
+\code{require\_premium} chặn riêng ở phía máy chủ.\\
 \code{offline} & Chế độ ngoại tuyến và đồng bộ lại.\\
 \code{profile}, \code{user} & Hồ sơ, cài đặt, quản lý tài khoản.\\
-\code{admin} & Màn hình quản trị nhúng cho vai trò quản trị viên.\\
+\code{admin} & Màn hình quản trị nhúng cho vai trò quản trị viên, gồm
+\code{admin/features/ads/} — quản lý banner trong ứng dụng di động (tạo/sửa/xoá) gọi
+cùng điểm cuối \code{/banners} mà trang \code{AdsPage.tsx} ở admin web dùng.\\
 \bottomrule
 \caption{Mô-đun tính năng của ứng dụng Flutter}
 \end{longtable}
@@ -155,6 +179,12 @@ sẽ chặn giao diện nếu bật ngay lúc khởi động.
 Trên nền web, SQLite dùng bản \code{ffi} không có \en{web worker}, nên một số bước bị bỏ
 qua có chủ đích: nạp hồ sơ XP và danh sách podcast tuyển chọn được hoãn lại, kiểm tra sức
 khoẻ backend bị bỏ.
+
+Tải sách để đọc ngoại tuyến là một trường hợp riêng: nút tải chỉ yêu cầu Premium khi sách
+\textbf{chưa} được tải. Màn \code{BookDetailScreen} bọc nút tải bằng \code{PremiumGate}
+duy nhất khi \code{isDownloaded == false}; một khi đã có bản tải cục bộ — kể cả tải từ lúc
+còn miễn phí — nút chuyển sang trạng thái "Đã tải" và không còn bị khoá lại, nên việc đổi
+chính sách thu phí không thể tước mất nội dung người dùng đã có sẵn trên máy.
 
 \section{Giao diện và trải nghiệm}
 

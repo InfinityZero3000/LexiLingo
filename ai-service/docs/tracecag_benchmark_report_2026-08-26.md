@@ -1,5 +1,10 @@
 # TRACE-CAG benchmark report — 2026-08-26
 
+> **Historical result.** This report preserves the August 2026 HotpotQA
+> protocol and `qwen/qwen3.6-27b` measurements. It is not directly comparable
+> with the current daily protocol pinned to `qwen/qwen3.8-27b`; use
+> `model-development/benchmark/README.md` for current execution.
+
 HotpotQA, n=64, `qwen/qwen3.6-27b` via Groq, distractor setting (10-passage pool
 per question), canonical SQuAD normalisation. All runs `Validation: PASS`.
 

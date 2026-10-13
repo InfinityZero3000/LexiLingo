@@ -24,7 +24,10 @@ hỏi (mục~\ref{sec:format-confidence}).
 
 \subsection{Đường quên}
 
-Xác suất nhớ lại sau \(t\) ngày, với độ bền \(S\) ngày:
+Trực giác: trí nhớ không phai đều theo cấp số nhân như mô hình SM-2 giả định — nó phai
+nhanh trong những ngày đầu rồi chậm lại dần. Một đường cong luỹ thừa nghịch đảo mô tả
+đúng dáng suy giảm này hơn hàm mũ, và được chọn hằng số sao cho ngay tại ngày \(S\), xác
+suất nhớ lại còn đúng 90\%. Xác suất nhớ lại sau \(t\) ngày, với độ bền \(S\) ngày:
 
 \begin{equation}
 R(t) = \left(1 + F\cdot\frac{t}{S}\right)^{D},
@@ -66,7 +69,10 @@ nói lên điều gì:
 e = c\,(1 - 0{,}35\,d)
 \end{equation}
 
-\paragraph{Bước 3 — luật delta cho mức nắm vững.} Với \(\eta = 0{,}45\) là tốc độ học và
+\paragraph{Bước 3 — luật delta cho mức nắm vững.} Trực giác: mức nắm vững được kéo một
+bước về phía 0 (sai) hoặc 1 (đúng), bước đó lớn hay nhỏ theo trọng số bằng chứng \(e\) —
+giống một bộ lọc trung bình trượt (\en{EMA}) chứ không phải một phép cập nhật xác suất
+kiểu Bayes. Với \(\eta = 0{,}45\) là tốc độ học và
 \(y = 1\) nếu đúng, \(y = 0\) nếu sai:
 \begin{equation}
 m' = \mathrm{clamp}\big(m_{\text{decay}} + e\,\eta\,(y - m_{\text{decay}}),\ 0{,}01,\ 0{,}99\big)
@@ -162,17 +168,21 @@ Không rõ & 1,00 & Mặc định trung tính\\
 
 \subsection{Trọng số kỹ năng}
 
+Điểm năng lực tổng hợp của một người học là trung bình có trọng số của sáu điểm kỹ năng,
+không chia đều: bốn kỹ năng hành động (nghe, nói, đọc, viết) được coi trọng hơn hai kỹ
+năng tài nguyên (từ vựng, ngữ pháp), vì trong CEFR hai kỹ năng sau chỉ phục vụ bốn kỹ
+năng trước, không phải trụ cột độc lập.
+
 \begin{equation}
 w = \{\text{nghe}: 0{,}20,\ \text{nói}: 0{,}20,\ \text{đọc}: 0{,}20,\ \text{viết}: 0{,}20,\ \text{từ vựng}: 0{,}10,\ \text{ngữ pháp}: 0{,}10\}
 \end{equation}
 
-Cân bằng quanh bốn kỹ năng chính, mỗi kỹ năng 20\%. Từ vựng và ngữ pháp chỉ 10\% vì trong
-CEFR chúng là \textbf{tài nguyên} phục vụ bốn kỹ năng, không phải trụ cột độc lập.
-
 \subsection{Cập nhật điểm kỹ năng}
 
-Với mỗi bài tập \(i\) thuộc kỹ năng đang xét, điểm \(s\) được cập nhật \textbf{một bước
-cho mỗi bài tập}:
+Trực giác: mỗi bài tập kéo điểm kỹ năng một bước nhỏ về phía điểm của chính bài tập đó —
+bài khó hơn thì bước lớn hơn — giống một bộ lọc trung bình trượt có tốc độ học thay đổi
+theo độ khó, không phải phép cộng trung bình cổ điển. Với mỗi bài tập \(i\) thuộc kỹ
+năng đang xét, điểm \(s\) được cập nhật \textbf{một bước cho mỗi bài tập}:
 
 \begin{equation}
 s \leftarrow s + \underbrace{\min\big(0{,}15,\ (1-\lambda)\cdot\mu_i\big)}_{\text{bước}} \cdot (x_i - s)
@@ -286,7 +296,11 @@ Trò chơi ánh xạ qua bảng cố định \code{GAME\_TYPE\_SKILL}, không ba
 
 \subsection{Điểm rủi ro tái sử dụng}
 
-Với mỗi ứng viên trong L1, hệ thống tính điểm rủi ro \(\rho \in [0,1]\):
+Trực giác: \(\rho\) đo \textbf{mức độ khác biệt} giữa yêu cầu mới và một mục đã lưu trong
+cache — khác ý định, khác tập khái niệm, khác bằng chứng, càng cũ hoặc hệ thống đã đổi
+phiên bản thì \(\rho\) càng cao. \(\rho\) thấp nghĩa là đủ giống để dùng lại nguyên vẹn
+hoặc chỉ cần vá nhẹ; \(\rho\) cao buộc tính lại toàn bộ. Với mỗi ứng viên trong L1, hệ
+thống tính điểm rủi ro \(\rho \in [0,1]\):
 
 \begin{equation}
 \rho = 0{,}20\,\delta_{\text{intent}}
@@ -361,6 +375,9 @@ phản hồi đã suy ra từ nó đều bị gỡ.
 
 \subsection{Điểm hợp nhất}
 
+Trực giác: một mẩu bằng chứng đáng tin hơn nếu nó gần khái niệm đang hỏi trên đồ thị tri
+thức, có nghĩa gần giống câu hỏi, và còn mới — ba manh mối độc lập này được cộng có
+trọng số thành một điểm duy nhất thay vì chọn một tín hiệu áp đặt lên hai tín hiệu kia.
 Mỗi mẩu bằng chứng nhận một điểm hợp nhất từ ba tín hiệu:
 
 \begin{equation}
@@ -440,6 +457,31 @@ Bắt buộc \code{source\_id} & Ba nguồn nhạy cảm lặp — \code{game}, 
 
 Hệ số chuỗi ngày nhân vào XP cơ sở: chuỗi \(\ge\)3 ngày nhân 1,2; \(\ge\)7 ngày nhân 1,5;
 \(\ge\)30 ngày nhân 2,0.
+
+\subsection{Khoá đồng thời trong kinh tế gem}
+
+Hai sửa lỗi gần đây trong kinh tế gem là lỗi về \textbf{trình tự thực hiện}, không phải
+về công thức tính thưởng:
+
+\begin{enumerate}[leftmargin=1.4em]
+  \item \textbf{Khoá dòng ví trước khi đọc số dư.} \code{add\_gems} và \code{spend\_gems}
+  (trong \code{WalletCRUD}) khoá dòng ví bằng \code{SELECT ... FOR UPDATE} trước khi đọc
+  và ghi số dư. Trước đó có một khoảng hở thời gian giữa lúc đọc số dư và lúc ghi lại: nếu
+  hai yêu cầu dùng cùng một vật phẩm hoặc nhận cùng một phần thưởng được gửi đúng lúc, cả
+  hai đều đọc được số dư cũ, cả hai đều qua được điều kiện "đủ gems", và cả hai đều ghi —
+  một vật phẩm bị dùng hai lần, hoặc một phần thưởng được nhận hai lần. Khoá dòng buộc yêu
+  cầu thứ hai phải chờ yêu cầu thứ nhất ghi xong rồi mới được đọc số dư, lúc đó số dư đã
+  phản ánh đúng thay đổi của yêu cầu thứ nhất.
+  \item \textbf{Trần thưởng giới thiệu mỗi ngày, đếm bằng truy vấn.} \code{claim\_referral\_code}
+  chỉ trả 50 gems cho người giới thiệu nếu số dòng \code{WalletTransaction} có
+  \code{source = "referral\_reward"} của người đó trong ngày hiện tại còn dưới
+  \code{\_MAX\_REWARDED\_REFERRALS\_PER\_DAY} (10). Cách đếm dựa trên các dòng giao dịch đã
+  có này vẫn còn một khoảng hở hiếm gặp: nếu hai yêu cầu nhận thưởng tới đúng vào thời điểm
+  biên của trần, cả hai có thể cùng đọc được cùng một số đếm (chưa chạm trần) và cùng được
+  trả thưởng, khiến trần bị vượt đúng 1 đơn vị. Rủi ro này được ghi nhận và chấp nhận có
+  chủ đích vì hậu quả chỉ lệch có lợi cho người dùng (thêm 50 gems ngoài dự kiến), không
+  làm hệ thống mất tiền thật hay sai lệch dữ liệu nghiêm trọng.
+\end{enumerate}
 
 \section{Ranh giới ghi nhận: cái gì được tính, cái gì không}
 

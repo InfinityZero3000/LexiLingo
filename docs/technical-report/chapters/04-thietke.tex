@@ -3,8 +3,20 @@
 \section{Sơ đồ use case hệ thống}
 
 So với use case nghiệp vụ ở Chương~2 (điều người dùng \textit{muốn}), use case hệ thống
-gắn nghiệp vụ với cơ chế kỹ thuật cụ thể (điều hệ thống \textit{làm}) và biểu diễn quan hệ
-\en{include}/\en{extend} giữa chúng.
+gắn nghiệp vụ với cơ chế kỹ thuật cụ thể. Nói cách khác, nó mô tả điều hệ thống
+\textit{làm} để thực hiện điều người dùng \textit{muốn}, và biểu diễn quan hệ
+\en{include}/\en{extend} giữa các use case với nhau.
+
+\begin{luuy}[Nâng cấp Premium — tác nhân và cơ chế, chưa vẽ vào Hình~\ref{fig:uc-hethong}]
+NV10 (Chương~2) có hai tác nhân: \textbf{Người học} khởi tạo giao dịch mua, và \textbf{Hệ
+thống thanh toán RevenueCat} xác nhận giao dịch đó qua App Store/Play Store. Về cơ chế,
+use case hệ thống tương ứng là \en{include} hai bước: gọi \code{EntitlementService} để xác
+thực lại trạng thái quyền lợi với RevenueCat (không tin trạng thái client gửi lên), rồi ghi
+một dòng \code{UserEntitlement} mới. Use case này không được vẽ vào Hình~\ref{fig:uc-hethong}
+vì hình được chốt trước khi Premium hoàn thiện (xem ghi chú ở Chương~2); việc chèn thêm hai
+nút và một tác nhân ngoài mới vào một sơ đồ TikZ đã bố cục chật sẽ dễ gây chồng lấp hơn là
+làm rõ thêm thông tin.
+\end{luuy}
 
 \begin{figure}[htbp]
 \centering
@@ -56,9 +68,10 @@ gắn nghiệp vụ với cơ chế kỹ thuật cụ thể (điều hệ thốn
 
 \section{Sơ đồ thực thể quan hệ (ERD)}
 
-ERD dưới đây chỉ vẽ các thực thể trung tâm và khoá ngoại giữa chúng — bảng dữ liệu đầy đủ
-(khoảng 70 bảng) nằm ở Chương~6. Mọi khoá ngoại trỏ về người dùng đều
-\codesp{ON DELETE CASCADE} trừ khi ghi chú khác.
+ERD dưới đây chỉ vẽ các thực thể trung tâm và khoá ngoại giữa chúng. Bảng dữ liệu đầy đủ
+(khoảng 70 bảng) nằm ở Chương~6. Trừ khi ghi chú khác, mọi khoá ngoại trỏ về người dùng đều
+\codesp{ON DELETE CASCADE} — xoá một \code{User} kéo theo xoá toàn bộ dữ liệu phụ thuộc
+của người đó, không để lại dòng mồ côi.
 
 \begin{figure}[htbp]
 \centering
@@ -108,7 +121,40 @@ là một phép ghi một dòng duy nhất, không phải cập nhật hàng lo�
 hiệu hoá bộ đệm cá nhân hoá diễn ra tức thời và rẻ (Chương~9).
 \end{luuy}
 
+\subsection{Hai thực thể bổ sung: Premium và Banner}
+
+Hai thực thể dưới đây phục vụ NV10 và NV11 (Chương~2). Chúng không được vẽ vào
+Hình~\ref{fig:erd} vì cùng lý do đã nêu ở mục trước — thêm vào sẽ phải dựng lại bố cục
+\code{resizebox} hiện có — nhưng vẫn là một phần chính thức của lược đồ dữ liệu.
+
+\begin{longtable}{L{3.0cm} L{9.8cm}}
+\toprule
+\multicolumn{2}{l}{\textbf{UserEntitlement} — quyền lợi Premium đã xác thực với RevenueCat}\\
+\midrule
+\endhead
+Khoá & \code{id} (PK)\\
+Khoá ngoại & \code{user\_id} (FK $\to$ \code{User.id}) — một người dùng có thể có nhiều dòng theo thời gian (gia hạn, đổi gói)\\
+Trường chính & \code{entitlement\_id}, \code{product\_id}, \code{status}, \code{expires\_at}, \code{source} (nền tảng phát hành: App Store/Play Store)\\
+Ghi chú & Dòng mới nhất theo \code{expires\_at} quyết định người dùng có đang là Premium hay không; không trường nào trong bảng này do client tự đặt — tất cả đến từ phản hồi xác thực của RevenueCat.\\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{L{3.0cm} L{9.8cm}}
+\toprule
+\multicolumn{2}{l}{\textbf{Banner} — banner quảng cáo hiển thị trang chủ}\\
+\midrule
+\endhead
+Khoá & \code{id} (PK)\\
+Khoá ngoại & \code{created\_by\_id} (FK $\to$ \code{User.id}, tuỳ chọn — người tạo)\\
+Trường chính & \code{title}, \code{image\_url}, \code{link\_url}, \code{position}, \code{priority}, \code{is\_active}, \code{start\_at}, \code{end\_at}, \code{target\_min\_level}, \code{target\_max\_level}, \code{target\_language}\\
+Ghi chú & Một banner chỉ hiển thị khi \code{is\_active} đúng, thời điểm hiện tại nằm giữa \code{start\_at} và \code{end\_at}, bậc CEFR của người học nằm trong khoảng nhắm mục tiêu, ngôn ngữ khớp \code{target\_language}, \textbf{và} người học không phải Premium (NV11, QT liên quan ở mục dưới).\\
+\bottomrule
+\end{longtable}
+
 \section{Sơ đồ lớp — lõi mô hình người học}
+
+Sơ đồ này chỉ vẽ phần lõi tính toán (hàm thuần, không phụ thuộc cơ sở dữ liệu) của hai
+động cơ mô hình người học — lý do tách riêng khỏi lớp ORM được giải thích ngay sau hình.
 
 \begin{figure}[htbp]
 \centering
@@ -146,15 +192,24 @@ hiệu hoá bộ đệm cá nhân hoá diễn ra tức thời và rẻ (Chương
 \label{fig:class-learnerstate}
 \end{figure}
 
-Thiết kế tách \code{LearnerStateSnapshot} (bất biến, không phụ thuộc cơ sở dữ liệu) khỏi
-\code{LearnerConceptState} (ORM, có trạng thái) là có chủ đích: hàm \code{evolve\_state}
-là một hàm thuần — cùng đầu vào luôn cho cùng đầu ra — nên kiểm thử được bằng
-\code{assert} thuần tuý mà không cần dựng cơ sở dữ liệu. Tầng gọi (\code{record\_concept\_observation})
-mới chịu trách nhiệm đọc/ghi ORM.
+Việc tách \code{LearnerStateSnapshot} (bất biến, không phụ thuộc cơ sở dữ liệu) khỏi
+\code{LearnerConceptState} (ORM, có trạng thái) là có chủ đích, không phải trùng lặp thừa.
+Hàm \code{evolve\_state} là một hàm thuần — cùng đầu vào luôn cho cùng đầu ra — nên kiểm
+thử được bằng \code{assert} thuần tuý, không cần dựng cơ sở dữ liệu cho mỗi lần chạy test.
+Nếu để logic FSRS nằm lẫn trong lớp ORM, mỗi bài kiểm thử logic phải kèm một phiên cơ sở dữ
+liệu giả, chạy chậm hơn và dễ vỡ hơn khi lược đồ bảng thay đổi. Tầng gọi
+(\code{record\_concept\_observation}) mới là nơi chịu trách nhiệm đọc/ghi ORM thật.
 
 \section{Sơ đồ tuần tự}
 
+Hai kịch bản dưới đây được chọn vì chúng là hai điểm vào chạm tới cả hai động cơ mô hình
+người học trong cùng một yêu cầu — phần lớn các yêu cầu khác trong hệ thống chỉ chạm một
+động cơ, hoặc không chạm động cơ nào.
+
 \subsection{Hoàn thành bài học — đường đi hai động cơ}
+
+Một yêu cầu, hai hệ quả độc lập: điểm kỹ năng CEFR cập nhật ngay trong yêu cầu, còn
+lịch ôn khái niệm được tính lại dựa trên kết quả đó.
 
 \begin{figure}[htbp]
 \centering
@@ -191,6 +246,9 @@ mới chịu trách nhiệm đọc/ghi ORM.
 
 \subsection{Hội thoại AI — dòng SSE và ghi quan sát}
 
+Khác với sơ đồ trên, kịch bản này trả lời theo luồng (\en{streaming}) — người học thấy
+chữ xuất hiện dần thay vì chờ cả câu trả lời xong mới hiển thị.
+
 \begin{figure}[htbp]
 \centering
 \begin{tikzpicture}[
@@ -226,7 +284,14 @@ mới chịu trách nhiệm đọc/ghi ORM.
 \label{fig:seq-chat}
 \end{figure}
 
+Sơ đồ tuần tự cho hai use case ở trên minh hoạ thứ tự gọi thực tế giữa các thành phần —
+hai sơ đồ hoạt động ở Chương~2 đã mô tả \textit{luồng nghiệp vụ}, còn dưới đây mô tả
+\textit{luồng kỹ thuật}: dịch vụ nào gọi dịch vụ nào, đồng bộ hay bất đồng bộ.
+
 \section{Sơ đồ triển khai}
+
+Sơ đồ dưới đây trả lời câu hỏi "mỗi thành phần chạy ở đâu, trên hạ tầng nào" — khác với sơ
+đồ kiến trúc ở Chương~3 (vốn trả lời "thành phần nào gọi thành phần nào").
 
 \begin{figure}[htbp]
 \centering
@@ -267,7 +332,7 @@ mới chịu trách nhiệm đọc/ghi ORM.
 \label{fig:deploy}
 \end{figure}
 
-\section{Đặc tả use case chi tiết — hai use case trung tâm}
+\section{Đặc tả use case chi tiết — ba use case trung tâm}
 
 \begin{longtable}{L{3.2cm} L{9.6cm}}
 \toprule
@@ -293,5 +358,19 @@ Tác nhân phụ & Nhà cung cấp LLM\\
 Luồng chính & 1. Người học gửi câu. 2. Hệ thống kiểm tra bộ đệm hai lớp. 3. Nếu trượt: mở rộng đồ thị và chẩn đoán song song. 4. Truy xuất bằng chứng. 5. Sinh phản hồi theo chiến lược sư phạm phù hợp bậc. 6. Ghi quan sát học tập vào vùng đệm \textbf{trước} khi trả lời. 7. Trả phản hồi theo dòng SSE.\\
 Luồng phụ & 3a. Độ tin cậy chẩn đoán $<0{,}5$ $\rightarrow$ hỏi làm rõ, bỏ qua bước 4--5. \newline 2a. Đệm trúng $\rightarrow$ bỏ qua bước 3--6, trả thẳng phản hồi đã lưu.\\
 Điều kiện sau & Một khoản mục đệm mới được ghi (nếu tính lại); \code{learner\_observation\_spool} có thêm sự kiện.\\
+\bottomrule
+\end{longtable}
+
+\begin{longtable}{L{3.2cm} L{9.6cm}}
+\toprule
+\multicolumn{2}{l}{\textbf{UC-03 — Nâng cấp Premium}}\\
+\midrule
+\endhead
+Tác nhân chính & Người học\\
+Tác nhân phụ & Hệ thống thanh toán RevenueCat\\
+Điều kiện trước & Đã đăng nhập; chưa có quyền lợi Premium còn hiệu lực\\
+Luồng chính & 1. Người học chọn gói Premium trong app. 2. Giao dịch mua được App Store/Play Store xử lý, RevenueCat ghi nhận. 3. App gọi backend để đồng bộ. 4. Backend gọi \code{EntitlementService} xác thực lại trạng thái quyền lợi trực tiếp với RevenueCat (không tin dữ liệu client gửi lên). 5. Backend ghi một dòng \code{UserEntitlement} mới với \code{status} và \code{expires\_at} từ RevenueCat. 6. Từ thời điểm này, các yêu cầu sau của người học không còn bị giới hạn 30 tin chat/ngày, không còn thấy banner, và được phép tải sách offline.\\
+Luồng phụ & 4a. RevenueCat báo quyền lợi không hợp lệ hoặc đã hết hạn $\rightarrow$ backend không ghi \code{UserEntitlement} mới, người học vẫn ở gói miễn phí dù client có thể đã hiển thị sai trạng thái tạm thời.\\
+Điều kiện sau & \code{UserEntitlement} được cập nhật; sách đã tải trước đó (nếu có) không bị ảnh hưởng dù sau này quyền lợi hết hạn.\\
 \bottomrule
 \end{longtable}

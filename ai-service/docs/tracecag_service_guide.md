@@ -356,6 +356,8 @@ The request preserves current benchmark controls:
 
 These fields allow benchmark runners to evaluate the production pipeline through
 the portable contract without duplicating benchmark-only pipeline code.
+The canonical runner and current protocol are documented in
+`model-development/benchmark/README.md`.
 
 ## 16. Operational Guarantees
 
@@ -405,4 +407,3 @@ Expected result:
 
 These tests intentionally avoid FastAPI startup, Redis, Kuzu, Groq, Gemini, and
 network calls.
-

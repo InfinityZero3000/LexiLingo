@@ -18,6 +18,13 @@ Content Prefetch & RSS, YouTube, podcast & Nội dung thực tế đã lưu đ�
 
 \section{Content ETL — ngữ liệu từ vựng có kiểm soát bản quyền}
 
+Pipeline này giải quyết một vấn đề đặt ra \textbf{trước khi} nghĩ tới AI: dữ liệu từ vựng
+hiển thị cho người học (định nghĩa, phiên âm IPA, ví dụ) cần độ chính xác ngôn ngữ học và
+nguồn gốc bản quyền rõ ràng — hai điều một mô hình sinh tự do không bảo đảm được, vì nó có
+thể bịa phiên âm hoặc dùng ngữ liệu không được phép khai thác lại. Vì vậy ETL chỉ nhập dữ
+liệu từ các kho ngữ liệu mở \textbf{đã được kiểm định}, mỗi nguồn gắn một giấy phép và một
+phiên bản cụ thể, chứ không để mô hình tự tạo ra từ vựng.
+
 \subsection{Nguồn và giấy phép}
 
 Thư mục \code{ai-service/api/services/content\_etl/} triển khai ETL cho bảy nguồn, mỗi
@@ -75,6 +82,12 @@ Vì vậy nguồn hạt giống đang dùng thực tế là \code{admin\_upload}
 
 \section{Content Agent — sinh khoá học}
 
+Sinh một khoá học cần hai năng lực khác nhau: gọi LLM để viết nội dung (việc này có thể
+lỗi, hết hạn mức, hoặc trả về rác, nên cần thử lại và kiểm tra) và ghi dữ liệu nhất quán
+vào cơ sở dữ liệu nghiệp vụ (việc này không được phép ghi một bài tập sai hình dạng). Vì
+hai việc có tính chất khác nhau, tác tử nội dung được chia làm hai nửa nằm ở hai dịch vụ,
+nối với nhau qua một hàng đợi tác vụ chứ không gọi hàm trực tiếp.
+
 \subsection{Kiến trúc hai nửa}
 
 \begin{longtable}{L{5.2cm} L{8.4cm}}
@@ -121,7 +134,10 @@ Cấu hình \code{--concurrency=2 --delay=6} hoàn thành 93/93 bài. Cấu hìn
 \section{Learner Observation — từ luyện tập thành dữ liệu}
 
 Đây là pipeline quan trọng nhất về mặt kiến trúc, vì nó bắc cầu giữa hai dịch vụ mà không
-được phép mất dữ liệu.
+được phép mất dữ liệu. Nếu ai-service gọi thẳng và đồng bộ vào API chấm điểm của backend,
+một lần backend quá tải hoặc đứt mạng sẽ xoá mất toàn bộ bằng chứng học tập của lượt chat
+đó — không có cách nào lấy lại. Pipeline này tồn tại để tách hai dịch vụ qua một vùng đệm
+bền (ghi trước, gửi sau), chịu được gián đoạn ở cả hai đầu mà không rơi dữ liệu.
 
 \subsection{Bốn chặng}
 
@@ -132,10 +148,15 @@ Cấu hình \code{--concurrency=2 --delay=6} hoàn thành 93/93 bài. Cấu hìn
   \item \textbf{Chuyển tiếp có thuê.} Một tiến trình thuê (\en{lease worker}) lấy lô sự
   kiện và gửi sang điểm cuối nội bộ của backend.
   \item \textbf{Ghi outbox rồi mới xác nhận.} Backend ghi dòng \en{outbox} bất biến-khi-lặp
-  vào PostgreSQL, xác nhận với tiến trình gửi, rồi mới xử lý.
+  vào PostgreSQL, xác nhận với tiến trình gửi, rồi mới xử lý. "Bất biến-khi-lặp" ở đây có
+  nghĩa cụ thể: nếu tiến trình thuê gửi lại đúng lô cũ vì không nhận được phản hồi (mất gói,
+  hết thời gian chờ), dòng outbox vẫn chỉ được tạo một lần nhờ khoá trên \code{event\_id} —
+  lần gửi lại không tạo thêm bằng chứng học tập giả.
   \item \textbf{Áp dụng song song.} Nhiều tiến trình áp dụng sự kiện bằng
-  \codesp{FOR UPDATE SKIP LOCKED}. Trạng thái khái niệm, \code{state\_epoch} và cờ đã-áp-dụng
-  đổi trong \textbf{một giao dịch duy nhất}.
+  \codesp{FOR UPDATE SKIP LOCKED}: mỗi tiến trình khoá dòng nó đang xử lý và \textbf{bỏ qua}
+  (không chờ) những dòng tiến trình khác đã khoá, nên nhiều worker chạy đồng thời mà không
+  worker nào áp dụng trùng một sự kiện hoặc phải đứng chờ nhau. Trạng thái khái niệm,
+  \code{state\_epoch} và cờ đã-áp-dụng đổi trong \textbf{một giao dịch duy nhất}.
 \end{enumerate}
 
 \subsection{Chấm điểm kỹ năng từ hội thoại}
@@ -144,7 +165,10 @@ Mỗi lượt chat gắn \textbf{một} quan sát neo mang \code{skill}, \code{s
 \code{difficulty\_level}. Hàm \code{\_record\_turn\_skill\_evidence} ở
 \code{routes/learner\_state.py} chuyển nó thành một \code{ExerciseResult}. Tính bất
 biến-khi-lặp dựa hoàn toàn vào cơ chế chống trùng \code{event\_id} của vùng đệm: chỉ những
-sự kiện \textbf{mới được chèn} mới được chấm điểm, nên không cần thêm bảng phụ nào.
+sự kiện \textbf{mới được chèn} mới được chấm điểm, nên không cần thêm bảng phụ nào. Ví dụ,
+nếu tiến trình chuyển tiếp gửi lại đúng lô cũ vì không nhận được phản hồi HTTP, các
+\code{event\_id} đó đã tồn tại trong bảng nên lần chèn thứ hai không sinh dòng mới — một
+lượt chat không thể bị chấm điểm hai lần chỉ vì mạng chập chờn.
 
 \begin{luuy}[Danh sách khoá được phép nằm ở hai nơi]
 Danh sách khoá hợp lệ của tải trọng quan sát được khai báo cả ở
@@ -152,6 +176,22 @@ Danh sách khoá hợp lệ của tải trọng quan sát được khai báo c�
 \code{ai-service/api/services/learner\_observation\_spool.py}. Một khoá lạ khiến
 \textbf{cả lô} bị từ chối. Khi thêm trường mới, phải sửa cả hai.
 \end{luuy}
+
+\subsection{Độ bền khi khởi động ai-service}
+
+Bộ chuyển tiếp ở chặng 2 chạy ngay trong tiến trình ai-service, nên lỗi của nó từng có thể
+kéo sập cả dịch vụ. Trước 10/2026, các hệ thống phụ khởi động cùng ai-service không được
+cách ly với nhau: một lỗi nhỏ ở một tính năng \textbf{không quan trọng} — ví dụ bộ cảnh báo
+giọng nói song công, hay bộ theo dõi độ cũ của dữ liệu content ETL — có thể khiến toàn bộ
+tiến trình không khởi động được, kéo theo chat, dịch, nhận dạng giọng nói và TRACE-CAG
+ngừng hoạt động \textbf{cùng lúc}, dù các tính năng đó không liên quan gì tới lỗi gốc. Từ
+10/2026, hàm \code{lifespan} trong \code{ai-service/api/main.py} bọc riêng từng hệ thống
+phụ không bắt buộc — bộ chuyển tiếp quan sát người học, bộ làm nóng vòng khoá Redis/Groq,
+bộ làm nóng Piper TTS, kiểm tra độ sẵn sàng giọng nói song công, bộ theo dõi độ cũ dữ liệu
+content ETL: lỗi của \textbf{một} hệ thống chỉ bị ghi log cảnh báo và tắt riêng tính năng
+đó, không còn lan ra toàn tiến trình. MongoDB vẫn là phụ thuộc \textbf{bắt buộc} duy nhất —
+mất kết nối Mongo vẫn làm tiến trình dừng, vì không nhánh nào của dịch vụ chạy được mà
+thiếu nó.
 
 \subsection{Giới hạn an toàn}
 
@@ -172,9 +212,12 @@ luôn khớp với \code{\_vocab\_concept\_id} trong
 
 \section{Content Prefetch — nội dung thực tế}
 
-Ba tác vụ Celery nạp trước nội dung ngoài đời thực để người học không phải chờ nguồn bên
-thứ ba: tin tức mỗi 6 giờ, YouTube mỗi 12 giờ, podcast mỗi ngày. Nội dung được lưu đệm
-kèm câu hỏi/quiz sinh sẵn; riêng phần quiz mới là thứ tạo ra bằng chứng học tập.
+API tin tức, YouTube và podcast bên thứ ba có độ trễ và hạn mức tần suất không đoán được;
+nếu gọi trực tiếp khi người học mở màn hình, họ phải chờ đúng lúc đó. Vì vậy ba tác vụ
+Celery nạp trước nội dung này theo lịch, không theo yêu cầu: tin tức mỗi 6 giờ, YouTube
+mỗi 12 giờ, podcast mỗi ngày. Nội dung được lưu đệm kèm câu hỏi/quiz sinh sẵn; riêng phần
+quiz mới là thứ tạo ra bằng chứng học tập — đọc/xem/nghe thuần thụ động không được ghi nhận
+làm bằng chứng, vì hoàn thành một tập podcast không chứng minh người học đã hiểu nội dung.
 
 \section{Gieo dữ liệu và kiểm toán}
 
@@ -211,7 +254,11 @@ Kịch bản kiểm toán có ba chế độ sửa: \code{--fix-counters} (đồ
 
 \section{Sao lưu như một pipeline}
 
-Dữ liệu người dùng nằm ở đúng hai kho, nên sao lưu chỉ có hai đối tượng:
+Sao lưu được coi là một pipeline có đầu vào, đầu ra và một bước xác minh riêng, không phải
+một tác vụ cron chạy rồi quên, vì một bản kết xuất hỏng chỉ lộ ra khi có người thật sự thử
+khôi phục nó — nếu không có bước xác minh định kỳ, lỗi nằm im cho tới đúng ngày cần dùng
+thật, tức là ngày mọi phương án khác đã hết. Dữ liệu người dùng nằm ở đúng hai kho, nên sao
+lưu chỉ có hai đối tượng:
 
 \begin{longtable}{L{5.0cm} L{3.0cm} L{5.6cm}}
 \toprule

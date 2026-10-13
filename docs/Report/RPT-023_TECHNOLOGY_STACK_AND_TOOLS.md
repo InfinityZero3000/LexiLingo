@@ -538,7 +538,7 @@ CORS_ORIGINS=["http://localhost:3000", "https://lexilingo.me"]
 # Providers
 GEMINI_API_KEY=xxx
 GROQ_API_KEY=xxx
-GROQ_MODEL=qwen/qwen3-32b
+GROQ_MODEL=qwen/qwen3.6-27b
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=lexilingo-qwen3-1.7b
 

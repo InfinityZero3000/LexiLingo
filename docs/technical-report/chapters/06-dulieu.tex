@@ -7,7 +7,7 @@
 \textbf{Kho} & \textbf{Nội dung} & \textbf{Lý do chọn}\\
 \midrule
 \endhead
-PostgreSQL & Tài khoản, khoá học, tiến độ, XP, từ vựng, trạng thái khái niệm — khoảng 70 bảng. &
+PostgreSQL & Tài khoản, khoá học, tiến độ, XP, từ vựng, trạng thái khái niệm — 72 bảng. &
 Dữ liệu có quan hệ chặt, cần giao dịch (\en{transaction}) và ràng buộc toàn vẹn. Đây là \textbf{nguồn sự thật}.\\
 Redis & Bộ nhớ đệm phản hồi, phiên, danh sách đen thẻ, hạn ngạch, môi giới Celery, đệm đồ thị con L0/L1. &
 Đọc/ghi dưới mili-giây, cấu hình \code{allkeys-lru} nên có thể mất dữ liệu — vì vậy chỉ chứa thứ tái tạo được.\\
@@ -41,6 +41,7 @@ Năng lực CEFR & \code{user\_proficiency\_profiles}, \code{user\_skill\_scores
 Động lực học & \code{xp\_transactions}, \code{achievements}, \code{user\_achievements}, \code{user\_wallets}, \code{wallet\_transactions}, \code{leaderboard\_entries}, \code{shop\_items}, \code{user\_inventory}, \code{challenge\_reward\_claims}, \code{user\_reward\_grants}, \code{game\_sessions}.\\
 Xã hội & \code{user\_following}, \code{activity\_feeds}.\\
 Thông báo & \code{notifications}, \code{notification\_campaign\_jobs}, \code{user\_reminder\_preferences}, \code{reminder\_deliveries}.\\
+Quảng cáo & \code{banners}.\\
 Tác tử AI & \code{content\_agent\_jobs}, \code{content\_agent\_uploads}, \code{ranking\_agent\_jobs}.\\
 Vận hành & \code{api\_cache\_entries}, \code{product\_events}.\\
 \bottomrule
@@ -92,8 +93,8 @@ Hội thoại AI sinh quan sát ở ai-service, còn trạng thái nằm ở bac
 một lần mạng chập sẽ mất bằng chứng học tập. Với \en{outbox}: ai-service ghi vào vùng đệm
 MongoDB trước khi trả lời người dùng; một tiến trình thuê chuyển tiếp sang backend;
 backend ghi dòng \en{outbox} \textbf{trong cùng giao dịch} rồi mới xác nhận. Nhiều tiến
-trình áp dụng song song bằng \codesp{FOR UPDATE SKIP LOCKED}, nên trạng thái, \en{epoch} và
-cờ đã-áp-dụng luôn thay đổi trong một giao dịch duy nhất.
+trình áp dụng song song bằng \codesp{FOR UPDATE SKIP LOCKED}. Nhờ vậy trạng thái,
+\en{epoch} và cờ đã-áp-dụng luôn thay đổi cùng nhau, trong một giao dịch duy nhất.
 \end{luuy}
 
 \section{Dữ liệu năng lực CEFR}
@@ -106,8 +107,12 @@ cờ đã-áp-dụng luôn thay đổi trong một giao dịch duy nhất.
   \item \code{skill\_daily\_stats} — thứ thực sự tồn tại lâu dài: một dòng cho mỗi
   (người học, ngày, kỹ năng), ghi bằng \en{UPSERT}. Nhờ vậy một ngày học tốn tối đa sáu
   dòng dù người học luyện tập bao nhiêu. Mọi biểu đồ lịch sử đọc từ đây.
-  \item \code{user\_level\_history} — lịch sử thăng/giáng bậc CEFR.
-  \item \code{level\_assessment\_tests} — bài kiểm tra xếp bậc.
+  \item \code{user\_level\_history} — lịch sử thăng/giáng bậc CEFR. Mỗi dòng chụp lại điểm
+  tổng và toàn bộ điểm theo kỹ năng tại thời điểm đổi bậc, để trả lời được "vì sao" chứ
+  không chỉ "khi nào".
+  \item \code{level\_assessment\_tests} — bài kiểm tra xếp bậc chính thức. Điểm theo kỹ
+  năng được chụp vào cột riêng của bảng này, tách khỏi \code{user\_skill\_scores} đang
+  cập nhật liên tục, để mốc xếp bậc không bị dữ liệu luyện tập sau đó làm trôi.
 \end{itemize}
 
 \section{Ràng buộc dữ liệu không hiển nhiên}
@@ -121,13 +126,47 @@ Những ràng buộc sau đây không đọc được từ tên cột, nên đã
 \endhead
 \code{VocabularyItem.part\_of\_speech} & Kiểu liệt kê \code{PartOfSpeech}, giá trị \textbf{chữ thường}: \code{noun}, \code{verb}, \ldots\\
 \code{VocabularyItem.difficulty\_level} & Kiểu liệt kê \code{DifficultyLevel}, giá trị \textbf{chữ hoa}: \code{A1}, \code{A2}, \ldots\\
-\code{GrammarItem.content} & Kiểu \code{Text}, không phải JSON; riêng \code{examples} mới là danh sách JSON.\\
+\code{GrammarItem.content} & Kiểu \code{Text}, không phải JSON; riêng \code{examples} mới là danh sách JSON. Nội dung giải thích là văn xuôi tự do, không lặp cấu trúc như ví dụ, nên không cần ép về JSON.\\
 \code{GameWord.cefr\_level} & Chuỗi thuần \code{A1}--\code{C2}, không phải kiểu liệt kê.\\
 \code{TestExam.question\_ids} & Danh sách JSON, được điền lúc chạy chứ không phải khi gieo dữ liệu.\\
 \code{Lesson.exercise\_count} & Đồng bộ tự động qua \en{hook}; gán tay sẽ bị ghi đè.\\
 \bottomrule
 \caption{Ràng buộc dữ liệu cần nhớ}
 \end{longtable}
+
+\section{Bảng \code{banners}}
+
+Banner quảng cáo do quản trị viên tạo (NV11, hoàn thiện 10/2026), hiển thị ở một trong ba
+vị trí \code{position}: \code{hero}, \code{sidebar}, \code{interstitial}.
+
+\begin{longtable}{L{4.0cm} L{3.0cm} L{6.6cm}}
+\toprule
+\textbf{Cột} & \textbf{Kiểu} & \textbf{Ý nghĩa}\\
+\midrule
+\endhead
+\code{title}, \code{description}, \code{image\_url}, \code{link\_url} & chuỗi/\code{Text} & Nội dung hiển thị; \code{link\_url} có thể rỗng (banner thuần thông báo).\\
+\code{position}, \code{priority} & chuỗi, \code{int} & Vị trí hiển thị và thứ tự ưu tiên trong cùng vị trí.\\
+\code{is\_active} & \code{bool} & Cờ tắt/mở nhanh không cần xoá bản ghi.\\
+\code{start\_at}, \code{end\_at} & thời điểm, nullable & Lịch chạy; \code{null} ở \code{start\_at} nghĩa là "đã bắt đầu", \code{null} ở \code{end\_at} nghĩa là "không có hạn".\\
+\code{target\_min\_level}, \code{target\_max\_level}, \code{target\_language} & chuỗi CEFR/ngôn ngữ, nullable & Lọc theo trình độ và ngôn ngữ học; \code{null} trên một trục nghĩa là "không giới hạn trục đó".\\
+\code{created\_by\_id} & UUID, FK $\to$ \code{users}, nullable & Ai tạo banner; \code{SET NULL} khi tài khoản admin bị xoá, để banner không biến mất theo.\\
+\bottomrule
+\caption{Cấu trúc \code{banners}}
+\end{longtable}
+
+Chỉ mục tổ hợp \code{(is\_active, position, priority)} phục vụ đúng truy vấn điểm cuối
+công khai: lấy banner đang hoạt động của một vị trí, sắp theo độ ưu tiên.
+
+\begin{luuy}[Premium không thấy banner — và vì sao cần \code{user\_entitlements}]
+Điểm cuối \code{/banners/active} gọi \code{EntitlementService.is\_active} trước khi
+đụng tới bảng \code{banners}: nếu người dùng có một dòng \code{active} trong
+\code{user\_entitlements}, API trả danh sách rỗng ngay, không lọc theo lịch hay trình độ.
+\code{user\_entitlements} (đã liệt kê ở bảng miền \code{Người dùng} phía trên) là trạng
+thái Premium \textbf{do backend tự xác nhận với RevenueCat} — không phải cờ client tự
+khai báo — nên đây là nơi duy nhất đáng tin để quyết định ẩn quảng cáo. Ràng buộc duy nhất
+trên \code{(user\_id, entitlement\_id)} giữ mỗi gói quyền lợi chỉ có một dòng trạng thái
+mới nhất cho một người dùng.
+\end{luuy}
 
 \section{Bộ nhớ đệm Redis}
 

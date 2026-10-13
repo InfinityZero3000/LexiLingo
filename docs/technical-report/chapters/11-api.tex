@@ -135,6 +135,25 @@ GET & \code{/news/proxy/image}, \code{/books/proxy/text}\ldots & Uỷ nhiệm t�
 \caption{Điểm cuối nội dung thực tế}
 \end{longtable}
 
+\section{Premium và quảng cáo}
+
+Gói trả phí được xác thực hoàn toàn ở phía server qua \code{EntitlementService}
+(Chương~5): client chỉ đọc lại trạng thái đã đồng bộ, không bao giờ tự quyết định mở khoá.
+
+\begin{longtable}{L{2.8cm} L{6.0cm} L{4.8cm}}
+\toprule
+\textbf{Method} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
+\midrule
+\endhead
+POST & \code{/entitlements/sync} & Gọi sau khi mua/khôi phục hoặc mỗi lần mở app: đồng bộ lại trạng thái Premium từ RevenueCat, bỏ qua mọi thông tin mua hàng do client gửi lên\\
+GET & \code{/entitlements/me} & Đọc trạng thái Premium đã đồng bộ sẵn, không gọi RevenueCat\\
+GET & \code{/banners/active} & Người dùng (kể cả chưa đăng nhập) lấy banner công khai theo vị trí (\code{hero}/\code{sidebar}/\code{interstitial}), đã lọc theo bậc CEFR và ngôn ngữ; trả danh sách rỗng ngay nếu người gọi đang có Premium active\\
+GET, POST,\newline PUT, DELETE & \code{/banners}, \code{/banners/\{id\}} & CRUD banner cho trang quản trị, yêu cầu quyền admin\\
+GET & nội bộ \code{/internal/entitlements/\{user\_id\}} & Không dành cho client: ai-service gọi điểm cuối này để biết một người dùng có đang là Premium hay không, nhờ đó quyết định có áp giới hạn 30 tin/ngày lên chat Lexi hay không mà không cần tự tra Postgres; xác thực bằng token dịch vụ dùng chung (\code{X-LexiLingo-Service-Token}/\code{X-LexiLingo-Audience}), tái dùng chính secret đã cấu hình cho learner-state\\
+\bottomrule
+\caption{Điểm cuối Premium và banner quảng cáo}
+\end{longtable}
+
 \section{Quản trị}
 
 Nhóm \code{/admin/*} cung cấp CRUD đầy đủ cho khoá học, chương, bài học, nội dung bài học,
@@ -155,16 +174,16 @@ nếu không bộ đếm bài tập và ràng buộc xuất bản sẽ lệch.
 \textbf{Giao thức} & \textbf{Đường dẫn} & \textbf{Chức năng}\\
 \midrule
 \endhead
-POST & \code{/api/v1/lexi/chat} & Hội thoại TRACE-CAG đầy đủ; hỗ trợ dòng SSE\\
-POST & \code{/api/v1/chat} & Hội thoại cơ bản\\
-POST & \code{/api/v1/topics/\ldots} & Hội thoại theo chủ đề\\
-POST & \code{/api/v1/stt} & Nhận dạng giọng nói, chấm phát âm\\
-POST & \code{/api/v1/tts} & Tổng hợp giọng nói\\
-WS & \code{/api/v1/voice} & Phiên giọng nói song luồng thời gian thực\\
-POST & \code{/api/v1/ai/translate} & Dịch có ngữ cảnh học tập\\
-POST & nội bộ \code{/content-agent/\ldots} & Sinh nội dung khoá học\\
-POST & nội bộ \code{/notification-agent/\ldots} & Soạn thông báo\\
-GET & \code{/warmup}, \code{/visualizer} & Làm ấm mô hình, trực quan hoá pipeline\\
+POST & \code{/api/v1/lexi/chat} & Màn hình chat Lexi của Flutter gọi: hội thoại TRACE-CAG đầy đủ, hỗ trợ dòng SSE\\
+POST & \code{/api/v1/chat} & Hội thoại cơ bản, không qua pipeline TRACE-CAG — dùng cho luồng nhẹ hơn chat chính\\
+POST & \code{/api/v1/topics/\ldots} & Hội thoại theo chủ đề gợi sẵn (du lịch, công việc\ldots) thay vì chat tự do\\
+POST & \code{/api/v1/stt} & Ứng dụng gửi audio người học đọc để nhận dạng giọng nói và chấm phát âm\\
+POST & \code{/api/v1/tts} & Tổng hợp giọng nói cho câu mẫu/phản hồi của Lexi\\
+WS & \code{/api/v1/voice} & Phiên giọng nói song luồng thời gian thực cho luyện nói hai chiều\\
+POST & \code{/api/v1/ai/translate} & Dịch có ngữ cảnh học tập, gọi khi người học chạm để dịch một từ/câu trong bài\\
+POST & nội bộ \code{/content-agent/\ldots} & Gọi từ \code{content\_agent} của backend-service, không phải từ client: sinh nội dung khoá học\\
+POST & nội bộ \code{/notification-agent/\ldots} & Gọi từ backend-service để soạn nội dung thông báo đẩy\\
+GET & \code{/warmup}, \code{/visualizer} & \code{/warmup} dùng lúc khởi động để làm ấm mô hình trước request đầu tiên; \code{/visualizer} phục vụ trang quan trắc để trực quan hoá pipeline\\
 \bottomrule
 \caption{Điểm cuối AI service}
 \end{longtable}
