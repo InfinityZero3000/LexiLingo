@@ -109,17 +109,18 @@ def _parse_retry_after_seconds(raw_value: Optional[str]) -> float:
 
 
 def _provider_tpm(provider: str) -> int:
-    """Input tokens per minute per key.
+    """Input tokens per minute per key; 0 (the default) means no in-process pacing.
 
-    Groq's 429 names the limit it enforces: "input tokens per minute (ITPM):
-    Limit 7000". 6000 leaves headroom, matching groq_key_pool's own constant.
+    Opt-in, because pacing sleeps inside every caller of `_throttled_post_json`
+    and production already paces through groq_key_pool. The benchmark switches it
+    on (BenchmarkConfig.apply_environment): it runs without Redis, where the pool
+    degrades to round-robin, and Groq's 429 names the limit it then hits:
+    "input tokens per minute (ITPM): Limit 7000". Use 6000 for headroom.
     """
-    defaults = {"groq": 6000, "gemini": 32000}
-    raw = os.getenv(f"TRACECAG_{provider.upper()}_TPM", str(defaults.get(provider, 0)))
     try:
-        return max(0, int(raw))
+        return max(0, int(os.getenv(f"TRACECAG_{provider.upper()}_TPM", "0")))
     except ValueError:
-        return defaults.get(provider, 0)
+        return 0
 
 
 def _estimate_payload_tokens(payload: Dict[str, Any]) -> int:
