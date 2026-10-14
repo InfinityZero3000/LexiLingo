@@ -237,10 +237,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Set up Python 3.11
+      # ai-service runs on 3.12 (see CLAUDE.md); networkx>=3.7 and the
+      # other pinned deps refuse to install on 3.11, so this job was
+      # testing an environment the service never runs in.
+      - name: Set up Python 3.12
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
           cache-dependency-path: ai-service/requirements.txt
 
