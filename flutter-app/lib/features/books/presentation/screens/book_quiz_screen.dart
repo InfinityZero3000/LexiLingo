@@ -293,7 +293,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              '$score / $total correct',
+              'books.quizScore'.tr(namedArgs: {'score': '$score', 'total': '$total'}),
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white60 : AppColors.textGrey,
@@ -317,7 +317,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                     Icon(Icons.bolt_rounded, color: accentColor),
                     const SizedBox(width: 6),
                     Text(
-                      '+$xpEarned XP earned!',
+                      'games.xpEarned'.tr(namedArgs: {'xp': '$xpEarned'}),
                       style: TextStyle(
                         color: accentColor,
                         fontWeight: FontWeight.w700,

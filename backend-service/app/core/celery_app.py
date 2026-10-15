@@ -23,10 +23,15 @@ if Celery is not None:
         broker=settings.effective_celery_broker_url,
         backend=settings.effective_celery_result_backend,
         include=[
+            "app.tasks.auth_tokens",
             "app.tasks.content_agent",
             "app.tasks.content_prefetch_schedule",
+            "app.tasks.event_worker",
+            "app.tasks.learner_state",
+            "app.tasks.notification_campaign",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
+            "app.tasks.skill_history",
             "app.tasks.streak_reminders",
             "app.tasks.word_of_day",
         ],
@@ -48,6 +53,10 @@ if Celery is not None:
             "task": "app.tasks.reminders.scan_fsrs_reminders",
             "schedule": settings.REMINDER_SCAN_INTERVAL_SECONDS,
         },
+        "drain-content-interaction-stream": {
+            "task": "app.tasks.event_worker.drain_content_interaction_stream",
+            "schedule": settings.EVENT_WORKER_DRAIN_INTERVAL_SECONDS,
+        },
         "send-streak-alerts": {
             "task": "app.tasks.streak_reminders.send_streak_alerts",
             "schedule": crontab(hour=20, minute=0),
@@ -59,6 +68,32 @@ if Celery is not None:
         "cleanup-expired-content-agent-uploads": {
             "task": "app.tasks.content_agent.cleanup_expired_content_agent_uploads",
             "schedule": crontab(hour=3, minute=15),
+        },
+        "cleanup-learner-observations": {
+            "task": "app.tasks.learner_state.cleanup_learner_observations",
+            "schedule": crontab(hour=2, minute=30),
+        },
+        # Rotation writes a row per refresh, so the table only ever grew.
+        "prune-refresh-tokens": {
+            "task": "app.tasks.auth_tokens.prune_refresh_tokens",
+            "schedule": crontab(hour=2, minute=15),
+        },
+        # Answer-level rows are only kept while they can still explain a
+        # recent score; skill_daily_stats carries the long term.
+        "prune-exercise-attempts": {
+            "task": "app.tasks.skill_history.prune_exercise_attempts",
+            "schedule": crontab(hour=2, minute=45),
+        },
+        # Append-only and the highest-volume table here; the recommender only
+        # ever reads its newest 60 days.
+        "prune-product-events": {
+            "task": "app.tasks.event_worker.prune_product_events",
+            "schedule": crontab(hour=3, minute=45),
+        },
+        # Feeds UserSkillScore.trend, which read two columns nothing wrote.
+        "snapshot-skill-scores": {
+            "task": "app.tasks.skill_history.snapshot_skill_scores",
+            "schedule": crontab(hour=3, minute=0, day_of_week=1),
         },
         "auto-league-reset": {
             "task": "app.tasks.ranking_agent.auto_league_reset",
@@ -101,6 +136,14 @@ else:
                             "app.tasks.content_agent."
                             "cleanup_expired_content_agent_uploads"
                         ),
+                        "schedule": 86400,
+                    },
+                    "cleanup-learner-observations": {
+                        "task": "app.tasks.learner_state.cleanup_learner_observations",
+                        "schedule": 86400,
+                    },
+                    "prune-refresh-tokens": {
+                        "task": "app.tasks.auth_tokens.prune_refresh_tokens",
                         "schedule": 86400,
                     },
                     "auto-league-reset": {

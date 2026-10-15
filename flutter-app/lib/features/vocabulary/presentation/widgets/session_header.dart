@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Session Header Widget
 /// Clean Code: Single responsibility - display session progress
@@ -65,13 +66,13 @@ class SessionHeader extends StatelessWidget {
             children: [
               _StatItem(
                 icon: Icons.assignment_turned_in,
-                label: 'Reviewed',
+                label: 'vocabulary.reviewed'.tr(),
                 value: '${session.reviewedCards}',
                 color: AppColors.primary,
               ),
               _StatItem(
                 icon: Icons.check_circle,
-                label: 'Correct',
+                label: 'assessment.correct'.tr(),
                 value: '${session.correctCount}',
                 color: AppColors.greenSuccess,
               ),
@@ -83,7 +84,7 @@ class SessionHeader extends StatelessWidget {
               ),
               _StatItem(
                 icon: Icons.pending,
-                label: 'Remaining',
+                label: 'vocabulary.remaining'.tr(),
                 value: '${session.remainingCards}',
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),

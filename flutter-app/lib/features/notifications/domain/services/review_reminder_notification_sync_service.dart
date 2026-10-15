@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/features/notifications/domain/entities/notification_entity.dart';
 import 'package:lexilingo_app/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ReviewReminderNotificationSyncService {
   static const notificationId = 'vocabulary_review_due_reminder';
@@ -46,8 +47,8 @@ class ReviewReminderNotificationSyncService {
     final notification = NotificationEntity(
       id: notificationId,
       type: NotificationType.vocabularyReviewReminder,
-      title: 'Đến giờ ôn từ vựng',
-      body: '$dueCount từ đang đợi bạn ôn tập.',
+      title: 'notifications.reviewReminderTitle'.tr(),
+      body: 'notifications.reviewWaitingBody'.tr(namedArgs: {'count': '$dueCount'}),
       timestamp: sameReminderDay ? existing?.timestamp ?? now : now,
       isRead: sameReminderDay ? existing?.isRead ?? false : false,
       data: {

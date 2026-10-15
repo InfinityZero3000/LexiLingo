@@ -111,12 +111,13 @@ def generate_words_for_level(level, level_type, count, existing_words):
         f"Return ONLY a raw JSON list of strings, e.g. [\"word1\", \"word2\"]. No extra markdown, explanation, or tags."
     )
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
         "messages": [
             {"role": "system", "content": "You are a vocabulary builder. Output ONLY raw JSON lists of strings."},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.7
+        "temperature": 0.7,
+        "reasoning_effort": "none",
     }
     
     res = call_groq(payload)
@@ -171,12 +172,13 @@ def fetch_details_for_word(word, level, ielts_band=None):
     )
     
     payload = {
-        "model": "llama-3.3-70b-versatile",
+        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
         "messages": [
             {"role": "system", "content": "You are a lexicographer. Output ONLY raw JSON objects matching the schema."},
             {"role": "user", "content": prompt}
         ],
-        "temperature": 0.0
+        "temperature": 0.0,
+        "reasoning_effort": "none",
     }
     
     res = call_groq(payload)

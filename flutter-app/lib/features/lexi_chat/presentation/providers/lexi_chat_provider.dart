@@ -13,6 +13,7 @@ import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.da
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
+import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 
 const _tag = 'LexiChatProvider';
 
@@ -53,6 +54,16 @@ class LexiChatProvider extends ChangeNotifier {
       timeout: AppConstants.aiOperationTimeout,
     );
     return (result['text'] as String? ?? '').trim();
+  }
+
+  /// Attaches a pronunciation score to a message once assessment finishes —
+  /// separate call from sending so a slow/failed assessment never blocks or
+  /// breaks message delivery.
+  void attachPronunciationScore(String messageId, PronunciationScore score) {
+    final idx = _messages.indexWhere((m) => m.id == messageId);
+    if (idx == -1) return;
+    _messages[idx] = _messages[idx].copyWith(pronunciationScore: score);
+    notifyListeners();
   }
 
   // ── State ──────────────────────────────────────────────────────────────────
@@ -653,6 +664,7 @@ class LexiChatProvider extends ChangeNotifier {
             :final corrections,
             :final linkedConcepts,
             :final suggestedPractice,
+            :final suggestedCourses,
             :final nativeHint,
             :final scores,
             :final audioBase64,
@@ -678,6 +690,7 @@ class LexiChatProvider extends ChangeNotifier {
                 corrections: corrections,
                 linkedConcepts: linkedConcepts,
                 suggestedPractice: suggestedPractice,
+                suggestedCourses: suggestedCourses,
                 nativeHint: nativeHint,
                 scores: scores,
                 syncStatus: 'synced',
@@ -1160,6 +1173,9 @@ class LexiChatProvider extends ChangeNotifier {
                       'concept_title': m.suggestedPractice!.conceptTitle,
                       'prompt': m.suggestedPractice!.prompt,
                     },
+              'suggested_courses': m.suggestedCourses
+                  .map((c) => c.toJson())
+                  .toList(),
               'scores': m.scores,
               'sync_status': m.syncStatus,
               'client_request_id': m.clientRequestId,
@@ -1242,6 +1258,12 @@ class _CachedChatPage {
                     '',
               )
             : null,
+        suggestedCourses: (m['suggested_courses'] as List<dynamic>? ?? const [])
+            .whereType<Map>()
+            .map(
+              (c) => LexiCourseSuggestion.fromJson(Map<String, dynamic>.from(c)),
+            )
+            .toList(),
         nativeHint: m['native_hint']?.toString(),
         scores: m['scores'] is Map
             ? Map<String, dynamic>.from(m['scores'] as Map)

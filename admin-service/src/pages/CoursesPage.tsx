@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { BookOpen, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -28,6 +28,11 @@ import {
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+// Which CEFR skill this course credits on completion. Leaving it unset falls
+// back to guessing from tags, which is how listening and speaking content
+// ended up scored as vocabulary.
+const SKILLS = ["vocabulary", "grammar", "reading", "listening", "speaking", "writing"];
+
 export const CoursesPage = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
@@ -54,13 +59,14 @@ export const CoursesPage = () => {
     description: "",
     language: "en",
     level: "A1",
+    skill: "",
     tags: "",
     thumbnail_url: "",
     is_published: false,
   });
 
   const resetForm = () => {
-    setForm({ title: "", description: "", language: "en", level: "A1", tags: "", thumbnail_url: "", is_published: false });
+    setForm({ title: "", description: "", language: "en", level: "A1", skill: "", tags: "", thumbnail_url: "", is_published: false });
     setEditingId(null);
   };
 
@@ -125,6 +131,7 @@ export const CoursesPage = () => {
       description: course.description || "",
       language: course.language,
       level: course.level,
+      skill: course.skill || "",
       tags: (course.tags || []).join(", "),
       thumbnail_url: course.thumbnail_url || "",
       is_published: course.is_published,
@@ -139,6 +146,9 @@ export const CoursesPage = () => {
     try {
       const payload = {
         ...form,
+        // "" is the form's "no label yet" choice; the API accepts a real
+        // skill name or null, and null keeps the tag-based fallback.
+        skill: form.skill || null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       if (editingId) {
@@ -194,22 +204,24 @@ export const CoursesPage = () => {
       {error && <div className="form-error">{error}</div>}
 
       {/* Toolbar */}
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, flex: 1, minWidth: 200 }}>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
+          <form onSubmit={handleSearch} className="filter-search-form">
             <input
+              className="search-input"
               placeholder={t.courses.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ flex: 1 }}
             />
-            <button className="ghost-button" type="submit">{t.common.search}</button>
+            <button className="icon-button filter-search-button" type="submit" aria-label={t.common.search} title={t.common.search}>
+              <Search size={18} aria-hidden="true" />
+            </button>
           </form>
-          <select value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
+          <select className="filter-select" value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allLevels}</option>
             {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
-          <select value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
+          <select className="filter-select" value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allStatus}</option>
             <option value="true">{t.common.published}</option>
             <option value="false">{t.common.draft}</option>
@@ -263,7 +275,7 @@ export const CoursesPage = () => {
           <EmptyState
             title={t.courses.noCourses}
             description={t.courses.noCoursesDesc}
-            icon="📚"
+            icon={<BookOpen size={40} aria-hidden="true" />}
             action={
               <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
                 {t.courses.createCourse}
@@ -328,14 +340,14 @@ export const CoursesPage = () => {
               rows={courses}
             />
             {/* Pagination */}
-            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 16 }}>
-              <button className="ghost-button small" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            <div className="pagination">
+              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 {t.courses.prev}
               </button>
-              <span className="table-meta" style={{ padding: "6px 12px" }}>
+              <span className="page-info">
                 {t.common.page} {page} {t.common.of} {Math.ceil(total / 20) || 1}
               </span>
-              <button className="ghost-button small" disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
+              <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
                 {t.courses.next}
               </button>
             </div>
@@ -367,6 +379,13 @@ export const CoursesPage = () => {
                     {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
                   </select>
                 </label>
+                <label>
+                  Kỹ năng chính
+                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                    <option value="">— Chưa gắn nhãn —</option>
+                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </label>
               </div>
               <label>
                 {t.courses.tags}
@@ -377,9 +396,15 @@ export const CoursesPage = () => {
                 <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
               </label>
               <label className="checkbox">
-                <input type="checkbox" checked={form.is_published} onChange={(e) => setForm({ ...form, is_published: e.target.checked })} />
+                <input
+                  type="checkbox"
+                  checked={form.is_published}
+                  disabled={!editingId}
+                  onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
+                />
                 {t.courses.publishNow}
               </label>
+              <p className="form-hint">{t.courses.publishRequirement}</p>
               <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
                 <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
                 <button className="primary-button" type="submit" disabled={saving}>

@@ -1,4 +1,5 @@
 from tracecag_bench.metrics.retrieval import retrieval_metrics
+from tracecag_bench.reporting.console import print_summary
 from tracecag_bench.metrics.safety import calibrate_thresholds, safety_metrics
 from tracecag_bench.metrics.text import exact_match, token_f1
 from tracecag_bench.schemas import RunObservation
@@ -65,3 +66,66 @@ def test_benchmark_evidence_snippet_keeps_definition_and_question_match():
     assert "Avery Stone is a Canadian film director" in snippet
     assert "directed Moon Harbor" in snippet
     assert "unrelated awards" not in snippet
+
+
+def test_all_support_distinguishes_half_retrieved_multihop_from_fully_retrieved():
+    """recall@k averages over hops, so a 2-hop question with only one hop
+    retrieved scores 0.5 — indistinguishable from genuine partial progress even
+    though the question is unanswerable. all_support_at_k is the gate that
+    separates them."""
+    trace = [
+        {"title": "Hop One", "text": "first supporting passage"},
+        {"title": "Distractor", "text": "irrelevant"},
+        {"title": "Hop Two", "text": "second supporting passage"},
+    ]
+    supporting = ("Hop One", "Hop Two")
+
+    half = retrieval_metrics(trace[:2], supporting)
+    assert half["recall_at_5"] == 0.5
+    assert half["hit_at_5"] == 1.0
+    assert half["all_support_at_5"] == 0.0
+
+    full = retrieval_metrics(trace, supporting)
+    assert full["recall_at_5"] == 1.0
+    assert full["all_support_at_5"] == 1.0
+
+
+def test_answer_in_context_tracks_reader_ceiling_not_title_overlap():
+    trace = [{"title": "Hop One", "text": "The arena seats 3,677 people."}]
+    reachable = retrieval_metrics(trace, ("Hop One",), gold_answers=("3,677",))
+    assert reachable["answer_in_context_at_5"] == 1.0
+
+    # Right passage retrieved, but the gold string is not in it: the reader
+    # cannot win this one, and EM=0 here is not a reader defect.
+    unreachable = retrieval_metrics(trace, ("Hop One",), gold_answers=("9,984",))
+    assert unreachable["recall_at_5"] == 1.0
+    assert unreachable["answer_in_context_at_5"] == 0.0
+
+
+def test_map_rewards_ranking_supporting_passages_higher():
+    supporting = ("A", "B")
+    top = [{"title": "A"}, {"title": "B"}, {"title": "X"}]
+    bottom = [{"title": "X"}, {"title": "A"}, {"title": "B"}]
+
+    assert retrieval_metrics(top, supporting)["recall_at_5"] == retrieval_metrics(bottom, supporting)["recall_at_5"]
+    assert retrieval_metrics(top, supporting)["map_at_5"] > retrieval_metrics(bottom, supporting)["map_at_5"]
+
+
+def test_console_summary_tolerates_empty_mode(capsys):
+    print_summary({
+        "protocol": "public_qa",
+        "dataset": {"name": "query_clusters"},
+        "summaries": {
+            "tracecag": {
+                "exact_match": 0.0,
+                "token_f1": 0.0,
+                "rouge_l": 0.0,
+                "retrieval": {},
+                "cache": {"cache_hit_rate": 0.0},
+                "latency": {"mean_ms": 0.0, "routing_overhead_mean_ms": None},
+            }
+        },
+        "run_validation": {"passed": True},
+    })
+    assert "R@5=n/a" in capsys.readouterr().out
+

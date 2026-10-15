@@ -1,5 +1,9 @@
 # ICTA TRACE-CAG Benchmark Execution Plan
 
+> **Historical plan.** Superseded on 2026-09-23 by the production-backed daily
+> flow in `model-development/benchmark/README.md`. Commands, model values, and
+> legacy benchmark modes below are retained only to document the original plan.
+
 > **For agentic workers:** REQUIRED: Execute in the current session with checkpoints; use reviewer agents only at review gates.
 
 **Goal:** Produce validated TRACE-CAG benchmark artifacts and evidence for the eight-page ICTA paper.

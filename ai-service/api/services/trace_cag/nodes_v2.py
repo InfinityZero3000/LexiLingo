@@ -19,6 +19,7 @@ import json
 import time
 from typing import Dict, Any, List, Optional
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
@@ -29,7 +30,11 @@ from api.services.trace_cag.dependencies import (
 from api.services.jit_graph_service import get_jit_graph_service
 
 # LLM client — httpx pooling and rate-limit throttling
-from api.services.trace_cag.llm_client import _throttled_post_json
+from api.services.trace_cag.llm_client import (
+    _qwen_no_think_messages,
+    _qwen_reasoning_overrides,
+    _throttled_post_json,
+)
 
 # PCC cache R/W helpers used by the generation path
 from api.services.trace_cag.cache_utils import _detect_native_request
@@ -228,12 +233,15 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
         # ── Phase 1: Seed concept matching (fast O(words) lookup) ──────
         user_text = state.get("user_input", "").lower()
 
-        # Phase 1a: Exact keyword lookup via inverted index (O(words_in_text))
-        seed_exact = kg.get_seed_concepts_fast(user_text)
+        # Phase 1a: IDF-ranked keyword lookup via inverted index
+        seed_exact = kg.get_seed_concepts_fast(user_text, learner_level=learner_level)
         # Phase 1a-semantic: TF-IDF cosine similarity (catches indirect references)
         seed_semantic = kg.semantic_seed_concepts(user_text, top_k=5)
-        # Merge: exact first (higher confidence), then semantic fills gaps
-        seed_concepts = list(dict.fromkeys(seed_exact + seed_semantic))
+        # Semantic first. retrieve_node seeds its vector stage from
+        # kg_seed_concepts[:5], and keyword overlap put five arbitrary
+        # vocab.word.* concepts there while the TF-IDF seeds — which named the
+        # right topic node outright — sat behind hundreds of them.
+        seed_concepts = list(dict.fromkeys(seed_semantic + seed_exact))
 
         # Grammar error patterns (Phase 1b)
         grammar_patterns = {
@@ -502,19 +510,24 @@ Be encouraging and focus on the most important errors first."""
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
             groq_key = await get_available_groq_key(estimated_tokens=400)
-            groq_model = os.getenv("GROQ_MODEL_DIAGNOSE", os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"))
+            groq_model = resolve_groq_model("GROQ_MODEL_DIAGNOSE", "GROQ_MODEL")
             if groq_key:
                 try:
-                    _no_think = "/no_think\n" if "qwen" in groq_model.lower() else ""
-                    messages = [
+                    messages = _qwen_no_think_messages(groq_model, [
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
-                        {"role": "user", "content": f"{_no_think}{diagnosis_prompt}"},
-                    ]
+                        {"role": "user", "content": diagnosis_prompt},
+                    ])
                     resp = await _throttled_post_json(
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": messages, "max_tokens": 400, "temperature": 0.0},
+                        payload={
+                            "model": groq_model,
+                            "messages": messages,
+                            "max_tokens": 400,
+                            "temperature": 0.0,
+                            **_qwen_reasoning_overrides(groq_model),
+                        },
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:
@@ -545,15 +558,21 @@ Be encouraging and focus on the most important errors first."""
                 else:
                     ai_data = ai_response
                 
-                # Extract errors
+                # Extract errors — small fallback models sometimes hallucinate a
+                # generic span (e.g. "the sentence") instead of quoting the
+                # actual offending text, so drop anything that isn't really
+                # part of what the user typed.
                 for err in ai_data.get("errors", []):
+                    span = err.get("span", "")
+                    if not span or span.lower() not in user_text.lower():
+                        continue
                     errors.append(DiagnosisError(
-                        span=err.get("span", ""),
+                        span=span,
                         type=err.get("type", "unknown"),
                         correction=err.get("correction", ""),
                         explanation=err.get("explanation", ""),
                     ))
-                    
+
                     # Map to KG concept
                     error_type = err.get("type", "").lower()
                     concept_map = {

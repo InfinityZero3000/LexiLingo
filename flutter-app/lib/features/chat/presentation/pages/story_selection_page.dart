@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -160,25 +161,21 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
         ],
       ),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (val) => setState(() => _searchQuery = val),
-        textAlignVertical: TextAlignVertical.center,
-        style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
-        decoration: InputDecoration(
-          isDense: true,
-          hintText: 'storySelection.searchHint'.tr(),
-          hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
-          prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? accent : theme.primaryColor,
+      child: Center(
+        child: TextField(
+          controller: _searchController,
+          onChanged: (val) => setState(() => _searchQuery = val),
+          textAlignVertical: TextAlignVertical.center,
+          style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
+          decoration: InputDecoration(
+            hintText: 'storySelection.searchHint'.tr(),
+            hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
+            prefixIcon: Icon(
+              Icons.search,
+              color: isDark ? accent : theme.primaryColor,
+            ),
+            border: InputBorder.none,
           ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 44,
-            minHeight: 44,
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.only(top: 0, bottom: 0, right: 16),
         ),
       ),
     );
@@ -364,6 +361,13 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   }
 
   Future<void> _handleTopicSelection(StoryListItem story) async {
+    trackContentInteraction(
+      itemType: 'topic',
+      itemId: story.storyId,
+      action: 'open',
+      topic: story.category,
+      source: 'story_selection',
+    );
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
@@ -462,7 +466,7 @@ class _TopicListItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          '${story.estimatedMinutes} mins',
+                          'course.durationMin'.tr(namedArgs: {'count': '${story.estimatedMinutes}'}),
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColorRoles.textMuted(isDark),

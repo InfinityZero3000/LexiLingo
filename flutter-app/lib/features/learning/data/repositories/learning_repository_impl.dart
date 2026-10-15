@@ -1,6 +1,6 @@
 import 'package:dartz/dartz.dart';
+import 'package:lexilingo_app/core/error/failure_mapper.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
-import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/features/learning/data/datasources/learning_remote_datasource.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_attempt.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/answer_response.dart';
@@ -23,12 +23,8 @@ class LearningRepositoryImpl implements LearningRepository {
     try {
       final response = await _remoteDataSource.startLesson(lessonId);
       return Right(response.data);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -53,12 +49,8 @@ class LearningRepositoryImpl implements LearningRepository {
         confidenceScore: confidenceScore,
       );
       return Right(response.data);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -69,12 +61,8 @@ class LearningRepositoryImpl implements LearningRepository {
     try {
       final response = await _remoteDataSource.completeLesson(attemptId);
       return Right(response.data);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -85,12 +73,8 @@ class LearningRepositoryImpl implements LearningRepository {
     try {
       final response = await _remoteDataSource.getCourseRoadmap(courseId);
       return Right(response.data);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -101,12 +85,8 @@ class LearningRepositoryImpl implements LearningRepository {
     try {
       final response = await _remoteDataSource.getLessonContent(lessonId);
       return Right(response.data.toEntity());
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(UnexpectedFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 }

@@ -57,30 +57,39 @@ const shouldRefreshAccessToken = (token: string | null): boolean => {
 // Chỉ fallback khi lỗi là TypeError (connection refused / DNS / network down).
 // Lỗi HTTP (4xx, 5xx) KHÔNG fallback — đó là response hợp lệ từ server.
 // ─────────────────────────────────────────────────────────────────────────────
+// Chọn cặp (base, fallback) cho một URL.
+//
+// backendUrl và aiUrl mặc định TRÙNG NHAU (cùng DEFAULT_API_URL), nên bản cũ —
+// kiểm tra backendUrl trước — gán fallback của backend cho cả request AI. Lọc
+// bỏ base chưa cấu hình fallback để trường hợp cùng host dùng đúng cái đang có,
+// và chọn base dài nhất khi một base là tiền tố của base kia.
+export const resolveFallbackTarget = (
+  primaryUrl: string
+): { base: string; fallback: string } | null => {
+  const match = ([
+    { base: ENV.backendUrl, fallback: ENV.backendUrlFallback },
+    { base: ENV.aiUrl, fallback: ENV.aiUrlFallback },
+  ] as const)
+    .filter((c) => c.base && c.fallback && primaryUrl.startsWith(c.base))
+    .sort((a, b) => b.base.length - a.base.length)[0];
+  return match ? { base: match.base, fallback: match.fallback } : null;
+};
+
 async function fetchWithFallback(
   primaryUrl: string,
   options: RequestInit
 ): Promise<Response> {
-  // Xác định base và fallback tương ứng
-  let fallbackBase = "";
-  if (primaryUrl.startsWith(ENV.backendUrl)) {
-    fallbackBase = ENV.backendUrlFallback;
-  } else if (primaryUrl.startsWith(ENV.aiUrl)) {
-    fallbackBase = ENV.aiUrlFallback;
-  }
+  const target = resolveFallbackTarget(primaryUrl);
 
   try {
     return await fetch(primaryUrl, options);
   } catch (err) {
     // Chỉ fallback khi là network error (không phải HTTP error)
-    if (!(err instanceof TypeError) || !fallbackBase) {
+    if (!(err instanceof TypeError) || !target) {
       throw err;
     }
 
-    // Tái cấu trúc URL với fallback base
-    const primaryBase = primaryUrl.startsWith(ENV.backendUrl)
-      ? ENV.backendUrl
-      : ENV.aiUrl;
+    const { base: primaryBase, fallback: fallbackBase } = target;
     const path = primaryUrl.slice(primaryBase.length);
     const fallbackUrl = `${fallbackBase}${path}`;
 
@@ -124,7 +133,13 @@ async function tryRefreshToken(): Promise<boolean> {
       });
 
       if (!response.ok) {
-        authStore.clear();
+        // Only a rejected token ends the session. A 500/503 or a rate limit
+        // means the server could not answer, not that the refresh token is
+        // invalid — clearing on those logged the admin out over a blip and
+        // lost whatever they had open.
+        if (response.status === 401 || response.status === 403) {
+          authStore.clear();
+        }
         return false;
       }
 
@@ -135,7 +150,8 @@ async function tryRefreshToken(): Promise<boolean> {
       }
       return true;
     } catch {
-      authStore.clear();
+      // Network error: the server never answered, so the token is still as
+      // valid as it was. Keep it and let the caller surface the failure.
       return false;
     } finally {
       isRefreshing = false;
@@ -199,7 +215,11 @@ export const apiFetch = async <T>(
     const refreshed = await tryRefreshToken();
     if (refreshed) {
       response = await makeRequest(authStore.accessToken);
-    } else {
+    } else if (!authStore.refreshToken) {
+      // tryRefreshToken only clears the store when the server actually
+      // rejected the token. Still holding one means the refresh failed for
+      // another reason (network, 503), so keep the session and let the caller
+      // show the error instead of bouncing to /login.
       window.location.href = "/login";
       throw new ApiError("Session expired. Please log in again.", 401);
     }

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
   Bell,
+  Check,
   CheckCircle,
   ChevronDown,
   ChevronUp,
@@ -96,107 +97,109 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
     }
   }
 
-  const statusColor: Record<string, string> = {
-    queued: "text-gray-500 bg-gray-100",
-    segmenting: "text-blue-600 bg-blue-50",
-    generating: "text-purple-600 bg-purple-50",
-    validating: "text-indigo-600 bg-indigo-50",
-    sending: "text-orange-600 bg-orange-50",
-    preview_ready: "text-amber-600 bg-amber-50",
-    completed: "text-green-600 bg-green-50",
-    failed: "text-red-600 bg-red-50",
-    cancelled: "text-gray-500 bg-gray-100",
+  const statusTone: Record<string, string> = {
+    queued: "neutral",
+    segmenting: "info",
+    generating: "info",
+    validating: "info",
+    sending: "warning",
+    preview_ready: "warning",
+    completed: "success",
+    failed: "danger",
+    cancelled: "neutral",
   };
 
   const content = (job.config as Record<string, Record<string, unknown>>)?.content ?? {};
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[480px] bg-white shadow-2xl flex flex-col z-40 border-l">
-      <div className="flex items-center justify-between px-5 py-4 border-b">
-        <div className="flex items-center gap-2">
-          <Radio className="w-5 h-5 text-blue-500" />
+    <aside className="notification-drawer" aria-label="Notification campaign details">
+      <div className="notification-drawer-header">
+        <div className="notification-drawer-heading">
+          <Radio size={20} aria-hidden="true" />
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900 text-sm">
+            <div className="notification-drawer-title">
+              <span>
                 {JOB_TYPE_LABELS[job.job_type]}
               </span>
-              <Bell className="w-4 h-4 text-gray-400" />
+              <Bell size={16} aria-hidden="true" />
             </div>
-            <span className="text-xs text-gray-400">{job.id.slice(0, 8)}…</span>
+            <span className="notification-drawer-id">{job.id.slice(0, 8)}…</span>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="notification-drawer-header-actions">
           <span
-            className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColor[job.status] ?? "text-gray-500 bg-gray-100"}`}
+            className={`status-pill ${statusTone[job.status] ?? "neutral"}`}
           >
             {STATUS_LABELS[job.status] ?? job.status}
           </span>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
+          <button type="button" onClick={onClose} className="icon-button" aria-label="Close campaign details">
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
       </div>
 
       {isNotificationCampaignJobActive(job.status) && (
-        <div className="px-5 pt-3">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span className="capitalize">{job.progress.stage}</span>
+        <div className="notification-progress-block">
+          <div className="notification-progress-meta">
+            <span>{job.progress.stage}</span>
             <span>{job.progress.percent ?? 0}%</span>
           </div>
-          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="notification-progress-track" role="progressbar" aria-valuenow={job.progress.percent ?? 0} aria-valuemin={0} aria-valuemax={100}>
             <div
-              className="h-full bg-blue-500 transition-all duration-500"
+              className="notification-progress-fill"
               style={{ width: `${job.progress.percent ?? 0}%` }}
             />
           </div>
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+      <div className="notification-drawer-body">
         {(job.status === "segmenting" || job.status === "generating" || job.status === "validating") && (
-          <div className="flex flex-col items-center gap-3 py-8 text-gray-400">
-            <Clock className="w-8 h-8 animate-spin" />
-            <p className="text-sm capitalize">{job.status}…</p>
+          <div className="notification-job-loading">
+            <Clock size={32} className="is-spinning" aria-hidden="true" />
+            <p>{job.status}…</p>
           </div>
         )}
 
         {job.blocking_errors.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 space-y-1">
-            <p className="text-xs font-semibold text-red-700 flex items-center gap-1">
-              <XCircle className="w-3.5 h-3.5" /> Blocking errors
+          <div className="notification-callout danger">
+            <p className="notification-callout-title">
+              <XCircle size={15} aria-hidden="true" /> Blocking errors
             </p>
             {job.blocking_errors.map((e, i) => (
-              <p key={i} className="text-xs text-red-600">{e}</p>
+              <p key={i}>{e}</p>
             ))}
           </div>
         )}
 
         {job.warnings.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-1">
-            <p className="text-xs font-semibold text-amber-700 flex items-center gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" /> Warnings
+          <div className="notification-callout warning">
+            <p className="notification-callout-title">
+              <AlertTriangle size={15} aria-hidden="true" /> Warnings
             </p>
             {job.warnings.map((w, i) => (
-              <p key={i} className="text-xs text-amber-700">{w}</p>
+              <p key={i}>{w}</p>
             ))}
           </div>
         )}
 
         {job.artifact && job.status === "preview_ready" && (
-          <div className="border rounded-lg overflow-hidden">
+          <div className="notification-preview-section">
             <button
+              type="button"
               onClick={() => setPreviewExpanded((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-sm font-medium text-gray-700 hover:bg-gray-100"
+              className="notification-preview-toggle"
+              aria-expanded={previewExpanded}
             >
               <span>Preview</span>
               {previewExpanded ? (
-                <ChevronUp className="w-4 h-4" />
+                <ChevronUp size={16} aria-hidden="true" />
               ) : (
-                <ChevronDown className="w-4 h-4" />
+                <ChevronDown size={16} aria-hidden="true" />
               )}
             </button>
             {previewExpanded && (
-              <div className="px-4 py-3 space-y-3">
+              <div className="notification-preview-body">
                 <PreviewSummary job={job} />
               </div>
             )}
@@ -204,57 +207,60 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
         )}
 
         {job.status === "completed" && (
-          <div className="flex flex-col items-center gap-3 py-8 text-green-600">
-            <CheckCircle className="w-10 h-10" />
-            <p className="text-sm font-medium">Campaign sent successfully</p>
+          <div className="notification-job-complete">
+            <CheckCircle size={40} aria-hidden="true" />
+            <p>Campaign sent successfully</p>
             <DeliveryStats stats={job.delivery_stats} />
           </div>
         )}
 
         {job.status === "failed" && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm font-medium text-red-700">Job failed</p>
+          <div className="notification-callout danger">
+            <p className="notification-callout-title">Job failed</p>
             {job.error_message && (
-              <p className="text-xs text-red-600 mt-1">{job.error_message}</p>
+              <p>{job.error_message}</p>
             )}
           </div>
         )}
 
         {actionError && (
-          <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{actionError}</p>
+          <p className="form-error">{actionError}</p>
         )}
       </div>
 
-      <div className="px-5 py-4 border-t flex justify-between gap-3">
-        <div className="flex gap-2">
+      <div className="notification-drawer-footer">
+        <div className="notification-drawer-actions">
           {isNotificationCampaignJobActive(job.status) && job.status !== "sending" && (
             <button
+              type="button"
               onClick={handleCancel}
-              className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+              className="ghost-button small danger"
             >
               Cancel
             </button>
           )}
           {job.status === "failed" && (
             <button
+              type="button"
               onClick={handleRetry}
-              className="px-3 py-1.5 text-sm text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors flex items-center gap-1"
+              className="ghost-button small notification-action-button"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Retry
+              <RotateCcw size={15} aria-hidden="true" /> Retry
             </button>
           )}
         </div>
         {canApplyNotificationCampaignJob(job) && (
           <button
+            type="button"
             onClick={handleApply}
             disabled={applying}
-            className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+            className="primary-button"
           >
             {applying ? "Sending…" : "Send Campaign"}
           </button>
         )}
       </div>
-    </div>
+    </aside>
   );
 }
 
@@ -265,41 +271,41 @@ function PreviewSummary({ job }: { job: NotificationCampaignJob }) {
   const sampleUsers = (art.sample_users as Array<Record<string, unknown>>) ?? [];
 
   return (
-    <div className="space-y-3 text-sm">
-      <div className="grid grid-cols-2 gap-2">
+    <div className="notification-preview-summary">
+      <div className="notification-stat-grid two-columns">
         <Stat label="Audience size" value={String(art.audience_size ?? 0)} />
         <Stat
           label="FCM eligible"
           value={String(art.fcm_eligible ?? 0)}
-          color={Number(art.fcm_eligible ?? 0) > 0 ? "text-green-600" : "text-red-500"}
+          tone={Number(art.fcm_eligible ?? 0) > 0 ? "success" : "danger"}
         />
       </div>
 
       {contentPreview && (
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 space-y-1">
+        <div className="notification-content-preview">
           {!!aiCopy && (
-            <p className="text-xs font-semibold text-purple-700 flex items-center gap-1 mb-1">
-              <Sparkles className="w-3.5 h-3.5" /> AI-generated copy
+            <p className="notification-content-label">
+              <Sparkles size={15} aria-hidden="true" /> AI-generated copy
             </p>
           )}
-          <p className="text-xs font-semibold text-gray-700">
+          <p className="notification-content-title">
             {String(contentPreview.title ?? "")}
           </p>
-          <p className="text-xs text-gray-600">{String(contentPreview.body ?? "")}</p>
+          <p className="notification-content-body">{String(contentPreview.body ?? "")}</p>
         </div>
       )}
 
       {sampleUsers.length > 0 && (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-gray-500 flex items-center gap-1">
-            <Users className="w-3.5 h-3.5" /> Sample users ({sampleUsers.length})
+        <div className="notification-sample-users">
+          <p className="notification-sample-heading">
+            <Users size={15} aria-hidden="true" /> Sample users ({sampleUsers.length})
           </p>
-          <div className="divide-y text-xs">
+          <div className="notification-sample-list">
             {sampleUsers.map((u, i) => (
-              <div key={i} className="py-1 flex justify-between">
-                <span className="font-mono text-gray-600">{String(u.username ?? "")}</span>
-                <span className="text-gray-400">
-                  {String(u.cefr_level ?? "")} · {u.has_fcm ? "FCM ✓" : "no FCM"}
+              <div key={i} className="notification-sample-row">
+                <span className="mono">{String(u.username ?? "")}</span>
+                <span className="notification-sample-meta">
+                  {String(u.cefr_level ?? "")} · {u.has_fcm ? <><Check size={13} aria-hidden="true" /> FCM</> : "no FCM"}
                 </span>
               </div>
             ))}
@@ -308,7 +314,7 @@ function PreviewSummary({ job }: { job: NotificationCampaignJob }) {
       )}
 
       {!!art.scheduled_for && (
-        <p className="text-xs text-gray-400">
+        <p className="notification-scheduled">
           Scheduled: {new Date(String(art.scheduled_for)).toLocaleString()}
         </p>
       )}
@@ -319,16 +325,16 @@ function PreviewSummary({ job }: { job: NotificationCampaignJob }) {
 function Stat({
   label,
   value,
-  color = "text-gray-900",
+  tone = "default",
 }: {
   label: string;
   value: string;
-  color?: string;
+  tone?: "default" | "success" | "danger" | "muted";
 }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-2">
-      <p className="text-xs text-gray-500">{label}</p>
-      <p className={`text-lg font-bold ${color}`}>{value}</p>
+    <div className="notification-stat">
+      <p>{label}</p>
+      <strong className={`notification-stat-value ${tone}`}>{value}</strong>
     </div>
   );
 }
@@ -336,10 +342,10 @@ function Stat({
 function DeliveryStats({ stats }: { stats: Record<string, unknown> }) {
   if (!Object.keys(stats).length) return null;
   return (
-    <div className="grid grid-cols-3 gap-2 mt-2">
-      <Stat label="Sent" value={String(stats.sent ?? 0)} color="text-green-600" />
-      <Stat label="Failed" value={String(stats.failed ?? 0)} color="text-red-500" />
-      <Stat label="Skipped" value={String(stats.skipped ?? 0)} color="text-gray-500" />
+    <div className="notification-stat-grid three-columns">
+      <Stat label="Sent" value={String(stats.sent ?? 0)} tone="success" />
+      <Stat label="Failed" value={String(stats.failed ?? 0)} tone="danger" />
+      <Stat label="Skipped" value={String(stats.skipped ?? 0)} tone="muted" />
     </div>
   );
 }

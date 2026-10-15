@@ -317,6 +317,11 @@ class Settings(BaseSettings):
     REMINDER_SCAN_BATCH_SIZE: int = 250
     REMINDER_SCAN_INTERVAL_SECONDS: int = 300
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
+
+    # Event Worker — drains the content_interaction Redis Stream and
+    # recomputes recommender insights off the request path.
+    EVENT_WORKER_DRAIN_INTERVAL_SECONDS: int = 10
+    EVENT_WORKER_DRAIN_BATCH_SIZE: int = 500
     REMINDER_REVIEW_ROUTE: str = "/vocabulary/review"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
 
@@ -341,6 +346,7 @@ class Settings(BaseSettings):
 
     # ── External API Keys (Phase 0+ Content Features) ──
     YOUTUBE_API_KEY: str | None = None  # YouTube Data API v3
+    YOUTUBE_TRANSCRIPT_PROXY_URL: str | None = None
     NEWSAPI_KEY: str | None = None  # NewsAPI.org
     NEWSDATA_KEY: str | None = None  # NewsData.io (fallback)
     PODCASTINDEX_KEY: str | None = None  # PodcastIndex.org

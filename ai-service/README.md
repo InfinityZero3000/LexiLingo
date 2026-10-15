@@ -32,6 +32,24 @@
 - Message history
 - Conversation context
 
+## TRACE-CAG Benchmark
+
+The canonical benchmark calls the production
+`api.services.trace_cag.TraceCAGPipeline`; the old standalone simulator is not
+part of the current daily flow. Runbook and protocol details are in
+[`model-development/benchmark/README.md`](model-development/benchmark/README.md).
+
+```bash
+venv/bin/python model-development/benchmark/benchmark.py drift-safety \
+  --mode tracecag_full --n-clusters 5 \
+  --provider groq --model qwen/qwen3.8-27b
+
+venv/bin/python model-development/benchmark/run_daily_benchmark.py --day 5
+```
+
+The migrated 240-variant dataset remains exploratory until its pending review
+and placeholder-answer quality issues are resolved.
+
 ---
 
 ## API Endpoints

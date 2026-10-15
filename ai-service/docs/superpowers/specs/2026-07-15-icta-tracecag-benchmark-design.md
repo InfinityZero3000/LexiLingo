@@ -1,5 +1,11 @@
 # ICTA TRACE-CAG Benchmark and Paper Design
 
+> **Historical specification.** The execution protocol was superseded on
+> 2026-09-23 by the production-backed benchmark documented in
+> `model-development/benchmark/README.md` and
+> `docs/superpowers/plans/2026-09-19-production-driftbench.md`. Legacy modes and model values
+> below are preserved as design history, not current run instructions.
+
 ## Goal
 
 Produce a reproducible TRACE-CAG evaluation, compare it fairly with historical runs, audit the implementation against the paper, and use only verified evidence in an eight-page ICTA DOCM submission.

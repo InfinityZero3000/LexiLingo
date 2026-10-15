@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import defusedxml.ElementTree as ET
 
@@ -37,27 +39,41 @@ def _tag(local: str) -> str:
     return f"{{{_OEWN_NS}}}{local}"
 
 
+def _is_gzip(raw_path: Path) -> bool:
+    with raw_path.open("rb") as handle:
+        return handle.read(2) == b"\x1f\x8b"
+
+
 def parse(raw_path: Path) -> list[dict[str, Any]]:
     """Parse OEWN XML file. Returns one record per lemma/POS/sense combination."""
-    tree = ET.parse(str(raw_path))
-    root = tree.getroot()
+    # The pinned artifact is english-wordnet-<version>.xml.gz; an .xml-only
+    # fixture is what hid that this parsed nothing at all in production.
+    if _is_gzip(raw_path):
+        with gzip.open(raw_path, "rb") as handle:
+            root = ET.fromstring(handle.read())
+    else:
+        root = ET.parse(str(raw_path)).getroot()
+
+    # The published release declares WN-LMF only as a DOCTYPE, so its elements
+    # carry no namespace; other exports do namespace them. Follow the document.
+    tag = _tag if root.tag.startswith("{") else (lambda local: local)
 
     # Build synset definition index: synset_id → definition text
     synset_defs: dict[str, str] = {}
-    for lexicon in root.iter(_tag("Lexicon")):
-        for synset in lexicon.iter(_tag("Synset")):
+    for lexicon in root.iter(tag("Lexicon")):
+        for synset in lexicon.iter(tag("Synset")):
             ss_id = synset.get("id", "")
-            def_elem = synset.find(_tag("Definition"))
+            def_elem = synset.find(tag("Definition"))
             if def_elem is not None and def_elem.text:
                 synset_defs[ss_id] = def_elem.text.strip()
 
     records: list[dict[str, Any]] = []
 
-    for lexicon in root.iter(_tag("Lexicon")):
+    for lexicon in root.iter(tag("Lexicon")):
         lang = lexicon.get("language", "en")
-        for entry in lexicon.iter(_tag("LexicalEntry")):
+        for entry in lexicon.iter(tag("LexicalEntry")):
             entry_id = entry.get("id", "")
-            lemma_elem = entry.find(_tag("Lemma"))
+            lemma_elem = entry.find(tag("Lemma"))
             if lemma_elem is None:
                 continue
             written_form = (lemma_elem.get("writtenForm") or "").strip()
@@ -67,7 +83,7 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
 
             pos = _POS_MAP.get(pos_code, "phrase")
 
-            for sense in entry.iter(_tag("Sense")):
+            for sense in entry.iter(tag("Sense")):
                 sense_id = sense.get("id", "")
                 synset_id = sense.get("synset", "")
                 definition = synset_defs.get(synset_id, "")
@@ -75,7 +91,7 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
                 # Example sentences from SenseExample elements.
                 examples = [
                     ex.text.strip()
-                    for ex in sense.iter(_tag("SenseExample"))
+                    for ex in sense.iter(tag("SenseExample"))
                     if ex.text and ex.text.strip()
                 ]
 
@@ -89,7 +105,12 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
                     "part_of_speech": pos,
                     "definition": definition or None,
                     "example": examples[0] if examples else None,
-                    "source_url": f"https://en-word.net/lemma/{written_form}",
+                    # Multi-word lemmas ("'tween decks") must be escaped: the URL
+                    # validator rewrites the space, the rewritten value no longer
+                    # matches the record checksum, and the record is quarantined.
+                    "source_url": (
+                        f"https://en-word.net/lemma/{quote(written_form, safe='')}"
+                    ),
                     "language": lang,
                     "lineage": {
                         "adapter": SOURCE_NAME,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Full-screen overlay shown when a streak milestone is reached (7, 14, 30, 60, 100, 365 days).
 class StreakMilestoneOverlay extends StatefulWidget {
@@ -148,7 +149,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                   children: [
                     // Fire emoji header
                     Text(
-                      '🔥 Streak Milestone!',
+                      'progress.streakMilestone'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -194,7 +195,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                       ),
                     ),
                     Text(
-                      'days in a row',
+                      'progress.daysInARow'.tr(),
                       style: TextStyle(
                         fontSize: 14,
                         color: AppColorRoles.textMuted(isDark),
@@ -218,7 +219,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
 
                     // Tap hint
                     Text(
-                      'Tap anywhere to continue',
+                      'common.tapAnywhereToContinue'.tr(),
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColorRoles.textMuted(isDark).withValues(

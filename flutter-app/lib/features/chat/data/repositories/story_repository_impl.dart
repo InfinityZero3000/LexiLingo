@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/error/failure_mapper.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../domain/entities/story.dart';
@@ -50,7 +51,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getStories error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -64,7 +65,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getStoryDetails error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -84,7 +85,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'warmTopicCache error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -98,7 +99,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getCategories error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -122,7 +123,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'startTopicSession error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -144,7 +145,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'sendTopicMessage error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -173,7 +174,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getTopicSession error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -189,7 +190,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getTopicMessages error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -235,7 +236,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'getTopicMessagesPaged error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 
@@ -249,7 +250,7 @@ class StoryRepositoryImpl implements StoryRepository {
       return Left(ServerFailure(e.message));
     } catch (e) {
       logError(_tag, 'checkLlmHealth error: $e');
-      return Left(ServerFailure(e.toString()));
+      return Left(mapFailure(e));
     }
   }
 }

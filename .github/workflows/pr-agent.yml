@@ -43,6 +43,13 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           config.model: "google/gemini-2.5-flash"
+          # pr-agent only knows the context window of models in its own
+          # MAX_TOKENS table, and this one is not in it — without this every run
+          # ends "Ensure google/gemini-2.5-flash is defined in MAX_TOKENS", so
+          # the check has been failing on every PR for configuration reasons
+          # rather than anything in the diff. 1,048,576 is Gemini 2.5 Flash's
+          # input window.
+          config.custom_model_max_tokens: "1048576"
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "true"
           github_action_config.auto_improve: "false"

@@ -1,5 +1,9 @@
 # TRACE-CAG Full Benchmark Run Design
 
+> **Historical specification.** Model settings and commands below describe the
+> July 2026 protocol. The current production-backed runbook is
+> `model-development/benchmark/README.md`.
+
 ## Objective
 
 Run a production-backed TRACE-CAG benchmark, monitor the results, identify real

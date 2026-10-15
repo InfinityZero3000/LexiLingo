@@ -128,7 +128,7 @@ class _XPProgressBarState extends State<XPProgressBar>
                       ),
                     ),
                     Text(
-                      '${widget.totalXp} total XP',
+                      'gamification.totalXp'.tr(namedArgs: {'xp': '${widget.totalXp}'}),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -155,7 +155,7 @@ class _XPProgressBarState extends State<XPProgressBar>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${widget.progressPercent.toStringAsFixed(0)}% to next level',
+              'games.percentToNextLevel'.tr(namedArgs: {'percent': widget.progressPercent.toStringAsFixed(0)}),
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,

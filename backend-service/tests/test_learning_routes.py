@@ -521,6 +521,47 @@ class TestCourseRoadmap:
             # (depends on test data setup)
             assert "is_locked" in second_lesson
     
+    async def test_roadmap_hides_lessons_without_exercises(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_course_with_units: Course,
+    ):
+        """Unplayable lessons must not appear — they'd dead-end the unlock chain."""
+        unit_result = await db_session.execute(
+            select(Unit)
+            .where(Unit.course_id == test_course_with_units.id)
+            .order_by(Unit.order_index)
+        )
+        first_unit = unit_result.scalars().first()
+        db_session.add(
+            Lesson(
+                course_id=test_course_with_units.id,
+                unit_id=first_unit.id,
+                title="Unauthored Lesson",
+                order_index=99,
+                lesson_type="lesson",
+                content={"exercises": []},
+            )
+        )
+        await db_session.commit()
+
+        response = await async_client.get(
+            f"/api/v1/learning/courses/{test_course_with_units.id}/roadmap",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        roadmap = response.json()["data"]
+        titles = [
+            lesson["title"]
+            for unit in roadmap["units"]
+            for lesson in unit["lessons"]
+        ]
+        assert "Unauthored Lesson" not in titles
+        assert roadmap["total_lessons"] == len(titles)
+
     async def test_roadmap_not_found(
         self,
         async_client: AsyncClient,
@@ -534,3 +575,31 @@ class TestCourseRoadmap:
         )
         
         assert response.status_code == 404
+
+
+def test_lesson_complete_response_accepts_achievement_ids():
+    """Regression: completing a lesson 500'd whenever achievements unlocked.
+
+    check_achievements_for_user returns dicts; LessonCompleteResponse and the
+    Flutter model both want bare ids. Only a learner who actually unlocked
+    something hit it, so a fresh test user never reproduced the bug.
+    """
+    import uuid
+
+    import pytest
+    from pydantic import ValidationError
+
+    from app.schemas.progress import LessonCompleteResponse
+
+    rich = {"id": str(uuid.uuid4()), "name": "First Lesson", "badge_icon": "star"}
+    base = dict(
+        attempt_id=uuid.uuid4(), passed=True, final_score=100.0, total_xp_earned=12,
+        time_spent_seconds=9, accuracy=100.0, stars_earned=3, next_lesson_unlocked=None,
+        total_questions=5, correct_answers=5, wrong_answers=0, hints_used=0,
+    )
+
+    with pytest.raises(ValidationError):
+        LessonCompleteResponse(**base, achievements_unlocked=[rich])
+
+    resp = LessonCompleteResponse(**base, achievements_unlocked=[rich["id"]])
+    assert str(resp.achievements_unlocked[0]) == rich["id"]

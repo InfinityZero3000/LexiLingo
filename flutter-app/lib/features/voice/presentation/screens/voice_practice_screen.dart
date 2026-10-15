@@ -266,6 +266,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         }
         await _player.play();
 
+        if (!mounted) return;
         setState(() {
           _isPlaying = true;
           _isPreparingExample = false;

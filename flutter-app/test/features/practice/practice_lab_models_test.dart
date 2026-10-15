@@ -75,15 +75,14 @@ void main() {
       },
     );
 
-    test('marks writing practice as premium-only soft gate', () {
+    test('no catalog item is premium-only', () {
+      // Writing used to carry premiumOnly here, but it only navigated to
+      // Lexi chat, which is free from its own tab anyway — locking entry was
+      // a dead end a free learner could just route around. The real premium
+      // perk moved server-side: a daily message cap on Lexi chat.
       final items = buildPracticeLabItems();
 
-      final premiumItems = items
-          .where((item) => item.premiumOnly)
-          .map((item) => item.skill)
-          .toList();
-
-      expect(premiumItems, [SkillType.writing]);
+      expect(items.where((item) => item.premiumOnly), isEmpty);
     });
   });
 }

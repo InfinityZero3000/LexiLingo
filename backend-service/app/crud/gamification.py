@@ -191,18 +191,27 @@ class WalletCRUD:
         commit: bool = True,
     ) -> Tuple[UserWallet, WalletTransaction]:
         """Add gems to user's wallet"""
-        wallet = await WalletCRUD.get_or_create_wallet(
+        if amount <= 0:
+            # A negative "add" is a spend that skips the balance check.
+            raise ValueError(f"add_gems amount must be positive, got {amount}")
+        await WalletCRUD.get_or_create_wallet(
             db,
             user_id,
             commit=commit,
         )
+        # populate_existing: get_or_create_wallet's own lookup (unlocked, when
+        # the wallet already exists) put this row in the identity map — without
+        # this, SQLAlchemy returns that cached object as-is instead of refreshing
+        # it from the row we just locked, so a concurrent committed change made
+        # between the two selects would be silently overwritten below.
         result = await db.execute(
             select(UserWallet)
             .where(UserWallet.user_id == user_id)
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         wallet = result.scalar_one()
-        
+
         wallet.gems += amount
         wallet.total_gems_earned += amount
         
@@ -239,11 +248,19 @@ class WalletCRUD:
     ) -> Tuple[Optional[UserWallet], Optional[WalletTransaction]]:
         """Spend gems from wallet. Returns None if insufficient balance.
         Uses SELECT FOR UPDATE to prevent double-spending race conditions."""
-        # Lock the wallet row to prevent concurrent spending
+        if amount <= 0:
+            # `gems < amount` is never true for a negative amount, and
+            # `gems -= amount` then credits the wallet — the shop's
+            # quantity=-N exploit. Reject it here so no caller can reach it.
+            raise ValueError(f"spend_gems amount must be positive, got {amount}")
+        # Lock the wallet row to prevent concurrent spending. populate_existing
+        # guards against the same identity-map staleness as add_gems above, in
+        # case a caller already loaded this wallet earlier in the session.
         result = await db.execute(
             select(UserWallet)
             .where(UserWallet.user_id == user_id)
             .with_for_update()
+            .execution_options(populate_existing=True)
         )
         wallet = result.scalar_one_or_none()
         if not wallet:

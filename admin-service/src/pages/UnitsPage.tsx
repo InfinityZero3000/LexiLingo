@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -136,23 +137,25 @@ export const UnitsPage = () => {
 
       {error && <div className="form-error">{error}</div>}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flex: 1, minWidth: 300 }}>
-            <form onSubmit={handleSearch} style={{ display: "flex", gap: 8, flex: 1 }}>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
+          <div className="filter-group filter-group-grow">
+            <form onSubmit={handleSearch} className="filter-search-form">
               <input
+                className="search-input"
                 placeholder={t.units.searchPlaceholder}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{ flex: 1, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
               />
-              <button className="ghost-button" type="submit">{t.common.search}</button>
+              <button className="icon-button filter-search-button" type="submit" aria-label={t.common.search} title={t.common.search}>
+                <Search size={18} aria-hidden="true" />
+              </button>
             </form>
             {isStandalone && (
               <select
+                className="filter-select"
                 value={selectedCourseId}
                 onChange={(e) => setSelectedCourseId(e.target.value)}
-                style={{ minWidth: 220, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
               >
                 <option value="">-- Tất cả khóa học --</option>
                 {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}

@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
@@ -143,11 +144,21 @@ class _CourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final levelColor = getLevelColor(course.level, isDark: isDark);
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return GestureDetector(
       onTap: () {
+        trackContentInteraction(
+          itemType: 'course',
+          itemId: course.id,
+          action: 'open',
+          topic: course.tags.isNotEmpty ? course.tags.first : null,
+          source: 'home_featured',
+        );
         LearnerRoute.push(
           context,
           (_) => CourseDetailScreen(
@@ -161,7 +172,7 @@ class _CourseCard extends StatelessWidget {
       child: Container(
         width: 240,
         margin: const EdgeInsets.only(right: 16),
-        decoration: Theme.of(context).extension<AppTactileTheme>()!.decoration(
+        decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
           fill: isDark ? AppColors.surfaceDarkMuted : Colors.white,
           accent: levelColor,
@@ -404,6 +415,8 @@ class _FeaturedCourseThumbnail extends StatelessWidget {
 
     return CachedNetworkImage(
       imageUrl: candidates[index],
+      cacheKey: 'featured-course-image-${course.id}|${candidates[index]}',
+      memCacheWidth: 480,
       fit: BoxFit.cover,
       placeholder: (_, __) =>
           Container(color: levelColor.withValues(alpha: 0.1)),

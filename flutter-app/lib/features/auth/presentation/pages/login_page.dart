@@ -385,6 +385,7 @@ class _LoginPageState extends State<LoginPage> {
 
                                   if (authProvider.isAuthenticated) {
                                     await _persistCredentialPreference();
+                                    if (!mounted) return;
                                     setState(() => _failedAttempts = 0);
                                   } else if (_isEmailNotVerifiedMessage(
                                     authProvider.errorMessage,
@@ -458,7 +459,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'If this account uses Google, tap Google below.',
+                        'auth.googleAccountHint'.tr(),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: isDark

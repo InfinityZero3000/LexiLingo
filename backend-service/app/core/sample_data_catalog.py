@@ -144,8 +144,15 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "multiple_choice",
                                 "ui_type": "vocabulary_flashcard",
                                 "question": "Learn the card: 'Routine'",
-                                "options": [{"id": "0", "text": "Got it!", "is_correct": True}],
-                                "correct_answer": "Got it!",
+                                # A single "Got it!" option grades itself correct
+                                # and pays XP for a tap — the card has to ask.
+                                "options": [
+                                    {"id": "0", "text": "Việc làm hằng ngày", "is_correct": True},
+                                    {"id": "1", "text": "Chuyến đi xa", "is_correct": False},
+                                    {"id": "2", "text": "Bữa tiệc bất ngờ", "is_correct": False},
+                                    {"id": "3", "text": "Kỳ nghỉ dài", "is_correct": False},
+                                ],
+                                "correct_answer": "Việc làm hằng ngày",
                                 "explanation": "Routine is a sequence of actions regularly followed."
                             }
                         ]
@@ -240,7 +247,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "categorization",
                                 "question": "Categorize the pronouns: Singular vs Plural",
-                                "options": [{"id": "he", "text": "Singular"}, {"id": "they", "text": "Plural"}],
+                                "options": ["he", "they", "Singular", "Plural"],
                                 "correct_answer": "he:Singular, they:Plural",
                                 "explanation": "He is singular, they is plural."
                             }
@@ -289,7 +296,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "match_word_to_meaning",
                                 "question": "Match the family words with meanings.",
-                                "options": [{"id": "father", "text": "Male parent"}, {"id": "mother", "text": "Female parent"}],
+                                "options": ["father", "mother", "Male parent", "Female parent"],
                                 "correct_answer": "father:Male parent, mother:Female parent",
                                 "explanation": "Father is male parent, mother is female."
                             },
@@ -306,7 +313,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "cognitive_fluidity",
                                 "question": "Match: mother, sister",
-                                "options": [{"id": "mother", "text": "female parent"}, {"id": "sister", "text": "female sibling"}],
+                                "options": ["mother", "sister", "female parent", "female sibling"],
                                 "correct_answer": "mother:female parent, sister:female sibling",
                                 "explanation": "Fast match."
                             },
@@ -314,9 +321,14 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "id": "ex_v1_5",
                                 "type": "multiple_choice",
                                 "ui_type": "vocabulary_flashcard",
-                                "question": "Learn: 'Sibling' (anh chị em ruột)",
-                                "options": [{"id": "0", "text": "Got it!", "is_correct": True}],
-                                "correct_answer": "Got it!",
+                                "question": "Learn: 'Sibling'",
+                                "options": [
+                                    {"id": "0", "text": "Anh chị em ruột", "is_correct": True},
+                                    {"id": "1", "text": "Cha mẹ", "is_correct": False},
+                                    {"id": "2", "text": "Ông bà", "is_correct": False},
+                                    {"id": "3", "text": "Hàng xóm", "is_correct": False},
+                                ],
+                                "correct_answer": "Anh chị em ruột",
                                 "explanation": "A sibling is a brother or sister."
                             },
                             {
@@ -386,7 +398,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "matching",
                                 "ui_type": "match_word_to_meaning",
                                 "question": "Match rooms with objects.",
-                                "options": [{"id": "bedroom", "text": "bed"}, {"id": "kitchen", "text": "fridge"}],
+                                "options": ["bedroom", "kitchen", "bed", "fridge"],
                                 "correct_answer": "bedroom:bed, kitchen:fridge",
                                 "explanation": "Bed in bedroom, fridge in kitchen."
                             },
@@ -455,8 +467,13 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "multiple_choice",
                                 "ui_type": "vocabulary_flashcard",
                                 "question": "Learn: 'Furnishings'",
-                                "options": [{"id": "0", "text": "Got it!", "is_correct": True}],
-                                "correct_answer": "Got it!",
+                                "options": [
+                                    {"id": "0", "text": "Đồ đạc trong phòng", "is_correct": True},
+                                    {"id": "1", "text": "Quần áo mùa đông", "is_correct": False},
+                                    {"id": "2", "text": "Dụng cụ nhà bếp", "is_correct": False},
+                                    {"id": "3", "text": "Cây cảnh ngoài vườn", "is_correct": False},
+                                ],
+                                "correct_answer": "Đồ đạc trong phòng",
                                 "explanation": "Furniture and appliances in a room."
                             }
                         ]

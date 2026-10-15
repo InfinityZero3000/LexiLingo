@@ -784,8 +784,9 @@ class TestProxyEndpoints:
     async def test_proxy_image_success(self, no_db_client: AsyncClient):
         target_url = "https://www.gutenberg.org/cache/epub/2591/pg2591.cover.medium.jpg"
         
-        # Mock httpx.AsyncClient inside the route
-        with patch("app.routes.books.httpx.AsyncClient") as mock_client_class:
+        with patch("app.routes.books.httpx.AsyncClient") as mock_client_class, patch(
+            "app.routes.books.safe_get", new_callable=AsyncMock
+        ) as mock_safe_get:
             mock_client = MagicMock()
             mock_client_class.return_value.__aenter__.return_value = mock_client
             
@@ -793,7 +794,7 @@ class TestProxyEndpoints:
             mock_resp.status_code = 200
             mock_resp.content = b"fakeimagebinary"
             mock_resp.headers = {"content-type": "image/jpeg"}
-            mock_client.get = AsyncMock(return_value=mock_resp)
+            mock_safe_get.return_value = mock_resp
 
             response = await no_db_client.get(f"{BASE}/proxy/image?url={target_url}")
 
@@ -813,8 +814,9 @@ class TestProxyEndpoints:
     async def test_proxy_text_success(self, no_db_client: AsyncClient):
         target_url = "https://www.gutenberg.org/cache/epub/2591/pg2591.txt"
         
-        # Mock httpx.AsyncClient inside the route
-        with patch("app.routes.books.httpx.AsyncClient") as mock_client_class:
+        with patch("app.routes.books.httpx.AsyncClient") as mock_client_class, patch(
+            "app.routes.books.safe_get", new_callable=AsyncMock
+        ) as mock_safe_get:
             mock_client = MagicMock()
             mock_client_class.return_value.__aenter__.return_value = mock_client
             
@@ -822,7 +824,7 @@ class TestProxyEndpoints:
             mock_resp.status_code = 200
             mock_resp.content = b"Chapter 1: Once upon a time..."
             mock_resp.headers = {"content-type": "text/plain; charset=utf-8"}
-            mock_client.get = AsyncMock(return_value=mock_resp)
+            mock_safe_get.return_value = mock_resp
 
             response = await no_db_client.get(f"{BASE}/proxy/text?url={target_url}")
 

@@ -3,6 +3,7 @@ import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 Future<void> showQuickSaveWordSheet(
   BuildContext context, {
@@ -107,8 +108,8 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
       if (!widget.hostContext.mounted) return;
       final messenger = ScaffoldMessenger.maybeOf(widget.hostContext);
       messenger?.showSnackBar(
-        const SnackBar(
-          content: Text('Failed to save word to vocabulary.'),
+        SnackBar(
+          content: Text('vocabulary.saveWordFailed'.tr()),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.errorBright,
         ),
@@ -142,7 +143,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Save to Vocabulary',
+            'vocabulary.saveToVocabulary'.tr(),
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.w700,
@@ -186,7 +187,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
                   onPressed: _isSaving
                       ? null
                       : () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                  child: Text('common.cancel'.tr()),
                 ),
               ),
               const SizedBox(width: 12),
@@ -199,7 +200,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
                           height: 16,
                           child: LottieLoadingWidget.tiny(),
                         )
-                      : const Text('Save Word'),
+                      : Text('vocabulary.saveWord'.tr()),
                 ),
               ),
             ],

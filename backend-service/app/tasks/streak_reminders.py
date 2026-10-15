@@ -6,19 +6,27 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 
+from sqlalchemy import select
+
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 from app.models.progress import Streak
 from app.models.user import UserDevice
 from app.services.push_notification_service import PushNotificationService
-from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
 
 
 @celery_app.task(name="app.tasks.streak_reminders.send_streak_alerts")
 def send_streak_alerts() -> dict:
-    return asyncio.run(_send_streak_alerts())
+    return asyncio.run(_with_db_cleanup(_send_streak_alerts()))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _send_streak_alerts() -> dict:

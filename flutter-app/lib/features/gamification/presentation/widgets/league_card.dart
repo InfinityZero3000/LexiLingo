@@ -101,7 +101,7 @@ class LeagueCard extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       _RankMetricChip(
-                        label: 'Score',
+                        label: 'gamification.score'.tr(),
                         value: status.rankScore.toStringAsFixed(0),
                         color: leagueData.color,
                       ),
@@ -256,12 +256,12 @@ class LeagueCard extends StatelessWidget {
                     runSpacing: 6,
                     children: [
                       _RankMetricChip(
-                        label: 'Hạng',
+                        label: 'gamification.rankLabel'.tr(),
                         value: '#${entry.rank}',
                         color: rankColor,
                       ),
                       _RankMetricChip(
-                        label: 'Lessons',
+                        label: 'course.lessons'.tr(),
                         value: '${entry.lessonsCompleted}',
                         color: leagueData.color,
                       ),

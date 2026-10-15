@@ -13,6 +13,7 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import '../widgets/bookmark_button.dart';
 import '../widgets/reader_controls.dart';
+import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 
 /// Paginated plain-text reader with font controls, theme, bookmarks, and XP.
 ///
@@ -28,12 +29,22 @@ class BookReaderScreen extends StatefulWidget {
 
 class _BookReaderScreenState extends State<BookReaderScreen> {
   final PageController _pageController = PageController();
+
+  /// Time with the book open is practice, credited in idempotent chunks and
+  /// only while the learner is actually turning pages.
+  late final ContentTimeTracker _readingTime;
+
   bool _isCurrentPageBookmarked = false;
   bool _showControls = true;
 
   @override
   void initState() {
     super.initState();
+    _readingTime = ContentTimeTracker(
+      source: 'book',
+      sourceIdPrefix: 'read:${widget.book.id}',
+      sourceDetail: 'reading_time',
+    )..start();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<BookProvider>();
       await provider.loadBookText();
@@ -47,6 +58,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 
   @override
   void dispose() {
+    _readingTime.stop();
     _pageController.dispose();
     super.dispose();
   }
@@ -57,11 +69,14 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
   }
 
   Future<void> _onPageChanged(int page) async {
+    // Turning a page is the proof someone is reading.
+    _readingTime.markActive();
     await context.read<BookProvider>().goToPage(page);
     _refreshBookmarkState();
   }
 
   void _toggleControls() {
+    _readingTime.markActive();
     setState(() => _showControls = !_showControls);
   }
 

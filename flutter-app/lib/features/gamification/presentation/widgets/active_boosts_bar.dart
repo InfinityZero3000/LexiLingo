@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/inventory_item.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Horizontal bar displaying all currently active boosts with live countdown.
 /// Returns [SizedBox.shrink] when there are no active boosts.
@@ -25,7 +26,7 @@ class ActiveBoostsBar extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'ACTIVE BOOSTS',
+                'gamification.activeBoosts'.tr(),
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,

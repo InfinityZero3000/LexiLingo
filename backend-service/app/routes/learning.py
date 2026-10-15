@@ -3,7 +3,6 @@ Learning Session Routes
 Endpoints for lesson attempts and learning sessions (Start/Submit/Complete)
 """
 
-import hashlib
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -17,13 +16,8 @@ from app.core.database import get_db
 from app.core.cache import build_cache_key, delete_cached
 from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.models.learner_state import LearnerObservationEvent
-from app.services.learner_state import (
-    ObservationInput,
-    apply_observation_event,
-    ingest_observations,
-)
-from app.services.streak_service import update_user_streak
+from app.services.learner_state import record_concept_observation
+from app.services.streak_service import record_daily_activity, update_user_streak
 from app.models.user import User
 from app.models.course import Course, Unit, Lesson
 from app.models.progress import (
@@ -50,7 +44,8 @@ from app.schemas.course import LessonContentResponse, Exercise, ExerciseOption
 from app.schemas.response import ApiResponse
 from app.services import check_achievements_for_user
 from app.services.proficiency_service import ProficiencyService
-from app.schemas.proficiency import ExerciseResult, ProficiencyLevel
+from app.services.skill_attribution import attribute_exercises
+from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
 from app.routes.proficiency import record_exercise_results_for_user
 from app.crud.progress import ProgressCRUD
 from app.services.level_service import (
@@ -124,10 +119,8 @@ async def start_lesson(
         )
     
     # Determine total questions dynamically from lesson content or demo fallback
-    total_questions = 10
-    if lesson.content and isinstance(lesson.content, dict) and lesson.content.get("exercises"):
-        total_questions = len(lesson.content["exercises"])
-    else:
+    total_questions = lesson.exercise_count
+    if total_questions == 0:
         if settings.is_production:
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
@@ -338,9 +331,16 @@ def _generate_demo_exercises(lesson_title: str) -> List[Exercise]:
         [
             Exercise(
                 id="1", type="multiple_choice", ui_type="vocabulary_flashcard",
-                question="Learn the word: 'Persevere' (kiên trì)",
-                options=[ExerciseOption(id="0", text="Got it!", is_correct=True)],
-                correct_answer="Got it!",
+                question="Learn the word: 'Persevere'",
+                # Never a lone "Got it!": that grades itself correct and pays XP
+                # for a tap.
+                options=[
+                    ExerciseOption(id="0", text="Kiên trì theo đuổi", is_correct=True),
+                    ExerciseOption(id="1", text="Bỏ cuộc sớm", is_correct=False),
+                    ExerciseOption(id="2", text="Nghỉ ngơi đầy đủ", is_correct=False),
+                    ExerciseOption(id="3", text="Thay đổi kế hoạch", is_correct=False),
+                ],
+                correct_answer="Kiên trì theo đuổi",
                 explanation="To persevere means to continue in spite of difficulty.",
                 difficulty=1, points=10
             ),
@@ -589,6 +589,7 @@ async def submit_answer(
             user_id=current_user.id,
             concept_id=concept_id,
             is_correct=is_correct,
+            question_format=request.question_type.value,
         )
 
     # Calculate XP based on correctness, hint usage, and time
@@ -654,41 +655,27 @@ async def _emit_concept_observation(
     user_id: UUID,
     concept_id: str,
     is_correct: bool,
+    question_format: str | None = None,
 ) -> None:
     """Feed a lesson-exercise answer into the unified learner_concept_state
     engine (same one vocabulary review uses — app/crud/vocabulary.py
     submit_review). Applied synchronously in this request's transaction so
     mastery is immediately queryable, not just eventually via the outbox
     worker. Best-effort: any failure here must never break answer submission."""
-    now = datetime.now(timezone.utc)
-    event_id = hashlib.sha256(
-        f"{user_id}:{concept_id}:{now.isoformat()}".encode("utf-8")
-    ).hexdigest()
     try:
         # SAVEPOINT: a failure here must roll back only this observation,
         # not abort the outer transaction that still needs to persist the
         # QuestionAttempt/lesson-progress writes that follow in the caller.
         async with db.begin_nested():
-            await ingest_observations(
+            await record_concept_observation(
                 db,
-                [
-                    ObservationInput(
-                        event_id=event_id,
-                        user_id=user_id,
-                        concept_id=concept_id,
-                        outcome="correct" if is_correct else "incorrect",
-                        confidence=0.8,
-                        observed_at=now,
-                    )
-                ],
+                user_id=user_id,
+                concept_id=concept_id,
+                outcome="correct" if is_correct else "incorrect",
+                confidence=0.8,
+                source="lesson_answer",
+                question_format=question_format,
             )
-            event_db_id = await db.scalar(
-                select(LearnerObservationEvent.id).where(
-                    LearnerObservationEvent.event_id == event_id
-                )
-            )
-            if event_db_id is not None:
-                await apply_observation_event(db, event_db_id, now=now)
     except Exception:
         logger.exception(
             "Failed to record concept observation for user=%s concept=%s",
@@ -718,13 +705,20 @@ async def _validate_answer(
                 correct_answer = str(ex.get('correct_answer', ''))
                 explanation = ex.get('explanation', 'Check the correct answer and try again.')
 
+                ui_type = ex.get("ui_type")
                 is_correct = _answers_match(
                     user_answer,
                     correct_answer,
                     question_type,
-                    ex.get("ui_type"),
+                    ui_type,
                 )
-                return is_correct, correct_answer, explanation, ex.get("concept_id")
+                # A free-form answer we merely accepted is not evidence about
+                # the concept: we know the learner wrote something, not whether
+                # they were right. Withholding concept_id keeps that guess out
+                # of the BKT/FSRS schedule, which would otherwise move mastery
+                # on an outcome nothing actually verified.
+                concept_id = None if _is_free_form_writing(ui_type) else ex.get("concept_id")
+                return is_correct, correct_answer, explanation, concept_id
 
     # Fallback: look up in the dynamic demo exercise set for this lesson
     if lesson and not settings.is_production:
@@ -797,6 +791,78 @@ async def _find_next_lesson(db: AsyncSession, current_lesson: Lesson) -> Optiona
     return first.id if first else None
 
 
+async def _skill_results_for_attempt(
+    db: AsyncSession,
+    *,
+    attempt,
+    lesson,
+    course,
+    lesson_skill: SkillType,
+) -> List[ExerciseResult]:
+    """One ExerciseResult per skill the learner actually exercised.
+
+    A lesson mixes templates — an IELTS reading lesson carries writing tasks,
+    a vocabulary lesson carries dictation — so crediting the whole attempt to
+    `lesson.skill` measured the label instead of the work. Each answered
+    exercise is attributed from its own `ui_type` (see
+    `services/skill_attribution.py`); anything unattributable is left out.
+
+    Falls back to the single aggregate result when the attempt recorded no
+    per-question rows, which is what clients that only call /complete produce.
+    """
+    aggregate = ExerciseResult(
+        exercise_type="lesson",
+        skill=lesson_skill,
+        difficulty_level=ProficiencyLevel(course.level),
+        is_correct=attempt.passed,
+        score=float(attempt.score),
+        time_spent_seconds=attempt.time_spent_ms // 1000,
+        lesson_id=str(attempt.lesson_id),
+        course_id=str(lesson.course_id),
+    )
+
+    exercises = (
+        lesson.content.get("exercises") if isinstance(lesson.content, dict) else None
+    )
+    if not exercises:
+        return [aggregate]
+
+    rows = await db.execute(
+        select(QuestionAttempt).where(
+            QuestionAttempt.lesson_attempt_id == attempt.id
+        )
+    )
+    # Last answer wins: a retried question is stored as a second row.
+    outcomes = {
+        str(row.question_id): bool(row.is_correct)
+        for row in sorted(rows.scalars().all(), key=lambda r: r.attempt_number)
+    }
+    if not outcomes:
+        return [aggregate]
+
+    by_skill = attribute_exercises(exercises, outcomes, lesson_skill=lesson_skill)
+    if not by_skill:
+        return [aggregate]
+
+    seconds = attempt.time_spent_ms // 1000
+    total_answered = sum(len(v) for v in by_skill.values()) or 1
+    return [
+        ExerciseResult(
+            exercise_type="lesson",
+            skill=skill,
+            difficulty_level=ProficiencyLevel(course.level),
+            is_correct=all(items),
+            score=round(100.0 * sum(items) / len(items), 2),
+            # Split the attempt's time across skills by how much of the work
+            # each one carried, so a one-exercise skill cannot claim the lot.
+            time_spent_seconds=int(seconds * len(items) / total_answered),
+            lesson_id=str(attempt.lesson_id),
+            course_id=str(lesson.course_id),
+        )
+        for skill, items in by_skill.items()
+    ]
+
+
 def _normalize_answer(answer: any, question_type: str) -> str:
     """Normalize answer for comparison"""
     if answer is None:
@@ -833,6 +899,33 @@ def _normalize_answer(answer: any, question_type: str) -> str:
     return ans_str
 
 
+# Exercises whose answer is the learner's own words. A model answer exists, but
+# it is one acceptable phrasing out of many — "Cartels see soccer as a way to
+# gain power." is a correct response to a prompt whose stored answer reads "The
+# cartels want to use soccer to gain power", and no string comparison will ever
+# agree. Dictation and translation are deliberately absent: those do have one
+# right answer, so matching them exactly is correct.
+_FREE_FORM_WRITING_UI_TYPES = {"short_writing_answer"}
+
+# Shortest response worth treating as an attempt rather than a stray keypress.
+_MIN_FREE_FORM_ANSWER_CHARS = 3
+
+
+def _is_free_form_writing(ui_type: Optional[str]) -> bool:
+    return str(ui_type or "").lower() in _FREE_FORM_WRITING_UI_TYPES
+
+
+def _free_form_answer_is_substantive(user_answer: any) -> bool:
+    """Whether the learner actually wrote something.
+
+    This is all we can honestly assess for a free-form answer without a grader
+    that understands meaning. It deliberately does not claim the answer is
+    *right* — see _validate_answer, which withholds the concept evidence for
+    these so a good answer we cannot grade never counts as a mistake.
+    """
+    return len(_normalize_answer(user_answer, "translate")) >= _MIN_FREE_FORM_ANSWER_CHARS
+
+
 def _answers_match(
     user_answer: any,
     correct_answer: any,
@@ -844,6 +937,12 @@ def _answers_match(
         "pronunciation_practice",
     }:
         return _speaking_answers_match(user_answer, correct_answer)
+
+    if _is_free_form_writing(ui_type):
+        # Marking these wrong would punish the learner for the grader's limits:
+        # every non-verbatim answer scored 0, dragging down the lesson score,
+        # the skill it credits and the spaced-repetition schedule at once.
+        return _free_form_answer_is_substantive(user_answer)
 
     return _normalize_answer(user_answer, question_type) == _normalize_answer(
         correct_answer,
@@ -1014,55 +1113,24 @@ async def complete_lesson(
         apply_rank_info_to_user(current_user, new_rank_info)
         
         # --- Update DailyActivity ---
-        from datetime import date as date_type
-        today = date_type.today()
-        daily_result = await db.execute(
-            select(DailyActivity).where(
-                and_(
-                    DailyActivity.user_id == current_user.id,
-                    DailyActivity.activity_date == today,
-                )
-            )
+        await record_daily_activity(
+            db,
+            current_user.id,
+            xp_earned=xp_to_award,
+            lessons_completed=1,
+            study_time_minutes=attempt.time_spent_ms // 60_000,
         )
-        daily_activity = daily_result.scalar_one_or_none()
-        
-        if daily_activity:
-            daily_activity.xp_earned = (daily_activity.xp_earned or 0) + xp_to_award
-            daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
-        else:
-            daily_activity = DailyActivity(
-                user_id=current_user.id,
-                activity_date=today,
-                xp_earned=xp_to_award,
-                lessons_completed=1,
-            )
-            db.add(daily_activity)
     elif attempt.passed:
-        # If passed but no new XP was awarded (already passed before),
-        # still increment completed lessons in DailyActivity for active engagement.
-        from datetime import date as date_type
-        today = date_type.today()
-        daily_result = await db.execute(
-            select(DailyActivity).where(
-                and_(
-                    DailyActivity.user_id == current_user.id,
-                    DailyActivity.activity_date == today,
-                )
-            )
+        # Passed before, so no new XP — but the lesson was still played, and
+        # both the completion count and the time at it are real.
+        await record_daily_activity(
+            db,
+            current_user.id,
+            lessons_completed=1,
+            study_time_minutes=attempt.time_spent_ms // 60_000,
         )
-        daily_activity = daily_result.scalar_one_or_none()
-        
-        if daily_activity:
-            daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
-        else:
-            daily_activity = DailyActivity(
-                user_id=current_user.id,
-                activity_date=today,
-                xp_earned=0,
-                lessons_completed=1,
-            )
-            db.add(daily_activity)
-            
+
+
     # Update streak
     await update_user_streak(db, current_user.id)
     
@@ -1101,22 +1169,20 @@ async def complete_lesson(
         )
         course = course_result.scalar_one_or_none()
         if course and course.level in {lvl.value for lvl in ProficiencyLevel}:
+            lesson_skill = ProficiencyService.resolve_lesson_skill(
+                lesson.skill, course.skill, course.tags
+            )
+            results = await _skill_results_for_attempt(
+                db,
+                attempt=attempt,
+                lesson=lesson,
+                course=course,
+                lesson_skill=lesson_skill,
+            )
             await record_exercise_results_for_user(
                 db,
                 current_user,
-                [
-                    ExerciseResult(
-                        exercise_type="lesson",
-                        skill=ProficiencyService.infer_skill_from_tags(course.tags),
-                        difficulty_level=ProficiencyLevel(course.level),
-                        is_correct=attempt.passed,
-                        score=float(attempt.score),
-                        time_spent_seconds=attempt.time_spent_ms // 1000,
-                        lesson_id=str(attempt.lesson_id),
-                        course_id=str(lesson.course_id),
-                    )
-                ],
-                award_xp=False,  # lesson completion above already awarded XP
+                results,
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)
@@ -1146,7 +1212,11 @@ async def complete_lesson(
             accuracy=accuracy,
             stars_earned=stars,
             next_lesson_unlocked=next_lesson_id,
-            achievements_unlocked=unlocked_achievements,
+            # check_achievements_for_user returns rich dicts (id, name, badge…)
+            # but both this schema and the Flutter model expect bare ids. Passing
+            # the dicts raised ValidationError, so completing a lesson 500'd for
+            # any learner who actually unlocked something — the reward moment.
+            achievements_unlocked=[a["id"] for a in unlocked_achievements],
             total_questions=attempt.total_questions,
             correct_answers=attempt.correct_answers,
             wrong_answers=attempt.total_questions - attempt.correct_answers,
@@ -1174,8 +1244,20 @@ async def get_course_roadmap(
     if not course:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Course not found")
     
+    # Lessons whose content has no exercises are not playable (start/content
+    # both reject them) — hide them so they can't dead-end the unlock chain.
+    playable_lessons = {
+        unit.id: sorted(
+            (lesson for lesson in unit.lessons if lesson.exercise_count > 0),
+            key=lambda lesson: lesson.order_index,
+        )
+        for unit in course.units
+    }
+
     # Get progress for all lessons
-    lesson_ids = [lesson.id for unit in course.units for lesson in unit.lessons]
+    lesson_ids = [
+        lesson.id for lessons in playable_lessons.values() for lesson in lessons
+    ]
     result = await db.execute(
         select(UserProgress).where(
             and_(
@@ -1208,15 +1290,16 @@ async def get_course_roadmap(
     completed_units = 0
     completed_lessons_count = 0
 
-    sorted_units = sorted(course.units, key=lambda unit: unit.order_index)
+    sorted_units = [
+        unit
+        for unit in sorted(course.units, key=lambda unit: unit.order_index)
+        if playable_lessons[unit.id]
+    ]
     for unit_number, unit in enumerate(sorted_units, start=1):
         lessons_items = []
         unit_completed = 0
 
-        sorted_lessons = sorted(
-            unit.lessons,
-            key=lambda lesson: lesson.order_index
-        )
+        sorted_lessons = playable_lessons[unit.id]
         for lesson_index, lesson in enumerate(sorted_lessons):
             progress = progress_map.get(lesson.id)
 
@@ -1283,7 +1366,7 @@ async def get_course_roadmap(
         )
         units_roadmap.append(unit_roadmap)
     
-    total_lessons = sum(len(u.lessons) for u in course.units)
+    total_lessons = len(lesson_ids)
     overall_comp = (completed_lessons_count / total_lessons * 100) if total_lessons > 0 else 0
     
     return ApiResponse(
@@ -1293,7 +1376,7 @@ async def get_course_roadmap(
             course_id=course.id,
             course_title=course.title,
             level=course.level,
-            total_units=len(course.units),
+            total_units=len(sorted_units),
             completed_units=completed_units,
             total_lessons=total_lessons,
             completed_lessons=completed_lessons_count,

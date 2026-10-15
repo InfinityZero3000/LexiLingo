@@ -161,7 +161,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'} available',
+                              'course.coursesAvailablePlural'.plural(categoryCourses.length),
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: AppColorRoles.textSecondary(isDark),
@@ -392,7 +392,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
 }
 
 String _courseImageUrl(CourseEntity course) {
-  if (course.thumbnailUrl != null) return course.thumbnailUrl!;
+  final thumbnailUrl = course.thumbnailUrl?.trim();
+  if (thumbnailUrl != null && thumbnailUrl.isNotEmpty) return thumbnailUrl;
   final tags = course.tags.map((t) => t.toLowerCase()).toSet();
   final level = course.level.toLowerCase();
   final pick = course.id.hashCode.abs();
@@ -400,7 +401,7 @@ String _courseImageUrl(CourseEntity course) {
   const ielts = [
     'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam pencil
     'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
-    'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', // graduation cap
+    'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', // classroom
   ];
   const business = [
     'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
@@ -532,6 +533,7 @@ class _CourseCard extends StatelessWidget {
                   child: Image.network(
                     _courseImageUrl(course),
                     fit: BoxFit.cover,
+                    cacheWidth: 400,
                     errorBuilder: (_, __, ___) =>
                         _buildPlaceholderImage(context),
                   ),
@@ -665,6 +667,7 @@ class _CourseGridCard extends StatelessWidget {
                   child: Image.network(
                     _courseImageUrl(course),
                     fit: BoxFit.cover,
+                    cacheWidth: 400,
                     errorBuilder: (_, __, ___) =>
                         _buildPlaceholderImage(context),
                   ),

@@ -22,6 +22,7 @@ import 'package:lexilingo_app/features/auth/domain/usecases/register_usecase.dar
 
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_facebook_usecase.dart';
 import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class AuthProvider extends ChangeNotifier {
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -654,7 +655,7 @@ class AuthProvider extends ChangeNotifier {
     } else {
       return failure.message.isNotEmpty
           ? failure.message
-          : 'An error occurred. Please try again.';
+          : 'errors.genericRetry'.tr();
     }
   }
 }

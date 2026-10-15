@@ -4,7 +4,7 @@ Contextual Word Translation Route
 GET /api/v1/ai/translate?word=run&lang=vi&context=run+a+company
 
 Replaces MyMemory API (5k chars/day limit) with LLM-powered contextual translation.
-Fallback chain: Groq qwen3-32b → Ollama qwen3:1.7b → empty string.
+Fallback chain: Groq qwen3.6-27b → Ollama qwen3:1.7b → empty string.
 """
 
 from __future__ import annotations
@@ -15,9 +15,9 @@ import os
 import re
 from typing import Optional
 
-import httpx
 from fastapi import APIRouter, Depends, Query
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.routes.admin import verify_admin_api_key
 
 logger = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ def _parse_llm_json(raw: str) -> dict:
 
 
 async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[dict]:
-    """Try Groq qwen3-32b for contextual translation. Returns None if unavailable."""
+    """Try Groq qwen3.6-27b for contextual translation. Returns None if unavailable."""
     from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
     from api.services.trace_cag.llm_client import _throttled_post_json
 
@@ -71,7 +71,10 @@ async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[di
         logger.info("[translate] Groq key pool exhausted, skipping")
         return None
 
-    groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    # Must be a non-reasoning model: this call caps max_tokens at 80, and a
+    # reasoning model spends that budget before emitting any content —
+    # openai/gpt-oss-20b burns 78 reasoning tokens and returns "".
+    groq_model = resolve_groq_model()
     messages = [
         {"role": "system", "content": _SYSTEM_PROMPT},
         {"role": "user", "content": _build_user_prompt(word, lang, context)},
@@ -91,7 +94,6 @@ async def _translate_via_groq(word: str, lang: str, context: str) -> Optional[di
                 "max_tokens": 80,
                 "temperature": 0.0,
             },
-            httpx_module=httpx,
             timeout=12.0,
         )
 
@@ -160,7 +162,7 @@ async def translate_word(
     """
     Contextual LLM-powered word translation.
 
-    Fallback chain: Groq qwen3-32b → Ollama qwen3:1.7b → empty fields.
+    Fallback chain: Groq qwen3.6-27b → Ollama qwen3:1.7b → empty fields.
     Called by backend-service /youtube/translate; never hits this endpoint directly from Flutter.
     """
     clean_word = word.lower().strip()

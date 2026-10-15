@@ -43,9 +43,8 @@ from app.services.level_service import (
 from app.services.rank_service import (
     apply_rank_info_to_user,
     calculate_rank as calc_rank,
-    check_rank_up,
 )
-from app.services.streak_service import update_user_streak
+from app.services.streak_service import record_daily_activity, update_user_streak
 from app.crud.gamification import WalletCRUD
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
@@ -315,29 +314,17 @@ async def complete_lesson(
             apply_rank_info_to_user(current_user, new_rank_info)
             
             # --- Update DailyActivity ---
+            # No study_time_minutes: LessonCompletionCreate carries only a
+            # score, so this route never learns how long the lesson took. The
+            # attempt-based flow in routes/learning.py does, and records it.
             from datetime import date as date_type
-            today = date_type.today()
-            daily_result = await db.execute(
-                select(DailyActivity).where(
-                    and_(
-                        DailyActivity.user_id == current_user.id,
-                        DailyActivity.activity_date == today,
-                    )
-                )
+            await record_daily_activity(
+                db,
+                current_user.id,
+                xp_earned=xp_earned,
+                lessons_completed=1,
+                today=date_type.today(),
             )
-            daily_activity = daily_result.scalar_one_or_none()
-            
-            if daily_activity:
-                daily_activity.xp_earned = (daily_activity.xp_earned or 0) + xp_earned
-                daily_activity.lessons_completed = (daily_activity.lessons_completed or 0) + 1
-            else:
-                daily_activity = DailyActivity(
-                    user_id=current_user.id,
-                    activity_date=today,
-                    xp_earned=xp_earned,
-                    lessons_completed=1,
-                )
-                db.add(daily_activity)
         
         await db.commit()
         
@@ -862,8 +849,13 @@ async def claim_daily_reward(
     """
     Claim the daily login reward based on current streak cycle (1-7 days)
     """
+    # Locked: the once-a-day check below reads last_reward_claim_date, so two
+    # requests in flight together would both see "not claimed" and both pay.
     result = await db.execute(
-        select(Streak).where(Streak.user_id == current_user.id)
+        select(Streak)
+        .where(Streak.user_id == current_user.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
     )
     streak = result.scalar_one_or_none()
     

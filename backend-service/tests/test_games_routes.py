@@ -250,6 +250,27 @@ class TestGrammarQuiz:
             assert len(q["options"]) == 4
 
     @pytest.mark.asyncio
+    async def test_session_expected_items_preserve_question_topics(
+        self,
+        auth_client: AsyncClient,
+    ):
+        session = MagicMock(id=uuid.uuid4())
+        with patch(
+            "app.routes.games.create_game_session",
+            new_callable=AsyncMock,
+            return_value=session,
+        ) as create_mock:
+            response = await auth_client.get(
+                f"{BASE}/grammar-quiz?level=A1&count=3"
+            )
+
+        assert response.status_code == 200
+        expected_items = create_mock.await_args.kwargs["expected_items"]
+        assert [item["topic"] for item in expected_items] == [
+            question["topic"] for question in response.json()["questions"]
+        ]
+
+    @pytest.mark.asyncio
     async def test_correct_answer_in_options(self, auth_client: AsyncClient):
         response = await auth_client.get(f"{BASE}/grammar-quiz?level=A2")
         assert response.status_code == 200
@@ -452,6 +473,92 @@ class TestMatchingGame:
 # ============================================================================
 
 class TestGameSessionCompletion:
+    @pytest.mark.parametrize(
+        ("game_type", "expected_item", "hook_name", "hook_argument"),
+        [
+            (
+                "word_scramble",
+                {"id": str(uuid.uuid4()), "answer": "hello", "xp_value": 10},
+                "record_game_vocab_lapse",
+                "game_word_id",
+            ),
+            (
+                "grammar_quiz",
+                {
+                    "id": "1",
+                    "answer": "is",
+                    "xp_value": 10,
+                    "topic": "to_be",
+                },
+                "record_game_grammar_lapse",
+                "topic",
+            ),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_wrong_answer_hooks_keep_completion_successful(
+        self,
+        auth_client: AsyncClient,
+        game_type: str,
+        expected_item: dict,
+        hook_name: str,
+        hook_argument: str,
+    ):
+        session_id = uuid.uuid4()
+        session = MagicMock()
+        session.id = session_id
+        session.user_id = "test-user-uuid"
+        session.game_type = game_type
+        session.started_at = datetime.now(timezone.utc) - timedelta(seconds=20)
+        session.created_at = session.started_at
+        session.completed_at = None
+        session.xp_awarded = False
+        session.session_data = {"expected_items": [expected_item]}
+        xp_result = MagicMock()
+        xp_result.xp_awarded = 0
+        xp_result.to_dict.return_value = {"xp_awarded": 0}
+
+        with patch(
+            "app.routes.games.get_game_session_for_update",
+            new_callable=AsyncMock,
+            return_value=session,
+        ), patch(
+            "app.routes.games.award_xp_transaction",
+            new_callable=AsyncMock,
+            return_value=xp_result,
+        ), patch(
+            "app.routes.games.record_learner_error",
+            new_callable=AsyncMock,
+        ), patch(
+            f"app.routes.games.{hook_name}",
+            new_callable=AsyncMock,
+        ) as lapse_mock, patch(
+            "app.routes.games.update_user_streak",
+            new_callable=AsyncMock,
+        ), patch(
+            "app.routes.games.check_achievements_for_user",
+            new_callable=AsyncMock,
+            return_value=[],
+        ), patch(
+            "app.routes.games.invalidate_cache",
+            new_callable=AsyncMock,
+        ):
+            response = await auth_client.post(
+                f"{BASE}/sessions/{session_id}/complete",
+                json={
+                    "answers": [
+                        {"id": expected_item["id"], "answer": "wrong"}
+                    ]
+                },
+            )
+
+        assert response.status_code == 200
+        lapse_mock.assert_awaited_once()
+        assert lapse_mock.await_args.kwargs[hook_argument] == expected_item.get(
+            hook_argument,
+            expected_item["id"],
+        )
+
     @pytest.mark.asyncio
     async def test_completes_session_with_server_verified_score(self):
         from app.routes.games import complete_game_session

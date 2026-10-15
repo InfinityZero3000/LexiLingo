@@ -20,8 +20,6 @@ from app.schemas.level import (
     LevelFullResponse,
     UserStatsResponse,
     WeeklyActivityResponse,
-    XPAwardRequest,
-    XPAwardResponse,
 )
 from app.services.level_service import LevelService, get_numeric_level_progress, calculate_numeric_level
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
@@ -322,71 +320,3 @@ async def get_weekly_activity_route(
 ):
     activity = await get_weekly_activity(db, current_user)
     return ApiResponse(success=True, data=activity, message="Weekly activity retrieved successfully")
-
-
-@router.post("/me/xp", response_model=ApiResponse[XPAwardResponse])
-async def award_xp(
-    xp_data: XPAwardRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Award XP to the current user.
-    
-    This endpoint is typically called by other services after completing actions.
-    Returns level up information if user leveled up.
-    
-    Automatically applies active XP boosts (double_xp) if any.
-    """
-    from app.services.item_effects_service import ItemEffectsService
-    
-    # Check for active XP boosts
-    effects_service = ItemEffectsService(db)
-    multiplier = await effects_service.get_xp_multiplier(current_user.id)
-    
-    # Apply multiplier to XP amount
-    base_amount = xp_data.amount
-    boosted_amount = int(base_amount * multiplier)
-    
-    old_xp = current_user.total_xp
-    new_xp = old_xp + boosted_amount
-    
-    # Check if user leveled up
-    leveled_up, previous_tier = LevelService.check_level_up(old_xp, new_xp)
-    
-    # Update user XP, level, numeric_level, and rank
-    current_user.total_xp = new_xp
-    if leveled_up:
-        new_level_status = LevelService.calculate_level_status(new_xp)
-        current_user.level = new_level_status.current_tier.code
-    
-    current_user.numeric_level = calculate_numeric_level(new_xp)
-    
-    # Recalculate rank
-    rank_info = calc_rank(current_user.numeric_level, current_user.level or "A1")
-    apply_rank_info_to_user(current_user, rank_info)
-    
-    await db.commit()
-    await db.refresh(current_user)
-    
-    # Calculate new level status
-    level_status = LevelService.calculate_level_status(new_xp)
-    
-    # Build message including boost info
-    message = f"Awarded {boosted_amount} XP"
-    if multiplier > 1.0:
-        message = f"Awarded {boosted_amount} XP ({base_amount} × {multiplier}x boost)"
-    if leveled_up:
-        message += " - Level Up!"
-    
-    return ApiResponse(
-        success=True,
-        data=XPAwardResponse(
-            total_xp=new_xp,
-            xp_gained=boosted_amount,
-            new_level=level_status,
-            level_up=leveled_up,
-            previous_tier=previous_tier
-        ),
-        message=message
-    )

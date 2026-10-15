@@ -1,30 +1,48 @@
-from datetime import datetime, timedelta, timezone
-from typing import Any
+from datetime import date, datetime, timedelta, timezone
 
-from sqlalchemy import func, select, delete as sa_delete
+from sqlalchemy import delete as sa_delete
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.gamification import (
-    ActivityFeed, ChallengeRewardClaim, LeaderboardEntry,
-    UserAchievement, UserFollowing, UserInventory, UserWallet, WalletTransaction,
-)
 from app.models.games import GameSession, XPTransaction
+from app.models.gamification import (
+    ActivityFeed,
+    ChallengeRewardClaim,
+    LeaderboardEntry,
+    UserAchievement,
+    UserFollowing,
+    UserInventory,
+    UserWallet,
+    WalletTransaction,
+)
 from app.models.notification import Notification
 from app.models.proficiency import (
-    ExerciseAttempt, LevelAssessmentTest, UserLevelHistory,
-    UserProficiencyProfile, UserSkillScore,
+    ExerciseAttempt,
+    LevelAssessmentTest,
+    UserLevelHistory,
+    UserProficiencyProfile,
+    UserSkillScore,
 )
 from app.models.progress import (
-    DailyActivity, DailyReviewSession, LessonAttempt, LessonCompletion,
-    QuestionAttempt, Streak, UserCourseProgress, UserProgress, UserVocabKnowledge,
+    DailyActivity,
+    DailyReviewSession,
+    LessonAttempt,
+    LessonCompletion,
+    QuestionAttempt,
+    Streak,
+    UserCourseProgress,
+    UserProgress,
+    UserVocabKnowledge,
 )
 from app.models.rbac import AuditLog
 from app.models.reminder import ReminderDelivery, UserReminderPreference
 from app.models.reward_grant import UserRewardGrant
-from app.models.user import User, RefreshToken, UserDevice
+from app.models.user import RefreshToken, User, UserDevice
 from app.models.vocabulary import UserVocabulary, VocabularyDeck, VocabularyReview
 from app.schemas.level import (
-    UserStatsResponse, WeeklyActivityData, WeeklyActivityResponse,
+    UserStatsResponse,
+    WeeklyActivityData,
+    WeeklyActivityResponse,
 )
 from app.services.level_service import LevelService
 
@@ -32,68 +50,72 @@ from app.services.level_service import LevelService
 async def get_user_stats(db: AsyncSession, user: User) -> UserStatsResponse:
     level_status = LevelService.calculate_level_status(user.total_xp)
 
-    courses_enrolled = (await db.execute(
-        select(func.count(UserCourseProgress.id)).where(UserCourseProgress.user_id == user.id)
-    )).scalar() or 0
+    def count(column, *filters):
+        return select(func.count(column)).where(*filters).scalar_subquery()
 
-    courses_completed = (await db.execute(
-        select(func.count(UserCourseProgress.id)).where(
-            UserCourseProgress.user_id == user.id,
-            UserCourseProgress.progress_percentage >= 100,
+    stats = (
+        await db.execute(
+            select(
+                count(
+                    UserCourseProgress.id,
+                    UserCourseProgress.user_id == user.id,
+                ).label("courses_enrolled"),
+                count(
+                    UserCourseProgress.id,
+                    UserCourseProgress.user_id == user.id,
+                    UserCourseProgress.progress_percentage >= 100,
+                ).label("courses_completed"),
+                count(
+                    LessonCompletion.id,
+                    LessonCompletion.user_id == user.id,
+                    LessonCompletion.is_passed.is_(True),
+                ).label("lessons_completed"),
+                select(func.coalesce(func.sum(LessonAttempt.time_spent_ms), 0))
+                .where(LessonAttempt.user_id == user.id)
+                .scalar_subquery()
+                .label("study_time_ms"),
+                select(Streak.current_streak)
+                .where(Streak.user_id == user.id)
+                .scalar_subquery()
+                .label("current_streak"),
+                select(Streak.longest_streak)
+                .where(Streak.user_id == user.id)
+                .scalar_subquery()
+                .label("longest_streak"),
+                count(
+                    UserVocabulary.id,
+                    UserVocabulary.user_id == user.id,
+                ).label("words_learned"),
+                count(
+                    UserVocabulary.id,
+                    UserVocabulary.user_id == user.id,
+                    UserVocabulary.status == "mastered",
+                ).label("words_mastered"),
+                count(
+                    UserAchievement.id,
+                    UserAchievement.user_id == user.id,
+                ).label("achievements_unlocked"),
+                select(UserWallet.gems)
+                .where(UserWallet.user_id == user.id)
+                .scalar_subquery()
+                .label("total_gems"),
+            )
         )
-    )).scalar() or 0
-
-    lessons_completed = (await db.execute(
-        select(func.count(LessonCompletion.id)).where(
-            LessonCompletion.user_id == user.id,
-            LessonCompletion.is_passed.is_(True),
-        )
-    )).scalar() or 0
-
-    raw_time = (await db.execute(
-        select(func.sum(LessonAttempt.time_spent_ms)).where(LessonAttempt.user_id == user.id)
-    )).scalar() or 0
-    total_study_time = int(raw_time / 60000) if raw_time else 0
-
-    streak = (await db.execute(
-        select(Streak).where(Streak.user_id == user.id)
-    )).scalar_one_or_none()
-    current_streak = streak.current_streak if streak else 0
-    longest_streak = streak.longest_streak if streak else 0
-
-    words_learned = (await db.execute(
-        select(func.count(UserVocabulary.id)).where(UserVocabulary.user_id == user.id)
-    )).scalar() or 0
-
-    words_mastered = (await db.execute(
-        select(func.count(UserVocabulary.id)).where(
-            UserVocabulary.user_id == user.id,
-            UserVocabulary.status == "mastered",
-        )
-    )).scalar() or 0
-
-    achievements_unlocked = (await db.execute(
-        select(func.count(UserAchievement.id)).where(UserAchievement.user_id == user.id)
-    )).scalar() or 0
-
-    wallet = (await db.execute(
-        select(UserWallet).where(UserWallet.user_id == user.id)
-    )).scalar_one_or_none()
-    total_gems = wallet.gems if wallet else 0
+    ).one()
 
     return UserStatsResponse(
         total_xp=user.total_xp,
         level=level_status,
-        courses_enrolled=courses_enrolled,
-        courses_completed=courses_completed,
-        lessons_completed=lessons_completed,
-        total_study_time=total_study_time,
-        current_streak=current_streak,
-        longest_streak=longest_streak,
-        words_learned=words_learned,
-        words_mastered=words_mastered,
-        achievements_unlocked=achievements_unlocked,
-        total_gems=total_gems,
+        courses_enrolled=stats.courses_enrolled or 0,
+        courses_completed=stats.courses_completed or 0,
+        lessons_completed=stats.lessons_completed or 0,
+        total_study_time=int((stats.study_time_ms or 0) / 60000),
+        current_streak=stats.current_streak or 0,
+        longest_streak=stats.longest_streak or 0,
+        words_learned=stats.words_learned or 0,
+        words_mastered=stats.words_mastered or 0,
+        achievements_unlocked=stats.achievements_unlocked or 0,
+        total_gems=stats.total_gems or 0,
     )
 
 
@@ -102,26 +124,36 @@ async def get_weekly_activity(db: AsyncSession, user: User) -> WeeklyActivityRes
     week_ago = today - timedelta(days=6)
     day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
+    range_start = datetime.combine(week_ago, datetime.min.time())
+    range_end = datetime.combine(today + timedelta(days=1), datetime.min.time())
+    rows = (
+        await db.execute(
+            select(
+                func.date(LessonAttempt.finished_at).label("day"),
+                func.count(LessonAttempt.id).label("count"),
+                func.coalesce(func.sum(LessonAttempt.xp_earned), 0).label("xp"),
+                func.coalesce(func.sum(LessonAttempt.time_spent_ms), 0).label("time"),
+            )
+            .where(
+                LessonAttempt.user_id == user.id,
+                LessonAttempt.finished_at >= range_start,
+                LessonAttempt.finished_at < range_end,
+                LessonAttempt.passed.is_(True),
+            )
+            .group_by(func.date(LessonAttempt.finished_at))
+        )
+    ).all()
+    activity_by_day = {
+        date.fromisoformat(row.day) if isinstance(row.day, str) else row.day: row
+        for row in rows
+    }
+
     week_data: list[WeeklyActivityData] = []
     total_xp = total_lessons = total_study_time = 0
 
     for i in range(7):
         day_date = week_ago + timedelta(days=i)
-        day_start = datetime.combine(day_date, datetime.min.time())
-        day_end = datetime.combine(day_date, datetime.max.time())
-
-        row = (await db.execute(
-            select(
-                func.count(LessonAttempt.id).label("count"),
-                func.coalesce(func.sum(LessonAttempt.xp_earned), 0).label("xp"),
-                func.coalesce(func.sum(LessonAttempt.time_spent_ms), 0).label("time"),
-            ).where(
-                LessonAttempt.user_id == user.id,
-                LessonAttempt.finished_at >= day_start,
-                LessonAttempt.finished_at <= day_end,
-                LessonAttempt.passed.is_(True),
-            )
-        )).first()
+        row = activity_by_day.get(day_date)
 
         day_lessons = int(row.count) if row and row.count else 0
         day_xp = int(row.xp) if row and row.xp else 0

@@ -15,6 +15,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashca
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class VocabularySpeakingPracticeScreen extends StatefulWidget {
   const VocabularySpeakingPracticeScreen({super.key});
@@ -311,18 +312,18 @@ class _VocabularySpeakingPracticeScreenState
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Lesson 1 Speaking practice',
+        title: Text(
+          'lesson.exercise.speakingTitle'.tr(),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
-            tooltip: 'Minimize',
+            tooltip: 'common.minimize'.tr(),
             icon: const Icon(Icons.remove),
             onPressed: () {},
           ),
           IconButton(
-            tooltip: 'Maximize',
+            tooltip: 'common.maximize'.tr(),
             icon: const Icon(Icons.crop_square),
             onPressed: () {},
           ),
@@ -339,7 +340,7 @@ class _VocabularySpeakingPracticeScreenState
             return _buildMessageState(
               icon: Icons.error_outline,
               message: provider.errorMessage!,
-              actionLabel: 'Try again',
+              actionLabel: 'voice.tryAgain'.tr(),
               onAction: () {
                 provider.clearError();
                 provider.startReviewSession();
@@ -352,8 +353,8 @@ class _VocabularySpeakingPracticeScreenState
           if (session == null || card == null) {
             return _buildMessageState(
               icon: Icons.check_circle_outline,
-              message: 'No speaking practice due right now.',
-              actionLabel: 'Close',
+              message: 'vocabulary.noSpeakingDue'.tr(),
+              actionLabel: 'common.close'.tr(),
               onAction: () => Navigator.of(context).pop(),
             );
           }
@@ -390,7 +391,7 @@ class _VocabularySpeakingPracticeScreenState
           const TtsSpeedButton(),
           const SizedBox(width: 18),
           Text(
-            'No. $current',
+            'vocabulary.itemNumber'.tr(namedArgs: {'current': '$current'}),
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(width: 12),
@@ -406,7 +407,7 @@ class _VocabularySpeakingPracticeScreenState
             ),
           ),
           const SizedBox(width: 12),
-          Text('$total in total'),
+          Text('vocabulary.totalCount'.tr(namedArgs: {'total': '$total'})),
         ],
       ),
     );
@@ -444,7 +445,7 @@ class _VocabularySpeakingPracticeScreenState
           OutlinedButton.icon(
             onPressed: () => _showMeaning(card),
             icon: const Icon(Icons.translate),
-            label: const Text('Meaning'),
+            label: Text('vocabulary.meaning'.tr()),
           ),
           const SizedBox(height: 34),
           _buildRecordControl(),
@@ -565,7 +566,7 @@ class _VocabularySpeakingPracticeScreenState
         OutlinedButton.icon(
           onPressed: _recordedAudio == null ? null : _playRecording,
           icon: Icon(_isPlayingRecording ? Icons.stop : Icons.play_arrow),
-          label: const Text('My pronunciation'),
+          label: Text('voice.yourPronunciation'.tr()),
         ),
         const SizedBox(height: 12),
         Row(
@@ -594,7 +595,7 @@ class _VocabularySpeakingPracticeScreenState
             Expanded(
               child: OutlinedButton(
                 onPressed: provider.isLoading ? null : _tryAgain,
-                child: const Text('Try again'),
+                child: Text('voice.tryAgain'.tr()),
               ),
             ),
             const SizedBox(width: 12),
@@ -611,7 +612,7 @@ class _VocabularySpeakingPracticeScreenState
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Submit'),
+                    : Text('common.submit'.tr()),
               ),
             ),
           ],

@@ -117,6 +117,39 @@ async def test_enforce_user_quota_blocks_over_token_limit(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_enforce_user_quota_rpd_limit_override(monkeypatch):
+    """The free-tier Lexi chat cap passes a tighter rpd_limit than the
+    guard's own abuse ceiling, on its own endpoint_key — this is the knob
+    premium's "unlimited chat" promise relies on."""
+    fake_redis = _FakeRedis()
+
+    async def _fake_get_redis():
+        return fake_redis
+
+    monkeypatch.setattr(quota_guard, "get_redis", _fake_get_redis)
+
+    guard = quota_guard.UserQuotaGuard()
+    guard.rpm_limit = 100
+    guard.rpd_limit = 1000  # the shared abuse ceiling — must not apply here
+    monkeypatch.setattr(quota_guard, "_guard", guard)
+
+    first = await quota_guard.enforce_user_quota(
+        "u5", "lexi.chat.free_tier", rpd_limit=2
+    )
+    assert first.allowed is True
+    assert first.rpd_limit == 2
+
+    second = await quota_guard.enforce_user_quota(
+        "u5", "lexi.chat.free_tier", rpd_limit=2
+    )
+    assert second.allowed is True
+
+    with pytest.raises(HTTPException) as exc:
+        await quota_guard.enforce_user_quota("u5", "lexi.chat.free_tier", rpd_limit=2)
+    assert exc.value.status_code == 429
+
+
+@pytest.mark.asyncio
 async def test_enforce_user_quota_fail_closed_when_redis_unavailable(monkeypatch):
     async def _fake_get_redis():
         return None

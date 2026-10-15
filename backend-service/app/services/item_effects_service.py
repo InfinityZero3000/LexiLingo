@@ -52,14 +52,19 @@ class ItemEffectsService:
         Returns:
             Tuple of (success, message, effects_applied)
         """
-        # Get inventory item
+        # Get inventory item. Locked: the `quantity <= 0` check and the
+        # decrement below are a read-modify-write, so two uses in flight on a
+        # quantity of 1 both passed the check and both applied the effect.
         result = await self.db.execute(
-            select(UserInventory).where(
+            select(UserInventory)
+            .where(
                 and_(
                     UserInventory.id == inventory_id,
                     UserInventory.user_id == user_id
                 )
             )
+            .with_for_update()
+            .execution_options(populate_existing=True)
         )
         inventory = result.scalar_one_or_none()
         
@@ -332,7 +337,6 @@ class DailyChallengeService:
         
         Checks if already claimed today and awards XP/gems if not.
         """
-        from app.models.progress import DailyActivity
         from app.crud.gamification import WalletCRUD
         
         today = datetime.now(timezone.utc).date()
@@ -360,32 +364,19 @@ class DailyChallengeService:
         # Award XP to User.total_xp and DailyActivity
         if xp_reward > 0:
             from app.models.user import User
-            from app.models.progress import DailyActivity
 
             user_result = await self.db.execute(select(User).where(User.id == user_id))
             user = user_result.scalar_one_or_none()
             if user is not None:
                 user.total_xp = (user.total_xp or 0) + xp_reward
 
-            activity_result = await self.db.execute(
-                select(DailyActivity).where(
-                    and_(DailyActivity.user_id == user_id, DailyActivity.activity_date == today)
-                )
-            )
-            activity = activity_result.scalar_one_or_none()
-            if activity is not None:
-                activity.xp_earned = (activity.xp_earned or 0) + xp_reward
-            else:
-                self.db.add(DailyActivity(
-                    user_id=user_id,
-                    activity_date=today,
-                    xp_earned=xp_reward,
-                    lessons_completed=0,
-                    study_time_minutes=0,
-                ))
+            # No study time here: claiming a challenge reward is not practice.
+            from app.services.streak_service import record_daily_activity
 
-            from app.crud.gamification import LeaderboardCRUD
-            await LeaderboardCRUD.add_xp(self.db, user_id, xp_reward)
+            await record_daily_activity(
+                self.db, user_id, xp_earned=xp_reward, today=today
+            )
+
 
         # Award gems if applicable
         if gems_reward > 0:

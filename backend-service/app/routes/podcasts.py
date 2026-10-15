@@ -17,7 +17,7 @@ import re
 import time
 import xml.etree.ElementTree as ET
 from typing import Optional
-from urllib.parse import quote, urlparse
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, Request, status
@@ -25,11 +25,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.safe_http import safe_get as _safe_get
+from app.core.safe_http import safe_get as _safe_get, validate_public_url
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.clients.ai_service_client import AIServiceClient
-from app.routes.news import _stream_public_url, _validate_public_http_url
+from app.routes.news import _stream_public_url
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -183,7 +183,7 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     Includes SSRF protection and validates that the content is an image.
     """
     try:
-        _validate_public_http_url(url)
+        validate_public_url(url)
     except HTTPException as exc:
         exc.headers = _PROXY_CORS
         raise
@@ -373,28 +373,7 @@ async def get_podcast_episodes(
     """
     feed_url = feed_url.strip()
 
-    # SSRF protection: only allow public HTTP/HTTPS URLs
-    _parsed = urlparse(feed_url)
-    if _parsed.scheme not in ("http", "https"):
-        raise HTTPException(status_code=400, detail="Only HTTP/HTTPS feed URLs are allowed")
-    _host = (_parsed.hostname or "").lower()
-    # Use ipaddress module for robust private IP detection
-    from ipaddress import ip_address
-    import socket
-    _private_prefixes = ("localhost", "127.", "0.0.0.0", "10.", "192.168.", "172.16.",
-                         "172.17.", "172.18.", "172.19.", "172.20.", "172.21.",
-                         "172.22.", "172.23.", "172.24.", "172.25.", "172.26.",
-                         "172.27.", "172.28.", "172.29.", "172.30.", "172.31.",
-                         "169.254.", "fc00", "fd", "fe80")
-    if any(_host == p or _host.startswith(p) for p in _private_prefixes):
-        raise HTTPException(status_code=400, detail="Internal/private feed URLs are not allowed")
-    # Additional check: resolve hostname and verify the IP is public
-    try:
-        resolved_ip = socket.getaddrinfo(_host, None, socket.AF_UNSPEC, socket.SOCK_STREAM)[0][4][0]
-        if ip_address(resolved_ip).is_private or ip_address(resolved_ip).is_loopback:
-            raise HTTPException(status_code=400, detail="Internal/private feed URLs are not allowed")
-    except (socket.gaierror, ValueError):
-        pass  # Allow if DNS resolution fails—httpx will handle the error
+    validate_public_url(feed_url)
 
     cache_key = f"podcasts:episodes:{hashlib.md5(f'{feed_url}:{limit}'.encode()).hexdigest()[:16]}"
     cache_service = APICacheService(db)
@@ -485,7 +464,7 @@ async def generate_transcript(
     episode_guid = episode_guid.strip()
     audio_url = audio_url.strip()
 
-    _validate_public_http_url(audio_url)
+    validate_public_url(audio_url)
 
     transcript_fingerprint = hashlib.sha256(
         f"{feed_url}\0{episode_guid}\0{audio_url}".encode()

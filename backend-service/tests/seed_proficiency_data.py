@@ -44,10 +44,16 @@ def _make_unique_username() -> str:
     return f"{TARGET_USERNAME}_{uuid4().hex[:8]}"
 
 
-async def seed() -> None:
+async def seed(session_factory=None) -> None:
+    """Seed the fixed proficiency dataset.
+
+    Callers inside pytest must pass their own NullPool session factory: this
+    module is also a CLI, and reusing the app-global pool from a fresh
+    asyncio.run() hands back connections bound to an already-closed loop.
+    """
     now = datetime.now(timezone.utc)
 
-    async with AsyncSessionLocal() as session:
+    async with (session_factory or AsyncSessionLocal)() as session:
         # Ensure target user exists.
         user = (
             await session.execute(select(User).where(User.email == TARGET_EMAIL))

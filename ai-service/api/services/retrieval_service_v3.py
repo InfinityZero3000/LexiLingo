@@ -20,6 +20,7 @@ import numpy as np
 
 from api.models.v3_schemas import (
     ExamplePair,
+    KGHits,
     RetrievalBundleV3,
     V3PipelineContext,
     VectorHit,
@@ -30,6 +31,15 @@ from api.services.kg_service_v3 import KnowledgeGraphServiceV3
 
 
 logger = logging.getLogger(__name__)
+
+# A learner turn either names one of the graph's topics or it does not, and the
+# two are cleanly separable: over 120 topic phrasings the best topic similarity
+# has median 0.550 (p10 0.412); over 120 grammar/idiom questions drawn from the
+# graph itself it has median 0.180 (p90 0.287). At 0.40 the gate keeps 91.7% of
+# topic turns and misroutes 2.5% of the rest.
+_TOPIC_ROUTE_MIN_SIM = 0.40
+_TOPIC_ROUTE_TOP_N = 2
+_TOPIC_PREFIX = "topic:"
 
 
 @dataclass
@@ -85,6 +95,9 @@ class RetrievalServiceV3:
         # Cache for embeddings
         self._concept_cache: Dict[str, Dict[str, str]] = {}
         self._concept_embeddings: Dict[str, np.ndarray] = {}
+        # Tier-1 routing index: topic ids, their stacked embeddings, members
+        self._topic_ids: List[str] = []
+        self._topic_matrix: Optional[np.ndarray] = None
         
         # Pre-compute analytics on init
         if analytics_enabled:
@@ -127,6 +140,36 @@ class RetrievalServiceV3:
         Returns:
             RetrievalBundleV3 with optimized concept set
         """
+        # Tier 1: is this turn about one of the graph's topics? If so its own
+        # subgraph is a better corpus than all 15,129 concepts — measured over
+        # the 120 learner phrasings, restricting to the top-2 topics moves
+        # recall 89.2% -> 92.5% and the share of on-topic evidence 73.5% ->
+        # 87.7%, at 60 dot products instead of a full scan.
+        # Embed once. Routing and retrieval both need the query vector, and a
+        # second encode is ~30ms against an 80ms vector budget — enough on its
+        # own to push the stage past its deadline and drop it entirely.
+        query_vec = self.embedder.embed_text((query or "").strip())
+        routed_topics, topic_similarity = self.route_to_topics(query, query_vec=query_vec)
+        if routed_topics:
+            members = self.kg.get_topic_members()
+            pool = [cid for topic in routed_topics for cid in members.get(topic, [])]
+            if pool:
+                return RetrievalBundleV3(
+                    query=query,
+                    # Centrality and community pruning are deliberately skipped:
+                    # both spread the selection across communities, which is the
+                    # opposite of what a turn already narrowed to one topic wants.
+                    vector_hits=self._semantic_retrieval(
+                        query,
+                        limit=self.config.vector_top_k,
+                        restrict_to=pool,
+                        query_vec=query_vec,
+                    ),
+                    kg_hits=KGHits(seed_nodes=routed_topics, expanded_nodes=[], paths=[]),
+                    routed_topics=routed_topics,
+                    topic_similarity=topic_similarity,
+                )
+
         # Step 1: KG expansion
         kg_hits = await self.kg.expand(seed_nodes=seed_concepts, hops=1)
         
@@ -134,6 +177,7 @@ class RetrievalServiceV3:
         all_vector_hits = self._semantic_retrieval(
             query,
             limit=self.config.vector_top_k,
+            query_vec=query_vec,
         )
         
         # Step 3: Apply centrality ranking if enabled
@@ -169,14 +213,21 @@ class RetrievalServiceV3:
             vector_hits=vector_hits,
             kg_hits=kg_hits,
             examples=examples,
+            topic_similarity=topic_similarity,
         )
     
     def _semantic_retrieval(
         self,
         query: str,
         limit: int = 10,
+        restrict_to: Optional[List[str]] = None,
+        query_vec: Optional[np.ndarray] = None,
     ) -> List[VectorHit]:
-        """Embedding-based semantic retrieval over KG concepts."""
+        """Embedding-based semantic retrieval over KG concepts.
+
+        ``restrict_to`` narrows the corpus to a candidate set (tier-2 of topic
+        routing); None scans every concept.
+        """
         normalized = (query or "").strip()
         if not normalized:
             return []
@@ -187,10 +238,16 @@ class RetrievalServiceV3:
 
         self._refresh_concept_cache(concepts)
 
-        query_vec = self.embedder.embed_text(normalized)
+        if query_vec is None:
+            query_vec = self.embedder.embed_text(normalized)
 
+        candidates = (
+            {cid: self._concept_cache[cid] for cid in restrict_to if cid in self._concept_cache}
+            if restrict_to is not None
+            else self._concept_cache
+        )
         scored: List[Tuple[str, float, str]] = []
-        for concept_id, meta in self._concept_cache.items():
+        for concept_id, meta in candidates.items():
             concept_vec = self._concept_embeddings.get(concept_id)
             if concept_vec is None:
                 continue
@@ -376,6 +433,47 @@ class RetrievalServiceV3:
 
         embeddings = self.embedder.embed_texts(texts)
         self._concept_embeddings = {cid: emb for cid, emb in zip(ids, embeddings)}
+        self._refresh_topic_index()
+
+    def _refresh_topic_index(self) -> None:
+        """Stack the topic-node embeddings so tier-1 routing is one matmul."""
+        topic_ids = [
+            cid for cid in self._concept_cache
+            if cid.startswith(_TOPIC_PREFIX) and cid in self._concept_embeddings
+        ]
+        self._topic_ids = topic_ids
+        self._topic_matrix = (
+            np.stack([self._concept_embeddings[cid] for cid in topic_ids])
+            if topic_ids else None
+        )
+
+    def route_to_topics(
+        self,
+        query: str,
+        query_vec: Optional[np.ndarray] = None,
+    ) -> Tuple[List[str], float]:
+        """Tier 1: which topics is this turn about, if any?
+
+        Returns the topic ids to draw evidence from and the best similarity.
+        An empty list means the turn is not topic-shaped and the caller should
+        keep its corpus-wide behaviour — over the graph's own grammar and idiom
+        questions, lexical retrieval answers ~100% of them and this path would
+        only bury that under an unrelated topic's material.
+        """
+        if self._topic_matrix is None or not self._topic_ids:
+            # Normally built by the boot-time warmup; rebuild rather than
+            # silently disable routing if a request beat it here.
+            self._refresh_topic_index()
+        if self._topic_matrix is None or not self._topic_ids:
+            return [], 0.0
+        if query_vec is None:
+            query_vec = self.embedder.embed_text((query or "").strip())
+        sims = self._topic_matrix @ query_vec
+        best = float(sims.max())
+        if best < _TOPIC_ROUTE_MIN_SIM:
+            return [], best
+        order = np.argsort(-sims)[:_TOPIC_ROUTE_TOP_N]
+        return [self._topic_ids[i] for i in order], best
     
     def get_analytics_summary(self) -> Dict:
         """Get summary of graph analytics for debugging."""

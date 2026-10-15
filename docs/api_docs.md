@@ -268,7 +268,6 @@ well-known không có tiền tố này.
 | `GET` | `/api/v1/users/me/level-full` |
 | `GET` | `/api/v1/users/me/stats` |
 | `GET` | `/api/v1/users/me/weekly-activity` |
-| `POST` | `/api/v1/users/me/xp` |
 | `POST` | `/api/v1/devices` |
 | `GET` | `/api/v1/devices` |
 | `PUT` | `/api/v1/devices/{device_id}` |

@@ -1,7 +1,9 @@
 import 'package:easy_localization/easy_localization.dart';
+import '../../../ielts/presentation/pages/ielts_tests_page.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/premium_gate.dart';
+import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_navigation.dart';
@@ -15,12 +17,29 @@ class PracticeLabPage extends StatefulWidget {
 }
 
 class _PracticeLabPageState extends State<PracticeLabPage> {
+  // Drives which cards may be recommended. Assume no entitlement until the
+  // check answers, so a free learner is never shown a locked card as their
+  // top suggestion while it resolves.
+  bool _hasPremium = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProficiencyProvider>().loadProfile();
     });
+    _loadPremiumStatus();
+  }
+
+  Future<void> _loadPremiumStatus() async {
+    try {
+      final isPremium = await PurchasesService.instance.isPremium;
+      if (!mounted || isPremium == _hasPremium) return;
+      setState(() => _hasPremium = isPremium);
+    } catch (_) {
+      // Entitlement unknown — leave it locked rather than promoting a card
+      // the learner may not be able to open.
+    }
   }
 
   @override
@@ -38,7 +57,10 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
             final items = buildPracticeLabItems(
               weakestSkills: proficiency.weakestSkills,
             );
-            final recommended = recommendedPracticeItems(items: items);
+            final recommended = recommendedPracticeItems(
+              items: items,
+              hasPremium: _hasPremium,
+            );
             final hasRecommendations = items.any((item) => item.recommended);
 
             return RefreshIndicator(
@@ -54,6 +76,8 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                         : 0,
                     isLoading: proficiency.isLoading,
                   ),
+                  const SizedBox(height: 16),
+                  const _IeltsEntryCard(),
                   const SizedBox(height: 16),
                   _SectionHeader(
                     title: 'practiceLab.recommendedTitle'.tr(),
@@ -551,6 +575,72 @@ class _SmallChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+
+/// Entry point to the IELTS mock tests.
+///
+/// Deliberately a card of its own rather than a `PracticeLabItem`: a mock test
+/// is a one-to-three-hour sitting covering all four skills, so it does not
+/// belong in a list of per-skill drills the recommender ranks.
+class _IeltsEntryCard extends StatelessWidget {
+  const _IeltsEntryCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const IeltsTestsPage()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.school_outlined,
+                  color: theme.colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'IELTS mock tests',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Full four-skill papers, scored in bands with AI feedback on Writing and Speaking.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

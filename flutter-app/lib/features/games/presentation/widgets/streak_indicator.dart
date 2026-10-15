@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -103,7 +104,7 @@ class StreakIndicator extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$streakDays day${streakDays != 1 ? 's' : ''}',
+                'common.dayCount'.plural(streakDays),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,

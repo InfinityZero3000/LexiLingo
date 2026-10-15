@@ -6,11 +6,85 @@ Extended for Phase 2: Advanced Content Management System
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, Index
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 from typing import List
 
 from app.core.database import Base
 from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
+
+
+def count_exercises(content) -> int:
+    exercises = content.get("exercises") if isinstance(content, dict) else None
+    return len(exercises) if isinstance(exercises, list) else 0
+
+
+# Mirrors contracts/content-agent/exercise-types-v1.json. The contract file is
+# not in the backend image, and tests/test_content_contract_parity.py asserts
+# this stays identical to it.
+UI_TYPE_TO_BASE_TYPE: dict[str, str] = {
+    "multiple_choice": "multiple_choice",
+    "true_or_false": "true_false",
+    "fill_in_the_blank": "fill_blank",
+    "arrange_the_sentence": "reorder",
+    "translation_choice": "translate",
+    "dialogue_completion": "fill_blank",
+    "collocation_choice": "multiple_choice",
+    "dictation": "fill_blank",
+    "grammar_correction": "fill_blank",
+    "image_based_choice": "multiple_choice",
+    "listen_and_choose": "multiple_choice",
+    "match_word_to_meaning": "matching",
+    "vocabulary_flashcard": "multiple_choice",
+    "pronunciation_practice": "translate",
+    "reading_comprehension": "multiple_choice",
+    "short_writing_answer": "fill_blank",
+    "speaking_repeat": "translate",
+    "categorization": "matching",
+    "cognitive_fluidity": "matching",
+}
+
+
+def base_type_for(ui_type) -> str | None:
+    """The `type` an exercise must carry for its `ui_type`.
+
+    A generator that copies ui_type into type ("short_writing_answer") produces
+    content the learner endpoint rejects with a 500, so type is derived, never
+    trusted.
+    """
+    return UI_TYPE_TO_BASE_TYPE.get(str(ui_type or ""))
+
+
+def option_text(option) -> str:
+    return option.get("text", "") if isinstance(option, dict) else str(option)
+
+
+_TILE_PUNCTUATION = ".,?!;:"
+
+
+def arrange_tiles(sentence) -> list[str]:
+    """Word-bank tiles for a reorder sentence — punctuation is not a tile."""
+    tiles = (word.strip(_TILE_PUNCTUATION) for word in str(sentence).split())
+    return [tile for tile in tiles if tile]
+
+
+def arrange_bank_matches(options, correct_answer) -> bool:
+    """True when `options` is the shuffled word bank of `correct_answer`.
+
+    An arrange exercise never has its answer among the options, so the generic
+    "answer must be one of the options" check cannot be used on it.
+    """
+    bank = [
+        tile
+        for tile in (
+            option_text(option).strip(_TILE_PUNCTUATION) for option in options or []
+        )
+        if tile
+    ]
+    if not bank:
+        return False
+    return sorted(t.lower() for t in bank) == sorted(
+        t.lower() for t in arrange_tiles(correct_answer)
+    )
 
 
 class Course(Base):
@@ -40,6 +114,12 @@ class Course(Base):
         index=True
     )
     
+    # Which of the six CEFR skills this course mainly exercises, used to
+    # credit the right UserSkillScore on completion. NULL means "not
+    # labelled yet" and falls back to guessing from tags — see
+    # ProficiencyService.resolve_lesson_skill.
+    skill: Mapped[str] = mapped_column(String(20), nullable=True)
+
     # Phase 2: Enhanced metadata
     tags: Mapped[dict] = mapped_column(PortableJSON, nullable=True)  # ["grammar", "vocabulary", "business"]
     total_xp: Mapped[int] = mapped_column(Integer, default=0)
@@ -161,7 +241,12 @@ class Lesson(Base):
     total_exercises: Mapped[int] = mapped_column(Integer, default=0)
     
     lesson_type: Mapped[str] = mapped_column(String(50), default="lesson")  # lesson, practice, review, test
-    
+
+    # Overrides Course.skill for a single lesson (a listening lesson inside a
+    # grammar course). NULL = inherit from the course.
+    skill: Mapped[str] = mapped_column(String(20), nullable=True)
+
+
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     updated_at: Mapped[datetime] = mapped_column(
         TZDateTime,
@@ -171,7 +256,21 @@ class Lesson(Base):
     
     # Relationships
     unit: Mapped["Unit"] = relationship("Unit", back_populates="lessons")
-    
+
+    @property
+    def exercise_count(self) -> int:
+        """Playable exercises in content — the single source of truth for
+        "is this lesson learnable?"."""
+        return count_exercises(self.content)
+
+    @validates("content")
+    def _sync_total_exercises(self, _key: str, content):
+        """Keep the denormalized counter true no matter who writes content
+        (admin routes, CRUD, content agent, seeds, scripts) — it used to be
+        set by hand in some paths and left at 0 in others."""
+        self.total_exercises = count_exercises(content)
+        return content
+
     def __repr__(self) -> str:
         return f"<Lesson {self.title}>"
 

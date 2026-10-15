@@ -281,6 +281,51 @@ def test_production_etl_accepts_immutable_core_pins():
     assert settings.CONTENT_ETL_ENABLED is True
 
 
+def test_production_etl_accepts_a_partially_licensed_estate():
+    """CEFR-J is commercial; demanding its pins would make ETL unusable for an
+    operator who has only the open datasets."""
+    settings = Settings(
+        _env_file=None,
+        ENVIRONMENT="production",
+        DEBUG=False,
+        SECRET_KEY="x" * 32,
+        CONTENT_ETL_ENABLED=True,
+        CONTENT_ETL_OEWN_VERSION="2025",
+        CONTENT_ETL_OEWN_SHA256="a" * 64,
+        CONTENT_ETL_CMU_REF="1" * 40,
+        CONTENT_ETL_CMU_SHA256="b" * 64,
+        CONTENT_ETL_CEFR_J_REF="",
+        CONTENT_ETL_CEFR_J_SHA256="",
+    )
+
+    assert settings.CONTENT_ETL_ENABLED is True
+
+
+def test_production_etl_rejects_enabling_with_nothing_pinned():
+    with pytest.raises(ValidationError, match="at least one pinned dataset"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DEBUG=False,
+            SECRET_KEY="x" * 32,
+            CONTENT_ETL_ENABLED=True,
+        )
+
+
+@pytest.mark.parametrize("blank_ref", ["", "   "])
+def test_production_etl_rejects_a_checksum_without_a_real_ref(blank_ref):
+    with pytest.raises(ValidationError, match="pinned"):
+        Settings(
+            _env_file=None,
+            ENVIRONMENT="production",
+            DEBUG=False,
+            SECRET_KEY="x" * 32,
+            CONTENT_ETL_ENABLED=True,
+            CONTENT_ETL_OEWN_VERSION=blank_ref,
+            CONTENT_ETL_OEWN_SHA256="a" * 64,
+        )
+
+
 def test_production_etl_rejects_missing_dataset_checksum():
     with pytest.raises(ValidationError, match="SHA-256"):
         Settings(

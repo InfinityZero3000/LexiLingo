@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -1888,6 +1890,16 @@ class ImageBasedChoiceWidget extends StatelessWidget {
     final colors = _ExercisePalette.of(context);
     final options = exercise.options ?? [];
     final imageUrl = exercise.metadata?['image_url'] as String?;
+    final hasImageUrl = imageUrl != null && imageUrl.trim().isNotEmpty;
+
+    Widget imagePlaceholder() => Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Icon(Icons.image_outlined, size: 64, color: colors.border),
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -1908,20 +1920,14 @@ class ImageBasedChoiceWidget extends StatelessWidget {
           // Image area
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: imageUrl != null
-                ? Image.network(imageUrl, height: 200, fit: BoxFit.cover)
-                : Container(
-                    height: 180,
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(
-                      Icons.image_outlined,
-                      size: 64,
-                      color: colors.border,
-                    ),
-                  ),
+            child: hasImageUrl
+                ? Image.network(
+                    imageUrl,
+                    height: 200,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => imagePlaceholder(),
+                  )
+                : imagePlaceholder(),
           ),
           const SizedBox(height: 20),
           // 2x2 grid options
@@ -2086,14 +2092,41 @@ class MatchWordMeaningWidget extends StatefulWidget {
 class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
   String? _selectedLeft;
   final Map<String, String> _matched = {};
+  late List<String> _left;
+  late List<String> _right;
+
+  @override
+  void initState() {
+    super.initState();
+    _splitColumns();
+  }
+
+  @override
+  void didUpdateWidget(MatchWordMeaningWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.exercise.id != oldWidget.exercise.id) {
+      _matched.clear();
+      _selectedLeft = null;
+      _splitColumns();
+    }
+  }
+
+  /// Content stores the pairs aligned (first half keys, second half values), so
+  /// an unshuffled right column is solvable by tapping row i ↔ row i.
+  /// Seeded by exercise id so the order is stable across rebuilds.
+  void _splitColumns() {
+    final options = widget.exercise.options ?? [];
+    final half = options.length ~/ 2;
+    _left = options.take(half).toList();
+    _right = options.skip(half).toList()
+      ..shuffle(Random(widget.exercise.id.hashCode));
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
-    final options = widget.exercise.options ?? [];
-    final half = options.length ~/ 2;
-    final left = options.take(half).toList();
-    final right = options.skip(half).toList();
+    final left = _left;
+    final right = _right;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -2320,6 +2353,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
     final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options ?? [];
     final imageUrl = widget.exercise.metadata?['image_url'] as String?;
+    final hasImageUrl = imageUrl != null && imageUrl.trim().isNotEmpty;
     final word = _word;
 
     // If options is just ["Got it!"], show simple flashcard
@@ -2369,7 +2403,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                       textAlign: TextAlign.center,
                     ),
                   ],
-                  if (imageUrl != null) ...[
+                  if (hasImageUrl) ...[
                     const SizedBox(height: 16),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -2377,6 +2411,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                         imageUrl,
                         height: 140,
                         fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                       ),
                     ),
                   ],
@@ -2450,7 +2485,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                if (imageUrl != null) ...[
+                if (hasImageUrl) ...[
                   const SizedBox(height: 12),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
@@ -2459,6 +2494,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                       height: 120,
                       fit: BoxFit.cover,
                       width: double.infinity,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
                 ],
@@ -2511,6 +2547,9 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
 class PronunciationPracticeWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  /// Reports the best take while the learner is still below the pass mark, so
+  /// a session they never pass is still measured instead of discarded.
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -2519,6 +2558,7 @@ class PronunciationPracticeWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -2609,6 +2649,7 @@ class _PronunciationPracticeWidgetState
                   : widget.exercise.question,
               isAnswered: widget.isAnswered,
               onApproved: widget.onAnswer,
+              onAttempt: widget.onInputChanged,
               primaryColor: colors.primary,
               secondaryTextColor: colors.textSecondary,
             ),
@@ -2910,6 +2951,9 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
 class SpeakingRepeatWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  /// Reports the best take while the learner is still below the pass mark, so
+  /// a session they never pass is still measured instead of discarded.
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -2918,6 +2962,7 @@ class SpeakingRepeatWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -3007,6 +3052,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                   : widget.exercise.question,
               isAnswered: widget.isAnswered,
               onApproved: widget.onAnswer,
+              onAttempt: widget.onInputChanged,
               primaryColor: colors.primary,
               secondaryTextColor: colors.textSecondary,
             ),
@@ -3091,7 +3137,11 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
     final colors = _ExercisePalette.of(context);
     final options = widget.exercise.options ?? [];
     final half = options.length ~/ 2;
-    final words = options.take(half).toList();
+    // Word i belongs to category i in the stored content — shuffle the bank so
+    // the buckets can't be filled top-to-bottom without reading. Seeded by
+    // exercise id: same order on every rebuild.
+    final words = options.take(half).toList()
+      ..shuffle(Random(widget.exercise.id.hashCode));
     final cats = options.skip(half).toList();
 
     final unassigned = words

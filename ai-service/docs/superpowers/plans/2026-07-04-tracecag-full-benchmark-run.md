@@ -1,5 +1,9 @@
 # TRACE-CAG Full Benchmark Run Implementation Plan
 
+> **Historical plan.** Model settings and commands below describe the July
+> 2026 run. For current production-backed execution, use
+> `model-development/benchmark/README.md` and its daily manifest.
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Run the TRACE-CAG benchmark end to end, identify real bottlenecks, fix confirmed issues minimally, and rerun the benchmark.

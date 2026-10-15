@@ -5,7 +5,9 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import select
+from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.content_agent import (
@@ -41,6 +43,21 @@ def _course_tags(course_level: str, source_topics: list[str]) -> dict:
         "source": ["content-agent"],
         "topics": topics or ["general"],
     }
+
+
+def _lesson_skill(exercises: list[dict]) -> str:
+    """Which skill a generated lesson credits, read off its own exercises.
+
+    Listening is the only one the artifact marks unambiguously: the validator
+    requires an `audio_url` on listening exercises. Everything the generator
+    currently emits otherwise (multiple_choice, fill_blank, translate,
+    matching, reorder, true_false) is vocabulary or grammar practice, and the
+    grammar share is decided per exercise rather than per lesson — so a lesson
+    with no audio is labelled vocabulary, which is what these lessons are.
+    """
+    if any(exercise.get("audio_url") for exercise in exercises):
+        return "listening"
+    return "vocabulary"
 
 
 class ContentAgentApplyService:
@@ -131,6 +148,7 @@ class ContentAgentApplyService:
         vocab_identity = await upsert_vocabulary_batch(db, all_vocab_items)
 
         created_course_ids: list[uuid.UUID] = []
+        membership_rows: dict[tuple[uuid.UUID, uuid.UUID], dict] = {}
         for course_data in artifact.courses:
             # Collect unique topics across all lessons in the course
             course_topics: list[str] = []
@@ -198,6 +216,7 @@ class ContentAgentApplyService:
                         outcome=lesson_data.outcome,
                         order_index=lesson_data.order_index,
                         lesson_type="vocabulary",
+                        skill=_lesson_skill(exercises),
                         pass_threshold=80,
                         estimated_minutes=lesson_data.estimated_minutes,
                         xp_reward=lesson_data.xp_reward,
@@ -219,21 +238,15 @@ class ContentAgentApplyService:
                         )
                         vocab_id = vocab_identity[key]
 
-                        membership_exists = await db.scalar(
-                            select(LessonVocabularyItem.id).where(
-                                LessonVocabularyItem.lesson_id == lesson.id,
-                                LessonVocabularyItem.vocabulary_id == vocab_id,
-                            )
+                        membership_rows.setdefault(
+                            (lesson.id, vocab_id),
+                            {
+                                "lesson_id": lesson.id,
+                                "vocabulary_id": vocab_id,
+                                "source_job_id": job.id,
+                                "order_index": vocab_order,
+                            },
                         )
-                        if membership_exists is None:
-                            db.add(
-                                LessonVocabularyItem(
-                                    lesson_id=lesson.id,
-                                    vocabulary_id=vocab_id,
-                                    source_job_id=job.id,
-                                    order_index=vocab_order,
-                                )
-                            )
                         db.add(
                             ContentProvenance(
                                 job_id=job.id,
@@ -276,6 +289,23 @@ class ContentAgentApplyService:
                                 },
                             )
                         )
+
+        rows = list(membership_rows.values())
+        if rows:
+            dialect = db.bind.dialect.name if db.bind else "postgresql"
+            if dialect == "postgresql":
+                statement = pg_insert(LessonVocabularyItem).values(rows)
+                statement = statement.on_conflict_do_nothing(
+                    index_elements=["lesson_id", "vocabulary_id"]
+                )
+            elif dialect == "sqlite":
+                statement = sqlite_insert(LessonVocabularyItem).values(rows)
+                statement = statement.on_conflict_do_nothing(
+                    index_elements=["lesson_id", "vocabulary_id"]
+                )
+            else:
+                statement = insert(LessonVocabularyItem).values(rows)
+            await db.execute(statement)
 
         job.created_entity_ids = {
             "course_ids": [str(course_id) for course_id in created_course_ids]

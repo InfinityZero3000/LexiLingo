@@ -2,7 +2,7 @@
 
 Server-authoritative premium state. The Flutter client's local RevenueCat
 SDK state is a UX hint only — this is the boundary any future premium-gated
-route should depend on via `require_entitlement`.
+route should enforce through `EntitlementService.is_active`.
 """
 
 from fastapi import APIRouter, Depends

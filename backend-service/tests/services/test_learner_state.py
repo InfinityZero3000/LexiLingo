@@ -10,15 +10,21 @@ import pytest
 from sqlalchemy.dialects import postgresql
 
 from app.services.learner_state import (
+    INITIAL_STABILITY_LAPSE,
+    INITIAL_STABILITY_RECALL,
+    TARGET_RETENTION,
     LearnerStateSnapshot,
     ObservationInput,
     TooManyConceptsError,
+    _interval_days,
+    _retrievability,
     _validate_observation,
     apply_observation_event,
     bump_learner_state_epoch,
     evolve_state,
     get_due_concepts_for_user,
     get_states_for_concepts,
+    grade_to_observation,
     ingest_observations,
 )
 
@@ -88,6 +94,119 @@ def test_late_observation_policy_never_regresses_learner_clock() -> None:
     result = evolve_state(current, "incorrect", 0.8, effective_time)
 
     assert result.last_interacted_at == NOW
+
+
+@pytest.mark.parametrize(
+    ("quality", "expected_outcome"),
+    [(0, "incorrect"), (1, "incorrect"), (2, "incorrect"), (3, "correct"), (4, "correct"), (5, "correct")],
+)
+def test_grade_maps_to_outcome_on_the_sm2_pass_boundary(
+    quality: int, expected_outcome: str
+) -> None:
+    outcome, _ = grade_to_observation(quality)
+    assert outcome == expected_outcome
+
+
+def test_grade_confidence_measures_decisiveness_not_score() -> None:
+    """A blackout is as decisive as a perfect recall; near-misses are not.
+
+    Scoring confidence as ``quality / 5`` made a blackout a zero-evidence
+    no-op, which is the inverse of what it should mean.
+    """
+    blackout = grade_to_observation(0)[1]
+    near_miss = grade_to_observation(2)[1]
+    barely_passed = grade_to_observation(3)[1]
+    perfect = grade_to_observation(5)[1]
+
+    assert blackout == pytest.approx(perfect)
+    assert near_miss == pytest.approx(barely_passed)
+    assert blackout > near_miss
+    assert blackout > 0.0
+
+
+def test_worse_failure_is_always_rescheduled_sooner() -> None:
+    """The invariant SM-2 encodes and v1 inverted: the less you recalled, the
+    sooner it must come back."""
+    learned = prior(attempt_count=5, stability_days=5.0, last_interacted_at=NOW - timedelta(days=1))
+
+    intervals = []
+    for quality in (0, 1, 2):
+        outcome, confidence = grade_to_observation(quality)
+        result = evolve_state(learned, outcome=outcome, confidence=confidence, now=NOW)
+        intervals.append((result.next_review_at - NOW).total_seconds())
+
+    assert intervals == sorted(intervals)
+
+
+def test_lapse_returns_a_matured_memory_to_relearning() -> None:
+    """Scaling stability down alone would leave a 200-day memory ~90 days out."""
+    matured = prior(
+        mastery_probability=0.95,
+        stability_days=200.0,
+        attempt_count=20,
+        last_interacted_at=NOW - timedelta(days=60),
+    )
+    outcome, confidence = grade_to_observation(0)
+
+    result = evolve_state(matured, outcome=outcome, confidence=confidence, now=NOW)
+
+    assert result.stability_days <= max(INITIAL_STABILITY_LAPSE)
+    assert (result.next_review_at - NOW) <= timedelta(days=1)
+
+
+def test_review_interval_equals_stability_at_the_retention_target() -> None:
+    """Self-consistency of the curve: the scheduler must invert the same
+    forgetting model the mastery decay uses, or intervals drift away from the
+    retention the engine claims to target."""
+    for stability in (1.0, 6.0, 21.0, 100.0):
+        assert _retrievability(_interval_days(stability), stability) == pytest.approx(
+            TARGET_RETENTION, abs=1e-6
+        )
+
+
+def test_first_answer_seeds_stability_from_its_grade() -> None:
+    """v1 seeded every new concept at a flat 1.0 days, so a perfect first
+    recall and a blackout produced the same next-review date."""
+    perfect = evolve_state(prior(), *grade_to_observation(5), now=NOW)
+    blackout = evolve_state(prior(), *grade_to_observation(0), now=NOW)
+
+    assert perfect.stability_days >= min(INITIAL_STABILITY_RECALL)
+    assert blackout.stability_days <= max(INITIAL_STABILITY_LAPSE)
+    assert perfect.next_review_at > blackout.next_review_at
+
+
+def test_consecutive_perfect_recalls_grow_intervals_past_the_floor() -> None:
+    """The v1 regression this guards: perfect recalls stayed pinned to the
+    6-hour floor because interval was stability * 0.105 while stability only
+    grew ~1.1x per review."""
+    state = LearnerStateSnapshot()
+    now = NOW
+    intervals = []
+    for _ in range(5):
+        state = evolve_state(state, *grade_to_observation(5), now=now)
+        intervals.append((state.next_review_at - now).total_seconds() / 86_400)
+        now = state.next_review_at
+
+    assert intervals == sorted(intervals)
+    assert intervals[0] >= 1.0
+    assert intervals[-1] > 10.0
+
+
+def test_recall_after_decay_strengthens_more_than_drilling_a_fresh_memory() -> None:
+    """Spacing effect — the pedagogical reason to prefer FSRS over SM-2."""
+    base = prior(
+        mastery_probability=0.8,
+        stability_days=10.0,
+        difficulty=0.4,
+        attempt_count=5,
+        last_interacted_at=NOW,
+    )
+    outcome, confidence = grade_to_observation(4)
+
+    on_schedule = evolve_state(base, outcome, confidence, NOW + timedelta(days=10))
+    overdue = evolve_state(base, outcome, confidence, NOW + timedelta(days=40))
+
+    assert overdue.stability_days > on_schedule.stability_days
 
 
 @pytest.mark.parametrize(

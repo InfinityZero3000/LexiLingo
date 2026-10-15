@@ -467,3 +467,102 @@ class TestClaimDailyBonus:
         """Unauthenticated bonus claim is rejected."""
         response = await no_auth_client.post(f"{BASE}/daily/bonus/claim")
         assert response.status_code in (401, 403)
+
+
+# ---------------------------------------------------------------------------
+# Every template must be measurable
+# ---------------------------------------------------------------------------
+
+class TestEveryTemplateIsMeasurable:
+    """A challenge whose progress can never move is an unwinnable daily task.
+
+    `voice_practice` and `chat_practice` shipped for months returning a hard 0,
+    and with 4-5 of 13 templates drawn a day, most days handed the learner one.
+    """
+
+    def test_no_template_uses_an_unmeasured_category(self):
+        from app.routes.challenges import DAILY_CHALLENGE_TEMPLATES
+
+        measured = {"lesson", "vocabulary", "xp", "streak", "time", "content"}
+        unmeasured = {
+            t["id"]: t["category"]
+            for t in DAILY_CHALLENGE_TEMPLATES
+            if t["category"] not in measured
+        }
+        assert unmeasured == {}
+
+    def test_time_challenge_is_not_scored_as_xp(self):
+        """"Study for 10 minutes" sat in the xp category, so 10 XP satisfied it."""
+        from app.routes.challenges import DAILY_CHALLENGE_TEMPLATES
+
+        time_spent = next(
+            t for t in DAILY_CHALLENGE_TEMPLATES if t["id"] == "time_spent"
+        )
+        assert time_spent["category"] == "time"
+
+    def test_generation_does_not_disturb_global_random(self):
+        """Seeding is per-call; the module-level sequence must be untouched."""
+        import random
+
+        from app.routes.challenges import get_challenges_for_user
+
+        random.seed(1234)
+        expected = [random.random() for _ in range(3)]
+
+        random.seed(1234)
+        first = random.random()
+        get_challenges_for_user(TEST_USER_ID, date.today())
+        rest = [random.random() for _ in range(2)]
+
+        assert [first, *rest] == expected
+
+    def test_every_content_quest_knows_where_to_read_its_progress(self):
+        """A content template without a CONTENT_QUEST_SOURCES entry reads 0."""
+        from app.routes.challenges import (
+            CONTENT_QUEST_SOURCES,
+            DAILY_CHALLENGE_TEMPLATES,
+        )
+
+        content_ids = {
+            t["id"] for t in DAILY_CHALLENGE_TEMPLATES if t["category"] == "content"
+        }
+        assert content_ids == set(CONTENT_QUEST_SOURCES)
+
+    def test_content_quest_units_are_known(self):
+        from app.routes.challenges import CONTENT_QUEST_SOURCES
+
+        for quest_id, spec in CONTENT_QUEST_SOURCES.items():
+            assert spec["unit"] in {"events", "minutes"}, quest_id
+            assert spec["sources"], quest_id
+
+    def test_content_quest_sources_are_awardable(self):
+        """A source absent from XP_SOURCE_CAPS can never produce a transaction."""
+        from app.routes.challenges import CONTENT_QUEST_SOURCES
+        from app.services.xp_service import XP_SOURCE_CAPS
+
+        for quest_id, spec in CONTENT_QUEST_SOURCES.items():
+            for source in spec["sources"]:
+                assert source in XP_SOURCE_CAPS, f"{quest_id}: {source}"
+
+    def test_minute_quests_pin_a_source_detail_or_own_their_source(self):
+        """Two quests reading the same source must not count each other's awards.
+
+        A book earns XP for reading time, for a milestone and for a chapter quiz.
+        Without a `source_detail`, "read 15 minutes" and "finish a chapter quiz"
+        would both see all three.
+        """
+        from app.routes.challenges import CONTENT_QUEST_SOURCES
+
+        by_source: dict[str, list[str]] = {}
+        for quest_id, spec in CONTENT_QUEST_SOURCES.items():
+            for source in spec["sources"]:
+                by_source.setdefault(source, []).append(quest_id)
+
+        for source, quest_ids in by_source.items():
+            if len(quest_ids) == 1:
+                continue
+            details = {
+                CONTENT_QUEST_SOURCES[q].get("source_detail") for q in quest_ids
+            }
+            assert None not in details, f"{source}: {quest_ids} need a source_detail"
+            assert len(details) == len(quest_ids), f"{source}: {quest_ids} overlap"

@@ -134,8 +134,9 @@ void main() {
       ReviewReminderNotificationSyncService.notificationId,
     );
     expect(notification.type, NotificationType.vocabularyReviewReminder);
-    expect(notification.title, 'Đến giờ ôn từ vựng');
-    expect(notification.body, contains('201'));
+    // Localization is not booted in unit tests, so .tr() falls back to the key.
+    expect(notification.title, 'notifications.reviewReminderTitle');
+    expect(notification.body, 'notifications.reviewWaitingBody');
     expect(notification.isRead, isFalse);
     expect(notification.data?['route'], '/vocabulary/review');
     expect(notification.data?['due_count'], 201);
@@ -162,7 +163,7 @@ void main() {
 
     expect(notificationRepository.notifications, hasLength(1));
     final notification = notificationRepository.notifications.single;
-    expect(notification.body, contains('150'));
+    expect(notification.data?['due_count'], 150);
     expect(notification.isRead, isTrue);
   });
 
@@ -174,6 +175,9 @@ void main() {
     await service.sync();
 
     expect(notificationRepository.notifications, hasLength(1));
-    expect(notificationRepository.notifications.single.body, contains('201'));
+    expect(
+      notificationRepository.notifications.single.data?['due_count'],
+      201,
+    );
   });
 }

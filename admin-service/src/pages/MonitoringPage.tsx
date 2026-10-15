@@ -476,8 +476,8 @@ export const MonitoringPage = () => {
             />
           </div>
           {aiDash?.health?.warnings && aiDash.health.warnings.length > 0 && (
-            <div style={{ marginTop: 12, fontSize: 12, color: "var(--accent)" }}>
-              ⚠ {aiDash.health.warnings.join(" • ")}
+            <div className="monitor-warning">
+              <AlertTriangle size={15} aria-hidden="true" /> {aiDash.health.warnings.join(" • ")}
             </div>
           )}
         </div>
@@ -553,4 +553,3 @@ export const MonitoringPage = () => {
     </div>
   );
 };
-

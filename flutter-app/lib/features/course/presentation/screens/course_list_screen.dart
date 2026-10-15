@@ -109,7 +109,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                             ),
                                       ),
                                       Text(
-                                        '${provider.courses.length} courses available',
+                                        'course.coursesAvailablePlural'.plural(provider.courses.length),
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
@@ -140,7 +140,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                           ),
                                           onPressed: () =>
                                               _showFilterSheet(context),
-                                          tooltip: 'Filter',
+                                          tooltip: 'common.filter'.tr(),
                                         ),
                                       ),
                                       if (provider.hasActiveFilters)
@@ -278,7 +278,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
             categoryId: levelKey,
             title: levelKey,
             description:
-                '${courses.length} ${courses.length == 1 ? 'course' : 'courses'}',
+                'course.courseCount'.plural(courses.length),
             icon: _getLevelIcon(levelKey),
             color: _getLevelColor(levelKey, isDark: isDark),
             courses: courses,
@@ -315,7 +315,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
             categoryId: category.id,
             title: category.name,
             description:
-                '${categoryCourses.length} ${categoryCourses.length == 1 ? 'course' : 'courses'}',
+                'course.courseCount'.plural(categoryCourses.length),
             icon: _parseCategoryIcon(category.icon ?? 'book'),
             color: _parseCategoryColor(category.color, isDark: isDark),
             courses: categoryCourses,
@@ -484,7 +484,7 @@ class _CourseBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    'Start Learning',
+                    'course.startLearning'.tr(),
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -499,7 +499,7 @@ class _CourseBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Pick a course & start your\nlanguage journey today!',
+                    'course.pickCoursePrompt'.tr(),
                     textAlign: TextAlign.right,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.9),
@@ -980,7 +980,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     const ielts = [
       'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam pencil
       'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
-      'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80', // graduation cap
+      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', // classroom
     ];
     const business = [
       'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
@@ -1083,10 +1083,16 @@ class _HorizontalCourseCard extends StatelessWidget {
   }
 
   Widget _buildCourseThumbnail(BuildContext context) {
-    final primaryUrl = course.thumbnailUrl;
+    final primaryUrl = course.thumbnailUrl?.trim();
     final fallbackUrl = _getCourseImageUrl();
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
+    // Same course can render in two category sections at once (see
+    // heroTag comment above) — two Hero widgets loading the identical
+    // network image concurrently have been observed to render black
+    // instead of the photo, so scope the cache entry per Hero instance
+    // rather than sharing one keyed only by URL.
+    const targetWidth = 400;
 
     Widget gradientLoading() => Container(
       decoration: BoxDecoration(
@@ -1122,27 +1128,28 @@ class _HorizontalCourseCard extends StatelessWidget {
       ),
     );
 
-    // DB thumbnail exists: try it first, fall back to computed URL on error
-    if (primaryUrl != null) {
-      return CachedNetworkImage(
-        imageUrl: primaryUrl,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => gradientLoading(),
-        errorWidget: (_, __, ___) => CachedNetworkImage(
-          imageUrl: fallbackUrl,
+    Widget networkThumbnail(String url, {required Widget Function() onError}) =>
+        CachedNetworkImage(
+          imageUrl: url,
+          cacheKey: '$heroTag|$url',
+          memCacheWidth: targetWidth,
           fit: BoxFit.cover,
           placeholder: (_, __) => gradientLoading(),
-          errorWidget: (ctx, __, ___) => finalFallback(ctx),
+          errorWidget: (_, __, ___) => onError(),
+        );
+
+    // DB thumbnail exists: try it first, fall back to computed URL on error
+    if (primaryUrl != null && primaryUrl.isNotEmpty) {
+      return networkThumbnail(
+        primaryUrl,
+        onError: () => networkThumbnail(
+          fallbackUrl,
+          onError: () => finalFallback(context),
         ),
       );
     }
 
-    return CachedNetworkImage(
-      imageUrl: fallbackUrl,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => gradientLoading(),
-      errorWidget: (ctx, __, ___) => finalFallback(ctx),
-    );
+    return networkThumbnail(fallbackUrl, onError: () => finalFallback(context));
   }
 
   static const Set<String> _hiddenCourseTagKeys = {
@@ -1582,13 +1589,13 @@ class _FilterSheetState extends State<_FilterSheet> {
                       runSpacing: 8,
                       children: [
                         _Chip(
-                          label: 'All',
+                          label: 'course.langAll'.tr(),
                           isSelected: _language == null,
                           color: Colors.grey,
                           onTap: () => setState(() => _language = null),
                         ),
                         _Chip(
-                          label: 'English',
+                          label: 'course.langEnglish'.tr(),
                           isSelected: _language == 'English',
                           color: primaryAccent,
                           prefix: _LangBadge(
@@ -1599,7 +1606,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           onTap: () => setState(() => _language = 'English'),
                         ),
                         _Chip(
-                          label: 'Spanish',
+                          label: 'course.langSpanish'.tr(),
                           isSelected: _language == 'Spanish',
                           color: AppColors.orange,
                           prefix: _LangBadge(
@@ -1610,7 +1617,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           onTap: () => setState(() => _language = 'Spanish'),
                         ),
                         _Chip(
-                          label: 'Vietnamese',
+                          label: 'course.langVietnamese'.tr(),
                           isSelected: _language == 'Vietnamese',
                           color: AppColors.errorBright,
                           prefix: _LangBadge(
@@ -1653,7 +1660,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                       _SectionHeader(
                         icon: Icons.category_outlined,
                         color: AppColors.teal,
-                        label: 'Category',
+                        label: 'topics.category'.tr(),
                       ),
                       const SizedBox(height: 12),
                       Wrap(
@@ -1661,7 +1668,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                         runSpacing: 8,
                         children: [
                           _Chip(
-                            label: 'All',
+                            label: 'course.langAll'.tr(),
                             isSelected: _categorySlug == null,
                             color: Colors.grey,
                             onTap: () => setState(() => _categorySlug = null),
@@ -1691,7 +1698,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     _SectionHeader(
                       icon: Icons.bookmark_outline,
                       color: Colors.amber[700]!,
-                      label: 'My Enrollments',
+                      label: 'course.myEnrollments'.tr(),
                     ),
                     const SizedBox(height: 12),
                     GestureDetector(
@@ -1725,7 +1732,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'Show enrolled courses only',
+                              'course.showEnrolledOnly'.tr(),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
@@ -1757,7 +1764,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     _SectionHeader(
                       icon: Icons.sort,
                       color: AppColors.primary,
-                      label: 'Sort By',
+                      label: 'course.sortBy'.tr(),
                     ),
                     const SizedBox(height: 12),
                     Wrap(
@@ -1814,8 +1821,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    child: const Text(
-                      'Apply Filters',
+                    child: Text(
+                      'course.applyFilters'.tr(),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 15,

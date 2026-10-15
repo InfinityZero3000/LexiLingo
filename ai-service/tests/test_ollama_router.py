@@ -190,3 +190,29 @@ async def test_ollama_models_success_returns_models_list(monkeypatch):
     assert data["models"] == model_list
     assert data["count"] == 2
     assert data["current"] == "lexilingo-qwen3-1.7b"
+
+
+@pytest.mark.asyncio
+async def test_handler_stays_offline_when_ollama_is_disabled(monkeypatch):
+    """Nothing serves Ollama yet: warming it up logged a connection error on
+    every start and made callers wait out a timeout before falling back."""
+    from api.services.handlers import ollama_qwen_handler as module
+
+    class _Settings:
+        OLLAMA_ENABLED = False
+
+    dialled = False
+
+    def _no_dial(*args, **kwargs):
+        nonlocal dialled
+        dialled = True
+        raise AssertionError("must not open a client when disabled")
+
+    monkeypatch.setattr(module, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(module.httpx, "AsyncClient", _no_dial)
+
+    handler = module.OllamaQwenHandler()
+
+    assert await handler.load() is False
+    assert handler.is_loaded is False
+    assert dialled is False

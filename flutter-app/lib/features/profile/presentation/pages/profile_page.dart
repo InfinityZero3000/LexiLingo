@@ -198,7 +198,7 @@ class _ProfilePageState extends State<ProfilePage> {
             IconButton(
               icon: const Icon(Icons.admin_panel_settings_rounded),
               color: Colors.deepOrange,
-              tooltip: 'Admin Mobile',
+              tooltip: 'profile.adminMobile'.tr(),
               onPressed: _openAdminPanel,
             ),
         ],

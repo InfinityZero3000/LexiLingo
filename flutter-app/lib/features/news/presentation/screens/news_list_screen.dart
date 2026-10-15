@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -238,6 +239,13 @@ class _NewsListScreenState extends State<NewsListScreen> {
 
     return GestureDetector(
       onTap: () {
+        trackContentInteraction(
+          itemType: 'news',
+          itemId: article.id,
+          action: 'open',
+          topic: article.category,
+          source: 'news_list',
+        );
         Navigator.pushNamed(context, '/news/detail', arguments: article);
       },
       child: Container(
@@ -345,7 +353,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${article.readingTimeMin} min',
+                                'course.durationMin'.tr(namedArgs: {'count': '${article.readingTimeMin}'}),
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11,

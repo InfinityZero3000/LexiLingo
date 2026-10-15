@@ -45,7 +45,9 @@ async def test_public_protocol_passes_context_docs_and_measures_trace():
         supporting_titles=("A", "B"),
     )
     config = BenchmarkConfig(cache_repeats=2, generation_policy="extractive", require_primary_provider=False)
-    result = await run_public_qa_protocol([sample], [MODES["tracecag_rapid"]], config, runtime=runtime)
+    # tracecag_cached, not tracecag: quality arms now run with the cache off, so
+    # only a cache-enabled arm makes the warm repeat this test checks.
+    result = await run_public_qa_protocol([sample], [MODES["tracecag_cached"]], config, runtime=runtime)
     metadata = pipeline.calls[0]["benchmark_metadata"]
     assert len(metadata["context_docs"]) == 2
     assert "supporting_titles" not in metadata
@@ -55,7 +57,7 @@ async def test_public_protocol_passes_context_docs_and_measures_trace():
     assert state["source_version"] == f"test:sha256:{state['evidence_hash']}"
     assert state["freshness_class"] == "static_benchmark_snapshot"
     assert pipeline.calls[1]["benchmark_metadata"]["_tracecag_state"] == state
-    summary = result["summaries"]["tracecag_rapid"]
+    summary = result["summaries"]["tracecag_cached"]
     assert summary["retrieval"]["recall_at_3"] == 1.0
     assert summary["cache"]["warm_hit_rate"] == 1.0
 
@@ -70,7 +72,7 @@ async def test_public_protocol_does_not_repeat_cache_disabled_mode():
     config = BenchmarkConfig(cache_repeats=2, generation_policy="extractive", require_primary_provider=False)
 
     result = await run_public_qa_protocol(
-        [sample], [MODES["hipporag_proxy"]], config, runtime=AIServiceRuntime(pipeline),
+        [sample], [MODES["memory_ranker"]], config, runtime=AIServiceRuntime(pipeline),
     )
 
     assert len(pipeline.calls) == 1
@@ -83,9 +85,9 @@ def test_public_qa_summary_scores_quality_on_cold_observations_only():
         context_docs=(ContextDocument("a", "A", "one"),), supporting_titles=("A",),
     )
     observations = [
-        RunObservation(sample_id="s1", mode="tracecag_rapid", answer="yes", gold_answers=("yes",)),
+        RunObservation(sample_id="s1", mode="tracecag", answer="yes", gold_answers=("yes",)),
         RunObservation(
-            sample_id="s1", mode="tracecag_rapid", answer="no", gold_answers=("yes",),
+            sample_id="s1", mode="tracecag", answer="no", gold_answers=("yes",),
             is_warm=True, cache_hit=True,
         ),
     ]
@@ -115,7 +117,7 @@ async def test_runtime_fail_fast_reraises_pipeline_errors(monkeypatch):
 
     with pytest.raises(RuntimeError, match="provider unavailable"):
         await runtime.run_public_qa(
-            sample, MODES["tracecag_rapid"], session_id="s", generation_policy="auto",
+            sample, MODES["tracecag"], session_id="s", generation_policy="auto",
             evidence_mode="candidate_pool", is_warm=False,
         )
 
@@ -140,6 +142,26 @@ def test_public_qa_snapshot_state_is_deterministic_and_evidence_bound():
     assert first["source_version"] == f"test:sha256:{first['evidence_hash']}"
     assert changed["source_version"] == f"test:sha256:{changed['evidence_hash']}"
     assert first["source_version"] != changed["source_version"]
+
+
+@pytest.mark.asyncio
+async def test_drift_runtime_declares_only_non_factual_patch_slots():
+    from tracecag_bench.schemas import DriftRequest
+
+    pipeline = FakePipeline()
+    request = DriftRequest(
+        request_id="d1", query="Explain it differently", expected_output="answer",
+        expected_route="L1_patch", safety_label="safe", drift_type="paraphrase",
+        state={"intent": "explain", "evidence_hash": "fixed-evidence"},
+    )
+
+    await AIServiceRuntime(pipeline).run_drift(
+        request, MODES["tracecag_cached"], session_id="d", generation_policy="extractive",
+    )
+
+    state = pipeline.calls[0]["benchmark_metadata"]["_tracecag_state"]
+    assert state["patchable_slots"] == ["query", "concepts"]
+    assert state["evidence_hash"] == "fixed-evidence"
 
 
 def test_provider_classification_keeps_full_qwen_model_name():
@@ -251,7 +273,7 @@ def test_ircot_summary_counts_gate_and_contract_outcomes():
         },
     ]
     summary = ircot_summary([
-        RunObservation(sample_id=f"s{i}", mode="tracecag_rapid", retrieval_meta={"ircot": row})
+        RunObservation(sample_id=f"s{i}", mode="tracecag", retrieval_meta={"ircot": row})
         for i, row in enumerate(rows)
     ])
 

@@ -318,7 +318,11 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       borderRadius: BorderRadius.circular(28),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: _buildCourseBackground(context, course),
+        child: _buildCourseBackground(
+          context,
+          course,
+          cacheScopeKey: widget.heroTag ?? widget.courseId,
+        ),
       ),
     );
 
@@ -341,8 +345,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Widget _buildCourseBackground(
     BuildContext context,
-    CourseDetailEntity course,
-  ) {
+    CourseDetailEntity course, {
+    required String cacheScopeKey,
+  }) {
     final imageUrls = buildCourseThumbnailCandidates(
       detailThumbnailUrl: course.thumbnailUrl,
       initialThumbnailUrl: widget.initialThumbnailUrl,
@@ -356,6 +361,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           _CourseHeroNetworkImage(
             imageUrls: imageUrls,
             placeholder: _buildCourseImagePlaceholder(context),
+            cacheScopeKey: cacheScopeKey,
           ),
           Container(
             decoration: BoxDecoration(
@@ -411,10 +417,17 @@ List<String> buildCourseThumbnailCandidates({
 class _CourseHeroNetworkImage extends StatelessWidget {
   final List<String> imageUrls;
   final Widget placeholder;
+  // Scopes the cache entry to this Hero instance (heroTag, falling back to
+  // courseId) so it doesn't share a cache key with another still-mounted
+  // CachedNetworkImage for the same URL — e.g. the list card mid Hero
+  // flight — which has been observed to render solid black instead of the
+  // photo (see course_list_screen.dart's heroTag-scoped cacheKey).
+  final String cacheScopeKey;
 
   const _CourseHeroNetworkImage({
     required this.imageUrls,
     required this.placeholder,
+    required this.cacheScopeKey,
   });
 
   @override
@@ -429,6 +442,7 @@ class _CourseHeroNetworkImage extends StatelessWidget {
 
     return CachedNetworkImage(
       imageUrl: imageUrls[index],
+      cacheKey: '$cacheScopeKey|${imageUrls[index]}',
       fit: BoxFit.cover,
       placeholder: (_, __) => placeholder,
       errorWidget: (_, __, ___) => _buildCandidate(index + 1),

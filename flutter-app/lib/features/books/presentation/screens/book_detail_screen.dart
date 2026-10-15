@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
+import 'package:lexilingo_app/core/widgets/premium_gate.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -352,47 +353,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           const SizedBox(height: 12),
 
                           // Download button
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              icon: provider.isDownloading
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: LottieLoadingWidget.tiny(),
-                                    )
-                                  : Icon(
-                                      isDownloaded
-                                          ? Icons.download_done_rounded
-                                          : Icons.download_rounded,
-                                    ),
-                              label: Text(
-                                provider.isDownloading
-                                    ? 'Downloading...'
-                                    : isDownloaded
-                                    ? 'Downloaded'
-                                    : 'Download for Offline',
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: isDownloaded
-                                    ? AppColors.greenSuccess
-                                    : AppColors.primary,
-                                side: BorderSide(
-                                  color: isDownloaded
-                                      ? AppColors.greenSuccess
-                                      : AppColors.primary,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: provider.isDownloading || isDownloaded
-                                  ? null
-                                  : () => provider.downloadBook(),
-                            ),
+                          _downloadButton(
+                            provider: provider,
+                            isDownloaded: isDownloaded,
                           ),
                           const SizedBox(height: 12),
 
@@ -439,18 +402,65 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     );
   }
 
+  /// Offline download is a premium perk. An already-downloaded book stays
+  /// readable for everyone regardless — only *new* downloads are gated, so
+  /// nobody loses access to something they already have on disk.
+  Widget _downloadButton({
+    required BookProvider provider,
+    required bool isDownloaded,
+  }) {
+    final button = SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        icon: provider.isDownloading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: LottieLoadingWidget.tiny(),
+              )
+            : Icon(
+                isDownloaded
+                    ? Icons.download_done_rounded
+                    : Icons.download_rounded,
+              ),
+        label: Text(
+          provider.isDownloading
+              ? 'Downloading...'
+              : isDownloaded
+              ? 'Downloaded'
+              : 'Download for Offline',
+        ),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: isDownloaded
+              ? AppColors.greenSuccess
+              : AppColors.primary,
+          side: BorderSide(
+            color: isDownloaded ? AppColors.greenSuccess : AppColors.primary,
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        onPressed: provider.isDownloading || isDownloaded
+            ? null
+            : () => provider.downloadBook(),
+      ),
+    );
+    if (isDownloaded) return button;
+    return PremiumGate(child: button);
+  }
+
   Widget _buildStatRow(bool isDark, Book book) {
     final stats = [
       if (book.chapterCount > 0)
         _StatItem(
           icon: Icons.format_list_numbered_rounded,
-          label: '${book.chapterCount} ch.',
+          label: 'books.chapterCountShort'.tr(namedArgs: {'count': '${book.chapterCount}'}),
           isDark: isDark,
         ),
       if (book.wordCount > 0)
         _StatItem(
           icon: Icons.text_fields_rounded,
-          label: '${(book.wordCount / 1000).toStringAsFixed(0)}k words',
+          label: 'books.wordCountK'.tr(namedArgs: {'count': (book.wordCount / 1000).toStringAsFixed(0)}),
           isDark: isDark,
         ),
       _StatItem(

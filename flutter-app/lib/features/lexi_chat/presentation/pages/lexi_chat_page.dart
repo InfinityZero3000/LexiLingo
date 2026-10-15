@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +21,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialo
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corrections_sheet.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
+import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
 
 /// Lexi Chat Page — Minimalist design with clean conversation UI.
 ///
@@ -296,6 +298,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     try {
       final path = await _recorder.stop();
+      if (!mounted) return;
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
@@ -314,10 +317,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       }
       final bytes = await file.readAsBytes();
 
-      if (!mounted) {
-        setState(() => _isTranscribing = false);
-        return;
-      }
+      if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
       final transcript = await chatProvider.transcribeAudio(bytes);
       if (!mounted) return;
@@ -335,6 +335,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
       if (!mounted) return;
       await _sendMessage();
+      unawaited(_assessAndAttachPronunciation(bytes, transcript));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -343,6 +344,52 @@ class _LexiChatPageState extends State<LexiChatPage>
       });
       _showSnack('lexiChat.sttFailed'.tr(namedArgs: {'error': e.toString()}));
     }
+  }
+
+  /// Scores pronunciation on the audio the learner just sent, using the STT
+  /// transcript itself as the reference text — this is a live speech-quality
+  /// signal (did they say the words clearly), not a "was this correct"
+  /// check, so it works for free-form conversation instead of only
+  /// read-aloud drills. Fire-and-forget: never blocks or fails the send.
+  Future<void> _assessAndAttachPronunciation(
+    Uint8List bytes,
+    String transcript,
+  ) async {
+    if (transcript.trim().isEmpty) return;
+
+    final result = await sl<AssessPronunciationUseCase>()(
+      AssessPronunciationParams(
+        audioData: bytes,
+        filename: 'lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a',
+        targetText: transcript,
+        language: 'en',
+      ),
+    );
+    if (!mounted) return;
+
+    result.fold(
+      (_) {}, // Assessment is a bonus signal — silently skip on failure.
+      (score) {
+        final chatProvider = context.read<LexiChatProvider>();
+        LexiMessage? lastUserMessage;
+        for (final message in chatProvider.messages.reversed) {
+          if (message.isUser) {
+            lastUserMessage = message;
+            break;
+          }
+        }
+        if (lastUserMessage == null) return;
+        chatProvider.attachPronunciationScore(lastUserMessage.id, score);
+        trackProductEvent(
+          'pronunciation_score_shown',
+          source: 'lexi_chat',
+          properties: {
+            'message_id': lastUserMessage.id,
+            'score': score.overallScore,
+          },
+        );
+      },
+    );
   }
 
   void _showSnack(String msg) {
@@ -764,6 +811,16 @@ class _LexiChatPageState extends State<LexiChatPage>
                         message.linkedConcepts.isNotEmpty)
                     ? () => LexiCorrectionsSheet.show(context, message)
                     : null,
+                onPronunciationScoreTap: message.pronunciationScore == null
+                    ? null
+                    : () => trackProductEvent(
+                        'pronunciation_score_tapped',
+                        source: 'lexi_chat',
+                        properties: {
+                          'message_id': message.id,
+                          'score': message.pronunciationScore!.overallScore,
+                        },
+                      ),
                 onSuggestedPracticeTap: (practice) =>
                     _sendQuickReply(practice.prompt),
               ),

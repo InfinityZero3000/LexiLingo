@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BookOpen } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -19,6 +20,11 @@ import {
 import { useI18n } from "../lib/i18n";
 
 const LESSON_TYPES = ["lesson", "practice", "review", "test", "vocabulary", "grammar"];
+
+// Which CEFR skill a finished lesson credits. Empty = inherit the course's
+// label; only override when this lesson exercises something else (a listening
+// lesson inside a grammar course).
+const SKILLS = ["vocabulary", "grammar", "reading", "listening", "speaking", "writing"];
 
 const typeColors: Record<string, "info" | "success" | "warning" | "danger"> = {
   lesson: "info",
@@ -57,6 +63,7 @@ export const LessonsPage = () => {
     outcome: "",
     order_index: 0,
     lesson_type: "lesson",
+    skill: "",
     xp_reward: 10,
     pass_threshold: 80,
     estimated_minutes: 10,
@@ -69,6 +76,7 @@ export const LessonsPage = () => {
       outcome: "",
       order_index: lessons.length,
       lesson_type: "lesson",
+      skill: "",
       xp_reward: 10,
       pass_threshold: 80,
       estimated_minutes: 10,
@@ -143,6 +151,7 @@ export const LessonsPage = () => {
       outcome: lesson.outcome || "",
       order_index: lesson.order_index,
       lesson_type: lesson.lesson_type,
+      skill: lesson.skill || "",
       xp_reward: lesson.xp_reward,
       pass_threshold: lesson.pass_threshold,
       estimated_minutes: lesson.estimated_minutes ?? 10,
@@ -164,11 +173,14 @@ export const LessonsPage = () => {
     setSaving(true);
     setError(null);
     try {
+      // "" is the form's "inherit from the course" choice; the API only
+      // accepts a real skill name or null.
+      const payload = { ...form, skill: form.skill || null };
       if (editingId) {
-        await updateLesson(editingId, { ...form });
+        await updateLesson(editingId, payload);
       } else {
         await createLesson({
-          ...form,
+          ...payload,
           unit_id: targetUnitId,
           order_index: form.order_index || lessons.length,
         });
@@ -203,22 +215,22 @@ export const LessonsPage = () => {
 
       {error && <div className="form-error">{error}</div>}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
           {isStandalone && (
-            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+            <div className="filter-group">
               <select
+                className="filter-select"
                 value={selectedCourseId}
                 onChange={(e) => setSelectedCourseId(e.target.value)}
-                style={{ minWidth: 200, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
               >
                 <option value="">-- Tất cả khóa học --</option>
                 {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
               <select
+                className="filter-select"
                 value={selectedUnitId}
                 onChange={(e) => setSelectedUnitId(e.target.value)}
-                style={{ minWidth: 200, padding: "8px 12px", borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", fontSize: 14 }}
               >
                 <option value="">-- Tất cả chương --</option>
                 {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
@@ -238,7 +250,7 @@ export const LessonsPage = () => {
           <EmptyState
             title={t.lessons.noLessons}
             description={t.lessons.noLessonsDesc}
-            icon="📖"
+            icon={<BookOpen size={40} aria-hidden="true" />}
             action={
               <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
                 {t.lessons.createLesson}
@@ -289,7 +301,14 @@ export const LessonsPage = () => {
               },
               {
                 header: "Bài tập",
-                render: (row: LessonItem) => <span className="table-meta">{row.total_exercises}</span>,
+                render: (row: LessonItem) =>
+                  row.exercise_count > 0 ? (
+                    <span className="table-meta">{row.exercise_count}</span>
+                  ) : (
+                    <span title="Bài học chưa có bài tập — người học không mở được và khóa học không thể xuất bản">
+                      <StatusPill tone="warning" label="Chưa có" />
+                    </span>
+                  ),
                 align: "center",
               },
               {
@@ -302,7 +321,7 @@ export const LessonsPage = () => {
                       onClick={() => handleEditExercises(row)}
                       title="Quản lý bài tập"
                     >
-                      Bài tập ({row.total_exercises})
+                      Bài tập ({row.exercise_count})
                     </button>
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
                     <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
@@ -359,6 +378,15 @@ export const LessonsPage = () => {
                     {LESSON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </label>
+                <label>
+                  Kỹ năng chấm điểm
+                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                    <option value="">— Theo khóa học —</option>
+                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </label>
+              </div>
+              <div className="form-row">
                 <label>
                   Thứ tự
                   <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />

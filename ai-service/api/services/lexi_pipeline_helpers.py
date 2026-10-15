@@ -69,6 +69,13 @@ def sanitize_lexi_response(text: str) -> str:
         return "Squawk! I lost my words for a second. Could you ask that again?"
 
     cleaned = re.sub(r"<think\b[^>]*>[\s\S]*?</think>", "", cleaned, flags=re.IGNORECASE)
+    # An unpaired closing tag, with no opening tag to match. Qwen3 answers a
+    # "/no_think" prompt by emitting an empty reasoning block, and only the
+    # closing tag survives — measured on lexilingo-qwen3-1.7b, the model
+    # OLLAMA_MODEL names as the fallback provider. The paired pattern above
+    # cannot see it, so Lexi opened her reply with "</think>" whenever Groq was
+    # down and the local model answered.
+    cleaned = re.sub(r"^\s*</think>\s*", "", cleaned, flags=re.IGNORECASE)
 
     if re.search(r"\bconcept:[a-z0-9_.:-]+", cleaned, flags=re.IGNORECASE):
         return _INTERNAL_CONTEXT_FALLBACK

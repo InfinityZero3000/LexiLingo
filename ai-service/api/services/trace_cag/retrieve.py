@@ -36,7 +36,6 @@ from api.services.trace_cag.benchmark.ranking import (
     _rank_benchmark_candidates,
     _rank_with_online_ranker,
     _ranker_enabled,
-    _interleave_explicit_second_hop,
     _select_diverse_multihop_evidence,
 )
 
@@ -160,22 +159,33 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         1's output), so sharing mutable lists across both would race."""
         local_vector_hits: List[Dict[str, Any]] = []
         local_evidence: List[Dict[str, Any]] = []
+        routed_topics: List[str] = []
+        from api.models.v3_schemas import V3PipelineContext
+
+        # Built outside the try on purpose. V3PipelineContext.user_id is a
+        # required str while analyze()'s is Optional, so a turn without one
+        # raised a pydantic error in here, was reported as "RetrievalServiceV3
+        # unavailable", and silently dropped the whole dense stage. A bad
+        # context is a bug and must surface; only the service call below is
+        # allowed to degrade.
+        ctx = V3PipelineContext(
+            user_input=user_input,
+            session_id=state.get("session_id", ""),
+            user_id=state.get("user_id") or "",
+        )
+        seed_nodes = [
+            c if isinstance(c, str) else c.get("id", "")
+            for c in kg_concepts[:5]
+        ]
         try:
-            from api.models.v3_schemas import V3PipelineContext
-
             retrieval_v3 = await _get_retrieval_v3()
-            ctx = V3PipelineContext(
-                user_input=user_input,
-                session_id=state.get("session_id", ""),
-                user_id=state.get("user_id"),
-            )
-            seed_nodes = [
-                c if isinstance(c, str) else c.get("id", "")
-                for c in kg_concepts[:5]
-            ]
             bundle = await retrieval_v3.retrieve(user_input, seed_nodes, ctx)
+            routed_topics = list(bundle.routed_topics)
+            # A routed turn draws its whole prompt from one topic subgraph, so
+            # it needs enough hits to fill the evidence budget on its own.
+            hit_budget = max(max_hits, 8) if routed_topics else max_hits
 
-            for hit in bundle.vector_hits[:max_hits]:
+            for hit in bundle.vector_hits[:hit_budget]:
                 snippet = getattr(hit, "snippet", hit.id)
                 local_vector_hits.append({"text": snippet, "score": hit.score})
                 local_evidence.append({
@@ -188,8 +198,12 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 })
 
             logger.info(
-                f"[retrieve_node] RetrievalServiceV3: {len(local_vector_hits)} hits "
-                f"(centrality+community ranked)"
+                f"[retrieve_node] RetrievalServiceV3: {len(local_vector_hits)} hits"
+                + (
+                    f" from topics {routed_topics} (sim={bundle.topic_similarity:.2f})"
+                    if routed_topics
+                    else " (centrality+community ranked)"
+                )
             )
 
         except Exception as e:
@@ -221,12 +235,17 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                         candidate_labels.append(label)
 
                 if candidate_labels:
+                    # Call `similarity` directly, not the handler's own
+                    # `invoke`: gateway.invoke already wraps the return in
+                    # {"success", "data"}, so routing through invoke() nested
+                    # the payload twice and this read {} every time — the
+                    # MiniLM fallback silently contributed zero hits.
                     result = await gateway.invoke(
-                        "minilm", "invoke",
-                        {"task": "similarity", "query": user_input, "candidates": candidate_labels},
+                        "minilm", "similarity",
+                        {"query": user_input, "candidates": candidate_labels},
                     )
                     if result.get("success"):
-                        sim_results = result.get("data", {}).get("results", [])
+                        sim_results = result.get("data") or []
                         for r in sim_results:
                             if r["score"] >= threshold:
                                 local_vector_hits.append({"text": r["text"], "score": r["score"]})
@@ -242,38 +261,44 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             except Exception as e2:
                 logger.warning(f"[retrieve_node] Vector search fully skipped: {e2}")
 
-        return local_vector_hits, local_evidence
+        return local_vector_hits, local_evidence, routed_topics
 
     # Decide + start Stage 2 now (before Stage 1 runs) — the decision only
     # depends on diagnosis_errors/confidence/policy, all already available,
     # never on Stage 1's output, so it can run concurrently with Stage 1
     # instead of waiting for it to finish first.
     vector_hits: List[Dict[str, Any]] = []
+    routed_topics: List[str] = []
     stage2_task = None
     if not benchmark_candidates:
         _errors = state.get("diagnosis_errors", [])
         _confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
-        _is_multihop_task = benchmark_task == "multihop_qa"
-
-        _do_vector_search = True
+        # Rapid used to skip the vector stage entirely for a turn with no
+        # grammar errors and a confident diagnosis, then to keep only 3 of its
+        # hits. Both throttles read grammar accuracy as a proxy for "does the
+        # tutor need material", which starves exactly the well-written turns.
+        # The stage supplies 87 of the 106 on-topic prompts across the 120
+        # learner phrasings in data/eval/topic_paraphrases.json; truncating it
+        # to 3 cost a further point of coverage for no compute, since all ten
+        # hits are already ranked by the time this runs.
         _max_hits = 5
-        if retrieval_policy == "rapid":
-            if len(_errors) == 0 and _confidence >= 0.85 and not _is_multihop_task:
-                _do_vector_search = False
-            elif len(_errors) <= 2 and _confidence >= 0.72:
-                _max_hits = 3
 
-        if _do_vector_search:
-            stage2_task = asyncio.create_task(
-                _run_vector_stage(_max_hits, _errors, _confidence)
-            )
+        stage2_task = asyncio.create_task(
+            _run_vector_stage(_max_hits, _errors, _confidence)
+        )
 
     # ── Stage 1: Graph-local evidence (cheap) ────────────────────────
     # Each evidence item: {"text": ..., "kg_depth": ..., "vec_sim": ..., "turns_ago": ...}
     evidence_items: List[Dict[str, Any]] = []
 
+    # Diagnosis evidence carries an item_id because rank_with_learner_overlay
+    # drops any candidate without one, and LEARNER_STATE_MODE is "read" in
+    # production — so the corrections this turn just computed were being
+    # deleted from the prompt before the tutor ever saw them.
     for concept_id in state.get("diagnosis_root_causes", []):
         evidence_items.append({
+            "item_id": str(concept_id),
+            "title": str(concept_id),
             "text": f"Grammar concept: {concept_id}",
             "kg_depth": 0,
             "vec_sim": 0.0,
@@ -282,8 +307,20 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
 
     for node in kg_expanded:
         depth = node.get("depth", 1) if isinstance(node, dict) else 1
+        title = str(node.get("title") or "").strip()
+        if not title:
+            # No title means nothing readable to ground on — the id alone
+            # ("concept:vocab.word.nerve") is noise in the prompt.
+            continue
+        keywords = str(node.get("keywords") or "").strip()
+        relation = str(node.get("relation") or "related_to")
+        text = f"Related concept ({relation}): {title}"
+        if keywords:
+            text = f"{text}. Keywords: {keywords}"
         evidence_items.append({
-            "text": f"Related: {node.get('id', '')} ({node.get('relation', '')})",
+            "item_id": str(node.get("id") or title),
+            "title": title,
+            "text": text,
             "kg_depth": depth,
             "vec_sim": 0.0,
             "turns_ago": session_turn,
@@ -338,9 +375,12 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         except Exception as kg_exc:
             logger.warning(f"[retrieve_node] KG top-K query skipped: {kg_exc}")
 
-    for error in state.get("diagnosis_errors", [])[:3]:
+    for idx, error in enumerate(state.get("diagnosis_errors", [])[:3]):
+        span = str(error.get("span", ""))
         evidence_items.append({
-            "text": f"Error: '{error.get('span', '')}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
+            "item_id": f"error:{span or idx}",
+            "title": f"Correction: {span}" if span else "Correction",
+            "text": f"Error: '{span}' → '{error.get('correction', '')}' — {error.get('explanation', '')}",
             "kg_depth": 0,
             "vec_sim": 0.0,
             "turns_ago": 0,
@@ -390,15 +430,28 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     if stage2_task is not None:
         remaining_s = max(0.0, vector_budget_ms / 1000.0 - (time.monotonic() - retrieve_start))
         try:
-            vector_hits, stage2_evidence = await asyncio.wait_for(stage2_task, timeout=remaining_s)
+            vector_hits, stage2_evidence, stage2_topics = await asyncio.wait_for(
+                stage2_task, timeout=remaining_s
+            )
+            routed_topics = stage2_topics
+            if routed_topics:
+                # The turn named a topic, so its subgraph is the whole corpus.
+                # Keyword overlap and best-first expansion only dilute it —
+                # judged on their own lists over the 120 learner phrasings the
+                # dense stage scores 91.7% recall at 82.9% precision, lexical
+                # 36.7/59.5 and expansion 60.0/42.5, and blending all three
+                # lands below the dense stage alone on both. Diagnosis items
+                # stay: they are this turn's own corrections, not retrieval.
+                evidence_items = [
+                    item for item in evidence_items if item["kg_depth"] == 0
+                ]
             evidence_items.extend(stage2_evidence)
         except asyncio.TimeoutError:
             stage2_task.cancel()
             budget_exhausted = True
             logger.warning("[retrieve_node] Vector stage exceeded budget, skipping its results")
     elif not benchmark_candidates:
-        # do_vector_search was False (rapid-policy short-circuit) — not a
-        # budget miss, nothing to flag.
+        # No stage2 task: benchmark candidates are pre-ranked, nothing to flag.
         pass
 
     # ── Stage 3: L2 External Knowledge (Selective Retrieval) ─────────
@@ -495,9 +548,11 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         benchmark_candidates=bool(benchmark_candidates),
         adaptive_profile=adaptive_profile,
         benchmark_task=benchmark_task,
+        # The arm declares its own window, so two arms being compared cannot
+        # read different numbers of passages for the same question.
+        declared_budget=int(benchmark_metadata.get("_evidence_budget") or 0),
     )
     if benchmark_candidates and benchmark_task in {"multihop_qa", "retrieval_qa"}:
-        evidence_items = _interleave_explicit_second_hop(evidence_items)
         top_evidence = _select_diverse_multihop_evidence(
             items=evidence_items,
             question=user_input,
@@ -523,7 +578,12 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             "title": str(item.get("title") or item.get("item_id") or ""),
             "text": str(item.get("text") or ""),
             "rank": idx + 1,
+            # fusion_score is the score BEFORE the coverage-constrained selector
+            # reorders; on its own it does not explain the rank, which made the
+            # trace look unsorted. Keep both so a report can say which is which.
             "score": float(item.get("fusion_score") or 0.0),
+            "selection_rank": idx + 1,
+            "score_basis": "fusion_pre_selection",
         }
         if "is_relevant" in item:
             trace_item["is_relevant"] = bool(item["is_relevant"])
@@ -563,7 +623,17 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         for item in retrieval_trace
     ]
     evidence_version = stable_version_token(evidence_projection, prefix="evidence")
-    query_scope = stable_version_token(user_input.strip().lower(), prefix="query")
+    # Scope by retrieval_policy, not just the question text: "full" (cag_vanilla)
+    # and "rapid" (tracecag_rapid) select different top-k evidence for the SAME
+    # question, but observe_dependency_tokens uses setdefault (first-write-wins)
+    # on this key — without the policy in the key, whichever mode processes a
+    # question first "poisons" the shared token, so every later mode's cache
+    # entry for that question fails its own freshness recheck against a token
+    # it never wrote (confirmed: retrieval_trace identical, only the recorded
+    # dependency version differs across modes for the same query).
+    query_scope = stable_version_token(
+        f"{retrieval_policy}:{user_input.strip().lower()}", prefix="query"
+    )
     state_hints = (state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}
     source_version = str(state_hints.get("source_version") or evidence_version)
 
@@ -590,6 +660,10 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "beta": _FUSION_BETA,
                 "gamma": _FUSION_GAMMA,
                 "recency_lambda": _RECENCY_LAMBDA,
+            },
+            "topic_routing": {
+                "routed": bool(routed_topics),
+                "topics": routed_topics,
             },
             "kg_topk": {
                 "top_k": max(1, _env_int("TRACECAG_KG_TOPK", 8)),

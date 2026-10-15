@@ -68,7 +68,10 @@ def disable_rate_limiting(monkeypatch):
 @pytest.fixture(scope="module", autouse=True)
 def seed_database() -> None:
     """Reset deterministic proficiency data before this module mutates it."""
-    asyncio.run(seed_proficiency_data())
+    # Seed through this module's NullPool factory, not the app-global pool —
+    # asyncio.run() opens a loop of its own and pooled connections from an
+    # earlier test's loop fail with "attached to a different loop".
+    asyncio.run(seed_proficiency_data(_session_factory))
 
 
 @pytest.fixture
@@ -234,9 +237,15 @@ class TestRecordExercises:
         data = (await auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)).json()
         assert data["exercises_recorded"] == len(sample_exercises)
 
-    async def test_xp_earned_positive(self, auth_client, sample_exercises):
+    async def test_route_grants_no_xp(self, auth_client, sample_exercises):
+        """The client grades these, so XP must come from /xp/award instead."""
         data = (await auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)).json()
-        assert data["xp_earned"] > 0, "Correct exercises should earn XP"
+        assert data["xp_earned"] == 0
+
+    async def test_oversized_batch_rejected(self, auth_client, sample_exercises):
+        oversized = (sample_exercises * 20)[:51]
+        response = await auth_client.post(f"{BASE}/record-exercises", json=oversized)
+        assert response.status_code == 422
 
     async def test_skill_updates_contain_changed_skills(self, auth_client, sample_exercises):
         data = (await auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)).json()
@@ -397,7 +406,10 @@ class TestLevelThresholds:
         assert c2["min_listening_score"] > 0
         assert c2["min_speaking_score"] > 0
         assert c2["min_writing_score"] > 0
-        assert c2["min_exercises_completed"] >= 2500
+        # Volume gates were lowered when min_skill_confidence took over the
+        # "measured enough to promote" role; C2 still asks for the most.
+        assert c2["min_exercises_completed"] >= 1000
+        assert c2["min_skill_confidence"] >= 0.8
         assert c2["min_streak_days"] >= 60
 
 

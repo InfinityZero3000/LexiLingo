@@ -121,6 +121,32 @@ check_prerequisites() {
   [[ -x "${SMOKE_SCRIPT}" ]] || { echo "Smoke script is not executable: ${SMOKE_SCRIPT}"; exit 1; }
 }
 
+# Both of these degrade silently when unset: ai-service calls backend directly
+# over the Docker network and swallows the failure, so the only symptom is a
+# feature quietly doing nothing. Warn at the start rather than after the build.
+check_internal_channel_config() {
+  local warned=false
+
+  if ! grep -E "^ALLOWED_HOSTS=" "${ENV_FILE}" | grep -q "backend-service"; then
+    echo "WARNING: ALLOWED_HOSTS in ${ENV_FILE} does not list 'backend-service'."
+    echo "         TrustedHostMiddleware will answer 400 to every ai-service ->"
+    echo "         backend call, disabling Lexi's learner card and AI audit ingest."
+    warned=true
+  fi
+
+  local audit_secret
+  audit_secret="$(grep -hE "^AI_AUDIT_INGEST_SECRET=" "${SECRET_ENV_FILE}" "${ENV_FILE}" 2>/dev/null | tail -n 1 | cut -d '=' -f 2-)"
+  if [[ -z "${audit_secret}" ]]; then
+    echo "WARNING: AI_AUDIT_INGEST_SECRET is unset. The audit ingest endpoint will"
+    echo "         answer 403 and the admin AI Quality page will stay empty."
+    echo "         Generate one with: openssl rand -hex 32"
+    warned=true
+  fi
+
+  [[ "${warned}" == true ]] && echo ""
+  return 0
+}
+
 check_required_secrets() {
   local required_vars=(
     POSTGRES_PASSWORD
@@ -141,6 +167,22 @@ check_required_secrets() {
     echo "Missing required secrets in ${SECRET_ENV_FILE}: ${missing[*]}"
     exit 1
   fi
+}
+
+tag_rollback_images() {
+  # There is no registry and no image backup on this host, so a lost :latest
+  # tag is unrecoverable — on 2026-08-14 a cancelled build left ai-service with
+  # no image and no container. Keep a known-good tag before anything swaps.
+  local image
+  for service in ai-service backend-service; do
+    image="lexilingo-${service}:latest"
+    if sudo docker image inspect "${image}" >/dev/null 2>&1; then
+      run "sudo docker tag ${image} lexilingo-${service}:rollback"
+      log "Tagged rollback image for ${service}"
+    else
+      log "WARNING: ${image} missing — no rollback image for ${service}"
+    fi
+  done
 }
 
 wait_for_service() {
@@ -202,6 +244,7 @@ perform_git_pull() {
 main() {
   check_prerequisites
   check_required_secrets
+  check_internal_channel_config
 
   log "Starting one-shot deployment at ${TIMESTAMP_UTC}"
   log "Branch: ${CURRENT_BRANCH}"
@@ -222,7 +265,8 @@ main() {
   fi
 
   log "Step 3/4: Docker up with orphan cleanup"
-  run "${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
+  tag_rollback_images
+  run "${DOCKER_COMPOSE_CMD} up -d --build --remove-orphans"
 
   if [[ "${DRY_RUN}" == false ]]; then
     wait_for_service "postgres" 180

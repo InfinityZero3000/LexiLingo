@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/streak_pr
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
+import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/services/known_words_service.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
@@ -38,6 +39,15 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   double _playbackSpeed = 1.0;
   bool _streakUpdated = false;
 
+  /// Watch time, credited in idempotent chunks by the shared tracker.
+  ///
+  /// Fed position *advances* rather than wall-clock ticks: a tick can only ever
+  /// contribute as much as a tick covers, so dragging the scrubber forward
+  /// credits nothing because the jump is clamped to [_kWatchTickCapMs].
+  late final ContentTimeTracker _watchTime;
+
+  static const _kWatchTickCapMs = 1000;
+
   static const _kSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
   @override
@@ -63,6 +73,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       ),
     );
 
+    // No start(): the tracker's own ticker would count wall clock, and watching
+    // is measured from playback advancing instead.
+    _watchTime = ContentTimeTracker(
+      source: 'youtube',
+      sourceIdPrefix: widget.video.videoId,
+      sourceDetail: 'video_watch',
+    );
+
     _positionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       _syncPosition();
     });
@@ -84,11 +102,20 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     super.dispose();
   }
 
+  /// Credit each completed chunk of watching. Fire-and-forget: a learner has
+  /// already watched the video by the time this runs, and a failed award must
+  /// never interrupt playback.
   Future<void> _syncPosition() async {
     try {
       final seconds = await _ytController.currentTime;
       final posMs = (seconds * 1000).round();
       if (!mounted || posMs == _currentPositionMs) return;
+
+      _watchTime.add(
+        Duration(
+          milliseconds: (posMs - _currentPositionMs).clamp(0, _kWatchTickCapMs),
+        ),
+      );
 
       // Update streak once per session after 30 seconds of watching
       if (!_streakUpdated && posMs >= 30000) {
@@ -170,7 +197,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             ),
             const SizedBox(height: 16),
             Text(
-              'Tốc độ phát',
+              'voice.playbackSpeed'.tr(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
@@ -207,7 +234,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       ),
                     ),
                     child: Text(
-                      speed == 1.0 ? 'Bình thường' : '${speed}x',
+                      speed == 1.0 ? 'voice.speedNormal'.tr() : '${speed}x',
                       style: TextStyle(
                         color: isSelected
                             ? Colors.white
@@ -279,7 +306,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Học qua video',
+              'youtube.learnThroughVideo'.tr(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.2,
@@ -361,7 +388,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         }).toList(),
                       )
                     : Text(
-                        'Phụ đề thời gian thực sẽ hiển thị tại đây...',
+                        'youtube.subtitlePlaceholder'.tr(),
                         style: TextStyle(
                           fontSize: 14,
                           fontStyle: FontStyle.italic,
@@ -472,23 +499,23 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 icon: isSaved
                     ? Icons.bookmark_rounded
                     : Icons.bookmark_border_rounded,
-                label: isSaved ? 'Đã lưu' : 'Lưu video',
+                label: isSaved ? 'youtube.saved'.tr() : 'youtube.saveVideo'.tr(),
                 color: isSaved ? AppColors.primary : null,
                 isDark: isDark,
                 onTap: () {
                   if (isSaved) {
                     provider.unsaveVideo(widget.video.videoId);
-                    _showSnack('Đã xóa khỏi danh sách lưu');
+                    _showSnack('youtube.removedFromSaved'.tr());
                   } else {
                     provider.saveVideo(widget.video);
-                    _showSnack('Đã lưu video');
+                    _showSnack('youtube.videoSaved'.tr());
                   }
                 },
               ),
               _ActionButton(
                 icon: Icons.speed_rounded,
                 label: _playbackSpeed == 1.0
-                    ? 'Tốc độ'
+                    ? 'youtube.speed'.tr()
                     : '${_playbackSpeed}x',
                 isDark: isDark,
                 color: _playbackSpeed != 1.0 ? AppColors.primary : null,
@@ -513,7 +540,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       prov.translationHistoryFor(widget.video.videoId).length;
                   return _ActionButton(
                     icon: Icons.history_edu_rounded,
-                    label: histCount > 0 ? '$histCount từ' : 'Từ vựng',
+                    label: histCount > 0 ? 'youtube.wordCount'.tr(namedArgs: {'count': '$histCount'}) : 'lesson.vocabulary'.tr(),
                     isDark: isDark,
                     color: histCount > 0 ? AppColors.primary : null,
                     onTap: () => _tabController.animateTo(1),
@@ -561,9 +588,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               unselectedLabelStyle: const TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w500),
               dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Phụ đề'),
-                Tab(text: 'Từ đã tra'),
+              tabs: [
+                Tab(text: 'youtube.subtitles'.tr()),
+                Tab(text: 'youtube.lookedUpWords'.tr()),
               ],
             ),
           ),
@@ -602,7 +629,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Video này không có phụ đề tự động',
+                  'youtube.noSubtitles'.tr(),
                   style: TextStyle(
                     color: isDark ? Colors.white24 : AppColors.grey400,
                     fontSize: 12,
@@ -623,7 +650,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       size: 15, color: AppColors.primary),
                   const SizedBox(width: 5),
                   Text(
-                    '${provider.captions.length} đoạn',
+                    'youtube.segmentCount'.tr(namedArgs: {'count': '${provider.captions.length}'}),
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? Colors.white38 : AppColors.textGrey,
@@ -632,7 +659,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   ),
                   const Spacer(),
                   Text(
-                    'Nhấn vào từ để tra nghĩa',
+                    'youtube.tapWordToLookUp'.tr(),
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? Colors.white30 : AppColors.grey400,
@@ -761,7 +788,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     color: isDark ? Colors.white24 : AppColors.grey300),
                 const SizedBox(height: 10),
                 Text(
-                  'Chưa tra từ nào',
+                  'youtube.noLookupsYet'.tr(),
                   style: TextStyle(
                     color: isDark ? Colors.white38 : AppColors.textGrey,
                     fontSize: 14,
@@ -770,7 +797,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Nhấn vào từ trong phụ đề để tra nghĩa',
+                  'youtube.tapWordInSubtitle'.tr(),
                   style: TextStyle(
                     color: isDark ? Colors.white24 : AppColors.grey400,
                     fontSize: 12,
@@ -1082,8 +1109,8 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.alreadyInCollection
-              ? '"${result.normalizedWord}" đã có trong sổ tay từ vựng.'
-              : 'Đã lưu "${result.normalizedWord}" vào sổ tay từ vựng.'),
+              ? 'youtube.wordAlreadySaved'.tr(namedArgs: {'word': result.normalizedWord})
+              : 'youtube.wordSaved'.tr(namedArgs: {'word': result.normalizedWord})),
           behavior: SnackBarBehavior.floating,
           backgroundColor: AppColors.greenSuccess,
         ),
@@ -1092,7 +1119,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       if (!mounted) return;
       setState(() {
         _isSavingWord = false;
-        _saveError = 'Không thể lưu từ này. Vui lòng thử lại.';
+        _saveError = 'vocabulary.saveWordFailed'.tr();
       });
     }
   }
@@ -1143,7 +1170,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
           const LottieLoadingWidget.medium(),
           const SizedBox(height: 8),
           Text(
-            'Đang tra từ…',
+            'youtube.lookingUp'.tr(),
             style: TextStyle(
                 color: isDark ? Colors.white54 : AppColors.textGrey,
                 fontSize: 13),
@@ -1225,7 +1252,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Tiếng Việt',
+                    'vocabulary.translationLabel'.tr(),
                     style: TextStyle(
                         fontSize: 11,
                         color: isDark ? Colors.white38 : AppColors.textGrey,
@@ -1247,7 +1274,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
           // English definition
           if (t.hasDefinition) ...[
-            _sectionLabel('Định nghĩa', isDark),
+            _sectionLabel('vocabulary.definition'.tr(), isDark),
             const SizedBox(height: 4),
             Text(
               t.definition,
@@ -1263,7 +1290,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
           // Examples
           if (t.examples.isNotEmpty) ...[
-            _sectionLabel('Ví dụ', isDark),
+            _sectionLabel('vocabulary.examples'.tr(), isDark),
             const SizedBox(height: 6),
             ...t.examples.take(2).map(
               (ex) => Padding(
@@ -1294,7 +1321,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
           // Context sentence
           if (widget.contextSentence != null) ...[
-            _sectionLabel('Câu trong video', isDark),
+            _sectionLabel('youtube.sentenceInVideo'.tr(), isDark),
             const SizedBox(height: 4),
             Container(
               padding: const EdgeInsets.all(10),
@@ -1332,7 +1359,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                 child: OutlinedButton.icon(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded, size: 16),
-                  label: const Text('Đóng'),
+                  label: Text('common.close'.tr()),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
                         color: isDark ? Colors.white24 : AppColors.grey300),
@@ -1360,10 +1387,10 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                           size: 16,
                         ),
                   label: Text(_isSavingWord
-                      ? 'Đang lưu...'
+                      ? 'youtube.saving'.tr()
                       : _isSavedWord
-                          ? 'Đã lưu'
-                          : 'Lưu từ'),
+                          ? 'youtube.saved'.tr()
+                          : 'youtube.saveWord'.tr()),
                   style: FilledButton.styleFrom(
                     backgroundColor: _isSavedWord ? AppColors.greenSuccess : AppColors.primary,
                     disabledBackgroundColor: _isSavedWord ? AppColors.greenSuccess.withValues(alpha: 0.6) : null,

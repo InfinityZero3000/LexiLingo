@@ -5,12 +5,19 @@ from __future__ import annotations
 import asyncio
 
 from app.core.celery_app import celery_app
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 
 
 @celery_app.task(name="app.tasks.word_of_day.send_word_of_day")
 def send_word_of_day() -> dict:
-    return asyncio.run(_run())
+    return asyncio.run(_with_db_cleanup(_run()))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _run() -> dict:

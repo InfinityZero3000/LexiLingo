@@ -1,0 +1,55 @@
+% ===== Thu vien hinh ve TikZ dung chung =====
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes.geometric,shapes.misc,arrows.meta,positioning,fit,backgrounds,
+                calc,chains,shadows.blur,decorations.pathreplacing,patterns,matrix}
+
+\definecolor{cService}{HTML}{2563EB}
+\definecolor{cData}{HTML}{047857}
+\definecolor{cClient}{HTML}{7C3AED}
+\definecolor{cGate}{HTML}{D97706}
+\definecolor{cInfra}{HTML}{64748B}
+\definecolor{cSoft}{HTML}{EFF6FF}
+\definecolor{cSoftG}{HTML}{ECFDF5}
+\definecolor{cSoftP}{HTML}{F5F3FF}
+\definecolor{cSoftO}{HTML}{FFF7ED}
+\definecolor{cSoftGray}{HTML}{F1F5F9}
+
+\tikzset{
+  box/.style   = {rectangle, rounded corners=3pt, draw=#1, fill=#1!8, line width=0.7pt,
+                  align=center, inner sep=5pt, font=\scriptsize},
+  box/.default = cService,
+  svc/.style   = {box=cService},
+  dat/.style   = {box=cData},
+  cli/.style   = {box=cClient},
+  gat/.style   = {box=cGate},
+  inf/.style   = {box=cInfra},
+  lane/.style  = {rectangle, rounded corners=4pt, draw=cInfra!40, fill=cInfra!5,
+                  line width=0.6pt, inner sep=8pt},
+  fl/.style    = {-{Stealth[length=4pt]}, draw=cInfra!80, line width=0.6pt, font=\tiny},
+  flb/.style   = {-{Stealth[length=4pt]}, draw=cService, line width=0.8pt, font=\tiny},
+  lab/.style   = {font=\tiny\itshape, fill=white, inner sep=1pt},
+  proc/.style  = {rectangle, rounded corners=2pt, draw=cService, fill=cSoft,
+                  line width=0.7pt, align=center, inner sep=4pt, font=\scriptsize},
+  dec/.style   = {diamond, aspect=2, draw=cGate, fill=cSoftO, line width=0.7pt,
+                  align=center, inner sep=1pt, font=\tiny},
+  term/.style  = {rounded rectangle, draw=cInfra, fill=cSoftGray, line width=0.7pt,
+                  align=center, inner sep=4pt, font=\scriptsize},
+  ent/.style   = {rectangle, draw=cData, fill=cSoftG, line width=0.7pt,
+                  align=left, inner sep=4pt, font=\tiny},
+  actor/.style = {align=center, font=\scriptsize},
+  uc/.style    = {ellipse, draw=cService, fill=cSoft, line width=0.6pt,
+                  align=center, inner sep=2pt, font=\tiny, minimum width=2.6cm},
+}
+
+% Ky hieu actor cho so do use case
+\newcommand{\stickman}[3]{%
+  \begin{scope}[shift={(#1,#2)}]
+    \draw[line width=0.7pt] (0,0.34) circle (0.11);
+    \draw[line width=0.7pt] (0,0.23) -- (0,-0.08);
+    \draw[line width=0.7pt] (-0.16,0.12) -- (0.16,0.12);
+    \draw[line width=0.7pt] (0,-0.08) -- (-0.13,-0.32);
+    \draw[line width=0.7pt] (0,-0.08) -- (0.13,-0.32);
+    \node[font=\tiny, align=center] at (0,-0.52) {#3};
+  \end{scope}}

@@ -77,6 +77,8 @@ class Lesson {
   final int orderIndex;
   final String? outcome;
   final String lessonType;
+  /// CEFR skill credited on completion; null inherits the course's label.
+  final String? skill;
   final int xpReward;
   final int passThreshold;
   final int totalExercises;
@@ -89,6 +91,7 @@ class Lesson {
     required this.orderIndex,
     this.outcome,
     this.lessonType = 'lesson',
+    this.skill,
     this.xpReward = 10,
     this.passThreshold = 80,
     this.totalExercises = 0,
@@ -102,6 +105,7 @@ class Lesson {
         orderIndex: j['order_index'] ?? 0,
         outcome: j['outcome'],
         lessonType: j['lesson_type'] ?? 'lesson',
+        skill: j['skill'] as String?,
         xpReward: j['xp_reward'] ?? 10,
         passThreshold: j['pass_threshold'] ?? 80,
         totalExercises: j['total_exercises'] ?? 0,

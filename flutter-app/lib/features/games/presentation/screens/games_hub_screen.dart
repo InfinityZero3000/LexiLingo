@@ -256,7 +256,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               ),
               const SizedBox(width: 4),
               Text(
-                '$dailyXp/$dailyCap XP today',
+                'games.dailyXpToday'.tr(namedArgs: {'current': '$dailyXp', 'cap': '$dailyCap'}),
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textGrey,
@@ -310,7 +310,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
         ? toGameDailyChallenge(selectedChallenge)
         : DailyChallenge(
             gameType: GameType.fillBlank.apiKey,
-            description: 'Complete 5 Fill in the Blank questions',
+            description: 'games.fillBlankChallenge'.tr(),
             bonusMultiplier: 2,
             completed: false,
             resetsAt: DateTime.now().add(const Duration(days: 1)),
@@ -555,7 +555,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                       ),
                     ),
                     Text(
-                      '${user.weeklyXp} this week',
+                      'games.weeklyXp'.tr(namedArgs: {'xp': '${user.weeklyXp}'}),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textGrey,

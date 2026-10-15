@@ -21,9 +21,11 @@ here, both from the backend audit's SSRF finding:
 from __future__ import annotations
 
 import socket
+from collections.abc import Collection
 from ipaddress import ip_address
 from urllib.parse import urljoin, urlparse, urlunparse
 
+import anyio
 import httpx
 from fastapi import HTTPException, status
 
@@ -41,6 +43,7 @@ _REJECTED = HTTPException(
     status_code=status.HTTP_400_BAD_REQUEST,
     detail="Only public HTTP/HTTPS URLs are allowed.",
 )
+MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 
 
 def resolve_pinned_ip(host: str) -> str:
@@ -66,16 +69,33 @@ def _pin_url(url: str, pinned_ip: str) -> str:
     return urlunparse(parsed._replace(netloc=netloc))
 
 
-def _validate_and_pin(current_url: str, kwargs: dict) -> tuple[str, dict]:
-    """Validate current_url and return (pinned_url, request_kwargs)."""
-    parsed = urlparse(current_url)
+def validate_public_url(
+    url: str,
+    *,
+    allowed_hosts: Collection[str] | None = None,
+) -> None:
+    """Reject malformed, non-HTTP, private, and non-allowlisted URLs."""
+    parsed = urlparse(url)
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         raise _REJECTED
     host = parsed.hostname.lower()
+    if allowed_hosts is not None and host not in allowed_hosts:
+        raise _REJECTED
     if any(host == prefix or host.startswith(prefix) for prefix in _PRIVATE_HOST_PREFIXES):
         raise _REJECTED
+
+
+async def _validate_and_pin(
+    current_url: str,
+    kwargs: dict,
+    allowed_hosts: Collection[str] | None = None,
+) -> tuple[str, dict]:
+    """Validate current_url and return (pinned_url, request_kwargs)."""
+    validate_public_url(current_url, allowed_hosts=allowed_hosts)
+    parsed = urlparse(current_url)
+    host = parsed.hostname.lower()
     try:
-        pinned_ip = resolve_pinned_ip(host)
+        pinned_ip = await anyio.to_thread.run_sync(resolve_pinned_ip, host)
     except (socket.gaierror, ValueError) as exc:
         raise _REJECTED from exc
 
@@ -97,20 +117,42 @@ async def safe_get(
     url: str,
     *,
     max_redirects: int = 5,
+    max_response_bytes: int = MAX_RESPONSE_BYTES,
+    allowed_hosts: Collection[str] | None = None,
     **kwargs,
 ) -> httpx.Response:
-    """GET *url*, validating and IP-pinning every hop (including redirects)."""
-    current_url = url
-    for _ in range(max_redirects + 1):
-        pinned_url, request_kwargs = _validate_and_pin(current_url, kwargs)
-        response = await client.get(
-            pinned_url, follow_redirects=False, **request_kwargs
-        )
-        if response.is_redirect and response.headers.get("location"):
-            current_url = urljoin(current_url, response.headers["location"])
-            continue
+    """GET *url* with validated redirects and a bounded, buffered body."""
+    response = await safe_stream_get(
+        client,
+        url,
+        max_redirects=max_redirects,
+        allowed_hosts=allowed_hosts,
+        **kwargs,
+    )
+    try:
+        content_length = response.headers.get("content-length")
+        if (
+            content_length
+            and content_length.isdigit()
+            and int(content_length) > max_response_bytes
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail="Response exceeds the size limit.",
+            )
+
+        content = bytearray()
+        async for chunk in response.aiter_bytes():
+            content.extend(chunk)
+            if len(content) > max_response_bytes:
+                raise HTTPException(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    detail="Response exceeds the size limit.",
+                )
+        response._content = bytes(content)
         return response
-    raise HTTPException(status_code=400, detail="Too many redirects.")
+    finally:
+        await response.aclose()
 
 
 async def safe_stream_get(
@@ -118,6 +160,7 @@ async def safe_stream_get(
     url: str,
     *,
     max_redirects: int = 5,
+    allowed_hosts: Collection[str] | None = None,
     **kwargs,
 ) -> httpx.Response:
     """Like safe_get, but opens a streaming response (client.send(stream=True))
@@ -125,7 +168,9 @@ async def safe_stream_get(
     and call response.aclose() themselves (a `finally` block)."""
     current_url = url
     for _ in range(max_redirects + 1):
-        pinned_url, request_kwargs = _validate_and_pin(current_url, kwargs)
+        pinned_url, request_kwargs = await _validate_and_pin(
+            current_url, kwargs, allowed_hosts
+        )
         request = client.build_request("GET", pinned_url, **request_kwargs)
         response = await client.send(request, stream=True)
         if response.is_redirect and response.headers.get("location"):

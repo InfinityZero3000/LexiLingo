@@ -98,6 +98,7 @@ docs/cmd
 !.env.production.example
 .env.production.secrets
 .env.production.secrets.*
+!.env.production.secrets.example
 
 # AI Models (too large for git)
 **/models/whisper/*.pt
@@ -131,6 +132,7 @@ system-testing/
 dist/
 build/
 *.tsbuildinfo
+admin-service/src/tailwind-utilities.generated.css
 .deploy/
 backups/
 
@@ -171,3 +173,19 @@ ai-service/.crawl4ai/
 **/learner-state-*.html
 **/checkpoint*.json
 **/quarantine*.jsonl
+
+# Built LaTeX output of docs/technical-report (Makefile target, plus its `make cp` copy)
+docs/technical-report/*.pdf
+docs/technical-report/*.aux
+docs/technical-report/*.log
+docs/technical-report/*.toc
+docs/technical-report/*.out
+
+# Thesis / report deliverables and their figures (41MB of .docx, .pdf, .png).
+# Source documents the author keeps locally; the repo tracks the LaTeX in
+# docs/technical-report/ instead.
+docs/report-KLCN/
+
+# Generated artifacts: benchmark stats and plots, matplotlib's font cache, and
+# the .pdf/.docx the report build emits. All reproducible from source.
+output/

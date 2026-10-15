@@ -328,28 +328,30 @@ class APICacheService:
     ) -> None:
         """Insert or update cache entry in PostgreSQL."""
         try:
-            existing = await self._get_db_entry(cache_key)
-            if existing is not None:
-                existing.data = data_json
-                existing.api_name = api_name
-                existing.updated_at = datetime.now(timezone.utc)
-                existing.hit_count = (existing.hit_count or 0) + 1
-            else:
-                entry = APICacheEntry(
-                    cache_key=cache_key,
-                    api_name=api_name,
-                    data=data_json,
-                )
-                self.db.add(entry)
-            await self.db.flush()
+            async with self.db.begin_nested():
+                existing = await self._get_db_entry(cache_key)
+                if existing is not None:
+                    existing.data = data_json
+                    existing.api_name = api_name
+                    existing.updated_at = datetime.now(timezone.utc)
+                    existing.hit_count = (existing.hit_count or 0) + 1
+                else:
+                    entry = APICacheEntry(
+                        cache_key=cache_key,
+                        api_name=api_name,
+                        data=data_json,
+                    )
+                    self.db.add(entry)
+                await self.db.flush()
         except Exception as e:
             logger.error(f"DB cache write error for {cache_key}: {e}")
     
     async def _bump_hit_count(self, entry: APICacheEntry) -> None:
         """Increment hit counter for cache analytics."""
         try:
-            entry.hit_count = (entry.hit_count or 0) + 1
-            await self.db.flush()
+            async with self.db.begin_nested():
+                entry.hit_count = (entry.hit_count or 0) + 1
+                await self.db.flush()
         except Exception:
             pass  # Non-critical, don't fail on analytics
     

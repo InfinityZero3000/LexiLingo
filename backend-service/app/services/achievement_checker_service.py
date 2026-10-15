@@ -19,6 +19,7 @@ from app.models.progress import UserCourseProgress, LessonCompletion, Streak, Da
 from app.models.vocabulary import UserVocabulary, VocabularyStatus
 from app.models.user import User
 from app.models.games import GameSession
+from app.models.proficiency import SkillDailyStat, SkillType
 
 logger = logging.getLogger(__name__)
 
@@ -82,14 +83,7 @@ class AchievementCheckerService:
         # Get user stats once for all evaluations
         user_stats = await self._get_user_stats(user_id)
 
-        newly_unlocked = []
-        for achievement in pending_achievements:
-            if await self._evaluate_condition(user_id, achievement, user_stats):
-                unlocked = await self._unlock_achievement(user_id, achievement)
-                if unlocked:
-                    newly_unlocked.append(achievement)
-
-        return newly_unlocked
+        return await self._unlock_eligible(user_id, pending_achievements, user_stats)
 
     async def check_by_trigger(self, user_id: UUID, trigger: str) -> List[Achievement]:
         """
@@ -127,13 +121,36 @@ class AchievementCheckerService:
         # Get only needed stats
         user_stats = await self._get_user_stats(user_id, condition_types)
 
+        return await self._unlock_eligible(user_id, pending_achievements, user_stats)
+
+    async def _unlock_eligible(
+        self,
+        user_id: UUID,
+        pending_achievements: List[Achievement],
+        user_stats: Dict[str, Any],
+    ) -> List[Achievement]:
+        """
+        Evaluate and unlock each achievement in its own savepoint, so a bug
+        evaluating/unlocking one (bad condition_data, a gems-award failure)
+        can't roll back achievements already unlocked earlier in this same
+        batch — callers may also wrap the whole call in their own
+        savepoint/try-except for defense-in-depth, but without this
+        per-item isolation that outer rollback would discard every
+        achievement unlocked before the failing one.
+        """
         newly_unlocked = []
         for achievement in pending_achievements:
-            if await self._evaluate_condition(user_id, achievement, user_stats):
-                unlocked = await self._unlock_achievement(user_id, achievement)
-                if unlocked:
-                    newly_unlocked.append(achievement)
-
+            try:
+                async with self.db.begin_nested():
+                    if await self._evaluate_condition(user_id, achievement, user_stats):
+                        unlocked = await self._unlock_achievement(user_id, achievement)
+                        if unlocked:
+                            newly_unlocked.append(achievement)
+            except Exception as e:
+                logger.error(
+                    "Achievement %s check failed for user %s: %s",
+                    achievement.id, user_id, e, exc_info=True,
+                )
         return newly_unlocked
 
     async def _get_unlocked_achievement_ids(self, user_id: UUID) -> List[UUID]:
@@ -271,10 +288,23 @@ class AchievementCheckerService:
             )
             stats["quiz_completed"] = result.scalar() or 0
 
-        # Fetch voice practice count
-        # Note: Voice practices not tracked separately yet, return 0 for now
+        # Fetch voice practice count.
+        #
+        # Voice practice and pronunciation assessment post one speaking result
+        # per attempt through SkillEventRecorder, which the proficiency engine
+        # rolls up into SkillDailyStat. This was hardcoded to 0, so the seeded
+        # `voice_beginner` (10) and `voice_talent` (100) achievements were
+        # visible and permanently unreachable.
         if need_voice:
-            stats["voice_practices"] = 0
+            result = await self.db.execute(
+                select(func.coalesce(func.sum(SkillDailyStat.attempts), 0)).where(
+                    and_(
+                        SkillDailyStat.user_id == user_id,
+                        SkillDailyStat.skill == SkillType.SPEAKING,
+                    )
+                )
+            )
+            stats["voice_practices"] = int(result.scalar() or 0)
 
         # Fetch numeric level from User model
         if need_level:

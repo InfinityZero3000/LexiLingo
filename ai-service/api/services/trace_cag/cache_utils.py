@@ -352,9 +352,20 @@ def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
 
     cur_concepts = set(fingerprint.get("root_concepts") or [])
     cached_concepts = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
-    new_concepts = cur_concepts - cached_concepts
+    # Only real graph concepts may surface. _extract_lightweight_graph_concepts
+    # also emits `token:<word>` lexical shingles so near-miss queries land in the
+    # same bucket; they are matching material, never prose. Unfiltered, a learner
+    # was shown "(Also related: token:that, token:true)" and a benchmark answer
+    # became "Pedro Rodríguez\n\n(Also related: token:ab)" — which is why
+    # activating L1 halved EM the first time it ever served a request.
+    new_concepts = {
+        c for c in (cur_concepts - cached_concepts)
+        if str(c).startswith(("concept:", "intent:"))
+    }
     if new_concepts:
-        extras = ", ".join(c.split(".")[-1].replace("_", " ") for c in new_concepts)
+        extras = ", ".join(
+            sorted(c.split(":", 1)[-1].split(".")[-1].replace("_", " ") for c in new_concepts)
+        )
         response += f"\n\n(Also related: {extras})"
 
     return response
@@ -456,8 +467,9 @@ def _is_pcc_stable(state: TraceCAGState) -> bool:
     """
     WriteL1(x) = PCCStable ∧ Confident ∧ ¬HighlySpecific  (paper §4.1).
 
-    PCCStable  — diagnosis produced at least one root-cause concept so the
-                 bucket is anchored to a stable graph neighbourhood.
+    PCCStable  — the turn resolved to at least one graph concept, so the bucket
+                 is anchored to a stable neighbourhood rather than to one
+                 phrasing.
     Confident  — diagnosis_confidence ≥ 0.70 (arbitrary but conservative).
     ¬HighlySpec— input is at least 3 words long; single-word or two-word queries
                  are too instance-specific to be useful L1 artifacts.
@@ -472,6 +484,15 @@ def _is_pcc_stable(state: TraceCAGState) -> bool:
         return True
     if state.get("diagnosis_confidence", 0.0) < 0.70:
         return False
+    # The anchor kg_expand_node actually produced. This is the general case:
+    # root causes only exist when the learner
+    # made one of five mapped grammar mistakes, so gating L1 on them meant a
+    # correct sentence or any plain question could never write a bucket. That
+    # is why l1_rate was 0.0 in every benchmark run since 2026-05-30 and why
+    # the query_clusters paraphrase set — built specifically to exercise L1 —
+    # also measured 0.0: nothing was ever registered for the read side to find.
+    if state.get("kg_seed_concepts"):
+        return True
     return bool(state.get("diagnosis_root_causes"))
 
 
@@ -575,13 +596,44 @@ def _canonical_relation_hints(user_input: str) -> set[str]:
     return {"|".join(sorted(hints))} if hints else set()
 
 
+# Word-boundary matching, not substring: "restraint" contains "train" and
+# "whole"/"somewhere"/"nowhere" contain "who"/"where", so plain `in` routed
+# ordinary sentences to the wrong intent. That intent feeds the graph bucket in
+# _build_graph_bucket, so a misread put the turn in the wrong cache bucket.
+_INTENT_EXPLAIN = re.compile(r"\b(?:why|explain|what does|how does)\b")
+_INTENT_PRACTICE = re.compile(r"\b(?:practice|exercise|quiz|train)\b")
+_INTENT_ASK = re.compile(r"\b(?:who|where|when|which|what|how many)\b")
+
+
+def _benchmark_cache_scope(state: TraceCAGState) -> str:
+    """Benchmark mode, or "" in production.
+
+    Two modes answer the SAME question from different evidence, so they must not
+    share a cache entry. The harness clears the in-process cache between modes,
+    which hid this — but nothing stops a Redis entry written by one mode from
+    being read by the next, and the identical omission in the dependency-token
+    key already poisoned a run (cache hit 46.9%→6.2%).
+    """
+    return str((state.get("benchmark_metadata") or {}).get("_benchmark_mode") or "").strip().lower()
+
+
+def _build_cache_key(user_scope: "str | None", user_input: str, level: str, benchmark_scope: str = "") -> str:
+    """The one place a response-cache key is built. It had been open-coded in
+    both the read and the write path, so a change to one silently diverged."""
+    normalized = user_input.strip().lower()
+    raw = f"{user_scope}||{normalized}||{level}" if user_scope else f"{normalized}||{level}"
+    if benchmark_scope:
+        raw = f"{raw}||{benchmark_scope}"
+    return hashlib.md5(raw.encode()).hexdigest()
+
+
 def _infer_intent_pre_diagnosis(user_input: str) -> str:
     text = (user_input or "").lower()
-    if any(token in text for token in ["why", "explain", "what does", "how does"]):
+    if _INTENT_EXPLAIN.search(text):
         return "explain"
-    if any(token in text for token in ["practice", "exercise", "quiz", "train"]):
+    if _INTENT_PRACTICE.search(text):
         return "practice"
-    if text.rstrip().endswith("?") or any(token in text for token in ["who", "where", "when", "which", "what", "how many"]):
+    if text.rstrip().endswith("?") or _INTENT_ASK.search(text):
         return "ask"
     return "correct"
 
@@ -868,13 +920,7 @@ async def _write_cache_entry(
         return
     scoped_input = f"{user_scope}:{user_input}" if user_scope else user_input
 
-    normalized = user_input.strip().lower()
-    cache_raw = (
-        f"{user_scope}||{normalized}||{level}"
-        if user_scope
-        else f"{normalized}||{level}"
-    )
-    cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+    cache_key = _build_cache_key(user_scope, user_input, level, _benchmark_cache_scope(state))
     graph_bucket = _build_graph_bucket(
         scoped_input,
         level,
@@ -1023,7 +1069,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
       patch  — ρ ≤ τ₁ and PCC-patchable → delta-patch cached response
       full   — otherwise                → run full pipeline
 
-    Cache key = MD5(normalized_input || level)
+    Cache key = MD5(normalized_input || level [|| benchmark_mode])
     Structured entry stores ⟨F, P_c, R, B, σ, t_c⟩
     """
     from api.services.trace_cag.benchmark.adaptive import _choose_adaptive_profile
@@ -1180,12 +1226,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         return _with_adaptive(merged)
 
     normalized = user_input.strip().lower()
-    cache_raw = (
-        f"{user_scope}||{normalized}||{level}"
-        if user_scope
-        else f"{normalized}||{level}"
-    )
-    cache_key = hashlib.md5(cache_raw.encode()).hexdigest()
+    cache_key = _build_cache_key(user_scope, user_input, level, _benchmark_cache_scope(state))
     l1_request = _build_l1_request_signature(
         # The user-scope HMAC belongs in cache keys/buckets only.  Feeding it
         # to semantic extractors creates a synthetic entity and makes an

@@ -2,18 +2,38 @@
 
 from __future__ import annotations
 
+import hmac
 import logging
 import os
 from typing import Any, Optional
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
 _bearer = HTTPBearer(auto_error=False)
+
+_admin_key_header = APIKeyHeader(name="X-Admin-Api-Key", auto_error=False)
+
+
+async def verify_internal_admin_key(
+    provided: str | None = Security(_admin_key_header),
+) -> None:
+    """Shared secret for backend-service calling ai-service internals."""
+    expected = os.getenv("AI_ADMIN_API_KEY", "").strip()
+    if not expected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI_ADMIN_API_KEY is not configured",
+        )
+    if not provided or not hmac.compare_digest(provided, expected):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid admin API key",
+        )
 
 
 class AuthenticatedUser(BaseModel):

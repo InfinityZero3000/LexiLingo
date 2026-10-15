@@ -307,6 +307,52 @@ export const deleteShopItem = async (id: string) =>
   });
 
 // ============================================================================
+// Banner Management
+// ============================================================================
+
+export type BannerPosition = "hero" | "sidebar" | "interstitial";
+
+export type BannerType = {
+  id: string;
+  title: string;
+  description?: string | null;
+  image_url: string;
+  link_url?: string | null;
+  position: BannerPosition;
+  priority: number;
+  is_active: boolean;
+  start_at?: string | null;
+  end_at?: string | null;
+  target_min_level?: string | null;
+  target_max_level?: string | null;
+  target_language?: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export const listBanners = async () =>
+  apiFetch<AdminResponse<BannerType[]>>(`${ENV.backendUrl}/banners?limit=200`);
+
+export const createBanner = async (
+  params: Omit<BannerType, "id" | "created_at" | "updated_at">
+) =>
+  apiFetch<AdminResponse<BannerType>>(`${ENV.backendUrl}/banners`, {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+
+export const updateBanner = async (id: string, params: Partial<BannerType>) =>
+  apiFetch<AdminResponse<BannerType>>(`${ENV.backendUrl}/banners/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(params),
+  });
+
+export const deleteBanner = async (id: string) =>
+  apiFetch<AdminResponse<{ id: string }>>(`${ENV.backendUrl}/banners/${id}`, {
+    method: "DELETE",
+  });
+
+// ============================================================================
 // Course Management
 // ============================================================================
 
@@ -316,6 +362,8 @@ export type CourseItem = {
   description?: string | null;
   language: string;
   level: string;
+  /** CEFR skill this course mainly exercises; null falls back to tag guessing. */
+  skill?: string | null;
   tags?: string[];
   thumbnail_url?: string | null;
   total_lessons: number;
@@ -503,9 +551,13 @@ export type LessonItem = {
   outcome?: string | null;
   order_index: number;
   lesson_type: string;
+  /** CEFR skill credited on completion. Null inherits the course's. */
+  skill?: string | null;
   xp_reward: number;
   pass_threshold: number;
   total_exercises: number;
+  /** Exercises actually authored in content — total_exercises can be stale. */
+  exercise_count: number;
   estimated_minutes?: number;
   prerequisites: string[];
   created_at: string;
@@ -560,10 +612,10 @@ export const updateLessonContent = async (
 ) =>
   apiFetch<AdminResponse<LessonDetail>>(`${ENV.backendUrl}/admin/lessons/${id}/content`, {
     method: "PUT",
+    // total_exercises is derived from content server-side — don't send it.
     body: JSON.stringify({
       content: { exercises },
       estimated_minutes: estimatedMinutes,
-      total_exercises: exercises.length,
     }),
   });
 
@@ -723,3 +775,85 @@ export const updateSystemInfo = async (payload: SystemInfoUpdatePayload) =>
     method: "PUT",
     body: JSON.stringify(payload),
   });
+
+
+// ---------------------------------------------------------------------------
+// IELTS mock tests
+// ---------------------------------------------------------------------------
+
+export type IeltsTestType = "academic" | "general_training";
+export type IeltsSkillScope = "full" | "listening" | "reading" | "writing" | "speaking";
+
+export type IeltsTest = {
+  id: string;
+  title: string;
+  description?: string | null;
+  test_type: IeltsTestType;
+  skill_scope: IeltsSkillScope;
+  target_band?: string | null;
+  slug?: string | null;
+  content?: Record<string, unknown> | null;
+  is_published: boolean;
+  question_count: number;
+  attempt_count: number;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+export type IeltsValidation = {
+  publishable: boolean;
+  problems: string[];
+  counts: Record<string, number>;
+};
+
+export type IeltsAttemptRow = {
+  attempt_id: string;
+  user_id: string;
+  test_id: string;
+  status: string;
+  overall_band: number | null;
+  started_at?: string | null;
+  submitted_at?: string | null;
+};
+
+export const listIeltsTests = async () =>
+  apiFetch<AdminResponse<IeltsTest[]>>(`${ENV.backendUrl}/admin/ielts/tests?limit=100&offset=0`);
+
+export const getIeltsTest = async (id: string) =>
+  apiFetch<AdminResponse<IeltsTest>>(`${ENV.backendUrl}/admin/ielts/tests/${id}`);
+
+export const createIeltsTest = async (payload: Partial<IeltsTest>) =>
+  apiFetch<AdminResponse<IeltsTest>>(`${ENV.backendUrl}/admin/ielts/tests`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+
+export const updateIeltsTest = async (id: string, payload: Partial<IeltsTest>) =>
+  apiFetch<AdminResponse<IeltsTest>>(`${ENV.backendUrl}/admin/ielts/tests/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+
+export const validateIeltsTest = async (id: string) =>
+  apiFetch<AdminResponse<IeltsValidation>>(`${ENV.backendUrl}/admin/ielts/tests/${id}/validate`, {
+    method: "POST"
+  });
+
+export const deleteIeltsTest = async (id: string) =>
+  apiFetch<AdminResponse<{ id: string }>>(`${ENV.backendUrl}/admin/ielts/tests/${id}`, {
+    method: "DELETE"
+  });
+
+export const listIeltsAttempts = async (testId?: string) =>
+  apiFetch<AdminResponse<IeltsAttemptRow[]>>(
+    `${ENV.backendUrl}/admin/ielts/attempts?limit=50${testId ? `&test_id=${testId}` : ""}`
+  );
+
+export const uploadIeltsAudio = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ url: string; size_bytes: number }>>(
+    `${ENV.backendUrl}/admin/ielts/upload-audio`,
+    { method: "POST", body: formData }
+  );
+};

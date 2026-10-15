@@ -176,7 +176,15 @@ def check_disk() -> None:
         f"Triggering docker system prune...",
     )
     try:
-        run(["docker", "system", "prune", "-af"], timeout=120)
+        # `until=24h` spares images built in the last day. Plain -af deletes
+        # every image no *running* container uses, which silently ate the
+        # :rollback tags deploy-one-shot.sh creates — so on 2026-08-14 a failed
+        # ai-service deploy had no image to roll back to and the service stayed
+        # down through a 25-minute rebuild. Old cruft is still reclaimed.
+        run(
+            ["docker", "system", "prune", "-af", "--filter", "until=24h"],
+            timeout=120,
+        )
     except Exception as exc:  # noqa: BLE001
         alert("CRITICAL", f"Docker prune failed: {exc}")
         return

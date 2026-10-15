@@ -253,7 +253,10 @@ class ShopItemAdminUpdate(BaseModel):
 class PurchaseRequest(BaseModel):
     """Purchase request"""
     item_id: UUID
-    quantity: int = 1
+    # ge=1 is the only thing between a negative quantity and free gems: the
+    # cost is price × quantity, so quantity=-1000 made spend_gems *credit* the
+    # wallet. le=99 keeps price × quantity inside a Postgres INTEGER.
+    quantity: int = Field(1, ge=1, le=99)
 
 
 class PurchaseResponse(BaseModel):
@@ -309,7 +312,10 @@ class UseItemResponse(BaseModel):
     """Result of using an item"""
     success: bool
     message: str
-    item_name: str
+    # Was required, but POST /inventory/use never set it, so every successful
+    # use answered 500 *after* the item had been consumed and committed. No
+    # client reads it.
+    item_name: Optional[str] = None
     effects_applied: Optional[Dict[str, Any]] = None
     expires_at: Optional[datetime] = None
     

@@ -196,16 +196,16 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Thoát game?'),
-        content: const Text('XP sẽ được tính dựa trên số cặp đã ghép đúng.'),
+        title: Text('games.exitTitle'.tr()),
+        content: Text('games.exitXpByPairs'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Tiếp tục chơi'),
+            child: Text('games.keepPlaying'.tr()),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Thoát'),
+            child: Text('games.exit'.tr()),
           ),
         ],
       ),
@@ -354,11 +354,11 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                     ),
                   ),
                   if (_luckyCloverActive)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(bottom: 6),
                       child: ActivePowerUpBadge(
                         itemType: ShopItemEntity.effectLuckyClover,
-                        label: 'Lucky Clover Active',
+                        label: 'games.luckyCloverActive'.tr(),
                       ),
                     ),
                   Padding(

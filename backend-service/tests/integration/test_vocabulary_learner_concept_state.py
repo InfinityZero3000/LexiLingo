@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.vocabulary import vocabulary_crud
 from app.models.learner_state import LearnerConceptState
 from app.models.vocabulary import UserVocabulary, VocabularyItem, VocabularyStatus
+from app.services.learner_state import ALGORITHM_VERSION
 
 
 async def _seed_user_vocab(db_session: AsyncSession, user_id) -> UserVocabulary:
@@ -52,7 +53,7 @@ async def test_submit_review_writes_through_learner_concept_state(
     assert concept_state is not None
     assert concept_state.attempt_count == 1
     assert concept_state.correct_count == 1
-    assert concept_state.algorithm_version == "bkt-fsrs-v1"
+    assert concept_state.algorithm_version == ALGORITHM_VERSION
 
     # UserVocabulary.next_review_date is a synced read-cache of the same value
     assert updated.next_review_date == concept_state.next_review_at
@@ -94,3 +95,19 @@ async def test_submit_review_incorrect_answer_resets_streak_and_stays_learning(
 
     assert updated.streak == 0
     assert updated.status == VocabularyStatus.LEARNING
+
+
+@pytest.mark.asyncio
+async def test_submit_review_endpoint_succeeds_with_real_database(
+    async_client, auth_headers, db_session: AsyncSession, test_user
+):
+    user_vocab = await _seed_user_vocab(db_session, test_user.id)
+    db_session.sync_session.autoflush = False
+
+    response = await async_client.post(
+        f"/api/v1/vocabulary/review/{user_vocab.id}",
+        json={"quality": 5, "time_spent_ms": 1200},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200, response.text

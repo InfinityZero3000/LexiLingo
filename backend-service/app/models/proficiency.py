@@ -5,10 +5,10 @@ Database models for tracking user proficiency across multiple language skills.
 This system provides a more accurate CEFR level assessment than simple XP accumulation.
 """
 
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, Text, Boolean, Enum as SQLEnum
+from sqlalchemy import Column, Date, String, Integer, Float, ForeignKey, Text, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from app.core.db_types import TZDateTime, PortableJSON, GUID
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import uuid
 import enum
 
@@ -178,6 +178,41 @@ class ExerciseAttempt(Base):
     
     # Additional data (wrong answer, hints used, etc.)
     attempt_metadata = Column(PortableJSON, nullable=True)
+
+
+class SkillDailyStat(Base):
+    """One row per (user, day, skill): the long-term record of practice.
+
+    ExerciseAttempt keeps every individual answer, which nothing reads back and
+    which grows without limit — roughly 400 bytes per answer, so an active
+    learner costs megabytes a year and the table only ever gets bigger. This
+    rollup carries the same information at the resolution anything actually
+    needs it, bounded by days-with-activity rather than by how much someone
+    practised in a day, and lets the detail rows be pruned after 90 days.
+
+    Kept as sums rather than averages so a day's numbers can be merged with a
+    single UPSERT and still yield an exact mean afterwards.
+    """
+    __tablename__ = "skill_daily_stats"
+
+    user_id = Column(
+        GUID(), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
+    )
+    day = Column(Date, primary_key=True)
+    skill = Column(SQLEnum(SkillType), primary_key=True)
+
+    attempts = Column(Integer, nullable=False, default=0)
+    correct = Column(Integer, nullable=False, default=0)
+    score_sum = Column(Float, nullable=False, default=0.0)
+    difficulty_sum = Column(Float, nullable=False, default=0.0)
+
+    @property
+    def average_score(self) -> float:
+        return (self.score_sum / self.attempts) if self.attempts else 0.0
+
+    @property
+    def accuracy(self) -> float:
+        return (self.correct / self.attempts) if self.attempts else 0.0
 
 
 class LevelAssessmentTest(Base):

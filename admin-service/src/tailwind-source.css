@@ -1,0 +1,8 @@
+/* Source for the generated tailwind-utilities.generated.css.
+   @tailwindcss/vite doesn't yet play with this project's Vite 8, so utilities
+   are pre-built via the CLI instead — run `pnpm build:css` after adding any
+   new Tailwind class to ranking-agent/ or notification-campaign/.
+   No preflight: the rest of the app owns base element styling. */
+@import "tailwindcss/theme" layer(theme);
+@import "tailwindcss/utilities" layer(utilities);
+@source "./**/*.tsx";

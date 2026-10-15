@@ -51,6 +51,8 @@ from app.routes import (
 )
 from app.routes.learning import router as learning_router
 from app.routes.admin_courses import router as admin_courses_router
+from app.routes.admin_ielts import router as admin_ielts_router
+from app.routes.ielts import router as ielts_router
 from app.routes.admin_gamification import router as admin_gamification_router
 from app.routes.admin_system import router as admin_system_router
 from app.routes.content_agent import router as content_agent_router
@@ -59,6 +61,8 @@ from app.routes.ranking_agent import router as ranking_agent_router
 from app.routes.devices import router as devices_router
 from app.routes.challenges import router as challenges_router
 from app.routes.course_categories import router as course_categories_router
+from app.routes.banners import router as banners_router
+from app.routes.internal_entitlements import router as internal_entitlements_router
 from app.routes.proficiency import router as proficiency_router
 from app.routes.entitlements import router as entitlements_router
 from app.routes.rbac import router as rbac_router
@@ -76,11 +80,15 @@ from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
 from app.routes.referral import router as referral_router
+from app.routes.learner_card import router as learner_card_router
 from app.routes.learner_state import router as learner_state_router
 from app.routes.concepts import router as concepts_router
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
+from app.routes.product_events import router as product_events_router
+from app.routes.recommendations import router as recommendations_router
 from app.core.partner_auth import require_partner_api_key
+from app.clients.ai_service_client import AIServiceClient
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes
 
 # Setup logging
@@ -150,17 +158,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:  # pragma: no cover
         logger.warning(f"Could not pre-warm OpenAPI schema: {e}")
 
-    yield
-    
-    # Shutdown
-    logger.info("Shutting down...")
-    if settings.LEARNER_STATE_ENABLED:
-        from app.services.learner_state_outbox import stop_learner_state_outbox_worker
+    AIServiceClient.start()
+    try:
+        yield
+    finally:
+        # Shutdown
+        logger.info("Shutting down...")
+        if settings.LEARNER_STATE_ENABLED:
+            from app.services.learner_state_outbox import stop_learner_state_outbox_worker
 
-        await stop_learner_state_outbox_worker()
-    await RedisClient.close()
-    await close_db()
-    logger.info("Shutdown complete")
+            await stop_learner_state_outbox_worker()
+        await AIServiceClient.close()
+        await RedisClient.close()
+        await close_db()
+        logger.info("Shutdown complete")
 
 
 # Create FastAPI app
@@ -381,6 +392,8 @@ app.include_router(
     tags=["Partner Integrations"],
 )
 app.include_router(course_categories_router, prefix=f"{settings.API_V1_PREFIX}/categories", tags=["Course Categories"])
+app.include_router(banners_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Banners"])
+app.include_router(internal_entitlements_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Internal Entitlements"])
 app.include_router(progress_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Progress"])
 app.include_router(learning_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Learning Sessions"])
 app.include_router(vocabulary_router, prefix=f"{settings.API_V1_PREFIX}/vocabulary", tags=["Vocabulary"])
@@ -388,6 +401,8 @@ app.include_router(concepts_router, prefix=f"{settings.API_V1_PREFIX}/concepts",
 app.include_router(gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Gamification"])
 app.include_router(challenges_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Challenges"])
 app.include_router(admin_courses_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin IELTS"])
+app.include_router(ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["IELTS"])
 app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
@@ -419,6 +434,9 @@ app.include_router(ai_audit_router, prefix=f"{settings.API_V1_PREFIX}", tags=["A
 app.include_router(monitoring_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin Monitoring"])
 app.include_router(referral_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Referral"])
 app.include_router(learner_state_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(learner_card_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(product_events_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(recommendations_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Recommendations"])
 
 # Prometheus metrics — exposed at /metrics, scraped by Prometheus server
 try:

@@ -8,6 +8,7 @@ from app.models.proficiency import (
     UserSkillScore,
     UserLevelHistory,
     ExerciseAttempt,
+    SkillDailyStat,
 )
 from app.models.user import User
 from app.routes.proficiency import record_exercise_results_for_user
@@ -24,6 +25,7 @@ async def db_session():
         UserSkillScore.__table__,
         UserLevelHistory.__table__,
         ExerciseAttempt.__table__,
+        SkillDailyStat.__table__,
     ]
     async with engine.begin() as connection:
         await connection.run_sync(
@@ -67,19 +69,37 @@ def _one_result(score: float = 90.0) -> list[ExerciseResult]:
     ]
 
 
-async def test_award_xp_true_updates_both_profile_and_user_xp(db_session, test_user):
-    await record_exercise_results_for_user(db_session, test_user, _one_result(), award_xp=True)
+async def test_records_skills_without_awarding_any_xp(db_session, test_user):
+    """This function never grants XP, and has no flag to make it.
 
-    assert test_user.total_xp > 0
-
-
-async def test_award_xp_false_does_not_touch_user_xp(db_session, test_user):
-    await record_exercise_results_for_user(db_session, test_user, _one_result(), award_xp=False)
+    It used to, behind `award_xp=True`, which raised `User.total_xp` while
+    writing no XPTransaction, no DailyActivity and no LeaderboardEntry — XP that
+    no other table could account for. Every caller already passed False. XP
+    belongs to the calling route or to `award_xp_transaction`.
+    """
+    await record_exercise_results_for_user(db_session, test_user, _one_result())
 
     assert test_user.total_xp == 0
 
 
-async def test_award_xp_false_still_syncs_cefr_level_and_rank(db_session, test_user):
+async def test_reports_zero_xp_in_its_result(db_session, test_user):
+    result = await record_exercise_results_for_user(
+        db_session, test_user, _one_result()
+    )
+
+    assert result["xp_earned"] == 0
+    assert result["exercises_recorded"] == 1
+
+
+def test_no_award_xp_parameter_remains():
+    """A caller that forgot the flag would have minted unaccounted XP."""
+    import inspect
+
+    params = inspect.signature(record_exercise_results_for_user).parameters
+    assert "award_xp" not in params
+
+
+async def test_still_syncs_cefr_level_and_rank(db_session, test_user):
     # A2 requires >=100 exercises, >=10 lessons, and 60/55 vocab/grammar
     # scores (LEVEL_THRESHOLDS in app/schemas/proficiency.py). Pre-seed the
     # lesson count (record_exercise_results_for_user never increments it —
@@ -105,14 +125,14 @@ async def test_award_xp_false_still_syncs_cefr_level_and_rank(db_session, test_u
         for i in range(100)
     ]
 
-    await record_exercise_results_for_user(db_session, test_user, results, award_xp=False)
+    await record_exercise_results_for_user(db_session, test_user, results)
 
     # XP stayed untouched even though the CEFR level moved.
     assert test_user.total_xp == 0
     assert test_user.level != "A1"
 
-    # Rank must reflect the new level immediately, not the stale A1 value —
-    # award_xp=False must not leave rank one step behind current_user.level.
+    # Rank must reflect the new level immediately, not the stale A1 value:
+    # recording skills must not leave rank one step behind current_user.level.
     expected_rank = calculate_rank(
         numeric_level=test_user.numeric_level or 1,
         proficiency_level=test_user.level,

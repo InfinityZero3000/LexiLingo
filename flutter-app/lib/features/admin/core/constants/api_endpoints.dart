@@ -30,6 +30,8 @@ class ApiEndpoints {
   static const String adminShop = '/admin/shop';
   static const String adminTestExams = '/admin/test-exams';
   static const String systemInfo = '/admin/system-info';
+  // Not under /admin/ — auth-gated by dependency, matching course_categories.
+  static const String adminBanners = '/banners';
 
   // Monitoring — raw JSON (no ApiResponse wrapper)
   static const String monitoringSystem = '/admin/monitoring/system';

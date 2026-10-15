@@ -40,7 +40,7 @@ DEFAULT_QUOTA_STATE_PATH = (
     AI_SERVICE_ROOT / "model-development" / "reports" / "provider_quota_state.json"
 )
 
-DEFAULT_GROQ_MODEL = os.getenv("GROQ_TOPIC_MODEL") or os.getenv("GROQ_MODEL") or "qwen/qwen3-32b"
+DEFAULT_GROQ_MODEL = os.getenv("GROQ_TOPIC_MODEL") or os.getenv("GROQ_MODEL") or "qwen/qwen3.6-27b"
 GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # crawl4ai reads this at import time. Keep its SQLite/cache files inside the
@@ -312,7 +312,9 @@ class GroqKeyPool:
         keys = list((provider.get("day_counts") or {}).keys())
         keys.extend((provider.get("cooldown_until") or {}).keys())
         keys.extend(extra_keys or [])
-        env_keys = os.getenv("GROQ_KEYS", "")
+        # GROQ_API_KEYS is what the env files and docker-compose actually set;
+        # reading only GROQ_KEYS left this script rotating a pool of one.
+        env_keys = os.getenv("GROQ_KEYS", "") or os.getenv("GROQ_API_KEYS", "")
         if env_keys:
             keys.extend(item.strip() for item in env_keys.split(","))
         env_key = os.getenv("GROQ_API_KEY", "")

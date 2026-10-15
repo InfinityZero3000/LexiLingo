@@ -250,11 +250,14 @@ class TestNewsUrlSafety:
             return [(None, None, None, "", ("93.184.216.34", 443))]
 
         class RedirectClient:
-            async def get(self, url, **kwargs):
+            def build_request(self, method, url, **kwargs):
+                return httpx.Request(method, url, **kwargs)
+
+            async def send(self, request, **kwargs):
                 return httpx.Response(
                     302,
                     headers={"location": "http://127.0.0.1/private"},
-                    request=httpx.Request("GET", url),
+                    request=request,
                 )
 
         monkeypatch.setattr("socket.getaddrinfo", fake_getaddrinfo)

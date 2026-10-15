@@ -199,8 +199,12 @@ class _UserCard extends StatelessWidget {
       padding: const EdgeInsets.all(14), child: Row(children: [
         Checkbox(value: selected, onChanged: (value) => onSelect(value ?? false)),
         CircleAvatar(radius: 22, backgroundColor: AppColors.primaryContainer,
-          backgroundImage: user.avatarUrl == null ? null : NetworkImage(user.avatarUrl!),
-          child: user.avatarUrl == null ? Text((user.displayName.isEmpty ? user.email : user.displayName)[0].toUpperCase()) : null),
+          backgroundImage: (user.avatarUrl?.trim().isNotEmpty ?? false) ? NetworkImage(user.avatarUrl!.trim()) : null,
+          onBackgroundImageError: (user.avatarUrl?.trim().isNotEmpty ?? false) ? (_, __) {} : null,
+          // Initial is always the child so it still shows if the network
+          // avatar fails to load — onBackgroundImageError only silences the
+          // exception, it can't swap in a fallback.
+          child: Text((user.displayName.isEmpty ? user.email : user.displayName)[0].toUpperCase())),
         const SizedBox(width: 12),
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(user.displayName.isEmpty ? user.email.split('@').first : user.displayName,

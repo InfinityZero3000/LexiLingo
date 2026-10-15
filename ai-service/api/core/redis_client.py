@@ -265,6 +265,29 @@ class LearnerProfileCache:
         }
 
 
+async def record_learner_errors(user_id: Optional[str], errors: Optional[List[Dict[str, Any]]]) -> None:
+    """
+    Feed this turn's diagnosed error types into the learner's rolling
+    common-errors cache (LearnerProfileCache, 7-day TTL) so a later turn or
+    session can reference "you've been mixing up X lately" — input_node
+    already reads this cache into learner_profile["common_errors"], it was
+    just never being written to from the live chat path.
+
+    Best-effort: a Redis hiccup here must never fail the chat turn.
+    """
+    if not user_id or not errors:
+        return
+    try:
+        redis_client = await RedisClient.get_instance()
+        cache = LearnerProfileCache(redis_client)
+        for err in errors:
+            error_type = str(err.get("type") or "").strip()
+            if error_type:
+                await cache.add_error(str(user_id), error_type)
+    except Exception as exc:
+        logger.warning("record_learner_errors failed (non-fatal): %s", exc)
+
+
 class ResponseCache:
     """
     Cache for common AI responses

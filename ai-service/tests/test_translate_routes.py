@@ -9,6 +9,7 @@ Covers:
 - Query param wiring (word, lang, context)
 """
 
+import inspect
 import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -110,6 +111,38 @@ class TestTranslateRoute:
         assert result["translation"] == "điều hành"
         assert result["phonetic"] == "/rʌn/"
         assert result["part_of_speech"] == "verb"
+
+    @pytest.mark.asyncio
+    async def test_groq_call_matches_real_signature(self):
+        """The Groq call must bind against the real _throttled_post_json.
+
+        A bare AsyncMock accepts any kwarg, so a stale argument
+        (httpx_module=httpx) sailed through every other test here while
+        translate returned empty for every word in production. autospec makes
+        the mock reject exactly what the real function would reject.
+        """
+        from api.services.trace_cag.llm_client import _throttled_post_json
+
+        groq_payload = {
+            "choices": [{"message": {"content": '{"translation":"chạy","phonetic":"","part_of_speech":"verb"}'}}],
+            "usage": {"total_tokens": 95},
+        }
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = groq_payload
+
+        with patch("api.core.groq_key_pool.get_available_groq_key", new_callable=AsyncMock, return_value="gsk_test"), \
+             patch("api.core.groq_key_pool.record_groq_key_usage", new_callable=AsyncMock), \
+             patch("api.services.trace_cag.llm_client._throttled_post_json",
+                   autospec=True, return_value=mock_resp) as spy:
+
+            from api.routes.translate import translate_word
+            result = await translate_word(word="run", lang="vi", context="")
+
+        # Reached Groq (not the empty fallback) and bound cleanly.
+        assert result["translation"] == "chạy"
+        spy.assert_awaited_once()
+        inspect.signature(_throttled_post_json).bind(**spy.await_args.kwargs)
 
     @pytest.mark.asyncio
     async def test_ollama_fallback_when_groq_unavailable(self):

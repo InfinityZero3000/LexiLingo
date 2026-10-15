@@ -6,7 +6,7 @@ import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
 import { AppShell, NavItem } from "./components/AppShell";
 import {
-  LayoutDashboard, Users, BookOpen, Layers, FileText,
+  LayoutDashboard, Users, BookOpen, GraduationCap, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
   Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell,
@@ -19,6 +19,7 @@ const RoleRedirectPage = lazy(() => import("./pages/RoleRedirectPage").then(m =>
 const EnhancedAdminDashboard = lazy(() => import("./pages/EnhancedAdminDashboard").then(m => ({ default: m.EnhancedAdminDashboard })));
 const SuperAdminDashboard = lazy(() => import("./pages/SuperAdminDashboard").then(m => ({ default: m.SuperAdminDashboard })));
 const CoursesPage = lazy(() => import("./pages/CoursesPage").then(m => ({ default: m.CoursesPage })));
+const IeltsTestsPage = lazy(() => import("./pages/IeltsTestsPage").then(m => ({ default: m.IeltsTestsPage })));
 const UnitsPage = lazy(() => import("./pages/UnitsPage").then(m => ({ default: m.UnitsPage })));
 const LessonsPage = lazy(() => import("./pages/LessonsPage").then(m => ({ default: m.LessonsPage })));
 const LessonExercisesPage = lazy(() => import("./pages/LessonExercisesPage").then(m => ({ default: m.LessonExercisesPage })));
@@ -26,8 +27,8 @@ const TopicsPage = lazy(() => import("./pages/TopicsPage").then(m => ({ default:
 const VocabularyPage = lazy(() => import("./pages/VocabularyPage").then(m => ({ default: m.VocabularyPage })));
 const AchievementsPage = lazy(() => import("./pages/AchievementsPage").then(m => ({ default: m.AchievementsPage })));
 const ShopPage = lazy(() => import("./pages/ShopPage").then(m => ({ default: m.ShopPage })));
-const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const AdsPage = lazy(() => import("./pages/AdsPage").then(m => ({ default: m.AdsPage })));
+const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const LogsPage = lazy(() => import("./pages/LogsPage").then(m => ({ default: m.LogsPage })));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage").then(m => ({ default: m.MonitoringPage })));
 const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ default: m.ContentLabPage })));
@@ -58,6 +59,7 @@ const AppRoutes = () => {
     { to: "/admin", label: t.nav.dashboard, icon: <LayoutDashboard size={18} /> },
     { to: "/admin/users", label: t.nav.userManagement, icon: <Users size={18} /> },
     { to: "/admin/courses", label: t.nav.courses, icon: <BookOpen size={18} /> },
+    { to: "/admin/ielts", label: t.nav.ieltsTests, icon: <GraduationCap size={18} /> },
     { to: "/admin/units", label: t.nav.units, icon: <Layers size={18} /> },
     { to: "/admin/lessons", label: t.nav.lessons, icon: <FileText size={18} /> },
     { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} /> },
@@ -101,6 +103,7 @@ const AppRoutes = () => {
               <Route path="/admin" element={<EnhancedAdminDashboard />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/courses" element={<CoursesPage />} />
+              <Route path="/admin/ielts" element={<IeltsTestsPage />} />
               <Route path="/admin/courses/:courseId/units" element={<UnitsPage />} />
               <Route path="/admin/courses/:courseId/units/:unitId/lessons" element={<LessonsPage />} />
               <Route path="/admin/courses/:courseId/units/:unitId/lessons/:lessonId/exercises" element={<LessonExercisesPage />} />

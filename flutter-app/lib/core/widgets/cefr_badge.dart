@@ -10,11 +10,16 @@ class CefrBadge extends StatelessWidget {
   final CefrBadgeSize size;
   final bool outlined;
 
+  /// Set when the badge sits on a saturated/gradient surface instead of a
+  /// neutral one — the translucent tint fill is invisible there (1.2:1).
+  final bool onColored;
+
   const CefrBadge({
     super.key,
     required this.level,
     this.size = CefrBadgeSize.medium,
     this.outlined = false,
+    this.onColored = false,
   });
 
   static Color colorForLevel(String level) => switch (level.toUpperCase()) {
@@ -55,13 +60,20 @@ class CefrBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = colorForLevel(level);
+    final base = colorForLevel(level);
+    // Opaque white chip + darkened level color keeps CEFR semantics readable
+    // (~5:1) on top of any gradient.
+    final color = onColored ? Color.lerp(base, Colors.black, 0.3)! : base;
     final normalized = level.toUpperCase();
 
     return Container(
       padding: _padding,
       decoration: BoxDecoration(
-        color: outlined ? Colors.transparent : _bgForLevel(level, isDark),
+        color: outlined
+            ? Colors.transparent
+            : onColored
+            ? Colors.white
+            : _bgForLevel(level, isDark),
         borderRadius: BorderRadius.circular(_borderRadius),
         border: outlined ? Border.all(color: color, width: 1) : null,
       ),

@@ -1,11 +1,13 @@
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
+import 'package:lexilingo_app/core/error/failure_mapper.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/progress/data/datasources/progress_remote_datasource.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 
 /// Progress Repository Implementation
@@ -29,7 +31,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -47,7 +49,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -69,7 +71,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -85,7 +87,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -105,7 +107,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -125,7 +127,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -141,7 +143,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -157,7 +159,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -173,7 +175,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -189,7 +191,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -209,7 +211,7 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
     }
   }
 
@@ -227,7 +229,24 @@ class ProgressRepositoryImpl implements ProgressRepository {
     } on UnauthorizedException catch (e) {
       return Left(UnauthorizedFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+      return Left(mapFailure(e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, ContentActivityEntity>> getContentActivity({
+    int days = 7,
+  }) async {
+    try {
+      return Right(await remoteDataSource.getContentActivity(days: days));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(mapFailure(e));
     }
   }
 }

@@ -14,11 +14,19 @@ from pymongo.write_concern import WriteConcern
 
 logger = logging.getLogger(__name__)
 
+# Kept in sync by hand with ALLOWED_OBSERVATION_PAYLOAD_KEYS in
+# backend-service/app/schemas/learner_state.py — the backend rejects the whole
+# batch on an unknown key, so add to both sides together.
 _ALLOWED_PAYLOAD_KEYS = {
     "algorithm_version",
     "error_count",
     "migration_version",
     "source",
+    # Skill evidence, carried on one anchor observation per turn (see
+    # persist_trace_observations).
+    "skill",
+    "score",
+    "difficulty_level",
 }
 
 
@@ -191,6 +199,36 @@ class LearnerObservationSpool:
         ]
 
 
+# A delivery failure is one of three different things, and treating them alike is
+# what let an undeliverable observation retry every 30 seconds forever.
+#
+# The receiver being switched off is the normal case, not an error: backend-service
+# answers 404 for the whole route while `LEARNER_STATE_ENABLED` is false, and 401
+# when the shared token is wrong. Neither is the observation's fault and neither
+# improves by trying again soon — but the learner data is still good, so it waits
+# instead of being discarded, and the wait does not count against the attempt cap.
+_RECEIVER_OFF_STATUSES = frozenset({401, 403, 404})
+
+# The backend looked at the payload and refused it. Its allowlist rejects an
+# unknown key outright, so this will never succeed however often it is replayed.
+_PERMANENT_REJECTION_STATUSES = frozenset({400, 422})
+
+# Transient failures (5xx, 429, timeouts) get the exponential backoff below and
+# are abandoned after this many tries, matching `reconcile_once`.
+MAX_DELIVERY_ATTEMPTS = 10
+
+# How long to wait while the receiver is switched off. Long enough that a feature
+# left disabled for a week costs a handful of polls rather than 20,000.
+RECEIVER_OFF_BACKOFF_SECONDS = 300.0
+
+
+def _response_status(exc: BaseException) -> int | None:
+    """HTTP status behind a failed send, if it was an HTTP error at all."""
+    response = getattr(exc, "response", None)
+    status = getattr(response, "status_code", None)
+    return status if isinstance(status, int) else None
+
+
 class SpoolForwarder:
     """Lease-based replay worker for pending Mongo spool documents."""
 
@@ -212,6 +250,8 @@ class SpoolForwarder:
         self._audit_collection = audit_collection
         self._stop = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
+        self._depth_emitted_at: datetime | None = None
+        self._depth_interval_seconds = 60.0
 
     async def forward_once(self) -> bool:
         now = datetime.now(UTC)
@@ -269,36 +309,117 @@ class SpoolForwarder:
                     "$unset": {"claimed_at": ""},
                 },
             )
-            try:
-                depth = await self._collection.count_documents(
-                    {"status": {"$in": ["pending", "retry", "processing"]}}
-                )
-                _telemetry_event(
-                    "learner_observation_queue_depth", value=int(depth), gauge=True
-                )
-            except Exception:
-                pass
             return True
         except asyncio.CancelledError:
             raise
         except Exception as exc:
-            attempts = max(1, int(document.get("attempt_count", 1)))
-            delay = min(self._max_backoff_seconds, 2 ** min(attempts - 1, 8))
+            await self._reschedule_after_failure(document, event_id, exc)
+            return False
+
+    async def _reschedule_after_failure(
+        self, document: dict[str, Any], event_id: str, exc: BaseException
+    ) -> None:
+        """Decide what a failed delivery means for this observation.
+
+        Three outcomes, because the failures are not alike: park it until the
+        receiver is back, abandon it because it will never be accepted, or back
+        off and try again.
+        """
+        attempts = max(1, int(document.get("attempt_count", 1)))
+        status_code = _response_status(exc)
+        error_code = type(exc).__name__[:100]
+        now = datetime.now(UTC)
+
+        if status_code in _RECEIVER_OFF_STATUSES:
+            # Hand the attempt back: the observation never got a real try, and a
+            # long disabled spell must not exhaust its budget.
             await self._collection.update_one(
                 {"event_id": event_id, "status": "processing"},
                 {
                     "$set": {
                         "status": "retry",
-                        "available_at": datetime.now(UTC) + timedelta(seconds=delay),
-                        "last_error_code": type(exc).__name__[:100],
+                        "available_at": now
+                        + timedelta(seconds=RECEIVER_OFF_BACKOFF_SECONDS),
+                        "last_error_code": f"receiver_off_{status_code}",
+                    },
+                    "$inc": {"attempt_count": -1},
+                    "$unset": {"claimed_at": ""},
+                },
+            )
+            _telemetry_event("learner_state_degraded_total.receiver_off")
+            return
+
+        permanent = status_code in _PERMANENT_REJECTION_STATUSES
+        exhausted = attempts >= MAX_DELIVERY_ATTEMPTS
+        if permanent or exhausted:
+            await self._collection.update_one(
+                {"event_id": event_id, "status": "processing"},
+                {
+                    "$set": {
+                        "status": "dead",
+                        # Only `delivered_at` and `dead_at` carry a TTL, so a row
+                        # that reaches neither would live in the collection
+                        # forever. This is what makes the spool bounded.
+                        "dead_at": now,
+                        "last_error_code": (
+                            f"rejected_{status_code}" if permanent else error_code
+                        ),
                     },
                     "$unset": {"claimed_at": ""},
                 },
             )
-            return False
+            logger.error(
+                "learner observation %s abandoned after %d attempt(s): %s",
+                event_id,
+                attempts,
+                error_code if not permanent else f"HTTP {status_code}",
+            )
+            _telemetry_event("learner_state_degraded_total.observation_dead")
+            return
+
+        delay = min(self._max_backoff_seconds, 2 ** min(attempts - 1, 8))
+        await self._collection.update_one(
+            {"event_id": event_id, "status": "processing"},
+            {
+                "$set": {
+                    "status": "retry",
+                    "available_at": now + timedelta(seconds=delay),
+                    "last_error_code": error_code,
+                },
+                "$unset": {"claimed_at": ""},
+            },
+        )
+
+    async def _emit_queue_depth(self) -> None:
+        """Publish how much is still waiting.
+
+        Driven by the loop rather than by a successful delivery: the depth
+        matters most when nothing is being delivered, and emitting it on success
+        meant it went stale exactly then. Once per interval regardless of
+        traffic, so a parked backlog of ten thousand rows is one count, not ten
+        thousand.
+        """
+        now = datetime.now(UTC)
+        if (
+            self._depth_emitted_at is not None
+            and (now - self._depth_emitted_at).total_seconds()
+            < self._depth_interval_seconds
+        ):
+            return
+        self._depth_emitted_at = now
+        try:
+            depth = await self._collection.count_documents(
+                {"status": {"$in": ["pending", "retry", "processing"]}}
+            )
+            _telemetry_event(
+                "learner_observation_queue_depth", value=int(depth), gauge=True
+            )
+        except Exception:
+            pass
 
     async def _run(self) -> None:
         while not self._stop.is_set():
+            await self._emit_queue_depth()
             try:
                 handled = await self.forward_once()
                 if not handled:
@@ -442,8 +563,22 @@ async def persist_trace_observations(
     session_id: str,
     turn_id: str,
     trace_result: dict[str, Any],
+    skill: str | None = None,
+    difficulty_level: str | None = None,
 ) -> dict[str, Any]:
-    """Persist bounded concept evidence without retaining conversational text."""
+    """Persist bounded concept evidence without retaining conversational text.
+
+    When `skill` is given, the first observation of the turn also carries the
+    skill/score payload the backend turns into a CEFR skill result — a
+    conversation is speaking or writing practice, and until this existed an
+    hour of talking to Lexi moved neither score.
+
+    Only the first observation carries it, so one turn produces one skill
+    result rather than one per linked concept. That also means a turn that
+    linked no concepts at all records no skill evidence: the anchor rides on
+    a real concept observation, which is what makes it idempotent (the
+    backend dedupes on event_id) without a second dedup table.
+    """
     from api.core.config import settings
 
     if settings.LEARNER_STATE_MODE == "off":
@@ -465,6 +600,18 @@ async def persist_trace_observations(
     outcome = "incorrect" if errors else "correct"
     confidence = 0.8 if errors else 0.6
     spool = get_learner_observation_spool()
+
+    def _payload(is_anchor: bool) -> dict[str, Any]:
+        payload: dict[str, Any] = {"error_count": len(errors)}
+        if is_anchor and skill:
+            payload["skill"] = skill
+            # Fewer mistakes is a better turn. Capped at four so a long turn
+            # with many corrections floors at 0 rather than going negative.
+            payload["score"] = max(0.0, 100.0 - 25.0 * min(len(errors), 4))
+            if difficulty_level:
+                payload["difficulty_level"] = difficulty_level
+        return payload
+
     observations = [
             LearnerObservation(
                 user_id=str(user_id),
@@ -475,9 +622,9 @@ async def persist_trace_observations(
                 outcome=outcome,
                 confidence=confidence,
                 observed_at=datetime.now(UTC),
-                payload={"error_count": len(errors)},
+                payload=_payload(index == 0),
             )
-        for concept_id in concept_ids
+        for index, concept_id in enumerate(concept_ids)
     ]
     results = await spool.persist_many(observations)
     degraded = any(not result.durable for result in results)

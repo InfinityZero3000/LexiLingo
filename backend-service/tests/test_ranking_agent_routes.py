@@ -2,6 +2,7 @@
 
 import uuid
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 from fastapi.routing import APIRoute
 
@@ -77,6 +78,45 @@ async def test_cancel_locks_job_and_commits(monkeypatch):
 
 async def test_require_enabled_raises_when_disabled(monkeypatch):
     from app.core.config import settings
+
     monkeypatch.setattr(settings, "RANKING_AGENT_ENABLED", False)
     with __import__("pytest").raises(Exception):
         ranking_agent_routes._require_enabled()
+
+
+async def test_apply_invalidates_leaderboard_after_achievement_commit(monkeypatch):
+    job_id = uuid.uuid4()
+    job = SimpleNamespace(id=job_id, job_type="achievement_batch")
+    admin = SimpleNamespace(id=uuid.uuid4(), role=SimpleNamespace(level=2))
+    events = []
+
+    class FakeDB:
+        async def commit(self):
+            events.append("commit")
+
+    async def get_job(_db, _job_id, *, lock=False):
+        return job
+
+    monkeypatch.setattr(ranking_agent_routes, "_require_enabled", lambda: None)
+    monkeypatch.setattr(ranking_agent_routes, "_require_job_owner", lambda *_: None)
+    monkeypatch.setattr(ranking_agent_routes, "_get_job_or_404", get_job)
+    monkeypatch.setattr(ranking_agent_routes, "_audit", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(
+        ranking_agent_routes,
+        "_job_response",
+        lambda _job: SimpleNamespace(model_dump=lambda **_: {}),
+    )
+    monkeypatch.setattr(
+        ranking_agent_routes.RankingAgentApplyService,
+        "apply",
+        AsyncMock(return_value=(job, {"granted_count": 1})),
+    )
+
+    async def invalidate(_namespace):
+        events.append("invalidate")
+
+    monkeypatch.setattr(ranking_agent_routes, "invalidate_cache", invalidate)
+
+    await ranking_agent_routes.apply_job(job_id, db=FakeDB(), admin=admin)
+
+    assert events == ["commit", "invalidate", "commit"]

@@ -148,6 +148,17 @@ class XPTransaction(Base):
     source_id: Mapped[str] = mapped_column(String(100), nullable=True)  # e.g. game session UUID
     source_detail: Mapped[str] = mapped_column(String(100), nullable=True)  # e.g. "word_scramble"
 
+    # How long the activity took, as the client reported it. Null for sources
+    # that have no duration (a quiz answer, a claimed reward). This is what
+    # minute-based quests count — "watch 20 minutes of video" needs the minutes
+    # somewhere durable, and this row is already written once per activity and
+    # deduped on (user_id, source, source_id).
+    #
+    # Unverified for content sources, so treat it as a claim, not a measurement:
+    # a single award contributes at most MAX_STUDY_MINUTES_PER_AWARD to any
+    # total derived from it.
+    duration_seconds: Mapped[int] = mapped_column(Integer, nullable=True)
+
     # Level snapshot at time of award
     level_before: Mapped[int] = mapped_column(Integer, nullable=True)
     level_after: Mapped[int] = mapped_column(Integer, nullable=True)

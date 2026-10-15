@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
@@ -111,18 +112,29 @@ class _EnrolledCourseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final progress = course.userProgress ?? 0;
     final progressColor = progress >= 80
         ? AppColors.greenSuccessBright
         : progress >= 50
         ? AppColors.orange
         : AppColorRoles.primary(isDark);
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = theme.colorScheme;
     final surfaceBg = colorScheme.surfaceContainerHighest;
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
+    final hasThumbnail = course.thumbnailUrl?.trim().isNotEmpty ?? false;
 
     return GestureDetector(
       onTap: () {
+        trackContentInteraction(
+          itemType: 'course',
+          itemId: course.id,
+          action: 'open',
+          topic: course.tags.isNotEmpty ? course.tags.first : null,
+          source: 'home_enrolled',
+        );
         LearnerRoute.push(
           context,
           (_) => CourseDetailScreen(courseId: course.id),
@@ -131,7 +143,7 @@ class _EnrolledCourseCard extends StatelessWidget {
       child: Container(
         width: 240,
         margin: const EdgeInsets.only(right: 16),
-        decoration: Theme.of(context).extension<AppTactileTheme>()!.decoration(
+        decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
           fill: surfaceBg,
           accent: progressColor,
@@ -149,17 +161,18 @@ class _EnrolledCourseCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(16),
                   color: colorScheme.surface,
-                  image: course.thumbnailUrl != null
+                  image: hasThumbnail
                       ? DecorationImage(
-                          image: NetworkImage(course.thumbnailUrl!),
+                          image: NetworkImage(course.thumbnailUrl!.trim()),
                           fit: BoxFit.cover,
+                          onError: (_, __) {},
                         )
                       : null,
                   border: Border.all(color: colorScheme.outlineVariant),
                 ),
-                child: course.thumbnailUrl == null
-                    ? Icon(Icons.school, size: 32, color: progressColor)
-                    : null,
+                child: hasThumbnail
+                    ? null
+                    : Icon(Icons.school, size: 32, color: progressColor),
               ),
               const SizedBox(width: 16),
               // Info section

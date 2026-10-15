@@ -30,6 +30,7 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
             "/api/v1/auth/admin/login": 100,
             "/api/v1/auth/admin/request-otp": 50,
             "/api/v1/auth/admin/verify-otp": 100,
+            "/api/v1/proficiency/record-exercises": 120,
         }
     return {
         "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
@@ -38,6 +39,9 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
         "/api/v1/auth/admin/login": 5,
         "/api/v1/auth/admin/request-otp": 3,
         "/api/v1/auth/admin/verify-otp": 5,
+        # Client-graded quiz results. A news quiz posts one batch and a book
+        # quiz one result per answer, so a real learner stays far under this.
+        "/api/v1/proficiency/record-exercises": 20,
     }
 
 try:
@@ -64,6 +68,11 @@ _SENSITIVE_ROUTES_EXACT = {
     ("POST", "/api/v1/xp/award"),
     ("POST", "/api/v1/challenges/daily/bonus/claim"),
 }
+# Deliberately NOT sensitive: /api/v1/proficiency/record-exercises. It keeps a
+# strict per-minute limit above, but must not fail closed — abusing it only
+# inflates the caller's own CEFR score, it grants no XP, and failing closed
+# would stop every learner submitting a news or book quiz during a Redis
+# outage. The economic half of that flow is POST /xp/award, which is listed.
 _SENSITIVE_ROUTE_PREFIXES = (
     ("POST", "/api/v1/challenges/daily/"),  # /{challenge_id}/claim
     ("GET", "/api/v1/integrations/"),

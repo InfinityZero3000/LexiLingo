@@ -8,7 +8,7 @@ def _observation(
 ):
     return RunObservation(
         sample_id=sample_id,
-        mode="tracecag_full",
+        mode="tracecag_cached",
         cache_decision=decision,
         cache_layer=layer,
         expected_route=expected,
@@ -20,7 +20,7 @@ def _observation(
 
 def test_route_coverage_gate_requires_all_safety_paths():
     observations = [
-        _observation("reuse", decision="reuse", layer="L1", expected="L1_reuse"),
+        _observation("reuse", decision="reuse", layer="L0", expected="L0"),
         _observation("patch", decision="patch", layer="L1", expected="L1_patch"),
         _observation("reject", decision="full", layer="none", expected="L2", safety="unsafe"),
         _observation(
@@ -34,7 +34,7 @@ def test_route_coverage_gate_requires_all_safety_paths():
     assert gate == {
         "passed": True,
         "checks": {
-            "l1_reuse": True,
+            "safe_cache_reuse": True,
             "l1_patch": True,
             "unsafe_rejection": True,
             "optimistic_recheck": True,
@@ -48,7 +48,7 @@ def test_route_coverage_gate_reports_missing_paths():
         _observation("reject", decision="full", layer="none", expected="L2", safety="unsafe"),
     ])
     assert gate["passed"] is False
-    assert gate["missing"] == ["l1_reuse", "l1_patch", "optimistic_recheck"]
+    assert gate["missing"] == ["safe_cache_reuse", "l1_patch", "optimistic_recheck"]
 
 
 def test_safety_metrics_count_failures_conservatively():

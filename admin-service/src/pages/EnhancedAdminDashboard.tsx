@@ -54,30 +54,34 @@ export const EnhancedAdminDashboard = () => {
   const stats = statsData?.dashboard;
 
   return (
-    <div className="stack">
+    <div className="stack dashboard-view">
       {/* KPI Cards */}
       <div className="card-grid dashboard-card-grid">
         <StatCard
           label={t.dashboard.totalUsers}
           value={kpisLoading ? "--" : (kpis?.total_users?.toLocaleString() ?? "--")}
+          loading={kpisLoading}
           trend={kpisLoading ? undefined : `${kpis?.active_users_7d ?? 0} ${t.dashboard.activeUsers}`}
           note={kpisError ? t.common.loadFailed : undefined}
         />
         <StatCard
           label={t.dashboard.courses}
           value={kpisLoading ? "--" : String(kpis?.total_courses ?? "--")}
+          loading={kpisLoading}
           trend={kpisLoading ? undefined : `${kpis?.total_lessons_completed_today ?? 0} ${t.dashboard.lessonsCompletedToday}`}
           accent="teal"
         />
         <StatCard
           label={t.dashboard.avgDau}
           value={kpisLoading ? "--" : (kpis?.avg_dau_30d?.toFixed(0) ?? "--")}
+          loading={kpisLoading}
           trend={t.dashboard.dauDescription}
           accent="berry"
         />
         <StatCard
           label={t.dashboard.achievements}
           value={statsLoading ? "--" : String(stats?.total_achievements ?? "--")}
+          loading={statsLoading}
           trend={statsLoading ? undefined : `${stats?.total_unlocks ?? 0} ${t.dashboard.unlocked}`}
           note={statsError ? t.common.loadFailed : undefined}
           accent="orange"
@@ -86,7 +90,7 @@ export const EnhancedAdminDashboard = () => {
 
       {/* User Growth & Engagement Charts */}
       <div className="grid-2 dashboard-grid-2">
-        <div className="panel">
+        <div className="panel dashboard-chart-panel">
           <SectionHeader
             title={t.dashboard.userGrowth}
             description={t.dashboard.userGrowthDesc}
@@ -98,7 +102,7 @@ export const EnhancedAdminDashboard = () => {
           />
         </div>
 
-        <div className="panel">
+        <div className="panel dashboard-chart-panel">
           <SectionHeader
             title={t.dashboard.engagement}
             description={t.dashboard.engagementDesc}
@@ -113,7 +117,7 @@ export const EnhancedAdminDashboard = () => {
 
       {/* Course Analytics */}
       <div className="grid-2 dashboard-grid-2">
-        <div className="panel">
+        <div className="panel dashboard-chart-panel">
           <SectionHeader
             title={t.dashboard.popularCourses}
             description={t.dashboard.popularCoursesDesc}
@@ -125,7 +129,7 @@ export const EnhancedAdminDashboard = () => {
           />
         </div>
 
-        <div className="panel">
+        <div className="panel dashboard-chart-panel">
           <SectionHeader
             title={t.dashboard.courseFunnel}
             description={t.dashboard.courseFunnelDesc}

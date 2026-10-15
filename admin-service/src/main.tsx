@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Analytics } from "@vercel/analytics/react";
 import App from "./App";
+import "./tailwind-utilities.generated.css";
 import "./styles.css";
 
 // Create QueryClient with sensible defaults

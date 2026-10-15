@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// 7-day XP trend line chart using fl_chart.
 class XpLineChart extends StatelessWidget {
@@ -339,7 +340,7 @@ class _EmptyChart extends StatelessWidget {
       height: 120,
       child: Center(
         child: Text(
-          'Start learning to see your progress chart!',
+          'progress.emptyChart'.tr(),
           style: TextStyle(
             color: AppColorRoles.textMuted(isDark),
             fontSize: 13,

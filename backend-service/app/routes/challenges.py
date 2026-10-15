@@ -16,10 +16,17 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.models.progress import Streak, LessonCompletion, LessonAttempt, DailyActivity
+from app.models.games import XPTransaction
 from app.models.gamification import ChallengeRewardClaim
+from app.models.proficiency import SkillDailyStat, SkillType
 from app.models.vocabulary import VocabularyReview, UserVocabulary
 from app.schemas.response import ApiResponse
 from app.crud.gamification import WalletCRUD
+from app.services.streak_service import record_daily_activity
+from app.services.xp_service import (
+    MAX_STUDY_MINUTES_PER_AWARD,
+    capped_duration_seconds,
+)
 
 
 router = APIRouter(prefix="/challenges", tags=["Challenges"])
@@ -115,24 +122,6 @@ DAILY_CHALLENGE_TEMPLATES = [
         "xp_rewards": [15, 35, 55],
     },
     {
-        "id": "chat_practice",
-        "title": "Conversation Starter",
-        "description": "Complete {target} chat conversation(s)",
-        "icon": "💬",
-        "category": "social",
-        "targets": [1, 2, 3],
-        "xp_rewards": [20, 40, 60],
-    },
-    {
-        "id": "voice_practice",
-        "title": "Voice Training",
-        "description": "Do {target} pronunciation practice(s)",
-        "icon": "🎤",
-        "category": "voice",
-        "targets": [2, 5, 10],
-        "xp_rewards": [20, 40, 65],
-    },
-    {
         "id": "quiz_accuracy",
         "title": "Sharp Shooter",
         "description": "Score 80%+ on {target} quiz(zes)",
@@ -146,7 +135,7 @@ DAILY_CHALLENGE_TEMPLATES = [
         "title": "Dedicated Student",
         "description": "Study for {target} minute(s)",
         "icon": "⏱️",
-        "category": "xp",
+        "category": "time",
         "targets": [10, 20, 30],
         "xp_rewards": [15, 30, 50],
     },
@@ -177,7 +166,88 @@ DAILY_CHALLENGE_TEMPLATES = [
         "targets": [1, 3, 5],
         "xp_rewards": [20, 40, 65],
     },
+    # ── Content quests ────────────────────────────────────────────────────
+    # The library, podcast, video and news surfaces earned XP but counted
+    # toward nothing, so a day spent reading looked idle next to one lesson.
+    # Progress is read from the XPTransaction rows those surfaces already
+    # write — see CONTENT_QUEST_SOURCES.
+    {
+        "id": "watch_youtube",
+        "title": "Screen Time, Well Spent",
+        "description": "Watch {target} minute(s) of English video",
+        "icon": "📺",
+        "category": "content",
+        "targets": [5, 15, 30],
+        "xp_rewards": [15, 35, 60],
+    },
+    {
+        "id": "listen_podcast",
+        "title": "In One Ear",
+        "description": "Listen to {target} minute(s) of podcast",
+        "icon": "🎙️",
+        "category": "content",
+        "targets": [5, 15, 30],
+        "xp_rewards": [15, 35, 60],
+    },
+    {
+        "id": "read_news",
+        "title": "Current Affairs",
+        "description": "Pass {target} news quiz(zes)",
+        "icon": "📰",
+        "category": "content",
+        "targets": [1, 2, 3],
+        "xp_rewards": [15, 35, 55],
+    },
+    {
+        "id": "read_minutes",
+        "title": "Time Well Read",
+        "description": "Read for {target} minute(s)",
+        "icon": "📖",
+        "category": "content",
+        "targets": [5, 15, 30],
+        "xp_rewards": [15, 35, 60],
+    },
+    {
+        "id": "read_book",
+        "title": "Chapter and Verse",
+        "description": "Finish {target} book chapter quiz(zes)",
+        "icon": "📚",
+        "category": "content",
+        "targets": [1, 2, 3],
+        "xp_rewards": [20, 40, 60],
+    },
 ]
+
+
+# How each content quest reads its progress out of XPTransaction.
+#
+# `unit="minutes"` sums `duration_seconds`; `unit="events"` counts rows. Both are
+# scoped to today and, where given, to one `source_detail`.
+#
+# `source_detail` is what keeps these from reading each other's awards: a book
+# earns XP for reading time, for reaching a milestone *and* for a chapter quiz,
+# so "finish a chapter quiz" must not tick on the other two. `read_minutes`
+# spans both reading surfaces because a learner thinks of it as one thing —
+# twenty minutes read, whether in an article or a chapter.
+CONTENT_QUEST_SOURCES: dict[str, dict] = {
+    "watch_youtube": {"sources": ("youtube",), "unit": "minutes"},
+    "listen_podcast": {"sources": ("podcast",), "unit": "minutes"},
+    "read_minutes": {
+        "sources": ("news", "book"),
+        "unit": "minutes",
+        "source_detail": "reading_time",
+    },
+    "read_news": {
+        "sources": ("news",),
+        "unit": "events",
+        "source_detail": "news_quiz",
+    },
+    "read_book": {
+        "sources": ("book",),
+        "unit": "events",
+        "source_detail": "chapter_quiz",
+    },
+}
 
 
 def get_challenges_for_user(user_id: UUID, date_seed: date) -> List[dict]:
@@ -186,20 +256,38 @@ def get_challenges_for_user(user_id: UUID, date_seed: date) -> List[dict]:
     Uses date as seed for deterministic but varied challenges.
     """
     import random
-    
-    # Use date and user_id as seed for consistent daily challenges per user
+
+    # Use date and user_id as seed for consistent daily challenges per user.
+    # Its own Random instance, not random.seed(): the module-level seed is
+    # process-global, so seeding it here reset the sequence for every other
+    # caller of `random` in the same worker.
     seed = int(date_seed.strftime("%Y%m%d")) + sum(user_id.bytes)
-    random.seed(seed)
-    
-    # Select 4-5 challenges for the day (increased from 3-4)
-    num_challenges = random.randint(4, 5)
-    num_challenges = min(num_challenges, len(DAILY_CHALLENGE_TEMPLATES))
-    selected_templates = random.sample(DAILY_CHALLENGE_TEMPLATES, num_challenges)
-    
+    rng = random.Random(seed)
+
+    # Select 4-5 challenges for the day (increased from 3-4), of which exactly
+    # one is a content quest.
+    #
+    # Drawing all of them from one pool would let a day come up three-quarters
+    # content, and `claim_daily_bonus` needs *every* challenge done — so a
+    # learner who only wanted to do lessons would lose the bonus through no
+    # fault of their own. One guaranteed slot also means the library, podcast,
+    # video and news surfaces are always worth something, which is the point.
+    num_challenges = rng.randint(4, 5)
+
+    content_pool = [t for t in DAILY_CHALLENGE_TEMPLATES if t["category"] == "content"]
+    study_pool = [t for t in DAILY_CHALLENGE_TEMPLATES if t["category"] != "content"]
+
+    selected_templates = rng.sample(
+        study_pool, min(num_challenges - 1, len(study_pool))
+    )
+    if content_pool:
+        selected_templates.append(rng.choice(content_pool))
+    rng.shuffle(selected_templates)
+
     challenges = []
     for template in selected_templates:
         # Choose difficulty based on random (weighted toward easier)
-        difficulty = random.choices([0, 1, 2], weights=[50, 35, 15])[0]
+        difficulty = rng.choices([0, 1, 2], weights=[50, 35, 15])[0]
         
         challenges.append({
             "id": template["id"],
@@ -273,13 +361,21 @@ async def calculate_challenge_progress(
             return result.scalar() or 0
         
         elif challenge["id"] in ("grammar_drill", "listening_drill"):
-            # Fallback to total lesson completions today
+            # Count what the exercises actually measured, not how many lessons
+            # were finished — counting completions let a vocabulary lesson tick
+            # "Grammar Guru". SkillDailyStat is the per-(user, day, skill)
+            # rollup the proficiency engine already writes.
+            skill = (
+                SkillType.GRAMMAR
+                if challenge["id"] == "grammar_drill"
+                else SkillType.LISTENING
+            )
             result = await db.execute(
-                select(func.count(LessonCompletion.id)).where(
+                select(SkillDailyStat.attempts).where(
                     and_(
-                        LessonCompletion.user_id == user_id,
-                        LessonCompletion.completed_at >= today_start,
-                        LessonCompletion.completed_at < today_end,
+                        SkillDailyStat.user_id == user_id,
+                        SkillDailyStat.day == today,
+                        SkillDailyStat.skill == skill,
                     )
                 )
             )
@@ -340,6 +436,51 @@ async def calculate_challenge_progress(
         )
         return result.scalar() or 0
     
+    elif challenge["category"] == "time":
+        # Real minutes at the exercise, summed from the per-answer times the
+        # lesson flow accumulates. This used to sit under the "xp" category,
+        # so "Study for 10 minutes" was satisfied by earning 10 XP.
+        result = await db.execute(
+            select(func.coalesce(func.sum(LessonAttempt.time_spent_ms), 0)).where(
+                and_(
+                    LessonAttempt.user_id == user_id,
+                    LessonAttempt.finished_at >= today_start,
+                    LessonAttempt.finished_at < today_end,
+                )
+            )
+        )
+        return int(result.scalar() or 0) // 60_000
+
+    elif challenge["category"] == "content":
+        spec = CONTENT_QUEST_SOURCES.get(challenge["id"])
+        if spec is None:
+            return 0
+
+        conditions = [
+            XPTransaction.user_id == user_id,
+            XPTransaction.source.in_(spec["sources"]),
+            XPTransaction.created_at >= today_start,
+            XPTransaction.created_at < today_end,
+        ]
+        if spec.get("source_detail"):
+            conditions.append(XPTransaction.source_detail == spec["source_detail"])
+
+        if spec["unit"] == "events":
+            result = await db.execute(
+                select(func.count(XPTransaction.id)).where(and_(*conditions))
+            )
+            return int(result.scalar() or 0)
+
+        # Minutes. `duration_seconds` is what the client claimed, so cap each
+        # award the same way study time does — one forged number must not
+        # complete a 30-minute quest on its own.
+        result = await db.execute(
+            select(func.coalesce(func.sum(capped_duration_seconds()), 0)).where(
+                and_(*conditions, XPTransaction.duration_seconds.isnot(None))
+            )
+        )
+        return int(result.scalar() or 0) // 60
+
     elif challenge["category"] == "streak":
         # Check if user has been active today
         result = await db.execute(
@@ -348,14 +489,6 @@ async def calculate_challenge_progress(
         streak = result.scalar_one_or_none()
         if streak and streak.last_activity_date == today:
             return 1
-        return 0
-    
-    elif challenge["category"] == "voice":
-        # Voice practice — not tracked separately yet
-        return 0
-    
-    elif challenge["category"] == "social":
-        # Social interactions — not tracked separately yet
         return 0
     
     return 0
@@ -547,6 +680,17 @@ async def claim_daily_bonus(
         current_user.numeric_level = new_numeric_level
         apply_rank_info_to_user(current_user, new_rank_info)
 
+    # Claimed challenge XP reached neither today's row nor the weekly
+    # leaderboard, so it did not count toward the "earn XP" challenge this very
+    # file reads back, and never moved the learner's rank.
+    await record_daily_activity(
+        db,
+        current_user.id,
+        xp_earned=boosted_xp,
+        league=new_rank_info.rank.value,
+        today=today,
+    )
+
     # Award gems
     await WalletCRUD.add_gems(
         db,
@@ -672,6 +816,17 @@ async def claim_challenge_reward(
         current_user.total_xp = new_total_xp
         current_user.numeric_level = new_numeric_level
         apply_rank_info_to_user(current_user, new_rank_info)
+
+    # Claimed challenge XP reached neither today's row nor the weekly
+    # leaderboard, so it did not count toward the "earn XP" challenge this very
+    # file reads back, and never moved the learner's rank.
+    await record_daily_activity(
+        db,
+        current_user.id,
+        xp_earned=boosted_xp,
+        league=new_rank_info.rank.value,
+        today=today,
+    )
     
     # Award gems if any
     if gems_reward > 0:

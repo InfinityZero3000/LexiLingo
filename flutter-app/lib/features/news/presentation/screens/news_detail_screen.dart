@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
+import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 
 /// News Detail Screen — full article with vocabulary highlighting.
 ///
@@ -28,6 +29,11 @@ class NewsDetailScreen extends StatefulWidget {
 
 class _NewsDetailScreenState extends State<NewsDetailScreen> {
   final _scrollController = ScrollController();
+
+  /// Reading this article is practice, so it is credited like any other —
+  /// in idempotent chunks, and only while the learner is actually here.
+  late final ContentTimeTracker _readingTime;
+
   double _readingProgress = 0.0;
   bool _showQuizButton = false;
   String? _fullContent;
@@ -37,6 +43,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   void initState() {
     super.initState();
     _scrollController.addListener(_trackProgress);
+    _readingTime = ContentTimeTracker(
+      source: 'news',
+      sourceIdPrefix: 'read:${widget.article.id}',
+      sourceDetail: 'reading_time',
+    )..start();
     _loadFullContentIfNeeded();
   }
 
@@ -73,11 +84,14 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
 
   @override
   void dispose() {
+    _readingTime.stop();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _trackProgress() {
+    // Scrolling is the proof someone is reading rather than holding the phone.
+    _readingTime.markActive();
     if (!_scrollController.hasClients) return;
     final maxScroll = _scrollController.position.maxScrollExtent;
     if (maxScroll <= 0) return;
@@ -186,7 +200,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${widget.article.readingTimeMin} min read',
+                              'news.minRead'.tr(namedArgs: {'count': '${widget.article.readingTimeMin}'}),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,

@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/services/skill_event_recorder.dart';
+import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/audio_synthesis.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/transcription.dart';
@@ -15,8 +20,10 @@ class VoiceProvider extends ChangeNotifier {
   final TranscribeAudioUseCase transcribeAudioUseCase;
   final SynthesizeSpeechUseCase synthesizeSpeechUseCase;
   final AssessPronunciationUseCase assessPronunciationUseCase;
+  final SkillEventRecorder skillRecorder;
 
   VoiceProvider({
+    this.skillRecorder = const SkillEventRecorder(),
     required this.transcribeAudioUseCase,
     required this.synthesizeSpeechUseCase,
     required this.assessPronunciationUseCase,
@@ -165,10 +172,56 @@ class VoiceProvider extends ChangeNotifier {
         _lastPronunciationScore = score;
         _state = VoiceState.idle;
         notifyListeners();
+        unawaited(_recordSpeakingEvidence(score));
         return score;
       },
     );
   }
+
+  /// Send an assessed attempt to the speaking skill score, and put the words
+  /// that came out badly on the review schedule.
+  ///
+  /// The assessment used to be shown and then discarded: a learner could
+  /// record twenty phrases and the app would know no more about their
+  /// speaking than before they started.
+  Future<void> _recordSpeakingEvidence(PronunciationScore score) async {
+    // 70 is the entity's own isNeedsWork boundary — keep the two together so
+    // "needs work" in the UI and "incorrect" in the model never disagree.
+    const passMark = 70;
+
+    final results = <ExerciseResultData>[
+      ExerciseResultData(
+        exerciseType: 'pronunciation',
+        skill: SkillType.speaking,
+        difficultyLevel: _assessmentLevel,
+        isCorrect: score.overallScore >= passMark,
+        score: score.overallScore.toDouble(),
+      ),
+    ];
+
+    for (final word in score.wordScores) {
+      if (word.score >= passMark && !word.hasIssue) continue;
+      final conceptId = vocabConceptId(word.word);
+      if (conceptId == null) continue;
+      results.add(
+        ExerciseResultData(
+          exerciseType: 'pronunciation_word',
+          skill: SkillType.speaking,
+          difficultyLevel: _assessmentLevel,
+          isCorrect: false,
+          score: word.score.toDouble(),
+          conceptId: conceptId,
+        ),
+      );
+    }
+
+    await skillRecorder.record(results);
+  }
+
+  /// The assessment API returns no CEFR level of its own, and the practice
+  /// phrases are not levelled either, so every attempt is recorded at the
+  /// middle band rather than pretending to a precision we do not have.
+  static const String _assessmentLevel = 'B1';
 
   /// Clear last result
   void clearResults() {

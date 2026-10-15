@@ -81,7 +81,7 @@ async def test_cli_provider_failure_stops_before_dataset_or_protocol(monkeypatch
     monkeypatch.setattr(cli, "run_public_qa_protocol", should_not_run)
     args = Namespace(
         command="public-qa", dataset="hotpotqa", n=1, seed=42,
-        profile="public_cag_compare", modes=None, cache_repeats=2,
+        profile="fair_compare", modes=None, cache_repeats=2,
         generation_policy="auto", evidence_mode="candidate_pool",
         provider="groq", model="qwen/qwen3-32b", allow_fallback=False,
         allow_degraded_provider=False, allow_degraded_kg=False, report_json=None,

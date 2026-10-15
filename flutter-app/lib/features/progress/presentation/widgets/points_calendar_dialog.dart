@@ -78,6 +78,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
 
   Future<void> _loadReminderPrefs() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _reminderEnabled = prefs.getBool(_kReminderEnabledKey) ?? false;
       final hour = prefs.getInt(_kReminderHourKey) ?? 12;
@@ -409,7 +410,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       context: context,
       initialTime: _reminderTime,
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() => _reminderTime = picked);
       _saveReminderPrefs();
     }

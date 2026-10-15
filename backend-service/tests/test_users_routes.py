@@ -428,64 +428,31 @@ class TestGetWeeklyActivity:
 
 
 # ============================================================================
-# POST /api/v1/users/me/xp  — Award XP
+# POST /api/v1/users/me/xp  — removed
 # ============================================================================
 
-class TestAwardXP:
-    """Tests for POST /api/v1/users/me/xp."""
+
+class TestAwardXPEndpointIsGone:
+    """`POST /users/me/xp` was a second XP writer with no guards at all.
+
+    It took any positive `amount` with no upper bound, ignored XP_SOURCE_CAPS
+    and the 500/day cap, deduped nothing, and wrote no XPTransaction,
+    DailyActivity or LeaderboardEntry row — so it both minted unlimited XP and
+    desynced User.total_xp from every table that reports it. No client ever
+    called it. XP goes through POST /xp/award.
+    """
 
     @pytest.mark.asyncio
-    async def test_requires_auth(self, no_auth_client: AsyncClient):
-        response = await no_auth_client.post(f"{BASE}/me/xp", json={"amount": 50})
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_missing_amount_returns_422(self, auth_client):
+    async def test_route_is_not_registered(self, auth_client):
         client, _, _, _ = auth_client
-        response = await client.post(f"{BASE}/me/xp", json={})
-        assert response.status_code == 422
+        response = await client.post(
+            f"{BASE}/me/xp", json={"amount": 999_999_999, "reason": "x"}
+        )
+        assert response.status_code == 404
 
-    @pytest.mark.asyncio
-    async def test_awards_xp_successfully(self, auth_client):
-        client, _, _, mock_user = auth_client
-        mock_effects_service = AsyncMock()
-        mock_effects_service.get_xp_multiplier = AsyncMock(return_value=1.0)
+    def test_no_second_xp_award_schema_exists(self):
+        """The orphaned XPAwardRequest in schemas/level.py went with it."""
+        import app.schemas.level as level_schemas
 
-        with patch("app.services.item_effects_service.ItemEffectsService", return_value=mock_effects_service), \
-             patch("app.services.level_service.LevelService.check_level_up", return_value=(False, None)):
-            response = await client.post(f"{BASE}/me/xp", json={"amount": 50, "reason": "test"})
-
-        assert response.status_code == 200
-
-    @pytest.mark.asyncio
-    async def test_response_has_xp_data(self, auth_client):
-        client, _, _, mock_user = auth_client
-        mock_effects_service = AsyncMock()
-        mock_effects_service.get_xp_multiplier = AsyncMock(return_value=1.0)
-
-        with patch("app.services.item_effects_service.ItemEffectsService", return_value=mock_effects_service), \
-             patch("app.services.level_service.LevelService.check_level_up", return_value=(False, None)):
-            response = await client.post(f"{BASE}/me/xp", json={"amount": 50, "reason": "test"})
-
-        data = response.json()["data"]
-        assert "total_xp" in data
-        assert "xp_gained" in data
-        assert "level_up" in data
-
-    @pytest.mark.asyncio
-    async def test_xp_boost_applied_with_multiplier(self, auth_client):
-        """When a 2x boost is active, xp_gained should be double the base amount."""
-        client, _, _, mock_user = auth_client
-        mock_user.total_xp = 100
-
-        mock_effects_service = AsyncMock()
-        mock_effects_service.get_xp_multiplier = AsyncMock(return_value=2.0)
-
-        with patch("app.services.item_effects_service.ItemEffectsService", return_value=mock_effects_service), \
-             patch("app.services.level_service.LevelService.check_level_up", return_value=(False, None)):
-            response = await client.post(f"{BASE}/me/xp", json={"amount": 50, "reason": "test"})
-
-        assert response.status_code == 200
-        data = response.json()["data"]
-        # With 2x boost, 50 base XP -> 100 gained
-        assert data["xp_gained"] == 100
+        assert not hasattr(level_schemas, "XPAwardRequest")
+        assert not hasattr(level_schemas, "XPAwardResponse")

@@ -56,6 +56,11 @@ def env_float(name: str, default: float, minimum: float = 0.0) -> float:
         return default
 
 
+def _turn_skill(input_type: str | None) -> str:
+    """A spoken turn is speaking practice; a typed one is writing practice."""
+    return "speaking" if (input_type or "").strip().lower() == "voice" else "writing"
+
+
 # ─── Request / Response Models ───────────────────────────────────────────────
 class LexiChatRequest(BaseModel):
     """Request to chat with Lexi."""
@@ -86,6 +91,18 @@ class LexiSuggestedPractice(BaseModel):
     prompt: str
 
 
+class LexiCourseSuggestion(BaseModel):
+    """A real course row from the catalog, attached so the client renders a
+    tappable card instead of a course name the model typed out."""
+    course_id: str
+    title: str
+    level: Optional[str] = None
+    description: Optional[str] = None
+    thumbnail_url: Optional[str] = None
+    total_lessons: int = 0
+    estimated_duration: int = 0
+
+
 class LexiChatResponse(BaseModel):
     """Structured response from Lexi."""
     success: bool = True
@@ -96,6 +113,7 @@ class LexiChatResponse(BaseModel):
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
     suggested_practice: Optional[LexiSuggestedPractice] = None
+    suggested_courses: List[LexiCourseSuggestion] = []
     native_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     story_context: Optional[str] = None
@@ -204,6 +222,55 @@ def _build_suggested_practice(
         # this must stay visible in production logs, not silently vanish.
         logger.warning("[lexi_chat] suggested_practice lookup failed: %s", exc)
         return None
+
+
+async def _resolve_learner_card(
+    user_id: str, user_text: str
+) -> tuple[str, List["LexiCourseSuggestion"]]:
+    """(prompt fact block, real course rows) for turns that ask about the learner.
+
+    Returns empty results for every other turn, so ordinary tutoring pays no
+    latency and the tutor prompt is not diluted with facts it will not use.
+
+    Never raises. Both callers run this as a task alongside orchestrator
+    warmup, so an exception here would either derail an otherwise fine turn
+    into the degraded retry path or be left unretrieved on a timeout — losing
+    the learner's name is not worth either.
+    """
+    from api.services.learner_card import (
+        course_suggestions,
+        detect_learner_intents,
+        get_learner_card,
+        render_card_facts,
+    )
+
+    try:
+        intents = detect_learner_intents(user_text)
+        if not intents:
+            return "", []
+        card = await get_learner_card(user_id)
+        # INFO, not debug: this is how you tell from production logs whether
+        # the feature is reaching learners at all, or silently degrading
+        # because the internal channel is misconfigured.
+        logger.info(
+            "[lexi_chat] learner card intents=%s resolved=%s",
+            sorted(intents),
+            bool(card),
+        )
+        if not card:
+            return "", []
+        return (
+            render_card_facts(card, intents),
+            [
+                LexiCourseSuggestion(**item)
+                for item in course_suggestions(card, intents)
+            ],
+        )
+    except asyncio.CancelledError:
+        raise
+    except Exception as exc:
+        logger.warning("[lexi_chat] learner card unavailable (non-fatal): %s", exc)
+        return "", []
 
 
 def idempotency_request_hash(request: "LexiChatRequest") -> str:
@@ -410,6 +477,7 @@ class PipelineResult:
     corrections: List["LexiCorrection"] = field(default_factory=list)
     linked_concepts: List[str] = field(default_factory=list)
     suggested_practice: Optional["LexiSuggestedPractice"] = None
+    suggested_courses: List["LexiCourseSuggestion"] = field(default_factory=list)
     native_hint: Optional[str] = None
     scores: Optional[Dict[str, Any]] = None
     model_used: str = "trace-cag"
@@ -454,6 +522,7 @@ async def run_lexi_pipeline(
     scores: Optional[Dict[str, Any]] = None
     model_used = "trace-cag"
     observation_trace_result: Dict[str, Any] = {}
+    suggested_courses: List[LexiCourseSuggestion] = []
 
     try:
         from api.services.orchestrator import get_orchestrator
@@ -467,8 +536,12 @@ async def run_lexi_pipeline(
             if not history
             else None
         )
+        card_task = asyncio.ensure_future(
+            _resolve_learner_card(request.user_id, user_text)
+        )
         orchestrator = await get_orchestrator()
         session_recap = await recap_task if recap_task else None
+        learner_facts, suggested_courses = await card_task
         graph_result = await orchestrator.process(
             user_input=user_text,
             session_id=session_id,
@@ -477,8 +550,13 @@ async def run_lexi_pipeline(
                 "level": request.learner_level,
                 "native_language": iso_to_language_name(request.native_language),
                 **({"session_recap": session_recap} if session_recap else {}),
+                **({"learner_facts": learner_facts} if learner_facts else {}),
             },
             conversation_history=history,
+            # A cached reply would report yesterday's XP, streak or level as if
+            # it were current — personal facts age, the tutoring around them
+            # does not.
+            **({"cache_policy": "off"} if learner_facts else {}),
         )
         lexi_response = graph_result.get("tutor_response", "")
         for c in graph_result.get("corrections", []):
@@ -670,6 +748,8 @@ async def run_lexi_pipeline(
                 session_id=session_id,
                 turn_id=user_message["id"],
                 trace_result=observation_trace_result,
+                skill=_turn_skill(request.input_type),
+                difficulty_level=request.learner_level,
             )
         )
     except Exception as observation_err:
@@ -704,6 +784,7 @@ async def run_lexi_pipeline(
         corrections=corrections,
         linked_concepts=linked_concepts,
         suggested_practice=suggested_practice,
+        suggested_courses=suggested_courses,
         native_hint=native_hint,
         scores=scores,
         model_used=model_used,
@@ -808,6 +889,9 @@ async def stream_lexi_chat(
             if not history
             else None
         )
+        card_task = asyncio.create_task(
+            _resolve_learner_card(request.user_id, user_text)
+        )
         loop = asyncio.get_running_loop()
         orch_deadline = loop.time() + 45.0  # Reduced from 60s: total must fit within Cloudflare's 100s proxy timeout
         while not orch_task.done():
@@ -828,6 +912,7 @@ async def stream_lexi_chat(
                 break
         orchestrator = await orch_task
         session_recap = await recap_task if recap_task else None
+        learner_facts, suggested_courses = await card_task
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
                 user_input=user_text,
@@ -837,8 +922,12 @@ async def stream_lexi_chat(
                     "level": request.learner_level,
                     "native_language": iso_to_language_name(request.native_language),
                     **({"session_recap": session_recap} if session_recap else {}),
+                    **({"learner_facts": learner_facts} if learner_facts else {}),
                 },
                 conversation_history=history,
+                # See run_lexi_pipeline: a cached reply would report stale XP,
+                # streak or level as if it were current.
+                **({"cache_policy": "off"} if learner_facts else {}),
             )
         )
 
@@ -875,6 +964,8 @@ async def stream_lexi_chat(
 
     # Extract corrections / concepts / scores from pipeline state
     diag_errors = list(raw_state.get("diagnosis_errors") or [])
+    from api.core.redis_client import record_learner_errors
+    await record_learner_errors(request.user_id, diag_errors)
     corrections = [
         LexiCorrection(
             error_span=str(e.get("span") or ""),
@@ -1036,6 +1127,8 @@ async def stream_lexi_chat(
             session_id=session_id,
             turn_id=user_message["id"],
             trace_result=raw_state,
+            skill=_turn_skill(request.input_type),
+            difficulty_level=request.learner_level,
         )
     except Exception as observation_err:
         logger.error(
@@ -1072,6 +1165,7 @@ async def stream_lexi_chat(
         "suggested_practice": (
             suggested_practice.model_dump() if suggested_practice else None
         ),
+        "suggested_courses": [course.model_dump() for course in suggested_courses],
         "native_hint": native_hint,
         "scores": scores,
         "story_context": request.story_context,

@@ -320,6 +320,17 @@ class TestSuperAdminOnly:
     """Endpoints that require super_admin (level 2) should deny admin (level 1)."""
 
     @pytest.mark.asyncio
+    async def test_admin_cannot_update_system_info(
+        self, async_client: AsyncClient, admin_headers
+    ):
+        response = await async_client.put(
+            "/api/v1/admin/system-info",
+            headers=admin_headers,
+            json={"app_name": "unauthorized"},
+        )
+        assert response.status_code == 403
+
+    @pytest.mark.asyncio
     async def test_admin_cannot_change_user_role(
         self, async_client: AsyncClient, admin_headers, regular_user
     ):

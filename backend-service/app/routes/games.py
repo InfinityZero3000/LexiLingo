@@ -1,16 +1,9 @@
-"""
-Games API Routes — DEPRECATED
+"""Game API routes.
 
-This module has been split into:
-  app/routes/game_data.py      — constants and seed helper
-  app/routes/game_content.py   — 6 GET game endpoints + /categories
-  app/routes/game_scoring.py   — POST /sessions/{id}/complete
-
-main.py now registers game_content_router and game_scoring_router directly.
-This file is kept only as a reference and is no longer imported.
+The monolithic router remains the registered implementation. Game constants,
+content endpoints, and scoring endpoints intentionally live here together.
 """
 
-import asyncio
 import logging
 import random
 import uuid
@@ -30,7 +23,15 @@ from app.schemas.games import (
     GameSessionCompleteRequest,
     GameSessionCompleteResponse,
 )
-from app.services.game_scoring_service import GameScoringError, score_game
+from app.services.game_scoring_service import (
+    GameScoringError,
+    score_game,
+)
+from app.services.learner_error_service import record_learner_error
+from app.services.game_fsrs_service import (
+    record_game_grammar_lapse,
+    record_game_vocab_lapse,
+)
 from app.services.item_effects_service import ItemEffectsService
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
 from app.core.cache import build_cache_key, delete_cached, invalidate_cache
@@ -1473,6 +1474,7 @@ async def get_grammar_quiz(
                 "id": str(question["id"]),
                 "answer": question["correct_answer"],
                 "xp_value": XP_BY_LEVEL.get(level, 15),
+                "topic": question["topic"],
             }
             for question in questions
         ],
@@ -1587,6 +1589,42 @@ async def complete_game_session(
             detail=str(exc),
         ) from exc
 
+    submitted_by_id = {answer.id.strip(): answer.answer for answer in body.answers}
+    for expected in expected_items:
+        item_id = str(expected["id"]).strip()
+        if item_id in score.incorrect_ids:
+            submitted_answer = submitted_by_id[item_id]
+            expected_answer = expected["answer"]
+            await record_learner_error(
+                db,
+                user_id=current_user.id,
+                source="game",
+                is_correct=False,
+                submitted_answer=submitted_answer,
+                correct_answer=str(expected_answer or ""),
+                context={
+                    "game_type": session.game_type,
+                    "session_id": str(session.id),
+                },
+            )
+            if session.game_type in {
+                "word_scramble",
+                "spelling_bee",
+                "matching",
+                "hangman",
+            }:
+                await record_game_vocab_lapse(
+                    db,
+                    user_id=current_user.id,
+                    game_word_id=str(expected["id"]),
+                )
+            elif session.game_type == "grammar_quiz" and expected.get("topic"):
+                await record_game_grammar_lapse(
+                    db,
+                    user_id=current_user.id,
+                    topic=expected["topic"],
+                )
+
     item_multiplier = await ItemEffectsService(db).get_xp_multiplier(current_user.id)
     xp_result = await award_xp_transaction(
         db=db,
@@ -1595,6 +1633,9 @@ async def complete_game_session(
         base_xp=score.final_base_xp,
         source_id=str(session.id),
         source_detail=session.game_type,
+        # Computed above from the server's own start/finish times, not from
+        # body.client_duration_seconds.
+        duration_seconds=duration_seconds,
         commit=False,
         item_multiplier=item_multiplier,
     )
@@ -1640,16 +1681,13 @@ async def complete_game_session(
                 [
                     ExerciseResult(
                         exercise_type="game",
-                        skill=ProficiencyService.infer_skill_from_tags(
-                            session.game_type.split("_")
-                        ),
+                        skill=ProficiencyService.skill_for_game(session.game_type),
                         difficulty_level=ProficiencyLevel(level_code),
                         is_correct=score.correct_count >= total,
                         score=min(100.0, 100.0 * score.correct_count / total),
                         time_spent_seconds=duration_seconds,
                     )
                 ],
-                award_xp=False,  # game completion above already awarded XP
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)

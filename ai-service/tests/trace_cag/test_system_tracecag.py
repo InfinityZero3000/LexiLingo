@@ -403,14 +403,63 @@ async def _patched_pipeline(
     ), patch(
         "api.services.trace_cag.nodes_v2.get_gateway",
         new=AsyncMock(return_value=gateway_mock),
+    ), patch(
+        # retrieve_node's vector stage tries RetrievalServiceV3 first, which
+        # synchronously builds the real KG graph + pre-warms embeddings
+        # (169.5s on the production KG) — skip straight to the mocked-gateway
+        # fallback the way a real "service unavailable" would.
+        "api.services.trace_cag.retrieve._get_retrieval_v3",
+        new=AsyncMock(side_effect=RuntimeError("retrieval_v3 disabled in tests")),
+    ), patch(
+        # retrieve_node's fallback imports get_gateway from model_gateway
+        # directly (not via nodes_v2), so the nodes_v2 patch above doesn't
+        # cover it — left unpatched this built a real MiniLM embedding
+        # gateway and hung fetching the model.
+        "api.services.model_gateway.get_gateway",
+        new=AsyncMock(return_value=gateway_mock),
+    ), patch(
+        # L2 external-knowledge stage falls through to embedding_service_v3,
+        # which calls the real Gemini embeddings API (fails on the fake key
+        # above, but still a live network call) before falling back to a
+        # local model. No test scenario here exercises L2, so stub it empty.
+        "api.services.trace_cag.retrieve.get_doc_intel_service",
+        new=MagicMock(return_value=MagicMock(
+            query_l2=AsyncMock(return_value=[]),
+        )),
+    ), patch(
+        # generate.py imports get_doc_intel_service separately to check L1
+        # cache promotion. The real DocumentIntelligenceService() constructor
+        # builds EmbeddingServiceV3() (broken/unavailable in this test env),
+        # so it raised, generate.py's bare `except Exception` swallowed it,
+        # and _write_cache_entry below it never ran — the actual reason the
+        # L1 tests below saw zero buckets written on pass 1.
+        "api.services.trace_cag.generate.get_doc_intel_service",
+        new=MagicMock(return_value=MagicMock(
+            should_promote_to_cache=MagicMock(return_value=False),
+        )),
     ), patch.dict("sys.modules", {
         "api.services.kg_service_v3": fake_kg_module,
     }), patch(
         "api.services.trace_cag.generate._throttled_post_json",
         new=_post_json,
+    ), patch(
+        # cache_utils reads the shared `settings` singleton (loaded once from
+        # .env at process start), so LEARNER_STATE_MODE below has no effect
+        # on it — patch the attribute directly. With .env's "read" and a
+        # user_id set (default in _run_traced), _write_cache_entry's
+        # personalization gate silently skips every write unless
+        # learner_profile["_learner_state_available"] is True, which nothing
+        # in this mocked pipeline ever sets — the real reason pass 1 wrote
+        # zero cache entries and the L1 tests saw empty buckets.
+        "api.services.trace_cag.cache_utils.settings.LEARNER_STATE_MODE",
+        new="off",
     ), patch.dict("os.environ", {
         "GROQ_API_KEY": "test-groq-key",
         "GEMINI_API_KEY": "test-gemini-key",
+        # _jit_graph_extract_node downloads a real GLiNER NER model from
+        # HuggingFace Hub on first use (enabled by default) — the actual
+        # cause of these tests hanging on network/DNS.
+        "TRACECAG_ENABLE_JIT_MINIGRAPH": "0",
     }):
         from api.services.trace_cag.graph import get_trace_cag
         pipeline = await get_trace_cag()
@@ -1069,6 +1118,28 @@ async def test_scenario_l1_invalidation_on_version_change():
     print("=" * 74)
 
     async with _patched_pipeline(
+        # diagnose_node discards any mocked error whose `span` isn't a literal
+        # substring of user_input (anti-hallucination check) — the file
+        # default's span "go" doesn't occur in "She don't like coffee.", so
+        # this scenario always saw 0 errors / diagnosis_root_causes=[] and
+        # _is_pcc_stable() was never True. Match the span to this input.
+        gateway_mock=_make_gateway_mock(diagnosis_response={
+            "success": True,
+            "data": json.dumps({
+                "errors": [
+                    {
+                        "span": "don't",
+                        "type": "subject_verb_agreement",
+                        "correction": "doesn't",
+                        "explanation": "Use 'doesn't' with third-person singular 'she'.",
+                    }
+                ],
+                "intent": "correct",
+                "fluency_score": 0.65,
+                "grammar_score": 0.55,
+                "confidence": 0.92,
+            }),
+        }),
         groq_response="Use 'doesn't' instead of 'don't' with 'she'.",
     ) as pipeline:
         # ── Pass 1: populate bucket ──────────────────────────────────────────

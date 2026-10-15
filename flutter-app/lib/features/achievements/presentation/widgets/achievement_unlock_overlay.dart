@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Full-screen overlay shown when one or more achievements are unlocked.
 ///
@@ -25,7 +27,14 @@ class AchievementUnlockOverlay extends StatefulWidget {
     required List<UnlockedAchievement> achievements,
     required VoidCallback onDismiss,
   }) {
-    return showGeneralDialog(
+    trackProductEvent(
+      'achievement_unlock_overlay_shown',
+      source: 'achievements',
+      properties: {
+        'achievement_count': achievements.length,
+      },
+    );
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Achievement',
@@ -38,6 +47,12 @@ class AchievementUnlockOverlay extends StatefulWidget {
       pageBuilder: (ctx, _, __) => AchievementUnlockOverlay(
         achievements: achievements,
         onDismiss: onDismiss,
+      ),
+    ).whenComplete(
+      () => trackProductEvent(
+        'achievement_unlock_overlay_dismissed',
+        source: 'achievements',
+        properties: {'achievement_count': achievements.length},
       ),
     );
   }
@@ -181,7 +196,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
 
                     // "Achievement Unlocked!" label
                     Text(
-                      'Achievement Unlocked!',
+                      'achievements.achievementUnlocked'.tr(),
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColorRoles.textMuted(isDark),

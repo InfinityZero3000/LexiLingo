@@ -407,3 +407,33 @@ async def test_send_topic_message_stream_rejects_non_topic_session(monkeypatch):
         )
 
     assert exc.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_llm_health_reports_gemini_unconfigured_when_key_is_empty(monkeypatch):
+    """settings.GEMINI_API_KEY is a str defaulting to "", never None — an
+    `is not None` check always passed, so this field claimed Gemini was
+    configured even with an empty key. Retiring Gemini in favour of Groq
+    surfaced it: the field never went False."""
+    monkeypatch.setattr(topic_route.settings, "GEMINI_API_KEY", "")
+    orchestrator = MagicMock()
+    orchestrator.is_healthy.return_value = True
+    orchestrator.get_stats.return_value = {}
+
+    with patch("api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator)):
+        result = await topic_route.check_llm_health()
+
+    assert result["gemini_configured"] is False
+
+
+@pytest.mark.asyncio
+async def test_llm_health_reports_gemini_configured_when_key_is_set(monkeypatch):
+    monkeypatch.setattr(topic_route.settings, "GEMINI_API_KEY", "AIzaSyFakeKeyForTest")
+    orchestrator = MagicMock()
+    orchestrator.is_healthy.return_value = True
+    orchestrator.get_stats.return_value = {}
+
+    with patch("api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator)):
+        result = await topic_route.check_llm_health()
+
+    assert result["gemini_configured"] is True

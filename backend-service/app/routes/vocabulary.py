@@ -12,9 +12,11 @@ Endpoints:
 - GET    /vocabulary/stats          - Get user vocabulary statistics
 """
 
+import logging
+import math
 import uuid
-from datetime import date
-from typing import List, Optional
+from datetime import date, datetime, timezone
+from typing import Awaitable, Callable, List, Optional
 import httpx
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
 from fastapi.responses import JSONResponse
@@ -26,7 +28,7 @@ from app.core.cache import build_cache_key, get_cached, set_cached, delete_cache
 from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import vocabulary_crud
-from app.services.streak_service import update_user_streak
+from app.services.streak_service import record_daily_activity, update_user_streak
 from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
@@ -58,6 +60,69 @@ def _pronunciation_feedback(score: float) -> tuple[int, str, int]:
     if score >= 60:
         return 2, "Good", 3
     return 1, "Try again", 1
+
+
+def _days_until(next_review_date: datetime | None) -> int:
+    """Whole days until a scheduled review, rounded up, floor of 1.
+
+    Read off the actual schedule rather than the frozen legacy columns: those
+    are no longer written, so `fsrs_scheduled_days or interval` always fell
+    through to the column default and reported 1 day for every review.
+    """
+    if next_review_date is None:
+        return 1
+    if next_review_date.tzinfo is None:
+        next_review_date = next_review_date.replace(tzinfo=timezone.utc)
+    seconds = (next_review_date - datetime.now(timezone.utc)).total_seconds()
+    return max(1, math.ceil(seconds / 86400))
+
+
+async def _record_review_proficiency(
+    db: AsyncSession,
+    current_user: User,
+    user_vocab,
+    quality: int,
+) -> None:
+    """Feed one finished flashcard review into the CEFR skill scores.
+
+    Quality is SM-2's 0-5 scale; 3 is the "recalled it, with difficulty"
+    boundary the rest of this route already treats as correct.
+    """
+    from sqlalchemy import select
+
+    from app.models.vocabulary import VocabularyItem
+    from app.routes.proficiency import record_exercise_results_for_user
+    from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
+
+    item = await db.scalar(
+        select(VocabularyItem).where(VocabularyItem.id == user_vocab.vocabulary_id)
+    )
+    if item is None:
+        return
+
+    level_code = getattr(item.difficulty_level, "value", item.difficulty_level)
+    if level_code not in {level.value for level in ProficiencyLevel}:
+        level_code = current_user.level if current_user.level in {
+            level.value for level in ProficiencyLevel
+        } else ProficiencyLevel.A1.value
+
+    await record_exercise_results_for_user(
+        db,
+        current_user,
+        [
+            ExerciseResult(
+                exercise_type="vocab_review",
+                skill=SkillType.VOCABULARY,
+                difficulty_level=ProficiencyLevel(level_code),
+                is_correct=quality >= 3,
+                score=quality / 5 * 100,
+                # Deliberately no concept_id: vocabulary_crud.submit_review
+                # already recorded this review against the concept, and
+                # record_exercise_results_for_user would schedule it a second
+                # time from the same answer.
+            )
+        ],
+    )
 
 
 # ===== Word of the Day =====
@@ -383,23 +448,11 @@ async def bulk_add_to_collection(
     Bulk add multiple vocabulary items to collection.
     Useful when completing a lesson with many new words.
     """
-    results = []
-    
-    for vocab_id in request.vocabulary_ids:
-        # Verify exists
-        vocab = await vocabulary_crud.get_vocabulary_item(db, vocab_id)
-        if not vocab:
-            continue  # Skip non-existent items
-        
-        # Add to collection
-        user_vocab = await vocabulary_crud.add_to_collection(
-            db,
-            user_id=current_user.id,
-            vocabulary_id=vocab_id
-        )
-        results.append(user_vocab)
-    
-    return results
+    return await vocabulary_crud.bulk_add_to_collection(
+        db,
+        user_id=current_user.id,
+        vocabulary_ids=request.vocabulary_ids,
+    )
 
 
 # ===== Review System =====
@@ -425,11 +478,17 @@ async def evaluate_pronunciation(
             detail="Vocabulary item not found",
         )
 
-    audio_bytes = await audio.read()
+    max_audio_bytes = 20 * 1024 * 1024
+    audio_bytes = await audio.read(max_audio_bytes + 1)
     if not audio_bytes:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Audio file is empty",
+        )
+    if len(audio_bytes) > max_audio_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Audio file exceeds the 20MB limit",
         )
 
     try:
@@ -516,6 +575,30 @@ async def get_due_vocabulary(
     )
 
 
+async def _best_effort_step(
+    db: AsyncSession,
+    label: str,
+    action: Callable[[], Awaitable[None]],
+    *,
+    isolate: bool = False,
+    level: int = logging.ERROR,
+) -> None:
+    """Run a non-critical side effect without letting it fail the request.
+
+    Set isolate=True when `action` writes to the DB, so a failure rolls back
+    only its own savepoint instead of poisoning the caller's transaction
+    (and whatever it already recorded before this step ran).
+    """
+    try:
+        if isolate:
+            async with db.begin_nested():
+                await action()
+        else:
+            await action()
+    except Exception as e:
+        logging.getLogger(__name__).log(level, f"{label} error: {e}", exc_info=True)
+
+
 @router.post("/review/{user_vocabulary_id}", response_model=ReviewResponse)
 async def submit_review(
     user_vocabulary_id: uuid.UUID,
@@ -579,7 +662,6 @@ async def submit_review(
     from app.models.games import XPTransaction
     from app.models.progress import DailyActivity
     from sqlalchemy import select
-    from datetime import date
     
     user_id = current_user.id
     old_xp = current_user.total_xp or 0
@@ -615,55 +697,55 @@ async def submit_review(
     db.add(tx)
     
     # Update DailyActivity
-    today = date.today()
-    result = await db.execute(
-        select(DailyActivity).where(
-            DailyActivity.user_id == user_id,
-            DailyActivity.activity_date == today,
-        )
+    await record_daily_activity(
+        db,
+        user_id,
+        xp_earned=xp_awarded,
+        vocabulary_reviewed=1,
+        study_time_minutes=(review.time_spent_ms or 0) // 60_000,
+        today=datetime.now(timezone.utc).date(),
     )
-    daily = result.scalar_one_or_none()
-    if daily:
-        from unittest.mock import Mock
-        if isinstance(daily.xp_earned, Mock) or isinstance(daily.daily_goal_xp, Mock):
-            daily.xp_earned = xp_awarded
-            daily.daily_goal_met = True
-        else:
-            daily.xp_earned += xp_awarded
-            if daily.xp_earned >= daily.daily_goal_xp:
-                daily.daily_goal_met = True
-        daily.vocabulary_reviewed += 1
-        db.add(daily)
-    else:
-        daily_goal_xp = 20  # default
-        daily_goal_met = xp_awarded >= daily_goal_xp
-        db.add(DailyActivity(
-            user_id=user_id,
-            activity_date=today,
-            xp_earned=xp_awarded,
-            vocabulary_reviewed=1,
-            daily_goal_xp=daily_goal_xp,
-            daily_goal_met=daily_goal_met
-        ))
         
-    # Update user streak on vocab review
-    try:
-        await update_user_streak(db, current_user.id)
-    except Exception as e:
-        import logging
-        logging.getLogger(__name__).error(f"Error updating streak on vocabulary review: {e}", exc_info=True)
+    # Below this point every step is a best-effort side effect (streak,
+    # cache, achievements, proficiency) — none of them may roll back the
+    # review recorded above, so each runs through _best_effort_step.
+    await _best_effort_step(
+        db, "Streak update", lambda: update_user_streak(db, current_user.id)
+    )
 
-    # Invalidate user's progress caches
-    _uid = str(user_id)
-    await delete_cached(build_cache_key("progress_me", user_id=_uid))
-    await delete_cached(build_cache_key("progress_xp", user_id=_uid))
-    await delete_cached(build_cache_key("progress_streak", user_id=_uid))
-    await delete_cached(build_cache_key("vocab_stats", user_id=_uid))
+    async def _invalidate_progress_caches() -> None:
+        _uid = str(user_id)
+        await delete_cached(build_cache_key("progress_me", user_id=_uid))
+        await delete_cached(build_cache_key("progress_xp", user_id=_uid))
+        await delete_cached(build_cache_key("progress_streak", user_id=_uid))
+        await delete_cached(build_cache_key("vocab_stats", user_id=_uid))
 
-    # --- Check vocabulary achievements ---
+    await _best_effort_step(db, "Cache invalidation", _invalidate_progress_caches)
+
+    # isolate=True: runs in a savepoint so a bug in achievement evaluation
+    # can't poison the outer transaction and roll back the XP/streak/daily
+    # activity updates above it.
     from app.services import check_achievements_for_user
-    await check_achievements_for_user(db, current_user.id, "vocab_review")
-    
+
+    await _best_effort_step(
+        db,
+        "Achievement check",
+        lambda: check_achievements_for_user(db, current_user.id, "vocab_review"),
+        isolate=True,
+    )
+
+    # CEFR proficiency tracking. submit_review above only fed the delta-rule
+    # and FSRS schedule, so a learner who reviewed hundreds of cards still
+    # showed a vocabulary skill score of zero. Records skills only — XP for
+    # this review was granted above.
+    await _best_effort_step(
+        db,
+        "Proficiency update",
+        lambda: _record_review_proficiency(db, current_user, updated_vocab, review.quality),
+        level=logging.WARNING,
+    )
+
+
     # Generate message
     messages = {
         5: "Perfect! ",
@@ -678,7 +760,7 @@ async def submit_review(
         user_vocabulary=updated_vocab,
         xp_awarded=xp_awarded,
         streak_bonus=streak_bonus,
-        next_review_in_days=updated_vocab.fsrs_scheduled_days or updated_vocab.interval,
+        next_review_in_days=_days_until(updated_vocab.next_review_date),
         message=messages.get(review.quality, "Keep going!")
     )
 

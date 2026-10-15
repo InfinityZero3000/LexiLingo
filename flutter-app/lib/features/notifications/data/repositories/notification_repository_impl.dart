@@ -4,6 +4,7 @@ import '../../domain/entities/notification_entity.dart';
 import '../../domain/repositories/notification_repository.dart';
 import '../datasources/notification_local_datasource.dart';
 import '../datasources/notification_remote_datasource.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Notification Repository Implementation
 /// Manages notifications from local storage and FCM
@@ -136,17 +137,17 @@ class NotificationRepositoryImpl implements NotificationRepository {
     final groups = <NotificationGroup>[];
 
     if (today.isNotEmpty) {
-      groups.add(NotificationGroup(title: 'Today', notifications: today));
+      groups.add(NotificationGroup(title: 'datetime.today'.tr(), notifications: today));
     }
 
     if (yesterday.isNotEmpty) {
       groups.add(
-        NotificationGroup(title: 'Yesterday', notifications: yesterday),
+        NotificationGroup(title: 'datetime.yesterday'.tr(), notifications: yesterday),
       );
     }
 
     if (earlier.isNotEmpty) {
-      groups.add(NotificationGroup(title: 'Earlier', notifications: earlier));
+      groups.add(NotificationGroup(title: 'datetime.earlier'.tr(), notifications: earlier));
     }
 
     return groups;

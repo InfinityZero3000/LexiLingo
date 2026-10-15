@@ -15,7 +15,7 @@ from sqlalchemy import delete
 
 from app.core.celery_app import celery_app
 from app.core.config import settings
-from app.core.database import AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, close_db
 from app.models.content_agent import ContentAgentUpload
 from app.schemas.content_agent import ContentAgentArtifact
 from app.services.content_agent_apply import ContentAgentApplyService
@@ -37,7 +37,14 @@ class JobCancelled(Exception):
 
 @celery_app.task(name="app.tasks.content_agent.run_content_agent")
 def run_content_agent(job_id: str) -> dict:
-    return asyncio.run(_run_content_agent(uuid.UUID(job_id)))
+    return asyncio.run(_with_db_cleanup(_run_content_agent(uuid.UUID(job_id))))
+
+
+async def _with_db_cleanup(coro):
+    try:
+        return await coro
+    finally:
+        await close_db()
 
 
 async def _locked_active_job(db, job_id: uuid.UUID):
@@ -306,7 +313,7 @@ async def _run_content_agent(job_id: uuid.UUID) -> dict:
     name="app.tasks.content_agent.cleanup_expired_content_agent_uploads"
 )
 def cleanup_expired_content_agent_uploads() -> int:
-    return asyncio.run(_cleanup_expired_content_agent_uploads())
+    return asyncio.run(_with_db_cleanup(_cleanup_expired_content_agent_uploads()))
 
 
 async def _cleanup_expired_content_agent_uploads() -> int:

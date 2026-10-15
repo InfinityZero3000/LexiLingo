@@ -145,6 +145,13 @@ services:
       - "8000"
     volumes:
       - ./backend-service/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
+      # Uploaded media (IELTS listening recordings, imported audio). Without
+      # this the upload endpoint writes inside the container, /media is never
+      # mounted because the directory does not exist, and every deploy throws
+      # the files away. ai-service already mounts the same path read-only.
+      # The directory is not in git (data/ is ignored); docker creates it on
+      # first start, so check it is writable by the container's user.
+      - ./backend-service/data/media:/app/data/media
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\""]
       interval: 30s
@@ -253,11 +260,12 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       REDIS_DB: 1
       AI_MODEL_API_URL: http://ai-service:8001
+      BACKEND_AUDIT_INGEST_URL: http://backend-service:8000/api/v1/ai-audit/events
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys}
       GROQ_REQUIRE_SEVEN_KEYS: "true"
-      GROQ_MODEL: ${GROQ_MODEL:-llama-3.1-8b-instant}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.6-27b}
       GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-false}
       TRACECAG_GROQ_RPM: ${TRACECAG_GROQ_RPM:-28}
       REDIS_MAX_CONNECTIONS: ${REDIS_MAX_CONNECTIONS:-50}

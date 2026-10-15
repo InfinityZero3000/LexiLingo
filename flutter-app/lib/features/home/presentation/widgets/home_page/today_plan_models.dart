@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
+import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 
 enum TodayPlanDestination {
@@ -59,6 +60,17 @@ class TodayPlanSnapshot {
     }
     return tasks.isEmpty ? null : tasks.first;
   }
+
+  /// The tasks worth showing on a space-constrained surface (the home-screen
+  /// card only fits [limit]). Pending tasks come first — regardless of their
+  /// position in [tasks] — so an already-finished task never bumps a task
+  /// the learner still has to do out of view; each group keeps its original
+  /// relative order.
+  List<TodayPlanTask> visibleTasks([int limit = 3]) {
+    final pending = tasks.where((task) => !task.isCompleted);
+    final done = tasks.where((task) => task.isCompleted);
+    return pending.followedBy(done).take(limit).toList();
+  }
 }
 
 TodayPlanSnapshot buildTodayPlanSnapshot({
@@ -105,10 +117,18 @@ TodayPlanTask _buildVocabularyTask(int? dueCount) {
 }
 
 TodayPlanTask _buildCourseTask(List<CourseEntity> enrolledCourses) {
-  final course = enrolledCourses
-      .where((item) => (item.userProgress ?? 0) < 1)
-      .cast<CourseEntity?>()
-      .firstWhere((item) => item != null, orElse: () => null);
+  // Prefer a course still in progress; if every enrolled course is already
+  // finished, show the most recent one as completed instead of falling
+  // back to "choose a course" — the learner picked and finished it, that's
+  // not the same as having picked nothing.
+  CourseEntity? course;
+  for (final item in enrolledCourses) {
+    if ((item.userProgress ?? 0) < 1) {
+      course = item;
+      break;
+    }
+  }
+  course ??= enrolledCourses.isEmpty ? null : enrolledCourses.first;
 
   if (course == null) {
     return TodayPlanTask(
@@ -125,6 +145,7 @@ TodayPlanTask _buildCourseTask(List<CourseEntity> enrolledCourses) {
   }
 
   final progress = (course.userProgress ?? 0).clamp(0.0, 1.0);
+  final isDone = progress >= 1;
 
   return TodayPlanTask(
     type: TodayPlanTaskType.course,
@@ -132,16 +153,20 @@ TodayPlanTask _buildCourseTask(List<CourseEntity> enrolledCourses) {
     icon: Icons.menu_book_rounded,
     color: const Color(0xFF2687D9),
     title: course.title,
-    subtitle: 'home.todayPlan.courseSubtitle'.tr(
-      namedArgs: {'level': course.level},
-    ),
-    actionLabel: 'home.todayPlan.continueAction'.tr(),
+    subtitle: isDone
+        ? 'home.todayPlan.courseDoneSubtitle'.tr()
+        : 'home.todayPlan.courseSubtitle'.tr(
+            namedArgs: {'level': course.level},
+          ),
+    actionLabel: isDone
+        ? 'home.todayPlan.doneAction'.tr()
+        : 'home.todayPlan.continueAction'.tr(),
     metaLabel: 'home.todayPlan.courseProgress'.tr(
       namedArgs: {'percent': '${(progress * 100).round()}'},
     ),
     rewardLabel: course.totalXp > 0 ? '+${course.totalXp} XP' : null,
     progress: progress,
-    isCompleted: progress >= 1,
+    isCompleted: isDone,
   );
 }
 
@@ -184,19 +209,26 @@ TodayPlanTask _buildSkillTask(List<SkillScore> weakestSkills) {
   );
 }
 
+/// Reuses Practice Lab's mapping so the two surfaces cannot disagree about
+/// where a skill is practised — they already had, with writing pointing at
+/// games here and at Lexi there.
 TodayPlanDestination _destinationForSkill(SkillType skill) {
-  switch (skill) {
-    case SkillType.vocabulary:
+  switch (practiceDestinationForSkill(skill)) {
+    case PracticeLabDestination.vocabularyReview:
       return TodayPlanDestination.vocabularyReview;
-    case SkillType.grammar:
-    case SkillType.writing:
+    case PracticeLabDestination.games:
       return TodayPlanDestination.games;
-    case SkillType.reading:
+    case PracticeLabDestination.news:
       return TodayPlanDestination.news;
-    case SkillType.listening:
+    case PracticeLabDestination.podcast:
       return TodayPlanDestination.podcast;
-    case SkillType.speaking:
+    case PracticeLabDestination.voicePractice:
       return TodayPlanDestination.voice;
+    case PracticeLabDestination.lexi:
+      return TodayPlanDestination.lexi;
+    case PracticeLabDestination.mistakeNotebook:
+      // Not reachable from a skill, and Today's Plan has no slot for it.
+      return TodayPlanDestination.games;
   }
 }
 

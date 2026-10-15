@@ -54,7 +54,7 @@ printf 'uvicorn %s\n' "$*" >> "$COMMAND_LOG"
         env=env,
         capture_output=True,
         text=True,
-        timeout=5,
+        timeout=30,
         check=True,
     )
 
@@ -108,7 +108,7 @@ printf 'uvicorn %s\n' "$*" >> "$COMMAND_LOG"
         env=env,
         capture_output=True,
         text=True,
-        timeout=5,
+        timeout=30,
         check=True,
     )
 

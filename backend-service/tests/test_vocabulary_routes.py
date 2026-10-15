@@ -23,6 +23,8 @@ from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
+from app.models.progress import DailyActivity
+
 BASE = "/api/v1/vocabulary"
 VOCAB_ID = "00000000-0000-0000-0000-000000000050"
 USER_VOCAB_ID = "00000000-0000-0000-0000-000000000060"
@@ -460,7 +462,10 @@ class TestBulkAddToCollection:
     async def test_returns_empty_list_when_no_valid_ids(self, auth_client):
         client, _, _, _ = auth_client
         # All IDs are invalid (not found), so they are skipped
-        with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=None)):
+        with patch(
+            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
+            new=AsyncMock(return_value=[]),
+        ):
             response = await client.post(
                 f"{BASE}/collection/bulk",
                 json={"vocabulary_ids": [VOCAB_ID]},
@@ -471,10 +476,11 @@ class TestBulkAddToCollection:
     @pytest.mark.asyncio
     async def test_bulk_adds_valid_items(self, auth_client):
         client, _, _, _ = auth_client
-        mock_item = _make_mock_vocab_item()
         mock_user_vocab = _make_mock_user_vocab()
-        with patch("app.crud.vocabulary.vocabulary_crud.get_vocabulary_item", new=AsyncMock(return_value=mock_item)), \
-             patch("app.crud.vocabulary.vocabulary_crud.add_to_collection", new=AsyncMock(return_value=mock_user_vocab)):
+        with patch(
+            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
+            new=AsyncMock(return_value=[mock_user_vocab]),
+        ):
             response = await client.post(
                 f"{BASE}/collection/bulk",
                 json={"vocabulary_ids": [VOCAB_ID]},
@@ -486,6 +492,15 @@ class TestBulkAddToCollection:
     async def test_missing_body_returns_422(self, auth_client):
         client, _, _, _ = auth_client
         response = await client.post(f"{BASE}/collection/bulk", json={})
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_rejects_more_than_200_ids(self, auth_client):
+        client, _, _, _ = auth_client
+        response = await client.post(
+            f"{BASE}/collection/bulk",
+            json={"vocabulary_ids": [str(uuid.uuid4()) for _ in range(201)]},
+        )
         assert response.status_code == 422
 
 
@@ -630,7 +645,26 @@ class TestSubmitReview:
         client, mock_session, mock_result, mock_user = auth_client
         mock_user_vocab = _make_mock_user_vocab()
         mock_user_vocab.user_id = mock_user.id
-        mock_result.scalar_one_or_none.return_value = mock_user_vocab
+
+        # The route runs two queries: the UserVocabulary it is reviewing, then
+        # today's DailyActivity. Returning one mock for both handed the route a
+        # DailyActivity whose xp_earned was a MagicMock, and the route used to
+        # carry an `isinstance(..., Mock)` branch in production to survive it.
+        # A real DailyActivity keeps the arithmetic honest.
+        # Three queries now: the UserVocabulary, today's DailyActivity, and the
+        # weekly LeaderboardEntry that record_daily_activity credits.
+        mock_result.scalar_one_or_none.side_effect = [
+            mock_user_vocab,
+            DailyActivity(
+                user_id=mock_user.id,
+                activity_date=date.today(),
+                xp_earned=10,
+                daily_goal_xp=20,
+                vocabulary_reviewed=1,
+                daily_goal_met=False,
+            ),
+            None,
+        ]
 
         updated_vocab = _make_mock_user_vocab()
         updated_vocab.streak = 1

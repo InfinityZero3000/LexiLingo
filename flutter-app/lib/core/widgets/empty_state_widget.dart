@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -86,10 +87,10 @@ class EmptyStateWidget extends StatelessWidget {
 
   /// Factory for empty course list
   factory EmptyStateWidget.courses() {
-    return const EmptyStateWidget(
+    return EmptyStateWidget(
       icon: Icons.school_outlined,
-      title: 'No Courses Yet',
-      description: 'Start your learning journey by exploring our courses.',
+      title: 'emptyState.noCourses'.tr(),
+      description: 'emptyState.noCoursesDesc'.tr(),
       iconColor: Colors.blue,
     );
   }
@@ -98,9 +99,9 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.vocabulary({VoidCallback? onAdd}) {
     return EmptyStateWidget(
       icon: Icons.library_books_outlined,
-      title: 'No Vocabulary',
-      description: 'Add words to build your vocabulary library.',
-      actionLabel: onAdd != null ? 'Add Words' : null,
+      title: 'emptyState.noVocabulary'.tr(),
+      description: 'emptyState.noVocabularyDesc'.tr(),
+      actionLabel: onAdd != null ? 'emptyState.addWords'.tr() : null,
       onAction: onAdd,
       iconColor: AppColors.greenSuccessBright,
     );
@@ -108,10 +109,10 @@ class EmptyStateWidget extends StatelessWidget {
 
   /// Factory for empty notifications
   factory EmptyStateWidget.notifications() {
-    return const EmptyStateWidget(
+    return EmptyStateWidget(
       icon: Icons.notifications_none_outlined,
-      title: 'No Notifications',
-      description: 'You\'re all caught up! Check back later.',
+      title: 'notifications.emptyTitle'.tr(),
+      description: 'emptyState.allCaughtUp'.tr(),
       iconColor: AppColors.orange,
     );
   }
@@ -120,9 +121,9 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.chatHistory({VoidCallback? onStartChat}) {
     return EmptyStateWidget(
       icon: Icons.chat_bubble_outline,
-      title: 'No Conversations',
-      description: 'Start a conversation with our AI tutor.',
-      actionLabel: onStartChat != null ? 'Start Chat' : null,
+      title: 'emptyState.noConversations'.tr(),
+      description: 'emptyState.noConversationsDesc'.tr(),
+      actionLabel: onStartChat != null ? 'emptyState.startChat'.tr() : null,
       onAction: onStartChat,
       iconColor: AppColors.purple,
     );
@@ -132,10 +133,10 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.searchResults({String? query}) {
     return EmptyStateWidget(
       icon: Icons.search_off,
-      title: 'No Results Found',
+      title: 'emptyState.noResults'.tr(),
       description: query != null
-          ? 'No results found for "$query". Try a different search term.'
-          : 'No results found. Try a different search term.',
+          ? 'emptyState.noResultsForQuery'.tr(namedArgs: {'query': query})
+          : 'emptyState.noResultsDesc'.tr(),
       iconColor: Colors.grey,
     );
   }
@@ -144,9 +145,9 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.progress({VoidCallback? onStart}) {
     return EmptyStateWidget(
       icon: Icons.trending_up_outlined,
-      title: 'No Progress Yet',
-      description: 'Complete lessons to track your learning progress.',
-      actionLabel: onStart != null ? 'Start Learning' : null,
+      title: 'emptyState.noProgress'.tr(),
+      description: 'emptyState.noProgressDesc'.tr(),
+      actionLabel: onStart != null ? 'course.startLearning'.tr() : null,
       onAction: onStart,
       iconColor: AppColors.teal,
     );
@@ -156,9 +157,9 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.networkError({VoidCallback? onRetry}) {
     return EmptyStateWidget(
       icon: Icons.wifi_off_outlined,
-      title: 'No Internet Connection',
-      description: 'Please check your network and try again.',
-      actionLabel: onRetry != null ? 'Retry' : null,
+      title: 'errors.noInternet'.tr(),
+      description: 'emptyState.noInternetDesc'.tr(),
+      actionLabel: onRetry != null ? 'common.retry'.tr() : null,
       onAction: onRetry,
       iconColor: AppColors.errorBright,
     );
@@ -168,9 +169,9 @@ class EmptyStateWidget extends StatelessWidget {
   factory EmptyStateWidget.serverError({VoidCallback? onRetry}) {
     return EmptyStateWidget(
       icon: Icons.cloud_off_outlined,
-      title: 'Something Went Wrong',
-      description: 'We\'re having trouble connecting. Please try again.',
-      actionLabel: onRetry != null ? 'Retry' : null,
+      title: 'notifications.somethingWentWrong'.tr(),
+      description: 'emptyState.serverErrorDesc'.tr(),
+      actionLabel: onRetry != null ? 'common.retry'.tr() : null,
       onAction: onRetry,
       iconColor: AppColors.errorBright,
     );

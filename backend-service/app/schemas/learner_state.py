@@ -8,11 +8,19 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 MAX_PAYLOAD_BYTES = 4096
 MAX_FUTURE_SKEW = timedelta(minutes=5)
+# Kept in sync by hand with _ALLOWED_PAYLOAD_KEYS in
+# ai-service/api/services/learner_observation_spool.py — an unknown key fails
+# the whole batch, so add to both sides together.
 ALLOWED_OBSERVATION_PAYLOAD_KEYS = {
     "algorithm_version",
     "error_count",
     "migration_version",
     "source",
+    # Skill evidence for a conversation turn, carried on one anchor
+    # observation per turn. See ingest_learner_observation_batch.
+    "skill",
+    "score",
+    "difficulty_level",
 }
 
 

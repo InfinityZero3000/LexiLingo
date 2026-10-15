@@ -11,6 +11,7 @@ from app.models.user import User, UserDevice, RefreshToken
 # Course models (Phase 2)
 from app.models.course import Course, Unit, Lesson, MediaResource
 from app.models.course_category import CourseCategory
+from app.models.banner import Banner
 
 # Vocabulary models (Phase 3)
 from app.models.vocabulary import (
@@ -55,6 +56,7 @@ from app.models.proficiency import (
     UserSkillScore,
     UserLevelHistory,
     ExerciseAttempt,
+    SkillDailyStat,
     LevelAssessmentTest,
 )
 
@@ -64,6 +66,12 @@ from app.models.content import (
     QuestionItem,
     TestExam,
 )
+from app.models.ielts import (
+    IeltsTest,
+    IeltsAttempt,
+    IeltsGrading,
+)
+from app.models.user_grammar_item import UserGrammarItem
 
 # RBAC models
 from app.models.rbac import (
@@ -107,6 +115,9 @@ from app.models.ranking_agent import RankingAgentJob
 # Notification Campaign Agent models
 from app.models.notification_campaign import NotificationCampaignJob
 
+# Durable learner error history
+from app.models.learner_error import LearnerError
+
 # Sparse learner-state and durable observation outbox
 from app.models.learner_state import (
     LearnerConceptState,
@@ -115,12 +126,14 @@ from app.models.learner_state import (
 )
 
 from app.models.partner import PartnerApiKey
+from app.models.product_event import ProductEvent
 
 # Entitlement models (server-verified premium state)
 from app.models.entitlement import UserEntitlement
 
 __all__ = [
     "PartnerApiKey",
+    "ProductEvent",
     # User (Phase 1)
     "User",
     "UserDevice",
@@ -165,11 +178,16 @@ __all__ = [
     "UserSkillScore",
     "UserLevelHistory",
     "ExerciseAttempt",
+    "SkillDailyStat",
     "LevelAssessmentTest",
     # Content lab
     "GrammarItem",
+    "UserGrammarItem",
     "QuestionItem",
     "TestExam",
+    "IeltsTest",
+    "IeltsAttempt",
+    "IeltsGrading",
     # RBAC
     "Role",
     "Permission",
@@ -197,6 +215,8 @@ __all__ = [
     "RankingAgentJob",
     # Notification Campaign Agent
     "NotificationCampaignJob",
+    # Learner error history
+    "LearnerError",
     # Learner state
     "LearnerConceptState",
     "LearnerObservationEvent",

@@ -5,6 +5,7 @@ from __future__ import annotations
 import secrets
 import string
 import logging
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Path, status
@@ -15,14 +16,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.cache import build_cache_key, delete_cached
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.models.gamification import UserWallet, WalletTransaction
+from app.crud.gamification import WalletCRUD
+from app.models.gamification import WalletTransaction
 from app.models.user import User
-from app.schemas.common import MessageResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/referral", tags=["Referral"])
 
 _REFERRAL_REWARD_GEMS = 50
+# A referral rewards bringing someone new. Without a window, two established
+# accounts could each claim the other's code for 100 gems apiece.
+_CLAIM_WINDOW = timedelta(days=7)
+# Each new account needs a verified email, but plus-addressing makes those free
+# (a+1@gmail.com, a+2@…), so one person can mint referrals for their own main
+# account. Past this many a day the claimer still gets their welcome bonus and
+# the link is still recorded; only the referrer stops being paid.
+# ponytail: per-referrer daily count; normalise plus-addressed emails at
+# registration if farming shows up past the cap.
+_MAX_REWARDED_REFERRALS_PER_DAY = 10
+_REFERRER_REWARD_SOURCE = "referral_reward"
 _ALPHABET = string.ascii_uppercase + string.digits
 
 
@@ -109,46 +121,60 @@ async def claim_referral_code(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You cannot use your own referral code.",
         )
+    if referrer.referred_by == locked_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot use the code of someone you referred.",
+        )
+    created_at = locked_user.created_at
+    if created_at is not None and created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    if created_at is not None and now - created_at > _CLAIM_WINDOW:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Referral codes can only be used within 7 days of signing up.",
+        )
 
-    # Award gems to referrer
-    referrer_wallet = (
-        await db.execute(select(UserWallet).where(UserWallet.user_id == referrer.id))
-    ).scalar_one_or_none()
-
-    if referrer_wallet:
-        referrer_wallet.gems += _REFERRAL_REWARD_GEMS
-        db.add(
-            WalletTransaction(
-                user_id=referrer.id,
-                transaction_type="referral_reward",
-                amount=_REFERRAL_REWARD_GEMS,
-                description=f"Referral reward for inviting {locked_user.username}",
+    # WalletCRUD.add_gems locks the wallet row, creates a missing wallet and
+    # bumps total_gems_earned. The inline `wallet.gems += …` this replaced did
+    # none of that: concurrent claims on one referrer lost updates, and a user
+    # with no wallet row was told "you both received 50 gems" and got nothing.
+    day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    rewarded_today = (
+        await db.execute(
+            select(func.count(WalletTransaction.id)).where(
+                WalletTransaction.user_id == referrer.id,
+                WalletTransaction.source == _REFERRER_REWARD_SOURCE,
+                WalletTransaction.created_at >= day_start,
             )
         )
-    else:
-        logger.warning("Referrer %s has no wallet; gems skipped", referrer.id)
-
-    # Award gems to new user
-    new_user_wallet = (
-        await db.execute(select(UserWallet).where(UserWallet.user_id == locked_user.id))
-    ).scalar_one_or_none()
-
-    gems_awarded = 0
-    if new_user_wallet:
-        new_user_wallet.gems += _REFERRAL_REWARD_GEMS
-        db.add(
-            WalletTransaction(
-                user_id=locked_user.id,
-                transaction_type="referral_bonus",
-                amount=_REFERRAL_REWARD_GEMS,
-                description=f"Welcome bonus for using referral code {code.upper()}",
-            )
+    ).scalar() or 0
+    if rewarded_today < _MAX_REWARDED_REFERRALS_PER_DAY:
+        await WalletCRUD.add_gems(
+            db,
+            referrer.id,
+            _REFERRAL_REWARD_GEMS,
+            source=_REFERRER_REWARD_SOURCE,
+            description=f"Referral reward for inviting {locked_user.username}",
+            commit=False,
         )
-        gems_awarded = _REFERRAL_REWARD_GEMS
     else:
-        logger.warning("New user %s has no wallet; gems skipped", locked_user.id)
+        logger.warning(
+            "Referrer %s hit the daily referral reward cap; not paid for %s",
+            referrer.id, locked_user.id,
+        )
 
-    # Mark referral as claimed — set after wallet checks so the error path is clear
+    await WalletCRUD.add_gems(
+        db,
+        locked_user.id,
+        _REFERRAL_REWARD_GEMS,
+        source="referral_bonus",
+        description=f"Welcome bonus for using referral code {code.upper()}",
+        commit=False,
+    )
+    gems_awarded = _REFERRAL_REWARD_GEMS
+
     locked_user.referred_by = referrer.id
     await db.commit()
     await delete_cached(build_cache_key("wallet", user_id=str(referrer.id)))

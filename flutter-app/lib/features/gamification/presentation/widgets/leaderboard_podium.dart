@@ -642,7 +642,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          '${rankDisplayNameFor(entry.userRank)} · ${entry.lessonsCompleted} lessons',
+                          'gamification.rankLessons'.tr(namedArgs: {'rank': rankDisplayNameFor(entry.userRank), 'count': '${entry.lessonsCompleted}'}),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -821,7 +821,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    '${entry.lessonsCompleted} lessons completed',
+                    'gamification.lessonsCompletedCount'.tr(namedArgs: {'count': '${entry.lessonsCompleted}'}),
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

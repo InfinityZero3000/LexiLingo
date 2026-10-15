@@ -14,6 +14,9 @@ import logging
 import json
 import os
 import httpx
+from api.core.groq_key_pool import resolve_groq_model
+from api.core.config import get_settings
+from api.services.trace_cag.llm_client import _qwen_reasoning_overrides
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass
 
@@ -69,6 +72,13 @@ class OllamaQwenHandler:
         if self._loaded:
             return True
         if self._ollama_offline:
+            return False
+        if not get_settings().OLLAMA_ENABLED:
+            # Nothing is serving Ollama yet. Dialing it anyway logs a
+            # connection error on every warm-up and delays the caller's
+            # fallback to Groq by a timeout.
+            logger.info("[OllamaQwenHandler] OLLAMA_ENABLED is off; staying offline")
+            self._ollama_offline = True
             return False
         
         try:
@@ -144,7 +154,7 @@ class OllamaQwenHandler:
         """Attempt to call Groq or Gemini API directly, returning the response or None on failure."""
         from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-        groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+        groq_model = resolve_groq_model()
 
         # Build message list up front so we can estimate tokens accurately
         full_messages: List[Dict[str, str]] = []
@@ -164,6 +174,7 @@ class OllamaQwenHandler:
                     "messages": full_messages,
                     "max_tokens": max_tokens,
                     "temperature": temperature if temperature is not None else self.config.temperature,
+                    **_qwen_reasoning_overrides(groq_model),
                 }
 
                 async with httpx.AsyncClient() as client:
@@ -258,7 +269,7 @@ class OllamaQwenHandler:
             logger.info("[OllamaQwenHandler] Ollama is offline, falling back to Groq...")
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+            groq_model = resolve_groq_model()
             fallback_messages: List[Dict[str, str]] = []
             if system_prompt:
                 fallback_messages.append({"role": "system", "content": system_prompt})
@@ -275,6 +286,7 @@ class OllamaQwenHandler:
                 "messages": fallback_messages,
                 "max_tokens": max_tokens,
                 "temperature": temperature if temperature is not None else self.config.temperature,
+                **_qwen_reasoning_overrides(groq_model),
             }
 
             async with httpx.AsyncClient() as client:

@@ -180,14 +180,13 @@ export const VocabularyPage = () => {
         </div>
       )}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
           <input
-            className="form-input"
+            className="search-input"
             placeholder={t.vocabulary.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ flex: 1, minWidth: 200 }}
           />
           <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} style={{ display: "none" }} />
           <button className="ghost-button" onClick={() => fileRef.current?.click()} disabled={importing}>

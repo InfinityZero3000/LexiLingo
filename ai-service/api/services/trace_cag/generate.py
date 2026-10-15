@@ -10,8 +10,10 @@ import json
 import logging
 import os
 import time
+from collections import Counter
 from typing import Any, AsyncGenerator, Dict, List
 
+from api.core.groq_key_pool import resolve_groq_model
 from api.services.trace_cag.state import TraceCAGState
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.document_intelligence import get_doc_intel_service
@@ -19,7 +21,12 @@ from api.services.llama_kv_service import get_local_llama_kv_service
 
 from api.services.trace_cag.env_helpers import _env_flag
 from api.services.trace_cag.provider_state import _provider_is_disabled
-from api.services.trace_cag.llm_client import _get_httpx_client, _throttled_post_json
+from api.services.trace_cag.llm_client import (
+    _get_httpx_client,
+    _qwen_no_think_messages,
+    _qwen_reasoning_overrides,
+    _throttled_post_json,
+)
 from api.services.trace_cag.cache_utils import _write_cache_entry
 from api.services.trace_cag.dependencies import POLICY_VERSION_TOKEN, dependency_record
 
@@ -59,9 +66,15 @@ _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
 
 def _personalization_hint(state: Dict[str, Any]) -> str:
     learner_profile = state.get("learner_profile") or {}
+    # Authoritative facts about the learner themselves (name, level, XP,
+    # enrolled courses), injected only on turns that ask about them — see
+    # api.services.learner_card. Goes first so the model treats it as ground
+    # truth rather than as one more stylistic hint.
+    hint = str(learner_profile.get("learner_facts") or "").strip()
+    if hint:
+        hint += "\n"
     goal = str(learner_profile.get("goal") or "").strip()
     interest = str(learner_profile.get("interest") or "").strip()
-    hint = ""
     if goal or interest:
         if goal and interest:
             who = f"is learning for {goal} and is into {interest}"
@@ -77,6 +90,54 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
             f"acknowledge picking back up; don't force it if this message is "
             f"on a completely different topic.\n"
         )
+
+    # Durable (Postgres learner_concept_states, no TTL) signal takes priority
+    # over the Redis rolling cache: does the concept THIS turn's diagnosis
+    # just touched also have a persistent track record of low mastery across
+    # ALL past sessions? Populated by _load_learner_concept_overlay — empty
+    # whenever LEARNER_STATE_MODE is "off", so this safely no-ops until the
+    # feature is enabled.
+    concept_states = state.get("learner_concept_states") or {}
+    root_causes = state.get("diagnosis_root_causes") or []
+    struggling_concept = None
+    for concept_id in root_causes:
+        info = concept_states.get(str(concept_id))
+        if not isinstance(info, dict):
+            continue
+        error_count = int(info.get("error_count") or 0)
+        mastery = info.get("mastery_probability")
+        mastery = float(mastery) if mastery is not None else 1.0
+        if error_count >= 2 and mastery < 0.55:
+            struggling_concept = str(concept_id)
+            break
+
+    if struggling_concept:
+        readable = (
+            struggling_concept.split(":")[-1].replace(".", " ").replace("_", " ").strip()
+        )
+        if readable:
+            hint += (
+                f"This learner has a persistent track record of struggling with "
+                f"'{readable}' across past sessions, and just made a related error "
+                "again. If a natural opportunity comes up, reinforce it gently with "
+                "a short example — don't call it out as a repeated failure.\n"
+            )
+    else:
+        # Fallback: Redis rolling cache (last ~20 diagnosed errors, 7-day
+        # window — see LearnerProfileCache). Less precise (not tied to this
+        # turn's concept) but still useful when the durable store has no
+        # opinion yet (feature just enabled, or this concept never recorded).
+        common_errors = learner_profile.get("common_errors") or []
+        if common_errors:
+            top_error, _count = Counter(common_errors).most_common(1)[0]
+            readable = top_error.replace("_", " ").strip()
+            if readable:
+                hint += (
+                    f"This learner has repeatedly struggled with '{readable}' across "
+                    "recent turns. If a natural opportunity comes up in this reply, "
+                    "gently reinforce it with a short example — don't call it out as "
+                    "a repeated failure or force it into an unrelated message.\n"
+                )
     return hint
 
 
@@ -100,7 +161,20 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
         f"The learner's current CEFR level is: {level}\n"
         f"Difficulty setting for this turn: {difficulty}\n"
         f"{personalization}"
+        f"{_RICH_FORMATTING_HINT}"
     )
+
+
+_RICH_FORMATTING_HINT = (
+    "\nWhen it genuinely helps — comparing two grammar forms/tenses/words, or "
+    "summarizing multiple facts — use a markdown table (`| Col | Col |`) instead of "
+    "prose. Skip the table for short answers where it wouldn't add clarity.\n"
+    "For numeric data (scores, progress, counts), you may add ONE fenced "
+    '```chart block right after your sentence, containing only compact JSON: '
+    '{"type":"bar|line|pie","title":"...","labels":["A","B"],'
+    '"series":[{"name":"...","values":[1,2]}]}. Omit it unless there\'s real '
+    "data to plot — never invent numbers.\n"
+)
 
 
 def _compute_difficulty_ramp(session_turn: int, overall_score: float) -> str:
@@ -214,7 +288,7 @@ async def stream_llm_tokens(
     """
 
     groq_admitted = False
-    groq_model_used = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    groq_model_used = resolve_groq_model()
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -229,13 +303,7 @@ async def stream_llm_tokens(
         groq_admitted = True
 
         # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
-        groq_messages = messages
-        if "qwen" in groq_model.lower():
-            groq_messages = list(messages)
-            for i, msg in enumerate(groq_messages):
-                if msg.get("role") == "user":
-                    groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
-                    break
+        groq_messages = _qwen_no_think_messages(groq_model, messages)
 
         client = _get_httpx_client("groq")
         tokens_yielded = 0
@@ -253,6 +321,7 @@ async def stream_llm_tokens(
                     "max_tokens": max_tokens,
                     "temperature": 0.7,
                     "stream": True,
+                    **_qwen_reasoning_overrides(groq_model),
                 },
                 timeout=25.0,
             ) as resp:
@@ -267,6 +336,16 @@ async def stream_llm_tokens(
                         break
                     try:
                         obj = json.loads(data)
+                        # Groq reports mid-stream failures (e.g. daily token quota)
+                        # as an SSE error frame after a 200 header. Without this the
+                        # stream just ends token-less and the caller reports a
+                        # generic outage with nothing in the logs.
+                        if "error" in obj:
+                            logger.warning(
+                                "[stream_llm_tokens] Groq mid-stream error: %s",
+                                str(obj["error"])[:300],
+                            )
+                            return
                         delta = obj["choices"][0]["delta"].get("content") or ""
                         if delta:
                             tokens_yielded += len(delta.split())
@@ -534,17 +613,22 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
             import asyncio as _asyncio
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
 
-            groq_key = await get_available_groq_key(estimated_tokens=512)
-            groq_model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+            # The pool debits this against each key's per-minute budget, so it
+            # has to cover the whole request, not just the reply. `messages`
+            # already holds the system prompt, the KG context inside it and up
+            # to 12 history turns; a grounded first turn alone measures ~850
+            # tokens, so the flat 512 under-counted it by at least 1.7x and the
+            # pool handed out keys it had already spent, which Groq answered
+            # with 429 and a several-minute Retry-After.
+            _prompt_chars = sum(len(str(m.get("content") or "")) for m in messages)
+            groq_key = await get_available_groq_key(
+                estimated_tokens=512 + _prompt_chars // 4
+            )
+            groq_model = resolve_groq_model()
             gemini_key = os.getenv("GEMINI_API_KEY", "")
 
             # Disable Qwen3 thinking to keep token budget for actual response.
-            _groq_messages = list(messages)
-            if "qwen" in groq_model.lower():
-                for i, msg in enumerate(_groq_messages):
-                    if msg.get("role") == "user":
-                        _groq_messages[i] = {**msg, "content": f"/no_think\n{msg['content']}"}
-                        break
+            _groq_messages = _qwen_no_think_messages(groq_model, messages)
 
             async def _try_groq():
                 if not groq_key:
@@ -554,7 +638,13 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
                         headers={"Authorization": f"Bearer {groq_key}", "Content-Type": "application/json"},
-                        payload={"model": groq_model, "messages": _groq_messages, "max_tokens": 512, "temperature": 0.7},
+                        payload={
+                            "model": groq_model,
+                            "messages": _groq_messages,
+                            "max_tokens": 512,
+                            "temperature": 0.7,
+                            **_qwen_reasoning_overrides(groq_model),
+                        },
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:

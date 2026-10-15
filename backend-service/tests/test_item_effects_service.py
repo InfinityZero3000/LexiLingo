@@ -140,9 +140,10 @@ async def test_daily_challenge_service_records_claim_and_commits_once():
     db = MagicMock()
     db.execute = AsyncMock(
         side_effect=[
-            _result(None),
+            _result(None),   # no prior claim
             _result(user),
-            _result(None),
+            _result(None),   # no DailyActivity row yet
+            _result(None),   # no LeaderboardEntry for this week yet
         ]
     )
     db.add = MagicMock()
@@ -151,9 +152,6 @@ async def test_daily_challenge_service_records_claim_and_commits_once():
 
     service = DailyChallengeService(db)
     with patch(
-        "app.crud.gamification.LeaderboardCRUD.add_xp",
-        new=AsyncMock(),
-    ) as add_xp, patch(
         "app.crud.gamification.WalletCRUD.add_gems",
         new=AsyncMock(),
     ) as add_gems:
@@ -173,7 +171,10 @@ async def test_daily_challenge_service_records_claim_and_commits_once():
     assert user.total_xp == 25
     assert "DailyActivity" in added_model_names
     assert "ChallengeRewardClaim" in added_model_names
-    add_xp.assert_awaited_once_with(db, user_id, 20)
+    # The weekly entry is staged in the same transaction now. It used to go
+    # through LeaderboardCRUD.add_xp, which committed on its own — mid-flight,
+    # before the gems and the claim row were written.
+    assert "LeaderboardEntry" in added_model_names
     add_gems.assert_awaited_once()
     assert add_gems.await_args.kwargs["commit"] is False
     db.commit.assert_awaited_once()

@@ -5,16 +5,17 @@ Reusable dependencies for authentication, authorization, and RBAC
 """
 
 import uuid
-from typing import Optional, List, Callable
-from functools import wraps
-from fastapi import Depends, HTTPException, status, Request
+from typing import Optional
+
+import anyio
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
-from app.core.security import decode_token
+from app.core.security import decode_token, is_locally_issued_token
 from app.core.token_blacklist import TokenBlacklist
 from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
 from app.models.user import User
@@ -58,8 +59,17 @@ async def get_current_user(
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
 
+    # Our own token that did not validate (expired, wrong type, unknown user):
+    # Firebase can never accept it, so skip the remote verification. Expired
+    # access tokens are the common case and used to pay for it on every request.
+    if is_locally_issued_token(token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token"
+        )
+
     # 2) Try Firebase ID token
-    claims = verify_firebase_token(token)
+    claims = await anyio.to_thread.run_sync(verify_firebase_token, token)
     if claims:
         try:
             user = await get_or_create_user_from_claims(db, claims)
@@ -120,8 +130,12 @@ async def get_current_user_optional(
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
 
+    # Same short-circuit as the required dependency above.
+    if is_locally_issued_token(token):
+        return None
+
     # 2) Try Firebase ID token
-    claims = verify_firebase_token(token)
+    claims = await anyio.to_thread.run_sync(verify_firebase_token, token)
     if claims:
         try:
             user = await get_or_create_user_from_claims(db, claims)
@@ -140,29 +154,7 @@ async def get_current_user_optional(
     return None
 
 
-async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    """
-    Get current active user (for routes that require active users only).
-    """
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    return current_user
-
-
 # ── RBAC Guards ───────────────────────────────────────────
-
-def _get_user_role_slug(user: User) -> str:
-    """Get the role slug for a user. Defaults to 'user' if no role assigned."""
-    if hasattr(user, "role_slug"):
-        return user.role_slug
-    if user.role and hasattr(user.role, "slug"):
-        return user.role.slug
-    return "user"
 
 
 def _get_user_role_level(user: User) -> int:
@@ -193,7 +185,6 @@ async def get_current_admin(
         )
     return current_user
 
-
 async def get_current_super_admin(
     current_user: User = Depends(get_current_user),
 ) -> User:
@@ -214,62 +205,27 @@ async def get_current_super_admin(
     return current_user
 
 
-def require_permission(resource: str, action: str):
-    """
-    Dependency factory: require a specific permission.
-    
-    Usage:
-        @router.post("/courses", dependencies=[Depends(require_permission("courses", "create"))])
-        async def create_course(...):
-            ...
-    """
-    async def _check(
-        current_user: User = Depends(get_current_user),
-    ) -> User:
-        # Super admin bypasses all permission checks
-        if _get_user_role_level(current_user) >= 2:
-            return current_user
+async def require_premium(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Require an active `premium` entitlement, verified server-side.
 
-        # Check role permissions
-        if current_user.role:
-            for rp in (current_user.role.permissions or []):
-                perm = rp.permission
-                if perm and perm.resource == resource and perm.action == action:
-                    return current_user
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Permission denied: {resource}:{action}",
-        )
-
-    return _check
-
-
-def require_entitlement(entitlement_id: str = "premium"):
-    """
-    Dependency factory: require an active, server-verified entitlement.
-
-    Checks the `user_entitlements` row synced from RevenueCat — never trusts
-    client-reported purchase state. No route uses this yet; it is the
-    primitive ready for whichever route(s) become premium-gated.
+    The Flutter client also gates premium UI, but it reads the local
+    RevenueCat SDK, which a patched build can simply lie about — that check is
+    a UX hint, and this is the boundary. `EntitlementService.is_active` reads
+    the row the backend itself synced from RevenueCat, never a client claim.
 
     Usage:
-        @router.get("/premium-only", dependencies=[Depends(require_entitlement("premium"))])
-        async def premium_only(...):
+        @router.get("/some-premium-thing")
+        async def handler(user: User = Depends(require_premium)):
             ...
     """
-    async def _check(
-        current_user: User = Depends(get_current_user),
-        db: AsyncSession = Depends(get_db),
-    ) -> User:
-        from app.services.entitlement_service import EntitlementService
+    from app.services.entitlement_service import EntitlementService
 
-        if await EntitlementService.is_active(db, current_user.id, entitlement_id):
-            return current_user
-
+    if not await EntitlementService.is_active(db, current_user.id):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail=f"Requires an active '{entitlement_id}' entitlement",
+            detail="An active premium subscription is required.",
         )
-
-    return _check
+    return current_user

@@ -6,6 +6,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.core.dependencies import get_current_admin, get_current_super_admin
 from app.models.user import User
 from app.models.course import Course
@@ -34,6 +35,9 @@ async def seed_sample_data(
     Creates sample achievements, shop items, course categories, and courses.
     Admin only endpoint.
     """
+    if not settings.is_development:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     achievements_created = await admin_seed_service.seed_achievements(db)
     shop_items_created = await admin_seed_service.seed_shop_items(db)
     categories_created, category_ids = await admin_seed_service.seed_course_categories(db)
@@ -120,97 +124,35 @@ class SystemInfoUpdate(BaseModel):
     token_expire_minutes: Optional[int] = None
     refresh_token_days: Optional[int] = None
     cors_origins: Optional[str] = None
-    ai_service_url: Optional[str] = None
 
 @router.put("/system-info", response_model=ApiResponse[dict])
 async def update_system_info(
     payload: SystemInfoUpdate,
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_super_admin)
 ):
-    """Update system configuration. Admin only."""
+    """Update system configuration. Super-admin only."""
     from app.core.config import settings as app_settings
-    from pathlib import Path
 
-    updates = {}
-    
     if payload.app_name is not None:
         app_settings.APP_NAME = payload.app_name
-        updates["APP_NAME"] = payload.app_name
         
     if payload.debug is not None:
         app_settings.DEBUG = payload.debug
-        updates["DEBUG"] = payload.debug
         
     if payload.log_level is not None:
         level = payload.log_level.upper()
         if level in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             app_settings.LOG_LEVEL = level
-            updates["LOG_LEVEL"] = level
             
     if payload.token_expire_minutes is not None:
         app_settings.ACCESS_TOKEN_EXPIRE_MINUTES = payload.token_expire_minutes
-        updates["ACCESS_TOKEN_EXPIRE_MINUTES"] = payload.token_expire_minutes
         
     if payload.refresh_token_days is not None:
         app_settings.REFRESH_TOKEN_EXPIRE_DAYS = payload.refresh_token_days
-        updates["REFRESH_TOKEN_EXPIRE_DAYS"] = payload.refresh_token_days
         
     if payload.cors_origins is not None:
         app_settings.ALLOWED_ORIGINS = payload.cors_origins
-        updates["ALLOWED_ORIGINS"] = payload.cors_origins
         
-    if payload.ai_service_url is not None:
-        app_settings.AI_SERVICE_URL = payload.ai_service_url
-        updates["AI_SERVICE_URL"] = payload.ai_service_url
-
-    if updates:
-        project_root = Path(__file__).parent.parent.parent
-        env_file = project_root / ".env"
-        if app_settings.APP_ENV == "production":
-            prod_env = project_root / ".env.production"
-            if prod_env.exists():
-                env_file = prod_env
-        
-        try:
-            content = env_file.read_text() if env_file.exists() else ""
-            lines = content.splitlines()
-            new_lines = []
-            updated_keys = set()
-            
-            for line in lines:
-                stripped = line.strip()
-                if not stripped or stripped.startswith("#"):
-                    new_lines.append(line)
-                    continue
-                if "=" in stripped:
-                    key, val = stripped.split("=", 1)
-                    key = key.strip()
-                    if key in updates:
-                        new_val = updates[key]
-                        if isinstance(new_val, bool):
-                            new_val_str = "true" if new_val else "false"
-                        else:
-                            new_val_str = str(new_val)
-                        new_lines.append(f"{key}={new_val_str}")
-                        updated_keys.add(key)
-                    else:
-                        new_lines.append(line)
-                else:
-                    new_lines.append(line)
-                    
-            for key, val in updates.items():
-                if key not in updated_keys:
-                    if isinstance(val, bool):
-                        val_str = "true" if val else "false"
-                    else:
-                        val_str = str(val)
-                    new_lines.append(f"{key}={val_str}")
-                    
-            env_file.write_text("\n".join(new_lines) + "\n")
-        except Exception as e:
-            # Silently fallback if unable to write file in docker environment
-            pass
-
     return ApiResponse(
         success=True,
         message="System configuration updated successfully",

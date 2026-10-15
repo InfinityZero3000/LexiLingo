@@ -165,6 +165,8 @@ class ProficiencyCard extends StatelessWidget {
                     flex: 3,
                     child: GestureDetector(
                       onTap: () async {
+                        final confirmed = await _confirmStartTest(context);
+                        if (confirmed != true || !context.mounted) return;
                         await Navigator.pushNamed(context, '/placement-test');
                         if (context.mounted) {
                           await context
@@ -254,6 +256,26 @@ class ProficiencyCard extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Future<bool?> _confirmStartTest(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('assessment.confirmStartTitle'.tr()),
+        content: Text('assessment.confirmStartMessage'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text('common.cancel'.tr()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text('assessment.startNow'.tr()),
+          ),
+        ],
+      ),
     );
   }
 

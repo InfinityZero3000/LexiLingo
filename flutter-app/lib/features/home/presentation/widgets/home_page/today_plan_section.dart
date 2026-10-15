@@ -1,16 +1,15 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_data.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_models.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_navigation.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
-import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
-import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
-    as vocab_di;
 
 class TodayPlanSection extends StatefulWidget {
   const TodayPlanSection({super.key});
@@ -30,26 +29,23 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
   }
 
   Future<void> _loadVocabularyStats() async {
-    final result = await vocab_di
-        .getIt<VocabularyRepository>()
-        .getVocabularyStats();
-
+    final count = await fetchDueVocabularyCount();
     if (!mounted) return;
 
     setState(() {
-      _dueVocabularyCount = result.fold(
-        (_) => null,
-        (stats) => stats['due_for_review'] as int? ?? 0,
-      );
+      _dueVocabularyCount = count;
       _isLoadingVocabulary = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final accent = AppColorRoles.primary(isDark);
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return Consumer3<
       HomeProvider,
@@ -63,7 +59,7 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
           weakestSkills: proficiency.weakestSkills,
           dueVocabularyCount: _isLoadingVocabulary ? null : _dueVocabularyCount,
         );
-        final visibleTasks = snapshot.tasks.take(3).toList();
+        final visibleTasks = snapshot.visibleTasks();
 
         return Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -71,20 +67,21 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
-              onTap: () => Navigator.of(context).pushNamed('/today-plan'),
+              onTap: () {
+                trackProductEvent('card_tapped', source: 'today_plan');
+                Navigator.of(context).pushNamed('/today-plan');
+              },
               child: Container(
                 padding: const EdgeInsets.all(16),
-                decoration: Theme.of(context)
-                    .extension<AppTactileTheme>()!
-                    .decoration(
-                      variant: TactileSurfaceVariant.interactive,
-                      fill: isDark
-                          ? colorScheme.surfaceContainerHighest
-                          : Colors.white,
-                      accent: accent,
-                      borderRadius: BorderRadius.circular(20),
-                      diagnosticId: 'home-today-plan',
-                    ),
+                decoration: tactile.decoration(
+                  variant: TactileSurfaceVariant.interactive,
+                  fill: isDark
+                      ? colorScheme.surfaceContainerHighest
+                      : Colors.white,
+                  accent: accent,
+                  borderRadius: BorderRadius.circular(20),
+                  diagnosticId: 'home-today-plan',
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -162,8 +159,13 @@ class _TodayPlanSectionState extends State<TodayPlanSection> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () =>
-                              Navigator.of(context).pushNamed('/today-plan'),
+                          onPressed: () {
+                            trackProductEvent(
+                              'view_plan_tapped',
+                              source: 'today_plan',
+                            );
+                            Navigator.of(context).pushNamed('/today-plan');
+                          },
                           child: Text('home.todayPlan.viewAll'.tr()),
                         ),
                       ],

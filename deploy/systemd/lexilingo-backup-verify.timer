@@ -1,0 +1,11 @@
+[Unit]
+Description=Verify LexiLingo backups restore cleanly, weekly
+
+[Timer]
+# Sunday 04:00, well clear of the 02:30 backup run.
+OnCalendar=Sun *-*-* 04:00:00
+Persistent=true
+Unit=lexilingo-backup-verify.service
+
+[Install]
+WantedBy=timers.target

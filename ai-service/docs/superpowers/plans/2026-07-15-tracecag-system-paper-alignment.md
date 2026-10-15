@@ -1,5 +1,10 @@
 # TRACE-CAG System–Paper Alignment Implementation Plan
 
+> **Historical implementation plan.** Since 2026-09-23, the production
+> benchmark owns DriftBench execution and the standalone
+> `model-development/tracecag_benchmark` path is no longer used by the daily
+> runner. See `model-development/benchmark/README.md` for current commands.
+
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the production TRACE-CAG implementation match its state-certified reuse claims, validate the claims under drift, and regenerate an evidence-aligned eight-page ICTA paper.
@@ -13,6 +18,10 @@
 ---
 
 ## Execution status (2026-07-16)
+
+**Current update (2026-09-23):** the production five-cluster smoke observed L0
+reuse, L1 patching, unsafe rejection, and optimistic recheck; its route gate and
+validation passed. The task list below remains a historical record.
 
 - Tasks 1–9: implemented; focused production, portable-service, benchmark-adapter, mutation, recheck, and patch tests pass.
 - Task 10: implemented; controller ablations share the graph retriever/generator and pass isolation tests.

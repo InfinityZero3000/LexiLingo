@@ -1,39 +1,39 @@
 # FastAPI and Server
-fastapi>=0.141.1
-uvicorn[standard]>=0.52.1
+fastapi>=0.143.0
+uvicorn[standard]>=0.54.0
 python-multipart>=0.0.32
 pypdf
 
 # PostgreSQL (production)
-asyncpg>=0.31.0
-psycopg2-binary>=2.9.12
+asyncpg>=0.32.0
+psycopg2-binary>=2.9.13
 
 # SQLite (dev/test only)
 aiosqlite>=0.22.1
 
 # SQLAlchemy (Async ORM)
-sqlalchemy[asyncio]>=2.0.51
-alembic>=1.19.0
+sqlalchemy[asyncio]>=2.1.4
+alembic>=1.20.0
 
 # Data Validation
-pydantic>=2.13.4
-pydantic-settings>=2.14.2
+pydantic>=2.14.0
+pydantic-settings>=2.15.0
 email-validator>=2.3.0
 
 # Security
 python-jose[cryptography]>=3.5.0
 passlib[bcrypt]>=1.7.4
 bcrypt>=5.0.0
-firebase-admin>=7.5.0
-google-auth>=2.56.3
-google-auth-oauthlib>=1.4.0
+firebase-admin>=7.7.0
+google-auth>=2.61.0
+google-auth-oauthlib>=1.5.0
 
 # Environment
-python-dotenv>=1.2.2
+python-dotenv>=1.2.4
 
 # Logging and Error Tracking
 loguru>=0.7.3
-sentry-sdk[fastapi,sqlalchemy,loguru]>=2.66.1
+sentry-sdk[fastapi,sqlalchemy,loguru]>=2.71.0
 
 # HTTP Client (optional - for calling AI service)
 httpx>=0.28.1
@@ -42,7 +42,7 @@ httpx>=0.28.1
 feedparser>=6.0.14
 
 # News article full-text extraction
-trafilatura>=2.1.0
+trafilatura>=2.3.1
 
 # YouTube captions (no OAuth needed — uses public transcript endpoints)
 youtube-transcript-api>=0.6.3
@@ -52,8 +52,11 @@ redis>=8.1.0,<9.0.0
 
 
 # Background jobs — install without redis extras; redis-py is a direct dep and satisfies the transport at runtime
-kombu>=5.5.0,<5.6
-celery>=5.5.3,<5.6
+# celery and kombu move together: celery 5.5.x caps kombu at <5.6, so bumping
+# kombu alone (dependabot #5xx) made the two lines unsatisfiable and every CI
+# install died at pip resolution. celery 5.6 is the release that takes kombu 5.6.
+kombu>=5.6.2,<5.7
+celery>=5.6.3,<5.7
 
 # System metrics (used by admin monitoring endpoints)
 psutil>=6.1.1
@@ -65,12 +68,12 @@ prometheus-fastapi-instrumentator>=7.1.0
 psutil>=6.0.0
 
 # Testing
-pytest>=9.1.0
+pytest>=9.1.1
 pytest-asyncio>=1.4.0
 httpx>=0.27.0
 
 # Code Quality
-black>=26.5.1
+black>=26.10.0
 isort>=8.0.1
-flake8>=7.3.0
-ruff>=0.16.1
+flake8>=7.4.1
+ruff>=0.16.10

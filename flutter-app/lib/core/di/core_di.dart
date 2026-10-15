@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/network/network_info.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
+import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/health_check_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
@@ -26,9 +28,31 @@ import 'service_locator.dart';
 // refresh; the rest wait on the same Completer and reuse the result.
 Completer<bool>? _tokenRefreshCompleter;
 
-Future<bool> _refreshBackendToken(TokenStorage tokenStorage) async {
+// A request that was already in flight when the token was renewed still comes
+// back 401. Refresh tokens are single-use, so re-refreshing for that straggler
+// spends a rotation for nothing — its retry will pick up the token we just
+// stored.
+DateTime? _lastRefreshAt;
+const _refreshCooldown = Duration(seconds: 10);
+
+@visibleForTesting
+void resetTokenRefreshStateForTest() {
+  _tokenRefreshCompleter = null;
+  _lastRefreshAt = null;
+}
+
+Future<bool> refreshBackendToken(
+  TokenStorage tokenStorage, {
+  http.Client? httpClient,
+}) async {
   if (_tokenRefreshCompleter != null) {
     return _tokenRefreshCompleter!.future;
+  }
+
+  final lastRefreshAt = _lastRefreshAt;
+  if (lastRefreshAt != null &&
+      DateTime.now().difference(lastRefreshAt) < _refreshCooldown) {
+    return true;
   }
 
   _tokenRefreshCompleter = Completer<bool>();
@@ -43,16 +67,15 @@ Future<bool> _refreshBackendToken(TokenStorage tokenStorage) async {
       return false;
     }
 
-    final response = await http
-        .post(
-          Uri.parse('${ApiConfig.baseUrl}/auth/refresh'),
-          headers: const {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: jsonEncode({'refresh_token': tokens.refreshToken}),
-        )
-        .timeout(const Duration(seconds: 15));
+    final post = httpClient?.post ?? http.post;
+    final response = await post(
+      Uri.parse('${ApiConfig.baseUrl}/auth/refresh'),
+      headers: const {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode({'refresh_token': tokens.refreshToken}),
+    ).timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       // Refresh token is expired or revoked — wipe local tokens and force re-login.
@@ -80,6 +103,7 @@ Future<bool> _refreshBackendToken(TokenStorage tokenStorage) async {
       accessToken: accessToken,
       refreshToken: refreshToken,
     );
+    _lastRefreshAt = DateTime.now();
     completer.complete(true);
     return true;
   } catch (_) {
@@ -106,7 +130,10 @@ Future<void> registerCore({required bool skipDatabase}) async {
 
   // Register BackendAuthHeaderProvider instead of FirebaseAuthHeaderProvider
   sl.registerLazySingleton<BackendAuthHeaderProvider>(
-    () => BackendAuthHeaderProvider(tokenStorage: sl<TokenStorage>()),
+    () => BackendAuthHeaderProvider(
+      tokenStorage: sl<TokenStorage>(),
+      refreshTokens: () => refreshBackendToken(sl<TokenStorage>()),
+    ),
   );
 
   // Main API Client for Backend Service (Auth, Courses, Gamification)
@@ -114,7 +141,7 @@ Future<void> registerCore({required bool skipDatabase}) async {
     () => ApiClient(
       networkInfo: sl<NetworkInfo>(),
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
-      onUnauthorized: () => _refreshBackendToken(sl<TokenStorage>()),
+      onUnauthorized: () => refreshBackendToken(sl<TokenStorage>()),
     ),
   );
 
@@ -123,12 +150,15 @@ Future<void> registerCore({required bool skipDatabase}) async {
     () => AiApiClient(
       networkInfo: sl<NetworkInfo>(),
       authHeaderProvider: sl<BackendAuthHeaderProvider>().call,
-      onUnauthorized: () => _refreshBackendToken(sl<TokenStorage>()),
+      onUnauthorized: () => refreshBackendToken(sl<TokenStorage>()),
     ),
   );
 
   sl.registerLazySingleton<HealthCheckService>(
     () => HealthCheckService(apiClient: sl<ApiClient>()),
+  );
+  sl.registerLazySingleton<AnalyticsService>(
+    () => AnalyticsService(apiClient: sl<ApiClient>()),
   );
   sl.registerLazySingleton<EntitlementService>(
     () => EntitlementService(apiClient: sl<ApiClient>()),

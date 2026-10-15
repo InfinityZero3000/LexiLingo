@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/promo_banner_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/enrolled_courses_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/featured_courses_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_header.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_skeleton_loading.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/level_and_daily_goal_row.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/quick_actions_grid.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/recommendations_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/section_title.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/streak_card_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_section.dart';
@@ -51,6 +54,7 @@ class _HomePageNewState extends State<HomePageNew> {
         // Falls back to local formula if network is unavailable.
         if (mounted) _levelProvider?.fetchLevelFull();
       });
+      context.read<PromoBannerProvider>().load();
       // Listen for level-up events triggered by fetchLevelFull
       _levelProvider?.addListener(_onLevelProviderChange);
 
@@ -164,6 +168,7 @@ class _HomePageNewState extends State<HomePageNew> {
                           alignment: Alignment.centerLeft,
                           child: HomeHeader(),
                         ),
+                        const PromoBannerSection(),
                         const Padding(
                           padding: EdgeInsets.only(top: 12),
                           child: StreakCardSection(),
@@ -199,6 +204,19 @@ class _HomePageNewState extends State<HomePageNew> {
                         const Padding(
                           padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
                           child: DailyReviewCard(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SectionTitle(
+                                title: 'home.recommendedForYou'.tr(),
+                              ),
+                              const SizedBox(height: 8),
+                              const RecommendationsSection(),
+                            ],
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.only(top: 12),

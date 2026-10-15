@@ -11,7 +11,6 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.games import XPTransaction
-from app.models.gamification import LeaderboardEntry
 from app.models.progress import DailyActivity, Streak
 from app.models.user import User
 from app.core.cache import invalidate_cache
@@ -97,6 +96,33 @@ async def get_streak_days(user_id: uuid.UUID, db: AsyncSession) -> int:
     return 0
 
 
+# A client reports how long it spent, and nothing verifies it. One award is
+# capped at an hour so a forged duration inflates the study-time stat by at
+# most that, rather than by whatever number the caller felt like sending.
+MAX_STUDY_MINUTES_PER_AWARD = 60
+
+
+def capped_duration_seconds():
+    """`duration_seconds` with the per-award ceiling applied, as SQL.
+
+    A CASE rather than `least()`: that function does not exist in SQLite, which
+    is what the tests run on, so it would have failed only in production.
+    """
+    from sqlalchemy import case
+
+    ceiling = MAX_STUDY_MINUTES_PER_AWARD * 60
+    return case(
+        (XPTransaction.duration_seconds > ceiling, ceiling),
+        else_=XPTransaction.duration_seconds,
+    )
+
+
+def _clamped_study_minutes(duration_seconds: int | None) -> int:
+    if not duration_seconds or duration_seconds < 0:
+        return 0
+    return min(duration_seconds // 60, MAX_STUDY_MINUTES_PER_AWARD)
+
+
 async def award_xp_transaction(
     *,
     db: AsyncSession,
@@ -105,6 +131,7 @@ async def award_xp_transaction(
     base_xp: int,
     source_id: str | None = None,
     source_detail: str | None = None,
+    duration_seconds: int | None = None,
     commit: bool = True,
     item_multiplier: float = 1.0,
     daily_xp_loader: Callable[
@@ -214,62 +241,23 @@ async def award_xp_transaction(
             source=source,
             source_id=source_id,
             source_detail=source_detail,
+            duration_seconds=duration_seconds,
             level_before=calculated_old_level,
             level_after=new_level,
             leveled_up=leveled_up,
         )
     )
 
-    utc_today = datetime.now(timezone.utc).date()
-    result = await db.execute(
-        select(DailyActivity).where(
-            DailyActivity.user_id == user.id,
-            DailyActivity.activity_date == utc_today,
-        )
-    )
-    daily = result.scalar_one_or_none()
-    if daily:
-        daily.xp_earned = (daily.xp_earned or 0) + xp_awarded
-    else:
-        db.add(
-            DailyActivity(
-                user_id=user.id,
-                activity_date=utc_today,
-                xp_earned=xp_awarded,
-            )
-        )
+    from app.services.streak_service import record_daily_activity
 
-    now = datetime.now(timezone.utc)
-    week_start = (now - timedelta(days=now.weekday())).replace(
-        hour=0,
-        minute=0,
-        second=0,
-        microsecond=0,
+    await record_daily_activity(
+        db,
+        user.id,
+        xp_earned=xp_awarded,
+        study_time_minutes=_clamped_study_minutes(duration_seconds),
+        league=rank_info.rank.value,
+        today=datetime.now(timezone.utc).date(),
     )
-    leaderboard_result = await db.execute(
-        select(LeaderboardEntry)
-        .where(
-            LeaderboardEntry.user_id == user.id,
-            LeaderboardEntry.week_start == week_start,
-        )
-        .with_for_update()
-    )
-    leaderboard_entry = leaderboard_result.scalar_one_or_none()
-    if leaderboard_entry:
-        leaderboard_entry.xp_earned = (
-            leaderboard_entry.xp_earned or 0
-        ) + xp_awarded
-        leaderboard_entry.league = rank_info.rank.value
-    else:
-        db.add(
-            LeaderboardEntry(
-                user_id=user.id,
-                week_start=week_start,
-                week_end=week_start + timedelta(days=7),
-                league=rank_info.rank.value,
-                xp_earned=xp_awarded,
-            )
-        )
 
     if commit:
         try:

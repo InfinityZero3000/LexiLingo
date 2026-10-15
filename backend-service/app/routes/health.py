@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.common import HealthResponse
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.dependencies import get_current_admin
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,19 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
         status_code=status_code,
         content={"status": "ready" if all_ok else "degraded", "checks": checks}
     )
+
+
+@router.get("/health/integrations", tags=["Health"])
+async def integration_health(_admin=Depends(get_current_admin)):
+    """Prove each third-party credential still works.
+
+    Admin-only: it makes real outbound calls and names which feature is down.
+    Returns 200 with healthy=false rather than an error status so a monitor
+    can distinguish "the probe ran and found problems" from "the probe failed".
+    """
+    from app.services.integration_health import check_all
+
+    return await check_all()
 
 
 @router.get("/ping", tags=["Health"])
