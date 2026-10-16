@@ -94,13 +94,19 @@ class MistakeNotebookEntry {
     );
   }
 
+  /// Identity is the question, not the wrong answer: getting the same
+  /// question wrong twice with two different wrong answers must update one
+  /// notebook entry, not create a second one next to it. The backend's own
+  /// dedup (source_type + source_id + question hash) already ignores the
+  /// selected answer; this used to include it, so repeating a mistake with a
+  /// different wrong answer minted a new id the backend then merged away —
+  /// leaving a stale duplicate in the local cache.
   static String buildId({
     required String sourceType,
     required String sourceId,
     required String questionId,
-    required String selectedAnswer,
   }) {
-    final raw = '$sourceType|$sourceId|$questionId|$selectedAnswer';
+    final raw = '$sourceType|$sourceId|$questionId';
     return 'mistake_${_stableHash(raw).toRadixString(16)}';
   }
 

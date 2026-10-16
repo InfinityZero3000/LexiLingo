@@ -65,13 +65,11 @@ void main() {
         sourceType: 'book_quiz',
         sourceId: 'book-1',
         questionId: 'q1',
-        selectedAnswer: 'A',
       );
       final second = MistakeNotebookEntry.buildId(
         sourceType: 'book_quiz',
         sourceId: 'book-1',
         questionId: 'q1',
-        selectedAnswer: 'A',
       );
 
       expect(first, second);

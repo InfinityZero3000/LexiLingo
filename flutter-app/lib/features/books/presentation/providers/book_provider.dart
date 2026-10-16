@@ -564,7 +564,6 @@ class BookProvider extends ChangeNotifier {
           questionId: question.id.isEmpty
               ? '${quiz.chapter}:$questionIndex'
               : question.id,
-          selectedAnswer: selectedAnswer,
         ),
         sourceType: 'book_quiz',
         sourceId: quiz.bookId,

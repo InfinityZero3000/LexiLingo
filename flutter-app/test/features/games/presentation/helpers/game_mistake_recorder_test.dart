@@ -115,5 +115,42 @@ void main() {
         expect(entries.single.reviewCount, 1);
       },
     );
+
+    test(
+      'missing the same question twice with two different wrong answers '
+      'still upserts to one entry',
+      () async {
+        // The id used to hash in the selected answer, so a second wrong
+        // guess minted a second local entry next to the first instead of
+        // updating it — the backend's own dedup ignores the answer, so the
+        // two would silently merge there while the app kept showing two.
+        final repository = MistakeNotebookRepository();
+        final recorder = GameMistakeRecorder(repository: repository);
+        const question = FillBlankQuestion(
+          id: 'fb-3',
+          sentence: 'He ___ to the gym yesterday.',
+          options: ['go', 'goes', 'went', 'gone'],
+          correctAnswer: 'went',
+        );
+
+        await recorder.recordFillBlankMiss(
+          question: question,
+          sessionId: 'session',
+          questionIndex: 0,
+          selectedAnswer: 'go',
+        );
+        await recorder.recordFillBlankMiss(
+          question: question,
+          sessionId: 'session',
+          questionIndex: 0,
+          selectedAnswer: 'gone',
+        );
+
+        final entries = await repository.getEntries();
+
+        expect(entries, hasLength(1));
+        expect(entries.single.selectedAnswer, 'gone');
+      },
+    );
   });
 }
