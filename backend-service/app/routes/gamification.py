@@ -103,14 +103,28 @@ async def get_all_achievements(
 ):
     """
     Get all available achievements.
-    
+
     Returns all achievement definitions. If authenticated, includes
     unlock status for the current user.
+
+    `is_hidden` achievements (secret long-term goals like year_legend, or
+    ones with no working unlock path yet) are excluded here unless the
+    user already has them — the field existed end-to-end but nothing ever
+    filtered on it, so every secret achievement spoiled itself on the very
+    screen meant to let learners discover it by surprise.
     """
     achievements = await AchievementCRUD.get_all_achievements(db)
-    
+
+    unlocked_ids: set = set()
+    if current_user is not None:
+        unlocked_ids = await AchievementCRUD.get_unlocked_achievement_ids(
+            db, current_user.id
+        )
+
     response_data = []
     for achievement in achievements:
+        if achievement.is_hidden and achievement.id not in unlocked_ids:
+            continue
         response_data.append(AchievementResponse.model_validate(achievement))
 
     response.headers["X-Cache-Version"] = compute_cache_version(response_data)
