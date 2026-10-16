@@ -14,12 +14,15 @@ class AudioPlayerControls extends StatelessWidget {
   final VoidCallback onSkipBack;
   final VoidCallback onSkipForward;
   final ValueChanged<double> onSpeedChange;
+  final ValueChanged<Duration> onSeek;
+  final ValueChanged<Duration?> onSleepTimerSet;
   final bool isPlaying;
   final double playbackSpeed;
   final Duration position;
   final Duration duration;
   final String episodeTitle;
   final String artworkUrl;
+  final int? sleepTimerSecondsRemaining;
 
   const AudioPlayerControls({
     super.key,
@@ -28,12 +31,15 @@ class AudioPlayerControls extends StatelessWidget {
     required this.onSkipBack,
     required this.onSkipForward,
     required this.onSpeedChange,
+    required this.onSeek,
+    required this.onSleepTimerSet,
     required this.isPlaying,
     required this.playbackSpeed,
     required this.position,
     required this.duration,
     required this.episodeTitle,
     required this.artworkUrl,
+    this.sleepTimerSecondsRemaining,
   });
 
   @override
@@ -74,7 +80,12 @@ class AudioPlayerControls extends StatelessWidget {
           const SizedBox(height: 14),
 
           // ── Seek bar ──
-          _SeekBar(progress: progress.toDouble(), isDark: isDark),
+          _SeekBar(
+            progress: progress.toDouble(),
+            isDark: isDark,
+            duration: duration,
+            onSeek: onSeek,
+          ),
           const SizedBox(height: 6),
 
           // ── Time labels ──
@@ -113,7 +124,7 @@ class AudioPlayerControls extends StatelessWidget {
               // Skip back 15 s
               IconButton(
                 onPressed: onSkipBack,
-                icon: const Icon(Icons.replay_10_rounded),
+                icon: const Icon(Icons.fast_rewind_rounded),
                 iconSize: 32,
                 color: isDark ? Colors.white70 : AppColors.textDark,
                 tooltip: 'podcast.rewind15'.tr(),
@@ -141,14 +152,19 @@ class AudioPlayerControls extends StatelessWidget {
               // Skip forward 15 s
               IconButton(
                 onPressed: onSkipForward,
-                icon: const Icon(Icons.forward_10_rounded),
+                icon: const Icon(Icons.fast_forward_rounded),
                 iconSize: 32,
                 color: isDark ? Colors.white70 : AppColors.textDark,
                 tooltip: 'podcast.forward15'.tr(),
               ),
 
-              // Placeholder for balance (keeps play/pause centred)
-              const SizedBox(width: 40),
+              // Sleep timer (keeps play/pause centred, same slot as the old
+              // balance placeholder)
+              _SleepTimerButton(
+                secondsRemaining: sleepTimerSecondsRemaining,
+                isDark: isDark,
+                onTap: () => _showSleepTimerSheet(context),
+              ),
             ],
           ),
         ],
@@ -218,6 +234,86 @@ class AudioPlayerControls extends StatelessWidget {
   }
 
   // ──────────────────────────────────────
+  //  Sleep timer bottom sheet
+  // ──────────────────────────────────────
+
+  void _showSleepTimerSheet(BuildContext context) {
+    const presetMinutes = [5, 15, 30, 45, 60];
+    final isActive = sleepTimerSecondsRemaining != null;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'podcast.sleepTimer'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                if (isActive)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.bedtime_rounded,
+                      color: AppColors.primary,
+                    ),
+                    title: Text(
+                      'podcast.sleepTimerCancel'.tr(
+                        namedArgs: {
+                          'count':
+                              '${((sleepTimerSecondsRemaining ?? 0) / 60).ceil()}',
+                        },
+                      ),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    onTap: () {
+                      onSleepTimerSet(null);
+                      Navigator.pop(context);
+                    },
+                  )
+                else
+                  ListTile(
+                    leading: const Icon(Icons.bedtime_outlined),
+                    title: Text('podcast.sleepTimerOff'.tr()),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ...presetMinutes.map((minutes) {
+                  return ListTile(
+                    leading: const Icon(Icons.bedtime_outlined),
+                    title: Text(
+                      'podcast.sleepTimerMinutes'.tr(
+                        namedArgs: {'count': '$minutes'},
+                      ),
+                    ),
+                    onTap: () {
+                      onSleepTimerSet(Duration(minutes: minutes));
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ──────────────────────────────────────
   //  Helpers
   // ──────────────────────────────────────
 
@@ -236,24 +332,78 @@ class AudioPlayerControls extends StatelessWidget {
 //  Private sub-widgets
 // ──────────────────────────────────────
 
-class _SeekBar extends StatelessWidget {
-  final double progress; // 0.0 – 1.0
+class _SeekBar extends StatefulWidget {
+  final double progress; // 0.0 – 1.0, from the live position stream
   final bool isDark;
+  final Duration duration;
+  final ValueChanged<Duration> onSeek;
 
-  const _SeekBar({required this.progress, required this.isDark});
+  const _SeekBar({
+    required this.progress,
+    required this.isDark,
+    required this.duration,
+    required this.onSeek,
+  });
+
+  @override
+  State<_SeekBar> createState() => _SeekBarState();
+}
+
+class _SeekBarState extends State<_SeekBar> {
+  // Non-null only while the user's thumb is down — while dragging, the
+  // displayed value must follow the drag, not the live position stream,
+  // or the two fight for control of the thumb.
+  double? _dragValue;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: LinearProgressIndicator(
-        value: progress,
-        minHeight: 4,
-        backgroundColor: isDark
+    final value = (_dragValue ?? widget.progress).clamp(0.0, 1.0);
+    return SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        trackHeight: 4,
+        activeTrackColor: AppColors.primary,
+        inactiveTrackColor: widget.isDark
             ? Colors.white.withValues(alpha: 0.1)
             : AppColors.grey200,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+        thumbColor: AppColors.primary,
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
       ),
+      child: Slider(
+        value: value,
+        onChanged: (v) => setState(() => _dragValue = v),
+        onChangeEnd: (v) {
+          final ms = (v * widget.duration.inMilliseconds).round();
+          widget.onSeek(Duration(milliseconds: ms));
+          setState(() => _dragValue = null);
+        },
+      ),
+    );
+  }
+}
+
+class _SleepTimerButton extends StatelessWidget {
+  final int? secondsRemaining;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _SleepTimerButton({
+    required this.secondsRemaining,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = secondsRemaining != null;
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(isActive ? Icons.bedtime_rounded : Icons.bedtime_outlined),
+      iconSize: 24,
+      color: isActive
+          ? AppColors.primary
+          : (isDark ? Colors.white70 : AppColors.textDark),
+      tooltip: 'podcast.sleepTimer'.tr(),
     );
   }
 }

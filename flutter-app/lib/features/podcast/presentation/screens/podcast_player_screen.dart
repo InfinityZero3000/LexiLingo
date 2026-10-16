@@ -49,6 +49,11 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   bool _transcriptExpanded = false;
   bool _handlerInitializing = false;
 
+  // Mirrors PodcastAudioHandler.sleepTimerSecondsRemaining for display only —
+  // the timer itself lives on the handler, not here, so it keeps running
+  // after this screen is popped.
+  int? _sleepTimerSecondsRemaining;
+
   final List<StreamSubscription<dynamic>> _subs = [];
 
   @override
@@ -97,6 +102,17 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       _handler!.playerStateStream.listen((state) {
         if (!mounted) return;
         setState(() => _isPlaying = state.playing);
+      }),
+    );
+
+    // Sleep timer — read the current value synchronously first (a timer may
+    // already be running from before this screen was (re)opened), then
+    // follow further ticks.
+    _sleepTimerSecondsRemaining = _handler!.sleepTimerSecondsRemaining;
+    _subs.add(
+      _handler!.sleepTimerSecondsStream.listen((seconds) {
+        if (!mounted) return;
+        setState(() => _sleepTimerSecondsRemaining = seconds);
       }),
     );
 
@@ -157,8 +173,9 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     for (final sub in _subs) {
       sub.cancel();
     }
-    // Do NOT dispose the handler — it is a shared singleton and background
-    // playback should continue after the screen is popped.
+    // Do NOT dispose the handler, and do NOT cancel its sleep timer — it is
+    // a shared singleton and both background playback and any running sleep
+    // timer must keep going after this screen is popped.
     super.dispose();
   }
 
@@ -275,12 +292,15 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
               onSkipBack: _skipBack,
               onSkipForward: _skipForward,
               onSpeedChange: _changeSpeed,
+              onSeek: _handler!.seek,
+              onSleepTimerSet: (duration) => _handler!.setSleepTimer(duration),
               isPlaying: _isPlaying,
               playbackSpeed: _playbackSpeed,
               position: _position,
               duration: _duration,
               episodeTitle: widget.episode.title,
               artworkUrl: widget.artworkUrl,
+              sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
             ),
             const SizedBox(height: 24),
 
