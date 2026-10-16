@@ -42,6 +42,16 @@ class AchievementCRUD:
             select(Achievement).where(Achievement.id == achievement_id)
         )
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_unlocked_achievement_ids(db: AsyncSession, user_id: UUID) -> set[UUID]:
+        """IDs of achievements the user has already unlocked."""
+        result = await db.execute(
+            select(UserAchievement.achievement_id).where(
+                UserAchievement.user_id == user_id
+            )
+        )
+        return {row[0] for row in result.all()}
     
     @staticmethod
     async def get_user_achievements(

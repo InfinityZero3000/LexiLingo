@@ -442,6 +442,8 @@ const vi = {
     nameRequired: "Tên *",
     descriptionRequired: "Mô tả *",
     conditionRequired: "Điều kiện *",
+    conditionTrackedGroup: "Đã theo dõi (có thể mở khóa ngay)",
+    conditionUntrackedGroup: "Chưa theo dõi — sẽ không bao giờ mở khóa",
     conditionValueLabel: "Giá trị",
     categoryLabel: "Danh mục",
     rarityLabel: "Độ hiếm",
