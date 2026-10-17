@@ -405,7 +405,10 @@
       "speakingTitle": "Luyện nói",
       "speakingInstruction": "Lặp lại câu sau",
       "categorizationTitle": "Phân loại từ vựng",
-      "categorizationInstruction": "Nhấn một từ rồi nhấn vào danh mục phù hợp."
+      "categorizationInstruction": "Nhấn một từ rồi nhấn vào danh mục phù hợp.",
+      "correctAnswerLabel": "Đáp án đúng",
+      "correctLabel": "Chính xác",
+      "incorrectLabel": "Chưa đúng"
     }
   },
   "flashcard": {

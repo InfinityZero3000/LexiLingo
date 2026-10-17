@@ -405,7 +405,10 @@
       "speakingTitle": "Speaking practice",
       "speakingInstruction": "Repeat the following sentence",
       "categorizationTitle": "Categorize vocabulary",
-      "categorizationInstruction": "Tap a word, then tap the matching category."
+      "categorizationInstruction": "Tap a word, then tap the matching category.",
+      "correctAnswerLabel": "Correct answer",
+      "correctLabel": "Correct",
+      "incorrectLabel": "Not quite"
     }
   },
   "flashcard": {

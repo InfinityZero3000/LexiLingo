@@ -236,49 +236,110 @@ class _OptionCard extends StatelessWidget {
 
 /// Explanation panel shown after answering
 class _ExplanationCard extends StatelessWidget {
-  final String explanation;
+  final String? explanation;
   final bool isCorrect;
+  final String? correctAnswer;
+  final bool pairAnswer;
 
-  const _ExplanationCard({required this.explanation, required this.isCorrect});
+  const _ExplanationCard({
+    this.explanation,
+    required this.isCorrect,
+    this.correctAnswer,
+    this.pairAnswer = false,
+  });
 
   @override
-  Widget build(BuildContext context) => AnimatedContainer(
-    duration: const Duration(milliseconds: 300),
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: isCorrect
-          ? _kCorrect.withValues(alpha: 0.08)
-          : _kError.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(
+  Widget build(BuildContext context) {
+    final hasExplanation = explanation != null && explanation!.isNotEmpty;
+    // Always surface the right answer on a miss — these are practice
+    // exercises, not graded tests, so the learner needs it to self-correct.
+    final showCorrectAnswer =
+        !isCorrect && correctAnswer != null && correctAnswer!.isNotEmpty;
+    if (!hasExplanation && !showCorrectAnswer) return const SizedBox.shrink();
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
         color: isCorrect
-            ? _kCorrect.withValues(alpha: 0.4)
-            : _kError.withValues(alpha: 0.4),
+            ? _kCorrect.withValues(alpha: 0.08)
+            : _kError.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isCorrect
+              ? _kCorrect.withValues(alpha: 0.4)
+              : _kError.withValues(alpha: 0.4),
+        ),
       ),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          isCorrect ? Icons.check_circle : Icons.info_outline,
-          color: isCorrect ? _kCorrect : _kError,
-          size: 20,
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            explanation,
-            style: TextStyle(
-              fontSize: 14,
-              color: isCorrect ? _kCorrect : _kError,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (hasExplanation)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  isCorrect ? Icons.check_circle : Icons.info_outline,
+                  color: isCorrect ? _kCorrect : _kError,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    explanation!,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isCorrect ? _kCorrect : _kError,
+                      fontWeight: FontWeight.w500,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-      ],
-    ),
-  );
+          if (showCorrectAnswer) ...[
+            if (hasExplanation) const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.lightbulb_outline, color: _kCorrect, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: pairAnswer
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'lesson.exercise.correctAnswerLabel'.tr(),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _kCorrect,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            _PairAnswerChips(
+                              pairs: parsePairAnswer(correctAnswer!),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: _kCorrect,
+                            fontWeight: FontWeight.w600,
+                            height: 1.5,
+                          ),
+                        ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 /// Circular blue button that plays TTS audio
@@ -392,11 +453,12 @@ class TrueOrFalseWidget extends StatelessWidget {
               ),
             );
           }),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -512,11 +574,12 @@ class MultipleChoiceWidget extends StatelessWidget {
               ),
             );
           }),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -757,11 +820,12 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
                 ),
               ),
           ],
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
             ),
           ],
         ],
@@ -776,6 +840,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
 class ArrangeSentenceWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -784,6 +849,7 @@ class ArrangeSentenceWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -803,12 +869,33 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
     _bank = List<String>.from(widget.exercise.options ?? []);
   }
 
+  @override
+  void didUpdateWidget(ArrangeSentenceWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.exercise.id != oldWidget.exercise.id) {
+      _placed.clear();
+      _bank = List<String>.from(widget.exercise.options ?? []);
+    }
+  }
+
+  // Tapping a word only drafts the in-progress order — submitting on every
+  // tap would lock the exercise (isAnswered) after the first word and block
+  // the rest of the bank. The learner finalizes it via the Continue button.
+  void _reportDraft() {
+    final draft = _placed.join(' ');
+    if (widget.onInputChanged != null) {
+      widget.onInputChanged!(draft);
+    } else {
+      widget.onAnswer(draft);
+    }
+  }
+
   void _placeWord(String word) {
     setState(() {
       _bank.remove(word);
       _placed.add(word);
     });
-    widget.onAnswer(_placed.join(' '));
+    _reportDraft();
   }
 
   void _removeWord(String word) {
@@ -817,12 +904,17 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
       _placed.remove(word);
       _bank.add(word);
     });
-    widget.onAnswer(_placed.join(' '));
+    _reportDraft();
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
+    // Graded color only applies once the exercise is answered — while the
+    // learner is still arranging, the drop zone stays neutral/primary.
+    final gradedColor = widget.isAnswered
+        ? ((widget.isCorrect ?? false) ? _kCorrect : _kError)
+        : null;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
@@ -846,15 +938,19 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
             ),
           ),
           const SizedBox(height: 24),
-          // Drop zone (placed words)
+          // Drop zone (placed words) — borders and fills green/red once graded
+          // so the learner sees the result at a glance, not just in the text
+          // note below.
           Container(
             constraints: const BoxConstraints(minHeight: 80),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: colors.card,
+              color: gradedColor != null
+                  ? gradedColor.withValues(alpha: 0.08)
+                  : colors.card,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: colors.border,
+                color: gradedColor ?? colors.border,
                 style: BorderStyle.solid,
                 width: 1.5,
               ),
@@ -866,35 +962,69 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                       style: TextStyle(fontSize: 13, color: colors.textMuted),
                     ),
                   )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _placed
-                        .map(
-                          (w) => GestureDetector(
-                            onTap: () => _removeWord(w),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (gradedColor != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                (widget.isCorrect ?? false)
+                                    ? Icons.check_circle_rounded
+                                    : Icons.cancel_rounded,
+                                size: 18,
+                                color: gradedColor,
                               ),
-                              decoration: BoxDecoration(
-                                color: colors.primary,
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: colors.primaryDeep),
-                              ),
-                              child: Text(
-                                w,
+                              const SizedBox(width: 6),
+                              Text(
+                                (widget.isCorrect ?? false)
+                                    ? 'lesson.exercise.correctLabel'.tr()
+                                    : 'lesson.exercise.incorrectLabel'.tr(),
                                 style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: gradedColor,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
-                        )
-                        .toList(),
+                        ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _placed
+                            .map(
+                              (w) => GestureDetector(
+                                onTap: () => _removeWord(w),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: gradedColor ?? colors.primary,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: gradedColor ?? colors.primaryDeep,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    w,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ],
                   ),
           ),
           const SizedBox(height: 20),
@@ -937,11 +1067,12 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                   )
                   .toList(),
             ),
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 20),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
             ),
           ],
         ],
@@ -956,6 +1087,78 @@ String exerciseQuote(String q) {
     if (q.startsWith(p)) return q.substring(p.length).trim();
   }
   return q;
+}
+
+/// Parses the pair-exercise storage format ("key1:value1, key2:value2")
+/// into word → match. Used by matching/categorization widgets both to grade
+/// each pair individually and to render the answer as chips instead of raw
+/// punctuation.
+Map<String, String> parsePairAnswer(String raw) {
+  final map = <String, String>{};
+  for (final part in raw.split(',')) {
+    final trimmed = part.trim();
+    final sep = trimmed.indexOf(':');
+    if (sep == -1) continue;
+    map[trimmed.substring(0, sep).trim()] = trimmed.substring(sep + 1).trim();
+  }
+  return map;
+}
+
+/// A matched-pair reveal rendered as chips ("word → meaning") rather than
+/// the raw "word:meaning, word:meaning" storage string, which reads like code.
+class _PairAnswerChips extends StatelessWidget {
+  final Map<String, String> pairs;
+  const _PairAnswerChips({required this.pairs});
+
+  @override
+  Widget build(BuildContext context) {
+    if (pairs.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: pairs.entries
+          .map(
+            (e) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _kCorrect.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: _kCorrect.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    e.key,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _kCorrect,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 6),
+                    child: Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 13,
+                      color: _kCorrect,
+                    ),
+                  ),
+                  Text(
+                    e.value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: _kCorrect,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1073,11 +1276,12 @@ class TranslationChoiceWidget extends StatelessWidget {
               ),
             );
           }),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -1269,11 +1473,12 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
               ),
             );
           }),
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
             ),
           ],
         ],
@@ -1482,11 +1687,12 @@ class CollocationChoiceWidget extends StatelessWidget {
               ),
             ),
           ],
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -1633,11 +1839,12 @@ class _DictationWidgetState extends State<DictationWidget> {
               ),
             ),
           ],
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
             ),
           ],
         ],
@@ -1781,11 +1988,12 @@ class GrammarCorrectionWidget extends StatelessWidget {
               isAnswered: isAnswered,
             ),
           ],
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -1951,11 +2159,12 @@ class ImageBasedChoiceWidget extends StatelessWidget {
               );
             }).toList(),
           ),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -2053,11 +2262,12 @@ class ListeningChoiceWidget extends StatelessWidget {
               ),
             );
           }),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -2072,6 +2282,7 @@ class ListeningChoiceWidget extends StatelessWidget {
 class MatchWordMeaningWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -2080,6 +2291,7 @@ class MatchWordMeaningWidget extends StatefulWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -2127,6 +2339,11 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
     final colors = _ExercisePalette.of(context);
     final left = _left;
     final right = _right;
+    // Only known once graded — before that, a matched pair is just "filled
+    // in" (blue/primary), not yet right or wrong.
+    final correctMap = widget.isAnswered
+        ? parsePairAnswer(widget.exercise.correctAnswer)
+        : const <String, String>{};
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -2153,6 +2370,13 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                     children: left.map((item) {
                       final isMatchedLeft = _matched.containsKey(item);
                       final isSelected = _selectedLeft == item;
+                      final pairColor = !isMatchedLeft
+                          ? null
+                          : widget.isAnswered
+                          ? (correctMap[item] == _matched[item]
+                                ? _kCorrect
+                                : _kError)
+                          : _kCorrect;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: GestureDetector(
@@ -2170,18 +2394,16 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                               vertical: 14,
                             ),
                             decoration: BoxDecoration(
-                              color: isMatchedLeft
-                                  ? _kCorrect
-                                  : isSelected
-                                  ? colors.primary
-                                  : colors.card,
+                              color:
+                                  pairColor ??
+                                  (isSelected ? colors.primary : colors.card),
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: isMatchedLeft
-                                    ? _kCorrect
-                                    : isSelected
-                                    ? colors.primary
-                                    : colors.border,
+                                color:
+                                    pairColor ??
+                                    (isSelected
+                                        ? colors.primary
+                                        : colors.border),
                                 width: 1.5,
                               ),
                               boxShadow: [
@@ -2215,6 +2437,20 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                   child: Column(
                     children: right.map((item) {
                       final isMatchedRight = _matched.containsValue(item);
+                      String? matchedLeft;
+                      for (final e in _matched.entries) {
+                        if (e.value == item) {
+                          matchedLeft = e.key;
+                          break;
+                        }
+                      }
+                      final pairColor = !isMatchedRight
+                          ? null
+                          : widget.isAnswered
+                          ? (correctMap[matchedLeft] == item
+                                ? _kCorrect
+                                : _kError)
+                          : _kCorrect;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: GestureDetector(
@@ -2229,7 +2465,15 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                                     final ans = _matched.entries
                                         .map((e) => '${e.key}:${e.value}')
                                         .join(', ');
-                                    widget.onAnswer(ans);
+                                    // Draft until every pair is matched —
+                                    // submitting per pair would lock the
+                                    // exercise (isAnswered) after the first
+                                    // match and block the rest.
+                                    if (widget.onInputChanged != null) {
+                                      widget.onInputChanged!(ans);
+                                    } else {
+                                      widget.onAnswer(ans);
+                                    }
                                   }
                                 },
                           child: AnimatedContainer(
@@ -2239,12 +2483,10 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                               vertical: 14,
                             ),
                             decoration: BoxDecoration(
-                              color: isMatchedRight ? _kCorrect : colors.card,
+                              color: pairColor ?? colors.card,
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: isMatchedRight
-                                    ? _kCorrect
-                                    : colors.border,
+                                color: pairColor ?? colors.border,
                                 width: 1.5,
                               ),
                               boxShadow: [
@@ -2299,11 +2541,13 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
               ],
             ),
           ),
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 12),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
+              pairAnswer: true,
             ),
           ],
         ],
@@ -2528,11 +2772,12 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
               ),
             );
           }),
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
             ),
           ],
         ],
@@ -2547,6 +2792,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
 class PronunciationPracticeWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+
   /// Reports the best take while the learner is still below the pass mark, so
   /// a session they never pass is still measured instead of discarded.
   final ValueChanged<String>? onInputChanged;
@@ -2771,11 +3017,12 @@ class ReadingComprehensionWidget extends StatelessWidget {
               ),
             );
           }),
-          if (isAnswered && exercise.explanation != null) ...[
+          if (isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: exercise.explanation!,
+              explanation: exercise.explanation,
               isCorrect: isCorrect ?? false,
+              correctAnswer: exercise.correctAnswer,
             ),
           ],
         ],
@@ -2932,11 +3179,12 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
             ),
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
             ),
           ],
         ],
@@ -2951,6 +3199,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
 class SpeakingRepeatWidget extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+
   /// Reports the best take while the learner is still below the pass mark, so
   /// a session they never pass is still measured instead of discarded.
   final ValueChanged<String>? onInputChanged;
@@ -3147,6 +3396,11 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
     final unassigned = words
         .where((w) => !_assignments.containsKey(w))
         .toList();
+    // Only known once graded — before that, an assigned word is just
+    // "placed" (neutral), not yet right or wrong.
+    final correctMap = widget.isAnswered
+        ? parsePairAnswer(widget.exercise.correctAnswer)
+        : const <String, String>{};
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
@@ -3255,40 +3509,61 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
-                              children: assigned
-                                  .map(
-                                    (w) => GestureDetector(
-                                      onTap: widget.isAnswered
-                                          ? null
-                                          : () {
-                                              setState(() {
-                                                _assignments.remove(w);
-                                              });
-                                              _updateAnswer();
-                                            },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 7,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: colors.surface,
-                                          borderRadius: BorderRadius.circular(
-                                            999,
+                              children: assigned.map((w) {
+                                final graded = widget.isAnswered
+                                    ? (correctMap[w] == cat
+                                          ? _kCorrect
+                                          : _kError)
+                                    : null;
+                                return GestureDetector(
+                                  onTap: widget.isAnswered
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _assignments.remove(w);
+                                          });
+                                          _updateAnswer();
+                                        },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: graded != null
+                                          ? graded.withValues(alpha: 0.14)
+                                          : colors.surface,
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: graded != null
+                                          ? Border.all(color: graded)
+                                          : null,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (graded != null) ...[
+                                          Icon(
+                                            graded == _kCorrect
+                                                ? Icons.check_rounded
+                                                : Icons.close_rounded,
+                                            size: 14,
+                                            color: graded,
                                           ),
-                                        ),
-                                        child: Text(
+                                          const SizedBox(width: 4),
+                                        ],
+                                        Text(
                                           w,
                                           style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
-                                            color: colors.primary,
+                                            color: graded ?? colors.primary,
                                           ),
                                         ),
-                                      ),
+                                      ],
                                     ),
-                                  )
-                                  .toList(),
+                                  ),
+                                );
+                              }).toList(),
                             ),
                           ],
                         ],
@@ -3379,11 +3654,13 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
               ),
             ),
           ],
-          if (widget.isAnswered && widget.exercise.explanation != null) ...[
+          if (widget.isAnswered) ...[
             const SizedBox(height: 16),
             _ExplanationCard(
-              explanation: widget.exercise.explanation!,
+              explanation: widget.exercise.explanation,
               isCorrect: widget.isCorrect ?? false,
+              correctAnswer: widget.exercise.correctAnswer,
+              pairAnswer: true,
             ),
           ],
         ],
@@ -3398,6 +3675,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
 class CognitiveFluidityWidget extends StatelessWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
+  final ValueChanged<String>? onInputChanged;
   final bool isAnswered;
   final String? userAnswer;
   final bool? isCorrect;
@@ -3406,6 +3684,7 @@ class CognitiveFluidityWidget extends StatelessWidget {
     super.key,
     required this.exercise,
     required this.onAnswer,
+    this.onInputChanged,
     required this.isAnswered,
     this.userAnswer,
     this.isCorrect,
@@ -3415,6 +3694,7 @@ class CognitiveFluidityWidget extends StatelessWidget {
   Widget build(BuildContext context) => MatchWordMeaningWidget(
     exercise: exercise,
     onAnswer: onAnswer,
+    onInputChanged: onInputChanged,
     isAnswered: isAnswered,
     userAnswer: userAnswer,
     isCorrect: isCorrect,

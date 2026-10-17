@@ -355,14 +355,18 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       switch (uiType) {
         case 'arrange_the_sentence':
           return ArrangeSentenceWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
-            userAnswer: provider.currentUserAnswer,
+            userAnswer:
+                provider.currentUserAnswer ?? provider.currentDraftAnswer,
             isCorrect: provider.isCurrentCorrect,
           );
         case 'categorization':
           return CategorizationWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             onInputChanged: provider.updateDraftAnswer,
@@ -373,14 +377,18 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'cognitive_fluidity':
           return CognitiveFluidityWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
-            userAnswer: provider.currentUserAnswer,
+            userAnswer:
+                provider.currentUserAnswer ?? provider.currentDraftAnswer,
             isCorrect: provider.isCurrentCorrect,
           );
         case 'collocation_choice':
           return CollocationChoiceWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -389,6 +397,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'dialogue_completion':
           return DialogueCompletionWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             onInputChanged: provider.updateDraftAnswer,
@@ -399,6 +408,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'dictation':
           return DictationWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -407,6 +417,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'fill_in_the_blank':
           return FillBlankWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -415,6 +426,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'grammar_correction':
           return GrammarCorrectionWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -423,6 +435,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'image_based_choice':
           return ImageBasedChoiceWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -431,6 +444,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'listen_and_choose':
           return ListeningChoiceWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -439,14 +453,18 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'match_word_to_meaning':
           return MatchWordMeaningWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
+            onInputChanged: provider.updateDraftAnswer,
             isAnswered: provider.isCurrentAnswered,
-            userAnswer: provider.currentUserAnswer,
+            userAnswer:
+                provider.currentUserAnswer ?? provider.currentDraftAnswer,
             isCorrect: provider.isCurrentCorrect,
           );
         case 'multiple_choice':
           return MultipleChoiceWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -455,6 +473,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'pronunciation_practice':
           return PronunciationPracticeWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             onInputChanged: provider.updateDraftAnswer,
@@ -464,6 +483,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'reading_comprehension':
           return ReadingComprehensionWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -472,6 +492,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'short_writing_answer':
           return ShortWritingAnswerWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -480,6 +501,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'speaking_repeat':
           return SpeakingRepeatWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             onInputChanged: provider.updateDraftAnswer,
@@ -489,6 +511,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'translation_choice':
           return TranslationChoiceWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -497,6 +520,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'true_or_false':
           return TrueOrFalseWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -505,6 +529,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           );
         case 'vocabulary_flashcard':
           return VocabularyFlashcardWidget(
+            key: ValueKey(exercise.id),
             exercise: exercise,
             onAnswer: (answer) => provider.submitAnswer(answer),
             isAnswered: provider.isCurrentAnswered,
@@ -518,6 +543,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       case ExerciseType.multipleChoice:
       case ExerciseType.trueFalse:
         return QuizWidget(
+          key: ValueKey(exercise.id),
           exercise: exercise,
           onAnswer: (answer) => provider.submitAnswer(answer),
           isAnswered: provider.isCurrentAnswered,
@@ -528,6 +554,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       case ExerciseType.fillInBlank:
       case ExerciseType.translate:
         return LessonContentWidget(
+          key: ValueKey(exercise.id),
           exercise: exercise,
           onSubmit: (answer) => provider.submitAnswer(answer),
           isAnswered: provider.isCurrentAnswered,
