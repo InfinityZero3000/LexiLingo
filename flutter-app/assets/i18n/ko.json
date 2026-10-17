@@ -405,7 +405,10 @@
       "speakingTitle": "말하기 연습",
       "speakingInstruction": "다음 문장을 따라 하세요",
       "categorizationTitle": "어휘 분류",
-      "categorizationInstruction": "단어를 누른 다음 알맞은 분류를 누르세요."
+      "categorizationInstruction": "단어를 누른 다음 알맞은 분류를 누르세요.",
+      "correctAnswerLabel": "정답",
+      "correctLabel": "정답이에요",
+      "incorrectLabel": "아쉬워요"
     }
   },
   "flashcard": {

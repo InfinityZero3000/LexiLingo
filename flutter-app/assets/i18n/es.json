@@ -405,7 +405,10 @@
       "speakingTitle": "Práctica oral",
       "speakingInstruction": "Repite la siguiente oración",
       "categorizationTitle": "Clasifica el vocabulario",
-      "categorizationInstruction": "Toca una palabra y luego su categoría."
+      "categorizationInstruction": "Toca una palabra y luego su categoría.",
+      "correctAnswerLabel": "Respuesta correcta",
+      "correctLabel": "Correcto",
+      "incorrectLabel": "Casi"
     }
   },
   "flashcard": {

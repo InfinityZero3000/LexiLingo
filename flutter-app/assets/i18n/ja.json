@@ -405,7 +405,10 @@
       "speakingTitle": "スピーキング練習",
       "speakingInstruction": "次の文を繰り返してください",
       "categorizationTitle": "語彙を分類する",
-      "categorizationInstruction": "単語をタップし、対応するカテゴリを選んでください。"
+      "categorizationInstruction": "単語をタップし、対応するカテゴリを選んでください。",
+      "correctAnswerLabel": "正解",
+      "correctLabel": "正解です",
+      "incorrectLabel": "おしい"
     }
   },
   "flashcard": {

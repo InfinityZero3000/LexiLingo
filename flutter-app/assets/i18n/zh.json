@@ -405,7 +405,10 @@
       "speakingTitle": "口语练习",
       "speakingInstruction": "重复下面的句子",
       "categorizationTitle": "词汇分类",
-      "categorizationInstruction": "点击单词，再点击对应类别。"
+      "categorizationInstruction": "点击单词，再点击对应类别。",
+      "correctAnswerLabel": "正确答案",
+      "correctLabel": "正确",
+      "incorrectLabel": "不太对"
     }
   },
   "flashcard": {

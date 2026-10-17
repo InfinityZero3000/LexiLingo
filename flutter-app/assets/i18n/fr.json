@@ -405,7 +405,10 @@
       "speakingTitle": "Expression orale",
       "speakingInstruction": "Répétez la phrase suivante",
       "categorizationTitle": "Classer le vocabulaire",
-      "categorizationInstruction": "Touchez un mot, puis la catégorie correspondante."
+      "categorizationInstruction": "Touchez un mot, puis la catégorie correspondante.",
+      "correctAnswerLabel": "Bonne réponse",
+      "correctLabel": "Correct",
+      "incorrectLabel": "Pas tout à fait"
     }
   },
   "flashcard": {

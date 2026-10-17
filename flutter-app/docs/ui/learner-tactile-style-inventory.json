@@ -27900,6 +27900,186 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/core/widgets/circle_icon.dart::CircleIcon::BoxDecoration::0",
+      "path": "lib/core/widgets/circle_icon.dart",
+      "entryPoint": "surface",
+      "symbol": "CircleIcon",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 36,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart::ContinueLearningCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart",
+      "entryPoint": "surface",
+      "symbol": "ContinueLearningCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 15,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart::ContinueLearningCard::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart",
+      "entryPoint": "surface",
+      "symbol": "ContinueLearningCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 70,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/quick_actions_grid.dart::QuickActionsGrid::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/quick_actions_grid.dart",
+      "entryPoint": "surface",
+      "symbol": "QuickActionsGrid",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 71,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/pages/home_page.dart::_HomePageNewState::Card::3",
+      "path": "lib/features/home/presentation/pages/home_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_HomePageNewState",
+      "callKind": "Card",
+      "ordinal": 3,
+      "line": 211,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_PairAnswerChips::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "entryPoint": "surface",
+      "symbol": "_PairAnswerChips",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 1123,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/audio_player_controls.dart::AudioPlayerControls::showModalBottomSheet::1",
+      "path": "lib/features/podcast/presentation/widgets/audio_player_controls.dart",
+      "entryPoint": "overlay",
+      "symbol": "AudioPlayerControls",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 1,
+      "line": 243,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_HistoryTile::MaterialPageRoute::1",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_HistoryTile",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 1,
+      "line": 237,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
     }
   ],
   "boundaries": [
