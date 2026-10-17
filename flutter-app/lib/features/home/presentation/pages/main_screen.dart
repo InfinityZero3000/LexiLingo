@@ -11,6 +11,8 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/circle_icon.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
 
@@ -22,6 +24,34 @@ class MainScreen extends StatefulWidget {
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
+
+const _tabs = <({IconData icon, IconData activeIcon, String label})>[
+  (
+    icon: PhosphorIconsBold.compass,
+    activeIcon: PhosphorIconsFill.compass,
+    label: 'home.navDiscovery',
+  ),
+  (
+    icon: PhosphorIconsBold.graduationCap,
+    activeIcon: PhosphorIconsFill.graduationCap,
+    label: 'home.navLearning',
+  ),
+  (
+    icon: PhosphorIconsBold.sparkle,
+    activeIcon: PhosphorIconsFill.sparkle,
+    label: 'home.navLexi',
+  ),
+  (
+    icon: PhosphorIconsBold.chatCircleDots,
+    activeIcon: PhosphorIconsFill.chatCircleDots,
+    label: 'home.navTopic',
+  ),
+  (
+    icon: PhosphorIconsBold.userCircle,
+    activeIcon: PhosphorIconsFill.userCircle,
+    label: 'home.navAccount',
+  ),
+];
 
 class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
@@ -189,31 +219,12 @@ class _MainScreenState extends State<MainScreen> {
               : NavigationRailLabelType.selected,
           onDestinationSelected: _selectTab,
           destinations: [
-            NavigationRailDestination(
-              icon: const Icon(Icons.explore_outlined),
-              selectedIcon: const Icon(Icons.explore),
-              label: Text('home.navDiscovery'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.menu_book_outlined),
-              selectedIcon: const Icon(Icons.menu_book),
-              label: Text('home.navLearning'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.auto_awesome_outlined),
-              selectedIcon: const Icon(Icons.auto_awesome),
-              label: Text('home.navLexi'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.chat_bubble_outline),
-              selectedIcon: const Icon(Icons.chat_bubble),
-              label: Text('home.navTopic'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.account_circle_outlined),
-              selectedIcon: const Icon(Icons.account_circle),
-              label: Text('home.navAccount'.tr()),
-            ),
+            for (final tab in _tabs)
+              NavigationRailDestination(
+                icon: Icon(tab.icon),
+                selectedIcon: Icon(tab.activeIcon),
+                label: Text(tab.label.tr()),
+              ),
           ],
         ),
       ),
@@ -246,31 +257,19 @@ class _MainScreenState extends State<MainScreen> {
             elevation: 0,
             onTap: _selectTab,
             items: [
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.explore_outlined),
-                activeIcon: const Icon(Icons.explore),
-                label: 'home.navDiscovery'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.menu_book_outlined),
-                activeIcon: const Icon(Icons.menu_book),
-                label: 'home.navLearning'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.auto_awesome_outlined),
-                activeIcon: const Icon(Icons.auto_awesome),
-                label: 'home.navLexi'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.chat_bubble_outline),
-                activeIcon: const Icon(Icons.chat_bubble),
-                label: 'home.navTopic'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.account_circle_outlined),
-                activeIcon: const Icon(Icons.account_circle),
-                label: 'home.navAccount'.tr(),
-              ),
+              for (final tab in _tabs)
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Icon(tab.icon, size: 26),
+                  ),
+                  activeIcon: CircleIcon(
+                    icon: tab.activeIcon,
+                    color: AppColorRoles.primary(isDark),
+                    size: 44,
+                  ),
+                  label: tab.label.tr(),
+                ),
             ],
           ),
         ),

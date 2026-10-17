@@ -15,4 +15,5 @@ export 'network_avatar_image.dart';
 export 'language_switcher_button.dart';
 export 'app_button.dart';
 export 'cefr_badge.dart';
+export 'circle_icon.dart';
 export 'stagger_list.dart';

@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/continue_learning_card.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/promo_banner_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/enrolled_courses_section.dart';
@@ -133,7 +135,9 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : AppColors.skyBackground,
       body: SafeArea(
         child: Consumer3<HomeProvider, UserProvider, AuthProvider>(
           builder: (context, homeProvider, userProvider, authProvider, child) {
@@ -169,12 +173,17 @@ class _HomePageNewState extends State<HomePageNew> {
                           child: HomeHeader(),
                         ),
                         const PromoBannerSection(),
+                        const ContinueLearningCard(),
                         const Padding(
                           padding: EdgeInsets.only(top: 12),
                           child: StreakCardSection(),
                         ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: LevelAndDailyGoalRow(),
+                        ),
                         Padding(
-                          padding: const EdgeInsets.only(top: 12),
+                          padding: const EdgeInsets.only(top: 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -190,16 +199,12 @@ class _HomePageNewState extends State<HomePageNew> {
                           child: ActiveBoostsBar(),
                         ),
                         const Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: WordOfDayCard(),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: LevelAndDailyGoalRow(),
-                        ),
-                        const Padding(
                           padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
                           child: DailyChallengesCard(),
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: WordOfDayCard(),
                         ),
                         const Padding(
                           padding: EdgeInsets.fromLTRB(16, 12, 16, 0),

@@ -37,6 +37,10 @@ class AppColors {
   static const Color backgroundLight = Color(0xFFF6F7F8);
   static const Color backgroundDark = Color(0xFF151C26);
 
+  /// Home screen ground and the hairline that separates white cards on it.
+  static const Color skyBackground = Color(0xFFF2F7FD);
+  static const Color skyBorder = Color(0xFFE1EAF5);
+
   // ── Surfaces (cards, sheets, dialogs) ─────────────────────────────────────
   static const Color surfaceLight = Color(0xFFFFFFFF);
   static const Color surfaceDark = Color(0xFF243241);
