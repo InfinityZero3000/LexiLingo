@@ -307,7 +307,6 @@ class NewsProvider extends ChangeNotifier {
               sourceType: 'news_quiz',
               sourceId: sourceId,
               questionId: '${question.id}:${question.question}',
-              selectedAnswer: selectedAnswer,
             ),
             sourceType: 'news_quiz',
             sourceId: sourceId,

@@ -1005,6 +1005,10 @@
     "premiumOnly": "Premium",
     "premiumLockedSubtitle": "Mở khóa luyện viết nâng cao với Lexi bằng Premium.",
     "unlockPremium": "Mở khóa Premium",
+    "ielts": {
+      "title": "Đề thi thử IELTS",
+      "subtitle": "Đề đầy đủ 4 kỹ năng, chấm theo band điểm với phản hồi AI cho Viết và Nói."
+    },
     "skills": {
       "vocabulary": {
         "title": "Từ vựng",
@@ -1069,6 +1073,7 @@
     "sourceNewsQuiz": "Quiz tin tức",
     "sourceFillBlank": "Điền vào chỗ trống",
     "sourceGrammarQuiz": "Quiz ngữ pháp",
+    "sourceChatCorrection": "Sửa lỗi trong Chat",
     "sourceQuiz": "Quiz",
     "yourAnswer": "Bạn chọn",
     "correctAnswer": "Đáp án đúng",
@@ -1483,7 +1488,11 @@
     "generateTranscript": "Tạo bản chép lời",
     "episodeCount": "{count} tập",
     "rewind15": "Lùi 15 giây",
-    "forward15": "Tua 15 giây"
+    "forward15": "Tua 15 giây",
+    "sleepTimer": "Hẹn giờ ngủ",
+    "sleepTimerOff": "Tắt",
+    "sleepTimerMinutes": "{count} phút",
+    "sleepTimerCancel": "Hủy hẹn giờ (còn {count} phút)"
   },
   "games": {
     "loadFailed": "Không thể tải trò chơi. Vui lòng thử lại.",

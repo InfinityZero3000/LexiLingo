@@ -314,25 +314,40 @@ class AchievementCheckerService:
             stats["numeric_level"] = result.scalar() or 0
 
         # Fetch time-based study stats from DailyActivity
+        #
+        # Unimplemented — needs hour-of-day / lesson-duration tracking that
+        # doesn't exist yet. The achievements that key on these
+        # (night_owl, early_bird, speed_demon) are seeded with
+        # is_hidden=True for exactly this reason; un-hide them in
+        # scripts/backfill_achievements.py once this is built.
         if need_time:
-            stats["night_study_sessions"] = 0  # Placeholder: needs hour tracking
-            stats["morning_study_sessions"] = 0  # Placeholder: needs hour tracking
-            stats["speed_lessons"] = 0  # Placeholder: needs lesson duration tracking
+            stats["night_study_sessions"] = 0
+            stats["morning_study_sessions"] = 0
+            stats["speed_lessons"] = 0
 
         # Fetch skill-based stats (grammar, culture, writing, listening)
+        #
+        # Unimplemented — needs lessons tagged by category, which doesn't
+        # exist yet. grammar_guardian / culture_explorer / writing_wizard /
+        # listening_legend are seeded with is_hidden=True for exactly this
+        # reason; un-hide them once this is built.
         if need_skills:
-            # These are placeholders — actual implementation needs
-            # tagged lesson categories in the database
             stats["grammar_mastered"] = 0
             stats["culture_lessons"] = 0
             stats["writing_completed"] = 0
             stats["listening_completed"] = 0
 
         # Fetch social stats
+        #
+        # Unimplemented — no route records a social interaction, chat
+        # completion, or "helped another learner" event yet. social_butterfly
+        # / conversation_champion / feedback_friend are seeded with
+        # is_hidden=True for exactly this reason; un-hide them once this is
+        # built.
         if need_social:
-            stats["social_interactions"] = 0  # Placeholder
-            stats["chats_completed"] = 0  # Placeholder
-            stats["help_others_count"] = 0  # Placeholder
+            stats["social_interactions"] = 0
+            stats["chats_completed"] = 0
+            stats["help_others_count"] = 0
 
         # Fetch daily challenge completions
         if need_challenges:
@@ -392,7 +407,12 @@ class AchievementCheckerService:
             "help_others": lambda: user_stats.get("help_others_count", 0) >= condition_value,
             "daily_challenge_complete": lambda: user_stats.get("daily_challenges_completed", 0) >= condition_value,
             "game_complete": lambda: user_stats.get("games_completed", 0) >= condition_value,
-            "comeback": lambda: False,  # Special: checked contextually at login
+            # Never implemented — no route detects "returned after a break".
+            # Hardcoded False rather than an exception so an achievement with
+            # this condition_type fails safe (never unlocks) instead of
+            # crashing the batch it's evaluated in. Kept hidden in the seed
+            # data for the same reason.
+            "comeback": lambda: False,
         }
 
         evaluator = condition_evaluators.get(condition_type)

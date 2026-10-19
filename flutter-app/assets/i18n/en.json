@@ -1005,6 +1005,10 @@
     "premiumOnly": "Premium",
     "premiumLockedSubtitle": "Unlock advanced Lexi-guided writing practice with Premium.",
     "unlockPremium": "Unlock Premium",
+    "ielts": {
+      "title": "IELTS mock tests",
+      "subtitle": "Full four-skill papers, scored in bands with AI feedback on Writing and Speaking."
+    },
     "skills": {
       "vocabulary": {
         "title": "Vocabulary",
@@ -1069,6 +1073,7 @@
     "sourceNewsQuiz": "News quiz",
     "sourceFillBlank": "Fill in the Blank",
     "sourceGrammarQuiz": "Grammar Quiz",
+    "sourceChatCorrection": "Chat correction",
     "sourceQuiz": "Quiz",
     "yourAnswer": "Your answer",
     "correctAnswer": "Correct answer",
@@ -1483,7 +1488,11 @@
     "generateTranscript": "Generate Transcript",
     "episodeCount": "{count} episodes",
     "rewind15": "Rewind 15 s",
-    "forward15": "Skip 15 s"
+    "forward15": "Skip 15 s",
+    "sleepTimer": "Sleep Timer",
+    "sleepTimerOff": "Off",
+    "sleepTimerMinutes": "{count} min",
+    "sleepTimerCancel": "Cancel timer ({count} min left)"
   },
   "games": {
     "loadFailed": "Unable to load this game. Please try again.",

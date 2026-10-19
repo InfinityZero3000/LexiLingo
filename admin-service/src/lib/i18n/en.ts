@@ -444,6 +444,8 @@ const en: Translations = {
     nameRequired: "Name *",
     descriptionRequired: "Description *",
     conditionRequired: "Condition *",
+    conditionTrackedGroup: "Tracked (unlockable today)",
+    conditionUntrackedGroup: "Not tracked yet — will never unlock",
     conditionValueLabel: "Value",
     categoryLabel: "Category",
     rarityLabel: "Rarity",

@@ -199,7 +199,7 @@ class _HistoryTile extends StatelessWidget {
               ? 'Graded'
               : status == 'submitted'
               ? 'Writing and Speaking still being graded'
-              : 'In progress',
+              : 'In progress — tap to continue',
         ),
         trailing: overall != null
             ? Text(
@@ -210,6 +210,27 @@ class _HistoryTile extends StatelessWidget {
               )
             : const Icon(Icons.chevron_right),
         onTap: () {
+          // An unfinished sitting has no bands to show, so a result page is a
+          // dead end — resume it the same way the test card does, which the
+          // backend keys on (user, test_id, in_progress) regardless of which
+          // attempt_id this history row names.
+          if (status == 'in_progress') {
+            final testId = attempt['test_id']?.toString();
+            if (testId == null) return;
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => IeltsSittingPage(
+                  test: IeltsTestSummary(
+                    id: testId,
+                    title: title,
+                    testType: 'academic',
+                    skillScope: attempt['skill_scope']?.toString() ?? 'full',
+                  ),
+                ),
+              ),
+            );
+            return;
+          }
           final id = attempt['attempt_id']?.toString();
           if (id == null) return;
           Navigator.of(context).push(

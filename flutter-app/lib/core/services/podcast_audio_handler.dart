@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
+import 'sleep_timer_countdown.dart';
 
 /// Background audio handler for podcast playback.
 ///
@@ -13,6 +15,15 @@ import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.
 /// Phase 4: Podcast — skill: audio-format-optimization.
 class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   final AudioPlayer _player = AudioPlayer();
+
+  // Owned here rather than by the player screen's State: this handler is the
+  // one object that actually survives leaving the player screen (background
+  // playback is the whole point of it), so a timer that lives in the screen
+  // gets silently cancelled on the one path a sleep timer is for — the
+  // learner backs out to go to sleep while the podcast keeps playing forever.
+  final SleepTimerCountdown _sleepTimer = SleepTimerCountdown();
+  final _sleepTimerSecondsController = StreamController<int?>.broadcast();
+  int? _sleepTimerSecondsRemaining;
 
   PodcastAudioHandler() {
     // Forward every playback event to AudioService's playbackState BehaviourSubject
@@ -85,9 +96,44 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
+    _sleepTimer.cancel();
     await _player.stop();
     await super.stop();
   }
+
+  // ── Sleep timer ────────────────────────────────────────────────────────────
+
+  /// Starts (or replaces) a countdown that pauses playback when it elapses.
+  /// Pass `null` to cancel an active timer without pausing.
+  void setSleepTimer(Duration? duration) {
+    if (duration == null) {
+      _sleepTimer.cancel();
+      _pushSleepTimerSeconds(null);
+      return;
+    }
+    _sleepTimer.start(
+      duration: duration,
+      onTick: _pushSleepTimerSeconds,
+      onElapsed: () {
+        pause();
+        _pushSleepTimerSeconds(null);
+      },
+    );
+  }
+
+  void _pushSleepTimerSeconds(int? seconds) {
+    _sleepTimerSecondsRemaining = seconds;
+    _sleepTimerSecondsController.add(seconds);
+  }
+
+  /// Current remaining seconds, read synchronously so a screen that
+  /// (re)subscribes to [sleepTimerSecondsStream] after the timer already
+  /// started — e.g. navigating back into the player — can show the right
+  /// state immediately instead of waiting for the next tick.
+  int? get sleepTimerSecondsRemaining => _sleepTimerSecondsRemaining;
+
+  Stream<int?> get sleepTimerSecondsStream =>
+      _sleepTimerSecondsController.stream;
 
   // ── Passthrough getters for the player screen ─────────────────────────────
 

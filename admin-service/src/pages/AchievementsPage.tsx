@@ -21,13 +21,25 @@ const CATEGORIES = [
   "voice", "level", "special", "skill", "social", "milestone",
 ];
 const RARITIES = ["common", "rare", "epic", "legendary"];
-const CONDITION_TYPES = [
+// Backed by a real stat in AchievementCheckerService._get_user_stats() and
+// checked right after the action that would satisfy it.
+const TRACKED_CONDITION_TYPES = [
   "lesson_complete", "reach_streak", "vocab_mastered", "xp_earned",
   "perfect_score", "first_perfect", "course_complete", "voice_practice",
-  "numeric_level", "study_time_night", "study_time_morning", "speed_lesson",
+  "numeric_level", "daily_challenge_complete",
+];
+
+// _get_user_stats() hardcodes these to 0 (no route records the underlying
+// event yet — lesson category tags, time-of-day, "helped another learner",
+// etc.), and "comeback" is a dead `lambda: False`. An achievement created
+// with one of these can never unlock. Keep them selectable (deleting the
+// option would strand any existing achievement already using one), but
+// label them so a new one isn't created by accident — see
+// backend-service/app/services/achievement_checker_service.py.
+const UNTRACKED_CONDITION_TYPES = [
+  "study_time_night", "study_time_morning", "speed_lesson",
   "grammar_mastered", "culture_lesson", "writing_complete", "listening_complete",
-  "social_interaction", "chat_complete", "help_others",
-  "daily_challenge_complete", "comeback",
+  "social_interaction", "chat_complete", "help_others", "comeback",
 ];
 
 const rarityColor: Record<string, "info" | "success" | "warning" | "danger"> = {
@@ -508,7 +520,12 @@ export const AchievementsPage = () => {
                 <label>
                   {t.achievements.conditionRequired}
                   <select value={form.condition_type} onChange={(e) => setForm({ ...form, condition_type: e.target.value })}>
-                    {CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
+                    <optgroup label={t.achievements.conditionTrackedGroup}>
+                      {TRACKED_CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
+                    </optgroup>
+                    <optgroup label={t.achievements.conditionUntrackedGroup}>
+                      {UNTRACKED_CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
+                    </optgroup>
                   </select>
                 </label>
                 <label>
