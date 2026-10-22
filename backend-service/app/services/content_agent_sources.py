@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 # Admin uploads are job-local and never need AI-service snapshot pinning.
 _VIRTUAL_SOURCES: frozenset[str] = frozenset({"admin_upload"})
 _SOURCE_ALIASES: dict[str, str] = {"existing_cefr": "cefr_j"}
+# The planner only draws vocabulary from records that carry a declared CEFR
+# level. Everything else (OEWN, CMUdict, ...) is a reference corpus: it has no
+# level, so on its own it can never fill a lesson.
+_LABELLED_SOURCES: frozenset[str] = frozenset({"admin_upload", "cefr_j"})
 
 
 class SourceResolutionError(ValueError):
@@ -105,6 +109,17 @@ def resolve_snapshots(
         )
 
     return resolved
+
+
+def require_labelled_source(sources: list[str]) -> None:
+    """Reject a job whose sources cannot supply CEFR-labelled vocabulary."""
+    if _LABELLED_SOURCES.isdisjoint(canonicalize_sources(sources)):
+        raise SourceResolutionError(
+            "Source resolution failed: no selected source carries CEFR levels. "
+            "Add 'admin_upload' (a word list with levels) or 'cefr_j'; "
+            "OEWN and CMUdict are reference corpora that enrich the words of "
+            "those sources but cannot seed a course on their own."
+        )
 
 
 def canonicalize_sources(sources: list[str]) -> list[str]:

@@ -7,6 +7,7 @@ import pytest
 from app.services.content_agent_sources import (
     SourceResolutionError,
     canonicalize_sources,
+    require_labelled_source,
     resolve_snapshots,
 )
 
@@ -193,3 +194,17 @@ def test_virtual_sources_not_blocked_by_empty_catalog() -> None:
     # Even when AI service is unavailable, virtual sources should resolve
     resolved = resolve_snapshots(["admin_upload"], catalog=[])
     assert resolved == []
+
+
+@pytest.mark.parametrize(
+    "sources",
+    [["cefr_j"], ["existing_cefr"], ["admin_upload"], ["oewn", "admin_upload"], ["cmudict", "cefr_j"]],
+)
+def test_job_with_a_cefr_labelled_source_is_accepted(sources: list[str]) -> None:
+    require_labelled_source(sources)
+
+
+@pytest.mark.parametrize("sources", [["oewn"], ["cmudict"], ["oewn", "cmudict", "wikidata"]])
+def test_job_of_reference_corpora_only_is_rejected(sources: list[str]) -> None:
+    with pytest.raises(SourceResolutionError, match="no selected source carries CEFR levels"):
+        require_labelled_source(sources)
