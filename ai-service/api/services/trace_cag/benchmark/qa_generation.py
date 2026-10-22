@@ -10,6 +10,9 @@ at call time to avoid a circular import at module load.
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import contextvars
+import datetime as _dt
 import logging
 import os
 import re
@@ -407,6 +410,72 @@ def _truncate_benchmark_context(
     return "\n\n".join(p for _, p in selected)
 
 
+# ── Per-request usage ledger ──────────────────────────────────────────────────
+#
+# `usage_state` on a benchmark observation holds the usage of the LAST provider
+# response only. A request that asks IRCoT for a bridge entity, or whose
+# thinking call came back empty and was re-asked, made more calls than that, so
+# `total_tokens` understated its cost (626 -> 994 recorded tokens/question
+# between the top-5 arm and the IRCoT arm, with the bridge call in neither).
+# The ledger records every provider call of one request. It is a ContextVar, so
+# it is inert outside `_generate_benchmark_qa_response` and every concurrent
+# sample (its own task) gets its own list; nothing here changes an answer.
+_USAGE_LEDGER: "contextvars.ContextVar[list[dict[str, Any]] | None]" = contextvars.ContextVar(
+    "tracecag_usage_ledger", default=None
+)
+
+
+def _ledger_add(role: str, data: Any, *, wall_started: float, response: Any = None) -> None:
+    """Append one provider call to this request's ledger. Never raises."""
+    ledger = _USAGE_LEDGER.get()
+    if ledger is None:
+        return
+    try:
+        usage = (data or {}).get("usage") or {}
+        details = usage.get("prompt_tokens_details") or {}
+        prompt = _safe_int(usage.get("prompt_tokens"))
+        completion = _safe_int(usage.get("completion_tokens"))
+        elapsed = getattr(response, "elapsed", None)
+        ledger.append({
+            "role": role,
+            "prompt_tokens": prompt,
+            "completion_tokens": completion,
+            "total_tokens": _safe_int(usage.get("total_tokens")) or prompt + completion,
+            "cached_tokens": _safe_int(usage.get("cached_tokens") or details.get("cached_tokens")),
+            # Time inside the provider's HTTP call: excludes our own throttle waits and key rotation.
+            "http_ms": int(elapsed.total_seconds() * 1000) if isinstance(elapsed, _dt.timedelta) else 0,
+            # Wall time of the attempt, waits included.
+            "wall_ms": int((time.monotonic() - wall_started) * 1000),
+        })
+    except Exception as exc:  # accounting must never change an answer
+        logger.debug("[usage_ledger] skipped a call: %s", exc)
+
+
+def summarize_usage_ledger(entries: "list[dict[str, Any]] | None") -> "dict[str, Any] | None":
+    """Totals and a per-role breakdown for one request, or None when no call was recorded."""
+    if not entries:
+        return None
+    by_role: dict[str, dict[str, int]] = {}
+    for e in entries:
+        r = by_role.setdefault(e["role"], dict.fromkeys(("calls", "prompt_tokens", "completion_tokens", "total_tokens", "http_ms"), 0))
+        r["calls"] += 1
+        for k in ("prompt_tokens", "completion_tokens", "total_tokens", "http_ms"):
+            r[k] += e[k]
+    total = {k: sum(e[k] for e in entries) for k in ("prompt_tokens", "completion_tokens", "total_tokens", "cached_tokens", "http_ms", "wall_ms")}
+    return {"calls": len(entries), **total, "by_role": by_role, "source": "provider"}
+
+
+@contextlib.contextmanager
+def usage_ledger():
+    """Collect the provider calls made inside the block (for callers outside the QA pipeline)."""
+    entries: list[dict[str, Any]] = []
+    token = _USAGE_LEDGER.set(entries)
+    try:
+        yield entries
+    finally:
+        _USAGE_LEDGER.reset(token)
+
+
 # ── Groq chat helper (reused for IRCoT's reason + answer calls) ───────────────
 
 def _estimate_message_tokens(messages: list, *, max_tokens: int) -> int:
@@ -417,6 +486,7 @@ def _estimate_message_tokens(messages: list, *, max_tokens: int) -> int:
 
 async def _groq_chat_with_retry(
     messages: list, max_tokens: int, *, estimated_tokens: int = 0, reasoning_effort: str = "none",
+    ledger_role: str = "aux",
 ) -> "tuple[str, str]":
     """One Groq chat completion preserving the Bug 5/6 hardening: round-robin
     across all configured keys, skip 401 keys, bounded 503 exponential backoff.
@@ -439,6 +509,7 @@ async def _groq_chat_with_retry(
         if not key or (key in _tried and _503 >= _max_503_retries):
             break
         _tried.add(key)
+        _attempt_started = time.monotonic()
         try:
             resp = await _throttled_post_json(
                 provider="groq",
@@ -461,6 +532,7 @@ async def _groq_chat_with_retry(
             )
             if resp is not None and resp.status_code == 200:
                 data = resp.json()
+                _ledger_add(ledger_role, data, wall_started=_attempt_started, response=resp)
                 await record_groq_key_usage(key, data.get("usage", {}).get("total_tokens", max_tokens))
                 raw = data["choices"][0]["message"]["content"].strip()
                 raw = re.sub(r"<think>.*?</think>\s*", "", raw, flags=re.DOTALL).strip()
@@ -473,6 +545,7 @@ async def _groq_chat_with_retry(
                     )
                     return await _groq_chat_with_retry(
                         messages, 32, estimated_tokens=estimated_tokens, reasoning_effort="none",
+                        ledger_role=f"{ledger_role}_nothink",
                     )
                 return raw, f"groq/{groq_model}"
             if resp is not None and resp.status_code == 401:
@@ -764,7 +837,9 @@ def _ircot_bridge_contract(question: str, entity: str, extra: list[dict], base_c
     }
 
 
-async def _ircot_augment(question: str, base_context: str, state: TraceCAGState) -> "tuple[str, str, dict[str, Any]]":
+async def _ircot_augment(
+    question: str, base_context: str, state: TraceCAGState, *, cap_bonus: int = 0, looked_up: "tuple[str, ...]" = (),
+) -> "tuple[str, str, dict[str, Any]]":
     """IRCoT step: reason to find the bridge entity, then re-retrieve passages
     about it from the full pool and fold them into the reader's context.
 
@@ -797,6 +872,9 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
         "output that answer entity instead."
     )
     reason_user = f"Passages:\n{base_context[:1800]}\n\nQuestion: {question}\n\nBridge entity to look up next:"
+    if looked_up:   # later rounds only: without this the model names the entity it already resolved
+        reason_user = (f"Passages:\n{base_context[:1800]}\n\nQuestion: {question}\n\n"
+                       f"Already looked up: {'; '.join(looked_up)}.\nNext bridge entity to look up:")
     # The bridge entity IS the second retrieval's query, and it was extracted
     # with thinking off. Measured with corpus bridging: when the extracted
     # entity matched the missing hop's title (41% of 143) the answer scored F1
@@ -808,6 +886,7 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
         max_tokens=32 if _ircot_reasoning == "none" else 320,
         estimated_tokens=64,
         reasoning_effort=_ircot_reasoning,
+        ledger_role="ircot_reason",
     )
     meta["reason_latency_ms"] = int((time.time() - started) * 1000)
     meta["reason_model"] = reason_model
@@ -818,12 +897,15 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
         return base_context, "", meta
 
     already = _ircot_context_titles(base_context)
+    # Passages added per hop. 2 is the measured default; the rank-2 passage was a supporting passage 17% of the time
+    # against 37% for rank 1, so an arm may declare 1 to hand the reader less noise.
+    bridge_k = max(1, int((state.get("benchmark_metadata") or {}).get("_ircot_bridge_k") or 2))
     if (state.get("benchmark_metadata") or {}).get("_ircot_corpus") and _BENCHMARK_CORPUS_SEARCH is not None:
-        extra = _ircot_corpus_bridge_passages(entity, already, k=2, context=base_context)
+        extra = _ircot_corpus_bridge_passages(entity, already, k=bridge_k, context=base_context)
         meta["bridge_source"] = "corpus"
     else:
         docs = _ircot_full_candidate_docs(state)
-        extra = _ircot_pick_bridge_passages(entity, docs, already, k=2)
+        extra = _ircot_pick_bridge_passages(entity, docs, already, k=bridge_k)
         meta["bridge_source"] = "pool"
     if not extra:
         meta["reason"] = "no_bridge_passages"
@@ -843,7 +925,7 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
     # base 2500-char budget dropped the original answer-bearing passage).
     bridge_block = "\n".join(f"[{d['title']}] {d['text']}" for d in extra)
     augmented = f"{bridge_block}\n{base_context}"
-    ircot_cap = max(_BENCHMARK_CONTEXT_MAX_CHARS, _env_int("TRACECAG_IRCOT_CONTEXT_MAX_CHARS", 3800))
+    ircot_cap = max(_BENCHMARK_CONTEXT_MAX_CHARS, _env_int("TRACECAG_IRCOT_CONTEXT_MAX_CHARS", 3800)) + cap_bonus
     augmented = augmented[:ircot_cap]
     meta["reason"] = "augmented"
     meta["ircot_context_cap"] = ircot_cap
@@ -851,10 +933,56 @@ async def _ircot_augment(question: str, base_context: str, state: TraceCAGState)
     return augmented, entity, meta
 
 
+async def _ircot_rounds(question: str, base_context: str, state: TraceCAGState) -> "tuple[str, str, dict[str, Any]]":
+    """Up to the arm's declared `_ircot_rounds` reason -> re-retrieve hops (default 1: exactly `_ircot_augment`).
+
+    A later round reasons over the context the previous one produced and is told what was already looked up. The first
+    round that adds nothing ends the loop, and each extra round raises the context cap, because the cap truncates the
+    END of the context -- the original window -- and a second bridge block would otherwise push the first hop out.
+    """
+    rounds = max(1, int((state.get("benchmark_metadata") or {}).get("_ircot_rounds") or 1))
+    context, hint, meta = await _ircot_augment(question, base_context, state)
+    meta["rounds_run"] = 1
+    entities = [meta.get("bridge_entity") or ""]
+    titles = list(meta.get("added_titles") or [])
+    for n in range(2, rounds + 1):
+        if meta.get("reason") != "augmented":
+            break
+        nxt, nxt_hint, nxt_meta = await _ircot_augment(
+            question, context, state,
+            cap_bonus=(n - 1) * _env_int("TRACECAG_IRCOT_ROUND_EXTRA_CHARS", 1500),
+            looked_up=tuple(e for e in entities if e),
+        )
+        if nxt_meta.get("reason") != "augmented":
+            meta["rounds_stopped_by"] = nxt_meta.get("reason")
+            break
+        context, hint = nxt, nxt_hint
+        meta["rounds_run"] = n
+        entities.append(nxt_meta.get("bridge_entity") or "")
+        titles += list(nxt_meta.get("added_titles") or [])
+        meta["context_chars_after"] = nxt_meta.get("context_chars_after")
+    meta["bridge_entities"] = entities
+    meta["added_titles"] = titles
+    return context, hint, meta
+
+
 # ── Async QA generation (benchmark entry point) ───────────────────────────────
 
 
 async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
+    """Benchmark QA generation; adds `retrieval_meta["llm_usage"]`, the usage of every provider call it made."""
+    token = _USAGE_LEDGER.set([])
+    try:
+        result = await _generate_benchmark_qa_response_impl(state, start_time)
+        usage = summarize_usage_ledger(_USAGE_LEDGER.get())
+        if usage:
+            result["retrieval_meta"] = {**(result.get("retrieval_meta") or {}), "llm_usage": usage}
+        return result
+    finally:
+        _USAGE_LEDGER.reset(token)
+
+
+async def _generate_benchmark_qa_response_impl(state: TraceCAGState, start_time: float) -> Dict[str, Any]:
     """Generate concise QA outputs for paper-style public benchmarks."""
     from api.services.trace_cag.llm_client import (
         _is_qwen_model, _qwen_reasoning_overrides, _throttled_post_json,
@@ -895,7 +1023,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
         _ircot_hint = ""
         _use_ircot, _ircot_meta = _ircot_should_run(question, truncated_context, state)
         if _use_ircot:
-            truncated_context, _ircot_hint, _augment_meta = await _ircot_augment(question, truncated_context, state)
+            truncated_context, _ircot_hint, _augment_meta = await _ircot_rounds(question, truncated_context, state)
             _ircot_meta.update(_augment_meta)
             if _augment_meta.get("added_titles"):
                 # Ground against the UNION. The augmented context puts the bridge
@@ -1041,6 +1169,7 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                         if not groq_key or (groq_key in _tried_groq_keys and _503_retry_count >= _max_503_retries):
                             break
                         _tried_groq_keys.add(groq_key)
+                        _attempt_started = time.monotonic()
                         try:
                             resp = await _throttled_post_json(
                                 provider="groq",
@@ -1060,6 +1189,10 @@ async def _generate_benchmark_qa_response(state: TraceCAGState, start_time: floa
                             )
                             if resp is not None and resp.status_code == 200:
                                 data = resp.json()
+                                _ledger_add(
+                                    "reader" if not auxiliary_models.count("reasoning_fallback:empty_content") else "reader_nothink",
+                                    data, wall_started=_attempt_started, response=resp,
+                                )
                                 usage_state = _usage_state_from_provider_usage(data.get("usage") or {})
                                 tokens = usage_state.get("total_tokens") or data.get("usage", {}).get("total_tokens", _bench_max_tokens)
                                 await record_groq_key_usage(groq_key, tokens)

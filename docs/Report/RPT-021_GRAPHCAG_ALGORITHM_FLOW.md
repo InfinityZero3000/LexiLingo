@@ -6,7 +6,7 @@
 
 ## 1. Giới Thiệu TRACECAG
 
-**TRACECAG = Graph-augmented Cache-Augmented Generation**
+**TRACECAG = Traceable Cache-Augmented Generation** (CAG có đồ thị tri thức, mỗi quyết định tái dùng truy vết được)
 
 Đây là thuật toán AI cốt lõi của LexiLingo, kết hợp:
 
