@@ -49,6 +49,10 @@ def _get_storage() -> SnapshotStorage:
     return SnapshotStorage(root)
 
 
+def _storage_for(storage_root: Optional[str]) -> SnapshotStorage:
+    return SnapshotStorage(storage_root) if storage_root else _get_storage()
+
+
 def build_downloader(storage: SnapshotStorage) -> SecureDownloader:
     from api.core.config import get_settings
 
@@ -101,7 +105,7 @@ def sync(
     if dry_run:
         typer.echo("[dry-run] No files will be written.")
 
-    storage = SnapshotStorage(storage_root) if storage_root else _get_storage()
+    storage = _storage_for(storage_root)
     downloader = build_downloader(storage)
     failed = False
     for source_id in source_ids:
@@ -150,11 +154,9 @@ def validate(
         help="Override ETL storage root directory",
     ),
 ) -> None:
-    """Validate that a snapshot manifest is well-formed and consistent."""
-    root = storage_root or None
+    """Verify a snapshot's raw checksum, records and manifest against each other."""
     try:
-        storage = SnapshotStorage(root or "/data/content-etl")
-        manifest = storage.read_manifest(source, version)
+        manifest = _storage_for(storage_root).verify_snapshot(source, version)
     except StorageIntegrityError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(1) from exc
@@ -183,8 +185,7 @@ def activate(
 ) -> None:
     """Activate an approved snapshot, making it the active version."""
     try:
-        storage = SnapshotStorage(storage_root or "/data/content-etl")
-        active_path = storage.activate(source, version)
+        active_path = _storage_for(storage_root).activate(source, version)
     except StorageIntegrityError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(1) from exc

@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
 from api.models.content_agent import (
     ArtifactSourceManifest,
     ContentAgentArtifact,
     GenerationRequest,
+    NormalizedSourceRecord,
     QualityArtifact,
     RecordBatchResponse,
     SnapshotAttachmentResponse,
@@ -26,10 +29,14 @@ from api.services.content_agent.generator import (
     CourseGenerator,
     DeterministicCourseGenerator,
 )
+from api.services.content_agent.enrichment import enrich_plan
 from api.services.content_agent.planner import plan_curriculum
-from api.services.content_agent.policies import find_missing_production_exercise_lessons
-from api.services.content_agent.store import ContentAgentStore
-from api.services.content_etl.contracts import SourceRecordV2
+from api.services.content_agent.policies import (
+    find_missing_production_exercise_lessons,
+    get_source_policy,
+)
+from api.services.content_agent.store import ContentAgentStore, RecordLimitExceeded
+from api.services.content_etl.contracts import SourceManifest, SourceRecordV2
 from api.services.content_etl.registry import get_source_definition
 from api.services.content_etl.storage import SnapshotStorage, StorageIntegrityError
 
@@ -81,6 +88,8 @@ class ContentAgentService:
         self,
         job_id: str,
         request: GenerationRequest,
+        *,
+        storage_factory: Callable[[], SnapshotStorage] | None = None,
     ) -> ContentAgentArtifact:
         records = await self.store.get(job_id) or []
         if request.sources is not None:
@@ -126,14 +135,38 @@ class ContentAgentService:
         ]
 
         plan = plan_curriculum(records, request)
+        attached_snapshots = [
+            snapshot
+            for snapshot in await self.store.get_snapshots(job_id)
+            if request.sources is None or snapshot.source_name in request.sources
+        ]
+        references = [
+            snapshot
+            for snapshot in attached_snapshots
+            if get_source_policy(snapshot.source_name).role == "reference"
+        ]
+        enrichment_checksums: list[str] = []
+        reference_names = [snapshot.source_name for snapshot in references]
+        enrichment_metrics: dict[str, dict[str, int]] = {}
+        enrichment_warnings: list[str] = []
+        if references:
+            if storage_factory is None:
+                raise RuntimeError("Reference snapshots need ETL storage to enrich")
+            plan, report = await asyncio.to_thread(
+                enrich_plan, plan, storage=storage_factory(), references=references
+            )
+            enrichment_checksums = report.checksums
+            enrichment_metrics = report.metrics(sorted(reference_names))
+            enrichment_warnings = report.warnings(sorted(reference_names))
         courses = await self.generator.generate_courses(plan, request)
         source_counts = Counter(record.source_name for record in records)
-        attached_snapshots = await self.store.get_snapshots(job_id)
         attached_by_source = {
             snapshot.source_name: snapshot for snapshot in attached_snapshots
         }
         source_manifest: list[ArtifactSourceManifest] = []
-        for source_name in sorted(source_counts):
+        # Every pinned snapshot belongs in the manifest, including references
+        # that contributed no record of their own.
+        for source_name in sorted({*source_counts, *attached_by_source}):
             snapshot = attached_by_source.get(source_name)
             if snapshot is not None:
                 source_manifest.append(
@@ -220,6 +253,7 @@ class ContentAgentService:
                 }
                 for record in sorted(records, key=lambda item: item.record_id)
             ],
+            "enrichment": enrichment_checksums,
         }
         generation_key = hashlib.sha256(
             json.dumps(
@@ -228,7 +262,7 @@ class ContentAgentService:
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        warnings = []
+        warnings = list(enrichment_warnings)
         if plan.rejected_low_confidence:
             warnings.append(
                 f"Rejected {plan.rejected_low_confidence} low-confidence records"
@@ -246,6 +280,7 @@ class ContentAgentService:
                     "input_records": len(records),
                     "catalog_size": plan.catalog_size,
                     "rejected_low_confidence": plan.rejected_low_confidence,
+                    "enrichment": enrichment_metrics,
                     "courses": len(courses),
                     "lessons": sum(
                         len(unit.lessons)
@@ -288,6 +323,7 @@ class ContentAgentService:
 
         descriptors: list[SourceSnapshotDescriptor] = []
         normalized_records = []
+        planned_records = 0
         for reference in snapshots:
             manifest = storage.read_manifest(
                 reference.source_id,
@@ -301,23 +337,25 @@ class ContentAgentService:
                 raise StorageIntegrityError(
                     "Requested snapshot_id does not match the stored manifest"
                 )
-            raw_records = storage.read_normalized_records(
-                reference.source_id,
-                reference.source_version,
-            )
-            source_records = [
-                SourceRecordV2.model_validate(record) for record in raw_records
-            ]
-            for record in source_records:
-                if (
-                    record.source_name != manifest.source_name
-                    or record.source_version != manifest.source_version
-                    or record.raw_checksum != manifest.raw_sha256
-                ):
-                    raise StorageIntegrityError(
-                        "Normalized record provenance does not match its manifest"
+            if get_source_policy(manifest.source_name.value).role == "seed":
+                planned_records += manifest.counts.approved
+                if planned_records > self.store.max_records:
+                    raise RecordLimitExceeded(
+                        f"Job record limit exceeded ({self.store.max_records}): "
+                        f"snapshots carry {planned_records} records"
                     )
-            normalized_records.extend(normalize_etl_records(source_records))
+                normalized_records.extend(
+                    await asyncio.to_thread(
+                        _load_snapshot_records, storage, manifest
+                    )
+                )
+            else:
+                # Reference corpora are searched at generate time, never loaded.
+                await asyncio.to_thread(
+                    storage.verify_snapshot,
+                    manifest.source_name,
+                    manifest.source_version,
+                )
             definition = get_source_definition(manifest.source_name)
             descriptors.append(
                 SourceSnapshotDescriptor(
@@ -352,6 +390,27 @@ class ContentAgentService:
 
     async def delete(self, job_id: str) -> None:
         await self.store.delete(job_id)
+
+
+def _load_snapshot_records(
+    storage: SnapshotStorage,
+    manifest: SourceManifest,
+) -> list[NormalizedSourceRecord]:
+    raw_records = storage.read_normalized_records(
+        manifest.source_name,
+        manifest.source_version,
+    )
+    source_records = [SourceRecordV2.model_validate(record) for record in raw_records]
+    for record in source_records:
+        if (
+            record.source_name != manifest.source_name
+            or record.source_version != manifest.source_version
+            or record.raw_checksum != manifest.raw_sha256
+        ):
+            raise StorageIntegrityError(
+                "Normalized record provenance does not match its manifest"
+            )
+    return normalize_etl_records(source_records)
 
 
 def _stable_manifest_time(source_name: str, job_id: str, checksum: str) -> datetime:

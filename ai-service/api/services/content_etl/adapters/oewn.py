@@ -23,7 +23,10 @@ _POS_MAP: dict[str, str] = {
     "s": "adjective",  # adjective satellite
 }
 
-ADAPTER_VERSION = 1
+# v2: `metadata.sense_rank`, the sense's position in its entry. WordNet lists a
+# lemma's senses by frequency, and the pipeline sorts records by hash, so the
+# order is lost unless it is recorded here.
+ADAPTER_VERSION = 2
 SOURCE_NAME = "oewn"
 LICENSE_ID = "CC-BY-4.0"
 LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/"
@@ -60,12 +63,24 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
 
     # Build synset definition index: synset_id → definition text
     synset_defs: dict[str, str] = {}
+    # The published release keeps example sentences on the Synset, not the Sense.
+    synset_examples: dict[str, str] = {}
     for lexicon in root.iter(tag("Lexicon")):
         for synset in lexicon.iter(tag("Synset")):
             ss_id = synset.get("id", "")
             def_elem = synset.find(tag("Definition"))
             if def_elem is not None and def_elem.text:
                 synset_defs[ss_id] = def_elem.text.strip()
+            first_example = next(
+                (
+                    ex.text.strip()
+                    for ex in synset.findall(tag("Example"))
+                    if ex.text and ex.text.strip()
+                ),
+                None,
+            )
+            if first_example:
+                synset_examples[ss_id] = first_example
 
     records: list[dict[str, Any]] = []
 
@@ -83,17 +98,19 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
 
             pos = _POS_MAP.get(pos_code, "phrase")
 
-            for sense in entry.iter(tag("Sense")):
+            for sense_rank, sense in enumerate(entry.iter(tag("Sense")), start=1):
                 sense_id = sense.get("id", "")
                 synset_id = sense.get("synset", "")
                 definition = synset_defs.get(synset_id, "")
 
-                # Example sentences from SenseExample elements.
+                # Other WN-LMF exports put examples on the Sense instead.
                 examples = [
                     ex.text.strip()
                     for ex in sense.iter(tag("SenseExample"))
                     if ex.text and ex.text.strip()
                 ]
+                if not examples and synset_id in synset_examples:
+                    examples = [synset_examples[synset_id]]
 
                 identity = f"{SOURCE_NAME}:{written_form}:{pos}:{sense_id}"
                 record_id = f"{SOURCE_NAME}:{_sha256_str(identity)[:24]}"
@@ -112,6 +129,7 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
                         f"https://en-word.net/lemma/{quote(written_form, safe='')}"
                     ),
                     "language": lang,
+                    "metadata": {"sense_rank": sense_rank},
                     "lineage": {
                         "adapter": SOURCE_NAME,
                         "adapter_version": ADAPTER_VERSION,

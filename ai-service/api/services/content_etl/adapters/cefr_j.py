@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 
-ADAPTER_VERSION = 1
+ADAPTER_VERSION = 2
 SOURCE_NAME = "cefr_j"
 LICENSE_ID = "LicenseRef-CEFR-J-Commercial"
 LICENSE_URL = "https://github.com/openlanguageprofiles/olp-en-cefrj"
@@ -27,6 +27,32 @@ _VALID_CEFR_LABELS = frozenset({"A1", "A2", "B1", "B2", "C1", "C2", "A2+", "B1+"
 
 def _sha256_str(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+# The published file uses full names; abbreviations are accepted for older
+# exports. Grammatical classes the lexicon enum has no slot for map to the
+# nearest content class WordNet also uses ("eight" is a noun there, "every" an
+# adjective), so a seed is matched strictly instead of falling back to `phrase`.
+_POS_MAP: dict[str, str] = {
+    "noun": "noun", "n": "noun", "number": "noun",
+    "verb": "verb", "v": "verb",
+    "be-verb": "verb", "do-verb": "verb", "have-verb": "verb",
+    "adjective": "adjective", "adj": "adjective", "determiner": "adjective",
+    "adverb": "adverb", "adv": "adverb",
+    "pronoun": "pronoun",
+    "preposition": "preposition",
+    "conjunction": "conjunction",
+    "interjection": "interjection",
+}
+# No lexical definition exists for these ("can" as a modal is not "preserve in a
+# can"), so a card for them would teach the wrong thing.
+_SKIPPED_POS = frozenset({"modal auxiliary", "infinitive-to"})
+
+
+def _headword(raw: str) -> str:
+    # Spelling variants share one row: "color/colour", "a.m./A.M./am/AM". The
+    # first is the American form, which is also what CMUdict is keyed on.
+    return next((v.strip() for v in raw.split("/") if v.strip()), "").lower()
 
 
 def _reject_sharealike(raw_path: Path) -> None:
@@ -58,7 +84,12 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
 
     records: list[dict[str, Any]] = []
     for row_num, row in enumerate(reader, start=2):
-        word = (row.get("headword") or row.get("word") or "").strip().lower()
+        word = _headword(row.get("headword") or row.get("word") or "")
+        pos_raw = (row.get("pos") or "").strip().lower()
+        pos = _POS_MAP.get(pos_raw, "phrase")
+        # Contractions ("'m", "'re") are listed as headwords but are not words to teach.
+        if pos_raw in _SKIPPED_POS or not word[:1].isalnum():
+            continue
         cefr_raw = (row.get("CEFR") or row.get("cefr") or row.get("level") or "").strip()
         cefr = _normalise_cefr(cefr_raw)
 
@@ -69,13 +100,15 @@ def parse(raw_path: Path) -> list[dict[str, Any]]:
                 f"Row {row_num}: unrecognised CEFR label {cefr_raw!r} for word {word!r}"
             )
 
-        record_id = f"{SOURCE_NAME}:{_sha256_str(word)[:24]}"
+        # One headword is listed once per part of speech ("about" is an adverb
+        # and a preposition), so the id has to include it.
+        record_id = f"{SOURCE_NAME}:{_sha256_str(f'{word}:{pos}')[:24]}"
         records.append(
             {
                 "record_id": record_id,
                 "source_name": SOURCE_NAME,
                 "word": word,
-                "part_of_speech": "phrase",
+                "part_of_speech": pos,
                 "declared_cefr": cefr,
                 "source_url": OFFICIAL_URL,
                 "language": "en",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from typing import Any
+from typing import Any, Literal
 
 from api.models.content_agent import (
     ContentUsage,
@@ -56,8 +56,13 @@ class SourcePolicyError(ValueError):
     """Raised when a source is unsupported, expired, or not licensed."""
 
 
+SourceRole = Literal["seed", "reference"]
+
+
 @dataclass(frozen=True)
 class SourcePolicy:
+    # role: "seed" supplies the CEFR-labelled words a course is built from;
+    # "reference" corpora carry no level and only enrich words a seed chose.
     source_name: str
     license_mode: LicenseMode
     content_usage: ContentUsage
@@ -68,6 +73,7 @@ class SourcePolicy:
     enabled: bool = True
     ownership_verification_required: bool = False
     metadata_fields: tuple[str, ...] = ()
+    role: SourceRole = "seed"
 
 
 _REVIEWED_AT = date(2026, 6, 14)
@@ -78,6 +84,7 @@ _SAFE_METADATA_FIELDS = (
     "duration_seconds",
     "language",
     "resource_type",
+    "sense_rank",
 )
 
 
@@ -90,6 +97,7 @@ def _policy(
     content_storage_allowed: bool,
     enabled: bool = True,
     ownership_verification_required: bool = False,
+    role: SourceRole = "seed",
 ) -> SourcePolicy:
     return SourcePolicy(
         source_name=source_name,
@@ -102,6 +110,7 @@ def _policy(
         enabled=enabled,
         ownership_verification_required=ownership_verification_required,
         metadata_fields=_SAFE_METADATA_FIELDS,
+        role=role,
     )
 
 
@@ -126,13 +135,15 @@ SOURCE_POLICIES: dict[str, SourcePolicy] = {
         ContentUsage.FULL_TEXT,
         rate_limit=0,
         content_storage_allowed=True,
+        role="reference",
     ),
     "cmudict": _policy(
         "cmudict",
         LicenseMode.APPROVED_DATASET,
-        ContentUsage.LABEL_ONLY,
+        ContentUsage.FULL_TEXT,
         rate_limit=0,
         content_storage_allowed=True,
+        role="reference",
     ),
     "cefr_j": _policy(
         "cefr_j",
@@ -147,6 +158,7 @@ SOURCE_POLICIES: dict[str, SourcePolicy] = {
         ContentUsage.METADATA_ONLY,
         rate_limit=0,
         content_storage_allowed=True,
+        role="reference",
     ),
     "tatoeba": _policy(
         "tatoeba",
@@ -154,6 +166,7 @@ SOURCE_POLICIES: dict[str, SourcePolicy] = {
         ContentUsage.FULL_TEXT,
         rate_limit=0,
         content_storage_allowed=True,
+        role="reference",
     ),
     "librispeech": _policy(
         "librispeech",
@@ -161,6 +174,7 @@ SOURCE_POLICIES: dict[str, SourcePolicy] = {
         ContentUsage.FULL_TEXT,
         rate_limit=0,
         content_storage_allowed=True,
+        role="reference",
     ),
     "common_voice": _policy(
         "common_voice",
@@ -168,6 +182,7 @@ SOURCE_POLICIES: dict[str, SourcePolicy] = {
         ContentUsage.FULL_TEXT,
         rate_limit=0,
         content_storage_allowed=True,
+        role="reference",
     ),
 }
 
@@ -259,6 +274,7 @@ def apply_source_policy(
                 "definition": record.get("definition"),
                 "translation_vi": record.get("translation_vi"),
                 "example": record.get("example"),
+                "pronunciation": record.get("pronunciation"),
             }
         )
     elif content_usage == ContentUsage.LABEL_ONLY:

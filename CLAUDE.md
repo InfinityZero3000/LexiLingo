@@ -272,7 +272,7 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   phrase clearly." — check the wording before trusting a job.
   List what is actually available with
   `curl https://api.groq.com/openai/v1/models -H "Authorization: Bearer $KEY"`.
-- **Groq is `qwen/qwen3.6-27b` everywhere, and every request must carry
+- **Groq is `qwen/qwen3.8-27b` everywhere, and every request must carry
   `reasoning_effort: "none"`** (2026-08-19). Without it qwen writes `<think>`
   prose into `content`, so every JSON parser here fails; with it the stream is
   clean (`finish_reason=stop`) and a `max_tokens: 80` translate call answers in
@@ -303,16 +303,49 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   call leaves the old content in place. Groq's free tier rate-limits hard:
   `--concurrency=2 --delay=6` completed 93/93, `--concurrency=4 --delay=1` lost
   93 of 249 to 429s.
-- **ETL corpora cannot seed a course by themselves.** `plan_curriculum` selects
-  words strictly by `declared_cefr`, and OEWN/CMUdict records carry no CEFR
-  label — they are enrichment (definitions, examples, pronunciation), not a seed
-  list. The labelled source in the registry is CEFR-J, whose licence is
-  commercial, and `existing_cefr` is only an alias for it
-  (`content_agent_sources._SOURCE_ALIASES`), so a job with the CLI's default
-  `--sources existing_cefr` fails with "not found in catalog". Today the working
-  seed is `admin_upload`: a word list carrying `declared_cefr` per word.
-  Attaching a full corpus would also exceed `CONTENT_AGENT_MAX_RECORDS` (20,000;
-  OEWN is 185,129).
+- **Seeds choose the words; references only fill gaps.** `plan_curriculum` selects
+  words strictly by `declared_cefr`, and OEWN/CMUdict carry no CEFR label, so a
+  job needs a labelled source (`admin_upload`, or `cefr_j` — commercial licence;
+  `existing_cefr` is an alias for it) and the backend refuses one without
+  (`require_labelled_source`). Role lives in `SourcePolicy.role`. A `reference`
+  snapshot is **never loaded into the job** (so it does not count against
+  `CONTENT_AGENT_MAX_RECORDS`, and OEWN's 185,129 records are fine): after the
+  planner has picked its words, `enrichment.enrich_plan` streams the snapshot
+  (`SnapshotStorage.find_records`) for exactly those words and fills only fields
+  the seed lacks — an admin's own definition is never replaced, and an example is
+  taken only with the definition it was written for. Each borrowed field is
+  recorded in `lineage.enrichment` (snapshot id, record id, licence, attribution);
+  the item's own `attribution_text` stays the seed's because the backend gate
+  compares it with the pin, so OEWN's CC-BY credit travels in the manifest and
+  the lineage. The gate rejects an enrichment entry pointing at an unpinned
+  snapshot. Every pinned snapshot must appear in `source_manifest`, used or not.
+- **What real OEWN/CMUdict taught** (fixtures had hidden all of it): OEWN keeps
+  example sentences on the `Synset` (`<Example>`), there is no `SenseExample`;
+  senses are listed most-common-first within an entry, but the pipeline sorts by
+  hash, so adapter v2 records that order as `metadata.sense_rank` — picking the
+  "shortest definition" gave dog = "informal term for a man". Without a rank the
+  enricher refuses to guess. CMUdict needs its stress digit (`AH0` ə vs `AH1` ʌ),
+  so v2 keeps it; `phonetics.arpabet_to_ipa` converts to the IPA that
+  `VocabularyItem.pronunciation` stores. OEWN's own `<Pronunciation>` is not used:
+  24% coverage, mixed US/GB, missing for water/book/school.
+- **A new adapter version gets its own snapshot key.** `(source, version)` is
+  immutable, so adapter v≥2 output lands under `"<version>+a<N>"`
+  (`sources._snapshot_version`); v1 snapshots keep their name and stay as the
+  rollback. After deploying, run `sync` once: `active` moves to `…+a2`. A job
+  already pinned to a v1 snapshot is unaffected, but v1 OEWN has no `sense_rank`,
+  so it enriches nothing (the preview says "oewn matched none…").
+- **CEFR-J adapter was checked against the real file** (public 1.5 CSV, 7,799
+  rows; the old fixture had no `pos`). One headword is listed once per part of
+  speech (`about` = adverb + preposition) and 167 rows hold spelling variants
+  (`color/colour`), so the record id includes `pos` — hashing the word alone
+  quarantined 12% as duplicates and the 2% ceiling failed the whole sync — and the
+  first (American) spelling is kept. Grammar classes with no enum slot map to the
+  nearest WordNet class (`number`→noun, `determiner`→adjective); the modal
+  auxiliaries, infinitive `to` and contractions (`'m`) are dropped because no
+  dictionary sense is right for them (WordNet's `can` is "preserve in a can").
+  Result: 7,780 approved, 2 quarantined. The planner teaches a word once per unit
+  even when two parts of speech survive, because the lesson cursor advances a fixed
+  number of entries and a skipped duplicate made consecutive lessons overlap.
 - `flutter-app/data/crawler/` (BBC) — **deleted 2026-08-20**. It was unreferenced
   anywhere, wrote to a `flutter-app/courses/` directory that does not exist, and
   its export format carried no lessons or exercises. Recover from git history if

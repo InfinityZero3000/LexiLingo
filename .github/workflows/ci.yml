@@ -269,6 +269,22 @@ jobs:
             tests/test_llm_client_pacing.py \
             --tb=short -q
 
+      # The licensed-content ETL, its adapters and the content-agent that
+      # consumes it (seed/reference enrichment) had no CI coverage at all.
+      - name: Run content ETL and content-agent tests
+        run: |
+          pytest \
+            tests/content_etl \
+            tests/test_reference_enrichment_flow.py \
+            tests/test_content_agent_adapters.py \
+            tests/test_content_agent_generator.py \
+            tests/test_content_agent_planner.py \
+            tests/test_content_agent_policies.py \
+            tests/test_content_agent_routes.py \
+            tests/test_content_agent_store.py \
+            tests/integration/test_licensed_etl_content_agent_flow.py \
+            --tb=short -q
+
   # ──────────────────────────────────────────────
   # MCP server — import and startup protocol smoke
   # ──────────────────────────────────────────────

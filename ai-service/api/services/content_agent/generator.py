@@ -254,6 +254,7 @@ def _deterministic_vocabulary(
             definition=_generated_definition(record),
             translation_vi=record.translation_vi,
             example=_generated_example(record),
+            pronunciation=record.pronunciation,
             part_of_speech=record.part_of_speech,
             difficulty_level=level,
             topic=record.declared_topic,
@@ -668,7 +669,7 @@ class GroqMissionGenerator(LLMMissionGenerator):
         # the short service calls use, and a whole lesson deserves the bigger
         # model when the two differ.
         self._model = (
-            model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "qwen/qwen3.6-27b"
+            model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "qwen/qwen3.8-27b"
         )
 
     async def _call_model(
