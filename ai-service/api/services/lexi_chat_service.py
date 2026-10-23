@@ -225,6 +225,14 @@ def _build_suggested_practice(
         return None
 
 
+_CARD_UNAVAILABLE_FACTS = (
+    "The learner asked about their own profile or the app's courses, but their "
+    "data could not be loaded right now. Say that in one short sentence and "
+    "suggest the Courses tab or trying again in a moment. Never claim the app "
+    "has no courses.\n"
+)
+
+
 async def _resolve_learner_card(
     user_id: str, user_text: str
 ) -> tuple[str, List["LexiCourseSuggestion"]]:
@@ -259,7 +267,9 @@ async def _resolve_learner_card(
             bool(card),
         )
         if not card:
-            return "", []
+            # Silence here made the tutor improvise "I don't have a list of
+            # courses" as if the app had none.
+            return _CARD_UNAVAILABLE_FACTS, []
         return (
             render_card_facts(card, intents),
             [

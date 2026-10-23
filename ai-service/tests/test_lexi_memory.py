@@ -149,3 +149,20 @@ def test_practice_intent_is_never_answer_first():
 def test_memory_block_reaches_the_prompt():
     memory = render_facts({"preferred_name": "Thang"})
     assert 'Prefers to be called: "Thang"' in _prompt("Hello", [], memory=memory)
+
+
+@pytest.mark.asyncio
+async def test_unresolved_card_tells_the_tutor_not_to_claim_no_courses(monkeypatch):
+    from api.services import learner_card, lexi_chat_service
+
+    monkeypatch.setattr(
+        learner_card, "get_learner_card", AsyncMock(return_value=None), raising=True
+    )
+    facts, courses = await lexi_chat_service._resolve_learner_card(
+        "u1", "Can you give me some courses in this app?"
+    )
+    assert "Never claim the app has no courses" in facts
+    assert courses == []
+
+    facts, courses = await lexi_chat_service._resolve_learner_card("u1", "Hello there")
+    assert (facts, courses) == ("", [])
