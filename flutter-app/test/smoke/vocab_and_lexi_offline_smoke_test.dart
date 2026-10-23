@@ -31,6 +31,15 @@ class _FakeLexiRepo implements LexiChatRepository {
   Future<void> deleteSession({required String sessionId}) async {}
 
   @override
+  Future<Map<String, String>> getMemory() async => const {};
+
+  @override
+  Future<void> forgetMemory() async {}
+
+  @override
+  Future<void> forgetMemoryFact(String key) async {}
+
+  @override
   Future<List<LexiMessage>> getMessages({required String sessionId}) async {
     return initialMessages;
   }

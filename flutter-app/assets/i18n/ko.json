@@ -1237,6 +1237,26 @@
     "tooltipNewChat": "새 채팅",
     "sessionsDrawerTitle": "렉시 세션",
     "tooltipNewSession": "새 세션",
+    "memory": {
+      "entry": "Lexi가 기억하는 것",
+      "title": "Lexi가 기억하는 것",
+      "subtitle": "채팅에서 말씀하신 내용입니다. Lexi는 답변을 더 개인화하는 데 사용합니다. 언제든 삭제할 수 있어요.",
+      "empty": "아직 없어요. 이름, 직업, 공부하는 목적을 Lexi에게 말하면 여기에 표시됩니다.",
+      "loadFailed": "지금은 기억을 불러올 수 없어요.",
+      "retry": "다시 시도",
+      "forgetOne": "이 항목 잊기",
+      "forgetAll": "모두 잊기",
+      "confirmTitle": "모두 잊을까요?",
+      "confirmBody": "Lexi가 말씀하신 내용을 더 이상 사용하지 않습니다. 지난 채팅은 기록에 남아 있어요.",
+      "cancel": "취소",
+      "actionFailed": "업데이트하지 못했어요. 다시 시도해 주세요.",
+      "key": {
+        "preferred_name": "부르는 이름",
+        "occupation": "직업 또는 전공",
+        "goal": "학습 목표",
+        "interests": "관심사"
+      }
+    },
     "noSessions": "이전 세션이 없습니다.",
     "renameSessionTitle": "세션 이름 바꾸기",
     "cancelButton": "취소",

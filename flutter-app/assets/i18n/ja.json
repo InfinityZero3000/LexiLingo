@@ -1237,6 +1237,26 @@
     "tooltipNewChat": "新しいチャット",
     "sessionsDrawerTitle": "レクシー・セッション",
     "tooltipNewSession": "新しいセッション",
+    "memory": {
+      "entry": "Lexiが覚えていること",
+      "title": "Lexiが覚えていること",
+      "subtitle": "チャットで話した内容です。Lexiは返信をあなたに合わせるためにこれを使います。いつでも削除できます。",
+      "empty": "まだありません。名前や仕事、勉強の目的をLexiに伝えると、ここに表示されます。",
+      "loadFailed": "いまは記憶を読み込めませんでした。",
+      "retry": "もう一度試す",
+      "forgetOne": "これを忘れる",
+      "forgetAll": "すべて忘れる",
+      "confirmTitle": "すべて忘れますか？",
+      "confirmBody": "Lexiはあなたが話した内容を使わなくなります。過去のチャットは履歴に残ります。",
+      "cancel": "キャンセル",
+      "actionFailed": "更新できませんでした。もう一度お試しください。",
+      "key": {
+        "preferred_name": "呼び名",
+        "occupation": "仕事・専攻",
+        "goal": "学習の目標",
+        "interests": "興味"
+      }
+    },
     "noSessions": "以前のセッションはありません",
     "renameSessionTitle": "セッション名の変更",
     "cancelButton": "キャンセル",

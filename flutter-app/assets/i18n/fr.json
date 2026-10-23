@@ -1237,6 +1237,26 @@
     "tooltipNewChat": "Nouvelle discussion",
     "sessionsDrawerTitle": "Séances Lexi",
     "tooltipNewSession": "Nouvelle séance",
+    "memory": {
+      "entry": "Ce dont Lexi se souvient",
+      "title": "Ce dont Lexi se souvient",
+      "subtitle": "Ce que vous avez mentionné dans le chat. Lexi s'en sert pour personnaliser ses réponses. Vous pouvez en supprimer n'importe quel élément.",
+      "empty": "Rien pour l'instant. Si vous dites à Lexi votre prénom, votre métier ou ce pour quoi vous étudiez, cela apparaîtra ici.",
+      "loadFailed": "Impossible de charger la mémoire pour le moment.",
+      "retry": "Réessayer",
+      "forgetOne": "Oublier ceci",
+      "forgetAll": "Tout oublier",
+      "confirmTitle": "Tout oublier ?",
+      "confirmBody": "Lexi n'utilisera plus ce que vous lui avez dit. Vos anciennes conversations restent dans votre historique.",
+      "cancel": "Annuler",
+      "actionFailed": "Mise à jour impossible. Veuillez réessayer.",
+      "key": {
+        "preferred_name": "M'appeler",
+        "occupation": "Métier ou domaine d'études",
+        "goal": "Objectif d'apprentissage",
+        "interests": "Centres d'intérêt"
+      }
+    },
     "noSessions": "Aucune séance précédente",
     "renameSessionTitle": "Renommer la session",
     "cancelButton": "Annuler",

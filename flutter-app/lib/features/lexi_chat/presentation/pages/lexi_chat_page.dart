@@ -20,6 +20,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_cha
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corrections_sheet.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
 
@@ -816,6 +817,15 @@ class _LexiChatPageState extends State<LexiChatPage>
                             );
                           },
                         ),
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.psychology_alt_rounded),
+                  title: Text('lexiChat.memory.entry'.tr()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    LexiMemorySheet.show(this.context);
+                  },
                 ),
               ],
             );

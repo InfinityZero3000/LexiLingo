@@ -1371,6 +1371,26 @@
     "tooltipNewChat": "New chat",
     "sessionsDrawerTitle": "Lexi Sessions",
     "tooltipNewSession": "New session",
+    "memory": {
+      "entry": "What Lexi remembers",
+      "title": "What Lexi remembers",
+      "subtitle": "Things you mentioned in chat. Lexi uses them to make replies feel personal. You can remove any of them.",
+      "empty": "Nothing yet. If you tell Lexi your name, your job or what you are studying for, it will show up here.",
+      "loadFailed": "Couldn't load your memory right now.",
+      "retry": "Try again",
+      "forgetOne": "Forget this",
+      "forgetAll": "Forget everything",
+      "confirmTitle": "Forget everything?",
+      "confirmBody": "Lexi will stop using what you told it. Your past chats stay in your history.",
+      "cancel": "Cancel",
+      "actionFailed": "Couldn't update. Please try again.",
+      "key": {
+        "preferred_name": "Call me",
+        "occupation": "Job or field of study",
+        "goal": "Learning goal",
+        "interests": "Interests"
+      }
+    },
     "noSessions": "No previous sessions",
     "renameSessionTitle": "Rename session",
     "cancelButton": "Cancel",

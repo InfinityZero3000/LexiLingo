@@ -1371,6 +1371,26 @@
     "tooltipNewChat": "Cuộc trò chuyện mới",
     "sessionsDrawerTitle": "Phiên Lexi",
     "tooltipNewSession": "Phiên mới",
+    "memory": {
+      "entry": "Lexi nhớ gì về bạn",
+      "title": "Lexi nhớ gì về bạn",
+      "subtitle": "Những điều bạn đã nhắc tới khi trò chuyện. Lexi dùng chúng để trả lời gần gũi hơn. Bạn có thể xoá bất kỳ mục nào.",
+      "empty": "Chưa có gì. Nếu bạn nói với Lexi tên, nghề nghiệp hoặc mục tiêu học, thông tin sẽ hiện ở đây.",
+      "loadFailed": "Không tải được bộ nhớ lúc này.",
+      "retry": "Thử lại",
+      "forgetOne": "Quên mục này",
+      "forgetAll": "Quên tất cả",
+      "confirmTitle": "Quên tất cả?",
+      "confirmBody": "Lexi sẽ không dùng những gì bạn đã kể nữa. Các cuộc trò chuyện cũ vẫn nằm trong lịch sử.",
+      "cancel": "Huỷ",
+      "actionFailed": "Không cập nhật được. Vui lòng thử lại.",
+      "key": {
+        "preferred_name": "Gọi tôi là",
+        "occupation": "Nghề nghiệp / ngành học",
+        "goal": "Mục tiêu học",
+        "interests": "Sở thích"
+      }
+    },
     "noSessions": "Chưa có phiên nào",
     "renameSessionTitle": "Đổi tên phiên",
     "cancelButton": "Hủy",

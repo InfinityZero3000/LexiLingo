@@ -1237,6 +1237,26 @@
     "tooltipNewChat": "新聊天",
     "sessionsDrawerTitle": "莱克西会议",
     "tooltipNewSession": "新会话",
+    "memory": {
+      "entry": "Lexi 记得什么",
+      "title": "Lexi 记得什么",
+      "subtitle": "这些是你在聊天中提到的内容。Lexi 会用它们让回复更贴近你。你可以随时删除任何一项。",
+      "empty": "暂无内容。如果你告诉 Lexi 你的名字、职业或学习目的，它们会显示在这里。",
+      "loadFailed": "暂时无法加载记忆。",
+      "retry": "重试",
+      "forgetOne": "忘记这一项",
+      "forgetAll": "全部忘记",
+      "confirmTitle": "全部忘记？",
+      "confirmBody": "Lexi 将不再使用你告诉它的内容。你过去的聊天仍保留在历史记录中。",
+      "cancel": "取消",
+      "actionFailed": "更新失败，请重试。",
+      "key": {
+        "preferred_name": "称呼",
+        "occupation": "职业或专业",
+        "goal": "学习目标",
+        "interests": "兴趣"
+      }
+    },
     "noSessions": "没有之前的会话",
     "renameSessionTitle": "重命名会话",
     "cancelButton": "取消",

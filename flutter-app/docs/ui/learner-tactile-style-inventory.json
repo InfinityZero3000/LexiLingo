@@ -15706,6 +15706,30 @@
       }
     },
     {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart::LexiMemorySheet::showModalBottomSheet::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart",
+      "entryPoint": "overlay",
+      "symbol": "LexiMemorySheet",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 13,
+      "category": "eligible",
+      "group": 5,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart::_Body::showDialog::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart",
+      "entryPoint": "overlay",
+      "symbol": "_Body",
+      "callKind": "showDialog",
+      "ordinal": 0,
+      "line": 157,
+      "category": "eligible",
+      "group": 5,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart::_LexiTypingIndicatorState::BoxDecoration::0",
       "path": "lib/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart",
       "entryPoint": "surface",
