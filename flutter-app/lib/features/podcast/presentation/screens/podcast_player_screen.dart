@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../../../core/services/podcast_audio_handler.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/content_kit.dart';
 import '../../../../core/widgets/lottie_loading_widget.dart';
 import '../../../games/data/repositories/games_repository.dart';
 import '../../data/repositories/podcast_repository.dart';
+import '../../data/services/listening_history_recorder.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../widgets/audio_player_controls.dart';
+import '../widgets/player_header.dart';
 import '../widgets/transcript_panel.dart';
 
 /// Full podcast player screen.
@@ -25,10 +29,14 @@ class PodcastPlayerScreen extends StatefulWidget {
   final PodcastEpisode episode;
   final String artworkUrl;
 
+  /// Labels the "continue listening" card; empty when the caller has none.
+  final String podcastTitle;
+
   const PodcastPlayerScreen({
     super.key,
     required this.episode,
     required this.artworkUrl,
+    this.podcastTitle = '',
   });
 
   @override
@@ -48,6 +56,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   String? _transcript;
   bool _transcriptExpanded = false;
   bool _handlerInitializing = false;
+  bool _loadError = false;
 
   // Mirrors PodcastAudioHandler.sleepTimerSecondsRemaining for display only —
   // the timer itself lives on the handler, not here, so it keeps running
@@ -83,7 +92,9 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     // Position stream
     _subs.add(
       _handler!.positionStream.listen((pos) {
-        if (!mounted) return;
+        // just_audio ticks ~5x/s; rebuilding the whole screen that often is
+        // what made reopening a background podcast stutter.
+        if (!mounted || pos.inSeconds == _position.inSeconds) return;
         setState(() => _position = pos);
         _checkXpAward(pos);
       }),
@@ -116,16 +127,60 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       }),
     );
 
-    // Load episode into the handler (resolves local/remote source)
+    _recordHistory();
+    await _loadEpisode();
+  }
+
+  /// Hands the episode to the app-wide recorder, which keeps writing the
+  /// learner's place after this screen is popped.
+  void _recordHistory() {
+    if (!sl.isRegistered<ListeningHistoryRecorder>()) return;
+    final handler = _handler!;
+    sl<ListeningHistoryRecorder>()
+      ..bind(
+        owner: handler,
+        position: handler.positionStream,
+        duration: handler.durationStream,
+        playing: handler.playerStateStream.map((s) => s.playing).distinct(),
+      )
+      ..track(
+        episode: widget.episode,
+        podcastTitle: widget.podcastTitle,
+        artworkUrl: widget.artworkUrl,
+      );
+  }
+
+  // Load episode into the handler (resolves local/remote source)
+  Future<void> _loadEpisode() async {
+    if (_loadError) setState(() => _loadError = false);
     try {
-      await _handler!.setEpisode(widget.episode);
-      // Restore previous listen position
-      final prevMs = widget.episode.listenProgress * 1000;
-      if (prevMs > 0) {
-        await _handler!.seek(Duration(milliseconds: prevMs.toInt()));
+      final loaded = await _handler!.setEpisode(widget.episode);
+      if (!mounted) return;
+      if (!loaded) {
+        // Already playing in the background: adopt its live state instead of
+        // restarting it from the saved position.
+        setState(() {
+          _position = _handler!.currentPosition;
+          _isPlaying = _handler!.playing;
+        });
+        return;
       }
+      // Pick up where the learner left off.
+      final history = await _podcastRepository.getListeningHistory(
+        widget.episode.guid,
+      );
+      // A finished episode has history with no resume point: start it over.
+      // listenProgress is only the fallback for episodes with no history yet
+      // (it is itself copied from the history's last position).
+      final resume = history != null
+          ? history.resumeFromSeconds
+          : (widget.episode.listenProgress > 5
+                ? widget.episode.listenProgress
+                : null);
+      if (resume != null) await _handler!.seek(Duration(seconds: resume));
     } catch (e) {
       debugPrint('PodcastPlayerScreen: failed to load audio: $e');
+      if (mounted) setState(() => _loadError = true);
     }
   }
 
@@ -181,132 +236,111 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cefrColor = _cefrColor(widget.episode.cefrLevel ?? 'B1');
-
-    // Handler not yet available
-    if (_handler == null) {
-      return Scaffold(
-        backgroundColor: isDark
-            ? AppColors.backgroundDark
-            : AppColors.backgroundLight,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
-            onPressed: () => Navigator.pop(context),
-          ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
-        body: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(32),
-            child: LottieLoadingWidget.medium(),
-          ),
-        ),
-      );
-    }
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 28),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 32),
           onPressed: () => Navigator.pop(context),
           tooltip: 'notifications.tooltipBack'.tr(),
         ),
         title: Text(
-          widget.episode.title,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 15),
+          'podcast.nowPlaying'.tr().toUpperCase(),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.6,
+          ),
         ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ── Artwork ──
-            const SizedBox(height: 8),
-            Center(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: widget.artworkUrl.isNotEmpty
-                    ? Image.network(
-                        widget.artworkUrl,
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.cover,
-                        webHtmlElementStrategy: WebHtmlElementStrategy.never,
-                        errorBuilder: (_, __, ___) =>
-                            _buildArtworkFallback(cefrColor),
-                      )
-                    : _buildArtworkFallback(cefrColor),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // ── Episode title ──
-            Text(
-              widget.episode.title,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                height: 1.3,
-                color: isDark ? Colors.white : AppColors.textDark,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 6),
-
-            // ── CEFR badge ──
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: cefrColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                widget.episode.cefrLevel ?? 'B1',
-                style: TextStyle(
-                  color: AppColors.surfaceLight,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // ── Audio player controls ──
-            AudioPlayerControls(
-              onPlay: _handler!.play,
-              onPause: _handler!.pause,
-              onSkipBack: _skipBack,
-              onSkipForward: _skipForward,
-              onSpeedChange: _changeSpeed,
-              onSeek: _handler!.seek,
-              onSleepTimerSet: (duration) => _handler!.setSleepTimer(duration),
-              isPlaying: _isPlaying,
-              playbackSpeed: _playbackSpeed,
-              position: _position,
-              duration: _duration,
-              episodeTitle: widget.episode.title,
+            PlayerHeader(
+              title: widget.episode.title,
+              podcastTitle: widget.podcastTitle,
               artworkUrl: widget.artworkUrl,
-              sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
+              level: widget.episode.cefrLevel ?? 'B1',
             ),
-            const SizedBox(height: 24),
-
-            // ── Transcript section ──
-            _buildTranscriptSection(isDark),
-            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+              child: Column(
+                children: [
+                  if (_handler == null)
+                    const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: LottieLoadingWidget.medium(),
+                    )
+                  else
+                    AudioPlayerControls(
+                      onPlay: _handler!.play,
+                      onPause: _handler!.pause,
+                      onSkipBack: _skipBack,
+                      onSkipForward: _skipForward,
+                      onSpeedChange: _changeSpeed,
+                      onSeek: _handler!.seek,
+                      onSleepTimerSet: (duration) =>
+                          _handler!.setSleepTimer(duration),
+                      isPlaying: _isPlaying,
+                      playbackSpeed: _playbackSpeed,
+                      position: _position,
+                      duration: _duration,
+                      episodeTitle: widget.episode.title,
+                      artworkUrl: widget.artworkUrl,
+                      sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
+                    ),
+                  if (_loadError) ...[
+                    const SizedBox(height: 12),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: scheme.errorContainer,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'podcast.audioLoadFailed'.tr(),
+                                style: TextStyle(
+                                  color: scheme.onErrorContainer,
+                                  fontSize: 14,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _loadEpisode,
+                              style: TextButton.styleFrom(
+                                foregroundColor: scheme.onErrorContainer,
+                                minimumSize: const Size(44, 44),
+                              ),
+                              child: Text(
+                                'common.retry'.tr(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  _buildTranscriptSection(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -317,44 +351,60 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   //  Transcript section (collapsible)
   // ──────────────────────────────────────
 
-  Widget _buildTranscriptSection(bool isDark) {
+  Widget _buildTranscriptSection() {
+    final scheme = Theme.of(context).colorScheme;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Collapse/expand header
-        InkWell(
-          onTap: () =>
-              setState(() => _transcriptExpanded = !_transcriptExpanded),
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                Text(
-                  'podcast.transcriptLabel'.tr(),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    color: isDark ? Colors.white : AppColors.textDark,
+        Material(
+          color: scheme.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: scheme.outlineVariant),
+          ),
+          child: InkWell(
+            onTap: () =>
+                setState(() => _transcriptExpanded = !_transcriptExpanded),
+            customBorder: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(
+                    PhosphorIconsBold.subtitles,
+                    size: 20,
+                    color: scheme.primary,
                   ),
-                ),
-                const SizedBox(width: 4),
-                Icon(
-                  _transcriptExpanded
-                      ? Icons.expand_less_rounded
-                      : Icons.expand_more_rounded,
-                  color: isDark ? Colors.white54 : AppColors.textGrey,
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'podcast.transcriptLabel'.tr(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _transcriptExpanded
+                        ? PhosphorIconsBold.caretUp
+                        : PhosphorIconsBold.caretDown,
+                    size: 18,
+                    color: contentMuted(context),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
         if (_transcriptExpanded) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           TranscriptPanel(
             transcript: _transcript,
             isLoading: _transcriptLoading,
             onGenerateTranscript: _generateTranscript,
+            showHeading: false,
           ),
         ],
       ],
@@ -374,41 +424,6 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       if (mounted) setState(() => _transcript = null);
     } finally {
       if (mounted) setState(() => _transcriptLoading = false);
-    }
-  }
-
-  // ──────────────────────────────────────
-  //  Helpers
-  // ──────────────────────────────────────
-
-  Widget _buildArtworkFallback(Color color) {
-    return Container(
-      width: 200,
-      height: 200,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Icon(Icons.podcasts_rounded, size: 72, color: color),
-    );
-  }
-
-  Color _cefrColor(String level) {
-    switch (level) {
-      case 'A1':
-        return AppColors.greenSuccessBright;
-      case 'A2':
-        return AppColors.greenSuccessSoft;
-      case 'B1':
-        return AppColors.warning;
-      case 'B2':
-        return AppColors.orange;
-      case 'C1':
-        return AppColors.deepOrange;
-      case 'C2':
-        return AppColors.purple;
-      default:
-        return AppColors.primary;
     }
   }
 }

@@ -36,6 +36,14 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
         mediaItem.add(current.copyWith(duration: duration));
       }
     });
+
+    // A finished episode left "playing" keeps the foreground service and an
+    // un-dismissable notification alive forever; pausing hands it back.
+    _player.processingStateStream.listen((state) async {
+      if (state != ProcessingState.completed) return;
+      await pause();
+      await seek(Duration.zero);
+    });
   }
 
   // ── Source loading ────────────────────────────────────────────────────────
@@ -44,7 +52,15 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   ///
   /// Resolves the audio source: prefers a downloaded [localPath] if the file
   /// exists on disk, otherwise streams from the network [audioUrl].
-  Future<void> setEpisode(PodcastEpisode episode) async {
+  ///
+  /// Returns `false` without touching the player when [episode] is already
+  /// loaded: reopening the player screen on an episode playing in the
+  /// background must not restart it.
+  Future<bool> setEpisode(PodcastEpisode episode) async {
+    if (mediaItem.value?.id == episode.guid &&
+        _player.processingState != ProcessingState.idle) {
+      return false;
+    }
     final item = MediaItem(
       id: episode.guid,
       title: episode.title,
@@ -67,6 +83,7 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     }
 
     await _player.setAudioSource(source);
+    return true;
   }
 
   /// Set playback speed (0.5x – 2.0x).
@@ -100,6 +117,11 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     await _player.stop();
     await super.stop();
   }
+
+  // Swiping the app out of recents otherwise leaves the foreground service
+  // playing with no UI left to stop it.
+  @override
+  Future<void> onTaskRemoved() => stop();
 
   // ── Sleep timer ────────────────────────────────────────────────────────────
 
@@ -151,13 +173,15 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
         MediaControl.rewind,
         if (_player.playing) MediaControl.pause else MediaControl.play,
         MediaControl.fastForward,
+        MediaControl.stop,
       ],
       systemActions: const {
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
+        MediaAction.stop,
       },
-      androidCompactActionIndices: const [0, 1, 2],
+      androidCompactActionIndices: const [0, 1, 3],
       processingState: const {
         ProcessingState.idle: AudioProcessingState.idle,
         ProcessingState.loading: AudioProcessingState.loading,

@@ -19,6 +19,7 @@ class PodcastProvider extends ChangeNotifier {
   Podcast? _currentPodcast;
   List<PodcastEpisode> _currentEpisodes = [];
   List<UserPodcastFollow> _followedPodcasts = [];
+  List<ListeningHistory> _continueListening = [];
 
   bool _isLoading = false;
   bool _isSearching = false;
@@ -40,6 +41,7 @@ class PodcastProvider extends ChangeNotifier {
   Podcast? get currentPodcast => _currentPodcast;
   List<PodcastEpisode> get currentEpisodes => _currentEpisodes;
   List<UserPodcastFollow> get followedPodcasts => _followedPodcasts;
+  List<ListeningHistory> get continueListening => _continueListening;
 
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
@@ -106,9 +108,8 @@ class PodcastProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentEpisodes = await _repository.getEpisodes(
-        feedUrl: podcast.feedUrl,
-      );
+      final episodes = await _repository.getEpisodes(feedUrl: podcast.feedUrl);
+      _currentEpisodes = await _withListeningProgress(episodes);
     } catch (e) {
       debugPrint(
         '[PodcastProvider] loadEpisodes failed for "${podcast.title}" '
@@ -118,6 +119,42 @@ class PodcastProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Overlays the learner's saved place onto freshly fetched [episodes].
+  /// A history failure must never cost the episode list itself.
+  Future<List<PodcastEpisode>> _withListeningProgress(
+    List<PodcastEpisode> episodes,
+  ) async {
+    try {
+      final byGuid = {
+        for (final h in await _repository.getRecentListening())
+          h.episodeGuid: h,
+      };
+      return [
+        for (final e in episodes)
+          if (byGuid[e.guid] case final h?)
+            e.copyWith(
+              listenProgress: h.lastPositionSeconds,
+              isCompleted: h.completed,
+            )
+          else
+            e,
+      ];
+    } catch (e) {
+      debugPrint('PodcastProvider: listening progress unavailable: $e');
+      return episodes;
+    }
+  }
+
+  /// Refresh the "continue listening" shelf from local history.
+  Future<void> loadContinueListening() async {
+    try {
+      _continueListening = await _repository.getContinueListening();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to load continue listening: $e');
     }
   }
 

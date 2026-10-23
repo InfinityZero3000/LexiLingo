@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+import '../../../../core/widgets/cefr_badge.dart';
+import '../../../../core/widgets/content_kit.dart';
 import '../../domain/entities/podcast_entities.dart';
 
-/// Compact podcast card for list/grid display.
-///
-/// Shows artwork, title, author, CEFR badge, episode count, and follow button.
+/// Square cover with title and author underneath, for horizontal shelves.
 ///
 /// Phase 4: Podcast.
 class PodcastCard extends StatelessWidget {
@@ -19,211 +20,111 @@ class PodcastCard extends StatelessWidget {
     required this.isFollowed,
   });
 
+  static const coverSize = 148.0;
+  static const _radius = 20.0;
+
+  /// Height a shelf of these needs at the current text scale.
+  static double rowHeight(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    return coverSize +
+        12 +
+        scaler.scale(14) * 1.3 * 2 +
+        4 +
+        scaler.scale(12) * 1.3 +
+        4;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cefrColor = _cefrColor(podcast.cefrLevel);
+    final scheme = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 160,
-        margin: const EdgeInsets.only(right: 12),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── Artwork ──
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
-              child: Stack(
-                children: [
-                  // Artwork image
-                  SizedBox(
-                    width: 160,
-                    height: 140,
-                    child: podcast.artworkUrl.isNotEmpty
-                        ? Image.network(
-                            podcast.artworkUrl,
-                            width: 160,
-                            height: 140,
-                            fit: BoxFit.cover,
-                            webHtmlElementStrategy:
-                                WebHtmlElementStrategy.never,
-                            errorBuilder: (_, __, ___) =>
-                                _buildArtworkFallback(cefrColor),
-                          )
-                        : _buildArtworkFallback(cefrColor),
-                  ),
-                  // CEFR badge
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: _buildCefrBadge(podcast.cefrLevel, cefrColor),
-                  ),
-                  // Follow indicator dot
-                  if (isFollowed)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        decoration: const BoxDecoration(
-                          color: AppColors.greenSuccess,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // ── Info ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-              child: Column(
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: SizedBox(
+          width: coverSize,
+          child: Stack(
+            children: [
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
-                  Text(
-                    podcast.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      height: 1.3,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  // Author
-                  Text(
-                    podcast.author,
-                    style: TextStyle(
-                      color: isDark ? Colors.white54 : AppColors.textGrey,
-                      fontSize: 11,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  // Episode count row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(_radius),
+                    child: SizedBox.square(
+                      dimension: coverSize,
+                      child: Stack(
+                        fit: StackFit.expand,
                         children: [
-                          Icon(
-                            Icons.podcasts_rounded,
-                            size: 12,
-                            color: isDark ? Colors.white38 : AppColors.textGrey,
-                          ),
-                          const SizedBox(width: 3),
-                          Text(
-                            podcast.episodeCount > 0
-                                ? '${podcast.episodeCount} eps'
-                                : '– eps',
-                            style: TextStyle(
-                              color: isDark
-                                  ? Colors.white38
-                                  : AppColors.textGrey,
-                              fontSize: 11,
+                          ContentImage(url: podcast.artworkUrl),
+                          Positioned(
+                            top: 8,
+                            left: 8,
+                            child: CefrBadge(
+                              level: podcast.cefrLevel,
+                              size: CefrBadgeSize.small,
+                              onColored: true,
                             ),
                           ),
+                          if (isFollowed)
+                            Positioned(
+                              top: 8,
+                              right: 8,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  color: scheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(
+                                    PhosphorIconsBold.check,
+                                    size: 12,
+                                    color: scheme.onPrimary,
+                                  ),
+                                ),
+                              ),
+                            ),
                         ],
                       ),
-                      // Follow button
-                      GestureDetector(
-                        onTap: onTap,
-                        child: Icon(
-                          isFollowed
-                              ? Icons.check_circle_rounded
-                              : Icons.add_circle_outline_rounded,
-                          size: 20,
-                          color: isFollowed
-                              ? AppColors.greenSuccess
-                              : cefrColor.withValues(alpha: 0.7),
-                        ),
-                      ),
-                    ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    podcast.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    podcast.author,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.3,
+                      color: contentMuted(context),
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ──────────────────────────────────────
-  //  Helpers
-  // ──────────────────────────────────────
-
-  Widget _buildArtworkFallback(Color color) {
-    return Container(
-      width: 160,
-      height: 140,
-      color: color.withValues(alpha: 0.12),
-      child: Icon(Icons.podcasts_rounded, size: 48, color: color),
-    );
-  }
-
-  Widget _buildCefrBadge(String level, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(6),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.4),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
+              Positioned.fill(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: onTap,
+                    borderRadius: BorderRadius.circular(_radius),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Text(
-        level,
-        style: TextStyle(
-          color: AppColors.surfaceLight,
-          fontWeight: FontWeight.w800,
-          fontSize: 11,
         ),
       ),
     );
-  }
-
-  Color _cefrColor(String level) {
-    switch (level) {
-      case 'A1':
-        return AppColors.greenSuccessBright;
-      case 'A2':
-        return AppColors.greenSuccessSoft;
-      case 'B1':
-        return AppColors.warning;
-      case 'B2':
-        return AppColors.orange;
-      case 'C1':
-        return AppColors.deepOrange;
-      case 'C2':
-        return AppColors.purple;
-      default:
-        return AppColors.primary;
-    }
   }
 }
