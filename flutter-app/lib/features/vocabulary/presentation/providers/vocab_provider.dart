@@ -165,10 +165,7 @@ class VocabProvider extends ChangeNotifier {
   /// Strips auto-generated seeded/placeholder definitions that were inserted
   /// by data-import scripts and should not be surfaced to the user.
   static String _cleanDefinition(String raw) {
-    const seededPrefixes = [
-      'Seeded from crawled',
-      '#N/A',
-    ];
+    const seededPrefixes = ['Seeded from crawled', '#N/A'];
     for (final prefix in seededPrefixes) {
       if (raw.startsWith(prefix)) return '';
     }
@@ -326,8 +323,14 @@ class VocabProvider extends ChangeNotifier {
     String name,
     String? description,
     String color,
+  ) async => (await createDeckRecord(name, description, color)) != null;
+
+  Future<VocabularyDeck?> createDeckRecord(
+    String name,
+    String? description,
+    String color,
   ) async {
-    if (_apiClient == null) return false;
+    if (_apiClient == null) return null;
     _isLoading = true;
     notifyListeners();
 
@@ -336,16 +339,17 @@ class VocabProvider extends ChangeNotifier {
           ? '&description=${Uri.encodeComponent(description)}'
           : '';
       final colorParam = '&color=${Uri.encodeComponent(color)}';
-      await _apiClient.post(
+      final response = await _apiClient.post(
         '/vocabulary/decks?name=${Uri.encodeComponent(name)}'
         '$descParam$colorParam',
       );
+      final data = response['data'] ?? response;
       _errorMessage = null;
       await loadDecks();
-      return true;
+      return VocabularyDeck.fromJson(data as Map<String, dynamic>);
     } catch (e) {
       _errorMessage = 'Failed to create deck: $e';
-      return false;
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -400,6 +404,20 @@ class VocabProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+}
+
+Color deckColorFromHex(String hex) => Color(
+  int.tryParse('FF${hex.replaceAll('#', '')}', radix: 16) ?? 0xFF2196F3,
+);
+
+// Hue-shifted second stop so every collection gets its own gradient background.
+LinearGradient deckGradient(Color c) {
+  final hsl = HSLColor.fromColor(c);
+  return LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [c, hsl.withHue((hsl.hue + 35) % 360).toColor()],
+  );
 }
 
 class VocabularyDeck {
