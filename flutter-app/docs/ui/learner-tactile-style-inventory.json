@@ -28104,6 +28104,1766 @@
       "category": "eligible",
       "group": 2,
       "status": "inventoried"
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentCta::BoxDecoration::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentCta",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 73,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentHero::BoxDecoration::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentHero",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 140,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentDots::BoxDecoration::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentDots",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 227,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentChipBar::BoxDecoration::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentChipBar",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 333,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentCta::DecoratedBox::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentCta",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 72,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentHero::DecoratedBox::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentHero",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 139,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_FollowedTile::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_FollowedTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 471,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_FollowedTile::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_FollowedTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 470,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_SearchResultTile::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_SearchResultTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 544,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/podcast_card.dart::PodcastCard::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/widgets/podcast_card.dart",
+      "entryPoint": "surface",
+      "symbol": "PodcastCard",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 72,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_ContinueTile::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ContinueTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 587,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_ContinueTile::BoxDecoration::1",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ContinueTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 667,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_ContinueTile::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ContinueTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 586,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_ContinueTile::DecoratedBox::1",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ContinueTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 1,
+      "line": 666,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_PodcastExploreScreenState::Navigator.push::1",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_PodcastExploreScreenState",
+      "callKind": "Navigator.push",
+      "ordinal": 1,
+      "line": 355,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart::_PodcastExploreScreenState::MaterialPageRoute::1",
+      "path": "lib/features/podcast/presentation/screens/podcast_explore_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_PodcastExploreScreenState",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 1,
+      "line": 357,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::_RecommendationCard::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "_RecommendationCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 219,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/vocab_today_row.dart::VocabTodayRow::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/vocab_today_row.dart",
+      "entryPoint": "surface",
+      "symbol": "VocabTodayRow",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 23,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/vocab_today_row.dart::VocabTodayRow::Card::1",
+      "path": "lib/features/home/presentation/widgets/home_page/vocab_today_row.dart",
+      "entryPoint": "surface",
+      "symbol": "VocabTodayRow",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 25,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/vocab_today_row.dart::VocabTodayRow::Card::2",
+      "path": "lib/features/home/presentation/widgets/home_page/vocab_today_row.dart",
+      "entryPoint": "surface",
+      "symbol": "VocabTodayRow",
+      "callKind": "Card",
+      "ordinal": 2,
+      "line": 29,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_library_screen.dart::_SearchResultTile::BoxDecoration::0",
+      "path": "lib/features/books/presentation/screens/book_library_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_SearchResultTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 410,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_library_screen.dart::_SearchResultTile::DecoratedBox::0",
+      "path": "lib/features/books/presentation/screens/book_library_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_SearchResultTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 409,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::_Cover::BoxDecoration::0",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_Cover",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 97,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::_Cover::BoxDecoration::1",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_Cover",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 127,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::BookJacket::BoxDecoration::0",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "BookJacket",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 161,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::_Cover::DecoratedBox::0",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_Cover",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 96,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::_Cover::DecoratedBox::1",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_Cover",
+      "callKind": "DecoratedBox",
+      "ordinal": 1,
+      "line": 126,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::BookJacket::DecoratedBox::0",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "BookJacket",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 160,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_hero.dart::_HeroCover::BoxDecoration::0",
+      "path": "lib/features/books/presentation/widgets/book_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_HeroCover",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 94,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_hero.dart::_HeroCover::DecoratedBox::0",
+      "path": "lib/features/books/presentation/widgets/book_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_HeroCover",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 93,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_library_screen.dart::_BookLibraryScreenState::Navigator.push::1",
+      "path": "lib/features/books/presentation/screens/book_library_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_BookLibraryScreenState",
+      "callKind": "Navigator.push",
+      "ordinal": 1,
+      "line": 63,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_library_screen.dart::_BookLibraryScreenState::MaterialPageRoute::1",
+      "path": "lib/features/books/presentation/screens/book_library_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_BookLibraryScreenState",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 1,
+      "line": 65,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/core/widgets/quick_save_word_sheet.dart::_QuickSaveWordSheetState::BoxDecoration::3",
+      "path": "lib/core/widgets/quick_save_word_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "_QuickSaveWordSheetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 222,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/screens/youtube_player_screen.dart::_YouTubePlayerScreenState::Card::2",
+      "path": "lib/features/youtube/presentation/screens/youtube_player_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_YouTubePlayerScreenState",
+      "callKind": "Card",
+      "ordinal": 2,
+      "line": 407,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/games/presentation/widgets/answer_feedback.dart::AnswerFeedbackPanel::BoxDecoration::0",
+      "path": "lib/features/games/presentation/widgets/answer_feedback.dart",
+      "entryPoint": "surface",
+      "symbol": "AnswerFeedbackPanel",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 57,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/vocabulary/presentation/widgets/new_deck_composer.dart::_NewDeckComposerState::BoxDecoration::0",
+      "path": "lib/features/vocabulary/presentation/widgets/new_deck_composer.dart",
+      "entryPoint": "surface",
+      "symbol": "_NewDeckComposerState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 89,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeShelfCard::Card::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeShelfCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 213,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeThumbnail::BoxDecoration::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeThumbnail",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 46,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeVideoTile::BoxDecoration::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeVideoTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 103,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeChannelAvatar::BoxDecoration::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeChannelAvatar",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 331,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeThumbnail::DecoratedBox::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeThumbnail",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 45,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeVideoTile::DecoratedBox::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeVideoTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 102,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart::YouTubeChannelAvatar::DecoratedBox::0",
+      "path": "lib/features/youtube/presentation/widgets/youtube_video_tiles.dart",
+      "entryPoint": "surface",
+      "symbol": "YouTubeChannelAvatar",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 330,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart::_Header::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_Header",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 266,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart::_TopBar::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_TopBar",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 464,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart::_EpisodeSkeleton::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EpisodeSkeleton",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 519,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart::_Header::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_Header",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 265,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart::_EpisodeSkeleton::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EpisodeSkeleton",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 518,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/screens/podcast_player_screen.dart::_PodcastPlayerScreenState::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/screens/podcast_player_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_PodcastPlayerScreenState",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 299,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/episode_tile.dart::_PlayDisc::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/widgets/episode_tile.dart",
+      "entryPoint": "surface",
+      "symbol": "_PlayDisc",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 191,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/episode_tile.dart::EpisodeTile::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/widgets/episode_tile.dart",
+      "entryPoint": "surface",
+      "symbol": "EpisodeTile",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 75,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/episode_tile.dart::_PlayDisc::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/widgets/episode_tile.dart",
+      "entryPoint": "surface",
+      "symbol": "_PlayDisc",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 190,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/player_header.dart::PlayerHeader::BoxDecoration::0",
+      "path": "lib/features/podcast/presentation/widgets/player_header.dart",
+      "entryPoint": "surface",
+      "symbol": "PlayerHeader",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 50,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/player_header.dart::PlayerHeader::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/widgets/player_header.dart",
+      "entryPoint": "surface",
+      "symbol": "PlayerHeader",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 49,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/transcript_panel.dart::TranscriptPanel::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/widgets/transcript_panel.dart",
+      "entryPoint": "surface",
+      "symbol": "TranscriptPanel",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 38,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/transcript_panel.dart::TranscriptPanel::DecoratedBox::1",
+      "path": "lib/features/podcast/presentation/widgets/transcript_panel.dart",
+      "entryPoint": "surface",
+      "symbol": "TranscriptPanel",
+      "callKind": "DecoratedBox",
+      "ordinal": 1,
+      "line": 103,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/transcript_panel.dart::TranscriptPanel::DecoratedBox::2",
+      "path": "lib/features/podcast/presentation/widgets/transcript_panel.dart",
+      "entryPoint": "surface",
+      "symbol": "TranscriptPanel",
+      "callKind": "DecoratedBox",
+      "ordinal": 2,
+      "line": 137,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/audio_player_controls.dart::AudioPlayerControls::DecoratedBox::0",
+      "path": "lib/features/podcast/presentation/widgets/audio_player_controls.dart",
+      "entryPoint": "surface",
+      "symbol": "AudioPlayerControls",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 54,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/podcast/presentation/widgets/audio_player_controls.dart::AudioPlayerControls::DecoratedBox::1",
+      "path": "lib/features/podcast/presentation/widgets/audio_player_controls.dart",
+      "entryPoint": "surface",
+      "symbol": "AudioPlayerControls",
+      "callKind": "DecoratedBox",
+      "ordinal": 1,
+      "line": 119,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_BookDetailScreenState::Card::0",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_BookDetailScreenState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 81,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_ProgressCard::Card::0",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ProgressCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 369,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_ProgressCard::BoxDecoration::0",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ProgressCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 377,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_ProgressCard::DecoratedBox::0",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_ProgressCard",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 376,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::BookCover::BoxDecoration::0",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "BookCover",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 104,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::BookCover::BoxDecoration::1",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "BookCover",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 134,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::BookCover::DecoratedBox::0",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "BookCover",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 103,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/widgets/book_card.dart::BookCover::DecoratedBox::1",
+      "path": "lib/features/books/presentation/widgets/book_card.dart",
+      "entryPoint": "surface",
+      "symbol": "BookCover",
+      "callKind": "DecoratedBox",
+      "ordinal": 1,
+      "line": 133,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/content_kit.dart::ContentTopBar::BoxDecoration::0",
+      "path": "lib/core/widgets/content_kit.dart",
+      "entryPoint": "surface",
+      "symbol": "ContentTopBar",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 131,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_Actions::Navigator.push::0",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_Actions",
+      "callKind": "Navigator.push",
+      "ordinal": 0,
+      "line": 298,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_Actions::Navigator.push::1",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_Actions",
+      "callKind": "Navigator.push",
+      "ordinal": 1,
+      "line": 311,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_Actions::MaterialPageRoute::0",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_Actions",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 300,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_detail_screen.dart::_Actions::MaterialPageRoute::1",
+      "path": "lib/features/books/presentation/screens/book_detail_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_Actions",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 1,
+      "line": 313,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
     }
   ],
   "boundaries": [
