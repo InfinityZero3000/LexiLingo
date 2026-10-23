@@ -45,8 +45,10 @@ class LearningProvider with ChangeNotifier {
   bool get isLoadingRoadmap => _isLoadingRoadmap;
   String? get roadmapError => _roadmapError;
 
-  Future<void> loadRoadmap(String courseId) async {
-    _isLoadingRoadmap = true;
+  /// [refresh] keeps the current roadmap on screen while it reloads, so
+  /// coming back from a lesson updates it in place instead of flashing a loader.
+  Future<void> loadRoadmap(String courseId, {bool refresh = false}) async {
+    _isLoadingRoadmap = !refresh || _courseRoadmap == null;
     _roadmapError = null;
     notifyListeners();
 
@@ -56,7 +58,7 @@ class LearningProvider with ChangeNotifier {
 
     result.fold(
       (failure) {
-        _roadmapError = failure.message;
+        if (!refresh || _courseRoadmap == null) _roadmapError = failure.message;
         _isLoadingRoadmap = false;
       },
       (roadmap) {

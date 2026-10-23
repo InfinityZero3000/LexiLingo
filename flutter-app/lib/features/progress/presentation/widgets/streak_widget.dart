@@ -408,7 +408,9 @@ class StreakDetailsSheet extends StatelessWidget {
           const SizedBox(height: 16),
           // Restores remaining count display
           Text(
-            'Lượt khôi phục chuỗi còn lại trong tháng: ${streak.restoresRemaining}',
+            'progress.streakRestoresLeft'.tr(
+              namedArgs: {'count': '${streak.restoresRemaining}'},
+            ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: AppColors.grey500,
             ),
@@ -550,7 +552,12 @@ class StreakDetailsSheet extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Bạn có thể khôi phục lại chuỗi ${streak.previousStreak} ngày cũ! Bạn còn ${streak.restoresRemaining} lượt khôi phục trong tháng này.',
+                      'progress.streakRestoreHint'.tr(
+                        namedArgs: {
+                          'days': '${streak.previousStreak}',
+                          'count': '${streak.restoresRemaining}',
+                        },
+                      ),
                       style: TextStyle(
                         color: AppColors.primaryDark,
                         fontSize: 12,
@@ -573,9 +580,9 @@ class StreakDetailsSheet extends StatelessWidget {
                             if (success && context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                                SnackBar(
                                   content: Text(
-                                    'Đã khôi phục chuỗi thành công!',
+                                    'progress.streakRestoreSuccess'.tr(),
                                   ),
                                   backgroundColor: AppColors.greenSuccessBright,
                                 ),
@@ -587,7 +594,9 @@ class StreakDetailsSheet extends StatelessWidget {
                       color: AppColors.surfaceLight,
                     ),
                     label: Text(
-                      'Khôi phục chuỗi (${streak.previousStreak} ngày)',
+                      'progress.streakRestoreButton'.tr(
+                        namedArgs: {'days': '${streak.previousStreak}'},
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColorRoles.primary(

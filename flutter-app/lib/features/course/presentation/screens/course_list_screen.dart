@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
@@ -80,6 +81,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
                             children: [
                               Row(
                                 children: [
+                                  // A tab in MainScreen, but also pushed as a
+                                  // route (Today Plan) — only then can it pop.
+                                  if (ModalRoute.of(context)?.canPop ?? false)
+                                    AppBackButton(
+                                      onPressed: () =>
+                                          Navigator.of(context).pop(),
+                                    ),
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
@@ -199,7 +207,12 @@ class _CourseListScreenState extends State<CourseListScreen> {
                   else if (provider.courses.isEmpty)
                     SliverFillRemaining(child: EmptyStateWidget.courses())
                   else
-                    _buildCourseContent(context, provider),
+                    SliverPadding(
+                      padding: EdgeInsets.only(
+                        bottom: MediaQuery.paddingOf(context).bottom,
+                      ),
+                      sliver: _buildCourseContent(context, provider),
+                    ),
                 ],
               ),
             ),

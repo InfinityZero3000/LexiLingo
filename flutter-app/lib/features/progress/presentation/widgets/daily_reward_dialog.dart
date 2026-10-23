@@ -51,6 +51,7 @@ class _DailyRewardDialogContent extends StatefulWidget {
 class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
+  final GlobalKey _activeCardKey = GlobalKey();
   bool _isClaiming = false;
 
   final List<int> _rewardsCycle = const [5, 10, 15, 20, 25, 30, 50];
@@ -62,6 +63,16 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _activeCardKey.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   @override
@@ -229,11 +240,17 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 14),
 
-                  // 7-day reward tracker horizontal list
+                  // 7-day reward tracker horizontal list. The padding leaves
+                  // room for the active card's scale, border and glow, which
+                  // the scroll view would otherwise clip.
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(7, (index) {
@@ -255,7 +272,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                       }),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 18),
 
                   // Action Button
                   SizedBox(
@@ -352,8 +369,10 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     }
 
     final card = Container(
-      width: 44,
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      key: isActive ? _activeCardKey : null,
+      width: 60,
+      height: 66,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(14),
@@ -419,7 +438,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: scale != 1.0 ? Transform.scale(scale: scale, child: card) : card,
     );
   }

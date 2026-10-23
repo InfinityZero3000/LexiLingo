@@ -45,6 +45,10 @@ class CourseProvider with ChangeNotifier {
   // State: Course Detail
   CourseDetailEntity? _courseDetail;
   bool _isLoadingDetail = false;
+  String? _refreshingDetailId;
+  // The course the screen asked for last; a slower response for another
+  // course must not take its place.
+  String? _wantedDetailId;
   String? _detailError;
   final Map<String, CourseDetailEntity> _detailCache = {};
 
@@ -311,20 +315,23 @@ class CourseProvider with ChangeNotifier {
   }
 
   /// Load course detail with roadmap
-  Future<void> loadCourseDetail(String courseId, {bool forceRefresh = false}) async {
-    if (_isLoadingDetail) return;
+  Future<void> loadCourseDetail(String courseId) async {
+    if (_isLoadingDetail || _refreshingDetailId == courseId) return;
 
-    if (!forceRefresh && _detailCache.containsKey(courseId)) {
-      _courseDetail = _detailCache[courseId];
+    // Progress and lesson ticks change whenever the learner studies, so the
+    // cache only paints the screen instantly; the fetch below always runs.
+    final cached = _detailCache[courseId];
+    _wantedDetailId = courseId;
+    if (cached != null) {
+      _refreshingDetailId = courseId;
+      _courseDetail = cached;
       _detailError = null;
-      notifyListeners();
-      return;
-    }
-
-    _isLoadingDetail = true;
-    _detailError = null;
-    if (_courseDetail?.id != courseId) {
-      _courseDetail = null;
+    } else {
+      _isLoadingDetail = true;
+      _detailError = null;
+      if (_courseDetail?.id != courseId) {
+        _courseDetail = null;
+      }
     }
     notifyListeners();
 
@@ -333,18 +340,27 @@ class CourseProvider with ChangeNotifier {
 
       result.fold(
         (failure) {
-          _detailError = _getErrorMessage(failure);
+          if (cached == null && _wantedDetailId == courseId) {
+            _detailError = _getErrorMessage(failure);
+          }
         },
         (detail) {
-          _courseDetail = detail;
           _detailCache[courseId] = detail;
-          _detailError = null;
+          if (_wantedDetailId == courseId) {
+            _courseDetail = detail;
+            _detailError = null;
+          }
         },
       );
     } catch (e) {
-      _detailError = e.toString();
+      if (cached == null && _wantedDetailId == courseId) {
+        _detailError = e.toString();
+      }
     } finally {
-      _isLoadingDetail = false;
+      // A background refresh never set the flag, so it must not clear the
+      // flag of the course the learner opened meanwhile.
+      if (cached == null) _isLoadingDetail = false;
+      if (_refreshingDetailId == courseId) _refreshingDetailId = null;
       notifyListeners();
     }
   }
@@ -528,6 +544,8 @@ class CourseProvider with ChangeNotifier {
     _detailCache.clear();
     _isLoadingCourses = false;
     _isLoadingDetail = false;
+    _refreshingDetailId = null;
+    _wantedDetailId = null;
     _isEnrolling = false;
     _coursesError = null;
     _detailError = null;

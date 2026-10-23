@@ -62,9 +62,9 @@ class DailyChallengesResponseModel extends DailyChallengesResponse {
   factory DailyChallengesResponseModel.fromJson(Map<String, dynamic> json) {
     final challengesList =
         (json['challenges'] as List?)
-            ?.map((c) => DailyChallengeModel.fromJson(c))
+            ?.map<DailyChallengeEntity>((c) => DailyChallengeModel.fromJson(c))
             .toList() ??
-        [];
+        <DailyChallengeEntity>[];
 
     return DailyChallengesResponseModel(
       date: json['date'] ?? DateTime.now().toIso8601String().split('T').first,
