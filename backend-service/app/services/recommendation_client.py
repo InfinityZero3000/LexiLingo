@@ -12,7 +12,9 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-_TIMEOUT_SECONDS = 8.0
+# Must stay well under the Flutter client's 8s: when ai-service is cold the
+# degraded fallback has to reach the app before it gives up, or Home shows nothing.
+_TIMEOUT_SECONDS = 4.0
 
 
 class RecommendationClient:

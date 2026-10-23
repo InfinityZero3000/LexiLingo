@@ -8,6 +8,7 @@ route should enforce through `EntitlementService.is_active`.
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -18,6 +19,8 @@ router = APIRouter(prefix="/entitlements", tags=["Entitlements"])
 
 
 def _to_status(row, entitlement_id: str, degraded: bool) -> EntitlementStatus:
+    if settings.PREMIUM_FORCE_ENABLED:
+        return EntitlementStatus(entitlement_id=entitlement_id, active=True, source="dev_override")
     if row is None:
         return EntitlementStatus(
             entitlement_id=entitlement_id,
@@ -48,6 +51,8 @@ async def sync_entitlement(
     session. Ignores any client-submitted purchase payload — verification
     is entirely server-to-RevenueCat.
     """
+    if settings.PREMIUM_FORCE_ENABLED:
+        return _to_status(None, entitlement_id, False)
     row, degraded = await EntitlementService.sync(db, current_user.id, entitlement_id)
     return _to_status(row, entitlement_id, degraded)
 
