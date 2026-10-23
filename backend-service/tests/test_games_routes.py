@@ -773,3 +773,12 @@ class TestGameCategories:
             assert "id" in cat
             assert "label" in cat
             assert "count" in cat
+
+
+def test_game_hint_replaces_category_placeholder():
+    from app.models.games import GameWord
+    from app.routes.games import _game_hint
+
+    assert _game_hint(GameWord(word="fluency", hint="Category: language")) == 'Starts with "F", 7 letters'
+    assert _game_hint(GameWord(word="fluency", hint=None)) == 'Starts with "F", 7 letters'
+    assert _game_hint(GameWord(word="cat", hint="Common house pet")) == "Common house pet"

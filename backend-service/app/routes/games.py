@@ -917,6 +917,13 @@ GRAMMAR_QUIZ_BANK: dict = {
 _seed_done = False  # In-process flag to avoid re-seeding on every request
 
 
+def _game_hint(w: GameWord) -> str:
+    # rows seeded by the crawl script carry "Category: x" as their hint, which says nothing about the word
+    if w.hint and not w.hint.startswith("Category:"):
+        return w.hint
+    return f"Starts with \"{w.word[0].upper()}\", {len(w.word)} letters"
+
+
 async def _ensure_seeded(db: AsyncSession) -> None:
     """Seed the game_words table if it is empty (runs at most once per process)."""
     global _seed_done
@@ -985,7 +992,8 @@ async def get_word_scramble(
             "word_id": str(w.id),
             "word": w.word,
             "shuffled_letters": shuffled,
-            "hint": w.hint,
+            "hint": _game_hint(w),
+            "category": w.category,
             "definition": w.definition,
             "xp_value": w.xp_value,
             "cefr_level": w.cefr_level,
@@ -1276,7 +1284,7 @@ async def get_hangman_word(
             "word_id": str(word_obj.id),
             "word": word_obj.word,
             "category": word_obj.category,
-            "hint": word_obj.hint,
+            "hint": _game_hint(word_obj),
             "definition": word_obj.definition,
             "letter_count": word_obj.letter_count,
             "xp_value": word_obj.xp_value,
@@ -1284,7 +1292,7 @@ async def get_hangman_word(
             "max_lives": 6,
             "vietnamese_translation": word_obj.vietnamese_translation,
             "hints": {
-                "hint1_free": word_obj.hint or "",
+                "hint1_free": _game_hint(word_obj),
                 "hint2_xp_cost": hint2_cost,
                 "hint2_definition": word_obj.definition or "",
                 "hint3_xp_cost": hint3_cost,

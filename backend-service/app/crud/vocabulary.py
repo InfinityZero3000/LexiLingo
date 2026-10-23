@@ -55,6 +55,8 @@ from app.services.vocabulary_catalog_policy import (
     select_balanced_starter_vocabulary,
 )
 
+USER_SAVED_PLACEHOLDER = "A user-saved word:"
+
 _PLACEHOLDER_DEFINITION_VALUES = (
     "",
     "#n/a",
@@ -215,6 +217,7 @@ class VocabularyCRUD:
         translation: Optional[str] = None,
         part_of_speech: Optional[str] = None,
         difficulty_level: Optional[str] = None,
+        pronunciation: Optional[str] = None,
     ) -> VocabularyItem:
         """Create a master vocabulary item for user-discovered words."""
         normalized = self.normalize_word(word)
@@ -233,12 +236,40 @@ class VocabularyCRUD:
 
         item = VocabularyItem(
             word=normalized,
-            definition=(definition or f"A user-saved word: {normalized}").strip(),
+            definition=(definition or f"{USER_SAVED_PLACEHOLDER} {normalized}").strip(),
             translation={"vi": translation.strip()} if translation and translation.strip() else None,
+            pronunciation=(pronunciation or "").strip()[:100] or None,
             part_of_speech=pos,
             difficulty_level=level,
         )
         db.add(item)
+        await db.commit()
+        await db.refresh(item)
+        return item
+
+    async def fill_placeholder_item(
+        self,
+        db: AsyncSession,
+        item: VocabularyItem,
+        definition: Optional[str] = None,
+        translation: Optional[str] = None,
+        part_of_speech: Optional[str] = None,
+        pronunciation: Optional[str] = None,
+    ) -> VocabularyItem:
+        """Replace the auto-generated placeholder on a user-saved word."""
+        if not (item.definition or "").startswith(USER_SAVED_PLACEHOLDER):
+            return item
+        if not (definition or translation):
+            return item
+
+        if definition:
+            item.definition = definition.strip()
+        if translation and translation.strip() and not item.translation:
+            item.translation = {"vi": translation.strip()}
+        if pronunciation and not item.pronunciation:
+            item.pronunciation = pronunciation.strip()[:100]
+        if part_of_speech and part_of_speech.lower() in {p.value for p in PartOfSpeech}:
+            item.part_of_speech = part_of_speech.lower()
         await db.commit()
         await db.refresh(item)
         return item
