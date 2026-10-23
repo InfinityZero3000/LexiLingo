@@ -663,6 +663,22 @@ async def forget_lexi_memory(
     return {"success": True, "deleted": await forget_facts(db, current_user.user_id)}
 
 
+@router.delete("/memory/{key}")
+async def forget_lexi_memory_fact(
+    key: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Forget one remembered fact (preferred_name, occupation, goal, interests)."""
+    from api.services.lexi_memory import forget_fact
+
+    try:
+        await forget_fact(db, current_user.user_id, key)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Unknown memory key")
+    return {"success": True, "key": key}
+
+
 @router.get("/health")
 async def lexi_health() -> Dict[str, Any]:
     """Health check for Lexi chat service."""

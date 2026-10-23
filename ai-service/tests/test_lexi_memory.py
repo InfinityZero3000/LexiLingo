@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -76,9 +77,13 @@ async def test_save_facts_upserts_only_allowlisted_keys():
     coll.update_one = AsyncMock()
     db = MagicMock()
     db.__getitem__.return_value = coll
-    await lexi_memory.save_facts(db, "u1", {"goal": "IELTS", "religion": "x"})
+    since = datetime.now(timezone.utc)
+    await lexi_memory.save_facts(
+        db, "u1", {"goal": "IELTS", "religion": "x"}, since=since
+    )
     flt, update = coll.update_one.await_args.args
-    assert flt == {"user_id": "u1"}
+    assert flt["user_id"] == "u1"
+    assert {"forgotten_at": {"$lt": since}} in flt["$or"]
     assert "facts.goal" in update["$set"] and "facts.religion" not in update["$set"]
     assert coll.update_one.await_args.kwargs == {"upsert": True}
 
@@ -86,7 +91,7 @@ async def test_save_facts_upserts_only_allowlisted_keys():
 @pytest.mark.asyncio
 async def test_save_facts_noop_without_facts():
     db = MagicMock()
-    await lexi_memory.save_facts(db, "u1", {})
+    await lexi_memory.save_facts(db, "u1", {}, since=datetime.now(timezone.utc))
     db.__getitem__.assert_not_called()
 
 
@@ -166,3 +171,35 @@ async def test_unresolved_card_tells_the_tutor_not_to_claim_no_courses(monkeypat
 
     facts, courses = await lexi_chat_service._resolve_learner_card("u1", "Hello there")
     assert (facts, courses) == ("", [])
+
+
+@pytest.mark.asyncio
+async def test_memory_routes_are_scoped_to_the_caller_and_validate_the_key(monkeypatch):
+    from fastapi import HTTPException
+
+    from api.core.auth import AuthenticatedUser
+    from api.routes import lexi_chat as route
+
+    user = MagicMock(spec=AuthenticatedUser)
+    user.user_id = "u1"
+    db = MagicMock()
+    load = AsyncMock(return_value={"goal": "IELTS"})
+    forget_all = AsyncMock(return_value=True)
+    forget_one = AsyncMock(side_effect=[None, KeyError("religion")])
+    monkeypatch.setattr(lexi_memory, "load_facts", load)
+    monkeypatch.setattr(lexi_memory, "forget_facts", forget_all)
+    monkeypatch.setattr(lexi_memory, "forget_fact", forget_one)
+
+    assert await route.get_lexi_memory(db=db, current_user=user) == {
+        "facts": {"goal": "IELTS"}
+    }
+    load.assert_awaited_once_with(db, "u1")
+    assert (await route.forget_lexi_memory(db=db, current_user=user))["deleted"] is True
+    forget_all.assert_awaited_once_with(db, "u1")
+
+    assert (await route.forget_lexi_memory_fact("goal", db=db, current_user=user))[
+        "key"
+    ] == "goal"
+    with pytest.raises(HTTPException) as err:
+        await route.forget_lexi_memory_fact("religion", db=db, current_user=user)
+    assert err.value.status_code == 404

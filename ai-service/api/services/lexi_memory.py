@@ -13,8 +13,15 @@ a form for. Every guard below lowers the risk; none makes it zero:
   - values are short, quoted when replayed, and rejected if they look like
     contact details, health/religion/politics, or an instruction, because they
     are replayed into the system prompt on later turns;
-  - `forget_facts` wipes the document (DELETE /api/v1/lexi/memory). It does not
-    touch `lexi_messages`, which holds the same words as chat history.
+  - `forget_facts` / `forget_fact` (DELETE /api/v1/lexi/memory[/{key}]) remove
+    facts but leave a `forgotten_at` tombstone, and `save_facts` only writes for
+    a turn that started after it. Without that, a turn already in flight when
+    the learner pressed "forget" would write its facts back a moment later.
+    The tombstone check lives in the update filter so it is atomic; it relies on
+    the unique `user_id` index (created at startup) to turn a blocked upsert
+    into a DuplicateKeyError instead of a second document.
+    None of this touches `lexi_messages`, which holds the same words as chat
+    history.
 """
 
 from __future__ import annotations
@@ -24,6 +31,9 @@ import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Dict, Mapping
+
+from pymongo import ReturnDocument
+from pymongo.errors import DuplicateKeyError
 
 logger = logging.getLogger(__name__)
 
@@ -143,14 +153,26 @@ async def load_memory_block(db: Any, user_id: str) -> str:
         return ""
 
 
-async def save_facts(db: Any, user_id: str, facts: Mapping[str, str]) -> None:
-    """Newest statement wins per key. Never raises."""
+async def save_facts(
+    db: Any, user_id: str, facts: Mapping[str, str], *, since: datetime
+) -> None:
+    """Newest statement wins per key. Never raises.
+
+    `since` is when the turn that produced `facts` started: anything the learner
+    forgot after that moment wins over this write.
+    """
     if not facts or not user_id:
         return
     now = datetime.now(timezone.utc).isoformat()
     try:
         await db[COLLECTION].update_one(
-            {"user_id": user_id},
+            {
+                "user_id": user_id,
+                "$or": [
+                    {"forgotten_at": {"$exists": False}},
+                    {"forgotten_at": {"$lt": since}},
+                ],
+            },
             {
                 "$set": {
                     "updated_at": now,
@@ -164,10 +186,32 @@ async def save_facts(db: Any, user_id: str, facts: Mapping[str, str]) -> None:
             },
             upsert=True,
         )
+    except DuplicateKeyError:
+        logger.info("[lexi_memory] save skipped: learner forgot after this turn began")
     except Exception as exc:
         logger.warning("[lexi_memory] save failed: %s", exc)
 
 
 async def forget_facts(db: Any, user_id: str) -> bool:
-    result = await db[COLLECTION].delete_one({"user_id": user_id})
-    return result.deleted_count > 0
+    """Forget everything. True if there was something to forget."""
+    prior = await db[COLLECTION].find_one_and_update(
+        {"user_id": user_id},
+        {"$set": {"forgotten_at": datetime.now(timezone.utc)}, "$unset": {"facts": ""}},
+        upsert=True,
+        return_document=ReturnDocument.BEFORE,
+    )
+    return bool(prior and prior.get("facts"))
+
+
+async def forget_fact(db: Any, user_id: str, key: str) -> None:
+    """Forget one allowlisted fact; the tombstone still covers in-flight turns."""
+    if key not in ALLOWED_FACTS:
+        raise KeyError(key)
+    await db[COLLECTION].update_one(
+        {"user_id": user_id},
+        {
+            "$set": {"forgotten_at": datetime.now(timezone.utc)},
+            "$unset": {f"facts.{key}": ""},
+        },
+        upsert=True,
+    )

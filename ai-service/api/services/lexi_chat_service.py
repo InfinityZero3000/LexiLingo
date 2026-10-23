@@ -513,6 +513,8 @@ async def run_lexi_pipeline(
     """
     metadata: Dict[str, Any] = {"pipeline_steps": ["session_ready"]}
 
+    turn_started_at = datetime.now(timezone.utc)
+
     # ── STT ──
     user_text = request.message
     if request.input_type == "voice" and request.audio_base64:
@@ -686,7 +688,7 @@ async def run_lexi_pipeline(
 
     # Fire all independent writes concurrently: cache append + MongoDB writes.
     await asyncio.gather(
-        save_facts(db, request.user_id, stated_facts),
+        save_facts(db, request.user_id, stated_facts, since=turn_started_at),
         append_lexi_messages(session_id, [user_message, assistant_message]),
         db["lexi_messages"].insert_many([
             {
@@ -831,6 +833,7 @@ async def stream_lexi_chat(
     from api.utils.languages import iso_to_language_name
 
     user_text = request.message
+    turn_started_at = datetime.now(timezone.utc)
 
     # 1. Open the SSE response before touching Redis/Mongo. This prevents a
     # degraded session store from holding the HTTP response until the edge
@@ -1101,7 +1104,12 @@ async def stream_lexi_chat(
 
     async def _stream_persist():
         await asyncio.gather(
-            save_facts(db, request.user_id, raw_state.get("diagnosis_facts") or {}),
+            save_facts(
+                db,
+                request.user_id,
+                raw_state.get("diagnosis_facts") or {},
+                since=turn_started_at,
+            ),
             append_lexi_messages(session_id, [user_message, assistant_message]),
             db["lexi_messages"].insert_many([
                 {**user_message, "session_id": session_id, "user_id": request.user_id},
