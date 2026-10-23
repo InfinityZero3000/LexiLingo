@@ -7,9 +7,6 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../domain/entities/streak_entity.dart';
 
-const _kReminderEnabledKey = 'checkin_reminder_enabled';
-const _kReminderHourKey = 'checkin_reminder_hour';
-const _kReminderMinuteKey = 'checkin_reminder_minute';
 const _kCalendarCellCount = 42;
 
 void showPointsCalendarDialog(BuildContext context, StreakEntity streak) {
@@ -19,7 +16,12 @@ void showPointsCalendarDialog(BuildContext context, StreakEntity streak) {
     builder: (ctx) => Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-      child: _PointsCalendarContent(streak: streak),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: _PointsCalendarContent(streak: streak),
+        ),
+      ),
     ),
   );
 }
@@ -80,25 +82,47 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _reminderEnabled = prefs.getBool(_kReminderEnabledKey) ?? false;
-      final hour = prefs.getInt(_kReminderHourKey) ?? 12;
-      final minute = prefs.getInt(_kReminderMinuteKey) ?? 0;
+      _reminderEnabled = prefs.getBool(NotificationService.checkinEnabledKey) ?? false;
+      final hour = prefs.getInt(NotificationService.checkinHourKey) ?? 12;
+      final minute = prefs.getInt(NotificationService.checkinMinuteKey) ?? 0;
       _reminderTime = TimeOfDay(hour: hour, minute: minute);
     });
   }
 
   Future<void> _saveReminderPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_kReminderEnabledKey, _reminderEnabled);
-    await prefs.setInt(_kReminderHourKey, _reminderTime.hour);
-    await prefs.setInt(_kReminderMinuteKey, _reminderTime.minute);
-
     final notificationService = sl<NotificationService>();
-    await notificationService.ensureInitialized();
-    if (_reminderEnabled) {
-      await notificationService.scheduleDailyReminder(_reminderTime);
-    } else {
-      await notificationService.cancelDailyReminder();
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      if (_reminderEnabled && !await notificationService.requestPermissions()) {
+        if (!mounted) return;
+        setState(() => _reminderEnabled = false);
+        messenger?.showSnackBar(
+          SnackBar(content: Text('notifications.checkin.permissionDenied'.tr())),
+        );
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(NotificationService.checkinEnabledKey, _reminderEnabled);
+      await prefs.setInt(NotificationService.checkinHourKey, _reminderTime.hour);
+      await prefs.setInt(NotificationService.checkinMinuteKey, _reminderTime.minute);
+
+      if (_reminderEnabled) {
+        await notificationService.scheduleCheckinReminders(
+          _reminderTime,
+          currentStreak: widget.streak.currentStreak,
+          longestStreak: widget.streak.longestStreak,
+          doneToday: widget.streak.isActiveToday,
+        );
+      } else {
+        await notificationService.cancelCheckinReminders();
+      }
+    } catch (e) {
+      debugPrint('Check-in reminder failed: $e');
+      if (!mounted) return;
+      setState(() => _reminderEnabled = false);
+      messenger?.showSnackBar(
+        SnackBar(content: Text('notifications.checkin.scheduleFailed'.tr())),
+      );
     }
   }
 
@@ -140,15 +164,17 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       borderRadius: BorderRadius.circular(24),
       child: Container(
         color: bg,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildHeader(context, isDark),
-            _buildCalendar(isDark, cardBg),
-            const SizedBox(height: 12),
-            _buildReminderSection(isDark),
-            const SizedBox(height: 20),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildHeader(context, isDark),
+              _buildCalendar(isDark, cardBg),
+              const SizedBox(height: 12),
+              _buildReminderSection(isDark),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

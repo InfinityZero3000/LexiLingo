@@ -66,27 +66,45 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'notifications.pageTitle'.tr(),
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          unread > 0
-                              ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'
-                                    .tr(namedArgs: {'count': unread.toString()})
-                              : 'notifications.allCaughtUp'.tr(),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Colors.grey[600]),
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'notifications.pageTitle'.tr(),
+                              maxLines: 1,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Text(
+                            unread > 0
+                                ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'
+                                      .tr(
+                                        namedArgs: {'count': unread.toString()},
+                                      )
+                                : 'notifications.allCaughtUp'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
-                    if (provider.hasUnread)
+                    if (provider.hasUnread &&
+                        MediaQuery.sizeOf(context).width < 400)
+                      IconButton(
+                        onPressed: () => provider.markAllAsRead(),
+                        icon: const Icon(Icons.done_all_rounded),
+                        color: AppColors.primary,
+                        tooltip: 'notifications.markAllRead'.tr(),
+                      )
+                    else if (provider.hasUnread)
                       TextButton(
                         onPressed: () => provider.markAllAsRead(),
                         style: TextButton.styleFrom(
