@@ -63,7 +63,7 @@ async def test_provider_info_reports_groq_when_groq_serves_tokens(monkeypatch):
     )
     monkeypatch.setattr("api.core.groq_key_pool.release_groq_key", AsyncMock())
     monkeypatch.setattr("api.core.groq_key_pool.record_groq_key_usage", AsyncMock())
-    monkeypatch.setenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    monkeypatch.setenv("GROQ_MODEL", "qwen/qwen3.8-27b")
     fake_response = _FakeStreamResponse(200, _groq_sse("Hello", " world"))
     monkeypatch.setattr(
         generate, "_get_httpx_client", lambda name: _FakeHttpxClient(fake_response)
@@ -81,7 +81,7 @@ async def test_provider_info_reports_groq_when_groq_serves_tokens(monkeypatch):
     ]
 
     assert "".join(tokens) == "Hello world"
-    assert provider_info == {"provider": "groq", "model": "qwen/qwen3.6-27b"}
+    assert provider_info == {"provider": "groq", "model": "qwen/qwen3.8-27b"}
 
 
 @pytest.mark.asyncio
