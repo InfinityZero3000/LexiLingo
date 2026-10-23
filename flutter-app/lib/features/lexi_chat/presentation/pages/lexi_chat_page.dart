@@ -32,7 +32,12 @@ import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciatio
 ///  - Free-form conversation focused on natural English practice
 ///  - Dark/light theme support
 class LexiChatPage extends StatefulWidget {
-  const LexiChatPage({super.key});
+  /// False while another bottom-nav tab is showing. The page stays mounted
+  /// under the IndexedStack, so dispose() never runs on a tab switch — this
+  /// flag is what tells it to stop listening and speaking.
+  final bool isActive;
+
+  const LexiChatPage({super.key, this.isActive = true});
 
   @override
   State<LexiChatPage> createState() => _LexiChatPageState();
@@ -67,6 +72,12 @@ class _LexiChatPageState extends State<LexiChatPage>
       _isWebSpeechActive ||
       _isDuplexVoiceActive;
 
+  late LexiChatProvider _chat;
+
+  /// Bumped when the tab is hidden. A mic or transcription that was still
+  /// starting when that happened sees a different value and backs out.
+  int _voiceEpoch = 0;
+
   int _lastMessageCount = 0;
   List<String> get _quickReplies => [
     'lexiChat.quickReply1'.tr(),
@@ -80,6 +91,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
+      provider.resumeSpeaking();
       provider.syncTtsWithGlobalSound(
         context.read<SettingsProvider>().soundEnabled,
       );
@@ -100,7 +112,50 @@ class _LexiChatPageState extends State<LexiChatPage>
     // (e.g. switched in Settings while this page stays alive under the
     // bottom-nav IndexedStack), keeping Lexi's native-language hint in
     // sync with whatever the UI is currently displaying.
-    context.read<LexiChatProvider>().setNativeLanguage(_nativeLanguage);
+    _chat = context.read<LexiChatProvider>();
+    _chat.setNativeLanguage(_nativeLanguage);
+  }
+
+  @override
+  void didUpdateWidget(covariant LexiChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive && !widget.isActive) unawaited(_stopAllVoice());
+    if (!oldWidget.isActive && widget.isActive) _chat.resumeSpeaking();
+  }
+
+  /// Ends every mic and speaker path without sending anything. Each step is
+  /// guarded so one failing release (a recorder the user already stopped)
+  /// cannot leave the other paths — or the UI flags — still on.
+  Future<void> _stopAllVoice() async {
+    _voiceEpoch++;
+    unawaited(_chat.stopSpeaking());
+    _recordingTimer?.cancel();
+    final wasListening = _isWebSpeechActive || _isDuplexVoiceActive;
+    _webSpeech?.stopListening();
+    _liveTranscript = '';
+    if (wasListening) _controller.clear();
+    for (final stop in <Future<void> Function()>[
+      () async => _webSpeechSub?.cancel(),
+      () async {
+        if (_isRecording) await _recorder.cancel();
+      },
+      () async {
+        if (_isDuplexVoiceActive) await _duplexVoice?.stop();
+      },
+    ]) {
+      try {
+        await stop();
+      } catch (error) {
+        debugPrint('stop voice path failed: $error');
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _isRecording = false;
+      _isTranscribing = false;
+      _isWebSpeechActive = false;
+      _isDuplexVoiceActive = false;
+    });
   }
 
   String get _userId {
@@ -117,6 +172,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   @override
   void dispose() {
+    unawaited(_chat.stopSpeaking());
     _scrollController.removeListener(_handleTopReached);
     _controller.dispose();
     _scrollController.dispose();
@@ -136,9 +192,11 @@ class _LexiChatPageState extends State<LexiChatPage>
       if (mounted) setState(() => _isDuplexVoiceActive = false);
       return;
     }
+    final epoch = _voiceEpoch;
     try {
       final provider = context.read<LexiChatProvider>();
       if (!provider.hasSession) await provider.startSession(_userId);
+      if (epoch != _voiceEpoch) return;
       final sessionId = provider.session?.sessionId;
       if (sessionId == null) throw StateError('Chat session unavailable');
       _duplexVoice ??= sl<DuplexVoiceClient>();
@@ -162,6 +220,10 @@ class _LexiChatPageState extends State<LexiChatPage>
         learnerLevel: provider.learnerLevel,
         nativeLanguage: provider.nativeLanguage,
       );
+      if (epoch != _voiceEpoch) {
+        await _duplexVoice?.stop();
+        return;
+      }
       if (mounted) setState(() => _isDuplexVoiceActive = true);
     } catch (error) {
       await _duplexVoice?.stop();
@@ -263,8 +325,10 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Mobile/Desktop: Record → REST STT → send as text ─────────────────────
   Future<void> _startMobileRecording() async {
+    final epoch = _voiceEpoch;
     try {
       final hasPermission = await _recorder.hasPermission();
+      if (epoch != _voiceEpoch) return;
       if (!hasPermission) {
         _showSnack('lexiChat.micPermissionRequired'.tr());
         return;
@@ -277,6 +341,10 @@ class _LexiChatPageState extends State<LexiChatPage>
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,
       );
+      if (epoch != _voiceEpoch) {
+        await _recorder.cancel();
+        return;
+      }
 
       setState(() {
         _isRecording = true;
@@ -295,10 +363,11 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   Future<void> _stopMobileRecordingAndTranscribe() async {
     _recordingTimer?.cancel();
+    final epoch = _voiceEpoch;
 
     try {
       final path = await _recorder.stop();
-      if (!mounted) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
@@ -320,7 +389,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
       final transcript = await chatProvider.transcribeAudio(bytes);
-      if (!mounted) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       setState(() => _isTranscribing = false);
 
       if (transcript.isEmpty) {

@@ -60,6 +60,7 @@ class _MainScreenState extends State<MainScreen> {
 
   // Pages are built lazily — only when the tab is first visited.
   static const int _pageCount = 5;
+  static const int _lexiTab = 2;
   final Map<int, Widget> _pageCache = {};
 
   Widget _buildPage(int index) {
@@ -178,9 +179,10 @@ class _MainScreenState extends State<MainScreen> {
       index: _currentIndex,
       children: List.generate(_pageCount, (i) {
         // Use a lightweight placeholder until the tab is first visited.
-        return _pageCache.containsKey(i)
-            ? _pageCache[i]!
-            : const SizedBox.shrink();
+        if (!_pageCache.containsKey(i)) return const SizedBox.shrink();
+        // Lexi keeps its mic and speaker; it has to be told when it is hidden.
+        if (i == _lexiTab) return LexiChatPage(isActive: _currentIndex == i);
+        return _pageCache[i]!;
       }),
     );
   }

@@ -268,8 +268,23 @@ async def stream_audio(websocket: WebSocket):
                             assistant_text=assistant_text,
                         )
 
+                    from api.services.lexi_memory import load_memory_block
+
+                    try:
+                        memory_block = await load_memory_block(
+                            mongodb_manager.db, user_id
+                        )
+                    except Exception:
+                        # .db raises while Mongo is down; memory must not cost the turn.
+                        memory_block = ""
+
                     turn_task = asyncio.create_task(
-                        DuplexTurn(send_json, send_bytes, persist=persist).run(
+                        DuplexTurn(
+                            send_json,
+                            send_bytes,
+                            persist=persist,
+                            system_extra=memory_block,
+                        ).run(
                             event,
                             turn_seq=turn_seq,
                             tts_enabled=session.start.tts_enabled,

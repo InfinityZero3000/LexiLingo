@@ -172,6 +172,7 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     diagnosis_intent: str  # "correct", "explain", "practice", "ask"
     diagnosis_errors: List[DiagnosisError]
+    diagnosis_facts: Dict[str, str]  # learner self-statements, see lexi_memory
     diagnosis_root_causes: List[str]  # concept IDs
     diagnosis_confidence: float  # 0.0 - 1.0
     

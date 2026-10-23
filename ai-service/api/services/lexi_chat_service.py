@@ -24,6 +24,7 @@ from pydantic import BaseModel, Field
 
 from api.core.auth import AuthenticatedUser
 from api.utils.cursor import to_iso_timestamp
+from api.services.lexi_memory import load_memory_block, save_facts
 from api.services.lexi_session_store import LexiSessionStore, get_lexi_store
 from api.services.lexi_idempotency_store import LexiIdempotencyStore, get_lexi_idempotency_store
 from api.services.lexi_pipeline_helpers import (
@@ -523,6 +524,7 @@ async def run_lexi_pipeline(
     model_used = "trace-cag"
     observation_trace_result: Dict[str, Any] = {}
     suggested_courses: List[LexiCourseSuggestion] = []
+    stated_facts: Dict[str, str] = {}
 
     try:
         from api.services.orchestrator import get_orchestrator
@@ -539,9 +541,11 @@ async def run_lexi_pipeline(
         card_task = asyncio.ensure_future(
             _resolve_learner_card(request.user_id, user_text)
         )
+        memory_task = asyncio.ensure_future(load_memory_block(db, request.user_id))
         orchestrator = await get_orchestrator()
         session_recap = await recap_task if recap_task else None
         learner_facts, suggested_courses = await card_task
+        memory_block = await memory_task
         graph_result = await orchestrator.process(
             user_input=user_text,
             session_id=session_id,
@@ -551,12 +555,13 @@ async def run_lexi_pipeline(
                 "native_language": iso_to_language_name(request.native_language),
                 **({"session_recap": session_recap} if session_recap else {}),
                 **({"learner_facts": learner_facts} if learner_facts else {}),
+                **({"memory": memory_block} if memory_block else {}),
             },
             conversation_history=history,
             # A cached reply would report yesterday's XP, streak or level as if
             # it were current — personal facts age, the tutoring around them
             # does not.
-            **({"cache_policy": "off"} if learner_facts else {}),
+            **({"cache_policy": "off"} if learner_facts or memory_block else {}),
         )
         lexi_response = graph_result.get("tutor_response", "")
         for c in graph_result.get("corrections", []):
@@ -567,6 +572,7 @@ async def run_lexi_pipeline(
                 explanation=c.get("explanation", ""),
             ))
         linked_concepts = graph_result.get("linked_concepts", [])
+        stated_facts = dict(graph_result.get("learner_facts_stated") or {})
         suggested_practice = _build_suggested_practice(
             graph_result.get("weak_concepts", []), bool(corrections)
         )
@@ -670,6 +676,7 @@ async def run_lexi_pipeline(
 
     # Fire all independent writes concurrently: cache append + MongoDB writes.
     await asyncio.gather(
+        save_facts(db, request.user_id, stated_facts),
         append_lexi_messages(session_id, [user_message, assistant_message]),
         db["lexi_messages"].insert_many([
             {
@@ -892,6 +899,7 @@ async def stream_lexi_chat(
         card_task = asyncio.create_task(
             _resolve_learner_card(request.user_id, user_text)
         )
+        memory_task = asyncio.create_task(load_memory_block(db, request.user_id))
         loop = asyncio.get_running_loop()
         orch_deadline = loop.time() + 45.0  # Reduced from 60s: total must fit within Cloudflare's 100s proxy timeout
         while not orch_task.done():
@@ -913,6 +921,7 @@ async def stream_lexi_chat(
         orchestrator = await orch_task
         session_recap = await recap_task if recap_task else None
         learner_facts, suggested_courses = await card_task
+        memory_block = await memory_task
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
                 user_input=user_text,
@@ -923,11 +932,12 @@ async def stream_lexi_chat(
                     "native_language": iso_to_language_name(request.native_language),
                     **({"session_recap": session_recap} if session_recap else {}),
                     **({"learner_facts": learner_facts} if learner_facts else {}),
+                    **({"memory": memory_block} if memory_block else {}),
                 },
                 conversation_history=history,
                 # See run_lexi_pipeline: a cached reply would report stale XP,
                 # streak or level as if it were current.
-                **({"cache_policy": "off"} if learner_facts else {}),
+                **({"cache_policy": "off"} if learner_facts or memory_block else {}),
             )
         )
 
@@ -1081,6 +1091,7 @@ async def stream_lexi_chat(
 
     async def _stream_persist():
         await asyncio.gather(
+            save_facts(db, request.user_id, raw_state.get("diagnosis_facts") or {}),
             append_lexi_messages(session_id, [user_message, assistant_message]),
             db["lexi_messages"].insert_many([
                 {**user_message, "session_id": session_id, "user_id": request.user_id},

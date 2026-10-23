@@ -22,6 +22,7 @@ from typing import Dict, Any, List, Optional
 from api.core.groq_key_pool import resolve_groq_model
 from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
+from api.services.lexi_memory import clean_facts
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.trace_cag.dependencies import (
     dependency_record,
@@ -465,11 +466,18 @@ Provide a JSON response with:
     "intent": "correct|explain|practice|ask",
     "fluency_score": 0.0-1.0,
     "grammar_score": 0.0-1.0,
-    "confidence": 0.0-1.0
+    "confidence": 0.0-1.0,
+    "facts": {{"preferred_name": "", "occupation": "", "goal": "", "interests": ""}}
 }}
 
-If no errors, return empty errors array with high scores.
-Be encouraging and focus on the most important errors first."""
+Rules for "errors": list only real mistakes (wrong grammar, spelling or word choice) that a
+teacher would correct. Do NOT list wording that is merely unusual, informal, awkward or
+could be said better — if the sentence is understandable and acceptable, return an empty
+list. If unsure, leave it out. At most 2 errors, most important first.
+Use intent "ask" when the learner is asking a question or requesting something.
+Rules for "facts": fill a field only when the learner states it about THEMSELVES in this
+sentence (name they want to be called, job or field of study, learning goal, interests),
+copying their exact words. Otherwise leave it empty. Never guess or infer."""
 
         # Call local Qwen via ModelGateway (lazy loads if needed).
         # If local Qwen is unavailable (e.g., missing local weights), fall back
@@ -500,6 +508,7 @@ Be encouraging and focus on the most important errors first."""
         # Parse AI response
         errors: List[DiagnosisError] = []
         root_causes: List[str] = []
+        facts: Dict[str, str] = {}
         intent = "correct"
         confidence = 0.9
         grammar_score = 0.8
@@ -562,7 +571,10 @@ Be encouraging and focus on the most important errors first."""
                 # generic span (e.g. "the sentence") instead of quoting the
                 # actual offending text, so drop anything that isn't really
                 # part of what the user typed.
+                facts = clean_facts(ai_data.get("facts"), user_text)
                 for err in ai_data.get("errors", []):
+                    if len(errors) >= 2:
+                        break
                     span = err.get("span", "")
                     if not span or span.lower() not in user_text.lower():
                         continue
@@ -605,6 +617,7 @@ Be encouraging and focus on the most important errors first."""
         return {
             "diagnosis_intent": intent,
             "diagnosis_errors": errors,
+            "diagnosis_facts": facts,
             "diagnosis_root_causes": root_causes,
             "diagnosis_confidence": confidence,
             "grammar_score": grammar_score,

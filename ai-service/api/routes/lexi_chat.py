@@ -641,6 +641,28 @@ async def delete_lexi_session(
     return {"success": True, "session_id": session_id}
 
 
+@router.get("/memory")
+async def get_lexi_memory(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """What Lexi remembers about the caller from earlier chats."""
+    from api.services.lexi_memory import load_facts
+
+    return {"facts": await load_facts(db, current_user.user_id)}
+
+
+@router.delete("/memory")
+async def forget_lexi_memory(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Wipe everything Lexi remembered about the caller."""
+    from api.services.lexi_memory import forget_facts
+
+    return {"success": True, "deleted": await forget_facts(db, current_user.user_id)}
+
+
 @router.get("/health")
 async def lexi_health() -> Dict[str, Any]:
     """Health check for Lexi chat service."""

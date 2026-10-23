@@ -292,6 +292,7 @@ class TraceCAGPipeline:
                 for err in errors
             ],
             "linked_concepts": state.get("kg_seed_concepts", []),
+            "learner_facts_stated": state.get("diagnosis_facts") or {},
             # Concept IDs diagnose_node traced the *actual grammar errors* back
             # to (distinct from linked_concepts, which are just topic-keyword
             # seeds from the raw input) — the precise signal a "practice this

@@ -16,7 +16,7 @@ from typing import Iterable
 # cache artifact. Previously these drifted independently (v1 here vs v2 in
 # cache_utils.py), which silently defeated certificate-based invalidation.
 GRAPH_SCHEMA_VERSION = 2
-POLICY_SCHEMA_VERSION = 2
+POLICY_SCHEMA_VERSION = 3
 
 POLICY_VERSION_TOKEN = f"policy_v{POLICY_SCHEMA_VERSION}"
 KG_VERSION_TOKEN = f"kg_schema_v{GRAPH_SCHEMA_VERSION}"
