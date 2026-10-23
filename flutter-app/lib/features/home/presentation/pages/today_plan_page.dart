@@ -25,7 +25,11 @@ class _TodayPlanPageState extends State<TodayPlanPage> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    // Both providers notifyListeners() synchronously; calling them while the
+    // route is still building throws "setState() called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadData();
+    });
   }
 
   Future<void> _loadData() async {

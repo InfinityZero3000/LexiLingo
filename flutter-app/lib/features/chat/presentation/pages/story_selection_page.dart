@@ -50,7 +50,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        toolbarHeight: 86,
+        toolbarHeight: 64,
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -122,7 +122,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                 children: [
                   // Search Bar
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                     child: _buildSearchBar(theme, isDark),
                   ),
 
@@ -146,6 +146,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
     final accent = AppColorRoles.primary(isDark);
+    final bodyStyle = theme.textTheme.bodyLarge ?? const TextStyle();
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -161,21 +162,29 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
         ],
       ),
-      child: Center(
-        child: TextField(
-          controller: _searchController,
-          onChanged: (val) => setState(() => _searchQuery = val),
-          textAlignVertical: TextAlignVertical.center,
-          style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
-          decoration: InputDecoration(
-            hintText: 'storySelection.searchHint'.tr(),
-            hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
-            prefixIcon: Icon(
-              Icons.search,
-              color: isDark ? accent : theme.primaryColor,
-            ),
-            border: InputBorder.none,
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) => setState(() => _searchQuery = val),
+        textAlignVertical: TextAlignVertical.center,
+        style: bodyStyle.copyWith(color: AppColorRoles.textPrimary(isDark)),
+        decoration: InputDecoration(
+          hintText: 'storySelection.searchHint'.tr(),
+          hintStyle: bodyStyle.copyWith(color: AppColorRoles.textMuted(isDark)),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 24,
+            color: isDark ? accent : theme.primaryColor,
           ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 56,
+            minHeight: 56,
+          ),
+          filled: false,
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.only(right: 16),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
       ),
     );
@@ -294,7 +303,12 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: stories.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {

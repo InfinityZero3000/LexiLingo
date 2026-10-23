@@ -11,7 +11,6 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/circle_icon.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
@@ -27,27 +26,27 @@ class MainScreen extends StatefulWidget {
 
 const _tabs = <({IconData icon, IconData activeIcon, String label})>[
   (
-    icon: PhosphorIconsBold.compass,
+    icon: PhosphorIconsRegular.compass,
     activeIcon: PhosphorIconsFill.compass,
     label: 'home.navDiscovery',
   ),
   (
-    icon: PhosphorIconsBold.graduationCap,
+    icon: PhosphorIconsRegular.graduationCap,
     activeIcon: PhosphorIconsFill.graduationCap,
     label: 'home.navLearning',
   ),
   (
-    icon: PhosphorIconsBold.sparkle,
+    icon: PhosphorIconsRegular.sparkle,
     activeIcon: PhosphorIconsFill.sparkle,
     label: 'home.navLexi',
   ),
   (
-    icon: PhosphorIconsBold.chatCircleDots,
+    icon: PhosphorIconsRegular.chatCircleDots,
     activeIcon: PhosphorIconsFill.chatCircleDots,
     label: 'home.navTopic',
   ),
   (
-    icon: PhosphorIconsBold.userCircle,
+    icon: PhosphorIconsRegular.userCircle,
     activeIcon: PhosphorIconsFill.userCircle,
     label: 'home.navAccount',
   ),
@@ -162,6 +161,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      extendBody: true,
       body: useRail
           ? Row(
               children: [
@@ -257,18 +257,20 @@ class _MainScreenState extends State<MainScreen> {
             currentIndex: _currentIndex,
             type: BottomNavigationBarType.fixed,
             elevation: 0,
+            selectedFontSize: 11,
+            unselectedFontSize: 11,
+            selectedItemColor: AppColorRoles.primary(isDark),
             onTap: _selectTab,
             items: [
               for (final tab in _tabs)
                 BottomNavigationBarItem(
                   icon: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Icon(tab.icon, size: 26),
+                    child: Icon(tab.icon, size: 24),
                   ),
-                  activeIcon: CircleIcon(
-                    icon: tab.activeIcon,
-                    color: AppColorRoles.primary(isDark),
-                    size: 44,
+                  activeIcon: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Icon(tab.activeIcon, size: 24),
                   ),
                   label: tab.label.tr(),
                 ),

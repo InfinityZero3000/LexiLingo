@@ -14,7 +14,15 @@ class QuickActionsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accent = AppColorRoles.primary(isDark);
+    // One saturated hue per tile, no two from the same family.
+    const lightActionColors = <Color>[
+      Color(0xFFFF4B4B), // YouTube
+      Color(0xFF14C38E), // News
+      Color(0xFF8B5CF6), // Games
+      Color(0xFF1CB0F6), // Podcast
+      Color(0xFFFF5FA2), // Books
+      Color(0xFFFF9F0A), // Vocabulary
+    ];
     // Keep all dark-mode quick actions in a consistent neon range.
     const neonDarkActionColors = <Color>[
       Color(0xFFFF3131), // YouTube
@@ -29,37 +37,37 @@ class QuickActionsGrid extends StatelessWidget {
       (
         icon: PhosphorIconsBold.youtubeLogo,
         label: 'home.youtube',
-        color: isDark ? neonDarkActionColors[0] : AppColors.dangerGradient[0],
+        color: isDark ? neonDarkActionColors[0] : lightActionColors[0],
         route: '/youtube',
       ),
       (
         icon: PhosphorIconsBold.newspaper,
         label: 'home.news',
-        color: isDark ? neonDarkActionColors[1] : AppColors.teal,
+        color: isDark ? neonDarkActionColors[1] : lightActionColors[1],
         route: '/news',
       ),
       (
         icon: PhosphorIconsBold.gameController,
         label: 'home.games',
-        color: isDark ? neonDarkActionColors[2] : AppColors.purple,
+        color: isDark ? neonDarkActionColors[2] : lightActionColors[2],
         route: '/games',
       ),
       (
         icon: PhosphorIconsBold.headphones,
         label: 'home.podcast',
-        color: isDark ? neonDarkActionColors[3] : accent,
+        color: isDark ? neonDarkActionColors[3] : lightActionColors[3],
         route: '/podcast',
       ),
       (
         icon: PhosphorIconsBold.bookOpenText,
         label: 'home.books',
-        color: isDark ? neonDarkActionColors[4] : AppColors.purpleLight,
+        color: isDark ? neonDarkActionColors[4] : lightActionColors[4],
         route: '/books',
       ),
       (
         icon: PhosphorIconsBold.cards,
         label: 'home.vocabulary',
-        color: isDark ? neonDarkActionColors[5] : AppColors.orange,
+        color: isDark ? neonDarkActionColors[5] : lightActionColors[5],
         route: '/vocab',
       ),
     ];
@@ -67,7 +75,7 @@ class QuickActionsGrid extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
         decoration: BoxDecoration(
           color: isDark
               ? theme.colorScheme.surfaceContainerHighest
@@ -90,11 +98,13 @@ class QuickActionsGrid extends StatelessWidget {
                 : 3;
             return GridView.builder(
               shrinkWrap: true,
+              // A null padding inherits the bottom nav inset as dead space.
+              padding: EdgeInsets.zero,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: columns,
-                mainAxisSpacing: 18,
-                mainAxisExtent: 96,
+                mainAxisSpacing: 10,
+                mainAxisExtent: 88,
               ),
               itemCount: quickActions.length,
               itemBuilder: (context, index) {
@@ -145,7 +155,7 @@ class _QuickActionTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleIcon(icon: icon, color: color, size: 60),
+          CircleIcon(icon: icon, color: color, size: 56),
           const SizedBox(height: 8),
           Text(
             label,

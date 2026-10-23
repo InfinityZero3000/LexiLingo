@@ -207,7 +207,9 @@ class _ProfilePageState extends State<ProfilePage> {
         onRefresh: _loadData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 24),
+          padding: EdgeInsets.only(
+            bottom: 24 + MediaQuery.paddingOf(context).bottom,
+          ),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 960),
@@ -238,7 +240,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   if (_isAdminUser(user))
                     AdminPanelTile(onTap: _openAdminPanel),
 
-                  const SizedBox(height: 80),
                 ],
               ),
             ),

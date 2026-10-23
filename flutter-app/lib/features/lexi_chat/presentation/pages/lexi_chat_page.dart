@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
@@ -522,6 +523,12 @@ class _LexiChatPageState extends State<LexiChatPage>
       ),
       child: Row(
         children: [
+          // A tab in MainScreen, but also pushed as `/lexi` — only then can it pop.
+          if (ModalRoute.of(context)?.canPop ?? false)
+            AppBackButton(
+              color: isDark ? Colors.white70 : AppColors.textDark,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           Container(
             decoration: BoxDecoration(
               color: isDark
@@ -919,12 +926,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   // ── Minimalist Input Bar ────────────────────────────────────────────────
   Widget _buildInputBar(bool isDark) {
     return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
