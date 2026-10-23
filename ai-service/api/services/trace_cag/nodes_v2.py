@@ -84,6 +84,39 @@ async def get_gateway():
 # NODE 1: INPUT NODE
 # ============================================================
 
+_INPUT_REDIS_WARN_EVERY_SECONDS = 30.0
+_input_redis_warned_at: Dict[str, float] = {}
+
+
+def _input_redis_budget_seconds() -> float:
+    """Longest input_node waits on Redis for the profile and history (TRACECAG_INPUT_REDIS_BUDGET_MS)."""
+    try:
+        return max(0.05, int(os.getenv("TRACECAG_INPUT_REDIS_BUDGET_MS", "500")) / 1000.0)
+    except ValueError:
+        return 0.5
+
+
+def _note_input_redis_degraded(part: str, exc: Optional[BaseException]) -> None:
+    """Count and (rarely) log a Redis read that input_node had to give up on.
+
+    These failures used to be swallowed: the turn ran with no history and no profile and nothing
+    was logged or counted. A connection-pool limit hits the same path.
+    """
+    try:
+        from api.services.telemetry import get_telemetry
+
+        telemetry = get_telemetry()
+        telemetry.increment_counter("tracecag_input_redis_degraded_total")
+        telemetry.record_metric("tracecag_input_redis_degraded", 1, unit="count", tags={"part": part})
+    except Exception:
+        pass
+    now = time.monotonic()
+    if now - _input_redis_warned_at.get(part, -1e9) >= _INPUT_REDIS_WARN_EVERY_SECONDS:
+        _input_redis_warned_at[part] = now
+        logger.warning("[input_node] Redis %s read failed, continuing without it: %s", part, exc or "budget exceeded")
+
+
+
 async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Parse and validate user input, load learner context.
@@ -105,10 +138,13 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
         import asyncio as _asyncio
         
         learner_profile = state.get("learner_profile", {"level": "B1"})
-        conversation_history = []
         user_id = state.get("user_id")
         session_id = state.get("session_id", "")
         epoch_result = None
+        # A caller that already holds the history (lexi_chat) passes it in; reading Redis for it
+        # again cost a round trip and then replaced it, or emptied it when Redis was down.
+        history_supplied = bool(state.get("conversation_history_supplied"))
+        conversation_history = list(state.get("conversation_history") or []) if history_supplied else []
 
         async def _get_learner_epoch():
             if not user_id or settings.LEARNER_STATE_MODE == "off":
@@ -121,11 +157,8 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             )
 
         epoch_task = _asyncio.create_task(_get_learner_epoch())
-        
-        try:
-            if RedisClient._benchmark_redis_disabled():
-                raise RuntimeError("Redis disabled for benchmark")
 
+        async def _read_redis():
             redis_client = await RedisClient.get_instance()
 
             # Fetch profile and history concurrently.
@@ -134,25 +167,41 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                     try:
                         profile_cache = LearnerProfileCache(redis_client)
                         return await profile_cache.get_profile(user_id)
-                    except Exception:
+                    except Exception as exc:
+                        _note_input_redis_degraded("profile", exc)
                         return None
                 return None
 
             async def _get_history():
-                if session_id:
+                if session_id and not history_supplied:
                     try:
                         conv_cache = ConversationCache(redis_client)
                         return await conv_cache.get_history(session_id)
-                    except Exception:
-                        return []
-                return []
+                    except Exception as exc:
+                        _note_input_redis_degraded("history", exc)
+                        return None
+                return None
 
-            cached_profile, fetched_history = await _asyncio.gather(
-                _get_profile(), _get_history()
-            )
+            return await _asyncio.gather(_get_profile(), _get_history())
+
+        try:
+            if RedisClient._benchmark_redis_disabled():
+                raise RuntimeError("Redis disabled for benchmark")
+
+            # Redis normally answers in about a millisecond. RedisClient retries a failed command
+            # up to 10 times with growing sleeps and a 5 s socket timeout, so without this budget
+            # a sick Redis stalled the whole turn for many seconds before the LLM was even called.
+            try:
+                cached_profile, fetched_history = await _asyncio.wait_for(
+                    _read_redis(), timeout=_input_redis_budget_seconds()
+                )
+            except (_asyncio.TimeoutError, TimeoutError):
+                cached_profile, fetched_history = None, None
+                _note_input_redis_degraded("budget", None)
             if cached_profile:
                 learner_profile = {**cached_profile, **learner_profile}
-            conversation_history = fetched_history or []
+            if not history_supplied:
+                conversation_history = fetched_history or []
 
         except Exception as e:
             if RedisClient._benchmark_redis_disabled():

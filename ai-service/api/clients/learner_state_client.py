@@ -34,6 +34,7 @@ class LearnerStateClient:
         audience: str = "lexilingo-backend",
         http_client: httpx.AsyncClient | None = None,
         max_inflight: int = 100,
+        max_keepalive: int | None = None,
         circuit_failures: int = 5,
         circuit_reset_seconds: float = 30.0,
         connect_timeout_seconds: float = 0.010,
@@ -44,7 +45,12 @@ class LearnerStateClient:
         self._audience = audience
         self._owns_client = http_client is None
         self._http = http_client or httpx.AsyncClient(
-            limits=httpx.Limits(max_connections=max_inflight, max_keepalive_connections=20),
+            # Idle connections default to the in-flight limit. With only 20 kept alive, any burst
+            # above 20 concurrent turns opened and closed a socket per call, inside a 40 ms deadline.
+            limits=httpx.Limits(
+                max_connections=max_inflight,
+                max_keepalive_connections=max_inflight if max_keepalive is None else max_keepalive,
+            ),
             timeout=None,
         )
         self._bulkhead = asyncio.Semaphore(max_inflight)
@@ -237,6 +243,7 @@ def get_learner_state_client() -> LearnerStateClient:
             token=settings.LEARNER_STATE_INTERNAL_TOKEN,
             audience=settings.LEARNER_STATE_INTERNAL_AUDIENCE,
             max_inflight=settings.LEARNER_STATE_MAX_INFLIGHT,
+            max_keepalive=settings.LEARNER_STATE_MAX_KEEPALIVE,
             circuit_failures=settings.LEARNER_STATE_CIRCUIT_FAILURES,
             circuit_reset_seconds=settings.LEARNER_STATE_CIRCUIT_RESET_SECONDS,
             connect_timeout_seconds=settings.LEARNER_STATE_CONNECT_TIMEOUT_MS / 1000.0,
