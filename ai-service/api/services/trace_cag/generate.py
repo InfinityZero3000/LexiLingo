@@ -83,6 +83,10 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
             who = f"is learning for {goal}" if goal else f"is into {interest}"
         hint += f"The learner {who} — use examples from that when it fits naturally.\n"
 
+    brief = str(learner_profile.get("profile_brief") or "").strip()
+    if brief:
+        hint += brief + "\n"
+
     memory = str(learner_profile.get("memory") or "").strip()
     if memory:
         hint += memory + "\n"
@@ -160,7 +164,10 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
 
     return (
         "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
-        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
+        "Talk like a friendly conversation partner who happens to be a tutor, not an "
+        "examiner: react to what the learner actually says, share a short thought of "
+        "your own, and often end with one natural question that keeps them talking. "
+        "Say \"Squawk!\" only occasionally.\n"
         "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
         "Always answer what the learner actually said or asked before anything else. "
         "Correct at most ONE mistake per reply, and only if it matters; a correction "
@@ -173,10 +180,10 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
 
 
 _RICH_FORMATTING_HINT = (
-    "\nWhen it genuinely helps — comparing two grammar forms/tenses/words, or "
-    "summarizing multiple facts — use a markdown table (`| Col | Col |`) instead of "
-    "prose. Skip the table for short answers where it wouldn't add clarity.\n"
-    "For numeric data (scores, progress, counts), you may add ONE fenced "
+    "\nFormatting: reply in plain conversational sentences. Use a markdown table "
+    "(`| Col | Col |`) only when the learner asks to compare forms/tenses/words or for "
+    "a list of several facts — never to grade or summarise their own sentence.\n"
+    "For numeric data (scores, progress, counts) you may add ONE fenced "
     '```chart block right after your sentence, containing only compact JSON: '
     '{"type":"bar|line|pie","title":"...","labels":["A","B"],'
     '"series":[{"name":"...","values":[1,2]}]}. Omit it unless there\'s real '
@@ -225,7 +232,11 @@ def _errors_directive(
     if not errors:
         if asked:
             return "\nNo errors found. Just answer the question directly; no praise needed.\n"
-        return "\nNo errors found — praise the learner's effort!\n"
+        return (
+            "\nNo errors found. Do not grade or rate their sentence. Respond to what "
+            "they told you like a friend would — react, relate, ask one follow-up. "
+            "Mention their English only if something was genuinely nicely put.\n"
+        )
     errs_text = "\n".join(
         f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
         for e in errors[:2]
@@ -235,13 +246,14 @@ def _errors_directive(
             f"\n--- Possible slips in the learner's wording ---\n{errs_text}\n"
             "The learner asked for something. ANSWER IT FIRST, fully and directly, "
             "as if the wording were perfect. Only after the answer, and only if a slip "
-            "really matters, add ONE short sentence of correction. If it is minor, "
-            "skip it entirely.\n"
+            "really matters, add a brief friendly aside such as 'By the way, we say "
+            "...' — never in brackets, never a lecture. If it is minor, skip it.\n"
         )
     return (
         f"\n--- Errors Found ---\n{errs_text}\n"
-        f"Strategy: {strategy}. Respond to what the learner said first, then weave in "
-        "at most one correction naturally.\n"
+        f"Strategy: {strategy}. Respond to what the learner said first, then fold in "
+        "at most one correction as a natural recast (say it correctly in your own "
+        "sentence, or 'By the way, we say ...'). Keep it light.\n"
     )
 
 

@@ -16,7 +16,7 @@ import uuid
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, NamedTuple, Optional, Tuple
 
 from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -232,14 +232,26 @@ _CARD_UNAVAILABLE_FACTS = (
     "has no courses.\n"
 )
 
+# A turn that did not ask about the learner never waits longer than this for
+# the card; the fetch carries on and fills the cache for the next turn.
+_PROFILE_WAIT_SECONDS = 0.6
 
-async def _resolve_learner_card(
-    user_id: str, user_text: str
-) -> tuple[str, List["LexiCourseSuggestion"]]:
-    """(prompt fact block, real course rows) for turns that ask about the learner.
 
-    Returns empty results for every other turn, so ordinary tutoring pays no
-    latency and the tutor prompt is not diluted with facts it will not use.
+class _CardContext(NamedTuple):
+    facts: str = ""
+    courses: Tuple[Any, ...] = ()
+    # Merged into learner_profile: level, goal, interest, profile_brief.
+    profile: Dict[str, str] = {}
+
+
+async def _resolve_learner_card(user_id: str, user_text: str) -> _CardContext:
+    """What the database says about this learner, for this turn.
+
+    Two layers from one cached card:
+      - every turn: a short profile (level, goal, interest, first name, what
+        they are studying, weakest skill) so ordinary replies are personal;
+      - only when the message asks about the learner or courses: the full fact
+        block and real course rows.
 
     Never raises. Both callers run this as a task alongside orchestrator
     warmup, so an exception here would either derail an otherwise fine turn
@@ -250,14 +262,21 @@ async def _resolve_learner_card(
         course_suggestions,
         detect_learner_intents,
         get_learner_card,
+        profile_defaults,
         render_card_facts,
+        render_profile_brief,
     )
+    from api.utils.languages import iso_to_language_name
 
     try:
         intents = detect_learner_intents(user_text)
-        if not intents:
-            return "", []
-        card = await get_learner_card(user_id)
+        fetch = asyncio.ensure_future(get_learner_card(user_id))
+        try:
+            card = await asyncio.wait_for(
+                asyncio.shield(fetch), timeout=None if intents else _PROFILE_WAIT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            card = None
         # INFO, not debug: this is how you tell from production logs whether
         # the feature is reaching learners at all, or silently degrading
         # because the internal channel is misconfigured.
@@ -269,19 +288,27 @@ async def _resolve_learner_card(
         if not card:
             # Silence here made the tutor improvise "I don't have a list of
             # courses" as if the app had none.
-            return _CARD_UNAVAILABLE_FACTS, []
-        return (
-            render_card_facts(card, intents),
-            [
+            return _CardContext(facts=_CARD_UNAVAILABLE_FACTS if intents else "")
+
+        profile = dict(profile_defaults(card))
+        brief = render_profile_brief(
+            card, iso_to_language_name(str(card.get("native_language") or ""))
+        )
+        if brief:
+            profile["profile_brief"] = brief
+        return _CardContext(
+            facts=render_card_facts(card, intents) if intents else "",
+            courses=tuple(
                 LexiCourseSuggestion(**item)
                 for item in course_suggestions(card, intents)
-            ],
+            ),
+            profile=profile,
         )
     except asyncio.CancelledError:
         raise
     except Exception as exc:
         logger.warning("[lexi_chat] learner card unavailable (non-fatal): %s", exc)
-        return "", []
+        return _CardContext()
 
 
 def idempotency_request_hash(request: "LexiChatRequest") -> str:
@@ -537,6 +564,7 @@ async def run_lexi_pipeline(
     observation_trace_result: Dict[str, Any] = {}
     suggested_courses: List[LexiCourseSuggestion] = []
     stated_facts: Dict[str, str] = {}
+    effective_level = request.learner_level
 
     try:
         from api.services.orchestrator import get_orchestrator
@@ -556,7 +584,9 @@ async def run_lexi_pipeline(
         memory_task = asyncio.ensure_future(load_memory_block(db, request.user_id))
         orchestrator = await get_orchestrator()
         session_recap = await recap_task if recap_task else None
-        learner_facts, suggested_courses = await card_task
+        card_ctx = await card_task
+        learner_facts, suggested_courses = card_ctx.facts, list(card_ctx.courses)
+        effective_level = card_ctx.profile.get("level", request.learner_level)
         memory_block = await memory_task
         graph_result = await orchestrator.process(
             user_input=user_text,
@@ -565,6 +595,7 @@ async def run_lexi_pipeline(
             learner_profile={
                 "level": request.learner_level,
                 "native_language": iso_to_language_name(request.native_language),
+                **card_ctx.profile,
                 **({"session_recap": session_recap} if session_recap else {}),
                 **({"learner_facts": learner_facts} if learner_facts else {}),
                 **({"memory": memory_block} if memory_block else {}),
@@ -768,7 +799,7 @@ async def run_lexi_pipeline(
                 turn_id=user_message["id"],
                 trace_result=observation_trace_result,
                 skill=_turn_skill(request.input_type),
-                difficulty_level=request.learner_level,
+                difficulty_level=effective_level,
             )
         )
     except Exception as observation_err:
@@ -900,6 +931,7 @@ async def stream_lexi_chat(
     #    Heartbeat pings keep the SSE connection alive while this runs.
     #    get_orchestrator() may block on cold start (model loading); run it as
     #    a task so we can keep pinging while it initialises.
+    effective_level = request.learner_level
     try:
         orch_task = asyncio.create_task(get_orchestrator())
         # Started alongside orchestrator warmup (not after) — this Mongo
@@ -933,7 +965,9 @@ async def stream_lexi_chat(
                 break
         orchestrator = await orch_task
         session_recap = await recap_task if recap_task else None
-        learner_facts, suggested_courses = await card_task
+        card_ctx = await card_task
+        learner_facts, suggested_courses = card_ctx.facts, list(card_ctx.courses)
+        effective_level = card_ctx.profile.get("level", request.learner_level)
         memory_block = await memory_task
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
@@ -943,6 +977,7 @@ async def stream_lexi_chat(
                 learner_profile={
                     "level": request.learner_level,
                     "native_language": iso_to_language_name(request.native_language),
+                    **card_ctx.profile,
                     **({"session_recap": session_recap} if session_recap else {}),
                     **({"learner_facts": learner_facts} if learner_facts else {}),
                     **({"memory": memory_block} if memory_block else {}),
@@ -1157,7 +1192,7 @@ async def stream_lexi_chat(
             turn_id=user_message["id"],
             trace_result=raw_state,
             skill=_turn_skill(request.input_type),
-            difficulty_level=request.learner_level,
+            difficulty_level=effective_level,
         )
     except Exception as observation_err:
         logger.error(

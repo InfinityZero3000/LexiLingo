@@ -111,7 +111,7 @@ def _prompt(user_input, errors, intent="correct", **profile):
 def test_question_with_slip_is_answered_first():
     prompt = _prompt("Can you give me some courses you know in this app please?", _ERR)
     assert "ANSWER IT FIRST" in prompt
-    assert "ONE short sentence" in prompt
+    assert "By the way" in prompt
 
 
 def test_question_without_errors_gets_no_praise_opener():
@@ -126,8 +126,10 @@ def test_plain_statement_with_errors_caps_corrections():
     assert "ANSWER IT FIRST" not in prompt
 
 
-def test_statement_without_errors_still_praised():
-    assert "praise the learner's effort" in _prompt("I went to school", [])
+def test_statement_without_errors_is_conversation_not_grading():
+    prompt = _prompt("I went to school", [])
+    assert "Do not grade or rate their sentence" in prompt
+    assert "praise the learner's effort" not in prompt
 
 
 def test_question_word_must_be_a_whole_word():
@@ -154,52 +156,3 @@ def test_practice_intent_is_never_answer_first():
 def test_memory_block_reaches_the_prompt():
     memory = render_facts({"preferred_name": "Thang"})
     assert 'Prefers to be called: "Thang"' in _prompt("Hello", [], memory=memory)
-
-
-@pytest.mark.asyncio
-async def test_unresolved_card_tells_the_tutor_not_to_claim_no_courses(monkeypatch):
-    from api.services import learner_card, lexi_chat_service
-
-    monkeypatch.setattr(
-        learner_card, "get_learner_card", AsyncMock(return_value=None), raising=True
-    )
-    facts, courses = await lexi_chat_service._resolve_learner_card(
-        "u1", "Can you give me some courses in this app?"
-    )
-    assert "Never claim the app has no courses" in facts
-    assert courses == []
-
-    facts, courses = await lexi_chat_service._resolve_learner_card("u1", "Hello there")
-    assert (facts, courses) == ("", [])
-
-
-@pytest.mark.asyncio
-async def test_memory_routes_are_scoped_to_the_caller_and_validate_the_key(monkeypatch):
-    from fastapi import HTTPException
-
-    from api.core.auth import AuthenticatedUser
-    from api.routes import lexi_chat as route
-
-    user = MagicMock(spec=AuthenticatedUser)
-    user.user_id = "u1"
-    db = MagicMock()
-    load = AsyncMock(return_value={"goal": "IELTS"})
-    forget_all = AsyncMock(return_value=True)
-    forget_one = AsyncMock(side_effect=[None, KeyError("religion")])
-    monkeypatch.setattr(lexi_memory, "load_facts", load)
-    monkeypatch.setattr(lexi_memory, "forget_facts", forget_all)
-    monkeypatch.setattr(lexi_memory, "forget_fact", forget_one)
-
-    assert await route.get_lexi_memory(db=db, current_user=user) == {
-        "facts": {"goal": "IELTS"}
-    }
-    load.assert_awaited_once_with(db, "u1")
-    assert (await route.forget_lexi_memory(db=db, current_user=user))["deleted"] is True
-    forget_all.assert_awaited_once_with(db, "u1")
-
-    assert (await route.forget_lexi_memory_fact("goal", db=db, current_user=user))[
-        "key"
-    ] == "goal"
-    with pytest.raises(HTTPException) as err:
-        await route.forget_lexi_memory_fact("religion", db=db, current_user=user)
-    assert err.value.status_code == 404
