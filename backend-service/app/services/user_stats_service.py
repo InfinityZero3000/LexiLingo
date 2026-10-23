@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select
@@ -119,61 +119,51 @@ async def get_user_stats(db: AsyncSession, user: User) -> UserStatsResponse:
     )
 
 
+_DAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
 async def get_weekly_activity(db: AsyncSession, user: User) -> WeeklyActivityResponse:
     today = datetime.now(timezone.utc).date()
     week_ago = today - timedelta(days=6)
-    day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    range_start = datetime.combine(week_ago, datetime.min.time())
-    range_end = datetime.combine(today + timedelta(days=1), datetime.min.time())
     rows = (
         await db.execute(
             select(
-                func.date(LessonAttempt.finished_at).label("day"),
-                func.count(LessonAttempt.id).label("count"),
-                func.coalesce(func.sum(LessonAttempt.xp_earned), 0).label("xp"),
-                func.coalesce(func.sum(LessonAttempt.time_spent_ms), 0).label("time"),
+                DailyActivity.activity_date,
+                func.sum(DailyActivity.xp_earned).label("xp"),
+                func.sum(DailyActivity.lessons_completed).label("lessons"),
+                func.sum(DailyActivity.study_time_minutes).label("minutes"),
+                func.sum(DailyActivity.vocabulary_reviewed).label("vocab"),
             )
             .where(
-                LessonAttempt.user_id == user.id,
-                LessonAttempt.finished_at >= range_start,
-                LessonAttempt.finished_at < range_end,
-                LessonAttempt.passed.is_(True),
+                DailyActivity.user_id == user.id,
+                DailyActivity.activity_date >= week_ago,
+                DailyActivity.activity_date <= today,
             )
-            .group_by(func.date(LessonAttempt.finished_at))
+            .group_by(DailyActivity.activity_date)
         )
     ).all()
-    activity_by_day = {
-        date.fromisoformat(row.day) if isinstance(row.day, str) else row.day: row
-        for row in rows
-    }
+    activity_by_day = {row.activity_date: row for row in rows}
 
     week_data: list[WeeklyActivityData] = []
-    total_xp = total_lessons = total_study_time = 0
-
     for i in range(7):
         day_date = week_ago + timedelta(days=i)
         row = activity_by_day.get(day_date)
-
-        day_lessons = int(row.count) if row and row.count else 0
-        day_xp = int(row.xp) if row and row.xp else 0
-        day_time = int(row.time / 60000) if row and row.time else 0
-
         week_data.append(WeeklyActivityData(
-            day=day_names[day_date.weekday()],
-            xp=day_xp,
-            lessons=day_lessons,
-            study_time=day_time,
+            day=_DAY_NAMES[day_date.weekday()],
+            date=day_date.isoformat(),
+            xp=int(row.xp or 0) if row else 0,
+            lessons=int(row.lessons or 0) if row else 0,
+            study_time=int(row.minutes or 0) if row else 0,
+            vocabulary=int(row.vocab or 0) if row else 0,
         ))
-        total_xp += day_xp
-        total_lessons += day_lessons
-        total_study_time += day_time
 
     return WeeklyActivityResponse(
         week_data=week_data,
-        total_xp=total_xp,
-        total_lessons=total_lessons,
-        total_study_time=total_study_time,
+        total_xp=sum(d.xp for d in week_data),
+        total_lessons=sum(d.lessons for d in week_data),
+        total_study_time=sum(d.study_time for d in week_data),
+        total_vocabulary=sum(d.vocabulary for d in week_data),
     )
 
 

@@ -133,6 +133,7 @@ class CourseListItem(BaseModel):
     total_xp: int = 0
     estimated_duration: int = 0
     is_enrolled: Optional[bool] = None
+    user_progress: Optional[float] = None  # 0-100%
     
     @field_validator("tags", mode="before")
     @classmethod
