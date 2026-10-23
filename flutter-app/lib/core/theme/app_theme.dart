@@ -160,6 +160,9 @@ class AppColors {
   static const Color cyanGlow = Color(0xFF19FCFC);
   static const Color cyanGlowDark = Color(0xFF30E8E8);
 
+  /// Success green for dark surfaces, where greenSuccessBright reads dull
+  static const Color successNeon = Color(0xFF3DFF8F);
+
   // ── Dark-Mode Accent & Text Roles ─────────────────────────────────────────
   static const Color primaryDarkMode = Color(0xFF19FCFC);
   static const Color primaryDarkModeSoft = Color(0xFF8CFDFF);

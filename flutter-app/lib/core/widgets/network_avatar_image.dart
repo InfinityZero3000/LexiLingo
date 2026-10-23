@@ -14,6 +14,7 @@ class NetworkAvatarImage extends StatelessWidget {
     this.width,
     this.height,
     this.fallback,
+    this.cacheSize,
   });
 
   final String? imageUrl;
@@ -21,6 +22,9 @@ class NetworkAvatarImage extends StatelessWidget {
   final double? width;
   final double? height;
   final Widget? fallback;
+
+  /// Logical px the avatar is shown at; decodes the bitmap at that size.
+  final double? cacheSize;
 
   @override
   Widget build(BuildContext context) {
@@ -53,11 +57,17 @@ class NetworkAvatarImage extends StatelessWidget {
       );
     }
 
+    final cacheSize = this.cacheSize;
+    final decodePx = cacheSize == null
+        ? null
+        : (cacheSize * MediaQuery.devicePixelRatioOf(context)).round();
+
     return Image.network(
       resolved,
       fit: fit,
       width: width,
       height: height,
+      cacheWidth: decodePx,
       errorBuilder: (_, __, ___) => fallbackWidget,
     );
   }

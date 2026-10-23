@@ -28,14 +28,14 @@ class CircleIcon extends StatelessWidget {
         ? theme.colorScheme.onPrimary
         : isDark
         ? color
-        : Color.alphaBlend(Colors.black.withValues(alpha: 0.28), color);
+        : Color.alphaBlend(Colors.black.withValues(alpha: 0.12), color);
 
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: solid ? color : color.withValues(alpha: isDark ? 0.22 : 0.14),
+        color: solid ? color : color.withValues(alpha: isDark ? 0.22 : 0.12),
         border: Border.all(
           color: solid ? color : color.withValues(alpha: isDark ? 0.7 : 0.5),
           width: 2,
