@@ -188,9 +188,12 @@ A lesson is playable only if `content.exercises` is non-empty. Consequences:
 - All admin lesson edits must go through `_apply_lesson_update` in `routes/admin_courses.py` — both `PUT /lessons/{id}` and `PUT /lessons/{id}/content` share it.
 - `scripts/audit_course_content.py` reports/repairs existing data (`--fix-counters`, `--fix-matching`, `--fix-unplayable`).
 
-Nothing validates an exercise's *shape* on write, so a malformed one is only
-discovered by a learner who cannot answer it. The shapes that have already been
-broken once:
+Admin lesson writes are shape-checked by `exercise_shape_problems`
+(`app/models/course.py`) and refused with a 422 naming the exercise; the
+`@validates("content")` hook also derives `type` from `ui_type` for every
+writer, because the grader picks its rule from `type`. Other writers (content
+agent, scripts) are not shape-checked; `audit_course_content.py` reports the
+same rules. The shapes that have already been broken once:
 
 - **Pair types** (`match_word_to_meaning`, `categorization`, `cognitive_fluidity`):
   `options` is every key followed by every value, `correct_answer` is

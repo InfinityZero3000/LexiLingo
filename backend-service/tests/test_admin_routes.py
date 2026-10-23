@@ -16,6 +16,16 @@ from app.models.user import User
 from app.models.content import GrammarItem, QuestionItem, TestExam
 
 
+def _mc(exercise_id: str) -> dict:
+    return {
+        "id": exercise_id,
+        "ui_type": "multiple_choice",
+        "question": "Pick b",
+        "options": ["a", "b"],
+        "correct_answer": "b",
+    }
+
+
 class TestAdminCourses:
     """Tests for admin course CRUD"""
     
@@ -333,7 +343,7 @@ class TestAdminLessons:
         db_session.add(lesson)
         await db_session.commit()
 
-        two = {"exercises": [{"id": "1"}, {"id": "2"}]}
+        two = {"exercises": [_mc("1"), _mc("2")]}
         response = await async_client.put(
             f"/api/v1/admin/lessons/{lesson.id}/content",
             headers=admin_headers,
@@ -346,7 +356,7 @@ class TestAdminLessons:
         response = await async_client.put(
             f"/api/v1/admin/lessons/{lesson.id}",
             headers=admin_headers,
-            json={"content": {"exercises": [{"id": "1"}]}},
+            json={"content": {"exercises": [_mc("1")]}},
         )
         assert response.status_code == 200
         assert response.json()["data"]["total_exercises"] == 1
@@ -390,6 +400,49 @@ class TestAdminLessons:
                 url, headers=admin_headers, json={"content": {"exercises": []}}
             )
             assert response.status_code == 409, url
+
+    @pytest.mark.asyncio
+    async def test_unplayable_exercise_is_refused_on_both_update_routes(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+        test_unit,
+    ):
+        """A word bank that lost a word can never be completed — the admin
+        hears about it on save, not a learner mid-lesson."""
+        lesson = Lesson(
+            course_id=test_unit.course_id,
+            unit_id=test_unit.id,
+            title="Shape Lesson",
+            order_index=0,
+            lesson_type="lesson",
+            content={"exercises": [_mc("1")]},
+        )
+        db_session.add(lesson)
+        await db_session.commit()
+
+        broken = {
+            "id": "2",
+            "ui_type": "arrange_the_sentence",
+            "question": "Arrange",
+            "options": [{"id": "0", "text": "she"}],
+            "correct_answer": "she reads",
+        }
+        for url in (
+            f"/api/v1/admin/lessons/{lesson.id}",
+            f"/api/v1/admin/lessons/{lesson.id}/content",
+        ):
+            response = await async_client.put(
+                url,
+                headers=admin_headers,
+                json={"content": {"exercises": [_mc("1"), broken]}},
+            )
+            assert response.status_code == 422, url
+            assert "exercise 2 (arrange_the_sentence)" in response.text
+
+        await db_session.refresh(lesson)
+        assert lesson.exercise_count == 1
 
 
 class TestAdminVocabulary:

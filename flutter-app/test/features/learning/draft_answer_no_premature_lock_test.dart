@@ -40,13 +40,21 @@ void main() {
     await tester.tap(find.text('reads'));
     await tester.pump();
     expect(onAnswerCalls, 0);
-    expect(drafts.last, 'reads');
+    expect(drafts.last, '');
 
     // The bank word must still be tappable after the first pick.
     await tester.tap(find.text('she'));
     await tester.pump();
     expect(onAnswerCalls, 0);
-    expect(drafts.last, 'reads she');
+    // Half a sentence is not an answer — the check button must stay off.
+    expect(drafts.last, '');
+
+    for (final w in ['the', 'newspaper', 'every', 'morning']) {
+      await tester.tap(find.text(w));
+      await tester.pump();
+    }
+    expect(onAnswerCalls, 0);
+    expect(drafts.last, 'reads she the newspaper every morning');
   });
 
   testWidgets('MatchWordMeaningWidget drafts each pair, never self-submits', (
@@ -82,7 +90,8 @@ void main() {
     await tester.tap(find.text('một'));
     await tester.pump();
     expect(onAnswerCalls, 0);
-    expect(drafts.last, 'one:một');
+    // One of two pairs is not an answer yet — the check button must stay off.
+    expect(drafts.last, '');
 
     // The second pair must still be tappable after the first match.
     await tester.tap(find.text('two'));
@@ -91,5 +100,47 @@ void main() {
     await tester.pump();
     expect(onAnswerCalls, 0);
     expect(drafts.last, 'one:một, two:hai');
+
+    // A wrong match must be undoable: tapping a matched word frees the pair
+    // and the draft drops back to "not an answer".
+    await tester.tap(find.text('two'));
+    await tester.pump();
+    expect(drafts.last, '');
+    await tester.tap(find.text('two'));
+    await tester.pump();
+    await tester.tap(find.text('hai'));
+    await tester.pump();
+    expect(drafts.last, 'one:một, two:hai');
+    expect(onAnswerCalls, 0);
+  });
+
+  testWidgets('CategorizationWidget shows one bucket per category', (
+    tester,
+  ) async {
+    // Stored one category per word, so "fruit" appears twice.
+    final exercise = Exercise(
+      id: 'cat-1',
+      type: ExerciseType.matching,
+      uiType: 'categorization',
+      question: 'Sort the words',
+      options: const ['apple', 'pear', 'dog', 'fruit', 'fruit', 'animal'],
+      correctAnswer: 'apple:fruit, pear:fruit, dog:animal',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: CategorizationWidget(
+            exercise: exercise,
+            onAnswer: (_) {},
+            onInputChanged: (_) {},
+            isAnswered: false,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('FRUIT'), findsOneWidget);
+    expect(find.text('ANIMAL'), findsOneWidget);
   });
 }

@@ -882,7 +882,9 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
   // tap would lock the exercise (isAnswered) after the first word and block
   // the rest of the bank. The learner finalizes it via the Continue button.
   void _reportDraft() {
-    final draft = _placed.join(' ');
+    // Half a sentence is not an answer: an empty draft keeps the check button
+    // disabled until every word in the bank is placed.
+    final draft = _bank.isEmpty ? _placed.join(' ') : '';
     if (widget.onInputChanged != null) {
       widget.onInputChanged!(draft);
     } else {
@@ -1405,14 +1407,18 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                     ),
                     border: Border.all(color: colors.border),
                   ),
-                  child: Text(
-                    '"$lineA"',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: colors.textPrimary,
-                      height: 1.4,
-                    ),
-                  ),
+                  // The gap can sit in either speaker's line; rendering it
+                  // only in B's left "A: {blank} B: ..." with no input at all.
+                  child: lineA.contains('{blank}')
+                      ? _buildBlankedLine(lineA)
+                      : Text(
+                          '"$lineA"',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: colors.textPrimary,
+                            height: 1.4,
+                          ),
+                        ),
                 ),
               ),
             ],
@@ -2334,6 +2340,20 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
       ..shuffle(Random(widget.exercise.id.hashCode));
   }
 
+  // Draft, not submit — onAnswer would lock the exercise (isAnswered) after
+  // the first match. A partial set of pairs is never an answer: an empty
+  // draft keeps the check button disabled until all are matched.
+  void _reportDraft(int total) {
+    final ans = _matched.length < total
+        ? ''
+        : _matched.entries.map((e) => '${e.key}:${e.value}').join(', ');
+    if (widget.onInputChanged != null) {
+      widget.onInputChanged!(ans);
+    } else {
+      widget.onAnswer(ans);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = _ExercisePalette.of(context);
@@ -2376,12 +2396,19 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                           ? (correctMap[item] == _matched[item]
                                 ? _kCorrect
                                 : _kError)
-                          : _kCorrect;
+                          : colors.primary;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: GestureDetector(
-                          onTap: widget.isAnswered || isMatchedLeft
+                          // Tapping a matched word undoes that pair, so a
+                          // wrong match can be fixed before checking.
+                          onTap: widget.isAnswered
                               ? null
+                              : isMatchedLeft
+                              ? () {
+                                  setState(() => _matched.remove(item));
+                                  _reportDraft(left.length);
+                                }
                               : () {
                                   setState(() {
                                     _selectedLeft = isSelected ? null : item;
@@ -2450,7 +2477,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                           ? (correctMap[matchedLeft] == item
                                 ? _kCorrect
                                 : _kError)
-                          : _kCorrect;
+                          : colors.primary;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: GestureDetector(
@@ -2462,18 +2489,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                                       _matched[_selectedLeft!] = item;
                                       _selectedLeft = null;
                                     });
-                                    final ans = _matched.entries
-                                        .map((e) => '${e.key}:${e.value}')
-                                        .join(', ');
-                                    // Draft until every pair is matched —
-                                    // submitting per pair would lock the
-                                    // exercise (isAnswered) after the first
-                                    // match and block the rest.
-                                    if (widget.onInputChanged != null) {
-                                      widget.onInputChanged!(ans);
-                                    } else {
-                                      widget.onAnswer(ans);
-                                    }
+                                    _reportDraft(left.length);
                                   }
                                 },
                           child: AnimatedContainer(
@@ -3351,7 +3367,9 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
   @override
   void didUpdateWidget(CategorizationWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.userAnswer != oldWidget.userAnswer) {
+    // Unanswered, the widget's own picks are the truth — an empty draft for a
+    // partial set must not wipe them.
+    if (widget.isAnswered && widget.userAnswer != oldWidget.userAnswer) {
       _parseUserAnswer();
     }
   }
@@ -3371,9 +3389,10 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
   }
 
   void _updateAnswer() {
-    final ans = _assignments.entries
-        .map((e) => '${e.key}:${e.value}')
-        .join(', ');
+    final total = (widget.exercise.options?.length ?? 0) ~/ 2;
+    final ans = _assignments.length < total
+        ? ''
+        : _assignments.entries.map((e) => '${e.key}:${e.value}').join(', ');
     if (widget.onInputChanged != null) {
       widget.onInputChanged!(ans);
     } else {
@@ -3391,7 +3410,9 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
     // exercise id: same order on every rebuild.
     final words = options.take(half).toList()
       ..shuffle(Random(widget.exercise.id.hashCode));
-    final cats = options.skip(half).toList();
+    // One category per word in storage ("fruit, fruit, animal") — one bucket
+    // per category on screen.
+    final cats = options.skip(half).toSet().toList();
 
     final unassigned = words
         .where((w) => !_assignments.containsKey(w))
