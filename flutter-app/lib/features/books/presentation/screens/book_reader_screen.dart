@@ -130,9 +130,9 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
             const SizedBox(height: 12),
             ...provider.bookmarks.map(
               (b) => ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.bookmark_rounded,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
                 title: Text(
                   'bookReader.bookmarkPage'.tr(
@@ -433,8 +433,8 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 value: totalPages > 1 ? cur / (totalPages - 1) : 1.0,
                 minHeight: 3,
                 backgroundColor: textColor.withValues(alpha: 0.15),
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -453,18 +453,23 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                     : null,
                 icon: Icon(Icons.navigate_before_rounded, color: textColor),
               ),
-              Text(
-                totalPages > 0
-                    ? 'bookReader.page'.tr(
-                        namedArgs: {
-                          'current': '${cur + 1}',
-                          'total': '$totalPages',
-                        },
-                      )
-                    : '',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textColor.withValues(alpha: 0.7),
+              Expanded(
+                child: Text(
+                  totalPages > 0
+                      ? 'bookReader.page'.tr(
+                          namedArgs: {
+                            'current': '${cur + 1}',
+                            'total': '$totalPages',
+                          },
+                        )
+                      : '',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textColor.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
               IconButton(
@@ -693,7 +698,7 @@ class _DictionarySheetState extends State<_DictionarySheet> {
             def.phonetic!,
             style: TextStyle(
               fontSize: 14,
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -740,13 +745,15 @@ class _DictionarySheetState extends State<_DictionarySheet> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             m.partOfSpeech,
-            style: const TextStyle(
-              color: AppColors.primary,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w700,
               fontSize: 12,
             ),

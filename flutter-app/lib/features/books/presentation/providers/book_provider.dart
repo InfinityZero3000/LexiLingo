@@ -75,6 +75,8 @@ class BookProvider extends ChangeNotifier {
   String? _error;
 
   List<Book> _savedBooks = [];
+  List<ReadingEntry> _continueReading = [];
+  final Set<String> _snapshotted = {};
 
   Timer? _searchDebounce;
   final Set<String> _awardedMilestones = {};
@@ -124,6 +126,7 @@ class BookProvider extends ChangeNotifier {
   String? get downloadedPath => _downloadedPath;
   String? get error => _error;
   List<Book> get savedBooks => _savedBooks;
+  List<ReadingEntry> get continueReading => _continueReading;
 
   // ── Book Discovery ─────────────────────────────────────────
 
@@ -400,6 +403,7 @@ class BookProvider extends ChangeNotifier {
     );
     _currentProgress = progress;
     await _repository.saveProgress(progress);
+    if (_snapshotted.add(book.id)) await _repository.saveReadingSnapshot(book);
 
     // Award reading milestone XP (fire-and-forget; backend dedup prevents doubles)
     final pct = _pages.length > 1 ? _currentPage / (_pages.length - 1) : 1.0;
@@ -598,6 +602,17 @@ class BookProvider extends ChangeNotifier {
         sourceId: 'book_quiz_${quiz.bookId}_ch${quiz.chapter}',
         sourceDetail: 'chapter_quiz',
       );
+    }
+  }
+
+  // ── Continue reading ───────────────────────────────────────
+
+  Future<void> loadContinueReading() async {
+    try {
+      _continueReading = await _repository.getContinueReading();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Failed to load continue reading: $e');
     }
   }
 

@@ -1,17 +1,20 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
+import 'package:lexilingo_app/core/widgets/content_kit.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
-import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/premium_gate.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
+import '../widgets/book_card.dart';
 import 'book_quiz_screen.dart';
 import 'book_reader_screen.dart';
 
-/// Book detail screen showing cover, synopsis, CEFR badge, and Read/Download actions.
+/// Book detail screen: the cover on a blurred copy of itself, the actions
+/// that matter (read, save, download, quiz) and the learner's progress.
 ///
 /// Phase 5: Book Reading — skill: ui-ux-pro-max.
 class BookDetailScreen extends StatefulWidget {
@@ -24,9 +27,16 @@ class BookDetailScreen extends StatefulWidget {
 }
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
+  /// Scroll depth at which the bar turns from clear-over-cover to solid.
+  static const _collapseAt = 240.0;
+
+  final _scrollController = ScrollController();
+  bool _collapsed = false;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     // Provider.openBook() was already called in the library screen
     // Load reader settings so they're ready when we enter the reader
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -36,503 +46,388 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     });
   }
 
-  Color _cefrColor(String level) {
-    switch (level) {
-      case 'A1':
-        return AppColors.greenSuccessBright;
-      case 'A2':
-        return AppColors.greenSuccessSoft;
-      case 'B1':
-        return AppColors.warning;
-      case 'B2':
-        return AppColors.orange;
-      case 'C1':
-        return AppColors.deepOrange;
-      case 'C2':
-        return AppColors.purple;
-      default:
-        return AppColors.primary;
-    }
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final collapsed = _scrollController.offset > _collapseAt;
+    if (collapsed != _collapsed) setState(() => _collapsed = collapsed);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final book = widget.book;
-    final cefrColor = _cefrColor(book.cefrLevel);
 
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      body: CustomScrollView(
-        slivers: [
-          // Hero app bar with cover
-          SliverAppBar(
-            expandedHeight: 320,
-            pinned: true,
-            backgroundColor: isDark
-                ? AppColors.backgroundDark
-                : AppColors.backgroundLight,
-            leading: AppBackButton(
-              icon: Icons.arrow_back_rounded,
-              color: Theme.of(context).colorScheme.surface,
-              onPressed: () => Navigator.pop(context),
-            ),
-            actions: [
-              Consumer<BookProvider>(
-                builder: (context, provider, _) {
-                  final isSaved = provider.isBookSaved(book.id);
-                  return IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.3),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        isSaved
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        color: isSaved ? Colors.red : Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    onPressed: () => provider.toggleSaveBook(book),
-                  );
-                },
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Background image (blurred)
-                  if (book.coverUrl.isNotEmpty)
-                    Image.network(
-                      book.coverUrl,
-                      fit: BoxFit.cover,
-                      color: Colors.black.withValues(alpha: 0.5),
-                      colorBlendMode: BlendMode.darken,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: cefrColor.withValues(alpha: 0.4)),
-                    )
-                  else
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            cefrColor.withValues(alpha: 0.7),
-                            cefrColor.withValues(alpha: 0.3),
-                          ],
-                        ),
-                      ),
-                    ),
-                  // Centered book cover
-                  Center(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: book.coverUrl.isNotEmpty
-                          ? Image.network(
-                              book.coverUrl,
-                              width: 120,
-                              height: 180,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _buildFallback(cefrColor),
-                            )
-                          : _buildFallback(cefrColor),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: [
+                _Header(book: book),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                  child: Consumer<BookProvider>(
+                    builder: (context, provider, _) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _Actions(book: book, provider: provider),
+                        if (_hasProgress(provider)) ...[
+                          const SizedBox(height: 24),
+                          _ProgressCard(progress: provider.currentProgress!),
+                        ],
+                        if (book.description.isNotEmpty) ...[
+                          const SizedBox(height: 24),
+                          Text(
+                            'books.about'.tr(),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            book.description,
+                            style: TextStyle(
+                              fontSize: 14,
+                              height: 1.6,
+                              color: contentMuted(context),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-
-          // Content
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title + CEFR chip
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          book.title,
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : AppColors.textDark,
-                            height: 1.25,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cefrColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          book.cefrLevel,
-                          style: TextStyle(
-                            color: AppColors.surfaceLight,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Author
-                  Text(
-                    book.author,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: isDark ? Colors.white60 : AppColors.textGrey,
+          Consumer<BookProvider>(
+            builder: (context, provider, _) {
+              final saved = provider.isBookSaved(book.id);
+              return ContentTopBar(
+                title: book.title,
+                collapsed: _collapsed,
+                actionsBuilder: (iconColor) => [
+                  IconButton(
+                    onPressed: () => provider.toggleSaveBook(book),
+                    tooltip: saved
+                        ? 'books.unsaveBook'.tr()
+                        : 'books.saveBook'.tr(),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size.square(48),
+                    ),
+                    icon: Icon(
+                      saved ? PhosphorIconsFill.heart : PhosphorIconsBold.heart,
+                      color: saved
+                          ? Theme.of(context).colorScheme.primary
+                          : iconColor,
                     ),
                   ),
-                  if (book.subject.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      book.subject,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white38 : AppColors.textGrey,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-
-                  // Stats row
-                  _buildStatRow(isDark, book),
-                  const SizedBox(height: 20),
-
-                  // Description
-                  if (book.description.isNotEmpty) ...[
-                    Text(
-                      'books.about'.tr(),
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      book.description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        height: 1.6,
-                        color: isDark ? Colors.white70 : AppColors.textGrey,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // Reading progress
-                  Consumer<BookProvider>(
-                    builder: (context, provider, _) {
-                      final progress = provider.currentProgress;
-                      if (progress == null || progress.totalPages == 0) {
-                        return const SizedBox.shrink();
-                      }
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'books.readingProgress'.tr(),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? Colors.white70
-                                      : AppColors.textDark,
-                                ),
-                              ),
-                              Text(
-                                '${(progress.readingProgress * 100).toInt()}%',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: cefrColor,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progress.readingProgress,
-                              minHeight: 6,
-                              backgroundColor: isDark
-                                  ? Colors.white.withValues(alpha: 0.1)
-                                  : AppColors.grey200,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                cefrColor,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'books.pageProgress'.tr(
-                              namedArgs: {
-                                'current': '${progress.currentPage + 1}',
-                                'total': '${progress.totalPages}',
-                              },
-                            ),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: isDark
-                                  ? Colors.white38
-                                  : AppColors.textGrey,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      );
-                    },
-                  ),
-
-                  // Actions
-                  Consumer<BookProvider>(
-                    builder: (context, provider, _) {
-                      final isDownloaded = provider.downloadedPath != null;
-                      return Column(
-                        children: [
-                          // Read button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.menu_book_rounded),
-                              label: Text(
-                                provider.currentProgress != null &&
-                                        provider.currentProgress!.currentPage >
-                                            0
-                                    ? 'Continue Reading'
-                                    : 'Start Reading',
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        BookReaderScreen(book: book),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Download button
-                          _downloadButton(
-                            provider: provider,
-                            isDownloaded: isDownloaded,
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Chapter Quiz button — show when user has started reading
-                          if (provider.currentProgress != null &&
-                              provider.currentProgress!.currentPage > 0)
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                icon: const Icon(Icons.quiz_rounded),
-                                label: Text('books.chapterQuiz'.tr()),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.purple,
-                                  side: const BorderSide(
-                                    color: AppColors.purple,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                onPressed: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const BookQuizScreen(chapter: 1),
-                                  ),
-                                ),
-                              ),
-                            ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
                 ],
-              ),
-            ),
+              );
+            },
           ),
         ],
       ),
     );
   }
+
+  bool _hasProgress(BookProvider provider) =>
+      provider.currentProgress != null &&
+      provider.currentProgress!.totalPages > 0;
+}
+
+// ──────────────────────────────────────
+//  Header
+// ──────────────────────────────────────
+
+class _Header extends StatelessWidget {
+  final Book book;
+
+  const _Header({required this.book});
+
+  static const _onScrim = Color(0xE6FFFFFF);
+  static const _cover = Size(150, 225);
+
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top + 56;
+    final stats = [
+      if (book.chapterCount > 0)
+        (
+          PhosphorIconsBold.listNumbers,
+          'books.chapterCountShort'.tr(
+            namedArgs: {'count': '${book.chapterCount}'},
+          ),
+        ),
+      if (book.wordCount > 0)
+        (
+          PhosphorIconsBold.textAa,
+          'books.wordCountK'.tr(
+            namedArgs: {'count': (book.wordCount / 1000).toStringAsFixed(0)},
+          ),
+        ),
+      (PhosphorIconsBold.translate, book.language.toUpperCase()),
+    ];
+
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: ContentBackdrop(
+            url: book.coverUrl,
+            fallback: BookJacket(title: book.title),
+          ),
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(20, top, 20, 28),
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              children: [
+                BookCover(
+                  book: book,
+                  width: _cover.width,
+                  height: _cover.height,
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  book.title,
+                  textAlign: TextAlign.center,
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                  style: contentDisplay(context, size: 24, color: Colors.white),
+                ),
+                if (book.author.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    book.author,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: _onScrim, fontSize: 14),
+                  ),
+                ],
+                if (book.subject.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    book.subject,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xB3FFFFFF),
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 8,
+                  children: [
+                    CefrBadge(
+                      level: book.cefrLevel,
+                      size: CefrBadgeSize.medium,
+                      onColored: true,
+                    ),
+                    for (final (icon, label) in stats)
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(icon, size: 16, color: _onScrim),
+                          const SizedBox(width: 4),
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              color: _onScrim,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ──────────────────────────────────────
+//  Actions
+// ──────────────────────────────────────
+
+class _Actions extends StatelessWidget {
+  final Book book;
+  final BookProvider provider;
+
+  const _Actions({required this.book, required this.provider});
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = provider.currentProgress;
+    final started = progress != null && progress.currentPage > 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          icon: const Icon(PhosphorIconsBold.bookOpenText),
+          label: Text((started ? 'books.continueCta' : 'books.startCta').tr()),
+          style: FilledButton.styleFrom(
+            minimumSize: const Size.fromHeight(52),
+            textStyle: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(26),
+            ),
+          ),
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => BookReaderScreen(book: book)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _downloadButton(context),
+        if (started) ...[
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            icon: const Icon(PhosphorIconsBold.exam),
+            label: Text('books.chapterQuiz'.tr()),
+            style: _outlined(context),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const BookQuizScreen(chapter: 1),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  ButtonStyle _outlined(BuildContext context) => OutlinedButton.styleFrom(
+    minimumSize: const Size.fromHeight(52),
+    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    side: BorderSide(color: Theme.of(context).colorScheme.outline),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+  );
 
   /// Offline download is a premium perk. An already-downloaded book stays
   /// readable for everyone regardless — only *new* downloads are gated, so
   /// nobody loses access to something they already have on disk.
-  Widget _downloadButton({
-    required BookProvider provider,
-    required bool isDownloaded,
-  }) {
-    final button = SizedBox(
-      width: double.infinity,
-      child: OutlinedButton.icon(
-        icon: provider.isDownloading
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: LottieLoadingWidget.tiny(),
-              )
-            : Icon(
-                isDownloaded
-                    ? Icons.download_done_rounded
-                    : Icons.download_rounded,
-              ),
-        label: Text(
-          provider.isDownloading
-              ? 'Downloading...'
-              : isDownloaded
-              ? 'Downloaded'
-              : 'Download for Offline',
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: isDownloaded
-              ? AppColors.greenSuccess
-              : AppColors.primary,
-          side: BorderSide(
-            color: isDownloaded ? AppColors.greenSuccess : AppColors.primary,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: provider.isDownloading || isDownloaded
-            ? null
-            : () => provider.downloadBook(),
+  Widget _downloadButton(BuildContext context) {
+    final isDownloaded = provider.downloadedPath != null;
+    final button = OutlinedButton.icon(
+      icon: provider.isDownloading
+          ? const SizedBox.square(
+              dimension: 18,
+              child: LottieLoadingWidget.tiny(),
+            )
+          : Icon(
+              isDownloaded
+                  ? PhosphorIconsFill.checkCircle
+                  : PhosphorIconsBold.downloadSimple,
+            ),
+      label: Text(
+        provider.isDownloading
+            ? 'books.downloading'.tr()
+            : isDownloaded
+            ? 'books.downloaded'.tr()
+            : 'books.download'.tr(),
       ),
+      style: _outlined(context),
+      onPressed: provider.isDownloading || isDownloaded
+          ? null
+          : provider.downloadBook,
     );
-    if (isDownloaded) return button;
-    return PremiumGate(child: button);
+    return isDownloaded ? button : PremiumGate(child: button);
   }
-
-  Widget _buildStatRow(bool isDark, Book book) {
-    final stats = [
-      if (book.chapterCount > 0)
-        _StatItem(
-          icon: Icons.format_list_numbered_rounded,
-          label: 'books.chapterCountShort'.tr(namedArgs: {'count': '${book.chapterCount}'}),
-          isDark: isDark,
-        ),
-      if (book.wordCount > 0)
-        _StatItem(
-          icon: Icons.text_fields_rounded,
-          label: 'books.wordCountK'.tr(namedArgs: {'count': (book.wordCount / 1000).toStringAsFixed(0)}),
-          isDark: isDark,
-        ),
-      _StatItem(
-        icon: Icons.language_rounded,
-        label: book.language.toUpperCase(),
-        isDark: isDark,
-      ),
-    ];
-
-    if (stats.isEmpty) return const SizedBox.shrink();
-
-    return Row(
-      children: stats
-          .expand((s) => [s, const SizedBox(width: 16)])
-          .take(stats.length * 2 - 1)
-          .toList(),
-    );
-  }
-
-  Widget _buildFallback(Color cefrColor) => Container(
-    width: 120,
-    height: 180,
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
-          cefrColor.withValues(alpha: 0.8),
-          cefrColor.withValues(alpha: 0.4),
-        ],
-      ),
-    ),
-    child: Center(
-      child: Icon(
-        Icons.menu_book_rounded,
-        size: 48,
-        color: AppColors.surfaceLight,
-      ),
-    ),
-  );
 }
 
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isDark;
+// ──────────────────────────────────────
+//  Reading progress
+// ──────────────────────────────────────
 
-  const _StatItem({
-    required this.icon,
-    required this.label,
-    required this.isDark,
-  });
+class _ProgressCard extends StatelessWidget {
+  final UserBook progress;
+
+  const _ProgressCard({required this.progress});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: isDark ? Colors.white54 : AppColors.textGrey,
+    final scheme = Theme.of(context).colorScheme;
+    final percent = (progress.readingProgress * 100).round().clamp(0, 100);
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'books.readingProgress'.tr(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                Text(
+                  '$percent%',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: scheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress.readingProgress.clamp(0.0, 1.0),
+                minHeight: 6,
+                color: scheme.primary,
+                backgroundColor: scheme.onSurface.withValues(alpha: 0.12),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'books.pageProgress'.tr(
+                namedArgs: {
+                  'current': '${progress.currentPage + 1}',
+                  'total': '${progress.totalPages}',
+                },
+              ),
+              style: TextStyle(fontSize: 12, color: contentMuted(context)),
+            ),
+          ],
         ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: isDark ? Colors.white54 : AppColors.textGrey,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

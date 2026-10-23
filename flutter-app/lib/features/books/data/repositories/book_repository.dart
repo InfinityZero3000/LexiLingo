@@ -196,13 +196,79 @@ class BookRepository {
     );
   }
 
+  /// Every stored progress record; a corrupt one is skipped, not fatal.
   Future<List<UserBook>> getAllProgress() async {
     final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys().where((k) => k.startsWith(_progressKeyPrefix));
-    return keys.map((k) {
-      final raw = prefs.getString(k)!;
-      return UserBook.fromJson(jsonDecode(raw) as Map<String, dynamic>);
-    }).toList();
+    final result = <UserBook>[];
+    for (final key in prefs.getKeys().where(
+      (k) => k.startsWith(_progressKeyPrefix),
+    )) {
+      try {
+        result.add(
+          UserBook.fromJson(
+            jsonDecode(prefs.getString(key)!) as Map<String, dynamic>,
+          ),
+        );
+      } catch (_) {
+        continue;
+      }
+    }
+    return result;
+  }
+
+  // ── Continue reading ──────────────────────────────────────────
+
+  // Not under _progressKeyPrefix: getAllProgress would try to parse it.
+  static const _readingDataPrefix = 'book_reading_data_';
+
+  /// Remember the book itself next to its progress, so a "continue reading"
+  /// card can be drawn without refetching it.
+  Future<void> saveReadingSnapshot(Book book) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      '$_readingDataPrefix${book.id}',
+      jsonEncode(book.toJson()),
+    );
+  }
+
+  /// Started-but-unfinished books, most recently read first. A book with no
+  /// stored snapshot (read before snapshots existed) falls back to its saved
+  /// copy, and is left out if there is neither.
+  Future<List<ReadingEntry>> getContinueReading({int limit = 5}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final inProgress =
+        (await getAllProgress())
+            .where(
+              (p) =>
+                  p.lastReadAt != null &&
+                  p.totalPages > 0 &&
+                  p.currentPage > 0 &&
+                  p.currentPage < p.totalPages - 1,
+            )
+            .toList()
+          ..sort((a, b) => b.lastReadAt!.compareTo(a.lastReadAt!));
+
+    final entries = <ReadingEntry>[];
+    for (final progress in inProgress) {
+      final book =
+          _storedBook(prefs, '$_readingDataPrefix${progress.bookId}') ??
+          _storedBook(prefs, '$_savedBookDataPrefix${progress.bookId}');
+      if (book != null) {
+        entries.add(ReadingEntry(book: book, progress: progress));
+      }
+      if (entries.length == limit) break;
+    }
+    return entries;
+  }
+
+  Book? _storedBook(SharedPreferences prefs, String key) {
+    final raw = prefs.getString(key);
+    if (raw == null) return null;
+    try {
+      return Book.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
   }
 
   // ── Saved Books ───────────────────────────────────────────────
@@ -224,22 +290,7 @@ class BookRepository {
       await prefs.setStringList(_savedBooksKey, ids);
     }
     // Persist enough data to restore book without API call
-    final data = jsonEncode({
-      'id': book.id,
-      'source': book.source,
-      'title': book.title,
-      'author': book.author,
-      'description': book.description,
-      'cover_url': book.coverUrl,
-      'download_url': book.downloadUrl,
-      'language': book.language,
-      'cefr_level': book.cefrLevel,
-      'subject': book.subject,
-      'topic': book.topic,
-      'download_count': book.downloadCount,
-      'chapter_count': book.chapterCount,
-      'word_count': book.wordCount,
-    });
+    final data = jsonEncode(book.toJson());
     await prefs.setString('$_savedBookDataPrefix${book.id}', data);
   }
 
