@@ -9,7 +9,7 @@ import 'app_back_button.dart';
 /// Page and hero titles: the theme's own face (Lexend), only heavier and larger.
 TextStyle contentDisplay(
   BuildContext context, {
-  double size = 28,
+  double size = 24,
   Color? color,
 }) => Theme.of(context).textTheme.titleLarge!.copyWith(
   fontSize: size,

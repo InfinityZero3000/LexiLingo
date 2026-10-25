@@ -64,122 +64,101 @@ class _CourseListScreenState extends State<CourseListScreen> {
               child: CustomScrollView(
                 controller: _scrollController,
                 slivers: [
-                  // Modern SliverAppBar with gradient
+                  // Keep the complete course header visible while scrolling.
                   SliverAppBar(
-                    expandedHeight: 100,
-                    floating: true,
+                    toolbarHeight: 100,
                     pinned: true,
                     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    surfaceTintColor: Colors.transparent,
+                    scrolledUnderElevation: 0,
                     automaticallyImplyLeading: false,
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                          child: Column(
+                    titleSpacing: 0,
+                    title: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      child: Row(
+                        children: [
+                          // A tab in MainScreen, but also pushed as a
+                          // route (Today Plan) — only then can it pop.
+                          if (ModalRoute.of(context)?.canPop ?? false)
+                            AppBackButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: primaryAccent,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.explore,
+                              color: Theme.of(context).colorScheme.surface,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Row(
-                                children: [
-                                  // A tab in MainScreen, but also pushed as a
-                                  // route (Today Plan) — only then can it pop.
-                                  if (ModalRoute.of(context)?.canPop ?? false)
-                                    AppBackButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                    ),
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: primaryAccent,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(
-                                      Icons.explore,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.surface,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'course.discoverCourses'.tr(),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                      Text(
-                                        'course.coursesAvailablePlural'.plural(provider.courses.length),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                  const Spacer(),
-                                  Stack(
-                                    children: [
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          color: provider.hasActiveFilters
-                                              ? primaryAccent
-                                              : primaryAccent.withValues(
-                                                  alpha: 0.14,
-                                                ),
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                        ),
-                                        child: IconButton(
-                                          icon: Icon(
-                                            Icons.tune_rounded,
-                                            color: provider.hasActiveFilters
-                                                ? Colors.white
-                                                : primaryAccent,
-                                          ),
-                                          onPressed: () =>
-                                              _showFilterSheet(context),
-                                          tooltip: 'common.filter'.tr(),
-                                        ),
-                                      ),
-                                      if (provider.hasActiveFilters)
-                                        Positioned(
-                                          top: 6,
-                                          right: 6,
-                                          child: Container(
-                                            width: 8,
-                                            height: 8,
-                                            decoration: BoxDecoration(
-                                              color: Colors.amber,
-                                              shape: BoxShape.circle,
-                                              border: Border.all(
-                                                color: Theme.of(
-                                                  context,
-                                                ).scaffoldBackgroundColor,
-                                                width: 1.5,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ],
+                              Text(
+                                'course.discoverCourses'.tr(),
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              Text(
+                                'course.coursesAvailablePlural'.plural(
+                                  provider.courses.length,
+                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey[600]),
                               ),
                             ],
                           ),
-                        ),
+                          const Spacer(),
+                          Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: provider.hasActiveFilters
+                                      ? primaryAccent
+                                      : primaryAccent.withValues(alpha: 0.14),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.tune_rounded,
+                                    color: provider.hasActiveFilters
+                                        ? Colors.white
+                                        : primaryAccent,
+                                  ),
+                                  onPressed: () => _showFilterSheet(context),
+                                  tooltip: 'common.filter'.tr(),
+                                ),
+                              ),
+                              if (provider.hasActiveFilters)
+                                Positioned(
+                                  top: 6,
+                                  right: 6,
+                                  child: Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).scaffoldBackgroundColor,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    actions: const [],
                   ),
 
                   // Hero banner below heading

@@ -96,31 +96,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         ],
                       ),
                     ),
-                    if (provider.hasUnread &&
-                        MediaQuery.sizeOf(context).width < 400)
+                    if (provider.hasUnread)
                       IconButton(
                         onPressed: () => provider.markAllAsRead(),
                         icon: const Icon(Icons.done_all_rounded),
                         color: AppColors.primary,
                         tooltip: 'notifications.markAllRead'.tr(),
-                      )
-                    else if (provider.hasUnread)
-                      TextButton(
-                        onPressed: () => provider.markAllAsRead(),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                        ),
-                        child: Text(
-                          'notifications.markAllRead'.tr(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
                       ),
                   ],
                 ),

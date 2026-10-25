@@ -181,8 +181,10 @@ class _MainScreenState extends State<MainScreen> {
         // Use a lightweight placeholder until the tab is first visited.
         if (!_pageCache.containsKey(i)) return const SizedBox.shrink();
         // Lexi keeps its mic and speaker; it has to be told when it is hidden.
-        if (i == _lexiTab) return LexiChatPage(isActive: _currentIndex == i);
-        return _pageCache[i]!;
+        final page = i == _lexiTab
+            ? LexiChatPage(isActive: _currentIndex == i)
+            : _pageCache[i]!;
+        return TickerMode(enabled: _currentIndex == i, child: page);
       }),
     );
   }
