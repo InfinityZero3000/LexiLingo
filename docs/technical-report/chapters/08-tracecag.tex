@@ -27,11 +27,18 @@ ba ý tưởng vốn tách rời trong tài liệu học thuật:
 \midrule
 \endhead
 Đồ thị tri thức & GraphRAG & Cấu trúc hoá miền kiến thức tiếng Anh thành khái niệm và quan hệ tiên quyết/liên quan/dễ nhầm, dùng để mở rộng ngữ cảnh có kiểm soát thay vì tìm kiếm mù trên văn bản.\\
-Bộ nhớ đệm có xác thực & CAG (Chan et al., 2025) & Tái sử dụng phản hồi đã tính khi trạng thái người học chưa đổi đáng kể, thay vì luôn luôn gọi LLM.\\
+Bộ nhớ đệm có xác thực & Tái dùng thay vì tính lại (cùng tiền đề với CAG, Chan et al., 2025, nhưng khác cơ chế) & Tái sử dụng phản hồi đã tính khi trạng thái người học chưa đổi đáng kể, thay vì luôn luôn gọi LLM.\\
 Truy vết phụ thuộc & Cung cấp nguồn gốc (\en{provenance}) & Mỗi khoản mục đệm mang theo \en{admissibility certificate} — bằng chứng có thể kiểm chứng để quyết định tái dùng, vá, hay tính lại.\\
 \bottomrule
 \caption{Ba ý tưởng cấu thành TRACE-CAG}
 \end{longtable}
+
+\textbf{Quan hệ với CAG.} TRACE-CAG \textbf{không phát triển từ cơ chế của CAG}: CAG nạp trước toàn bộ tri thức vào
+ngữ cảnh, cache trạng thái mô hình (KV) và không truy hồi lúc hỏi; TRACE-CAG không nạp trước gì, không cache KV, chỉ
+lưu câu trả lời và gói bằng chứng ở tầng ứng dụng, và khi không tái dùng được thì trả lời bằng đường dựng lại có
+truy hồi (một pipeline RAG). Hai bên chung tiền đề "tái dùng là mặc định" và mục tiêu giảm chi phí, độ trễ; từ
+"\en{cache-augmented}" trong tên chỉ \emph{cái được cache}, không phải \emph{cách CAG cache}. Độ chính xác (F1, EM) đến
+từ đường dựng lại; chi phí và tốc độ đến từ bộ điều khiển đệm và chỉ có khi yêu cầu lặp lại hoặc được diễn đạt lại.
 
 Khác biệt cốt lõi so với RAG kinh điển: RAG nối đất câu trả lời vào \textbf{tài liệu tĩnh}
 tìm được qua tìm kiếm véc-tơ; TRACE-CAG nối đất vào \textbf{trạng thái người học đang
