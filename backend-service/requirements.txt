@@ -12,7 +12,7 @@ psycopg2-binary>=2.9.13
 aiosqlite>=0.22.1
 
 # SQLAlchemy (Async ORM)
-sqlalchemy[asyncio]>=2.1.4
+sqlalchemy[asyncio]>=2.1.6
 alembic>=1.20.1
 
 # Data Validation
