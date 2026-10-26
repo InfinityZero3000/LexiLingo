@@ -11,7 +11,7 @@ pymongo>=4.19.0,<4.20.0
 redis>=7.4.1
 
 # Data Validation
-pydantic>=2.13.5
+pydantic>=2.14.1
 pydantic-settings>=2.15.0
 defusedxml>=0.7.1
 typer>=0.27.3,<1
