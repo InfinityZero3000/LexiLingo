@@ -117,17 +117,14 @@ class EmailService:
         """Send email verification link to a newly registered user.
 
         Returns True when sent successfully. If SMTP is not configured, returns
-        False after logging a warning and the generated verification URL for local dev.
+        False without exposing the verification token in logs.
         """
         from urllib.parse import quote
         encoded_token = quote(token, safe="")
         verify_link = f"{settings.effective_email_verification_url_base}?token={encoded_token}"
         if not settings.SMTP_HOST:
             logger.warning(
-                "SMTP_HOST not configured. Verification email was not sent. "
-                "Generated verification URL for %s: %s",
-                to_email,
-                verify_link,
+                "SMTP_HOST not configured. Verification email was not sent"
             )
             return False
 
@@ -156,10 +153,13 @@ class EmailService:
 
         try:
             await run_in_threadpool(cls._send_message_blocking, message)
-            logger.info("Verification email sent to %s", to_email)
+            logger.info("Verification email sent")
             return True
         except Exception as exc:  # pragma: no cover - external IO
-            logger.exception("Failed to send verification email to %s: %s", to_email, exc)
+            logger.exception(
+                "Failed to send verification email: %s",
+                exc,
+            )
             return False
 
     @classmethod

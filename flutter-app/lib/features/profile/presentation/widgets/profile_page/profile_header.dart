@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
 import 'package:lexilingo_app/features/level/level.dart';
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_page/social_stats_row.dart';
 import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart' as glass;
@@ -58,7 +59,7 @@ Color tierColor(BuildContext context, String tierCode) {
 }
 
 class ProfileHeader extends StatelessWidget {
-  final dynamic user;
+  final UserEntity? user;
   final VoidCallback onProfileEdited;
 
   const ProfileHeader({
@@ -181,35 +182,46 @@ class ProfileHeader extends StatelessWidget {
                               Positioned(
                                 bottom: 10,
                                 right: 10,
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        isDark ? accent : AppColors.primary,
-                                        isDark ? accent : AppColors.primary,
-                                      ],
-                                    ),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.surfaceLight,
-                                      width: 2,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            (isDark
-                                                    ? accent
-                                                    : AppColors.primary)
-                                                .withValues(alpha: 0.5),
-                                        blurRadius: 8,
+                                child: Semantics(
+                                  label: 'profile.emailVerified'.tr(),
+                                  child: Tooltip(
+                                    message: 'profile.emailVerified'.tr(),
+                                    excludeFromSemantics: true,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            isDark
+                                                ? accent
+                                                : AppColors.primary,
+                                            isDark
+                                                ? accent
+                                                : AppColors.primary,
+                                          ],
+                                        ),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: AppColors.surfaceLight,
+                                          width: 2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                (isDark
+                                                        ? accent
+                                                        : AppColors.primary)
+                                                    .withValues(alpha: 0.5),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    Icons.verified,
-                                    color: AppColors.surfaceLight,
-                                    size: 16,
+                                      child: Icon(
+                                        Icons.verified,
+                                        color: AppColors.surfaceLight,
+                                        size: 16,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -228,9 +240,9 @@ class ProfileHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         // Email
-                        if (user?.email != null)
+                        if (user != null)
                           Text(
-                            user.email,
+                            user!.email,
                             style: const TextStyle(
                               color: AppColors.grey600,
                               fontSize: 13,

@@ -1321,6 +1321,18 @@ class TestChangePassword:
 
 class TestResendVerification:
 
+    @pytest.fixture(autouse=True)
+    def clear_verification_resend_state(self, monkeypatch):
+        from app.routes import auth
+
+        auth._verification_resend_cooldowns.clear()
+        auth._verification_resend_history.clear()
+        monkeypatch.setattr(
+            auth.RedisClient,
+            "get_instance",
+            AsyncMock(return_value=None),
+        )
+
     async def test_resend_verification_unknown_email_still_200(self, client):
         """Anti-enumeration: unknown email returns the same generic 200."""
         response = await client.post(
@@ -1329,6 +1341,37 @@ class TestResendVerification:
         )
         assert response.status_code == 200
 
+    async def test_resend_verification_cooldown_is_scoped_by_email(self):
+        from app.routes import auth
+
+        assert await auth._claim_verification_resend_cooldown(
+            "one@example.com"
+        ) is True
+        assert await auth._claim_verification_resend_cooldown(
+            "ONE@example.com"
+        ) is False
+        assert await auth._claim_verification_resend_cooldown(
+            "two@example.com"
+        ) is True
+
+    async def test_resend_verification_has_recipient_hourly_quota(
+        self,
+    ):
+        from app.routes import auth
+
+        results = []
+        for _ in range(auth._VERIFICATION_RESEND_MAX_PER_WINDOW + 1):
+            # Simulate waiting out the minute cooldown while retaining the
+            # rolling-hour recipient history.
+            auth._verification_resend_cooldowns.clear()
+            results.append(
+                await auth._claim_verification_resend_cooldown(
+                    "one@example.com"
+                )
+            )
+
+        assert results == [True, True, True, True, True, False]
+
 
 class TestAdminOtpSecurityControls:
 
@@ -1336,11 +1379,18 @@ class TestAdminOtpSecurityControls:
     def clear_otp_state(self, monkeypatch):
         from app.routes import auth
 
+        auth._verification_resend_cooldowns.clear()
+        auth._verification_resend_history.clear()
         auth._admin_otp_store.clear()
         auth._admin_otp_attempts.clear()
         auth._admin_otp_cooldowns.clear()
         auth._admin_otp_locks.clear()
         monkeypatch.setattr(auth, "_get_admin_otp_redis", AsyncMock(return_value=None))
+        monkeypatch.setattr(
+            auth.RedisClient,
+            "get_instance",
+            AsyncMock(return_value=None),
+        )
 
     async def test_request_cooldown_is_scoped_by_email(self):
         from app.routes import auth

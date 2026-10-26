@@ -42,9 +42,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final gamificationProvider = context.read<GamificationProvider>();
     final proficiencyProvider = context.read<ProficiencyProvider>();
 
-    // Fetch authoritative level data from backend.
-    // Falls back to local formula if network is unavailable.
+    // Refresh the authoritative account state so email verification changes
+    // are reflected in the profile badge after returning from the email link.
     if (authProvider.currentUser != null) {
+      await authProvider.refreshCurrentUser();
       await levelProvider.fetchLevelFull();
     }
 

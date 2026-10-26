@@ -27,6 +27,7 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
             "/api/v1/auth/login": 300,          # relaxed — load testing from single IP
             "/api/v1/auth/register": 100,
             "/api/v1/auth/forgot-password": 50,
+            "/api/v1/auth/resend-verification": 50,
             "/api/v1/auth/admin/login": 100,
             "/api/v1/auth/admin/request-otp": 50,
             "/api/v1/auth/admin/verify-otp": 100,
@@ -36,6 +37,7 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
         "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
         "/api/v1/auth/register": 5,         # 5 req/min — signup abuse
         "/api/v1/auth/forgot-password": 3,  # 3 req/min — email bombing
+        "/api/v1/auth/resend-verification": 3,  # 3 req/min — email bombing
         "/api/v1/auth/admin/login": 5,
         "/api/v1/auth/admin/request-otp": 3,
         "/api/v1/auth/admin/verify-otp": 5,
@@ -62,6 +64,7 @@ _SENSITIVE_ROUTES_EXACT = {
     ("POST", "/api/v1/auth/login"),
     ("POST", "/api/v1/auth/register"),
     ("POST", "/api/v1/auth/forgot-password"),
+    ("POST", "/api/v1/auth/resend-verification"),
     ("POST", "/api/v1/auth/admin/login"),
     ("POST", "/api/v1/auth/admin/request-otp"),
     ("POST", "/api/v1/auth/admin/verify-otp"),
