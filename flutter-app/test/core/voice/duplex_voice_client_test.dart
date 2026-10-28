@@ -17,6 +17,20 @@ void main() {
     expect(frame.sublist(14), [1, 2]);
   });
 
+  test('writes the timestamp as two words so it also works on the web', () {
+    for (final ms in [0, 1234, 0xFFFFFFFF, 0x100000000, 0x1FFFFFFFFFFFF]) {
+      final frame = packMicrophoneFrame(
+        sequence: 1,
+        clientTimestampMs: ms,
+        pcm: Uint8List.fromList([1, 2]),
+      );
+      final header = ByteData.sublistView(frame);
+      final high = header.getUint32(6, Endian.big);
+      final low = header.getUint32(10, Endian.big);
+      expect(high * 0x100000000 + low, ms);
+    }
+  });
+
   test('validates and extracts TTS PCM', () {
     final frame = Uint8List(18);
     final header = ByteData.sublistView(frame);

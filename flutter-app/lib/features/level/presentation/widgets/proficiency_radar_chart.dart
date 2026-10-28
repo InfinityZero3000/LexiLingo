@@ -2,37 +2,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
-/// Maps 6 backend skills to 5 display dimensions for radar chart
-class ProficiencyDimensionMapper {
-  static const List<String> dimensionLabels = [
-    'Pronunciation',
-    'Vocabulary',
-    'Fluency',
-    'Grammar',
-    'Intonation',
-  ];
-
-  /// Map backend skill scores to 5 display dimensions
-  static Map<String, double> mapToDisplayDimensions(
-    Map<String, double> skillScores,
-  ) {
-    final speaking = skillScores['speaking'] ?? 0;
-    final listening = skillScores['listening'] ?? 0;
-    final vocabulary = skillScores['vocabulary'] ?? 0;
-    final grammar = skillScores['grammar'] ?? 0;
-    final reading = skillScores['reading'] ?? 0;
-    final writing = skillScores['writing'] ?? 0;
-
-    return {
-      'Pronunciation': speaking,
-      'Vocabulary': vocabulary * 0.7 + reading * 0.3,
-      'Fluency': speaking * 0.6 + listening * 0.4,
-      'Grammar': grammar * 0.8 + writing * 0.2,
-      'Intonation': speaking * 0.5 + listening * 0.5,
-    };
-  }
-}
-
 /// Proficiency radar/spider chart using CustomPainter
 class ProficiencyRadarChart extends StatefulWidget {
   final Map<String, double> scores;

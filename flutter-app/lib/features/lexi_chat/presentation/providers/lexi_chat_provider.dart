@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/services/encrypted_local_cache_service.dart';
 import 'package:lexilingo_app/core/services/background_sync_queue_service.dart';
@@ -83,6 +84,10 @@ class LexiChatProvider extends ChangeNotifier {
   bool _ttsEnabled = true;
   bool _ttsExplicitlySet = false;
   double _ttsSpeed = 1.0;
+  bool _captionsVisible = true;
+  bool _voiceTurnActive = false;
+  final Set<String> _revealedCaptions = {};
+  static const _captionsKey = 'lexi_voice_captions';
   String _learnerLevel = 'B1';
   String _nativeLanguage = 'vi';
   Timer? _typingStageTimer;
@@ -112,6 +117,43 @@ class LexiChatProvider extends ChangeNotifier {
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
   double get ttsSpeed => _ttsSpeed;
+  bool get captionsVisible => _captionsVisible;
+
+  bool isCaptionHidden(LexiMessage message) =>
+      !_captionsVisible &&
+      _isVoiceAssistantId(message.id) &&
+      message.content.isNotEmpty &&
+      !_revealedCaptions.contains(message.id);
+
+  // Live turns use underscores; the server persists the same turn with hyphens.
+  static bool _isVoiceAssistantId(String id) =>
+      id.startsWith('voice_assistant_') || id.startsWith('voice-assistant-');
+
+  Future<void> loadVoicePrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _captionsVisible = prefs.getBool(_captionsKey) ?? true;
+      notifyListeners();
+    } catch (_) {
+      // Captions simply stay on when preferences are unavailable.
+    }
+  }
+
+  Future<void> setCaptionsVisible(bool visible) async {
+    _captionsVisible = visible;
+    _revealedCaptions.clear();
+    notifyListeners();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_captionsKey, visible);
+    } catch (_) {
+      // The choice still applies for this session.
+    }
+  }
+
+  void revealCaption(String messageId) {
+    if (_revealedCaptions.add(messageId)) notifyListeners();
+  }
 
   String get ttsSpeedLabel {
     if (_ttsSpeed == 1.0) return '1.0x';
@@ -477,10 +519,27 @@ class LexiChatProvider extends ChangeNotifier {
     }
   }
 
+  /// Ends a voice turn that will never report `turn.done` (session ended or
+  /// connection lost), so the chat does not stay locked in "sending".
+  void abortVoiceTurn() {
+    if (!_voiceTurnActive) return;
+    _voiceTurnActive = false;
+    _isSending = false;
+    _messages.removeWhere(
+      (message) => _isVoiceAssistantId(message.id) && message.content.isEmpty,
+    );
+    notifyListeners();
+  }
+
   void handleDuplexVoiceEvent(Map<String, dynamic> event) {
     final type = event['type'];
     final turnId = event['turn_id']?.toString();
-    if (turnId == null) return;
+    if (turnId == null) {
+      if (type == 'voice.error' || type == 'connection.lost') {
+        abortVoiceTurn();
+      }
+      return;
+    }
     final userId = 'voice_user_$turnId';
     final assistantId = 'voice_assistant_$turnId';
     if (type == 'stt.final') {
@@ -494,6 +553,7 @@ class LexiChatProvider extends ChangeNotifier {
           role: 'user',
           content: text,
           timestamp: DateTime.now(),
+          heardUncertain: event['uncertain'] == true,
         ),
         LexiMessage(
           id: assistantId,
@@ -503,6 +563,7 @@ class LexiChatProvider extends ChangeNotifier {
         ),
       ]);
       _isSending = true;
+      _voiceTurnActive = true;
       notifyListeners();
     } else if (type == 'llm.token') {
       final index = _messages.indexWhere(
@@ -516,11 +577,13 @@ class LexiChatProvider extends ChangeNotifier {
       }
     } else if (type == 'turn.done') {
       _isSending = false;
+      _voiceTurnActive = false;
       if (_session != null) _touchSession(_session!.sessionId, messageDelta: 2);
       unawaited(_cacheCurrentMessages());
       notifyListeners();
     } else if (type == 'voice.error' || type == 'turn.cancelled') {
       _isSending = false;
+      _voiceTurnActive = false;
       _messages.removeWhere(
         (message) => message.id == assistantId && message.content.isEmpty,
       );
@@ -1275,7 +1338,8 @@ class _CachedChatPage {
         suggestedCourses: (m['suggested_courses'] as List<dynamic>? ?? const [])
             .whereType<Map>()
             .map(
-              (c) => LexiCourseSuggestion.fromJson(Map<String, dynamic>.from(c)),
+              (c) =>
+                  LexiCourseSuggestion.fromJson(Map<String, dynamic>.from(c)),
             )
             .toList(),
         nativeHint: m['native_hint']?.toString(),

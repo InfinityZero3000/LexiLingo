@@ -21,6 +21,11 @@ class LexiDialogueBubble extends StatelessWidget {
   final ValueChanged<LexiSuggestedPractice>? onSuggestedPracticeTap;
   final String? lexiAvatarUrl;
 
+  /// Listening-practice mode: a voice reply stays covered until tapped.
+  final bool captionHidden;
+  final VoidCallback? onRevealCaption;
+  final VoidCallback? onMisheardTap;
+
   const LexiDialogueBubble({
     super.key,
     required this.message,
@@ -29,6 +34,9 @@ class LexiDialogueBubble extends StatelessWidget {
     this.onPronunciationScoreTap,
     this.onSuggestedPracticeTap,
     this.lexiAvatarUrl,
+    this.captionHidden = false,
+    this.onRevealCaption,
+    this.onMisheardTap,
   });
 
   @override
@@ -116,7 +124,10 @@ class LexiDialogueBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Message text
-              _buildLexiMessageContent(context, isDark),
+              if (captionHidden)
+                _buildHiddenCaption(context, isDark)
+              else
+                _buildLexiMessageContent(context, isDark),
               // Real catalog rows, attached by the server when the learner
               // asked what to study — see LexiCourseSuggestions.
               LexiCourseSuggestions(courses: message.suggestedCourses),
@@ -152,7 +163,8 @@ class LexiDialogueBubble extends StatelessWidget {
                           icon: Icons.fitness_center_rounded,
                           label: 'lexiChat.practiceMoreButton'.tr(
                             namedArgs: {
-                              'concept': message.suggestedPractice!.conceptTitle,
+                              'concept':
+                                  message.suggestedPractice!.conceptTitle,
                             },
                           ),
                           onTap: () => onSuggestedPracticeTap!(
@@ -167,6 +179,34 @@ class LexiDialogueBubble extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildHiddenCaption(BuildContext context, bool isDark) {
+    final color = isDark ? Colors.white70 : AppColors.textGrey;
+    return Semantics(
+      button: true,
+      label: 'lexiChat.voice.tapToReveal'.tr(),
+      child: InkWell(
+        onTap: onRevealCaption,
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 44),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.visibility_off_rounded, size: 18, color: color),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  'lexiChat.voice.tapToReveal'.tr(),
+                  style: TextStyle(fontSize: 14, height: 1.5, color: color),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -241,6 +281,18 @@ class LexiDialogueBubble extends StatelessWidget {
               ],
             ),
           ),
+        if (message.heardUncertain && onMisheardTap != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: _buildActionChip(
+              context,
+              icon: Icons.hearing_disabled_rounded,
+              label: 'lexiChat.voice.misheardChip'.tr(),
+              onTap: onMisheardTap,
+              color: AppColors.accentYellow,
+              labelColor: isDark ? Colors.white : AppColors.textDark,
+            ),
+          ),
         if (message.pronunciationScore != null)
           Padding(
             padding: const EdgeInsets.only(top: 6),
@@ -269,10 +321,7 @@ class LexiDialogueBubble extends StatelessWidget {
     }
 
     return Text.rich(
-      TextSpan(
-        style: baseStyle,
-        children: _buildCorrectedSpans(baseStyle),
-      ),
+      TextSpan(style: baseStyle, children: _buildCorrectedSpans(baseStyle)),
     );
   }
 
@@ -335,6 +384,7 @@ class LexiDialogueBubble extends StatelessWidget {
     required String label,
     VoidCallback? onTap,
     Color? color,
+    Color? labelColor,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final chipColor = color ?? AppColorRoles.primary(isDark);
@@ -357,12 +407,16 @@ class LexiDialogueBubble extends StatelessWidget {
           children: [
             Icon(icon, size: 14, color: chipColor),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: chipColor,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: labelColor ?? chipColor,
+                ),
               ),
             ),
           ],

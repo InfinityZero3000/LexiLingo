@@ -19,7 +19,7 @@ class SocialStatsRow extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             AnimatedSocialStat(
-              value: '${stats?.totalVocabularyMastered ?? 0}',
+              value: '${stats?.totalVocabularyReviewed ?? 0}',
               label: 'profile.words'.tr(),
               icon: Icons.spellcheck_rounded,
               color: AppColors.greenSuccessBright,

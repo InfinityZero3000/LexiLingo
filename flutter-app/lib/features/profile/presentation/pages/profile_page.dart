@@ -19,7 +19,9 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool isActive;
+
+  const ProfilePage({super.key, this.isActive = true});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -32,6 +34,12 @@ class _ProfilePageState extends State<ProfilePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) _loadData();
   }
 
   Future<void> _loadData() async {
@@ -240,7 +248,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   // Admin Panel shortcut (only for authorised accounts)
                   if (_isAdminUser(user))
                     AdminPanelTile(onTap: _openAdminPanel),
-
                 ],
               ),
             ),

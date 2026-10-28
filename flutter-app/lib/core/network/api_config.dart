@@ -20,7 +20,10 @@ class ApiConfig {
   static bool get isDev => environment == 'development';
   static bool get isProd => environment == 'production';
 
+  /// Off on the web even when the flag is set: SoLoud there needs its 1.4 MB
+  /// wasm bundle declared in index.html, which the app does not ship.
   static bool get enableDuplexVoice =>
+      !kIsWeb &&
       _readEnv('VOICE_DUPLEX_ENABLED')?.trim().toLowerCase() == 'true';
 
   /// Starter rewards require backend routes and a database migration.

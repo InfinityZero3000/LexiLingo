@@ -5,6 +5,7 @@ class UserStatsEntity {
   final int totalCoursesCompleted;
   final int totalLessonsCompleted;
   final int totalVocabularyMastered;
+  final int totalVocabularyReviewed;
   final int totalTestsPassed;
   final int totalCertificatesEarned;
   final double averageTestScore;
@@ -15,6 +16,7 @@ class UserStatsEntity {
     required this.totalCoursesCompleted,
     required this.totalLessonsCompleted,
     required this.totalVocabularyMastered,
+    this.totalVocabularyReviewed = 0,
     required this.totalTestsPassed,
     required this.totalCertificatesEarned,
     required this.averageTestScore,

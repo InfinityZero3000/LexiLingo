@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_event.dart';
@@ -309,6 +310,124 @@ void main() {
       expect(provider.isSending, isFalse);
     });
 
+    LexiChatProvider voiceProvider() {
+      final provider = LexiChatProvider(
+        repository: _FakeLexiChatRepository(),
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+      return provider;
+    }
+
+    test('flags a transcript the recogniser was unsure of', () {
+      final provider = voiceProvider();
+      provider.handleDuplexVoiceEvent({
+        'type': 'stt.final',
+        'turn_id': 'u1',
+        'text': 'I goed there',
+        'uncertain': true,
+      });
+      provider.handleDuplexVoiceEvent({
+        'type': 'stt.final',
+        'turn_id': 'u2',
+        'text': 'I went there',
+      });
+      final users = provider.messages.where((m) => m.isUser).toList();
+      expect(users.map((m) => m.heardUncertain), [true, false]);
+    });
+
+    test('ending a voice session mid-turn frees the chat', () {
+      final provider = voiceProvider();
+      provider.handleDuplexVoiceEvent({
+        'type': 'stt.final',
+        'turn_id': 't1',
+        'text': 'Hello',
+      });
+      provider.handleDuplexVoiceEvent({
+        'type': 'llm.token',
+        'turn_id': 't1',
+        'text': 'Hi th',
+      });
+      expect(provider.isSending, isTrue);
+
+      provider.abortVoiceTurn();
+
+      expect(provider.isSending, isFalse);
+      expect(provider.messages.last.content, 'Hi th');
+    });
+
+    test('aborting with no voice turn in flight changes nothing', () {
+      final provider = voiceProvider();
+      var notified = 0;
+      provider.addListener(() => notified++);
+
+      provider.abortVoiceTurn();
+
+      expect(notified, 0);
+    });
+
+    test('a dropped connection frees the chat and removes the empty reply', () {
+      final provider = voiceProvider();
+      provider.handleDuplexVoiceEvent({
+        'type': 'stt.final',
+        'turn_id': 't1',
+        'text': 'Hello',
+      });
+      expect(provider.isSending, isTrue);
+
+      provider.handleDuplexVoiceEvent({'type': 'connection.lost'});
+
+      expect(provider.isSending, isFalse);
+      expect(provider.messages.where((m) => m.isLexi), isEmpty);
+    });
+
+    test(
+      'hides only voice replies while captions are off, until revealed',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final provider = voiceProvider();
+        provider.handleDuplexVoiceEvent({
+          'type': 'stt.final',
+          'turn_id': 't1',
+          'text': 'Hello',
+        });
+        provider.handleDuplexVoiceEvent({
+          'type': 'llm.token',
+          'turn_id': 't1',
+          'text': 'Hi there',
+        });
+        final reply = provider.messages.last;
+        final typed = LexiMessage(
+          id: 'typed',
+          role: 'assistant',
+          content: 'Typed reply',
+          timestamp: DateTime.now(),
+        );
+        final restored = reply.copyWith(id: 'voice-assistant-t1');
+
+        expect(provider.isCaptionHidden(reply), isFalse);
+
+        await provider.setCaptionsVisible(false);
+        expect(provider.isCaptionHidden(reply), isTrue);
+        expect(provider.isCaptionHidden(restored), isTrue);
+        expect(provider.isCaptionHidden(typed), isFalse);
+
+        provider.revealCaption(reply.id);
+        expect(provider.isCaptionHidden(reply), isFalse);
+        expect(provider.isCaptionHidden(restored), isTrue);
+      },
+    );
+
+    test('remembers the captions choice across launches', () async {
+      SharedPreferences.setMockInitialValues({});
+      await voiceProvider().setCaptionsVisible(false);
+
+      final next = voiceProvider();
+      expect(next.captionsVisible, isTrue);
+      await next.loadVoicePrefs();
+      expect(next.captionsVisible, isFalse);
+    });
+
     test('carries suggestedPractice from the repository through to the '
         'appended message unchanged', () async {
       final repo = _FakeLexiChatRepository()
@@ -392,9 +511,7 @@ void main() {
 
         await provider.sendMessage('hello', userId: 'user-1');
         final userMessage = provider.messages.firstWhere((m) => m.isUser);
-        final assistantMessage = provider.messages.firstWhere(
-          (m) => m.isLexi,
-        );
+        final assistantMessage = provider.messages.firstWhere((m) => m.isLexi);
         const score = PronunciationScore(
           overallScore: 82,
           accuracyScore: 80,

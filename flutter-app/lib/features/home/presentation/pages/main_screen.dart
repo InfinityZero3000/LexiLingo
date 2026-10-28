@@ -60,6 +60,7 @@ class _MainScreenState extends State<MainScreen> {
   // Pages are built lazily — only when the tab is first visited.
   static const int _pageCount = 5;
   static const int _lexiTab = 2;
+  static const int _profileTab = 4;
   final Map<int, Widget> _pageCache = {};
 
   Widget _buildPage(int index) {
@@ -181,9 +182,12 @@ class _MainScreenState extends State<MainScreen> {
         // Use a lightweight placeholder until the tab is first visited.
         if (!_pageCache.containsKey(i)) return const SizedBox.shrink();
         // Lexi keeps its mic and speaker; it has to be told when it is hidden.
-        final page = i == _lexiTab
-            ? LexiChatPage(isActive: _currentIndex == i)
-            : _pageCache[i]!;
+        final page = switch (i) {
+          _lexiTab => LexiChatPage(isActive: _currentIndex == i),
+          // The tab stays mounted, so Profile reloads when it is selected.
+          _profileTab => ProfilePage(isActive: _currentIndex == i),
+          _ => _pageCache[i]!,
+        };
         return TickerMode(enabled: _currentIndex == i, child: page);
       }),
     );

@@ -30020,6 +30020,58 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart::_DuplexVoicePanelState::BoxDecoration::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart",
+      "entryPoint": "surface",
+      "symbol": "_DuplexVoicePanelState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 93,
+      "category": "eligible",
+      "group": 5,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart::_DuplexVoicePanelState::BoxDecoration::1",
+      "path": "lib/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart",
+      "entryPoint": "surface",
+      "symbol": "_DuplexVoicePanelState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 184,
+      "category": "eligible",
+      "group": 5,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [
