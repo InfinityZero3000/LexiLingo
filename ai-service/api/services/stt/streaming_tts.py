@@ -25,13 +25,17 @@ class StreamingTTS:
     def sample_rate(self) -> int:
         return self._service.sample_rate
 
-    async def stream(self, text: str) -> AsyncIterator[bytes]:
+    async def stream(self, text: str, speed: float = 1.0) -> AsyncIterator[bytes]:
         async with self._lock:
             if self._active >= self._capacity:
                 raise TTSBusyError("TTS capacity exhausted")
             self._active += 1
 
-        iterator = self._service.iter_pcm_chunks(text)
+        iterator = (
+            self._service.iter_pcm_chunks(text, speed=speed)
+            if speed != 1.0
+            else self._service.iter_pcm_chunks(text)
+        )
         try:
             while True:
                 worker = asyncio.create_task(asyncio.to_thread(_next_or_none, iterator))

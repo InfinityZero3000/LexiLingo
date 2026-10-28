@@ -4,16 +4,28 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import struct
 from collections.abc import Awaitable, Callable
 
-from api.services.stt.streaming_tts import StreamingTTS, get_streaming_tts
+from api.services.stt.streaming_tts import (
+    StreamingTTS,
+    TTSBusyError,
+    get_streaming_tts,
+)
 from api.services.trace_cag.generate import ProviderBusyError, stream_llm_tokens
 
 JsonSink = Callable[[dict], Awaitable[None]]
 BinarySink = Callable[[bytes], Awaitable[None]]
 PersistSink = Callable[[str, str, str], Awaitable[None]]
 logger = logging.getLogger(__name__)
+
+_MD_MARKS = re.compile(r"[*`#~]+|(?<!\w)_+|_+(?!\w)")
+
+
+def _speakable(text: str) -> str:
+    """Piper reads markdown marks aloud ("**go**" runs 2.6x longer)."""
+    return _MD_MARKS.sub("", text).strip()
 
 
 class DuplexTurn:
@@ -24,8 +36,10 @@ class DuplexTurn:
         tts: StreamingTTS | None = None,
         persist: PersistSink | None = None,
         system_extra: str = "",
+        tts_speed: float = 1.0,
     ) -> None:
         self._system_extra = system_extra
+        self._tts_speed = tts_speed
         self._send_json = send_json
         self._send_bytes = send_bytes
         self._tts = tts or get_streaming_tts()
@@ -109,7 +123,7 @@ class DuplexTurn:
                 )
                 if tts_enabled:
                     tasks.create_task(self._consume_fragments(fragments, common))
-        except* ProviderBusyError as errors:
+        except* (ProviderBusyError, TTSBusyError) as errors:
             raise ProviderBusyError("Voice provider capacity exhausted") from errors
         return producer.result()
 
@@ -186,6 +200,9 @@ class DuplexTurn:
         audio_seq: int,
         common: dict,
     ) -> int:
+        text = _speakable(text)
+        if not text:
+            return audio_seq
         await self._send_json(
             {
                 "type": "tts.audio.start",
@@ -196,7 +213,8 @@ class DuplexTurn:
                 **common,
             }
         )
-        async for pcm in self._tts.stream(text):
+        speed = {"speed": self._tts_speed} if self._tts_speed != 1.0 else {}
+        async for pcm in self._tts.stream(text, **speed):
             for offset in range(0, len(pcm), 4096):
                 payload = pcm[offset : offset + 4096]
                 header = struct.pack(

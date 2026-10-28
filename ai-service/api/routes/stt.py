@@ -284,6 +284,7 @@ async def stream_audio(websocket: WebSocket):
                             send_bytes,
                             persist=persist,
                             system_extra=memory_block,
+                            tts_speed=session.start.tts_speed,
                         ).run(
                             event,
                             turn_seq=turn_seq,
@@ -296,6 +297,8 @@ async def stream_audio(websocket: WebSocket):
         sender = asyncio.create_task(send_events())
         while not session.closed:
             incoming = await websocket.receive()
+            if incoming["type"] == "websocket.disconnect":
+                raise WebSocketDisconnect(incoming.get("code", 1000))
             if incoming.get("bytes") is not None:
                 frame = parse_audio_frame(
                     incoming["bytes"],

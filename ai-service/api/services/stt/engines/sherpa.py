@@ -46,6 +46,10 @@ class SherpaSession:
             return _result_text(self.recognizer.get_result(self.stream))
 
         text = await asyncio.to_thread(_finish) or self.last_text
+        # A transducer stream keeps decoding forever; without a fresh one the
+        # next utterance's result begins with every earlier utterance's text.
+        self.stream = self.recognizer.create_stream()
+        self.last_text = ""
         return PrimaryResult(
             text=text,
             confidence=_sherpa_confidence(text),

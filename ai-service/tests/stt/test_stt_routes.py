@@ -229,10 +229,13 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
     import api.services.stt.duplex_turn as duplex_module
 
     class FakeTurn:
-        def __init__(self, send_json, _send_bytes, persist=None, system_extra=""):
+        def __init__(
+            self, send_json, _send_bytes, persist=None, system_extra="", tts_speed=1.0
+        ):
             self.send_json = send_json
             assert persist is not None
             assert system_extra == ""  # Mongo is not connected in this test
+            assert tts_speed == 0.75
 
         async def run(self, final, *, turn_seq, tts_enabled):
             assert turn_seq == 1
@@ -261,6 +264,7 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
                     "user_id": "u1",
                     "duplex": True,
                     "tts_enabled": False,
+                    "tts_speed": 0.75,
                 }
             )
             assert socket.receive_json()["type"] == "session_started"
@@ -360,6 +364,34 @@ def test_websocket_start_message_times_out(monkeypatch, tmp_path):
         ) as socket:
             event = socket.receive_json()
             assert event["message"] == "Start message timeout"
+
+
+def test_dropped_socket_marks_session_disconnected_for_resume(monkeypatch, tmp_path):
+    monkeypatch.setenv("SECRET_KEY", "test-secret")
+    config = STTConfig(temp_dir=str(tmp_path))
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    manager = SessionManager(config, registry)
+    monkeypatch.setattr(stt_route, "get_stt_config", lambda: config)
+    monkeypatch.setattr(stt_route, "get_stt_sessions", lambda: manager)
+
+    async def allow_quota(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(stt_route, "enforce_user_quota", allow_quota)
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/stt")
+
+    with TestClient(app) as client:
+        with client.websocket_connect(
+            "/api/v1/stt/stream",
+            headers={"Authorization": f"Bearer {_access_token()}"},
+        ) as socket:
+            socket.send_json({"type": "start", "session_id": "s1", "user_id": "u1"})
+            assert socket.receive_json()["type"] == "session_started"
+
+    session = manager.sessions["s1"]
+    assert not session.closed and session.disconnected_at is not None
 
 
 def test_websocket_resume_replays_final_transcripts(monkeypatch, tmp_path):

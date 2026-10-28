@@ -39,6 +39,39 @@ def test_think_sanitizer_handles_split_markers_and_hidden_eof(tokens, visible):
 
 
 @pytest.mark.asyncio
+async def test_markdown_marks_are_shown_but_never_spoken(monkeypatch):
+    sent = []
+    spoken = []
+
+    async def llm(**_kwargs):
+        yield "The past of **go** is _went_. "
+        yield "**"
+
+    class RecordingTTS:
+        sample_rate = 16000
+
+        async def stream(self, text):
+            spoken.append(text)
+            yield b"pcm"
+
+    async def send_json(event):
+        sent.append(event)
+
+    async def send_bytes(_payload):
+        pass
+
+    monkeypatch.setattr(duplex_turn, "stream_llm_tokens", llm)
+    await duplex_turn.DuplexTurn(send_json, send_bytes, RecordingTTS()).run(
+        {"session_id": "s1", "turn_id": "t1", "text": "Hi"}, turn_seq=1
+    )
+
+    assert spoken == ["The past of go is went."]
+    shown = [e["text"] for e in sent if e.get("type") == "sentence.final"]
+    assert shown[0] == "The past of **go** is _went_."
+    assert "snake_case" == duplex_turn._speakable("snake_case")
+
+
+@pytest.mark.asyncio
 async def test_hidden_reasoning_never_reaches_events_or_tts(monkeypatch):
     sent = []
     spoken = []
@@ -256,6 +289,64 @@ async def test_provider_capacity_error_is_retryable_server_busy(monkeypatch):
     )
 
     assert sent[-1]["type"] == "voice.error"
+    assert sent[-1]["code"] == "SERVER_BUSY"
+    assert sent[-1]["retryable"] is True
+
+
+@pytest.mark.asyncio
+async def test_tts_speed_is_forwarded_only_when_not_normal(monkeypatch):
+    speeds = []
+
+    async def llm(**_kwargs):
+        yield "Hello."
+
+    class SpeedTTS:
+        sample_rate = 16000
+
+        async def stream(self, text, speed=1.0):
+            speeds.append(speed)
+            yield b"pcm"
+
+    async def sink(_event):
+        pass
+
+    async def sink_bytes(_payload):
+        pass
+
+    monkeypatch.setattr(duplex_turn, "stream_llm_tokens", llm)
+    for tts_speed in (1.0, 0.75):
+        await duplex_turn.DuplexTurn(
+            sink, sink_bytes, SpeedTTS(), tts_speed=tts_speed
+        ).run({"session_id": "s1", "turn_id": "t1", "text": "Hi"}, turn_seq=1)
+
+    assert speeds == [1.0, 0.75]
+
+
+@pytest.mark.asyncio
+async def test_busy_tts_is_retryable_server_busy_not_turn_failed(monkeypatch):
+    sent = []
+
+    async def llm(**_kwargs):
+        yield "Hello there."
+
+    class BusyTTS:
+        sample_rate = 16000
+
+        async def stream(self, text):
+            raise duplex_turn.TTSBusyError("busy")
+            yield b""  # pragma: no cover
+
+    async def send_json(event):
+        sent.append(event)
+
+    async def send_bytes(_payload):
+        pass
+
+    monkeypatch.setattr(duplex_turn, "stream_llm_tokens", llm)
+    await duplex_turn.DuplexTurn(send_json, send_bytes, BusyTTS()).run(
+        {"session_id": "s1", "turn_id": "t1", "text": "Hi"}, turn_seq=3
+    )
+
     assert sent[-1]["code"] == "SERVER_BUSY"
     assert sent[-1]["retryable"] is True
 

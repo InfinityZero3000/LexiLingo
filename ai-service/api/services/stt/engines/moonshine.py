@@ -20,6 +20,7 @@ class MoonshineSession:
         self._language = language
         self._last_text = ""
         self._pending_ms = 0
+        self._consumed_lines = 0
 
     async def push_audio(self, pcm16: bytes, start_ms: int, end_ms: int):
         samples = np.frombuffer(pcm16, dtype="<i2").astype(np.float32) / 32768.0
@@ -30,7 +31,7 @@ class MoonshineSession:
             return None
         self._pending_ms = 0
         result = await asyncio.to_thread(self._transcriber.update_transcription)
-        text = _extract_text(result)
+        text = _extract_text(result, self._consumed_lines)
         if not text or text == self._last_text:
             return None
         self._last_text = text
@@ -47,7 +48,10 @@ class MoonshineSession:
             self._transcriber.update_transcription,
             self._transcriber.MOONSHINE_FLAG_FORCE_UPDATE,
         )
-        text = _extract_text(result) or self._last_text
+        text = _extract_text(result, self._consumed_lines) or self._last_text
+        # The transcriber keeps every line of the session; skip finished ones.
+        self._consumed_lines = _line_count(result)
+        self._last_text = ""
         return PrimaryResult(
             text=text,
             confidence=_stability_confidence(text),
@@ -117,7 +121,11 @@ class MoonshinePrimary:
         self._factory = None
 
 
-def _extract_text(result: Any) -> str:
+def _line_count(result: Any) -> int:
+    return len(getattr(result, "lines", None) or [])
+
+
+def _extract_text(result: Any, skip_lines: int = 0) -> str:
     if isinstance(result, str):
         return result.strip()
     if isinstance(result, dict):
@@ -125,7 +133,7 @@ def _extract_text(result: Any) -> str:
     lines = getattr(result, "lines", None)
     if lines:
         return " ".join(
-            str(getattr(line, "text", "")).strip() for line in lines
+            str(getattr(line, "text", "")).strip() for line in lines[skip_lines:]
         ).strip()
     return str(getattr(result, "text", "")).strip()
 
