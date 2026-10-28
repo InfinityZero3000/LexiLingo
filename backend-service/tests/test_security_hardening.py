@@ -13,6 +13,7 @@ from fastapi import HTTPException
 from httpx import ASGITransport, AsyncClient
 
 from app.core import dependencies
+from app.core.config import settings
 from app.core.security import (
     create_access_token,
     create_verification_token,
@@ -98,6 +99,27 @@ def test_email_html_escaping():
     escaped_display_name = html.escape(malicious_display_name)
     assert escaped_display_name in html_part
     assert malicious_display_name not in html_part
+
+
+@pytest.mark.asyncio
+async def test_verification_email_logs_never_expose_token_or_recipient(
+    monkeypatch,
+    caplog,
+):
+    monkeypatch.setattr(settings, "SMTP_HOST", None)
+    token = "secret-verification-token"
+    recipient = "private@example.com"
+
+    sent = await EmailService.send_verification_email(
+        to_email=recipient,
+        token=token,
+        display_name="Private User",
+    )
+
+    assert sent is False
+    assert "SMTP_HOST not configured" in caplog.text
+    assert token not in caplog.text
+    assert recipient not in caplog.text
 
 
 @pytest.mark.asyncio

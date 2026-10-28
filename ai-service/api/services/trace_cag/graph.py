@@ -207,6 +207,8 @@ class TraceCAGPipeline:
         # (avoids a redundant Redis round-trip when lexi_chat already holds the store)
         if conversation_history is not None:
             initial_state["conversation_history"] = conversation_history
+            # input_node must not read Redis for it again (it used to, then overwrite this).
+            initial_state["conversation_history_supplied"] = True
         
         logger.info(f"[TraceCAG] Starting analysis: {user_input[:50]}...")
         
@@ -292,6 +294,7 @@ class TraceCAGPipeline:
                 for err in errors
             ],
             "linked_concepts": state.get("kg_seed_concepts", []),
+            "learner_facts_stated": state.get("diagnosis_facts") or {},
             # Concept IDs diagnose_node traced the *actual grammar errors* back
             # to (distinct from linked_concepts, which are just topic-keyword
             # seeds from the raw input) — the precise signal a "practice this

@@ -113,7 +113,10 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CefrBadge(level: vocabulary.difficultyLevel, size: CefrBadgeSize.large),
+          CefrBadge(
+            level: vocabulary.difficultyLevel,
+            size: CefrBadgeSize.large,
+          ),
 
           const SizedBox(height: 24),
 
@@ -143,7 +146,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                       'vocabulary.audioQuestionHint'.tr(),
                       style: TextStyle(
                         fontSize: 16,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
                       ),
                       textAlign: TextAlign.center,
@@ -282,7 +287,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                             vocabulary.pronunciation!,
                             style: TextStyle(
                               fontSize: 16,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -325,10 +332,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                       fontSize: 16,
                       height: 1.5,
                       fontStyle: FontStyle.italic,
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.45),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.45),
                     ),
                   )
                 : Text(
@@ -427,5 +433,4 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
       ),
     );
   }
-
 }

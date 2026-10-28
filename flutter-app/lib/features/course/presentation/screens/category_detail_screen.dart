@@ -161,7 +161,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              'course.coursesAvailablePlural'.plural(categoryCourses.length),
+                              'course.coursesAvailablePlural'.plural(
+                                categoryCourses.length,
+                              ),
                               style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: AppColorRoles.textSecondary(isDark),
@@ -657,7 +659,6 @@ class _CourseGridCard extends StatelessWidget {
           children: [
             // Thumbnail
             Expanded(
-              flex: 3,
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(12),
@@ -675,46 +676,44 @@ class _CourseGridCard extends StatelessWidget {
               ),
             ),
             // Content
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      course.title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
+                    course.title,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6),
+                  // Level badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getLevelColor(
+                        course.level,
+                        isDark,
+                      ).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      course.level,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: _getLevelColor(course.level, isDark),
                         fontWeight: FontWeight.bold,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const Spacer(),
-                    // Level badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getLevelColor(
-                          course.level,
-                          isDark,
-                        ).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        course.level,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level, isDark),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],

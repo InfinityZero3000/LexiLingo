@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -6,6 +8,8 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/card_art_painter.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/section_title.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
@@ -16,6 +20,8 @@ class RecommendationItem {
     required this.itemType,
     required this.title,
     required this.reason,
+    this.reasonCode,
+    this.reasonArgs = const {},
     this.topic,
     this.level,
     this.payload = const {},
@@ -25,9 +31,26 @@ class RecommendationItem {
   final String itemType;
   final String title;
   final String reason;
+  final String? reasonCode;
+  final Map<String, String> reasonArgs;
   final String? topic;
   final String? level;
   final Map<String, dynamic> payload;
+
+  /// Localized on the client; `reason` (server text) only covers older cached
+  /// items and codes this build does not know.
+  String get localizedReason {
+    final key = switch (reasonCode) {
+      'due' => 'home.recReasonDue',
+      'topic' => 'home.recReasonTopic',
+      'gap' => 'home.recReasonGap',
+      'level' => 'home.recReasonLevel',
+      'similar' => 'home.recReasonSimilar',
+      'default' => 'home.recReasonDefault',
+      _ => null,
+    };
+    return key == null ? reason : key.tr(namedArgs: reasonArgs);
+  }
 
   factory RecommendationItem.fromJson(Map<String, dynamic> json) {
     return RecommendationItem(
@@ -35,6 +58,12 @@ class RecommendationItem {
       itemType: json['item_type'] as String? ?? '',
       title: json['title'] as String? ?? '',
       reason: json['reason'] as String? ?? '',
+      reasonCode: json['reason_code'] as String?,
+      reasonArgs:
+          (json['reason_args'] as Map?)?.map(
+            (key, value) => MapEntry('$key', '$value'),
+          ) ??
+          const {},
       topic: json['topic'] as String?,
       level: json['level'] as String?,
       payload: (json['payload'] as Map?)?.cast<String, dynamic>() ?? const {},
@@ -58,6 +87,17 @@ class RecommendationsSection extends StatefulWidget {
 class _RecommendationsSectionState extends State<RecommendationsSection> {
   late final Future<List<RecommendationItem>> _future = _load();
 
+  // Random start, then cycle: every visit looks different but neighbours never
+  // share a colour.
+  static const _palette = [
+    AppColors.primary,
+    AppColors.greenSuccess,
+    AppColors.purple,
+    AppColors.deepOrange,
+    AppColors.teal,
+  ];
+  final int _paletteOffset = Random().nextInt(_palette.length);
+
   Future<List<RecommendationItem>> _load() async {
     if (!sl.isRegistered<ApiClient>()) return const [];
     final response = await sl<ApiClient>().get(
@@ -76,35 +116,42 @@ class _RecommendationsSectionState extends State<RecommendationsSection> {
     return FutureBuilder<List<RecommendationItem>>(
       future: _future,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return SizedBox(
-            height: 132,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 3,
-              itemBuilder: (context, _) => Container(
-                width: 220,
-                margin: const EdgeInsets.only(right: 12),
-                child: const CardSkeleton(isHorizontal: false),
-              ),
-            ),
-          );
-        }
-
+        final loading = snapshot.connectionState == ConnectionState.waiting;
         final items = snapshot.data ?? const <RecommendationItem>[];
-        // An empty or failed list renders nothing rather than an error card:
-        // recommendations are an enhancement, never a blocker on Home.
-        if (items.isEmpty) return const SizedBox.shrink();
+        // An empty or failed list renders nothing — heading included — rather
+        // than an error card or an orphan title: recommendations are an
+        // enhancement, never a blocker on Home.
+        if (!loading && items.isEmpty) return const SizedBox.shrink();
 
-        return SizedBox(
-          height: 132,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: items.length,
-            itemBuilder: (context, index) =>
-                _RecommendationCard(item: items[index]),
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SectionTitle(title: 'home.recommendedForYou'.tr()),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 132,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: loading ? 3 : items.length,
+                  itemBuilder: (context, index) => loading
+                      ? Container(
+                          width: 220,
+                          margin: const EdgeInsets.only(right: 12),
+                          child: const CardSkeleton(isHorizontal: false),
+                        )
+                      : _RecommendationCard(
+                          item: items[index],
+                          slot: (index + _paletteOffset) % _palette.length,
+                          accent:
+                              _palette[(index + _paletteOffset) %
+                                  _palette.length],
+                        ),
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -113,9 +160,15 @@ class _RecommendationsSectionState extends State<RecommendationsSection> {
 }
 
 class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({required this.item});
+  const _RecommendationCard({
+    required this.item,
+    required this.accent,
+    required this.slot,
+  });
 
   final RecommendationItem item;
+  final Color accent;
+  final int slot;
 
   @override
   Widget build(BuildContext context) {
@@ -129,58 +182,92 @@ class _RecommendationCard extends StatelessWidget {
       child: Container(
         width: 220,
         margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(14),
         decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
-          fill: theme.colorScheme.surface,
+          accent: accent,
+          fill: Color.alphaBlend(
+            accent.withValues(alpha: isDark ? 0.16 : 0.10),
+            theme.colorScheme.surface,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Row(
-              children: [
-                Icon(
-                  _iconFor(item.itemType),
-                  size: 16,
-                  color: AppColorRoles.primary(isDark),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _labelFor(item.itemType),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColorRoles.textSecondary(isDark),
-                    ),
-                    overflow: TextOverflow.ellipsis,
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: CustomPaint(
+                  painter: CardArtPainter(
+                    accent: accent,
+                    base: theme.colorScheme.surface,
+                    motif: slot,
+                    isDark: isDark,
                   ),
                 ),
-                if (item.level != null)
-                  Text(
-                    item.level!,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColorRoles.primary(isDark),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              item.title,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppColorRoles.textPrimary(isDark),
               ),
             ),
-            const Spacer(),
-            Text(
-              item.reason,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: AppColorRoles.textSecondary(isDark),
+            Positioned.fill(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _iconFor(item.itemType),
+                            size: 16,
+                            color: accent,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _labelFor(item.itemType),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: AppColorRoles.textPrimary(isDark),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (item.level != null)
+                          Text(
+                            item.level!,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: accent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      item.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColorRoles.textPrimary(isDark),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      item.localizedReason,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: AppColorRoles.textSecondary(isDark),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

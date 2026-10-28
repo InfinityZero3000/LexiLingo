@@ -174,7 +174,7 @@ class _SessionListDrawerState extends State<SessionListDrawer> {
                                   )
                                 : TextButton(
                                     onPressed: widget.onLoadMoreSessions,
-                                    child: const Text('Tải thêm...'),
+                                    child: Text('chat.loadMore'.tr()),
                                   ),
                           ),
                         );

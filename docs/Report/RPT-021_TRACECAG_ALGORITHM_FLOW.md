@@ -6,20 +6,25 @@
 
 ## 1. Giới Thiệu TRACECAG
 
-**TRACECAG = Graph-augmented Cache-Augmented Generation**
+**TRACECAG = Traceable Cache-Augmented Generation** (bộ điều khiển tái dùng câu trả lời có đồ thị tri thức, mỗi quyết định tái dùng truy vết được; **không phát triển từ cơ chế của CAG**: không nạp trước, không cache KV)
+
+> **Ghi chú 2026-10-25.** Tài liệu này viết tháng 4/2026, trước khi quan hệ với CAG được làm rõ. Phần "CAG, không phải RAG" bên dưới **không còn đúng nguyên văn**: đường dựng lại của TRACE-CAG là một pipeline RAG
+> (truy hồi lai, cầu nối IRCoT); cache (Redis L0/L1) chỉ chặn đường đó khi chứng nhận được việc tái dùng. Định nghĩa hiện hành và so sánh chung/khác với CAG: `ai-service/model-development/docs/TRACE_CAG.md` §1.2.
 
 Đây là thuật toán AI cốt lõi của LexiLingo, kết hợp:
 
 | Thành phần | Vai trò | Công nghệ |
 |-----------|---------|-----------|
 | **Graph** | Knowledge Graph structured knowledge | KuzuDB |
-| **CAG** | Cache-Augmented Generation (không phải RAG) | Redis L0/L1 |
+| **Cache** | Bộ nhớ đệm câu trả lời có chứng nhận, tầng ứng dụng (không phải CAG nạp KV) | Redis L0/L1 |
 | **LangGraph** | Orchestration StateGraph | langgraph ≥ 0.0.66 |
 | **LLM** | Language model cho reasoning | Gemini / Ollama Qwen |
 
-### Tại sao CAG, không phải RAG?
+### Cache-first, truy hồi khi cần (thay cho mục "Tại sao CAG, không phải RAG?")
 
-| RAG (Retrieval-Augmented Generation) | CAG (Cache-Augmented Generation) |
+Cột phải dưới đây mô tả **đường cache** (L0/L1) của TRACE-CAG, không phải CAG của Chan et al.; khi cache không chứng nhận được việc tái dùng, hệ thống vẫn truy hồi như RAG.
+
+| RAG (Retrieval-Augmented Generation) | Đường cache của TRACE-CAG |
 |-------------------------------------|----------------------------------|
 | Tìm kiếm document từ vector store | Cache learner context từ Redis |
 | Phụ thuộc document quality | Phụ thuộc cache freshness |

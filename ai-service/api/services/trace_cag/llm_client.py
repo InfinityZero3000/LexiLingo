@@ -123,6 +123,18 @@ def _provider_tpm(provider: str) -> int:
         return 0
 
 
+def _is_daily_limit(error_text: str) -> bool:
+    """A 429 that will not clear within the minute, so the provider is disabled rather than retried.
+
+    Groq's per-minute 429s end with "Need more tokens? Upgrade to Dev Tier today at
+    https://console.groq.com/settings/billing". Matching "billing" against the whole body took every
+    OTPM/ITPM hit for a daily limit and switched the provider off for 5+ minutes, so one burst turned
+    every later request into "no response". Only the text before that sentence describes the limit.
+    """
+    described = error_text.lower().split("need more tokens")[0]
+    return any(marker in described for marker in ["tokens per day", "requests per day", "quota", "billing", "resource_exhausted"])
+
+
 def _estimate_payload_tokens(payload: Dict[str, Any]) -> int:
     chars = sum(len(str(m.get("content") or "")) for m in payload.get("messages") or [])
     return (chars // 4) + int(payload.get("max_tokens") or 256)
@@ -239,8 +251,7 @@ async def _throttled_post_json(
                     return response
 
                 retry_after = _parse_retry_after_seconds(response.headers.get("Retry-After"))
-                error_text = str(getattr(response, "text", "") or "").lower()
-                daily = any(marker in error_text for marker in ["tokens per day", "requests per day", "quota", "billing", "resource_exhausted"])
+                daily = _is_daily_limit(str(getattr(response, "text", "") or ""))
                 if daily:
                     _disable_provider(state_key, max(retry_after, 300.0))
                 if retry_after <= 0:

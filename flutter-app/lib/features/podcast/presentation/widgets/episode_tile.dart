@@ -1,13 +1,15 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+import '../../../../core/widgets/cefr_badge.dart';
+import '../../../../core/widgets/content_kit.dart';
+import '../../../../core/widgets/lottie_loading_widget.dart';
 import '../../domain/entities/podcast_entities.dart';
 
-/// Full-width list tile for a single podcast episode.
-///
-/// Shows episode number, title, duration, published date, CEFR badge,
-/// a download state button, and a listen-progress indicator.
+/// Full-width card for a single podcast episode: a play disc, the title,
+/// length and age, and how far the learner got.
 ///
 /// [onDownload] is called when the user taps the download button while the
 /// episode is in [DownloadState.notDownloaded]. Pass `null` to disable the
@@ -26,244 +28,178 @@ class EpisodeTile extends StatelessWidget {
     this.onDownload,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cefrColor = _cefrColor(episode.cefrLevel ?? 'B1');
-    final totalSeconds = episode.durationSeconds;
-    final progress = totalSeconds > 0
-        ? (episode.listenProgress / totalSeconds).clamp(0.0, 1.0)
-        : 0.0;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            if (!isDark)
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Episode number badge
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: cefrColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    episode.episodeNumber != null
-                        ? '#${episode.episodeNumber}'
-                        : '–',
-                    style: TextStyle(
-                      color: cefrColor,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Title + meta
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        episode.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Meta row: duration · date · CEFR
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          // Duration
-                          _MetaChip(
-                            icon: Icons.schedule_rounded,
-                            label: _formatDuration(totalSeconds),
-                            color: isDark ? Colors.white54 : AppColors.textGrey,
-                          ),
-                          // Published date
-                          _MetaChip(
-                            icon: Icons.calendar_today_rounded,
-                            label: _relativeDate(episode.publishedAt),
-                            color: isDark ? Colors.white54 : AppColors.textGrey,
-                          ),
-                          // CEFR badge
-                          if (episode.cefrLevel != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cefrColor,
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              child: Text(
-                                episode.cefrLevel!,
-                                style: TextStyle(
-                                  color: AppColors.surfaceLight,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 10,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                if (!kIsWeb) ...[
-                  const SizedBox(width: 8),
-                  // Download button
-                  _DownloadButton(
-                    state: episode.downloadState,
-                    onDownload: onDownload,
-                  ),
-                ],
-              ],
-            ),
-
-            // ── Progress bar (only when listen progress > 0) ──
-            if (episode.listenProgress > 0) ...[
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress.toDouble(),
-                  minHeight: 3,
-                  backgroundColor: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.grey200,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    episode.isCompleted ? AppColors.greenSuccess : cefrColor,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                episode.isCompleted
-                    ? 'Completed'
-                    : '${(progress * 100).toStringAsFixed(0)}% listened',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: episode.isCompleted
-                      ? AppColors.greenSuccess
-                      : (isDark ? Colors.white38 : AppColors.textGrey),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+  /// "Today", "3d ago"… in the learner's language.
+  static String ageLabel(String publishedAt, {DateTime? now}) {
+    if (publishedAt.isEmpty) return '';
+    final date = DateTime.tryParse(publishedAt);
+    if (date == null) return publishedAt;
+    final days = (now ?? DateTime.now()).difference(date).inDays;
+    if (days <= 0) return 'podcast.today'.tr();
+    if (days == 1) return 'podcast.yesterday'.tr();
+    if (days < 7) return 'podcast.daysAgo'.tr(namedArgs: {'count': '$days'});
+    if (days < 30) {
+      return 'podcast.weeksAgo'.tr(namedArgs: {'count': '${days ~/ 7}'});
+    }
+    if (days < 365) {
+      return 'podcast.monthsAgo'.tr(namedArgs: {'count': '${days ~/ 30}'});
+    }
+    return 'podcast.yearsAgo'.tr(namedArgs: {'count': '${days ~/ 365}'});
   }
 
-  // ──────────────────────────────────────
-  //  Helpers
-  // ──────────────────────────────────────
-
-  String _formatDuration(int totalSeconds) {
+  /// "04:30" or "1h 5m"; "–" when the length is unknown.
+  static String durationLabel(int totalSeconds) {
     if (totalSeconds <= 0) return '–';
     if (totalSeconds >= 3600) {
-      final h = totalSeconds ~/ 3600;
-      final m = (totalSeconds % 3600) ~/ 60;
-      return '${h}h ${m}m';
+      return '${totalSeconds ~/ 3600}h ${(totalSeconds % 3600) ~/ 60}m';
     }
     final m = totalSeconds ~/ 60;
     final s = totalSeconds % 60;
     return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
   }
 
-  String _relativeDate(String publishedAt) {
-    if (publishedAt.isEmpty) return '';
-    try {
-      final date = DateTime.parse(publishedAt);
-      final diff = DateTime.now().difference(date);
-      if (diff.inDays == 0) return 'Today';
-      if (diff.inDays == 1) return 'Yesterday';
-      if (diff.inDays < 7) return '${diff.inDays} days ago';
-      if (diff.inDays < 30) return '${diff.inDays ~/ 7}w ago';
-      if (diff.inDays < 365) return '${diff.inDays ~/ 30}mo ago';
-      return '${diff.inDays ~/ 365}y ago';
-    } catch (_) {
-      return publishedAt;
-    }
-  }
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final muted = contentMuted(context);
+    final total = episode.durationSeconds;
+    final progress = total > 0
+        ? (episode.listenProgress / total).clamp(0.0, 1.0)
+        : 0.0;
+    final age = ageLabel(episode.publishedAt);
+    final meta = [durationLabel(total), if (age.isNotEmpty) age].join(' · ');
+    final level = episode.cefrLevel;
 
-  Color _cefrColor(String level) {
-    switch (level) {
-      case 'A1':
-        return AppColors.greenSuccessBright;
-      case 'A2':
-        return AppColors.greenSuccessSoft;
-      case 'B1':
-        return AppColors.warning;
-      case 'B2':
-        return AppColors.orange;
-      case 'C1':
-        return AppColors.deepOrange;
-      case 'C2':
-        return AppColors.purple;
-      default:
-        return AppColors.primary;
-    }
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    _PlayDisc(done: episode.isCompleted),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            episode.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  meta,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    height: 1.3,
+                                    color: muted,
+                                  ),
+                                ),
+                              ),
+                              if (level != null) ...[
+                                const SizedBox(width: 8),
+                                CefrBadge(
+                                  level: level,
+                                  size: CefrBadgeSize.small,
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (episode.listenProgress > 0 ||
+                              episode.isCompleted) ...[
+                            const SizedBox(height: 8),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(2),
+                              child: LinearProgressIndicator(
+                                value: episode.isCompleted ? 1 : progress,
+                                minHeight: 4,
+                                color: scheme.primary,
+                                backgroundColor: scheme.onSurface.withValues(
+                                  alpha: 0.12,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              episode.isCompleted
+                                  ? 'podcast.completed'.tr()
+                                  : 'podcast.percentListened'.tr(
+                                      namedArgs: {
+                                        'percent':
+                                            '${(progress * 100).round()}',
+                                      },
+                                    ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                height: 1.3,
+                                color: muted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (!kIsWeb)
+                      _DownloadButton(
+                        state: episode.downloadState,
+                        onDownload: onDownload,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
-// ──────────────────────────────────────
-//  Private sub-widgets
-// ──────────────────────────────────────
+class _PlayDisc extends StatelessWidget {
+  final bool done;
 
-class _MetaChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _MetaChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
+  const _PlayDisc({required this.done});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 11, color: color),
-        const SizedBox(width: 3),
-        Text(label, style: TextStyle(fontSize: 11, color: color)),
-      ],
+    final primary = Theme.of(context).colorScheme.primary;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: primary.withValues(alpha: 0.14),
+      ),
+      child: SizedBox.square(
+        dimension: 44,
+        child: Icon(
+          done ? PhosphorIconsBold.check : PhosphorIconsFill.play,
+          size: 18,
+          color: primary,
+        ),
+      ),
     );
   }
 }
@@ -276,26 +212,37 @@ class _DownloadButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     switch (state) {
       case DownloadState.downloaded:
-        return Icon(
-          Icons.download_done_rounded,
-          size: 22,
-          color: AppColors.greenSuccess,
+        return Tooltip(
+          message: 'podcast.downloaded'.tr(),
+          child: SizedBox.square(
+            dimension: 44,
+            child: Icon(
+              PhosphorIconsFill.checkCircle,
+              size: 22,
+              color: scheme.primary,
+            ),
+          ),
         );
       case DownloadState.downloading:
-        return const SizedBox(
-          width: 22,
-          height: 22,
-          child: LottieLoadingWidget.tiny(),
+        return Tooltip(
+          message: 'podcast.downloading'.tr(),
+          child: const SizedBox.square(
+            dimension: 44,
+            child: Center(child: LottieLoadingWidget.tiny()),
+          ),
         );
       case DownloadState.notDownloaded:
-        return GestureDetector(
-          onTap: onDownload,
-          child: Icon(
-            Icons.download_outlined,
+        return IconButton(
+          onPressed: onDownload,
+          tooltip: 'podcast.download'.tr(),
+          style: IconButton.styleFrom(minimumSize: const Size.square(44)),
+          icon: Icon(
+            PhosphorIconsBold.downloadSimple,
             size: 22,
-            color: onDownload != null ? AppColors.primary : AppColors.textGrey,
+            color: onDownload != null ? scheme.primary : contentMuted(context),
           ),
         );
     }

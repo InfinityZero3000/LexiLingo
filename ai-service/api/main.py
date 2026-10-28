@@ -149,6 +149,12 @@ async def _ensure_mongo_indexes() -> None:
         name="lexi_sessions_user_updated_at_idx",
     )
     await _create_index_safe(
+        "lexi_user_memory",
+        [("user_id", ASCENDING)],
+        name="lexi_user_memory_user_id_uq",
+        unique=True,
+    )
+    await _create_index_safe(
         "lexi_messages",
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="lexi_messages_session_timestamp_idx",

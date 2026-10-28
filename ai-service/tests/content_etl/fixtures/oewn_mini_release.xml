@@ -9,12 +9,18 @@
            version="2025">
     <LexicalEntry id="oewn-journey-n">
       <Lemma writtenForm="journey" partOfSpeech="n"/>
-      <Sense id="oewn-journey-n-sense-1" synset="oewn-00012345-n">
-        <SenseExample>Their journey took three days.</SenseExample>
-      </Sense>
+      <Sense id="oewn-journey__1.04.00.." synset="oewn-00012345-n"/>
+      <Sense id="oewn-journey__1.04.01.." synset="oewn-00012346-n"/>
     </LexicalEntry>
+    <!-- As published, examples hang off the Synset (there are no SenseExample
+         elements), and a lemma's senses are listed most common first. -->
     <Synset id="oewn-00012345-n" ili="i90001" partOfSpeech="n">
       <Definition>An act of travelling from one place to another.</Definition>
+      <Example>Their journey took three days.</Example>
+      <Example>The journey home was long.</Example>
+    </Synset>
+    <Synset id="oewn-00012346-n" ili="i90002" partOfSpeech="n">
+      <Definition>A set of stages in a process.</Definition>
     </Synset>
   </Lexicon>
 </LexicalResource>

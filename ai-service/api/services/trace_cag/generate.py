@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import time
 from collections import Counter
 from typing import Any, AsyncGenerator, Dict, List
@@ -81,6 +82,14 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
         else:
             who = f"is learning for {goal}" if goal else f"is into {interest}"
         hint += f"The learner {who} — use examples from that when it fits naturally.\n"
+
+    brief = str(learner_profile.get("profile_brief") or "").strip()
+    if brief:
+        hint += brief + "\n"
+
+    memory = str(learner_profile.get("memory") or "").strip()
+    if memory:
+        hint += memory + "\n"
 
     recap = str(learner_profile.get("session_recap") or "").strip()
     if recap:
@@ -155,9 +164,14 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
 
     return (
         "You are Lexi 🦜, a cheerful, witty parrot who is an expert English tutor.\n"
-        "You speak in a warm, encouraging tone — like a fun game character guiding an adventure.\n"
+        "Talk like a friendly conversation partner who happens to be a tutor, not an "
+        "examiner: react to what the learner actually says, share a short thought of "
+        "your own, and often end with one natural question that keeps them talking. "
+        "Say \"Squawk!\" only occasionally.\n"
         "Keep responses concise (2-4 sentences). Use the knowledge context provided.\n"
-        "Gently correct mistakes with encouraging context.\n"
+        "Always answer what the learner actually said or asked before anything else. "
+        "Correct at most ONE mistake per reply, and only if it matters; a correction "
+        "never replaces the answer.\n"
         f"The learner's current CEFR level is: {level}\n"
         f"Difficulty setting for this turn: {difficulty}\n"
         f"{personalization}"
@@ -166,10 +180,10 @@ def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str
 
 
 _RICH_FORMATTING_HINT = (
-    "\nWhen it genuinely helps — comparing two grammar forms/tenses/words, or "
-    "summarizing multiple facts — use a markdown table (`| Col | Col |`) instead of "
-    "prose. Skip the table for short answers where it wouldn't add clarity.\n"
-    "For numeric data (scores, progress, counts), you may add ONE fenced "
+    "\nFormatting: reply in plain conversational sentences. Use a markdown table "
+    "(`| Col | Col |`) only when the learner asks to compare forms/tenses/words or for "
+    "a list of several facts — never to grade or summarise their own sentence.\n"
+    "For numeric data (scores, progress, counts) you may add ONE fenced "
     '```chart block right after your sentence, containing only compact JSON: '
     '{"type":"bar|line|pie","title":"...","labels":["A","B"],'
     '"series":[{"name":"...","values":[1,2]}]}. Omit it unless there\'s real '
@@ -191,6 +205,56 @@ def _compute_difficulty_ramp(session_turn: int, overall_score: float) -> str:
     if session_turn < 8 or overall_score < 0.70:
         return "standard"
     return "challenging"
+
+
+_ASK_OPENER = re.compile(
+    r"^(?:please\s+)?(?:can you|could you|would you|will you|do you|does|is there|"
+    r"are there|give me|tell me|show me|help me|explain|recommend|suggest)\b"
+)
+# Asking to be corrected is a request for the correction, so it is never "answer first".
+_CORRECTION_REQUEST = re.compile(
+    r"\b(?:correct|check|fix|proofread|mistakes?|grammar|is this right|is it right)\b"
+)
+
+
+def _is_asking(user_input: str, intent: str) -> bool:
+    """A question or request: the learner wants something back, not a grade."""
+    text = user_input.strip().lower()
+    if intent == "practice" or _CORRECTION_REQUEST.search(text):
+        return False
+    return intent == "ask" or "?" in text or bool(_ASK_OPENER.match(text))
+
+
+def _errors_directive(
+    errors: List[Dict[str, Any]], strategy: str, asked: bool
+) -> str:
+    """Prompt tail that tells the tutor how much weight corrections get."""
+    if not errors:
+        if asked:
+            return "\nNo errors found. Just answer the question directly; no praise needed.\n"
+        return (
+            "\nNo errors found. Do not grade or rate their sentence. Respond to what "
+            "they told you like a friend would — react, relate, ask one follow-up. "
+            "Mention their English only if something was genuinely nicely put.\n"
+        )
+    errs_text = "\n".join(
+        f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
+        for e in errors[:2]
+    )
+    if asked:
+        return (
+            f"\n--- Possible slips in the learner's wording ---\n{errs_text}\n"
+            "The learner asked for something. ANSWER IT FIRST, fully and directly, "
+            "as if the wording were perfect. Only after the answer, and only if a slip "
+            "really matters, add a brief friendly aside such as 'By the way, we say "
+            "...' — never in brackets, never a lecture. If it is minor, skip it.\n"
+        )
+    return (
+        f"\n--- Errors Found ---\n{errs_text}\n"
+        f"Strategy: {strategy}. Respond to what the learner said first, then fold in "
+        "at most one correction as a natural recast (say it correctly in your own "
+        "sentence, or 'By the way, we say ...'). Keep it light.\n"
+    )
 
 
 def build_generation_prompt(
@@ -238,15 +302,10 @@ def build_generation_prompt(
                 for e in errors[:3]
             )
             system_prompt += f"\n--- Errors (hints only) ---\n{hints}\n"
-    elif errors:
-        errs_text = "\n".join(
-            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
-            for e in errors[:3]
-        )
-        system_prompt += f"\n--- Errors Found ---\n{errs_text}\n"
-        system_prompt += f"Strategy: {strategy}. Weave corrections naturally.\n"
     else:
-        system_prompt += "\nNo errors found — praise the learner's effort!\n"
+        system_prompt += _errors_directive(
+            errors, strategy, _is_asking(user_input, intent)
+        )
 
     if native_hint:
         system_prompt += f"\n--- Native-Language Hint ---\n{native_hint}\n"
@@ -550,15 +609,10 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                 for e in errors[:3]
             ])
             system_prompt += f"\n--- Errors Found (use as hints, don't reveal directly) ---\n{errors_text}\n"
-    elif errors:
-        errors_text = "\n".join([
-            f"- '{e.get('span','')}' → '{e.get('correction','')}' ({e.get('explanation','')})"
-            for e in errors[:3]
-        ])
-        system_prompt += f"\n--- Errors Found ---\n{errors_text}\n"
-        system_prompt += f"Strategy: {strategy}. Weave corrections naturally into your response.\n"
     else:
-        system_prompt += "\nNo errors found — praise the learner's effort!\n"
+        system_prompt += _errors_directive(
+            errors, strategy, _is_asking(str(user_input), intent)
+        )
 
     if native_hint:
         system_prompt += f"\n--- Native-Language Hint (for reference) ---\n{native_hint}\n"

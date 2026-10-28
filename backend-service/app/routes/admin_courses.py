@@ -20,7 +20,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_admin
 from app.crud.course import CourseCRUD, LessonCRUD, UnitCRUD
 from app.models.content import GrammarItem, QuestionItem, TestExam
-from app.models.course import Course, Lesson, Unit, count_exercises
+from app.models.course import Course, Lesson, Unit, count_exercises, exercise_shape_problems
 from app.models.user import User
 from app.models.vocabulary import VocabularyItem
 from app.schemas.content import (
@@ -68,6 +68,23 @@ async def _assert_publishable(db: AsyncSession, course_id: UUID) -> None:
         )
 
 
+def _assert_exercises_playable(content) -> None:
+    """Refuse an exercise the app could not render or grade — otherwise the
+    first person to find out is a learner stuck on an unanswerable question."""
+    exercises = content.get("exercises") if isinstance(content, dict) else None
+    problems = [
+        f"exercise {index + 1} ({exercise.get('ui_type') if isinstance(exercise, dict) else '?'}): {problem}"
+        for index, exercise in enumerate(exercises if isinstance(exercises, list) else [])
+        for problem in exercise_shape_problems(exercise)
+    ]
+    if problems:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid exercises: " + "; ".join(problems[:10])
+            + (f" (and {len(problems) - 10} more)" if len(problems) > 10 else ""),
+        )
+
+
 async def _apply_lesson_update(
     db: AsyncSession, lesson_id: UUID, lesson_update: LessonUpdate
 ) -> Lesson:
@@ -82,6 +99,8 @@ async def _apply_lesson_update(
         )
 
     fields = lesson_update.model_dump(exclude_unset=True)
+    if "content" in fields:
+        _assert_exercises_playable(fields["content"])
     if "content" in fields and not count_exercises(fields["content"]):
         course = await CourseCRUD.get_course(db, lesson.course_id)
         if course and course.is_published:

@@ -66,43 +66,42 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'notifications.pageTitle'.tr(),
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          unread > 0
-                              ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'
-                                    .tr(namedArgs: {'count': unread.toString()})
-                              : 'notifications.allCaughtUp'.tr(),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: Colors.grey[600]),
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'notifications.pageTitle'.tr(),
+                              maxLines: 1,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Text(
+                            unread > 0
+                                ? 'notifications.${unread > 1 ? 'unreadCountPlural' : 'unreadCount'}'
+                                      .tr(
+                                        namedArgs: {'count': unread.toString()},
+                                      )
+                                : 'notifications.allCaughtUp'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Spacer(),
                     if (provider.hasUnread)
-                      TextButton(
+                      IconButton(
                         onPressed: () => provider.markAllAsRead(),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                        ),
-                        child: Text(
-                          'notifications.markAllRead'.tr(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
+                        icon: const Icon(Icons.done_all_rounded),
+                        color: AppColors.primary,
+                        tooltip: 'notifications.markAllRead'.tr(),
                       ),
                   ],
                 ),

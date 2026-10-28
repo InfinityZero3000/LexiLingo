@@ -258,3 +258,21 @@ async def test_provider_capacity_error_is_retryable_server_busy(monkeypatch):
     assert sent[-1]["type"] == "voice.error"
     assert sent[-1]["code"] == "SERVER_BUSY"
     assert sent[-1]["retryable"] is True
+
+
+@pytest.mark.asyncio
+async def test_system_extra_reaches_the_voice_prompt(monkeypatch):
+    prompts = []
+
+    async def llm(**kwargs):
+        prompts.append(kwargs["system_prompt"])
+        yield "Hello."
+
+    async def sink(_event):
+        pass
+
+    monkeypatch.setattr(duplex_turn, "stream_llm_tokens", llm)
+    await duplex_turn.DuplexTurn(
+        sink, sink, FakeTTS(), system_extra="- Prefers to be called: Thang"
+    ).run({"session_id": "s1", "turn_id": "t1", "text": "Hi"}, turn_seq=1)
+    assert "Prefers to be called: Thang" in prompts[0]

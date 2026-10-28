@@ -47,6 +47,7 @@ from app.services.proficiency_service import ProficiencyService
 from app.services.skill_attribution import attribute_exercises
 from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
 from app.routes.proficiency import record_exercise_results_for_user
+from app.crud.course import LessonCRUD
 from app.crud.progress import ProgressCRUD
 from app.services.level_service import (
     LevelService,
@@ -863,15 +864,28 @@ async def _skill_results_for_attempt(
     ]
 
 
+# Types whose answer is typed or assembled text. The client sends "translation"
+# (not "translate") and "reorder" builds its sentence from a word bank that has
+# no punctuation, so all of them compare on words alone.
+_FREE_TEXT_QUESTION_TYPES = {
+    "fill_blank", "translate", "translation", "reorder", "listening", "speaking",
+}
+
+
 def _normalize_answer(answer: any, question_type: str) -> str:
     """Normalize answer for comparison"""
     if answer is None:
         return ""
-    
-    # Convert to string
+
     ans_str = str(answer).strip().lower()
-    
-    # Handle matching/categorization pairs normalization by sorting
+
+    if question_type in _FREE_TEXT_QUESTION_TYPES:
+        import re
+        return " ".join(re.sub(r'[^\w\s]', '', ans_str).split())
+
+    # Pair types: order of pairs is irrelevant. Not applied to free text, where
+    # a ":" and a "," in an ordinary sentence would be misread as pairs and the
+    # rest of it silently dropped.
     if question_type == 'matching' or (':' in ans_str and (',' in ans_str or len(ans_str.split(':')) > 2)):
         try:
             pairs = []
@@ -884,18 +898,13 @@ def _normalize_answer(answer: any, question_type: str) -> str:
         except Exception:
             pass
 
-    # Remove punctuation for certain types
-    if question_type in ['fill_blank', 'translate']:
-        import re
-        ans_str = re.sub(r'[^\w\s]', '', ans_str)
-    
     # Handle boolean types
     if question_type == 'true_false':
         if ans_str in ['true', 'yes', '1', 'đúng']:
             return 'true'
         elif ans_str in ['false', 'no', '0', 'sai']:
             return 'false'
-    
+
     return ans_str
 
 
@@ -1267,6 +1276,11 @@ async def get_course_roadmap(
         )
     )
     progress_map = {p.lesson_id: p for p in result.scalars().all()}
+    # LessonCompletion is the one record of "passed": course detail, unlock
+    # prerequisites and course progress read it, so the roadmap must too.
+    passed_ids = await LessonCRUD.get_completed_lesson_ids(
+        db, current_user.id, lesson_ids
+    )
     
     # Get streak
     result = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
@@ -1308,16 +1322,12 @@ async def get_course_roadmap(
                 if lesson_index > 0
                 else None
             )
-            previous_progress = (
-                progress_map.get(previous_lesson.id)
-                if previous_lesson
-                else None
-            )
-            is_locked = previous_lesson is not None and not (
-                previous_progress and previous_progress.status == "completed"
+            is_locked = (
+                previous_lesson is not None
+                and previous_lesson.id not in passed_ids
             )
 
-            is_completed = (progress.status == "completed") if progress else False
+            is_completed = lesson.id in passed_ids
             if is_completed:
                 unit_completed += 1
                 completed_lessons_count += 1

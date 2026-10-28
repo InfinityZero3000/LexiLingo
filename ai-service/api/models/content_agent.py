@@ -71,6 +71,7 @@ class NormalizedSourceRecord(BaseModel):
     definition: str | None = None
     translation_vi: str | None = None
     example: str | None = None
+    pronunciation: str | None = Field(default=None, max_length=500)
     declared_cefr: CEFRLevel | None = None
     declared_topic: str = Field(default="general", min_length=1, max_length=100)
     published_at: datetime | None = None

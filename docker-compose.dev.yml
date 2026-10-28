@@ -336,7 +336,10 @@ services:
       REDIS_DB: 0
       REDIS_URL: redis://redis-ai:6379/0
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:-}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      CORS_ALLOW_ORIGIN_REGEX: ${AI_CORS_ALLOW_ORIGIN_REGEX:-https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https?://(localhost|127\.0\.0\.1)(:\d+)?}
       DEBUG: ${DEBUG:-false}
       LEARNER_STATE_MODE: ${LEARNER_STATE_MODE:-off}
       LEARNER_STATE_API_URL: http://backend-service:8000/api/v1/internal

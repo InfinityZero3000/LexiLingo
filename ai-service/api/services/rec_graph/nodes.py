@@ -137,17 +137,25 @@ async def rerank_node(state: RecState) -> RecState:
 
 
 async def explain_node(state: RecState) -> RecState:
-    """Attach a Vietnamese reason and persist the result.
+    """Attach a reason (code + args for the client to localize, Vietnamese text as
+    fallback) and persist the result.
 
     ponytail: templates, not an LLM call — the reason is a restatement of
     features we already computed, and an LLM here would add ~1s to every
     request. Swap in generate.py's client if the copy ever needs to vary.
     """
     profile = state.get("profile") or {}
-    explained = [
-        {**item, "reason": _reason_for(item, profile)}
-        for item in state.get("recommendations") or []
-    ]
+    explained = []
+    for item in state.get("recommendations") or []:
+        code, args = _reason_parts(item, profile)
+        explained.append(
+            {
+                **item,
+                "reason": _reason_for(item, profile),
+                "reason_code": code,
+                "reason_args": args,
+            }
+        )
 
     key = state.get("cache_key")
     if key:
@@ -162,20 +170,37 @@ async def explain_node(state: RecState) -> RecState:
     return {"recommendations": explained}
 
 
-def _reason_for(item: Dict[str, Any], profile: Dict[str, Any]) -> str:
+def _reason_parts(
+    item: Dict[str, Any], profile: Dict[str, Any]
+) -> tuple[str, Dict[str, str]]:
     features = item.get("features") or {}
     topic = item.get("topic")
     if features.get("due", 0) >= 0.5:
-        return "Đã đến hạn ôn lại phần này"
+        return "due", {}
     if features.get("topic", 0) >= 0.5 and topic:
-        return f"Bạn học nhiều về chủ đề {topic}"
+        return "topic", {"topic": str(topic)}
     if features.get("mastery_gap", 0) >= 0.6:
-        return "Phần này bạn chưa nắm vững"
+        return "gap", {}
     if features.get("cefr_fit", 0) >= 1.0:
-        return f"Vừa sức với trình độ {profile.get('level', '')}".strip()
+        return "level", {"level": str(profile.get("level", ""))}
     if features.get("similarity", 0) >= 0.4:
-        return "Gần với nội dung bạn đang học"
-    return "Gợi ý cho bạn"
+        return "similar", {}
+    return "default", {}
+
+
+_REASON_TEXT_VI = {
+    "due": "Đã đến hạn ôn lại phần này",
+    "topic": "Bạn học nhiều về chủ đề {topic}",
+    "gap": "Phần này bạn chưa nắm vững",
+    "level": "Vừa sức với trình độ {level}",
+    "similar": "Gần với nội dung bạn đang học",
+    "default": "Gợi ý cho bạn",
+}
+
+
+def _reason_for(item: Dict[str, Any], profile: Dict[str, Any]) -> str:
+    code, args = _reason_parts(item, profile)
+    return _REASON_TEXT_VI[code].format(**args).strip()
 
 
 async def _cache_get(key: str) -> Optional[str]:

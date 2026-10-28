@@ -33,6 +33,9 @@ class SnapshotStorage:
         "tmp",
     )
 
+    # Routes build a SnapshotStorage per request, so the cache is class-wide.
+    _verified_snapshots: set[tuple[Any, ...]] = set()
+
     def __init__(self, root: str | Path):
         self.root = Path(root)
         for directory in self.DIRECTORIES:
@@ -249,6 +252,24 @@ class SnapshotStorage:
         return active_path
 
     def _verify_approved_snapshot(self, manifest: SourceManifest) -> None:
+        raw_file = self._single_raw_file(manifest)
+        key = self._snapshot_fingerprint(manifest, raw_file)
+        if key in self._verified_snapshots:
+            return
+        self._verify_raw_checksum(manifest, raw_file)
+        self._verify_normalized_output(manifest, collect=False)
+        self._verified_snapshots.add(key)
+
+    def verify_snapshot(
+        self,
+        source_name: SourceName | str,
+        version: str,
+    ) -> SourceManifest:
+        manifest = self.read_manifest(source_name, version)
+        self._verify_approved_snapshot(manifest)
+        return manifest
+
+    def _single_raw_file(self, manifest: SourceManifest) -> Path:
         if manifest.counts.approved <= 0:
             raise StorageIntegrityError("Approved snapshot must be non-empty")
         raw_directory = (
@@ -262,9 +283,27 @@ class SnapshotStorage:
             raise StorageIntegrityError(
                 "Approved snapshot must contain exactly one raw artifact"
             )
-        if self._sha256_file(raw_files[0]) != manifest.raw_sha256:
+        return raw_files[0]
+
+    def _verify_raw_checksum(self, manifest: SourceManifest, raw_file: Path) -> None:
+        if self._sha256_file(raw_file) != manifest.raw_sha256:
             raise StorageIntegrityError("Approved snapshot raw checksum changed")
-        self._verify_normalized_output(manifest)
+
+    def _snapshot_fingerprint(
+        self,
+        manifest: SourceManifest,
+        raw_file: Path,
+    ) -> tuple[Any, ...]:
+        # Approved files are chmod 0444 and never rewritten, so an unchanged
+        # (mtime, size) pair means an earlier full verification still holds.
+        parts: list[Any] = [str(self.root), manifest.snapshot_id]
+        for path in (raw_file, self._normalized_path(manifest)):
+            try:
+                stat = path.stat()
+            except OSError:
+                return (*parts, None)
+            parts.extend((stat.st_mtime_ns, stat.st_size))
+        return tuple(parts)
 
     def _normalized_path(self, manifest: SourceManifest) -> Path:
         return (
@@ -278,6 +317,8 @@ class SnapshotStorage:
     def _verify_normalized_output(
         self,
         manifest: SourceManifest,
+        *,
+        collect: bool = True,
     ) -> list[dict[str, Any]]:
         normalized_path = self._normalized_path(manifest)
         if not normalized_path.is_file():
@@ -292,6 +333,7 @@ class SnapshotStorage:
             raise StorageIntegrityError("Approved snapshot normalized checksum changed")
 
         records: list[dict[str, Any]] = []
+        record_count = 0
         record_checksums: list[str] = []
         for line_number, line in enumerate(payload.splitlines(), start=1):
             if not line.strip():
@@ -311,14 +353,16 @@ class SnapshotStorage:
                 raise StorageIntegrityError(
                     "Approved snapshot normalized provenance changed"
                 )
-            records.append(record.model_dump(mode="json"))
+            if collect:
+                records.append(record.model_dump(mode="json"))
+            record_count += 1
             record_checksums.append(record.record_checksum)
 
-        if not records:
+        if not record_count:
             raise StorageIntegrityError(
                 "Approved snapshot normalized output must be non-empty"
             )
-        if len(records) != manifest.counts.normalized:
+        if record_count != manifest.counts.normalized:
             raise StorageIntegrityError(
                 "Approved snapshot normalized record count changed"
             )
@@ -366,8 +410,32 @@ class SnapshotStorage:
     ) -> list[dict[str, Any]]:
         source = SourceName(source_name)
         manifest = self.read_manifest(source, version)
-        self._verify_approved_snapshot(manifest)
+        raw_file = self._single_raw_file(manifest)
+        self._verify_raw_checksum(manifest, raw_file)
         return self._verify_normalized_output(manifest)
+
+    def find_records(
+        self,
+        source_name: SourceName | str,
+        version: str,
+        words: set[str],
+    ) -> dict[str, list[SourceRecordV2]]:
+        """Records of an approved snapshot whose casefolded `word` is in `words`."""
+        manifest = self.verify_snapshot(source_name, version)
+        found: dict[str, list[SourceRecordV2]] = {}
+        if not words:
+            return found
+        with self._normalized_path(manifest).open("rb") as handle:
+            for line in handle:
+                if not line.strip():
+                    continue
+                payload = json.loads(line)
+                word = str(payload.get("word") or "").casefold()
+                if word in words:
+                    found.setdefault(word, []).append(
+                        SourceRecordV2.model_validate(payload)
+                    )
+        return found
 
     def _make_snapshot_read_only(
         self,

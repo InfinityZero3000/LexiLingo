@@ -153,11 +153,12 @@ class ProgressCRUD:
         
         xp_earned = 0
         if existing:
-            # Update if new score is better
-            if score > existing.best_score:
+            # Update if new score is better, or if it newly clears a bar the
+            # earlier best missed (the threshold can change after a first try)
+            if score > existing.best_score or (is_passed and not existing.is_passed):
                 old_passed = existing.is_passed
-                existing.best_score = score
-                existing.is_passed = is_passed
+                existing.best_score = max(score, existing.best_score)
+                existing.is_passed = existing.is_passed or is_passed
                 existing.completed_at = datetime.now(timezone.utc)
                 
                 # Award XP only if wasn't passed before but is now
@@ -267,34 +268,35 @@ class ProgressCRUD:
     ) -> float:
         """Calculate course progress percentage based on completed lessons.
 
-        Counts the lessons that actually exist rather than trusting the
-        denormalized ``Course.total_lessons`` — otherwise a learner who
-        finishes everything can be stuck below 100%.
+        Counts the playable lessons (those with exercises) rather than trusting
+        the denormalized ``Course.total_lessons`` — the roadmap and course
+        detail only show playable lessons, so counting the rest would leave a
+        learner who finishes everything below 100%.
         """
-        total_result = await db.execute(
-            select(func.count(Lesson.id))
-            .join(Unit, Unit.id == Lesson.unit_id)
-            .where(Unit.course_id == course_id)
-        )
-        total_lessons = total_result.scalar() or 0
+        lessons = (
+            await db.execute(
+                select(Lesson)
+                .join(Unit, Unit.id == Lesson.unit_id)
+                .where(Unit.course_id == course_id)
+            )
+        ).scalars().all()
+        playable_ids = [l.id for l in lessons if l.exercise_count > 0]
 
-        if not total_lessons:
+        if not playable_ids:
             return 0.0
 
-        completed_result = await db.execute(
-            select(func.count(LessonCompletion.id))
-            .join(Lesson, Lesson.id == LessonCompletion.lesson_id)
-            .join(Unit, Unit.id == Lesson.unit_id)
-            .where(
-                and_(
-                    Unit.course_id == course_id,
-                    LessonCompletion.user_id == user_id,
-                    LessonCompletion.is_passed == True,
+        completed_count = (
+            await db.execute(
+                select(func.count(LessonCompletion.id)).where(
+                    and_(
+                        LessonCompletion.user_id == user_id,
+                        LessonCompletion.lesson_id.in_(playable_ids),
+                        LessonCompletion.is_passed == True,
+                    )
                 )
             )
-        )
-        completed_count = completed_result.scalar() or 0
-        return (completed_count / total_lessons) * 100
+        ).scalar() or 0
+        return (completed_count / len(playable_ids)) * 100
     
     @staticmethod
     async def get_user_total_xp(

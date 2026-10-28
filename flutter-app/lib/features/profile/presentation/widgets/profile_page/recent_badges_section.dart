@@ -241,7 +241,7 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
               ),
             ),
             SizedBox(
-              height: 100,
+              height: 116,
               child: isLoading
                   ? ShimmerContainer(
                       child: ListView.separated(
@@ -258,7 +258,8 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
                   ? _buildEmptyBadges()
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      // Room above/below so the badge shadow isn't clipped.
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       itemCount: visibleBadges.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 16),
                       itemBuilder: (context, index) {

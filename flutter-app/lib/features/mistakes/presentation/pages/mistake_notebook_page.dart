@@ -531,6 +531,7 @@ class _MistakeCard extends StatelessWidget {
       'news_quiz' => 'mistakeNotebook.sourceNewsQuiz'.tr(),
       'game_fill_blank' => 'mistakeNotebook.sourceFillBlank'.tr(),
       'game_grammar_quiz' => 'mistakeNotebook.sourceGrammarQuiz'.tr(),
+      'topic_chat' || 'lexi_chat' => 'mistakeNotebook.sourceChatCorrection'.tr(),
       _ => 'mistakeNotebook.sourceQuiz'.tr(),
     };
   }

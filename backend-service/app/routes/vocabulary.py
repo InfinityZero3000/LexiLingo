@@ -12,6 +12,7 @@ Endpoints:
 - GET    /vocabulary/stats          - Get user vocabulary statistics
 """
 
+import asyncio
 import logging
 import math
 import uuid
@@ -27,7 +28,7 @@ from app.core.dependencies import get_current_user
 from app.core.cache import build_cache_key, get_cached, set_cached, delete_cached
 from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
-from app.crud.vocabulary import vocabulary_crud
+from app.crud.vocabulary import USER_SAVED_PLACEHOLDER, vocabulary_crud
 from app.services.streak_service import record_daily_activity, update_user_streak
 from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
@@ -355,6 +356,17 @@ async def add_to_collection(
     return user_vocab
 
 
+async def _lookup_word(word: str) -> dict:
+    """Dictionary + LLM lookup for a word the catalog has no definition for; {} on failure."""
+    from app.routes.youtube import _fetch_word_data
+
+    try:
+        return await asyncio.wait_for(_fetch_word_data(word), timeout=12.0)
+    except Exception as exc:
+        logger.warning("Quick-save lookup failed for %r (%s)", word, type(exc).__name__)
+        return {}
+
+
 @router.post("/collection/quick-save", response_model=QuickSaveVocabularyResponse, status_code=status.HTTP_201_CREATED)
 async def quick_save_to_collection(
     request: QuickSaveVocabularyRequest,
@@ -380,15 +392,37 @@ async def quick_save_to_collection(
     vocab_item = await vocabulary_crud.find_vocabulary_by_word(db, normalized_word)
     created_new_item = False
 
-    if not vocab_item:
+    needs_lookup = (
+        not vocab_item
+        and not (request.definition and request.translation)
+    ) or (
+        vocab_item is not None
+        and (vocab_item.definition or "").startswith(USER_SAVED_PLACEHOLDER)
+    )
+    looked_up = await _lookup_word(normalized_word) if needs_lookup else {}
+
+    if vocab_item:
+        await vocabulary_crud.fill_placeholder_item(
+            db,
+            vocab_item,
+            definition=looked_up.get("definition"),
+            translation=looked_up.get("translation"),
+            part_of_speech=looked_up.get("part_of_speech"),
+            pronunciation=looked_up.get("phonetic"),
+        )
+    else:
+        defined_by_lookup = not request.definition and bool(looked_up.get("definition"))
         try:
             vocab_item = await vocabulary_crud.create_vocabulary_item(
                 db,
                 word=normalized_word,
-                definition=request.definition,
-                translation=request.translation,
-                part_of_speech=request.part_of_speech,
+                definition=request.definition or looked_up.get("definition"),
+                translation=request.translation or looked_up.get("translation"),
+                part_of_speech=(
+                    looked_up.get("part_of_speech") if defined_by_lookup else request.part_of_speech
+                ),
                 difficulty_level=request.difficulty_level,
+                pronunciation=looked_up.get("phonetic"),
             )
             created_new_item = True
         except ValueError as exc:

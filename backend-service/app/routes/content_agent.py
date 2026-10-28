@@ -34,6 +34,7 @@ from app.services.content_agent_sources import (
     SourceResolutionError,
     canonicalize_sources,
     get_source_catalog,
+    require_labelled_source,
     resolve_snapshots,
 )
 from app.services.content_agent_uploads import (
@@ -220,6 +221,7 @@ async def create_job(
         source for source in canonical_sources if source != "admin_upload"
     ]
     try:
+        require_labelled_source(canonical_sources)
         catalog = (
             await get_source_catalog(ContentAgentClient())
             if real_sources

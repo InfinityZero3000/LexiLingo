@@ -17,6 +17,7 @@ from app.core.middleware import (
 
 def test_is_sensitive_route_exact_matches():
     assert _is_sensitive_route("POST", "/api/v1/auth/login")
+    assert _is_sensitive_route("POST", "/api/v1/auth/resend-verification")
     assert _is_sensitive_route("POST", "/api/v1/xp/award")
     assert not _is_sensitive_route("GET", "/api/v1/auth/login")
     assert not _is_sensitive_route("POST", "/api/v1/courses")

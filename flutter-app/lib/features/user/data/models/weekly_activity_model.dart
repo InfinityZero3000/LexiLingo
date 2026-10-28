@@ -16,9 +16,7 @@ class WeeklyActivityModel extends WeeklyActivityEntity {
       lessonsCompleted:
           (json['lessons'] ?? json['lessons_completed']) as int? ?? 0,
       vocabularyLearned:
-          (json['study_time'] ?? json['minutes'] ?? json['vocabulary_learned'])
-              as int? ??
-          0,
+          (json['vocabulary'] ?? json['vocabulary_learned']) as int? ?? 0,
     );
   }
 

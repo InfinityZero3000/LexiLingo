@@ -15,7 +15,10 @@ TextTheme _withCjkFallback(TextTheme base) {
     headlineMedium: base.headlineMedium?.copyWith(
       fontFamilyFallback: fallbacks,
     ),
-    headlineSmall: base.headlineSmall?.copyWith(fontFamilyFallback: fallbacks),
+    headlineSmall: base.headlineSmall?.copyWith(
+      fontSize: 22,
+      fontFamilyFallback: fallbacks,
+    ),
     titleLarge: base.titleLarge?.copyWith(fontFamilyFallback: fallbacks),
     titleMedium: base.titleMedium?.copyWith(fontFamilyFallback: fallbacks),
     titleSmall: base.titleSmall?.copyWith(fontFamilyFallback: fallbacks),
@@ -36,6 +39,10 @@ class AppColors {
   // ── Backgrounds ───────────────────────────────────────────────────────────
   static const Color backgroundLight = Color(0xFFF6F7F8);
   static const Color backgroundDark = Color(0xFF151C26);
+
+  /// Home screen ground and the hairline that separates white cards on it.
+  static const Color skyBackground = Color(0xFFF2F7FD);
+  static const Color skyBorder = Color(0xFFE1EAF5);
 
   // ── Surfaces (cards, sheets, dialogs) ─────────────────────────────────────
   static const Color surfaceLight = Color(0xFFFFFFFF);
@@ -155,6 +162,9 @@ class AppColors {
   // ── Accent: Cyan glow ─────────────────────────────────────────────────────
   static const Color cyanGlow = Color(0xFF19FCFC);
   static const Color cyanGlowDark = Color(0xFF30E8E8);
+
+  /// Success green for dark surfaces, where greenSuccessBright reads dull
+  static const Color successNeon = Color(0xFF3DFF8F);
 
   // ── Dark-Mode Accent & Text Roles ─────────────────────────────────────────
   static const Color primaryDarkMode = Color(0xFF19FCFC);

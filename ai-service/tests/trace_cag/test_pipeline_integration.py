@@ -8,6 +8,8 @@ import pytest
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
+from .fake_redis_pipeline import with_empty_pipeline
+
 
 @pytest.fixture(autouse=True)
 def isolate_pipeline_dependencies(monkeypatch, mock_kg_service):
@@ -27,6 +29,7 @@ def isolate_pipeline_dependencies(monkeypatch, mock_kg_service):
     fake_redis.expire.return_value = True
     fake_redis.delete.return_value = 0
     fake_redis.ping.return_value = True
+    with_empty_pipeline(fake_redis)
 
     async def get_instance():
         return fake_redis

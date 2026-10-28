@@ -101,6 +101,18 @@ def _deduplicate(
     )
 
 
+def _one_per_word(
+    records: list[NormalizedSourceRecord],
+) -> list[NormalizedSourceRecord]:
+    # A word listed under two parts of speech ("about": adverb, preposition)
+    # is taught once per unit; keeping both would make the lesson cursor, which
+    # advances a fixed number of entries, overlap the next lesson.
+    first: dict[str, NormalizedSourceRecord] = {}
+    for record in records:
+        first.setdefault((record.word or "").casefold(), record)
+    return list(first.values())
+
+
 def _take_cyclic_unique(
     records: list[NormalizedSourceRecord],
     *,
@@ -108,14 +120,16 @@ def _take_cyclic_unique(
     count: int,
 ) -> tuple[NormalizedSourceRecord, ...]:
     selected: list[NormalizedSourceRecord] = []
-    seen: set[tuple[str, PartOfSpeech]] = set()
+    # By word, not (word, pos): one lesson must not teach "about" twice (adverb
+    # and preposition), and the matching exercises key on the word.
+    seen: set[str] = set()
     for offset in range(len(records)):
         record = records[(start + offset) % len(records)]
-        identity = _identity(record)
-        if identity in seen:
+        word = (record.word or "").casefold()
+        if word in seen:
             continue
         selected.append(record)
-        seen.add(identity)
+        seen.add(word)
         if len(selected) == count:
             break
     return tuple(selected)
@@ -149,9 +163,10 @@ def plan_curriculum(
         level_records = [
             record for record in catalog if record.declared_cefr == level
         ]
-        if len(level_records) < request.words_per_lesson:
+        distinct_words = {(record.word or "").casefold() for record in level_records}
+        if len(distinct_words) < request.words_per_lesson:
             raise InsufficientVocabularyError(
-                f"{level.value} has {len(level_records)} usable vocabulary records; "
+                f"{level.value} has {len(distinct_words)} usable vocabulary records; "
                 f"{request.words_per_lesson} are required"
             )
 
@@ -175,7 +190,7 @@ def plan_curriculum(
             other_records = [
                 record for record in level_records if record.declared_topic != topic
             ]
-            pool = [*topic_records, *other_records]
+            pool = _one_per_word([*topic_records, *other_records])
             lessons: list[PlannedLesson] = []
             for lesson_index in range(request.lessons_per_unit):
                 vocabulary = _take_cyclic_unique(

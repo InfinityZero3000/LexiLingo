@@ -229,9 +229,10 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
     import api.services.stt.duplex_turn as duplex_module
 
     class FakeTurn:
-        def __init__(self, send_json, _send_bytes, persist=None):
+        def __init__(self, send_json, _send_bytes, persist=None, system_extra=""):
             self.send_json = send_json
             assert persist is not None
+            assert system_extra == ""  # Mongo is not connected in this test
 
         async def run(self, final, *, turn_seq, tts_enabled):
             assert turn_seq == 1

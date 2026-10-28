@@ -11,6 +11,7 @@ import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
 
@@ -23,6 +24,34 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
+const _tabs = <({IconData icon, IconData activeIcon, String label})>[
+  (
+    icon: PhosphorIconsRegular.compass,
+    activeIcon: PhosphorIconsFill.compass,
+    label: 'home.navDiscovery',
+  ),
+  (
+    icon: PhosphorIconsRegular.graduationCap,
+    activeIcon: PhosphorIconsFill.graduationCap,
+    label: 'home.navLearning',
+  ),
+  (
+    icon: PhosphorIconsRegular.sparkle,
+    activeIcon: PhosphorIconsFill.sparkle,
+    label: 'home.navLexi',
+  ),
+  (
+    icon: PhosphorIconsRegular.chatCircleDots,
+    activeIcon: PhosphorIconsFill.chatCircleDots,
+    label: 'home.navTopic',
+  ),
+  (
+    icon: PhosphorIconsRegular.userCircle,
+    activeIcon: PhosphorIconsFill.userCircle,
+    label: 'home.navAccount',
+  ),
+];
+
 class _MainScreenState extends State<MainScreen> {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
@@ -30,6 +59,7 @@ class _MainScreenState extends State<MainScreen> {
 
   // Pages are built lazily — only when the tab is first visited.
   static const int _pageCount = 5;
+  static const int _lexiTab = 2;
   final Map<int, Widget> _pageCache = {};
 
   Widget _buildPage(int index) {
@@ -131,6 +161,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
+      extendBody: true,
       body: useRail
           ? Row(
               children: [
@@ -148,9 +179,12 @@ class _MainScreenState extends State<MainScreen> {
       index: _currentIndex,
       children: List.generate(_pageCount, (i) {
         // Use a lightweight placeholder until the tab is first visited.
-        return _pageCache.containsKey(i)
-            ? _pageCache[i]!
-            : const SizedBox.shrink();
+        if (!_pageCache.containsKey(i)) return const SizedBox.shrink();
+        // Lexi keeps its mic and speaker; it has to be told when it is hidden.
+        final page = i == _lexiTab
+            ? LexiChatPage(isActive: _currentIndex == i)
+            : _pageCache[i]!;
+        return TickerMode(enabled: _currentIndex == i, child: page);
       }),
     );
   }
@@ -189,31 +223,12 @@ class _MainScreenState extends State<MainScreen> {
               : NavigationRailLabelType.selected,
           onDestinationSelected: _selectTab,
           destinations: [
-            NavigationRailDestination(
-              icon: const Icon(Icons.explore_outlined),
-              selectedIcon: const Icon(Icons.explore),
-              label: Text('home.navDiscovery'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.menu_book_outlined),
-              selectedIcon: const Icon(Icons.menu_book),
-              label: Text('home.navLearning'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.auto_awesome_outlined),
-              selectedIcon: const Icon(Icons.auto_awesome),
-              label: Text('home.navLexi'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.chat_bubble_outline),
-              selectedIcon: const Icon(Icons.chat_bubble),
-              label: Text('home.navTopic'.tr()),
-            ),
-            NavigationRailDestination(
-              icon: const Icon(Icons.account_circle_outlined),
-              selectedIcon: const Icon(Icons.account_circle),
-              label: Text('home.navAccount'.tr()),
-            ),
+            for (final tab in _tabs)
+              NavigationRailDestination(
+                icon: Icon(tab.icon),
+                selectedIcon: Icon(tab.activeIcon),
+                label: Text(tab.label.tr()),
+              ),
           ],
         ),
       ),
@@ -244,33 +259,23 @@ class _MainScreenState extends State<MainScreen> {
             currentIndex: _currentIndex,
             type: BottomNavigationBarType.fixed,
             elevation: 0,
+            selectedFontSize: 11,
+            unselectedFontSize: 11,
+            selectedItemColor: AppColorRoles.primary(isDark),
             onTap: _selectTab,
             items: [
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.explore_outlined),
-                activeIcon: const Icon(Icons.explore),
-                label: 'home.navDiscovery'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.menu_book_outlined),
-                activeIcon: const Icon(Icons.menu_book),
-                label: 'home.navLearning'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.auto_awesome_outlined),
-                activeIcon: const Icon(Icons.auto_awesome),
-                label: 'home.navLexi'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.chat_bubble_outline),
-                activeIcon: const Icon(Icons.chat_bubble),
-                label: 'home.navTopic'.tr(),
-              ),
-              BottomNavigationBarItem(
-                icon: const Icon(Icons.account_circle_outlined),
-                activeIcon: const Icon(Icons.account_circle),
-                label: 'home.navAccount'.tr(),
-              ),
+              for (final tab in _tabs)
+                BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Icon(tab.icon, size: 24),
+                  ),
+                  activeIcon: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Icon(tab.activeIcon, size: 24),
+                  ),
+                  label: tab.label.tr(),
+                ),
             ],
           ),
         ),

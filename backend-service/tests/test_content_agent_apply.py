@@ -287,3 +287,88 @@ async def test_apply_bulk_inserts_lesson_memberships_without_selects(content_age
 
     assert sum(statement.lstrip().upper().startswith("INSERT") for statement in statements) == 1
     assert not any(statement.lstrip().upper().startswith("SELECT") for statement in statements)
+
+
+def _enriched_job(upload: ContentAgentUpload) -> ContentAgentJob:
+    artifact = _artifact()
+    oewn = {
+        **artifact["source_manifest"][0],
+        "snapshot_id": f"oewn:2025+a2:{'e' * 64}",
+        "source_name": "oewn",
+        "source_version": "2025+a2",
+        "license_id": "CC-BY-4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution_text": "Open English WordNet 2025",
+        "raw_checksum": "e" * 64,
+    }
+    artifact["source_manifest"].append(oewn)
+    hello = artifact["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    hello.update(
+        {
+            "definition": "an expression of greeting",
+            "pronunciation": "/həloʊ/",
+            "example": "she said hello to everyone",
+        }
+    )
+    hello["lineage"]["enrichment"] = [
+        {
+            "source_name": "oewn",
+            "snapshot_id": oewn["snapshot_id"],
+            "fields": ["definition", "example"],
+        }
+    ]
+    return ContentAgentJob(
+        requested_by_id=None,
+        upload_id=upload.id,
+        status="preview_ready",
+        request_hash="a" * 64,
+        revision=1,
+        config={"pinned_snapshots": [oewn]},
+        progress={"stage": "preview_ready", "percent": 100},
+        artifact=artifact,
+    )
+
+
+async def test_apply_stores_enriched_fields_and_their_provenance(content_agent_db):
+    upload = _upload()
+    job = _enriched_job(upload)
+    content_agent_db.add_all([upload, job])
+    await content_agent_db.commit()
+
+    await ContentAgentApplyService.apply(content_agent_db, job.id)
+    await content_agent_db.commit()
+
+    hello = await content_agent_db.scalar(
+        select(VocabularyItem).where(VocabularyItem.word == "hello")
+    )
+    assert hello.definition == "an expression of greeting"
+    assert hello.pronunciation == "/həloʊ/"
+    assert hello.translation["examples"] == ["she said hello to everyone"]
+    provenance = await content_agent_db.scalar(
+        select(ContentProvenance).where(
+            ContentProvenance.entity_type == "vocabulary",
+            ContentProvenance.entity_id == hello.id,
+        )
+    )
+    assert provenance.lineage["enrichment"][0]["source_name"] == "oewn"
+
+
+async def test_apply_never_replaces_curated_pronunciation_with_enriched(content_agent_db):
+    curated = VocabularyItem(
+        word="hello",
+        definition="Curated definition",
+        pronunciation="/həˈloʊ/",
+        part_of_speech="noun",
+        difficulty_level="A1",
+    )
+    upload = _upload()
+    job = _enriched_job(upload)
+    content_agent_db.add_all([curated, upload, job])
+    await content_agent_db.commit()
+
+    await ContentAgentApplyService.apply(content_agent_db, job.id)
+    await content_agent_db.commit()
+
+    await content_agent_db.refresh(curated)
+    assert curated.definition == "Curated definition"
+    assert curated.pronunciation == "/həˈloʊ/"

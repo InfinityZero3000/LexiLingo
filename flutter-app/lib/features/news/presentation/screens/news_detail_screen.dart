@@ -6,6 +6,8 @@ import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
+import '../../../youtube/domain/entities/youtube_entities.dart';
+import '../../../youtube/presentation/providers/youtube_provider.dart';
 import '../providers/news_provider.dart';
 import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 
@@ -111,11 +113,19 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         .trim();
     if (cleanWord.isEmpty) return;
 
+    final translation = context.read<YouTubeProvider>().translateWord(
+      cleanWord,
+      contextSentence: contextSentence,
+    );
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          _buildDictionarySheet(cleanWord, contextSentence: contextSentence),
+      builder: (_) => _buildDictionarySheet(
+        cleanWord,
+        translation,
+        contextSentence: contextSentence,
+      ),
     );
   }
 
@@ -573,7 +583,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   //  Dictionary Sheet (shared with YouTube)
   // ──────────────────────────────────────
 
-  Widget _buildDictionarySheet(String word, {String? contextSentence}) {
+  Widget _buildDictionarySheet(
+    String word,
+    Future<WordTranslation> translation, {
+    String? contextSentence,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
@@ -606,19 +620,63 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'news.dictionaryComingSoon'.tr(),
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.white54 : AppColors.textGrey,
-            ),
+          FutureBuilder<WordTranslation>(
+            future: translation,
+            builder: (context, snapshot) {
+              final t = snapshot.data;
+              if (t == null) {
+                return const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: LottieLoadingWidget.tiny(),
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (t.hasPhonetic || t.partOfSpeech.isNotEmpty)
+                    Text(
+                      [
+                        if (t.hasPhonetic) t.phonetic,
+                        if (t.partOfSpeech.isNotEmpty) t.partOfSpeech,
+                      ].join('  ·  '),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white54 : AppColors.textGrey,
+                      ),
+                    ),
+                  if (t.hasTranslation) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      t.translation,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppColors.textDark,
+                      ),
+                    ),
+                  ],
+                  if (t.hasDefinition) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      t.definition,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.white54 : AppColors.textGrey,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () {
+                  onPressed: () async {
+                    final t = await translation;
+                    if (!mounted) return;
                     Navigator.pop(context);
                     Future.microtask(() {
                       if (!mounted) return;
@@ -630,6 +688,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                             ? widget.article.id
                             : widget.article.url,
                         contextSentence: contextSentence,
+                        definition: t.hasDefinition ? t.definition : null,
+                        translation: t.hasTranslation ? t.translation : null,
+                        partOfSpeech:
+                            t.partOfSpeech.isNotEmpty ? t.partOfSpeech : null,
                       );
                     });
                   },

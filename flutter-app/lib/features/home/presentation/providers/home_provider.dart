@@ -81,17 +81,14 @@ class HomeProvider with ChangeNotifier {
   VocabularyItemEntity? get wordOfDay => _wordOfDay;
   bool get isLoadingWordOfDay => _isLoadingWordOfDay;
 
-  // If a DailyGoal has been loaded, use its earnedXP.
-  // Otherwise fall back to today's xpEarned from the weekly progress data
-  // (already loaded by loadWeeklyProgress), so the card shows real data.
+  // Weekly progress is the server's record of today's XP; _todayGoal only
+  // carries the target, so changing the goal must never change what was earned.
   int get dailyXP =>
-      _todayGoal?.earnedXP ?? _weeklyProgress.todayProgress?.xpEarned ?? 0;
+      _weeklyProgress.todayProgress?.xpEarned ?? _todayGoal?.earnedXP ?? 0;
   int get dailyGoalXP => _todayGoal?.targetXP ?? 50;
   double get dailyProgressPercentage {
-    if (_todayGoal != null) return _todayGoal!.progressPercentage;
-    final earned = _weeklyProgress.todayProgress?.xpEarned ?? 0;
     final goal = dailyGoalXP;
-    return goal > 0 ? (earned / goal).clamp(0.0, 1.0) : 0.0;
+    return goal > 0 ? (dailyXP / goal).clamp(0.0, 1.0) : 0.0;
   }
 
   bool get isLoadingDashboard => _isLoadingDashboard;
@@ -197,7 +194,7 @@ class HomeProvider with ChangeNotifier {
           userId: _currentUser?.id ?? 'guest',
           date: now,
           targetXP: targetXP,
-          earnedXP: 0,
+          earnedXP: dailyXP,
         );
     notifyListeners();
   }
@@ -248,10 +245,7 @@ class HomeProvider with ChangeNotifier {
     _isLoadingWordOfDay = true;
     notifyListeners();
     final result = await vocabularyRepository!.getWordOfDay();
-    result.fold(
-      (_) {},
-      (word) => _wordOfDay = word,
-    );
+    result.fold((_) {}, (word) => _wordOfDay = word);
     _isLoadingWordOfDay = false;
     notifyListeners();
   }

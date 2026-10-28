@@ -911,16 +911,30 @@ class LexiChatProvider extends ChangeNotifier {
 
   // ── TTS Playback ──────────────────────────────────────────────────────────
   Future<void> _playTtsAudio(String base64Audio) async {
+    if (_audioMuted) return;
     try {
       final bytes = base64Decode(base64Audio);
       final uri = Uri.dataFromBytes(bytes, mimeType: 'audio/mpeg');
       await _ttsPlayer.setUrl(uri.toString());
       await _ttsPlayer.setSpeed(_ttsSpeed);
+      if (_audioMuted) return;
       await _ttsPlayer.play();
     } catch (e) {
       logWarn(_tag, 'TTS playback failed: $e');
     }
   }
+
+  bool _audioMuted = false;
+
+  /// Silences Lexi without touching the TTS on/off preference, and drops any
+  /// reply audio that arrives later — the learner has left the chat.
+  Future<void> stopSpeaking() {
+    _audioMuted = true;
+    return _ttsPlayer.stop();
+  }
+
+  /// Lets replies speak again once the chat is back on screen.
+  void resumeSpeaking() => _audioMuted = false;
 
   /// Replay audio of a specific message.
   Future<void> replayAudio(LexiMessage message) async {

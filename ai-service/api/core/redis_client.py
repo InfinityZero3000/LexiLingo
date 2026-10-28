@@ -252,16 +252,28 @@ class LearnerProfileCache:
         await self._exec(lambda r: r.expire(key, self.ttl))
     
     async def get_profile(self, user_id: str) -> Dict[str, Any]:
-        """Get complete learner profile."""
-        level = await self.get_level(user_id)
-        errors = await self.get_common_errors(user_id)
-        sessions = await self.get_sessions(user_id)
-        
+        """Get complete learner profile in one round trip.
+
+        This was three sequential reads (level, errors, sessions), so on every chat turn it paid
+        three network round trips, and under a Redis fault each one could retry on its own.
+        """
+        level_key = f"learner:{user_id}:level"
+        errors_key = f"learner:{user_id}:errors"
+        sessions_key = f"learner:{user_id}:sessions"
+
+        async def _read(r: redis.Redis):
+            async with r.pipeline(transaction=False) as pipe:
+                pipe.get(level_key)
+                pipe.lrange(errors_key, 0, -1)
+                pipe.lrange(sessions_key, 0, 9)  # the 10 most recent summaries
+                return await pipe.execute()
+
+        level, errors, sessions = await self._exec(_read)
         return {
             "user_id": user_id,
             "level": level or "B1",  # Default
-            "common_errors": errors,
-            "recent_sessions": sessions
+            "common_errors": errors if errors else [],
+            "recent_sessions": [json.loads(item) for item in sessions] if sessions else [],
         }
 
 

@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.entitlement import UserEntitlement
 from app.services.revenuecat_client import RevenueCatClient, RevenueCatUnavailableError
 
@@ -32,6 +33,8 @@ class EntitlementService:
 
     @staticmethod
     async def is_active(db: AsyncSession, user_id: UUID, entitlement_id: str = "premium") -> bool:
+        if settings.PREMIUM_FORCE_ENABLED:
+            return True
         row = await EntitlementService.get(db, user_id, entitlement_id)
         if row is None or row.status != "active":
             return False

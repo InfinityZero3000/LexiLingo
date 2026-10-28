@@ -132,6 +132,7 @@
     "errRateLimited": "시도 횟수가 너무 많습니다. 잠시 기다려 주세요."
   },
   "home": {
+    "wordsLeftToReview": "복습할 단어",
     "greeting": "안녕하세요, {name}님!",
     "dailyGoal": "오늘의 목표",
     "dailyXpGoal": "일일 XP 목표",
@@ -280,7 +281,13 @@
     "recTypeVocab": "어휘",
     "recTypeVideo": "비디오",
     "recTypeNews": "뉴스",
-    "recTypeOther": "추천"
+    "recTypeOther": "추천",
+    "recReasonDue": "복습할 시간이에요",
+    "recReasonTopic": "{topic} 주제를 많이 공부하고 있어요",
+    "recReasonGap": "아직 완전히 익히지 못했어요",
+    "recReasonLevel": "{level} 수준에 알맞아요",
+    "recReasonSimilar": "학습 중인 내용과 비슷해요",
+    "recReasonDefault": "추천 항목"
   },
   "course": {
     "title": "행동",
@@ -405,7 +412,10 @@
       "speakingTitle": "말하기 연습",
       "speakingInstruction": "다음 문장을 따라 하세요",
       "categorizationTitle": "어휘 분류",
-      "categorizationInstruction": "단어를 누른 다음 알맞은 분류를 누르세요."
+      "categorizationInstruction": "단어를 누른 다음 알맞은 분류를 누르세요.",
+      "correctAnswerLabel": "정답",
+      "correctLabel": "정답이에요",
+      "incorrectLabel": "아쉬워요"
     }
   },
   "flashcard": {
@@ -516,6 +526,7 @@
     "saidCorrectly": "정확하게 말했어요"
   },
   "chat": {
+    "loadMore": "더 보기...",
     "placeholder": "메시지를 입력하세요...",
     "send": "보내다",
     "thinking": "생각...",
@@ -629,6 +640,11 @@
     "displayNameMin": "2자 이상이어야 합니다.",
     "displayNameMax": "50자 미만이어야 합니다.",
     "accountInformation": "계정 정보",
+    "emailVerified": "이메일 인증 완료",
+    "emailNotVerified": "이메일 미인증",
+    "emailVerificationHint": "계정을 보호하려면 이 이메일로 인증 링크를 보내세요.",
+    "checkVerificationStatus": "상태 확인",
+    "emailVerificationPending": "이메일이 아직 인증되지 않았습니다. 받은편지함의 링크를 연 후 다시 확인하세요.",
     "username": "사용자 이름",
     "saveChanges": "변경 사항 저장",
     "tapCameraToChangeAvatar": "아바타를 변경하려면 카메라를 탭하세요.",
@@ -666,6 +682,10 @@
     "adminMobileSubtitle": "LexiLingo 관리자 모바일"
   },
   "progress": {
+    "streakRestoresLeft": "이번 달 남은 연속 기록 복구 횟수: {count}",
+    "streakRestoreHint": "이전 {days}일 연속 기록을 복구할 수 있어요! 이번 달 {count}회 남았어요.",
+    "streakRestoreSuccess": "연속 기록을 복구했어요!",
+    "streakRestoreButton": "연속 기록 복구 ({days}일)",
     "title": "나의 진행 상황",
     "loadingProgress": "진행 상황을 불러오는 중...",
     "noProgressDataAvailable": "진행 데이터가 없습니다",
@@ -773,7 +793,34 @@
     "reviewBodyDue": "오늘 복습할 단어가 {count}개 있습니다!",
     "reviewBodyStreak": "단어를 복습할 시간입니다 — 연속 기록을 이어가세요!",
     "reviewBodyDueNow": "복습할 때가 된 단어가 {count}개 있습니다!",
-    "reviewWaitingBody": "{count}개 단어가 복습을 기다리고 있습니다."
+    "reviewWaitingBody": "{count}개 단어가 복습을 기다리고 있습니다.",
+    "checkin": {
+      "channelName": "출석 알림",
+      "channelDescription": "선택한 시간에 학습 연속 기록을 지킬 수 있도록 알려드려요",
+      "streakSummary": "{count}일 연속",
+      "permissionDenied": "출석 알림을 받으려면 설정에서 LexiLingo 알림을 켜 주세요.",
+      "scheduleFailed": "알림을 설정하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      "atRiskTitle": "{count}일 연속 기록이 오늘을 기다려요",
+      "atRiskBody": "자정 전에 짧은 레슨 하나면 지킬 수 있어요. 오늘을 놓치면 0으로 돌아가요.",
+      "milestoneTitle": "한 번만 더 출석하면 {count}일",
+      "milestoneBody": "이 기록까지 레슨 하나 남았어요. 마지막 날에 놓치지 마세요.",
+      "comebackTitle": "예전에 {count}일 연속으로 학습했어요",
+      "comebackBody": "그 기록은 당신이 세운 거예요. 새 연속 기록의 1일차는 지금 바로 시작할 수 있어요.",
+      "freshTitle": "오늘이 1일차",
+      "freshBody": "5분, 레슨 하나. 첫 연속 기록에 당신의 이름이 새겨져요.",
+      "keepGoingTitle": "오늘은 {count}일차",
+      "keepGoingBody": "어제도 약속을 지켰어요. 오늘도 출석해서 기록을 하루 더 늘려요.",
+      "waitingTitle": "Lexi가 다음 레슨에서 기다려요",
+      "waitingBody": "직접 정한 출석 시간이에요. 오늘은 짧은 레슨 하나면 충분해요.",
+      "fiveMinutesTitle": "영어에 5분만",
+      "fiveMinutesBody": "긴 시간은 필요 없어요. 짧은 레슨 하나도 하루로 인정돼요.",
+      "oneSentenceTitle": "오늘은 새 문장 하나?",
+      "oneSentenceBody": "매일 조금씩이 가장 오래 기억하는 방법이에요. 다음 레슨이 준비되어 있어요.",
+      "yourTimeTitle": "직접 정한 시간이에요",
+      "yourTimeBody": "이 시간에 공부하기로 한 건 당신이에요. 앱을 열고 출석한 뒤 하던 일로 돌아가세요.",
+      "fadingTitle": "어제 배운 단어가 희미해지고 있어요",
+      "fadingBody": "잊어버리기 직전에 복습할 때 기억에 가장 크게 남아요."
+    }
   },
   "errors": {
     "networkError": "네트워크 오류",
@@ -1234,6 +1281,26 @@
     "tooltipNewChat": "새 채팅",
     "sessionsDrawerTitle": "렉시 세션",
     "tooltipNewSession": "새 세션",
+    "memory": {
+      "entry": "Lexi가 기억하는 것",
+      "title": "Lexi가 기억하는 것",
+      "subtitle": "채팅에서 말씀하신 내용입니다. Lexi는 답변을 더 개인화하는 데 사용합니다. 언제든 삭제할 수 있어요.",
+      "empty": "아직 없어요. 이름, 직업, 공부하는 목적을 Lexi에게 말하면 여기에 표시됩니다.",
+      "loadFailed": "지금은 기억을 불러올 수 없어요.",
+      "retry": "다시 시도",
+      "forgetOne": "이 항목 잊기",
+      "forgetAll": "모두 잊기",
+      "confirmTitle": "모두 잊을까요?",
+      "confirmBody": "Lexi가 말씀하신 내용을 더 이상 사용하지 않습니다. 지난 채팅은 기록에 남아 있어요.",
+      "cancel": "취소",
+      "actionFailed": "업데이트하지 못했어요. 다시 시도해 주세요.",
+      "key": {
+        "preferred_name": "부르는 이름",
+        "occupation": "직업 또는 전공",
+        "goal": "학습 목표",
+        "interests": "관심사"
+      }
+    },
     "noSessions": "이전 세션이 없습니다.",
     "renameSessionTitle": "세션 이름 바꾸기",
     "cancelButton": "취소",
@@ -1329,7 +1396,10 @@
     "wordSaved": "\"{word}\"을(를) 단어장에 저장했습니다.",
     "lookingUp": "찾는 중…",
     "sentenceInVideo": "영상 속 문장",
-    "saving": "저장 중..."
+    "saving": "저장 중...",
+    "filterAll": "전체",
+    "watchNow": "지금 보기",
+    "openOnYoutube": "YouTube에서 열기"
   },
   "podcast": {
     "pageTitle": "팟캐스트",
@@ -1354,7 +1424,34 @@
     "generateTranscript": "성적 증명서 생성",
     "episodeCount": "{count}개 에피소드",
     "rewind15": "15초 뒤로",
-    "forward15": "15초 앞으로"
+    "audioLoadFailed": "이 에피소드의 오디오를 불러올 수 없습니다. 현재 네트워크에서 소스가 차단되었을 수 있습니다.",
+    "forward15": "15초 앞으로",
+    "sleepTimer": "Sleep Timer",
+    "sleepTimerOff": "Off",
+    "sleepTimerMinutes": "{count} min",
+    "sleepTimerCancel": "Cancel timer ({count} min left)",
+    "featured": "추천 팟캐스트",
+    "listenNow": "지금 듣기",
+    "filterAll": "전체",
+    "continueListening": "이어서 듣기",
+    "minutesLeft": "{count}분 남음",
+    "resume": "재개",
+    "playLatest": "최신 에피소드 재생",
+    "completed": "완료",
+    "percentListened": "{percent}% 들음",
+    "today": "오늘",
+    "yesterday": "어제",
+    "daysAgo": "{count}일 전",
+    "weeksAgo": "{count}주 전",
+    "monthsAgo": "{count}개월 전",
+    "yearsAgo": "{count}년 전",
+    "download": "다운로드",
+    "downloaded": "다운로드됨",
+    "downloading": "다운로드 중…",
+    "play": "재생",
+    "pause": "일시정지",
+    "speedNormal": "보통",
+    "nowPlaying": "재생 중"
   },
   "games": {
     "levelUpTitle": "레벨 업!",
@@ -1395,7 +1492,21 @@
     "weeklyXp": "이번 주 {xp}",
     "percentToNextLevel": "다음 레벨까지 {percent}%",
     "fillBlankChallenge": "빈칸 채우기 5문제 완료하기",
-    "completeTodayChallenge": "오늘의 챌린지 완료하기"
+    "completeTodayChallenge": "오늘의 챌린지 완료하기",
+    "answerFeedback": {
+      "correctTitle": "정답!",
+      "wrongTitle": "아쉬워요",
+      "timeoutTitle": "시간 초과",
+      "yourAnswer": "내 답",
+      "noAnswer": "선택한 답 없음",
+      "correctAnswer": "정답",
+      "whyLabel": "해설",
+      "ruleLabel": "문법 규칙",
+      "meaningLabel": "뜻",
+      "next": "다음 문제",
+      "nextWord": "다음 단어",
+      "seeResults": "결과 보기"
+    }
   },
   "learning": {
     "checkAnswer": "답변 확인",
@@ -1427,7 +1538,32 @@
     "savedBooks": "저장한 책",
     "chapterCountShort": "{count}장",
     "wordCountK": "단어 {count}k",
-    "quizScore": "{score}/{total} 정답"
+    "quizScore": "{score}/{total} 정답",
+    "filterAll": "전체",
+    "nowReading": "읽는 중",
+    "featured": "추천 도서",
+    "continueCta": "이어 읽기",
+    "startCta": "읽기 시작",
+    "percentRead": "{percent}% 읽음",
+    "levelProficiency": "숙달",
+    "download": "오프라인용 다운로드",
+    "downloading": "다운로드 중…",
+    "downloaded": "다운로드됨",
+    "saveBook": "책 저장",
+    "unsaveBook": "저장 해제",
+    "fontSize": "글자 크기",
+    "readerTheme": "테마",
+    "themeLight": "라이트",
+    "themeSepia": "세피아",
+    "themeDark": "다크",
+    "lineSpacing": "줄 간격",
+    "addBookmark": "북마크 추가",
+    "removeBookmark": "북마크 삭제",
+    "nextQuestion": "다음 문제",
+    "seeResults": "결과 보기",
+    "quizExcellent": "훌륭해요!",
+    "quizGood": "잘했어요!",
+    "quizKeepReading": "더 읽어보세요!"
   },
   "news": {
     "title": "영어 뉴스",
@@ -1511,6 +1647,11 @@
     "selectOneWord": "저장할 단어를 하나만 선택해 주세요.",
     "saveWordFailed": "단어를 단어장에 저장하지 못했습니다.",
     "saveToVocabulary": "단어장에 저장",
+    "collectionPickerTitle": "컬렉션에 추가 (선택)",
+    "newCollection": "새 컬렉션",
+    "collectionNameHint": "컬렉션 이름",
+    "rerollColor": "무작위 색상",
+    "savedToCollections": "\"{}\"을(를) 컬렉션 {}개에 저장했습니다",
     "noSpeakingDue": "지금 복습할 말하기 연습이 없습니다.",
     "itemNumber": "{current}번",
     "totalCount": "총 {total}개",
@@ -1631,6 +1772,10 @@
     "premiumOnly": "Premium",
     "premiumLockedSubtitle": "Unlock advanced Lexi-guided writing practice with Premium.",
     "unlockPremium": "Unlock Premium",
+    "ielts": {
+      "title": "IELTS mock tests",
+      "subtitle": "Full four-skill papers, scored in bands with AI feedback on Writing and Speaking."
+    },
     "skills": {
       "vocabulary": {
         "title": "Vocabulary",
@@ -1695,6 +1840,7 @@
     "sourceNewsQuiz": "News quiz",
     "sourceFillBlank": "Fill in the Blank",
     "sourceGrammarQuiz": "Grammar Quiz",
+    "sourceChatCorrection": "Chat correction",
     "sourceQuiz": "Quiz",
     "yourAnswer": "Your answer",
     "correctAnswer": "Correct answer",

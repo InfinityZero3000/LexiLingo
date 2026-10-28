@@ -153,6 +153,7 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     learner_profile: LearnerProfile
     conversation_history: List[Dict[str, Any]]
+    conversation_history_supplied: bool   # True when the caller passed the history in
     learner_concept_states: Dict[str, Dict[str, Any]]
     learner_state_epoch: int
     learner_state_degraded: bool
@@ -172,6 +173,7 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     diagnosis_intent: str  # "correct", "explain", "practice", "ask"
     diagnosis_errors: List[DiagnosisError]
+    diagnosis_facts: Dict[str, str]  # learner self-statements, see lexi_memory
     diagnosis_root_causes: List[str]  # concept IDs
     diagnosis_confidence: float  # 0.0 - 1.0
     
@@ -294,6 +296,7 @@ def create_initial_state(
         # Context (will be populated by input_node)
         learner_profile=learner_profile or {"level": "B1"},
         conversation_history=[],
+        conversation_history_supplied=False,
         learner_concept_states={},
         learner_state_epoch=0,
         learner_state_degraded=False,

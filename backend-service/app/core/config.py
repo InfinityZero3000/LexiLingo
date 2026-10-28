@@ -143,6 +143,9 @@ class Settings(BaseSettings):
         if self.DEBUG:
             raise ValueError("DEBUG must be false when APP_ENV=production")
 
+        if self.PREMIUM_FORCE_ENABLED:
+            raise ValueError("PREMIUM_FORCE_ENABLED must be false when APP_ENV=production")
+
         if self.SECRET_KEY.strip().lower().startswith(("your-secret", "change_me", "replace_")):
             raise ValueError("SECRET_KEY must be a real secret when APP_ENV=production")
 
@@ -227,6 +230,9 @@ class Settings(BaseSettings):
     PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
     EMAIL_VERIFICATION_URL_BASE: str = "https://lexilingo.me/verify-email"
     EMAIL_VERIFICATION_URL_BASE_PRODUCTION: str | None = None
+
+    # Dev/test only: treat every user as premium. Rejected when APP_ENV=production.
+    PREMIUM_FORCE_ENABLED: bool = False
 
     # AI Service (optional)
     AI_SERVICE_URL: str = "https://api.lexilingo.me/api/v1"

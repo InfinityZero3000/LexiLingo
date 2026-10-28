@@ -158,7 +158,15 @@ class ApiConfig {
     }
   }
 
+  // flutter run --dart-define=API_BASE_URL=http://<lan-ip>:8000/api/v1
+  static const _definedEnv = {
+    'API_BASE_URL': String.fromEnvironment('API_BASE_URL'),
+    'AI_SERVICE_URL': String.fromEnvironment('AI_SERVICE_URL'),
+  };
+
   static String? _readEnv(String key) {
+    final defined = _definedEnv[key];
+    if (defined != null && defined.isNotEmpty) return defined;
     if (!dotenv.isInitialized) return null;
     return dotenv.env[key];
   }

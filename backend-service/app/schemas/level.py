@@ -67,9 +67,11 @@ class UserStatsResponse(BaseModel):
 class WeeklyActivityData(BaseModel):
     """Weekly activity data for charts."""
     day: str = Field(..., description="Day of week (Mon, Tue, etc.)")
+    date: str = Field(default="", description="ISO date (UTC) of this day")
     xp: int = Field(..., description="XP earned on this day")
     lessons: int = Field(default=0, description="Lessons completed")
     study_time: int = Field(default=0, description="Study time in minutes")
+    vocabulary: int = Field(default=0, description="Vocabulary reviews")
 
 
 class WeeklyActivityResponse(BaseModel):
@@ -78,6 +80,7 @@ class WeeklyActivityResponse(BaseModel):
     total_xp: int
     total_lessons: int
     total_study_time: int
+    total_vocabulary: int = 0
 
 
 class WeeklyProgressData(BaseModel):

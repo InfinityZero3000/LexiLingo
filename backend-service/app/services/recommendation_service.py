@@ -239,7 +239,8 @@ async def _lesson_candidates(
     lessons = list(
         await db.scalars(
             select(Lesson)
-            .where(Lesson.course_id.in_(enrolled), Lesson.is_published.is_(True))
+            .join(Course, Course.id == Lesson.course_id)
+            .where(Lesson.course_id.in_(enrolled), Course.is_published.is_(True))
             .order_by(Lesson.order_index.asc())
             .limit(CANDIDATES_PER_TYPE * 3)
         )

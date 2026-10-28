@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Get personalized greeting based on time of day
 String getTimeBasedGreeting() {
@@ -425,7 +426,7 @@ class _NotificationBellState extends State<_NotificationBell>
                 alignment: Alignment.center,
                 children: [
                   Icon(
-                    Icons.notifications_rounded,
+                    PhosphorIconsBold.bell,
                     size: 22,
                     color: isDark ? Colors.white : Colors.grey[700],
                   ),
@@ -538,25 +539,20 @@ class _AnimatedStreakCardState extends State<AnimatedStreakCard>
                 end: Alignment.bottomRight,
                 colors: [AppColors.surfaceDark, const Color(0xFF1A1F26)],
               )
-            : const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFFFF6F0), Color(0xFFFFEFE3)],
-              ),
+            : null,
+        color: isDark ? null : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.1)
-              : const Color(0xFFFFCFA8),
+              : AppColors.skyBorder,
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.35)
-                : const Color(0xFFFF8A4C).withValues(alpha: 0.18),
-            blurRadius: 0,
-            offset: const Offset(0, 5),
+            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
+            blurRadius: isDark ? 0 : 18,
+            offset: Offset(0, isDark ? 5 : 6),
           ),
         ],
       ),

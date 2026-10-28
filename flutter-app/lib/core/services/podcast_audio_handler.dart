@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
+import 'sleep_timer_countdown.dart';
 
 /// Background audio handler for podcast playback.
 ///
@@ -13,6 +15,15 @@ import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.
 /// Phase 4: Podcast — skill: audio-format-optimization.
 class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   final AudioPlayer _player = AudioPlayer();
+
+  // Owned here rather than by the player screen's State: this handler is the
+  // one object that actually survives leaving the player screen (background
+  // playback is the whole point of it), so a timer that lives in the screen
+  // gets silently cancelled on the one path a sleep timer is for — the
+  // learner backs out to go to sleep while the podcast keeps playing forever.
+  final SleepTimerCountdown _sleepTimer = SleepTimerCountdown();
+  final _sleepTimerSecondsController = StreamController<int?>.broadcast();
+  int? _sleepTimerSecondsRemaining;
 
   PodcastAudioHandler() {
     // Forward every playback event to AudioService's playbackState BehaviourSubject
@@ -25,6 +36,14 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
         mediaItem.add(current.copyWith(duration: duration));
       }
     });
+
+    // A finished episode left "playing" keeps the foreground service and an
+    // un-dismissable notification alive forever; pausing hands it back.
+    _player.processingStateStream.listen((state) async {
+      if (state != ProcessingState.completed) return;
+      await pause();
+      await seek(Duration.zero);
+    });
   }
 
   // ── Source loading ────────────────────────────────────────────────────────
@@ -33,7 +52,15 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   ///
   /// Resolves the audio source: prefers a downloaded [localPath] if the file
   /// exists on disk, otherwise streams from the network [audioUrl].
-  Future<void> setEpisode(PodcastEpisode episode) async {
+  ///
+  /// Returns `false` without touching the player when [episode] is already
+  /// loaded: reopening the player screen on an episode playing in the
+  /// background must not restart it.
+  Future<bool> setEpisode(PodcastEpisode episode) async {
+    if (mediaItem.value?.id == episode.guid &&
+        _player.processingState != ProcessingState.idle) {
+      return false;
+    }
     final item = MediaItem(
       id: episode.guid,
       title: episode.title,
@@ -56,6 +83,7 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     }
 
     await _player.setAudioSource(source);
+    return true;
   }
 
   /// Set playback speed (0.5x – 2.0x).
@@ -85,9 +113,49 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
 
   @override
   Future<void> stop() async {
+    _sleepTimer.cancel();
     await _player.stop();
     await super.stop();
   }
+
+  // Swiping the app out of recents otherwise leaves the foreground service
+  // playing with no UI left to stop it.
+  @override
+  Future<void> onTaskRemoved() => stop();
+
+  // ── Sleep timer ────────────────────────────────────────────────────────────
+
+  /// Starts (or replaces) a countdown that pauses playback when it elapses.
+  /// Pass `null` to cancel an active timer without pausing.
+  void setSleepTimer(Duration? duration) {
+    if (duration == null) {
+      _sleepTimer.cancel();
+      _pushSleepTimerSeconds(null);
+      return;
+    }
+    _sleepTimer.start(
+      duration: duration,
+      onTick: _pushSleepTimerSeconds,
+      onElapsed: () {
+        pause();
+        _pushSleepTimerSeconds(null);
+      },
+    );
+  }
+
+  void _pushSleepTimerSeconds(int? seconds) {
+    _sleepTimerSecondsRemaining = seconds;
+    _sleepTimerSecondsController.add(seconds);
+  }
+
+  /// Current remaining seconds, read synchronously so a screen that
+  /// (re)subscribes to [sleepTimerSecondsStream] after the timer already
+  /// started — e.g. navigating back into the player — can show the right
+  /// state immediately instead of waiting for the next tick.
+  int? get sleepTimerSecondsRemaining => _sleepTimerSecondsRemaining;
+
+  Stream<int?> get sleepTimerSecondsStream =>
+      _sleepTimerSecondsController.stream;
 
   // ── Passthrough getters for the player screen ─────────────────────────────
 
@@ -105,13 +173,15 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
         MediaControl.rewind,
         if (_player.playing) MediaControl.pause else MediaControl.play,
         MediaControl.fastForward,
+        MediaControl.stop,
       ],
       systemActions: const {
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
+        MediaAction.stop,
       },
-      androidCompactActionIndices: const [0, 1, 2],
+      androidCompactActionIndices: const [0, 1, 3],
       processingState: const {
         ProcessingState.idle: AudioProcessingState.idle,
         ProcessingState.loading: AudioProcessingState.loading,

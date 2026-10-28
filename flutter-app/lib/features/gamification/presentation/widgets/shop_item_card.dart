@@ -51,7 +51,6 @@ class ShopItemCard extends StatelessWidget {
         children: [
           // Item Icon/Image
           Expanded(
-            flex: 3,
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -148,39 +147,37 @@ class ShopItemCard extends StatelessWidget {
             ),
           ),
 
-          // Item Info
-          Expanded(
-            flex: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          // Item Info: sized by its content so the icon area absorbs the slack
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: Text(
-                      item.description,
-                      style: TextStyle(fontSize: 11, color: AppColors.grey600),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.description,
+                  style: TextStyle(fontSize: 11, color: AppColors.grey600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 8),
 
-                  // Price and Buy Button
-                  Row(
-                    children: [
-                      // Price
-                      Container(
+                // Price and Buy Button
+                Row(
+                  children: [
+                    // Price
+                    Flexible(
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
@@ -198,70 +195,74 @@ class ShopItemCard extends StatelessWidget {
                               color: AppColors.purple,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              '${item.priceGems}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.purple,
+                            Flexible(
+                              child: Text(
+                                '${item.priceGems}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.purple,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Spacer(),
+                    ),
+                    const SizedBox(width: 6),
 
-                      // Buy Button
-                      GestureDetector(
-                        onTap:
-                            canAfford &&
-                                !item.isOutOfStock &&
-                                !isLoading &&
-                                !isOwned
-                            ? onPurchase
-                            : null,
-                        child: Container(
-                          constraints: const BoxConstraints(minHeight: 44),
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: canAfford && !item.isOutOfStock && !isOwned
-                                ? AppColors.greenSuccessBright
-                                : AppColors.grey300,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: isLoading
-                              ? SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: LottieLoadingWidget.tiny(),
-                                )
-                              : Text(
-                                  isOwned
-                                      ? 'OWNED'
-                                      : item.isOutOfStock
-                                      ? 'SOLD'
-                                      : 'BUY',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color:
-                                        canAfford &&
-                                            !item.isOutOfStock &&
-                                            !isOwned
-                                        ? AppColors.surfaceLight
-                                        : AppColors.grey600,
-                                  ),
-                                ),
+                    // Buy Button
+                    GestureDetector(
+                      onTap:
+                          canAfford &&
+                              !item.isOutOfStock &&
+                              !isLoading &&
+                              !isOwned
+                          ? onPurchase
+                          : null,
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        alignment: Alignment.center,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
+                        decoration: BoxDecoration(
+                          color: canAfford && !item.isOutOfStock && !isOwned
+                              ? AppColors.greenSuccessBright
+                              : AppColors.grey300,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: isLoading
+                            ? SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: LottieLoadingWidget.tiny(),
+                              )
+                            : Text(
+                                isOwned
+                                    ? 'OWNED'
+                                    : item.isOutOfStock
+                                    ? 'SOLD'
+                                    : 'BUY',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      canAfford &&
+                                          !item.isOutOfStock &&
+                                          !isOwned
+                                      ? AppColors.surfaceLight
+                                      : AppColors.grey600,
+                                ),
+                              ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ],

@@ -25,8 +25,7 @@ class QuizOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final baseSurface =
-        isDark ? AppColors.surfaceDarkMuted : Colors.white;
+    final baseSurface = isDark ? AppColors.surfaceDarkMuted : Colors.white;
 
     Color borderColor = theme.colorScheme.outlineVariant;
     Color background = baseSurface;

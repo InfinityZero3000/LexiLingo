@@ -159,7 +159,7 @@ async def grade_submission(
         raise ValueError("Cannot grade an empty submission")
 
     model = os.getenv("IELTS_GRADER_MODEL") or os.getenv(
-        "CONTENT_AGENT_GROQ_MODEL", "qwen/qwen3.6-27b"
+        "CONTENT_AGENT_GROQ_MODEL", "qwen/qwen3.8-27b"
     )
     api_key = await get_available_groq_key(estimated_tokens=3000)
     if not api_key:

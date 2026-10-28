@@ -73,6 +73,37 @@ class Book {
   );
 }
 
+extension BookJson on Book {
+  /// Enough to restore the book without an API call (CEFR info is derivable).
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'source': source,
+    'title': title,
+    'author': author,
+    'description': description,
+    'cover_url': coverUrl,
+    'download_url': downloadUrl,
+    'language': language,
+    'cefr_level': cefrLevel,
+    'subject': subject,
+    'topic': topic,
+    'download_count': downloadCount,
+    'chapter_count': chapterCount,
+    'word_count': wordCount,
+  };
+}
+
+/// A book the learner has started and not finished, with where they stopped.
+class ReadingEntry {
+  final Book book;
+  final UserBook progress;
+
+  const ReadingEntry({required this.book, required this.progress});
+
+  /// Whole percent read, 0–100.
+  int get percent => (progress.readingProgress * 100).round().clamp(0, 100);
+}
+
 /// The user's reading progress for a specific book.
 class UserBook {
   final String bookId;

@@ -5,9 +5,11 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from api.models.content_agent import GenerationRequest, SnapshotReference
 from api.services.content_agent.service import ContentAgentService
-from api.services.content_agent.store import ContentAgentStore
+from api.services.content_agent.store import ContentAgentStore, RecordLimitExceeded
 from api.services.content_etl.pipeline import ETLPipeline
 from api.services.content_etl.storage import SnapshotStorage
 
@@ -22,15 +24,12 @@ SHARED_FIXTURE = (
 )
 
 
-def _stage_oewn_snapshot(storage: SnapshotStorage):
+def _stage_cefr_j_snapshot(storage: SnapshotStorage):
     records = [
         {
-            "record_id": f"oewn:2025:{index}",
-            "source_record_id": f"oewn-entry-{index}",
-            "source_url": f"https://en-word.net/lemma/word{index:02d}",
+            "record_id": f"cefr_j:word{index:02d}",
             "word": f"word{index:02d}",
-            "part_of_speech": "noun",
-            "definition": f"A licensed lexical definition for word {index}.",
+            "part_of_speech": "phrase",
             "declared_cefr": "A1",
             "topic_ids": ["daily_life"],
         }
@@ -42,30 +41,30 @@ def _stage_oewn_snapshot(storage: SnapshotStorage):
     temp.write_bytes(raw)
     storage.promote_raw(
         temp,
-        source_name="oewn",
+        source_name="cefr_j",
         version="2025",
-        filename="english-wordnet-2025.json",
+        filename="cefrj-vocabulary-profile-1.5.csv",
         sha256=digest,
     )
     report = ETLPipeline(storage=storage).run(
-        source_name="oewn",
+        source_name="cefr_j",
         source_version="2025",
-        adapter_name="oewn",
+        adapter_name="cefr_j",
         adapter_version=1,
-        license_id="CC-BY-4.0",
-        license_url="https://creativecommons.org/licenses/by/4.0/",
-        attribution_text="Open English WordNet 2025",
+        license_id="LicenseRef-CEFR-J-Commercial",
+        license_url="https://github.com/openlanguageprofiles/olp-en-cefrj",
+        attribution_text="The CEFR-J Wordlist Version 1.5",
         raw_records=records,
         raw_bytes=raw,
-        official_url="https://en-word.net/static/english-wordnet-2025.xml.gz",
+        official_url="https://github.com/openlanguageprofiles/olp-en-cefrj",
     )
-    assert report.status == "approved"
-    return storage.read_active_manifest("oewn")
+    assert report.status == "approved", report.errors
+    return storage.read_active_manifest("cefr_j")
 
 
 def test_approved_snapshot_attaches_and_generates_deterministically(tmp_path):
     storage = SnapshotStorage(tmp_path)
-    manifest = _stage_oewn_snapshot(storage)
+    manifest = _stage_cefr_j_snapshot(storage)
     store = ContentAgentStore(ttl_seconds=60, max_records=100)
     service = ContentAgentService(store=store)
     job_id = "licensed-flow"
@@ -75,7 +74,7 @@ def test_approved_snapshot_attaches_and_generates_deterministically(tmp_path):
             job_id,
             [
                 SnapshotReference(
-                    source_id="oewn",
+                    source_id="cefr_j",
                     source_version=manifest.source_version,
                     snapshot_id=manifest.snapshot_id,
                 )
@@ -85,7 +84,7 @@ def test_approved_snapshot_attaches_and_generates_deterministically(tmp_path):
     )
     request = GenerationRequest(
         levels=["A1"],
-        sources=["oewn"],
+        sources=["cefr_j"],
         units_per_course=1,
         lessons_per_unit=1,
         words_per_lesson=8,
@@ -103,7 +102,7 @@ def test_approved_snapshot_attaches_and_generates_deterministically(tmp_path):
     vocabulary = first.courses[0].units[0].lessons[0].vocabulary
     assert len(vocabulary) == 8
     assert all(item.source_version == "2025" for item in vocabulary)
-    assert all(item.license_id == "CC-BY-4.0" for item in vocabulary)
+    assert all(item.license_id == "LicenseRef-CEFR-J-Commercial" for item in vocabulary)
     assert all(item.record_checksum and item.lineage for item in vocabulary)
 
     shared = json.loads(SHARED_FIXTURE.read_text(encoding="utf-8"))
@@ -114,3 +113,33 @@ def test_approved_snapshot_attaches_and_generates_deterministically(tmp_path):
     assert set(vocabulary[0].model_dump(mode="json")) == set(
         shared["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
     )
+
+
+def test_snapshot_over_the_job_limit_is_refused_before_reading_any_record(
+    tmp_path, monkeypatch
+):
+    storage = SnapshotStorage(tmp_path)
+    manifest = _stage_cefr_j_snapshot(storage)
+    service = ContentAgentService(
+        store=ContentAgentStore(ttl_seconds=60, max_records=3)
+    )
+
+    def unread(*_args, **_kwargs):
+        raise AssertionError("records must not be loaded for an oversized snapshot")
+
+    monkeypatch.setattr(SnapshotStorage, "read_normalized_records", unread)
+
+    with pytest.raises(RecordLimitExceeded):
+        asyncio.run(
+            service.attach_snapshots(
+                "too-big",
+                [
+                    SnapshotReference(
+                        source_id="cefr_j",
+                        source_version=manifest.source_version,
+                        snapshot_id=manifest.snapshot_id,
+                    )
+                ],
+                storage=storage,
+            )
+        )

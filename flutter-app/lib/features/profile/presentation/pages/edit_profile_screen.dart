@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -22,11 +24,17 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen>
     with SingleTickerProviderStateMixin {
+  static const _verificationResendCooldownSeconds = 60;
+
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _displayNameController;
   late TextEditingController _avatarUrlController;
 
   bool _isSaving = false;
+  bool _isSendingVerification = false;
+  bool _isCheckingVerification = false;
+  int _verificationCooldownSeconds = 0;
+  Timer? _verificationCooldownTimer;
   String? _errorMessage;
   String? _selectedAvatarUrl;
   late AnimationController _animController;
@@ -69,6 +77,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
 
   @override
   void dispose() {
+    _verificationCooldownTimer?.cancel();
     _displayNameController.dispose();
     _avatarUrlController.dispose();
     _animController.dispose();
@@ -129,6 +138,87 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         });
       }
     }
+  }
+
+  Future<void> _sendVerificationEmail(UserEntity user) async {
+    if (user.isVerified ||
+        _isSendingVerification ||
+        _isCheckingVerification) {
+      return;
+    }
+
+    setState(() => _isSendingVerification = true);
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.resendVerificationEmail(user.email);
+    if (!mounted) return;
+
+    setState(() => _isSendingVerification = false);
+    if (success) _startVerificationCooldown();
+    _showVerificationSnackBar(
+      success
+          ? 'auth.emailVerificationResendSuccess'.tr()
+          : (authProvider.errorMessage ??
+                'auth.emailVerificationResendError'.tr()),
+      isSuccess: success,
+    );
+  }
+
+  Future<void> _checkVerificationStatus() async {
+    if (_isCheckingVerification || _isSendingVerification) return;
+
+    setState(() => _isCheckingVerification = true);
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.refreshCurrentUser();
+    if (!mounted) return;
+
+    final isVerified = authProvider.currentUser?.isVerified == true;
+    final refreshError = authProvider.errorMessage;
+    setState(() {
+      _isCheckingVerification = false;
+      if (isVerified) {
+        _verificationCooldownTimer?.cancel();
+        _verificationCooldownSeconds = 0;
+      }
+    });
+    _showVerificationSnackBar(
+      isVerified
+          ? 'profile.emailVerified'.tr()
+          : (refreshError ?? 'profile.emailVerificationPending'.tr()),
+      isSuccess: isVerified,
+    );
+  }
+
+  void _startVerificationCooldown() {
+    _verificationCooldownTimer?.cancel();
+    setState(
+      () => _verificationCooldownSeconds = _verificationResendCooldownSeconds,
+    );
+    _verificationCooldownTimer = Timer.periodic(const Duration(seconds: 1), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_verificationCooldownSeconds <= 1) {
+        timer.cancel();
+        setState(() => _verificationCooldownSeconds = 0);
+        return;
+      }
+      setState(() => _verificationCooldownSeconds--);
+    });
+  }
+
+  void _showVerificationSnackBar(String message, {required bool isSuccess}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess
+            ? AppColors.greenSuccess
+            : AppColors.warningDark,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -258,6 +348,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   isDark: isDark,
                 ),
                 const SizedBox(height: 12),
+                if (user != null) ...[
+                  _buildEmailVerificationCard(
+                    user,
+                    isDark: isDark,
+                    primaryColor: primaryColor,
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 _buildReadOnlyField(
                   label: 'profile.levelTitle'.tr(),
                   value: user?.cefrLevel ?? 'A1',
@@ -728,6 +826,128 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ),
           const Icon(Icons.lock_outline, color: AppColors.grey500, size: 16),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmailVerificationCard(
+    UserEntity user, {
+    required bool isDark,
+    required Color primaryColor,
+  }) {
+    final isVerified = user.isVerified;
+    final statusColor = isVerified
+        ? AppColors.greenSuccessBright
+        : AppColors.warningDark;
+    final backgroundColor = isVerified
+        ? (isDark
+              ? AppColors.greenSuccessDark.withValues(alpha: 0.22)
+              : AppColors.greenSuccessBg)
+        : (isDark
+              ? AppColors.warningDark.withValues(alpha: 0.18)
+              : AppColors.warningBg);
+
+    return Semantics(
+      container: true,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: statusColor.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              isVerified
+                  ? Icons.verified_rounded
+                  : Icons.mark_email_unread_outlined,
+              color: statusColor,
+              size: 24,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isVerified
+                        ? 'profile.emailVerified'.tr()
+                        : 'profile.emailNotVerified'.tr(),
+                    style: TextStyle(
+                      color: isDark
+                          ? Theme.of(context).colorScheme.onSurface
+                          : AppColors.grey900,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (!isVerified) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      'profile.emailVerificationHint'.tr(),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColorRoles.textSecondary(isDark),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          onPressed:
+                              _isSendingVerification ||
+                                  _isCheckingVerification ||
+                                  _verificationCooldownSeconds > 0
+                              ? null
+                              : () => _sendVerificationEmail(user),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: primaryColor,
+                            foregroundColor: AppColors.surfaceLight,
+                          ),
+                          icon: _isSendingVerification
+                              ? SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.surfaceLight,
+                                  ),
+                                )
+                              : const Icon(Icons.outgoing_mail, size: 18),
+                          label: Text(
+                            _verificationCooldownSeconds > 0
+                                ? '${'auth.emailVerificationResend'.tr()} '
+                                      '(${_verificationCooldownSeconds}s)'
+                                : 'auth.emailVerificationResend'.tr(),
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed:
+                              _isCheckingVerification ||
+                                  _isSendingVerification
+                              ? null
+                              : _checkVerificationStatus,
+                          icon: _isCheckingVerification
+                              ? SizedBox.square(
+                                  dimension: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: primaryColor,
+                                  ),
+                                )
+                              : const Icon(Icons.refresh_rounded, size: 18),
+                          label: Text('profile.checkVerificationStatus'.tr()),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

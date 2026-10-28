@@ -28,6 +28,8 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from .fake_redis_pipeline import with_empty_pipeline
+
 import pytest
 
 # ═══════════════════════════════════════════════════════════════
@@ -181,7 +183,7 @@ def _make_redis_mock(cached_response: Optional[str] = None) -> AsyncMock:
     redis.expire = AsyncMock()
     redis.rpush = AsyncMock()
     redis.delete = AsyncMock(side_effect=_delete)
-    return redis
+    return with_empty_pipeline(redis)
 
 
 def _make_gateway_mock(

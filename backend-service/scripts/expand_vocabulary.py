@@ -111,7 +111,7 @@ def generate_words_for_level(level, level_type, count, existing_words):
         f"Return ONLY a raw JSON list of strings, e.g. [\"word1\", \"word2\"]. No extra markdown, explanation, or tags."
     )
     payload = {
-        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
+        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b"),
         "messages": [
             {"role": "system", "content": "You are a vocabulary builder. Output ONLY raw JSON lists of strings."},
             {"role": "user", "content": prompt}
@@ -172,7 +172,7 @@ def fetch_details_for_word(word, level, ielts_band=None):
     )
     
     payload = {
-        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
+        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b"),
         "messages": [
             {"role": "system", "content": "You are a lexicographer. Output ONLY raw JSON objects matching the schema."},
             {"role": "user", "content": prompt}

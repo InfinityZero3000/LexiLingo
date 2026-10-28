@@ -211,7 +211,8 @@ class AchievementBadge extends StatelessWidget {
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
-                    spreadRadius: 2,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : null,
@@ -292,7 +293,8 @@ class AchievementBadge extends StatelessWidget {
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 8,
-                    spreadRadius: 2,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : null,

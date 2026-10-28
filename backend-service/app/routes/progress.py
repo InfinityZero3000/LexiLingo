@@ -317,13 +317,11 @@ async def complete_lesson(
             # No study_time_minutes: LessonCompletionCreate carries only a
             # score, so this route never learns how long the lesson took. The
             # attempt-based flow in routes/learning.py does, and records it.
-            from datetime import date as date_type
             await record_daily_activity(
                 db,
                 current_user.id,
                 xp_earned=xp_earned,
                 lessons_completed=1,
-                today=date_type.today(),
             )
         
         await db.commit()

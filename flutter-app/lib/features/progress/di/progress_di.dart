@@ -27,7 +27,7 @@ void registerProgressModule() {
 
   // Streak Provider (singleton to maintain streak state)
   sl.registerLazySingleton<StreakProvider>(
-    () => StreakProvider(repository: sl()),
+    () => StreakProvider(repository: sl(), notificationService: sl()),
   );
 
   // Daily Challenges Provider

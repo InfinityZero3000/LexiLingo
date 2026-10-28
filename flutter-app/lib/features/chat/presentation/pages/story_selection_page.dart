@@ -50,57 +50,64 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
       appBar: AppBar(
-        toolbarHeight: 86,
+        toolbarHeight: 100,
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        scrolledUnderElevation: 0,
         automaticallyImplyLeading: false,
-        titleSpacing: 16,
+        titleSpacing: 0,
         title: Consumer<StoryProvider>(
           builder: (context, provider, _) {
             final total = provider.stories.length;
-            return Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: accent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.forum_rounded,
-                    color: Theme.of(context).colorScheme.surface,
-                    size: 22,
+            return Align(
+              alignment: Alignment.center,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.forum_rounded,
+                          color: Theme.of(context).colorScheme.surface,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'storySelection.pageTitle'.tr(),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'storySelection.topicsAvailableCount'.tr(
+                              namedArgs: {'total': '$total'},
+                            ),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'storySelection.pageTitle'.tr(),
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColorRoles.textPrimary(isDark),
-                      ),
-                    ),
-                    Text(
-                      'storySelection.topicsAvailableCount'.tr(
-                        namedArgs: {'total': '$total'},
-                      ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? AppColors.textMuted
-                            : AppColors.textGrey,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             );
           },
         ),
-        actions: const [],
       ),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
@@ -122,7 +129,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                 children: [
                   // Search Bar
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                     child: _buildSearchBar(theme, isDark),
                   ),
 
@@ -146,6 +153,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
 
   Widget _buildSearchBar(ThemeData theme, bool isDark) {
     final accent = AppColorRoles.primary(isDark);
+    final bodyStyle = theme.textTheme.bodyLarge ?? const TextStyle();
     return Container(
       height: 56,
       decoration: BoxDecoration(
@@ -161,21 +169,29 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
         ],
       ),
-      child: Center(
-        child: TextField(
-          controller: _searchController,
-          onChanged: (val) => setState(() => _searchQuery = val),
-          textAlignVertical: TextAlignVertical.center,
-          style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
-          decoration: InputDecoration(
-            hintText: 'storySelection.searchHint'.tr(),
-            hintStyle: TextStyle(color: AppColorRoles.textMuted(isDark)),
-            prefixIcon: Icon(
-              Icons.search,
-              color: isDark ? accent : theme.primaryColor,
-            ),
-            border: InputBorder.none,
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) => setState(() => _searchQuery = val),
+        textAlignVertical: TextAlignVertical.center,
+        style: bodyStyle.copyWith(color: AppColorRoles.textPrimary(isDark)),
+        decoration: InputDecoration(
+          hintText: 'storySelection.searchHint'.tr(),
+          hintStyle: bodyStyle.copyWith(color: AppColorRoles.textMuted(isDark)),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 24,
+            color: isDark ? accent : theme.primaryColor,
           ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 56,
+            minHeight: 56,
+          ),
+          filled: false,
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.only(right: 16),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         ),
       ),
     );
@@ -294,7 +310,12 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        16 + MediaQuery.paddingOf(context).bottom,
+      ),
       itemCount: stories.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {

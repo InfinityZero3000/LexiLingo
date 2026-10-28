@@ -568,8 +568,8 @@ class _LessonTile extends StatelessWidget {
       ),
       onTap: isLocked
           ? null
-          : () {
-              Navigator.push(
+          : () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => LearningSessionScreen(
@@ -578,6 +578,8 @@ class _LessonTile extends StatelessWidget {
                   ),
                 ),
               );
+              if (!context.mounted) return;
+              context.read<CourseProvider>().loadCourseDetail(courseId);
             },
     );
   }

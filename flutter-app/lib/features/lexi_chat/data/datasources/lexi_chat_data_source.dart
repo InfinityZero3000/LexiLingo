@@ -488,6 +488,27 @@ class LexiChatDataSource {
     await apiClient.post('/lexi/sessions/$sessionId/delete', body: {});
   }
 
+  // Unlike getSessions these do not swallow errors: a failed "forget" must not
+  // look like it worked, and an empty list must not hide a failed load.
+  Future<Map<String, String>> getMemory() async {
+    final json = await apiClient.get('/lexi/memory');
+    final data = json['data'] ?? json;
+    final facts = data['facts'];
+    if (facts is! Map) return const {};
+    return {
+      for (final entry in facts.entries)
+        if (entry.value != null) entry.key.toString(): entry.value.toString(),
+    };
+  }
+
+  Future<void> forgetMemory() async {
+    await apiClient.delete('/lexi/memory');
+  }
+
+  Future<void> forgetMemoryFact(String key) async {
+    await apiClient.delete('/lexi/memory/${Uri.encodeComponent(key)}');
+  }
+
   /// Send a message to Lexi and receive an SSE stream of events.
   ///
   /// Yields [LexiStreamEvent] values in order:

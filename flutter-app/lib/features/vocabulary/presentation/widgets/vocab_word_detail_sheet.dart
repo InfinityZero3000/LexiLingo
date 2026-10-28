@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/new_deck_composer.dart';
 
 /// Full flashcard bottom sheet for a [VocabWord].
 /// Front: word + IPA + part of speech + tap hint.
@@ -171,7 +172,9 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                           Expanded(
                             child: _ActionButton(
                               icon: Icons.flip,
-                              label: _showBack ? 'vocabulary.showFront'.tr() : 'vocabulary.flipCard'.tr(),
+                              label: _showBack
+                                  ? 'vocabulary.showFront'.tr()
+                                  : 'vocabulary.flipCard'.tr(),
                               onTap: _flip,
                               color: AppColors.primary,
                             ),
@@ -215,36 +218,82 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
     final userVocabId = widget.word.userVocabularyId;
 
     if (userVocabId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('vocabulary.addWordFirst'.tr())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('vocabulary.addWordFirst'.tr())));
       return;
     }
 
+    var composing = false;
+
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
             final decks = vocabProvider.decks;
             return Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'vocabulary.addToDeckTitle'.tr(),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  if (decks.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text('vocabulary.noDecksFound'.tr()),
-                      ),
+                  if (composing)
+                    NewDeckComposer(
+                      onCancel: () => setSheetState(() => composing = false),
+                      onCreated: (deck) async {
+                        final success = await vocabProvider.addWordToDeck(
+                          deck.id,
+                          userVocabId,
+                        );
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              success
+                                  ? 'vocabulary.addToDeckSuccess'.tr(
+                                      args: [deck.name],
+                                    )
+                                  : 'vocabulary.addToDeckFailed'.tr(),
+                            ),
+                          ),
+                        );
+                      },
                     )
+                  else
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(
+                        Icons.add_circle,
+                        color: AppColors.primary,
+                      ),
+                      title: Text('vocabulary.newCollection'.tr()),
+                      onTap: () => setSheetState(() => composing = true),
+                    ),
+                  if (decks.isEmpty)
+                    (composing
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
+                            child: Center(
+                              child: Text('vocabulary.noDecksFound'.tr()),
+                            ),
+                          ))
                   else
                     Flexible(
                       child: ListView.builder(
@@ -254,7 +303,12 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                           final deck = decks[index];
                           Color deckColor;
                           try {
-                            deckColor = Color(int.parse('FF${deck.color.replaceAll('#', '')}', radix: 16));
+                            deckColor = Color(
+                              int.parse(
+                                'FF${deck.color.replaceAll('#', '')}',
+                                radix: 16,
+                              ),
+                            );
                           } catch (_) {
                             deckColor = AppColors.primary;
                           }
@@ -263,16 +317,22 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                             leading: Icon(Icons.bookmark, color: deckColor),
                             title: Text(deck.name),
                             trailing: IconButton(
-                              icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                              icon: const Icon(
+                                Icons.add_circle_outline,
+                                color: AppColors.primary,
+                              ),
                               onPressed: () async {
-                                final success = await vocabProvider.addWordToDeck(deck.id, userVocabId);
+                                final success = await vocabProvider
+                                    .addWordToDeck(deck.id, userVocabId);
                                 if (context.mounted) {
                                   Navigator.pop(context);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
                                         success
-                                            ? 'vocabulary.addToDeckSuccess'.tr(args: [deck.name])
+                                            ? 'vocabulary.addToDeckSuccess'.tr(
+                                                args: [deck.name],
+                                              )
                                             : 'vocabulary.addToDeckFailed'.tr(),
                                       ),
                                     ),
@@ -513,7 +573,11 @@ class _CardBack extends StatelessWidget {
                 )
               : Text(
                   word.definition,
-                  style: TextStyle(fontSize: 16, height: 1.6, color: cs.onSurface),
+                  style: TextStyle(
+                    fontSize: 16,
+                    height: 1.6,
+                    color: cs.onSurface,
+                  ),
                 ),
 
           // Example

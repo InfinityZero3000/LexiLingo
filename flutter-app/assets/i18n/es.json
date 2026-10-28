@@ -132,6 +132,7 @@
     "errRateLimited": "Demasiados intentos. Espera un momento."
   },
   "home": {
+    "wordsLeftToReview": "palabras por repasar",
     "greeting": "¡Hola, {name}!",
     "dailyGoal": "Meta diaria",
     "dailyXpGoal": "Objetivo de XP diario",
@@ -280,7 +281,13 @@
     "recTypeVocab": "Vocabulario",
     "recTypeVideo": "Vídeo",
     "recTypeNews": "Noticias",
-    "recTypeOther": "Sugerencia"
+    "recTypeOther": "Sugerencia",
+    "recReasonDue": "Es hora de repasar esto",
+    "recReasonTopic": "Estudias mucho sobre {topic}",
+    "recReasonGap": "Aún no dominas esto",
+    "recReasonLevel": "Adecuado para tu nivel {level}",
+    "recReasonSimilar": "Cercano a lo que estás aprendiendo",
+    "recReasonDefault": "Sugerido para ti"
   },
   "course": {
     "title": "Cursos",
@@ -405,7 +412,10 @@
       "speakingTitle": "Práctica oral",
       "speakingInstruction": "Repite la siguiente oración",
       "categorizationTitle": "Clasifica el vocabulario",
-      "categorizationInstruction": "Toca una palabra y luego su categoría."
+      "categorizationInstruction": "Toca una palabra y luego su categoría.",
+      "correctAnswerLabel": "Respuesta correcta",
+      "correctLabel": "Correcto",
+      "incorrectLabel": "Casi"
     }
   },
   "flashcard": {
@@ -516,6 +526,7 @@
     "saidCorrectly": "Lo dijiste correctamente"
   },
   "chat": {
+    "loadMore": "Cargar más...",
     "placeholder": "Escribe un mensaje...",
     "send": "Enviar",
     "thinking": "Pensando...",
@@ -629,6 +640,11 @@
     "displayNameMin": "Debe tener al menos 2 caracteres",
     "displayNameMax": "Debe tener menos de 50 caracteres.",
     "accountInformation": "Información de la cuenta",
+    "emailVerified": "Correo electrónico verificado",
+    "emailNotVerified": "Correo electrónico no verificado",
+    "emailVerificationHint": "Envía un enlace de verificación a este correo para proteger tu cuenta.",
+    "checkVerificationStatus": "Comprobar estado",
+    "emailVerificationPending": "Tu correo aún no está verificado. Abre el enlace de tu bandeja de entrada y vuelve a comprobarlo.",
     "username": "Nombre de usuario",
     "saveChanges": "Guardar cambios",
     "tapCameraToChangeAvatar": "Toca la cámara para cambiar de avatar",
@@ -666,6 +682,10 @@
     "adminMobileSubtitle": "LexiLingo Admin móvil"
   },
   "progress": {
+    "streakRestoresLeft": "Restauraciones de racha restantes este mes: {count}",
+    "streakRestoreHint": "¡Puedes restaurar tu racha anterior de {days} días! Te quedan {count} restauraciones este mes.",
+    "streakRestoreSuccess": "¡Racha restaurada con éxito!",
+    "streakRestoreButton": "Restaurar racha ({days} días)",
     "title": "Mi progreso",
     "loadingProgress": "Cargando progreso...",
     "noProgressDataAvailable": "No hay datos de progreso disponibles",
@@ -773,7 +793,34 @@
     "reviewBodyDue": "¡Hoy tienes {count} palabras para repasar!",
     "reviewBodyStreak": "Hora de repasar: ¡mantén tu racha!",
     "reviewBodyDueNow": "¡Tienes {count} palabras pendientes de repaso!",
-    "reviewWaitingBody": "{count} palabras esperan tu repaso."
+    "reviewWaitingBody": "{count} palabras esperan tu repaso.",
+    "checkin": {
+      "channelName": "Recordatorios de asistencia",
+      "channelDescription": "Te recuerda mantener tu racha de estudio a la hora que elijas",
+      "streakSummary": "Racha de {count} días",
+      "permissionDenied": "Activa las notificaciones de LexiLingo en Ajustes para recibir recordatorios de asistencia.",
+      "scheduleFailed": "No se pudo programar el recordatorio. Inténtalo más tarde.",
+      "atRiskTitle": "Tu racha de {count} días solo espera el día de hoy",
+      "atRiskBody": "Una lección corta antes de medianoche la mantiene. Si fallas hoy, el contador vuelve a 0.",
+      "milestoneTitle": "Una asistencia más y llegas a {count} días",
+      "milestoneBody": "Este hito está a una sola lección. No lo dejes escapar el último día.",
+      "comebackTitle": "Una vez mantuviste {count} días seguidos",
+      "comebackBody": "Ese récord es tuyo. El día 1 de una nueva racha puede empezar ahora mismo.",
+      "freshTitle": "El día 1 empieza hoy",
+      "freshBody": "Cinco minutos, una lección — y tu primera racha ya lleva tu nombre.",
+      "keepGoingTitle": "Hoy es el día {count}",
+      "keepGoingBody": "Ayer cumpliste tu palabra. Marca asistencia hoy y la racha crece un día más.",
+      "waitingTitle": "Lexi te espera en la próxima lección",
+      "waitingBody": "Es la hora de asistencia que elegiste. Una lección corta basta por hoy.",
+      "fiveMinutesTitle": "Cinco minutos para el inglés",
+      "fiveMinutesBody": "No hace falta una sesión larga: una lección corta cuenta como un día.",
+      "oneSentenceTitle": "¿Una frase nueva hoy?",
+      "oneSentenceBody": "Un poco cada día es lo que más se recuerda. Tu próxima lección está lista.",
+      "yourTimeTitle": "Esta es la hora que elegiste",
+      "yourTimeBody": "Tú elegiste esta hora para estudiar. Abre la app, marca asistencia y vuelve a lo tuyo.",
+      "fadingTitle": "Las palabras de ayer se están borrando",
+      "fadingBody": "Repasar justo antes de olvidar es cuando más gana la memoria."
+    }
   },
   "errors": {
     "networkError": "Error de red",
@@ -1234,6 +1281,26 @@
     "tooltipNewChat": "Nuevo chat",
     "sessionsDrawerTitle": "Sesiones Lexi",
     "tooltipNewSession": "Nueva sesión",
+    "memory": {
+      "entry": "Lo que Lexi recuerda",
+      "title": "Lo que Lexi recuerda",
+      "subtitle": "Cosas que mencionaste en el chat. Lexi las usa para personalizar sus respuestas. Puedes quitar cualquiera de ellas.",
+      "empty": "Todavía nada. Si le dices a Lexi tu nombre, tu trabajo o para qué estudias, aparecerá aquí.",
+      "loadFailed": "No se pudo cargar la memoria ahora mismo.",
+      "retry": "Reintentar",
+      "forgetOne": "Olvidar esto",
+      "forgetAll": "Olvidar todo",
+      "confirmTitle": "¿Olvidar todo?",
+      "confirmBody": "Lexi dejará de usar lo que le contaste. Tus chats anteriores siguen en tu historial.",
+      "cancel": "Cancelar",
+      "actionFailed": "No se pudo actualizar. Inténtalo de nuevo.",
+      "key": {
+        "preferred_name": "Llámame",
+        "occupation": "Trabajo o área de estudio",
+        "goal": "Objetivo de aprendizaje",
+        "interests": "Intereses"
+      }
+    },
     "noSessions": "Sin sesiones previas",
     "renameSessionTitle": "Cambiar nombre de sesión",
     "cancelButton": "Cancelar",
@@ -1329,7 +1396,10 @@
     "wordSaved": "Se guardó «{word}» en tu cuaderno de vocabulario.",
     "lookingUp": "Consultando…",
     "sentenceInVideo": "Frase en el vídeo",
-    "saving": "Guardando..."
+    "saving": "Guardando...",
+    "filterAll": "Todo",
+    "watchNow": "Ver ahora",
+    "openOnYoutube": "Abrir en YouTube"
   },
   "podcast": {
     "pageTitle": "Pódcasts",
@@ -1354,7 +1424,34 @@
     "generateTranscript": "Generar transcripción",
     "episodeCount": "{count} episodios",
     "rewind15": "Retroceder 15 s",
-    "forward15": "Avanzar 15 s"
+    "audioLoadFailed": "No se pudo cargar el audio de este episodio. Puede que la fuente esté bloqueada en tu red.",
+    "forward15": "Avanzar 15 s",
+    "sleepTimer": "Sleep Timer",
+    "sleepTimerOff": "Off",
+    "sleepTimerMinutes": "{count} min",
+    "sleepTimerCancel": "Cancel timer ({count} min left)",
+    "featured": "Podcast destacado",
+    "listenNow": "Escuchar ahora",
+    "filterAll": "Todo",
+    "continueListening": "Seguir escuchando",
+    "minutesLeft": "Quedan {count} min",
+    "resume": "Reanudar",
+    "playLatest": "Reproducir el último episodio",
+    "completed": "Completado",
+    "percentListened": "{percent}% escuchado",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "hace {count} d",
+    "weeksAgo": "hace {count} sem.",
+    "monthsAgo": "hace {count} meses",
+    "yearsAgo": "hace {count} a.",
+    "download": "Descargar",
+    "downloaded": "Descargado",
+    "downloading": "Descargando…",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "speedNormal": "Normal",
+    "nowPlaying": "Reproduciendo"
   },
   "games": {
     "levelUpTitle": "¡Elevar a mismo nivel!",
@@ -1395,7 +1492,21 @@
     "weeklyXp": "{xp} esta semana",
     "percentToNextLevel": "{percent}% para el siguiente nivel",
     "fillBlankChallenge": "Completa 5 preguntas de rellenar huecos",
-    "completeTodayChallenge": "Completa el reto de hoy"
+    "completeTodayChallenge": "Completa el reto de hoy",
+    "answerFeedback": {
+      "correctTitle": "¡Correcto!",
+      "wrongTitle": "No exactamente",
+      "timeoutTitle": "Se acabó el tiempo",
+      "yourAnswer": "Elegiste",
+      "noAnswer": "No elegiste respuesta",
+      "correctAnswer": "Respuesta correcta",
+      "whyLabel": "Explicación",
+      "ruleLabel": "Regla gramatical",
+      "meaningLabel": "Significado",
+      "next": "Siguiente pregunta",
+      "nextWord": "Siguiente palabra",
+      "seeResults": "Ver resultados"
+    }
   },
   "learning": {
     "checkAnswer": "Verificar respuesta",
@@ -1427,7 +1538,32 @@
     "savedBooks": "Libros guardados",
     "chapterCountShort": "{count} cap.",
     "wordCountK": "{count}k palabras",
-    "quizScore": "{score} / {total} correctas"
+    "quizScore": "{score} / {total} correctas",
+    "filterAll": "Todo",
+    "nowReading": "Leyendo ahora",
+    "featured": "Libro destacado",
+    "continueCta": "Continuar",
+    "startCta": "Empezar a leer",
+    "percentRead": "{percent}% leído",
+    "levelProficiency": "Dominio",
+    "download": "Descargar para leer sin conexión",
+    "downloading": "Descargando…",
+    "downloaded": "Descargado",
+    "saveBook": "Guardar libro",
+    "unsaveBook": "Quitar de guardados",
+    "fontSize": "Tamaño de letra",
+    "readerTheme": "Tema",
+    "themeLight": "Claro",
+    "themeSepia": "Sepia",
+    "themeDark": "Oscuro",
+    "lineSpacing": "Interlineado",
+    "addBookmark": "Añadir marcador",
+    "removeBookmark": "Quitar marcador",
+    "nextQuestion": "Siguiente pregunta",
+    "seeResults": "Ver resultados",
+    "quizExcellent": "¡Excelente!",
+    "quizGood": "¡Buen trabajo!",
+    "quizKeepReading": "¡Sigue leyendo!"
   },
   "news": {
     "title": "noticias en ingles",
@@ -1511,6 +1647,11 @@
     "selectOneWord": "Selecciona exactamente una palabra para guardar.",
     "saveWordFailed": "No se pudo guardar la palabra en el vocabulario.",
     "saveToVocabulary": "Guardar en vocabulario",
+    "collectionPickerTitle": "Añadir a una colección (opcional)",
+    "newCollection": "Nueva colección",
+    "collectionNameHint": "Nombre de la colección",
+    "rerollColor": "Color aleatorio",
+    "savedToCollections": "\"{}\" guardada en {} colección(es)",
     "noSpeakingDue": "No hay práctica oral pendiente ahora mismo.",
     "itemNumber": "N.º {current}",
     "totalCount": "{total} en total",
@@ -1631,6 +1772,10 @@
     "premiumOnly": "Premium",
     "premiumLockedSubtitle": "Unlock advanced Lexi-guided writing practice with Premium.",
     "unlockPremium": "Unlock Premium",
+    "ielts": {
+      "title": "IELTS mock tests",
+      "subtitle": "Full four-skill papers, scored in bands with AI feedback on Writing and Speaking."
+    },
     "skills": {
       "vocabulary": {
         "title": "Vocabulary",
@@ -1695,6 +1840,7 @@
     "sourceNewsQuiz": "News quiz",
     "sourceFillBlank": "Fill in the Blank",
     "sourceGrammarQuiz": "Grammar Quiz",
+    "sourceChatCorrection": "Chat correction",
     "sourceQuiz": "Quiz",
     "yourAnswer": "Your answer",
     "correctAnswer": "Correct answer",

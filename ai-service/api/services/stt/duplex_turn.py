@@ -23,7 +23,9 @@ class DuplexTurn:
         send_bytes: BinarySink,
         tts: StreamingTTS | None = None,
         persist: PersistSink | None = None,
+        system_extra: str = "",
     ) -> None:
+        self._system_extra = system_extra
         self._send_json = send_json
         self._send_bytes = send_bytes
         self._tts = tts or get_streaming_tts()
@@ -124,7 +126,9 @@ class DuplexTurn:
         async for raw_token in stream_llm_tokens(
             system_prompt=(
                 "You are Lexi, a concise English tutor. Reply naturally in 1-2 "
-                "short sentences and do not reveal internal reasoning."
+                "short sentences and do not reveal internal reasoning. Answer what "
+                "the learner asked before correcting anything."
+                + (f"\n{self._system_extra}" if self._system_extra else "")
             ),
             messages=[{"role": "user", "content": text}],
             user_input=text,

@@ -35,7 +35,8 @@ from api.services.trace_cag.l1_state_cache import (
     L1Request,
     decide_l1_reuse,
 )
-from api.services.trace_cag.env_helpers import _env_float
+from api.services.trace_cag.bounded import LRUDict
+from api.services.trace_cag.env_helpers import _env_float, _env_int
 from api.services.trace_cag.dependencies import (
     DependencyEvent,
     GRAPH_SCHEMA_VERSION,
@@ -399,10 +400,20 @@ def _patch_postconditions_hold(entry: CacheEntry, patched_response: str) -> bool
 # IN-PROCESS CACHE (Structured CacheEntry, fallback when Redis unavailable)
 # ============================================================
 
-_MEM_RESPONSE_CACHE: dict[str, tuple[float, CacheEntry]] = {}
-_MEM_GRAPH_BUCKETS: dict[str, list[str]] = {}
+# Every index below is capped. Only the response cache used to be, so the bucket index and
+# its version records grew by ~1.7 KB per cached answer (and the token registry by ~200 B per
+# user) until the process restarted. Evicting an index entry is always safe: Redis is the
+# shared authority and a missing bucket is simply not a candidate.
 _MEM_RESPONSE_CACHE_MAX_ITEMS = 1024
 _MEM_BUCKET_MAX_ITEMS = 8
+_MEM_BUCKETS_MAX = max(1, _env_int("TRACECAG_MEM_BUCKETS_MAX", 20000))
+
+_MEM_RESPONSE_CACHE: dict[str, tuple[float, CacheEntry]] = LRUDict(
+    _MEM_RESPONSE_CACHE_MAX_ITEMS, on_evict=lambda key, _entry: remove_reverse_edges(key)
+)
+_MEM_GRAPH_BUCKETS: dict[str, list[str]] = LRUDict(
+    _MEM_BUCKETS_MAX, on_evict=lambda bucket, _keys: _MEM_BUCKET_VERSIONS.pop(bucket, None)
+)
 
 # ── L1 Bucket Version Store (paper §5.3, Algorithm 3) ───────────────────────
 # v_b = ⟨ν_graph, ν_policy, ν_profile, t_refresh⟩
@@ -873,8 +884,9 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
             "created_at": raw.get("created_at", now - 60),
             "ttl": raw.get("ttl", 3600),
         }
-        ttl_remaining = max(entry["ttl"] - (now - entry.get("created_at", now)), 60)
-        _MEM_RESPONSE_CACHE[cache_key] = (now + ttl_remaining, entry)
+        # Not copied into _MEM_RESPONSE_CACHE: that copy is only read when Redis is disabled
+        # (benchmark mode), where this Redis read cannot have succeeded. In production it was
+        # a multi-KB duplicate of every hit, never read back.
         if entry.get("graph_bucket"):
             _register_graph_bucket(entry["graph_bucket"], cache_key, refresh_version=False)
         return entry
@@ -1105,6 +1117,14 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         and state.get("user_id")
         and not learner_profile.get("_learner_state_available")
     ):
+        # The cache is off for every user while learner-state is down, so each turn becomes an
+        # LLM call. Count it: this is the line that shows up as Groq spend.
+        try:
+            from api.services.telemetry import get_telemetry
+
+            get_telemetry().increment_counter("tracecag_cache_bypass_learner_epoch_total")
+        except Exception:
+            pass
         return {
             "cache_hit": False,
             "cache_decision": "full",

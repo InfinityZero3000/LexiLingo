@@ -1,11 +1,12 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/continue_learning_card.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/promo_banner_section.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/enrolled_courses_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/featured_courses_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_header.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_skeleton_loading.dart';
@@ -14,17 +15,16 @@ import 'package:lexilingo_app/features/home/presentation/widgets/home_page/quick
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/recommendations_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/section_title.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/streak_card_section.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/vocab_today_row.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_section.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
-import 'package:lexilingo_app/features/vocabulary/presentation/widgets/daily_review_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_challenges_widget.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_reward_dialog.dart';
 import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_up_dialog.dart';
-import 'package:lexilingo_app/features/vocabulary/presentation/widgets/word_of_day_card.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/active_boosts_bar.dart';
 
 class HomePageNew extends StatefulWidget {
@@ -133,8 +133,11 @@ class _HomePageNewState extends State<HomePageNew> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : AppColors.skyBackground,
       body: SafeArea(
+        bottom: false,
         child: Consumer3<HomeProvider, UserProvider, AuthProvider>(
           builder: (context, homeProvider, userProvider, authProvider, child) {
             if (homeProvider.isLoading &&
@@ -156,6 +159,9 @@ class _HomePageNewState extends State<HomePageNew> {
               ]),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.paddingOf(context).bottom,
+                ),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1180),
@@ -169,12 +175,17 @@ class _HomePageNewState extends State<HomePageNew> {
                           child: HomeHeader(),
                         ),
                         const PromoBannerSection(),
+                        const ContinueLearningCard(),
                         const Padding(
                           padding: EdgeInsets.only(top: 12),
                           child: StreakCardSection(),
                         ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 12),
+                          child: LevelAndDailyGoalRow(),
+                        ),
                         Padding(
-                          padding: const EdgeInsets.only(top: 12),
+                          padding: const EdgeInsets.only(top: 16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -190,47 +201,11 @@ class _HomePageNewState extends State<HomePageNew> {
                           child: ActiveBoostsBar(),
                         ),
                         const Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: WordOfDayCard(),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 12),
-                          child: LevelAndDailyGoalRow(),
-                        ),
-                        const Padding(
                           padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
                           child: DailyChallengesCard(),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.fromLTRB(16, 12, 16, 0),
-                          child: DailyReviewCard(),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SectionTitle(
-                                title: 'home.recommendedForYou'.tr(),
-                              ),
-                              const SizedBox(height: 8),
-                              const RecommendationsSection(),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              SectionTitle(
-                                title: 'home.continueLearningSection'.tr(),
-                              ),
-                              const SizedBox(height: 8),
-                              const EnrolledCoursesSection(),
-                            ],
-                          ),
-                        ),
+                        const VocabTodayRow(),
+                        const RecommendationsSection(),
                         Padding(
                           padding: const EdgeInsets.only(top: 12, bottom: 24),
                           child: Column(

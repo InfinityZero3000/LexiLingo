@@ -45,8 +45,10 @@ class LearningProvider with ChangeNotifier {
   bool get isLoadingRoadmap => _isLoadingRoadmap;
   String? get roadmapError => _roadmapError;
 
-  Future<void> loadRoadmap(String courseId) async {
-    _isLoadingRoadmap = true;
+  /// [refresh] keeps the current roadmap on screen while it reloads, so
+  /// coming back from a lesson updates it in place instead of flashing a loader.
+  Future<void> loadRoadmap(String courseId, {bool refresh = false}) async {
+    _isLoadingRoadmap = !refresh || _courseRoadmap == null;
     _roadmapError = null;
     notifyListeners();
 
@@ -56,7 +58,7 @@ class LearningProvider with ChangeNotifier {
 
     result.fold(
       (failure) {
-        _roadmapError = failure.message;
+        if (!refresh || _courseRoadmap == null) _roadmapError = failure.message;
         _isLoadingRoadmap = false;
       },
       (roadmap) {
@@ -178,8 +180,11 @@ class LearningProvider with ChangeNotifier {
     final exercise = currentExercise;
     if (exercise == null) return;
 
-    _userAnswers[_currentExerciseIndex] = answer;
-    _draftAnswers.remove(_currentExerciseIndex);
+    // The request is awaited while Skip stays tappable, so the result must
+    // land on the question it answers, not wherever the index has moved to.
+    final index = _currentExerciseIndex;
+    _userAnswers[index] = answer;
+    _draftAnswers.remove(index);
     final timeSpentMs = _exerciseStartTime != null
         ? DateTime.now().difference(_exerciseStartTime!).inMilliseconds
         : 5000;
@@ -198,11 +203,11 @@ class LearningProvider with ChangeNotifier {
       result.fold(
         (failure) {
           final isCorrect = _checkAnswerLocally(exercise, answer);
-          _answerResults[_currentExerciseIndex] = isCorrect;
+          _answerResults[index] = isCorrect;
         },
         (response) {
-          _answerResults[_currentExerciseIndex] = response.isCorrect;
-          _answerResponses[_currentExerciseIndex] = response;
+          _answerResults[index] = response.isCorrect;
+          _answerResponses[index] = response;
           _livesRemaining = response.livesRemaining;
           _hintsRemaining = response.hintsRemaining;
           _xpEarned += response.xpEarned;
@@ -210,7 +215,7 @@ class LearningProvider with ChangeNotifier {
       );
     } else {
       final isCorrect = _checkAnswerLocally(exercise, answer);
-      _answerResults[_currentExerciseIndex] = isCorrect;
+      _answerResults[index] = isCorrect;
       if (isCorrect) {
         _xpEarned += 10;
       } else {
@@ -249,6 +254,9 @@ class LearningProvider with ChangeNotifier {
 
   void skipExercise() {
     if (_currentLesson == null) return;
+    // Skip after answering just moves on — overwriting the result would turn
+    // a correct answer into a miss.
+    if (isCurrentAnswered) return nextExercise();
     _userAnswers[_currentExerciseIndex] = '';
     _answerResults[_currentExerciseIndex] = false;
     nextExercise();
@@ -308,16 +316,14 @@ class LearningProvider with ChangeNotifier {
       case ExerciseType.trueFalse:
         return userAnswer == correctAnswer;
       case ExerciseType.fillInBlank:
-        return userAnswer == correctAnswer ||
-            userAnswer.replaceAll(RegExp(r'[^\w\s]'), '') ==
-                correctAnswer.replaceAll(RegExp(r'[^\w\s]'), '');
+        return _words(userAnswer) == _words(correctAnswer);
       case ExerciseType.translate:
         return _calculateSimilarity(userAnswer, correctAnswer) > 0.7;
       case ExerciseType.matching:
         return _normalizeMatchingAnswer(userAnswer) ==
             _normalizeMatchingAnswer(correctAnswer);
       case ExerciseType.reorder:
-        return userAnswer == correctAnswer;
+        return _words(userAnswer) == _words(correctAnswer);
       case ExerciseType.speaking:
         return SpeakingAnswerMatcher.evaluate(
           transcript: answer,
@@ -348,6 +354,14 @@ class LearningProvider with ChangeNotifier {
         return 'speaking';
     }
   }
+
+  // The word bank has no punctuation, so reorder and typed answers compare on
+  // words only — same rule as the backend's _normalize_answer.
+  String _words(String text) => text
+      .replaceAll(RegExp(r'[^\p{L}\p{N}_\s]', unicode: true), '')
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .join(' ');
 
   String _normalizeMatchingAnswer(String answer) {
     final pairs =
