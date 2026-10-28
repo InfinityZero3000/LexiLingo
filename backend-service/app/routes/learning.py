@@ -50,7 +50,6 @@ from app.routes.proficiency import record_exercise_results_for_user
 from app.crud.course import LessonCRUD
 from app.crud.progress import ProgressCRUD
 from app.services.level_service import (
-    LevelService,
     calculate_numeric_level,
     check_numeric_level_up
 )
@@ -1107,12 +1106,6 @@ async def complete_lesson(
         # Update numeric level
         new_numeric_level = calculate_numeric_level(new_xp)
         current_user.numeric_level = new_numeric_level
-        
-        # Check CEFR tier change
-        tier_up, _ = LevelService.check_level_up(old_xp, new_xp)
-        if tier_up:
-            cefr_status = LevelService.calculate_level_status(new_xp)
-            current_user.level = cefr_status.current_tier.code
         
         # Check numeric level up
         leveled, _, _ = check_numeric_level_up(old_xp, new_xp)

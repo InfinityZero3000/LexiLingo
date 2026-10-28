@@ -691,7 +691,7 @@ async def submit_review(
     streak_bonus = updated_vocab.streak >= 5
     
     # Update User XP, level, and rank
-    from app.services.level_service import check_numeric_level_up, LevelService
+    from app.services.level_service import check_numeric_level_up
     from app.services.rank_service import calculate_rank, apply_rank_info_to_user
     from app.models.games import XPTransaction
     from app.models.progress import DailyActivity
@@ -702,16 +702,13 @@ async def submit_review(
     new_xp = old_xp + xp_awarded
     
     leveled_up, old_level, new_level = check_numeric_level_up(old_xp, new_xp)
-    cefr_status = LevelService.calculate_level_status(new_xp)
-    new_cefr_level = cefr_status.current_tier.code
-    
+
     # Calculate new rank
-    new_rank_info = calculate_rank(new_level, new_cefr_level)
+    new_rank_info = calculate_rank(new_level, current_user.level or "A1")
     
     # Apply user updates
     current_user.total_xp = new_xp
     current_user.numeric_level = new_level
-    current_user.level = new_cefr_level
     apply_rank_info_to_user(current_user, new_rank_info)
     db.add(current_user)
     

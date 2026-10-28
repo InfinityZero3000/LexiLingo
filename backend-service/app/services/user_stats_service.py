@@ -89,6 +89,11 @@ async def get_user_stats(db: AsyncSession, user: User) -> UserStatsResponse:
                 count(
                     UserVocabulary.id,
                     UserVocabulary.user_id == user.id,
+                    UserVocabulary.total_reviews > 0,
+                ).label("words_reviewed"),
+                count(
+                    UserVocabulary.id,
+                    UserVocabulary.user_id == user.id,
                     UserVocabulary.status == "mastered",
                 ).label("words_mastered"),
                 count(
@@ -113,6 +118,7 @@ async def get_user_stats(db: AsyncSession, user: User) -> UserStatsResponse:
         current_streak=stats.current_streak or 0,
         longest_streak=stats.longest_streak or 0,
         words_learned=stats.words_learned or 0,
+        words_reviewed=stats.words_reviewed or 0,
         words_mastered=stats.words_mastered or 0,
         achievements_unlocked=stats.achievements_unlocked or 0,
         total_gems=stats.total_gems or 0,

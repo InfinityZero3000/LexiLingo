@@ -55,6 +55,7 @@ class UserStatsResponse(BaseModel):
     
     # Vocabulary stats
     words_learned: int = Field(default=0)
+    words_reviewed: int = Field(default=0)
     words_mastered: int = Field(default=0)
     
     # Achievements

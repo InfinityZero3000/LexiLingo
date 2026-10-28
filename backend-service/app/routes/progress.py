@@ -37,7 +37,7 @@ from app.models.progress import Streak, DailyActivity, LessonCompletion
 from app.models.course import Lesson, Unit
 from app.services import check_achievements_for_user
 from app.services.level_service import (
-    LevelService, calculate_numeric_level, get_numeric_level_progress,
+    calculate_numeric_level, get_numeric_level_progress,
     check_numeric_level_up
 )
 from app.services.rank_service import (
@@ -285,7 +285,6 @@ async def complete_lesson(
         if xp_earned > 0:
             old_xp = current_user.total_xp or 0
             old_numeric_level = current_user.numeric_level or 1
-            old_proficiency = current_user.level or "A1"
             
             new_xp = old_xp + xp_earned
             current_user.total_xp = new_xp
@@ -293,12 +292,6 @@ async def complete_lesson(
             # Update numeric level
             new_numeric_level = calculate_numeric_level(new_xp)
             current_user.numeric_level = new_numeric_level
-            
-            # Check CEFR tier change
-            tier_up, _ = LevelService.check_level_up(old_xp, new_xp)
-            if tier_up:
-                cefr_status = LevelService.calculate_level_status(new_xp)
-                current_user.level = cefr_status.current_tier.code
             
             # Check numeric level up
             leveled, _, _ = check_numeric_level_up(old_xp, new_xp)

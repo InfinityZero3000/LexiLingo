@@ -658,6 +658,9 @@ async def record_exercise_results_for_user(
         accuracy=profile.accuracy,
         current_level=ProficiencyLevel(profile.assessed_level),
         skill_confidences=skill_confidences_dict,
+        floor=ProficiencyLevel(profile.placement_level)
+        if profile.placement_level
+        else None,
     )
     
     level_changed = new_level.value != previous_level
@@ -1016,6 +1019,8 @@ async def submit_placement_test(
             last_assessment_at=now,
         )
         db.add(profile)
+    profile.placement_level = assessed_level
+    profile.placement_at = now
 
     # The test's own percentage belongs to the test record, not to
     # profile.overall_score: that field is the weighted skill total, and
