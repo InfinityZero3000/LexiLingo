@@ -26,6 +26,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          # Pinned: phosphor_flutter 2.1.0 extends IconData, which is final from Flutter 3.47 on.
+          flutter-version: 3.38.9
           channel: stable
           cache: true
 

@@ -29864,6 +29864,162 @@
       "category": "eligible",
       "group": 4,
       "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart::ContinueLearningCard::Card::1",
+      "path": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart",
+      "entryPoint": "surface",
+      "symbol": "ContinueLearningCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 50,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart::_RotatingLearningCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_RotatingLearningCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 64,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart::_LeadingDisc::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/continue_learning_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_LeadingDisc",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 408,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::Card::0",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 352,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::Card::1",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 833,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::BoxDecoration::8",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "BoxDecoration",
+      "ordinal": 8,
+      "line": 855,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [
