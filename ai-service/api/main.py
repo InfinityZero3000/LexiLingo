@@ -17,6 +17,8 @@ import logging
 import os
 import httpx
 from dotenv import load_dotenv
+
+from api import __version__
 from datetime import datetime, timezone
 from typing import Optional
 from pymongo import ASCENDING, DESCENDING
@@ -384,7 +386,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="LexiLingo AI Service",
     description="AI Service for Chat, STT, TTS with ModelGateway",
-    version="2.1.0",
+    version=__version__,
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
     redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
     openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",
