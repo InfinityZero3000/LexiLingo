@@ -107,6 +107,7 @@ class _FakeVoice extends DuplexVoiceClient {
     required String sessionId,
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
+    String spokenLanguage = 'auto',
     double ttsSpeed = 1.0,
   }) async {
     startArgs.add({

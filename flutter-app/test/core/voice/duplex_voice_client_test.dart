@@ -4,6 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
 
 void main() {
+  test('start payload separates spoken and native languages', () {
+    final payload = buildDuplexStartMessage(
+      sessionId: 'voice-1',
+      learnerLevel: 'B1',
+      nativeLanguage: 'vi',
+    );
+
+    expect(payload['language'], 'auto');
+    expect(payload['native_language'], 'vi');
+  });
+
   test('packs deployed microphone header', () {
     final frame = packMicrophoneFrame(
       sequence: 7,
