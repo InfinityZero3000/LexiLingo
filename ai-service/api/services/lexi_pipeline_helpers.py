@@ -13,6 +13,30 @@ _INTERNAL_CONTEXT_FALLBACK = (
     "Squawk! I couldn't form a safe reply just now. Please try again."
 )
 
+_GREETING_NAME_GLITCH = re.compile(
+    r"(?P<greeting>\b(?:chào\s+bạn|hello|hi|hey)[.!?]?\s+)"
+    r"[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]+(?=\s*[,،])",
+    flags=re.IGNORECASE,
+)
+
+
+def _remove_unexpected_script(
+    text: str,
+    expected_language: str | None,
+) -> str:
+    language = (
+        str(expected_language or "")
+        .lower()
+        .replace("_", "-")
+        .split("-", 1)[0]
+    )
+    if language not in {"en", "vi", "es", "fr"}:
+        return text
+    cleaned = _GREETING_NAME_GLITCH.sub(r"\g<greeting>", text)
+    cleaned = re.sub(r"([.!?])\s*,\s*", r"\1 ", cleaned)
+    cleaned = re.sub(r"\s+([,.;!?])", r"\1", cleaned)
+    return re.sub(r"[ \t]{2,}", " ", cleaned)
+
 
 def _normalize_markdown_for_lexi(text: str) -> str:
     """Normalize malformed markdown emphasis markers produced by model output."""
@@ -62,7 +86,10 @@ def _normalize_markdown_for_lexi(text: str) -> str:
     return "".join(out)
 
 
-def sanitize_lexi_response(text: str) -> str:
+def sanitize_lexi_response(
+    text: str,
+    expected_language: str | None = None,
+) -> str:
     """Remove internal TraceCAG debug payloads from user-facing Lexi output."""
     cleaned = str(text or "").strip()
     if not cleaned:
@@ -96,6 +123,8 @@ def sanitize_lexi_response(text: str) -> str:
 
     cleaned = cleaned.replace("\\*", "*")
     cleaned = cleaned.replace("\\_", "_")
+
+    cleaned = _remove_unexpected_script(cleaned, expected_language)
 
     cleaned = _normalize_markdown_for_lexi(cleaned)
 

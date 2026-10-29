@@ -29,3 +29,26 @@ def test_closing_tag_mid_reply_is_left_alone():
     """Only a leading orphan is an artifact; anything else is the model's text."""
     reply = "Use </think> as an example of an XML closing tag."
     assert "</think>" in sanitize_lexi_response(reply)
+
+
+def test_vietnamese_reply_drops_accidental_arabic_name_token():
+    reply = "Chào bạn! بالتأكيد, chúng ta có thể luyện nói ngay bây giờ."
+
+    assert sanitize_lexi_response(reply, expected_language="vi") == (
+        "Chào bạn! chúng ta có thể luyện nói ngay bây giờ."
+    )
+
+
+def test_non_latin_reply_is_preserved_outside_latin_ui_languages():
+    reply = "مرحباً! كيف يمكنني مساعدتك؟"
+
+    assert sanitize_lexi_response(reply, expected_language="ar") == reply
+
+
+def test_requested_arabic_is_preserved_for_a_vietnamese_learner():
+    reply = "Từ مرحباً có nghĩa là xin chào."
+
+    assert sanitize_lexi_response(
+        reply,
+        expected_language="vi",
+    ) == reply
