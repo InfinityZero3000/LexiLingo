@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
@@ -130,10 +132,44 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   }
 }
 
+class _CapturingAiApiClient extends AiApiClient {
+  String? path;
+
+  @override
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, String>? headers,
+    Map<String, String>? fields,
+    required String fileField,
+    required Uint8List fileBytes,
+    required String filename,
+    Duration? timeout,
+  }) async {
+    this.path = path;
+    return const {'text': 'xin chào'};
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('LexiChatProvider', () {
+    test('legacy audio transcription requests language auto-detection', () async {
+      final aiClient = _CapturingAiApiClient();
+      final provider = LexiChatProvider(
+        repository: _FakeLexiChatRepository(),
+        aiClient: aiClient,
+      );
+      addTearDown(provider.dispose);
+
+      final transcript = await provider.transcribeAudio(
+        Uint8List.fromList([1, 2, 3]),
+      );
+
+      expect(aiClient.path, '/stt/transcribe?language=auto');
+      expect(transcript, 'xin chào');
+    });
+
     test('builds web-safe request ids without crypto random', () async {
       final repo = _FakeLexiChatRepository();
       final provider = LexiChatProvider(
