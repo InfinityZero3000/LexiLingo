@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from typing import Any
 
 import httpx
@@ -175,7 +176,7 @@ def render_card_facts(card: dict[str, Any], intents: set[str]) -> str:
     lines: list[str] = []
 
     if "identity" in intents or "progress" in intents:
-        name = card.get("display_name")
+        name = _first_name(card)
         if name:
             lines.append(f"Name: {name}")
         if card.get("native_language"):
@@ -264,11 +265,35 @@ def card_level(card: dict[str, Any] | None) -> str | None:
 
 
 def _first_name(card: dict[str, Any]) -> str | None:
-    name = str(card.get("display_name") or "").strip()
+    name = unicodedata.normalize("NFC", str(card.get("display_name") or "").strip())
     if not name or "@" in name:
         return None
     first = name.split()[0]
-    return first if len(first) <= 30 else None
+    if not 1 < len(first) <= 30:
+        return None
+    language = str(card.get("native_language") or "").lower().split("-", 1)[0]
+    for char in first:
+        if char in {"-", "'", "’"}:
+            continue
+        category = unicodedata.category(char)
+        if category.startswith("M"):
+            continue
+        if not category.startswith("L") or not _name_script_matches(char, language):
+            return None
+    return first
+
+
+def _name_script_matches(char: str, language: str) -> bool:
+    codepoint = ord(char)
+    if "LATIN" in unicodedata.name(char, ""):
+        return True
+    if language == "ja":
+        return 0x3040 <= codepoint <= 0x30FF or 0x3400 <= codepoint <= 0x9FFF
+    if language == "ko":
+        return 0xAC00 <= codepoint <= 0xD7AF or 0x3400 <= codepoint <= 0x9FFF
+    if language == "zh":
+        return 0x3400 <= codepoint <= 0x9FFF
+    return False
 
 
 def profile_defaults(card: dict[str, Any] | None) -> dict[str, str]:

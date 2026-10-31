@@ -68,6 +68,14 @@ def test_no_facts_without_intent_or_card():
     assert render_card_facts({}, {"progress"}) == ""
 
 
+def test_invalid_cross_script_name_is_not_added_to_identity_facts():
+    card = {**CARD, "display_name": "بالتأكيد", "native_language": "vi"}
+    facts = render_card_facts(card, {"identity"})
+
+    assert "Name:" not in facts
+    assert "بالتأكيد" not in facts
+
+
 def test_course_rows_are_attached_only_for_course_turns():
     assert course_suggestions(CARD, {"course"})[0]["course_id"] == "c2"
     assert course_suggestions(CARD, {"progress"}) == []
