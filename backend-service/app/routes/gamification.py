@@ -30,8 +30,8 @@ from app.schemas.gamification import (
     WalletResponse, WalletHistoryResponse, WalletTransactionResponse,
     LeaderboardResponse, LeaderboardUserEntry, UserLeagueStatusResponse,
     ShopItemResponse, PurchaseRequest, PurchaseResponse,
-    EquipAvatarRequest, EquipAvatarResponse, InventoryResponse,
-    UserInventoryItemResponse, UseItemRequest, UseItemResponse,
+    EquipAvatarRequest, EquipAvatarResponse,
+    InventoryResponse, UserInventoryItemResponse, UseItemRequest, UseItemResponse,
     FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
     ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
     LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse,
@@ -107,11 +107,7 @@ async def get_all_achievements(
     Returns all achievement definitions. If authenticated, includes
     unlock status for the current user.
 
-    `is_hidden` achievements (secret long-term goals like year_legend, or
-    ones with no working unlock path yet) are excluded here unless the
-    user already has them — the field existed end-to-end but nothing ever
-    filtered on it, so every secret achievement spoiled itself on the very
-    screen meant to let learners discover it by surprise.
+    Hidden achievements stay secret until the current user unlocks them.
     """
     achievements = await AchievementCRUD.get_all_achievements(db)
 
@@ -376,9 +372,9 @@ async def _personalize_leaderboard(
     current_user: User,
     normalized_league: str,
 ) -> dict:
-    """Stamp a shared (per-league, not per-user) cached payload with this viewer's rank/flags."""
+    """Add viewer-specific flags to a shared per-league payload."""
     data = dict(base_data)
-    entries = [dict(e) for e in data.get("entries", [])]
+    entries = [dict(entry) for entry in data.get("entries", [])]
     current_user_id = str(current_user.id)
     current_user_rank = None
 
@@ -387,20 +383,25 @@ async def _personalize_leaderboard(
         if entry["is_current_user"]:
             current_user_rank = entry["rank"]
 
-    if current_user_rank is None and normalized_league == (current_user.rank or "bronze").lower():
+    if (
+        current_user_rank is None
+        and normalized_league == (current_user.rank or "bronze").lower()
+    ):
         current_user_rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
         current_entry = await LeaderboardCRUD.get_or_create_entry(db, current_user.id)
-        entries.append({
-            "rank": current_user_rank or len(entries) + 1,
-            "user_id": current_user_id,
-            "username": current_user.username,
-            "display_name": current_user.display_name,
-            "avatar_url": current_user.avatar_url,
-            "user_rank": current_user.rank,
-            "xp_earned": current_entry.xp_earned,
-            "lessons_completed": current_entry.lessons_completed,
-            "is_current_user": True,
-        })
+        entries.append(
+            {
+                "rank": current_user_rank or len(entries) + 1,
+                "user_id": current_user_id,
+                "username": current_user.username,
+                "display_name": current_user.display_name,
+                "avatar_url": current_user.avatar_url,
+                "user_rank": current_user.rank,
+                "xp_earned": current_entry.xp_earned,
+                "lessons_completed": current_entry.lessons_completed,
+                "is_current_user": True,
+            }
+        )
 
     data["entries"] = entries
     data["current_user_rank"] = current_user_rank
@@ -421,10 +422,6 @@ async def get_leaderboard(
     """
     normalized_league = league.lower().strip()
 
-    # Cache key is per-league only (not per-user): the standings are identical for
-    # every viewer, only is_current_user/current_user_rank differ, which are stamped
-    # on after the cache read. Keying by user_id previously made every request a
-    # guaranteed cache miss under real traffic — each user hit the DB every time.
     cache_key = build_cache_key("leaderboard", league=normalized_league)
     cached = await get_cached(cache_key)
     cached_matches_rank = (
@@ -432,17 +429,19 @@ async def get_leaderboard(
         and str(cached.get("league", "")).lower() == normalized_league
     )
     if cached and cached_matches_rank:
-        leaderboard_data = await _personalize_leaderboard(db, cached, current_user, normalized_league)
+        leaderboard_data = await _personalize_leaderboard(
+            db, cached, current_user, normalized_league
+        )
         response.headers["X-Cache-Version"] = compute_cache_version(cached)
         response.headers["X-Cache-Source"] = "redis"
         return ApiResponse(
             success=True,
             message="Leaderboard retrieved successfully",
-            data=leaderboard_data
+            data=leaderboard_data,
         )
 
-    # Full-table league sync only needs to run once per cache window now that the
-    # cache is shared, not on every single request.
+    # This may scan every entry for the current week, so do it once per shared
+    # cache window instead of once per viewer request.
     await LeaderboardCRUD.sync_current_week_entries_to_user_rank(db)
 
     entries = await LeaderboardCRUD.get_leaderboard(db, league)
@@ -505,14 +504,16 @@ async def get_leaderboard(
     ).model_dump(mode="json")
     await set_cached(cache_key, leaderboard_data, ttl=30)
 
-    personalized_data = await _personalize_leaderboard(db, leaderboard_data, current_user, normalized_league)
+    personalized_data = await _personalize_leaderboard(
+        db, leaderboard_data, current_user, normalized_league
+    )
     response.headers["X-Cache-Version"] = compute_cache_version(leaderboard_data)
     response.headers["X-Cache-Source"] = "origin"
 
     return ApiResponse(
         success=True,
         message="Leaderboard retrieved successfully",
-        data=personalized_data
+        data=personalized_data,
     )
 
 
@@ -540,9 +541,9 @@ async def get_my_league_status(
         current_user.rank,
     )
     _, week_end = LeaderboardCRUD.get_current_week_range()
-    
+
     hours_remaining = int((week_end - datetime.now(timezone.utc)).total_seconds() / 3600)
-    
+
     return ApiResponse(
         success=True,
         message="League status retrieved successfully",
