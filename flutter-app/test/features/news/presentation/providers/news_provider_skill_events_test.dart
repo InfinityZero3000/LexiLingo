@@ -107,5 +107,6 @@ class _FakeNewsRepository extends NewsRepository {
   _FakeNewsRepository({required this.quiz});
 
   @override
-  Future<NewsQuiz?> getQuiz(String articleId) async => quiz;
+  Future<NewsQuiz?> getQuiz(String articleId, {NewsArticle? article}) async =>
+      quiz;
 }
