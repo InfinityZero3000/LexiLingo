@@ -60,7 +60,7 @@ FastAPI + SQLAlchemy async (PostgreSQL) + Celery + Redis. Tất cả route dư�
 
 ## 5. Đánh giá trình độ
 
-`/proficiency` — hồ sơ trình độ, ghi nhận kết quả bài tập, kiểm tra level, ngưỡng level, lịch sử, bài test xếp lớp (lấy + nộp), nộp bài thi có kiểm soát (`exam-gated/submit`).
+`/proficiency` — hồ sơ trình độ, ghi nhận kết quả bài tập, kiểm tra level, ngưỡng level, lịch sử, bài test xếp lớp (lấy + nộp).
 
 `/recommendations` — gợi ý nội dung cá nhân hoá (RecGraph/EASE/SKNN, xem [[project_recsys_phases]]).
 
