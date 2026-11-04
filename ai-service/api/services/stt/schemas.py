@@ -31,6 +31,7 @@ class StartMessage(BaseModel):
     client_started_at: Optional[int] = None
     duplex: bool = False
     tts_enabled: bool = True
+    tts_speed: float = Field(default=1.0, ge=0.5, le=2.0)
     learner_level: str = Field(default="B1", pattern=r"^(A1|A2|B1|B2|C1|C2)$")
 
 

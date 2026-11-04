@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 import 'package:http/http.dart' as http;
 import 'package:record/record.dart';
@@ -9,6 +10,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import '../network/api_config.dart';
 import '../network/backend_auth_header_provider.dart';
+import 'duplex_voice_phase.dart';
 import 'pcm_frame_chunker.dart';
 import 'voice_audio_normalizer.dart';
 
@@ -19,6 +21,12 @@ class DuplexVoiceClient {
     AudioRecorder? recorder,
   }) : baseUrl = baseUrl ?? ApiConfig.aiServiceUrl,
        _recorder = recorder ?? AudioRecorder();
+
+  static const _replayCapSeconds = 30;
+
+  /// Process-wide capability hint used by the chat UI after a 404 ticket
+  /// response proves that duplex voice is disabled on this deployment.
+  static bool serverUnavailable = false;
 
   final BackendAuthHeaderProvider authHeaders;
   final String baseUrl;
@@ -37,31 +45,54 @@ class DuplexVoiceClient {
   final _clock = Stopwatch();
   Future<void> _incoming = Future.value();
   Future<void> _captureTransition = Future.value();
+  Completer<void>? _drainAbort;
   bool _stopping = false;
+  bool _replaying = false;
+  final _replay = BytesBuilder(copy: false);
+  int _replayRate = 22050;
 
   final events = StreamController<Map<String, dynamic>>.broadcast();
+  final phase = ValueNotifier<DuplexVoicePhase>(DuplexVoicePhase.idle);
+  final inputLevel = ValueNotifier<double>(0);
+  String? lastErrorCode;
+
+  bool get canReplay =>
+      phase.value == DuplexVoicePhase.listening && _replay.length > 0;
 
   Future<void> start({
     required String sessionId,
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
+    double ttsSpeed = 1.0,
   }) async {
     if (_channel != null) await stop();
+    phase.value = DuplexVoicePhase.connecting;
+    lastErrorCode = null;
     _stopping = false;
     _clock
       ..reset()
       ..start();
-    if (!await _recorder.isEncoderSupported(AudioEncoder.pcm16bits) ||
-        !await _recorder.hasPermission()) {
-      throw StateError('PCM microphone capture is unavailable');
-    }
     try {
+      if (!await _recorder.isEncoderSupported(AudioEncoder.pcm16bits) ||
+          !await _recorder.hasPermission()) {
+        lastErrorCode = 'MIC_PERMISSION';
+        throw StateError('PCM microphone capture is unavailable');
+      }
       final headers = await authHeaders.call();
       final response = await http.post(
         Uri.parse('$baseUrl/voice/ticket'),
         headers: headers,
       );
+      if (response.statusCode == 404) {
+        serverUnavailable = true;
+        lastErrorCode = 'UNAVAILABLE';
+        phase.value = DuplexVoicePhase.unavailable;
+        throw StateError('Voice is disabled on the server');
+      }
       if (response.statusCode != 200) {
+        lastErrorCode = response.statusCode == 429
+            ? 'QUOTA_EXCEEDED'
+            : 'TICKET_FAILED';
         throw StateError('Voice ticket failed (${response.statusCode})');
       }
       final ticket =
@@ -104,12 +135,17 @@ class DuplexVoiceClient {
           'tts_enabled': true,
           'learner_level': learnerLevel,
           'native_language': nativeLanguage,
+          if (ttsSpeed != 1.0) 'tts_speed': ttsSpeed,
         }),
       );
 
       await _startCapture();
     } catch (_) {
-      await stop();
+      if (phase.value != DuplexVoicePhase.unavailable) {
+        lastErrorCode ??= 'CONNECT_FAILED';
+        phase.value = DuplexVoicePhase.error;
+      }
+      await stop(failed: true);
       rethrow;
     }
   }
@@ -132,6 +168,7 @@ class DuplexVoiceClient {
           sampleRate: 48000,
           channels: 1,
         );
+        inputLevel.value = pcm16Level(normalized);
         for (final pcm in _chunker.add(normalized)) {
           _channel?.sink.add(
             packMicrophoneFrame(
@@ -153,6 +190,7 @@ class DuplexVoiceClient {
       await _recorder.stop();
       _normalizer.reset();
       _chunker.reset();
+      inputLevel.value = 0;
     });
   }
 
@@ -177,9 +215,46 @@ class DuplexVoiceClient {
     await _startCapture();
   }
 
-  Future<void> stop() async {
+  Future<void> interrupt() async {
+    if (!phase.value.canInterrupt) return;
+    if (_replaying) {
+      await _resetPlayback();
+      return;
+    }
+    await cancelTurn();
+    phase.value = DuplexVoicePhase.listening;
+  }
+
+  Future<void> replayLast() async {
+    if (!canReplay || _stopping) return;
+    final pcm = _replay.toBytes();
+    await _stopCapture();
+    _replaying = true;
+    phase.value = DuplexVoicePhase.speaking;
+    try {
+      await _ensurePlayback(_replayRate);
+      _soloud.addAudioDataStream(_source!, pcm);
+      await _drainPlayback();
+    } catch (_) {
+      // _drainPlayback has already moved the client to an error state.
+    } finally {
+      _replaying = false;
+      if (!_stopping) {
+        phase.value = DuplexVoicePhase.listening;
+        await _startCapture();
+      }
+    }
+  }
+
+  Future<void> stop({bool failed = false}) async {
     _stopping = true;
     _clock.stop();
+    if (!failed && phase.value != DuplexVoicePhase.unavailable) {
+      phase.value = DuplexVoicePhase.idle;
+    }
+    // Abort any TTS drain before waiting for the serialized inbound handler.
+    // Otherwise stop() can wait for the full playback timeout.
+    await _resetPlayback();
     final channel = _channel;
     final socketSubscription = _socketSubscription;
     _channel = null;
@@ -202,6 +277,7 @@ class DuplexVoiceClient {
       // Cleanup must continue after a malformed or failed inbound event.
     }
     await _resetPlayback();
+    _replay.clear();
     _normalizer.reset();
     _chunker.reset();
   }
@@ -209,6 +285,8 @@ class DuplexVoiceClient {
   Future<void> dispose() async {
     await stop();
     _recorder.dispose();
+    phase.dispose();
+    inputLevel.dispose();
     await events.close();
   }
 
@@ -220,11 +298,13 @@ class DuplexVoiceClient {
         await _stopCapture();
       }
       if (type == 'turn_started') {
+        _replay.clear();
         _activeTurnSeq = event['turn_seq'] as int?;
         _expectedAudioSeq = 0;
       }
       if (type == 'tts.audio.start') {
-        await _ensurePlayback(event['sample_rate'] as int);
+        _replayRate = event['sample_rate'] as int;
+        await _ensurePlayback(_replayRate);
       }
       if (type == 'tts.audio.end') {
         await _drainPlayback();
@@ -233,13 +313,25 @@ class DuplexVoiceClient {
         await _resetPlayback();
         _activeTurnSeq = null;
       }
+      if (type == 'voice.error' || type == 'stt.error') {
+        lastErrorCode = event['code']?.toString();
+      }
       if (type == 'voice.error') {
+        if (isRecoverableVoiceError(lastErrorCode)) {
+          await _startCapture();
+        } else {
+          _stopping = true;
+          await _stopCapture();
+          await _channel?.sink.close();
+        }
+      } else if (type == 'stt.error') {
         _stopping = true;
         await _stopCapture();
         await _channel?.sink.close();
       } else if (type == 'turn.done' || type == 'turn.cancelled') {
         await _startCapture();
       }
+      phase.value = reduceVoicePhase(phase.value, event);
       events.add(event);
       return;
     }
@@ -252,6 +344,9 @@ class DuplexVoiceClient {
       return;
     }
     _expectedAudioSeq++;
+    if (_replay.length < _replayRate * 2 * _replayCapSeconds) {
+      _replay.add(frame.pcm);
+    }
     if (_source != null) _soloud.addAudioDataStream(_source!, frame.pcm);
   }
 
@@ -270,14 +365,18 @@ class DuplexVoiceClient {
   Future<void> _drainPlayback() async {
     final source = _source;
     if (source == null) return;
+    final abort = _drainAbort = Completer<void>();
     try {
       _soloud.setDataIsEnded(source);
-      await source.allInstancesFinished.first.timeout(
-        const Duration(seconds: 30),
-      );
+      await Future.any([
+        source.allInstancesFinished.first,
+        abort.future,
+      ]).timeout(const Duration(seconds: 30));
     } catch (_) {
       _stopping = true;
       await _stopCapture();
+      lastErrorCode = 'PLAYBACK_FAILED';
+      phase.value = DuplexVoicePhase.error;
       if (!events.isClosed) {
         events.add({
           'type': 'voice.error',
@@ -296,6 +395,8 @@ class DuplexVoiceClient {
     _stopping = true;
     await _stopCapture();
     await _resetPlayback();
+    lastErrorCode = 'CONNECTION_CLOSED';
+    phase.value = DuplexVoicePhase.error;
     if (!events.isClosed) {
       events.add({
         'type': 'voice.error',
@@ -306,6 +407,8 @@ class DuplexVoiceClient {
   }
 
   Future<void> _resetPlayback() async {
+    final abort = _drainAbort;
+    if (abort != null && !abort.isCompleted) abort.complete();
     if (_handle != null) await _soloud.stop(_handle!);
     if (_source != null) _soloud.disposeSource(_source!);
     _handle = null;
