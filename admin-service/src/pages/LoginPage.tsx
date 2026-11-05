@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthProvider";
 import { ENV } from "../lib/env";
 import { useI18n } from "../lib/i18n";
-import GlobeBackground from "../components/login-globe/GlobeBackground";
+import { useTheme } from "../lib/theme";
+import { ThemeToggle } from "../components/ThemeToggle";
+const GlobeBackground = lazy(() => import("../components/login-globe/GlobeBackground"));
 
 export const LoginPage = () => {
   const { signInWithGoogle, loading } = useAuth();
@@ -13,6 +15,7 @@ export const LoginPage = () => {
   const isGsiInitialized = useRef(false);
   const [gsiReady, setGsiReady] = useState(false);
   const { t } = useI18n();
+  const { theme } = useTheme();
 
   const handleGoogleCallback = useCallback(
     async (response: any) => {
@@ -64,7 +67,7 @@ export const LoginPage = () => {
         );
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           type: "standard",
-          theme: "filled_black",
+          theme: theme === "dark" ? "filled_black" : "outline",
           size: "large",
           text: "signin_with",
           shape: "pill",
@@ -90,12 +93,14 @@ export const LoginPage = () => {
         clearTimeout(timeout);
       };
     }
-  }, [handleGoogleCallback]);
+  }, [handleGoogleCallback, theme]);
 
   return (
     <div className="login-page">
       {/* 3D Globe background */}
-      <GlobeBackground />
+      <Suspense fallback={null}>
+        <GlobeBackground />
+      </Suspense>
 
       {/* Animated gradient orbs */}
       <div className="login-orb login-orb-1" />
@@ -190,6 +195,10 @@ export const LoginPage = () => {
           </svg>
           <span>Discord</span>
         </a>
+
+        <div className="login-topbar-sep" />
+
+        <ThemeToggle className="login-theme-toggle" />
       </div>
 
       {/* Hero text — left side */}

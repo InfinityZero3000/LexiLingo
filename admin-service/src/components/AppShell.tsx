@@ -3,6 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { Role } from "../lib/auth";
 import { useI18n } from "../lib/i18n";
+import { ThemeToggle } from "./ThemeToggle";
 
 export type NavItem = {
   to: string;
@@ -98,6 +99,7 @@ export const AppShell = ({
             <span></span>
           </button>
           <span className="topbar-brand">LexiLingo</span>
+          <ThemeToggle className="topbar-theme-toggle" />
         </div>
         <div className="topbar-line" />
 

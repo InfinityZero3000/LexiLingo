@@ -91,10 +91,10 @@ export const AiModelsPage = () => {
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
+        <div className="panel" style={{ padding: 16, background: "var(--tint-orange)", border: "1px solid rgba(251, 146, 60, 0.5)" }}>
+          <h4 style={{ margin: "0 0 8px", color: "var(--ink-orange)" }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
           {warnings.map((w, i) => (
-            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w.message}</p>
+            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "var(--ink-orange)" }}>{w.message}</p>
           ))}
         </div>
       )}

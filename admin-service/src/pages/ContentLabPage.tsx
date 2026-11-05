@@ -276,10 +276,10 @@ export const ContentLabPage = () => {
       {error && <div className="form-error">{error}</div>}
       {loading && <div className="loading">Đang tải dữ liệu...</div>}
       {importResult && (
-        <div className="panel" style={{ padding: "12px 16px", background: "#f0fdf4" }}>
+        <div className="panel" style={{ padding: "12px 16px", background: "rgba(34, 197, 94, 0.12)" }}>
           <strong>Import hoàn tất:</strong> {importResult.created} tạo mới, {importResult.skipped} bỏ qua
           {importResult.errors.length > 0 && (
-            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "#b91c1c" }}>
+            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "var(--ink-red)" }}>
               {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           )}

@@ -12,6 +12,7 @@ export interface GlobeArcs {
   group: THREE.Group;
   materials: THREE.ShaderMaterial[];
   updateHeads: (progresses: number[]) => void;
+  setLight: (light: boolean) => void;
   dispose: () => void;
 }
 
@@ -70,6 +71,7 @@ export function createGlobeArcs(isMobile: boolean): GlobeArcs {
         uProgress: { value: rng() },
         uColorStart: { value: new THREE.Color("#FF4D00") }, // Deep orange tail
         uColorEnd: { value: new THREE.Color("#FFF2C8") }, // Bright yellow/white head
+        uHeadColor: { value: new THREE.Color("#FFFFFF") },
       },
       vertexShader: arcVertexShader,
       fragmentShader: arcFragmentShader,
@@ -127,6 +129,15 @@ export function createGlobeArcs(isMobile: boolean): GlobeArcs {
     attr.needsUpdate = true;
   };
 
+  // White heads vanish on a light page, so swap to a saturated orange palette
+  const setLight = (light: boolean) => {
+    materials.forEach((m) => {
+      m.uniforms.uColorEnd.value.set(light ? "#FF9A1F" : "#FFF2C8");
+      m.uniforms.uHeadColor.value.set(light ? "#E63E00" : "#FFFFFF");
+    });
+    headMat.color.set(light ? "#FF6A00" : "#FFFFFF");
+  };
+
   const dispose = () => {
     geometries.forEach((g) => g.dispose());
     materials.forEach((m) => m.dispose());
@@ -134,5 +145,5 @@ export function createGlobeArcs(isMobile: boolean): GlobeArcs {
     glowTex.dispose();
   };
 
-  return { group, materials, updateHeads, dispose };
+  return { group, materials, updateHeads, setLight, dispose };
 }

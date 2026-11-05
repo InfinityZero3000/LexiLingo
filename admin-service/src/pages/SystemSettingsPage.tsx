@@ -289,9 +289,9 @@ export const SystemSettingsPage = () => {
           display: flex;
           align-items: center;
           gap: 8px;
-          background: #d1fae5;
+          background: rgba(16, 185, 129, 0.14);
           border: 1px solid #10b981;
-          color: #065f46;
+          color: var(--ink-teal);
           padding: 12px 16px;
           border-radius: 8px;
           font-size: 14px;
