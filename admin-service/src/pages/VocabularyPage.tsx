@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -263,49 +264,47 @@ export const VocabularyPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? t.vocabulary.editWord : t.vocabulary.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
+        <Dialog onClose={() => setShowForm(false)} maxWidth={520}>
+          <h3>{editingId ? t.vocabulary.editWord : t.vocabulary.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <label>
+              Từ *
+              <input value={form.word} onChange={(e) => setForm({ ...form, word: e.target.value })} required />
+            </label>
+            <label>
+              Định nghĩa *
+              <textarea rows={2} value={form.definition} onChange={(e) => setForm({ ...form, definition: e.target.value })} required />
+            </label>
+            <label>
+              Dịch nghĩa (Tiếng Việt)
+              <input value={form.translation} onChange={(e) => setForm({ ...form, translation: e.target.value })} />
+            </label>
+            <label>
+              Phát âm
+              <input value={form.pronunciation} onChange={(e) => setForm({ ...form, pronunciation: e.target.value })} placeholder="/prəˌnʌnsiˈeɪʃn/" />
+            </label>
+            <div className="form-row">
               <label>
-                Từ *
-                <input value={form.word} onChange={(e) => setForm({ ...form, word: e.target.value })} required />
+                Loại từ
+                <select value={form.part_of_speech} onChange={(e) => setForm({ ...form, part_of_speech: e.target.value })}>
+                  {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
               </label>
               <label>
-                Định nghĩa *
-                <textarea rows={2} value={form.definition} onChange={(e) => setForm({ ...form, definition: e.target.value })} required />
+                Cấp độ
+                <select value={form.difficulty_level} onChange={(e) => setForm({ ...form, difficulty_level: e.target.value })}>
+                  {LEVEL_OPTIONS.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
               </label>
-              <label>
-                Dịch nghĩa (Tiếng Việt)
-                <input value={form.translation} onChange={(e) => setForm({ ...form, translation: e.target.value })} />
-              </label>
-              <label>
-                Phát âm
-                <input value={form.pronunciation} onChange={(e) => setForm({ ...form, pronunciation: e.target.value })} placeholder="/prəˌnʌnsiˈeɪʃn/" />
-              </label>
-              <div className="form-row">
-                <label>
-                  Loại từ
-                  <select value={form.part_of_speech} onChange={(e) => setForm({ ...form, part_of_speech: e.target.value })}>
-                    {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Cấp độ
-                  <select value={form.difficulty_level} onChange={(e) => setForm({ ...form, difficulty_level: e.target.value })}>
-                    {LEVEL_OPTIONS.map((l) => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

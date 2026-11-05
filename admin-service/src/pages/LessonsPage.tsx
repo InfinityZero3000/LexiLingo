@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -337,86 +338,84 @@ export const LessonsPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? t.lessons.editLesson : t.lessons.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
-              {isStandalone && !editingId && (
-                <label>
-                  Chương *
-                  <select
-                    value={formUnitId}
-                    onChange={(e) => setFormUnitId(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Chọn chương --</option>
-                    {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
-                  </select>
-                </label>
-              )}
+        <Dialog onClose={() => setShowForm(false)} maxWidth={520}>
+          <h3>{editingId ? t.lessons.editLesson : t.lessons.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            {isStandalone && !editingId && (
               <label>
-                Tiêu đề *
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                Chương *
+                <select
+                  value={formUnitId}
+                  onChange={(e) => setFormUnitId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Chọn chương --</option>
+                  {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
+                </select>
+              </label>
+            )}
+            <label>
+              Tiêu đề *
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </label>
+            <label>
+              Mô tả
+              <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+            <label>
+              Outcome (can-do statement)
+              <textarea
+                rows={2}
+                placeholder="Vd: Bạn có thể đặt bàn ăn qua điện thoại bằng tiếng Anh."
+                value={form.outcome}
+                onChange={(e) => setForm({ ...form, outcome: e.target.value })}
+              />
+            </label>
+            <div className="form-row">
+              <label>
+                Loại bài học *
+                <select value={form.lesson_type} onChange={(e) => setForm({ ...form, lesson_type: e.target.value })}>
+                  {LESSON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
               </label>
               <label>
-                Mô tả
-                <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                Kỹ năng chấm điểm
+                <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                  <option value="">— Theo khóa học —</option>
+                  {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                Thứ tự
+                <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                XP thưởng
+                <input type="number" min={0} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: Number(e.target.value) })} />
               </label>
               <label>
-                Outcome (can-do statement)
-                <textarea
-                  rows={2}
-                  placeholder="Vd: Bạn có thể đặt bàn ăn qua điện thoại bằng tiếng Anh."
-                  value={form.outcome}
-                  onChange={(e) => setForm({ ...form, outcome: e.target.value })}
-                />
+                Ngưỡng đạt (%)
+                <input type="number" min={0} max={100} value={form.pass_threshold} onChange={(e) => setForm({ ...form, pass_threshold: Number(e.target.value) })} />
               </label>
-              <div className="form-row">
-                <label>
-                  Loại bài học *
-                  <select value={form.lesson_type} onChange={(e) => setForm({ ...form, lesson_type: e.target.value })}>
-                    {LESSON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Kỹ năng chấm điểm
-                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
-                    <option value="">— Theo khóa học —</option>
-                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div className="form-row">
-                <label>
-                  Thứ tự
-                  <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
-                </label>
-              </div>
-              <div className="form-row">
-                <label>
-                  XP thưởng
-                  <input type="number" min={0} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: Number(e.target.value) })} />
-                </label>
-                <label>
-                  Ngưỡng đạt (%)
-                  <input type="number" min={0} max={100} value={form.pass_threshold} onChange={(e) => setForm({ ...form, pass_threshold: Number(e.target.value) })} />
-                </label>
-              </div>
-              <div className="form-row">
-                <label>
-                  Thời lượng (phút)
-                  <input type="number" min={1} max={120} value={form.estimated_minutes} onChange={(e) => setForm({ ...form, estimated_minutes: Number(e.target.value) })} />
-                </label>
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <div className="form-row">
+              <label>
+                Thời lượng (phút)
+                <input type="number" min={1} max={120} value={form.estimated_minutes} onChange={(e) => setForm({ ...form, estimated_minutes: Number(e.target.value) })} />
+              </label>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

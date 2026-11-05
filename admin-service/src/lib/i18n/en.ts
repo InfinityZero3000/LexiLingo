@@ -104,6 +104,8 @@ const en: Translations = {
     logout: "Logout",
     subtitle: "Content, system and operations control",
     toggleMenu: "Toggle menu",
+    themeToLight: "Switch to light theme",
+    themeToDark: "Switch to dark theme",
     breadcrumb: "Breadcrumb",
   },
 

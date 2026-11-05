@@ -1,9 +1,11 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../lib/theme";
+import { useI18n } from "../lib/i18n";
 
 export const ThemeToggle = ({ className = "" }: { className?: string }) => {
   const { theme, toggle } = useTheme();
-  const label = theme === "dark" ? "Chuyển sang giao diện sáng" : "Chuyển sang giao diện tối";
+  const { t } = useI18n();
+  const label = theme === "dark" ? t.appShell.themeToLight : t.appShell.themeToDark;
   return (
     <button
       type="button"

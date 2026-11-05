@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -252,54 +253,52 @@ export const UnitsPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-            <h3>{editingId ? t.units.editUnit : t.units.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
-              {isStandalone && !editingId && (
-                <label>
-                  Khóa học *
-                  <select
-                    value={formCourseId}
-                    onChange={(e) => setFormCourseId(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Chọn khóa học --</option>
-                    {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                </label>
-              )}
+        <Dialog onClose={() => setShowForm(false)} maxWidth={480}>
+          <h3>{editingId ? t.units.editUnit : t.units.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            {isStandalone && !editingId && (
               <label>
-                {t.units.unitTitle}
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                Khóa học *
+                <select
+                  value={formCourseId}
+                  onChange={(e) => setFormCourseId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Chọn khóa học --</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                </select>
+              </label>
+            )}
+            <label>
+              {t.units.unitTitle}
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </label>
+            <label>
+              {t.common.description}
+              <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+            <div className="form-row">
+              <label>
+                {t.units.order}
+                <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
               </label>
               <label>
-                {t.common.description}
-                <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                Màu nền
+                <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#4CAF50" />
               </label>
-              <div className="form-row">
-                <label>
-                  {t.units.order}
-                  <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
-                </label>
-                <label>
-                  Màu nền
-                  <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#4CAF50" />
-                </label>
-              </div>
-              <label>
-                Icon URL
-                <input value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })} />
-              </label>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <label>
+              Icon URL
+              <input value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })} />
+            </label>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

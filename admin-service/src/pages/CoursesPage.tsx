@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { BookOpen, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -290,10 +291,10 @@ export const CoursesPage = () => {
                   header: t.courses.course,
                   render: (row) => (
                     <div>
-                      <div className="table-title" style={{ cursor: "pointer", color: "var(--accent)" }}
+                      <button type="button" className="table-title" style={{ cursor: "pointer", color: "var(--accent)", background: "none", border: "none", padding: 0, font: "inherit", textAlign: "left" }}
                         onClick={() => navigate(`/admin/courses/${row.id}/units`)}>
                         {row.title}
-                      </div>
+                      </button>
                       <div className="table-sub">{row.description || "—"}</div>
                     </div>
                   ),
@@ -356,64 +357,62 @@ export const CoursesPage = () => {
       </div>
 
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? t.courses.editCourse : t.courses.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
+        <Dialog onClose={() => setShowForm(false)} maxWidth={520}>
+          <h3>{editingId ? t.courses.editCourse : t.courses.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <label>
+              {t.courses.courseTitle}
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </label>
+            <label>
+              {t.common.description}
+              <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+            <div className="form-row">
               <label>
-                {t.courses.courseTitle}
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-              </label>
-              <label>
-                {t.common.description}
-                <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              </label>
-              <div className="form-row">
-                <label>
-                  {t.courses.language}
-                  <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
-                </label>
-                <label>
-                  {t.courses.level}
-                  <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
-                    {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Kỹ năng chính
-                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
-                    <option value="">— Chưa gắn nhãn —</option>
-                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
-              </div>
-              <label>
-                {t.courses.tags}
-                <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+                {t.courses.language}
+                <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
               </label>
               <label>
-                {t.courses.thumbnailUrl}
-                <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
+                {t.courses.level}
+                <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
+                  {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
               </label>
-              <label className="checkbox">
-                <input
-                  type="checkbox"
-                  checked={form.is_published}
-                  disabled={!editingId}
-                  onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
-                />
-                {t.courses.publishNow}
+              <label>
+                Kỹ năng chính
+                <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                  <option value="">— Chưa gắn nhãn —</option>
+                  {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
               </label>
-              <p className="form-hint">{t.courses.publishRequirement}</p>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <label>
+              {t.courses.tags}
+              <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+            </label>
+            <label>
+              {t.courses.thumbnailUrl}
+              <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={form.is_published}
+                disabled={!editingId}
+                onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
+              />
+              {t.courses.publishNow}
+            </label>
+            <p className="form-hint">{t.courses.publishRequirement}</p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
 
       {showImport && (

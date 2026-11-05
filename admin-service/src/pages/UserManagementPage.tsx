@@ -347,6 +347,7 @@ export default function UserManagementPage() {
                           onClick={() => handleViewDetail(user.id)}
                           className="icon-button"
                           title="Xem chi tiết"
+                          aria-label="Xem chi tiết"
                           style={{ width: 32, height: 32 }}
                         >
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -359,6 +360,7 @@ export default function UserManagementPage() {
                           disabled={statusMutation.isPending}
                           className="icon-button"
                           title={user.is_active ? 'Hủy kích hoạt' : 'Kích hoạt'}
+                          aria-label={user.is_active ? 'Hủy kích hoạt' : 'Kích hoạt'}
                           style={{ width: 32, height: 32, opacity: statusMutation.isPending ? 0.5 : 1 }}
                         >
                           {user.is_active ? (
@@ -380,6 +382,7 @@ export default function UserManagementPage() {
                             disabled={deleteMutation.isPending}
                             className="icon-button"
                             title="Xóa vĩnh viễn"
+                            aria-label="Xóa vĩnh viễn"
                             style={{ width: 32, height: 32, color: '#dc2626', opacity: deleteMutation.isPending ? 0.5 : 1 }}
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

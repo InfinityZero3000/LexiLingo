@@ -54,6 +54,7 @@ export default function GlobeBackground() {
     let rafId: number;
     let prevTime = 0;
     let shown = false;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const animate = (now: number) => {
       rafId = requestAnimationFrame(animate);
@@ -63,7 +64,7 @@ export default function GlobeBackground() {
       prevTime = now;
 
       // Auto-rotate
-      scene.globeGroup.rotation.y += AUTO_ROTATE_RAD_S * delta;
+      if (!reduceMotion) scene.globeGroup.rotation.y += AUTO_ROTATE_RAD_S * delta;
 
       // Dot uniforms
       dots.material.uniforms.uTime.value = elapsed;

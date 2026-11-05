@@ -1,3 +1,4 @@
+import { Dialog } from "./Dialog";
 import React, { useState } from "react";
 import {
   bulkImportCourses,
@@ -382,126 +383,124 @@ export const CourseImportModal = ({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 720, maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ margin: 0 }}>Nhập dữ liệu khóa học</h3>
-          <button className="ghost-button small" onClick={onClose} style={{ fontSize: 18, padding: "4px 8px" }}>&times;</button>
-        </div>
+    <Dialog onClose={onClose} maxWidth={720} style={{ maxHeight: "90vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h3 style={{ margin: 0 }}>Nhập dữ liệu khóa học</h3>
+        <button className="ghost-button small" aria-label="Đóng" onClick={onClose} style={{ fontSize: 18, padding: "4px 8px" }}>&times;</button>
+      </div>
 
-        {/* Tab bar */}
-        <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
-          {([
-            { key: "text" as ImportTab, label: "Văn bản" },
-            { key: "json" as ImportTab, label: "JSON" },
-            { key: "csv" as ImportTab, label: "CSV" },
-          ]).map((t) => (
-            <button
-              key={t.key}
-              className={tab === t.key ? "tab active" : "tab"}
-              onClick={() => { setTab(t.key); setPreview(null); setResult(null); setParseError(null); }}
-            >
-              {t.label}
-            </button>
+      {/* Tab bar */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+        {([
+          { key: "text" as ImportTab, label: "Văn bản" },
+          { key: "json" as ImportTab, label: "JSON" },
+          { key: "csv" as ImportTab, label: "CSV" },
+        ]).map((t) => (
+          <button
+            key={t.key}
+            className={tab === t.key ? "tab active" : "tab"}
+            onClick={() => { setTab(t.key); setPreview(null); setResult(null); setParseError(null); }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* File upload */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
+        <label className="ghost-button small" style={{ cursor: "pointer" }}>
+          Tải file lên
+          <input type="file" accept=".txt,.md,.json,.csv,.pdf" onChange={handleFileUpload} style={{ display: "none" }} />
+        </label>
+        <button className="ghost-button small" onClick={loadSample}>Xem mẫu</button>
+        <span style={{ fontSize: 12, color: "var(--muted)" }}>
+          Hỗ trợ: .txt, .md, .json, .csv, .pdf
+        </span>
+      </div>
+
+      {/* Text area */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <textarea
+          value={textInput}
+          onChange={(e) => { setTextInput(e.target.value); setPreview(null); setResult(null); }}
+          placeholder={tab === "text"
+            ? "# Tên khóa học\n## Unit 1: Tên chương\n### Lesson 1: Tên bài học"
+            : tab === "json"
+            ? '[{"title": "...", "units": [...]}]'
+            : "course_title,unit_title,lesson_title,..."}
+          style={{
+            width: "100%",
+            height: 200,
+            fontFamily: "monospace",
+            fontSize: 13,
+            resize: "vertical",
+            borderRadius: 8,
+            border: "1px solid var(--line)",
+            padding: 12,
+            background: "var(--panel-soft)",
+          }}
+        />
+      </div>
+
+      {parseError && <div className="form-error" style={{ marginTop: 8 }}>{parseError}</div>}
+
+      {/* Preview */}
+      {preview && (
+        <div style={{ marginTop: 12, padding: 12, background: "var(--panel-soft)", borderRadius: 8, maxHeight: 200, overflow: "auto" }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--text)" }}>
+            Xem trước ({preview.length} khóa học)
+          </div>
+          {preview.map((course, i) => (
+            <div key={i} style={{ marginBottom: 8 }}>
+              <div style={{ fontWeight: 600, fontSize: 13 }}>
+                {course.title} <span style={{ color: "var(--muted)", fontWeight: 400 }}>({course.level} · {course.language})</span>
+              </div>
+              {course.units?.map((unit: any, ui: number) => (
+                <div key={ui} style={{ paddingLeft: 16, fontSize: 12, color: "var(--muted)" }}>
+                  {unit.title} — {unit.lessons?.length || 0} bài học
+                </div>
+              ))}
+            </div>
           ))}
         </div>
+      )}
 
-        {/* File upload */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
-          <label className="ghost-button small" style={{ cursor: "pointer" }}>
-            Tải file lên
-            <input type="file" accept=".txt,.md,.json,.csv,.pdf" onChange={handleFileUpload} style={{ display: "none" }} />
-          </label>
-          <button className="ghost-button small" onClick={loadSample}>Xem mẫu</button>
-          <span style={{ fontSize: 12, color: "var(--muted)" }}>
-            Hỗ trợ: .txt, .md, .json, .csv, .pdf
-          </span>
-        </div>
-
-        {/* Text area */}
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <textarea
-            value={textInput}
-            onChange={(e) => { setTextInput(e.target.value); setPreview(null); setResult(null); }}
-            placeholder={tab === "text"
-              ? "# Tên khóa học\n## Unit 1: Tên chương\n### Lesson 1: Tên bài học"
-              : tab === "json"
-              ? '[{"title": "...", "units": [...]}]'
-              : "course_title,unit_title,lesson_title,..."}
-            style={{
-              width: "100%",
-              height: 200,
-              fontFamily: "monospace",
-              fontSize: 13,
-              resize: "vertical",
-              borderRadius: 8,
-              border: "1px solid var(--line)",
-              padding: 12,
-              background: "var(--panel-soft)",
-            }}
-          />
-        </div>
-
-        {parseError && <div className="form-error" style={{ marginTop: 8 }}>{parseError}</div>}
-
-        {/* Preview */}
-        {preview && (
-          <div style={{ marginTop: 12, padding: 12, background: "var(--panel-soft)", borderRadius: 8, maxHeight: 200, overflow: "auto" }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--text)" }}>
-              Xem trước ({preview.length} khóa học)
-            </div>
-            {preview.map((course, i) => (
-              <div key={i} style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>
-                  {course.title} <span style={{ color: "var(--muted)", fontWeight: 400 }}>({course.level} · {course.language})</span>
-                </div>
-                {course.units?.map((unit: any, ui: number) => (
-                  <div key={ui} style={{ paddingLeft: 16, fontSize: 12, color: "var(--muted)" }}>
-                    {unit.title} — {unit.lessons?.length || 0} bài học
-                  </div>
-                ))}
-              </div>
-            ))}
+      {/* Result */}
+      {result && (
+        <div style={{
+          marginTop: 12,
+          padding: 12,
+          background: result.errors.length === 0 ? "rgba(42, 167, 161, 0.08)" : "rgba(255, 77, 0, 0.06)",
+          borderRadius: 8,
+          border: `1px solid ${result.errors.length === 0 ? "rgba(42, 167, 161, 0.2)" : "rgba(255, 77, 0, 0.15)"}`,
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+            {result.errors.length === 0 ? "Nhập thành công!" : "Kết quả nhập dữ liệu"}
           </div>
-        )}
-
-        {/* Result */}
-        {result && (
-          <div style={{
-            marginTop: 12,
-            padding: 12,
-            background: result.errors.length === 0 ? "rgba(42, 167, 161, 0.08)" : "rgba(255, 77, 0, 0.06)",
-            borderRadius: 8,
-            border: `1px solid ${result.errors.length === 0 ? "rgba(42, 167, 161, 0.2)" : "rgba(255, 77, 0, 0.15)"}`,
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-              {result.errors.length === 0 ? "Nhập thành công!" : "Kết quả nhập dữ liệu"}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--muted)" }}>
-              {result.courses} khóa học · {result.units} chương · {result.lessons} bài học
-            </div>
-            {result.errors.length > 0 && (
-              <div style={{ marginTop: 8, fontSize: 12, color: "var(--accent)" }}>
-                {result.errors.map((err, i) => <div key={i}>- {err}</div>)}
-              </div>
-            )}
+          <div style={{ fontSize: 12, color: "var(--muted)" }}>
+            {result.courses} khóa học · {result.units} chương · {result.lessons} bài học
           </div>
-        )}
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
-          <button className="ghost-button" onClick={onClose}>Đóng</button>
-          {!preview ? (
-            <button className="primary-button" onClick={handleParse} disabled={!textInput.trim()}>
-              Phân tích dữ liệu
-            </button>
-          ) : (
-            <button className="primary-button" onClick={handleImport} disabled={importing}>
-              {importing ? "Đang nhập..." : `Nhập ${preview.length} khóa học`}
-            </button>
+          {result.errors.length > 0 && (
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--accent)" }}>
+              {result.errors.map((err, i) => <div key={i}>- {err}</div>)}
+            </div>
           )}
         </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
+        <button className="ghost-button" onClick={onClose}>Đóng</button>
+        {!preview ? (
+          <button className="primary-button" onClick={handleParse} disabled={!textInput.trim()}>
+            Phân tích dữ liệu
+          </button>
+        ) : (
+          <button className="primary-button" onClick={handleImport} disabled={importing}>
+            {importing ? "Đang nhập..." : `Nhập ${preview.length} khóa học`}
+          </button>
+        )}
       </div>
-    </div>
+    </Dialog>
   );
 };

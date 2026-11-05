@@ -102,6 +102,8 @@ const vi = {
     logout: "Đăng xuất",
     subtitle: "Điều khiển nội dung, hệ thống và vận hành",
     toggleMenu: "Mở hoặc đóng menu",
+    themeToLight: "Chuyển sang giao diện sáng",
+    themeToDark: "Chuyển sang giao diện tối",
     breadcrumb: "Đường dẫn",
   },
 

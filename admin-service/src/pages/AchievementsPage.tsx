@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -440,140 +441,138 @@ export const AchievementsPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
-            <h3>{editingId ? t.achievements.editAchievement : t.achievements.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
-              <label>
-                {t.achievements.nameRequired}
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-              </label>
-              <label>
-                {t.achievements.descriptionRequired}
-                <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
-              </label>
+        <Dialog onClose={() => setShowForm(false)} maxWidth={560}>
+          <h3>{editingId ? t.achievements.editAchievement : t.achievements.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <label>
+              {t.achievements.nameRequired}
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            </label>
+            <label>
+              {t.achievements.descriptionRequired}
+              <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+            </label>
 
-              {/* Badge Image */}
-              <label>
-                Badge Image
-                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 4 }}>
-                  <div style={{ flex: 1 }}>
+            {/* Badge Image */}
+            <label>
+              Badge Image
+              <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 4 }}>
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="text"
+                    value={form.badge_icon}
+                    onChange={(e) => setForm({ ...form, badge_icon: e.target.value })}
+                    placeholder="/static/badges/streak7.png or https://..."
+                    style={{ width: "100%", marginBottom: 6 }}
+                  />
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      type="button"
+                      className="ghost-button small"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                    >
+                      {uploading ? "Uploading..." : "Upload Image"}
+                    </button>
                     <input
-                      type="text"
-                      value={form.badge_icon}
-                      onChange={(e) => setForm({ ...form, badge_icon: e.target.value })}
-                      placeholder="/static/badges/streak7.png or https://..."
-                      style={{ width: "100%", marginBottom: 6 }}
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      style={{ display: "none" }}
+                      onChange={handleFileUpload}
                     />
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <button
-                        type="button"
-                        className="ghost-button small"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                      >
-                        {uploading ? "Uploading..." : "Upload Image"}
-                      </button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        style={{ display: "none" }}
-                        onChange={handleFileUpload}
-                      />
-                    </div>
-                  </div>
-                  {/* Preview */}
-                  <div style={{
-                    width: 64, height: 64, borderRadius: 8,
-                    border: "1px solid var(--line)", background: "var(--panel-soft)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    overflow: "hidden", flexShrink: 0,
-                  }}>
-                    <BadgeImage badge={{ ...form, name: form.name || "Badge" }} size={56} />
                   </div>
                 </div>
-              </label>
+                {/* Preview */}
+                <div style={{
+                  width: 64, height: 64, borderRadius: 8,
+                  border: "1px solid var(--line)", background: "var(--panel-soft)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  overflow: "hidden", flexShrink: 0,
+                }}>
+                  <BadgeImage badge={{ ...form, name: form.name || "Badge" }} size={56} />
+                </div>
+              </div>
+            </label>
 
-              <div className="form-row">
-                <label>
-                  Badge Color
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input
-                      type="color"
-                      value={form.badge_color}
-                      onChange={(e) => setForm({ ...form, badge_color: e.target.value })}
-                      style={{ width: 40, height: 34, padding: 2, cursor: "pointer" }}
-                    />
-                    <input
-                      type="text"
-                      value={form.badge_color}
-                      onChange={(e) => setForm({ ...form, badge_color: e.target.value })}
-                      style={{ flex: 1 }}
-                      placeholder="#4CAF50"
-                    />
-                  </div>
-                </label>
-              </div>
-
-              <div className="form-row">
-                <label>
-                  {t.achievements.conditionRequired}
-                  <select value={form.condition_type} onChange={(e) => setForm({ ...form, condition_type: e.target.value })}>
-                    <optgroup label={t.achievements.conditionTrackedGroup}>
-                      {TRACKED_CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
-                    </optgroup>
-                    <optgroup label={t.achievements.conditionUntrackedGroup}>
-                      {UNTRACKED_CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
-                    </optgroup>
-                  </select>
-                </label>
-                <label>
-                  {t.achievements.conditionValueLabel}
-                  <input type="number" min={1} value={form.condition_value} onChange={(e) => setForm({ ...form, condition_value: Number(e.target.value) })} />
-                </label>
-              </div>
-              <div className="form-row">
-                <label>
-                  {t.achievements.categoryLabel}
-                  <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </label>
-                <label>
-                  {t.achievements.rarityLabel}
-                  <select value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })}>
-                    {RARITIES.map((r) => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div className="form-row">
-                <label>
-                  {t.achievements.xpRewardLabel}
-                  <input type="number" min={0} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: Number(e.target.value) })} />
-                </label>
-                <label>
-                  {t.achievements.gemsRewardLabel}
-                  <input type="number" min={0} value={form.gems_reward} onChange={(e) => setForm({ ...form, gems_reward: Number(e.target.value) })} />
-                </label>
-              </div>
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_hidden}
-                  onChange={(e) => setForm({ ...form, is_hidden: e.target.checked })}
-                />
-                {t.achievements.hiddenUntilUnlocked}
+            <div className="form-row">
+              <label>
+                Badge Color
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <input
+                    type="color"
+                    value={form.badge_color}
+                    onChange={(e) => setForm({ ...form, badge_color: e.target.value })}
+                    style={{ width: 40, height: 34, padding: 2, cursor: "pointer" }}
+                  />
+                  <input
+                    type="text"
+                    value={form.badge_color}
+                    onChange={(e) => setForm({ ...form, badge_color: e.target.value })}
+                    style={{ flex: 1 }}
+                    placeholder="#4CAF50"
+                  />
+                </div>
               </label>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+
+            <div className="form-row">
+              <label>
+                {t.achievements.conditionRequired}
+                <select value={form.condition_type} onChange={(e) => setForm({ ...form, condition_type: e.target.value })}>
+                  <optgroup label={t.achievements.conditionTrackedGroup}>
+                    {TRACKED_CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
+                  </optgroup>
+                  <optgroup label={t.achievements.conditionUntrackedGroup}>
+                    {UNTRACKED_CONDITION_TYPES.map((ct) => <option key={ct} value={ct}>{ct}</option>)}
+                  </optgroup>
+                </select>
+              </label>
+              <label>
+                {t.achievements.conditionValueLabel}
+                <input type="number" min={1} value={form.condition_value} onChange={(e) => setForm({ ...form, condition_value: Number(e.target.value) })} />
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                {t.achievements.categoryLabel}
+                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+                  {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </label>
+              <label>
+                {t.achievements.rarityLabel}
+                <select value={form.rarity} onChange={(e) => setForm({ ...form, rarity: e.target.value })}>
+                  {RARITIES.map((r) => <option key={r} value={r}>{r}</option>)}
+                </select>
+              </label>
+            </div>
+            <div className="form-row">
+              <label>
+                {t.achievements.xpRewardLabel}
+                <input type="number" min={0} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: Number(e.target.value) })} />
+              </label>
+              <label>
+                {t.achievements.gemsRewardLabel}
+                <input type="number" min={0} value={form.gems_reward} onChange={(e) => setForm({ ...form, gems_reward: Number(e.target.value) })} />
+              </label>
+            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={form.is_hidden}
+                onChange={(e) => setForm({ ...form, is_hidden: e.target.checked })}
+              />
+              {t.achievements.hiddenUntilUnlocked}
+            </label>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

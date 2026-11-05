@@ -262,10 +262,12 @@ export const ContentLabPage = () => {
   return (
     <div className="panel">
       <SectionHeader title="Content Lab" description="Grammar / Questions / Test-Exam" />
-      <div className="tab-row">
+      <div className="tab-row" role="tablist">
         {tabs.map((t) => (
           <button
             key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
             className={tab === t.key ? "tab active" : "tab"}
             onClick={() => setTab(t.key)}
           >
