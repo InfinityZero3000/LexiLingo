@@ -82,6 +82,15 @@ const vi = {
     database: "Cơ sở dữ liệu",
     aiModels: "Mô hình AI",
     adminZone: "Khu vực Admin",
+    adminManagement: "Quản lý Admin",
+    aiChatConfig: "Cấu hình AI Chat",
+    exercises: "Bài tập",
+    groups: {
+      learners: "Người học",
+      content: "Nội dung",
+      growth: "Tăng trưởng",
+      system: "Hệ thống",
+    },
   },
 
   // ============== App Shell ==============
@@ -92,6 +101,8 @@ const vi = {
     navigation: "Điều hướng",
     logout: "Đăng xuất",
     subtitle: "Điều khiển nội dung, hệ thống và vận hành",
+    toggleMenu: "Mở hoặc đóng menu",
+    breadcrumb: "Đường dẫn",
   },
 
   // ============== Login ==============

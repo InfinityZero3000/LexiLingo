@@ -84,6 +84,15 @@ const en: Translations = {
     database: "Database",
     aiModels: "AI Models",
     adminZone: "Admin Zone",
+    adminManagement: "Admin Management",
+    aiChatConfig: "AI Chat Config",
+    exercises: "Exercises",
+    groups: {
+      learners: "Learners",
+      content: "Content",
+      growth: "Growth",
+      system: "System",
+    },
   },
 
   // ============== App Shell ==============
@@ -94,6 +103,8 @@ const en: Translations = {
     navigation: "Navigation",
     logout: "Logout",
     subtitle: "Content, system and operations control",
+    toggleMenu: "Toggle menu",
+    breadcrumb: "Breadcrumb",
   },
 
   // ============== Login ==============

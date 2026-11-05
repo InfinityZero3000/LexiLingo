@@ -11,7 +11,7 @@ export const SectionHeader = ({
 }) => (
   <div className="section-header">
     <div>
-      <h2>{title}</h2>
+      <h1>{title}</h1>
       {description && <p>{description}</p>}
     </div>
     {action && <div>{action}</div>}
