@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { I18nProvider, useI18n } from "./lib/i18n";
+import { ConfirmProvider } from "./components/ConfirmDialog";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
@@ -145,9 +146,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <I18nProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ConfirmProvider>
     </I18nProvider>
   );
 };

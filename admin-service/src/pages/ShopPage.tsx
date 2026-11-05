@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { DataTable } from "../components/DataTable";
@@ -85,6 +86,7 @@ const EMPTY_FORM: ShopItemForm = {
 
 export const ShopPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [items, setItems] = useState<ShopItemType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -195,7 +197,7 @@ export const ShopPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.shop.deleteConfirm)) return;
+    if (!(await confirm({ message: t.shop.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteShopItem(id);
       await loadItems();
@@ -237,6 +239,7 @@ export const ShopPage = () => {
             columns={[
               {
                 header: t.shop.item,
+                sortValue: (row) => row.name,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.name}</div>
@@ -246,16 +249,19 @@ export const ShopPage = () => {
               },
               {
                 header: t.shop.type,
+                sortValue: (row) => row.item_type,
                 render: (row) => <span className="table-meta">{row.item_type}</span>,
                 align: "center",
               },
               {
                 header: t.shop.price,
+                sortValue: (row) => row.price_gems,
                 render: (row) => <span className="table-meta">{row.price_gems} Gems</span>,
                 align: "center",
               },
               {
                 header: t.shop.stock,
+                sortValue: (row) => row.stock_quantity ?? Number.MAX_SAFE_INTEGER,
                 render: (row) => (
                   <span className="table-meta">
                     {row.stock_quantity === null || row.stock_quantity === undefined ? "∞" : row.stock_quantity}
@@ -377,7 +383,7 @@ export const ShopPage = () => {
               />
               {t.shop.onSale}
             </label>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="table-actions">
               <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}

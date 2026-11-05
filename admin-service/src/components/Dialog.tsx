@@ -3,6 +3,8 @@ import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "re
 const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
 
+const openDialogs: HTMLElement[] = [];
+
 // Backdrop clicks do not close it: an accidental click used to throw away a half-filled form.
 export const Dialog = ({
   onClose,
@@ -24,6 +26,7 @@ export const Dialog = ({
     const el = ref.current;
     if (!el) return;
     const previous = document.activeElement as HTMLElement | null;
+    openDialogs.push(el);
 
     const heading = el.querySelector<HTMLElement>("h1,h2,h3");
     if (heading) {
@@ -33,6 +36,7 @@ export const Dialog = ({
     (el.querySelector<HTMLElement>("input,select,textarea") ?? el.querySelector<HTMLElement>(FOCUSABLE) ?? el).focus();
 
     const onKeyDown = (e: KeyboardEvent) => {
+      if (openDialogs[openDialogs.length - 1] !== el) return;
       if (e.key === "Escape") {
         e.stopPropagation();
         onCloseRef.current();
@@ -54,6 +58,7 @@ export const Dialog = ({
     document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
+      openDialogs.splice(openDialogs.indexOf(el), 1);
       previous?.focus();
     };
   }, [titleId]);

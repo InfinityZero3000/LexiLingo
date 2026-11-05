@@ -14,7 +14,7 @@ import {
   Legend,
   PolarAngleAxis,
 } from "recharts";
-import { Activity, CheckCircle, AlertTriangle, XCircle, RefreshCw, Database, Cpu, HardDrive, Server, Wifi } from "lucide-react";
+import { Activity, CheckCircle, AlertTriangle, XCircle, RefreshCw, Pause, Play, Database, Cpu, HardDrive, Server, Wifi } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import {
@@ -165,6 +165,7 @@ export const MonitoringPage = () => {
   const [loadState, setLoadState] = useState<LoadingState>("idle");
   const [lastUpdated, setLastUpdated] = useState<string>("");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [paused, setPaused] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoadState("loading");
@@ -210,11 +211,15 @@ export const MonitoringPage = () => {
 
   useEffect(() => {
     fetchAll();
+  }, [fetchAll]);
+
+  useEffect(() => {
+    if (paused) return;
     intervalRef.current = setInterval(fetchAll, REFRESH_MS);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [fetchAll]);
+  }, [fetchAll, paused]);
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
@@ -247,7 +252,7 @@ export const MonitoringPage = () => {
               </span>
             )}
             <button
-              className="btn-secondary btn-sm"
+              className="ghost-button small"
               onClick={fetchAll}
               disabled={loadState === "loading"}
               style={{ display: "flex", alignItems: "center", gap: 6 }}
@@ -261,6 +266,15 @@ export const MonitoringPage = () => {
                 }
               />
               Refresh
+            </button>
+            <button
+              className="ghost-button small"
+              onClick={() => setPaused((p) => !p)}
+              aria-pressed={paused}
+              title={paused ? t.monitoring.resumeAuto : t.monitoring.pauseAuto}
+              aria-label={paused ? t.monitoring.resumeAuto : t.monitoring.pauseAuto}
+            >
+              {paused ? <Play size={14} /> : <Pause size={14} />}
             </button>
           </div>
         }

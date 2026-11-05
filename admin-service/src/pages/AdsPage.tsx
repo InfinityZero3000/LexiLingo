@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { DataTable } from "../components/DataTable";
@@ -65,6 +66,7 @@ const toIsoOrUndefined = (local: string) => (local ? new Date(local).toISOString
 
 export const AdsPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [banners, setBanners] = useState<BannerType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +150,7 @@ export const AdsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.ads.deleteConfirm)) return;
+    if (!(await confirm({ message: t.ads.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteBanner(id);
       await loadBanners();
@@ -190,6 +192,7 @@ export const AdsPage = () => {
             columns={[
               {
                 header: t.ads.banner,
+                sortValue: (row) => row.title,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.title}</div>
@@ -199,16 +202,19 @@ export const AdsPage = () => {
               },
               {
                 header: t.ads.position,
+                sortValue: (row) => row.position,
                 render: (row) => <span className="table-meta">{row.position}</span>,
                 align: "center",
               },
               {
                 header: t.ads.priorityLabel,
+                sortValue: (row) => row.priority,
                 render: (row) => <span className="table-meta">{row.priority}</span>,
                 align: "center",
               },
               {
                 header: t.ads.startDate,
+                sortValue: (row) => row.start_at,
                 render: (row) => (
                   <span className="table-meta">
                     {row.start_at ? new Date(row.start_at).toLocaleDateString() : "—"}
@@ -218,6 +224,7 @@ export const AdsPage = () => {
               },
               {
                 header: t.ads.endDate,
+                sortValue: (row) => row.end_at,
                 render: (row) => (
                   <span className="table-meta">
                     {row.end_at ? new Date(row.end_at).toLocaleDateString() : "—"}
@@ -332,7 +339,7 @@ export const AdsPage = () => {
               />
               {t.common.active}
             </label>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="table-actions">
               <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}

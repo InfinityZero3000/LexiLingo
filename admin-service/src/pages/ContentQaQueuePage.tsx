@@ -232,7 +232,7 @@ export const ContentQaQueuePage = () => {
         title="Content QA Queue"
         description="Review, validate, publish, or reject AI-generated learning content."
         action={
-          <button className="btn-secondary btn-sm" onClick={loadQueue} disabled={loading}>
+          <button className="ghost-button small" onClick={loadQueue} disabled={loading}>
             <RefreshCw size={14} /> Refresh
           </button>
         }

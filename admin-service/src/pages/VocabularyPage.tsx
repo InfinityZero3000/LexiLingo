@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "../components/DataTable";
@@ -31,6 +32,7 @@ const levelColor: Record<string, "info" | "success" | "warning" | "danger"> = {
 
 export const VocabularyPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [items, setItems] = useState<VocabItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export const VocabularyPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.vocabulary.deleteWord)) return;
+    if (!(await confirm({ message: t.vocabulary.deleteWord, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteVocabulary(id);
       await loadItems();
@@ -189,7 +191,7 @@ export const VocabularyPage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} style={{ display: "none" }} />
+          <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} hidden />
           <button className="ghost-button" onClick={() => fileRef.current?.click()} disabled={importing}>
             {importing ? "Đang import..." : "Import CSV/PDF"}
           </button>
@@ -212,6 +214,7 @@ export const VocabularyPage = () => {
             columns={[
               {
                 header: t.vocabulary.word,
+                sortValue: (row) => row.word,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.word}</div>
@@ -221,6 +224,7 @@ export const VocabularyPage = () => {
               },
               {
                 header: "Định nghĩa",
+                sortValue: (row) => row.definition,
                 render: (row) => <span>{row.definition || "—"}</span>,
               },
               {
@@ -233,11 +237,13 @@ export const VocabularyPage = () => {
               },
               {
                 header: "Loại từ",
+                sortValue: (row) => row.part_of_speech,
                 render: (row) => <span className="table-meta">{row.part_of_speech || "—"}</span>,
                 align: "center",
               },
               {
                 header: "Level",
+                sortValue: (row) => row.difficulty_level,
                 render: (row) => (
                   <StatusPill
                     tone={levelColor[row.difficulty_level] || "info"}
@@ -297,7 +303,7 @@ export const VocabularyPage = () => {
                 </select>
               </label>
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="table-actions">
               <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}

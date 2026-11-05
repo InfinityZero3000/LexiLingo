@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { BookOpen, Search, Sparkles } from "lucide-react";
@@ -37,6 +38,7 @@ const SKILLS = ["vocabulary", "grammar", "reading", "listening", "speaking", "wr
 export const CoursesPage = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -168,7 +170,7 @@ export const CoursesPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.courses.deleteCourse)) return;
+    if (!(await confirm({ message: t.courses.deleteCourse, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteCourse(id);
       await loadCourses();
@@ -289,9 +291,10 @@ export const CoursesPage = () => {
               columns={[
                 {
                   header: t.courses.course,
+                  sortValue: (row) => row.title,
                   render: (row) => (
                     <div>
-                      <button type="button" className="table-title" style={{ cursor: "pointer", color: "var(--accent)", background: "none", border: "none", padding: 0, font: "inherit", textAlign: "left" }}
+                      <button type="button" className="link-button link-button--accent table-title"
                         onClick={() => navigate(`/admin/courses/${row.id}/units`)}>
                         {row.title}
                       </button>
@@ -301,21 +304,25 @@ export const CoursesPage = () => {
                 },
                 {
                   header: t.courses.level,
+                  sortValue: (row) => row.level,
                   render: (row) => <StatusPill tone="info" label={row.level} />,
                   align: "center",
                 },
                 {
                   header: t.courses.lessons,
+                  sortValue: (row) => row.total_lessons,
                   render: (row) => <span className="table-meta">{row.total_lessons}</span>,
                   align: "center",
                 },
                 {
                   header: t.courses.xp,
+                  sortValue: (row) => row.total_xp,
                   render: (row) => <span className="table-meta">{row.total_xp}</span>,
                   align: "center",
                 },
                 {
                   header: t.common.status,
+                  sortValue: (row) => (row.is_published ? 1 : 0),
                   render: (row) => (
                     <StatusPill
                       tone={row.is_published ? "success" : "warning"}
@@ -405,7 +412,7 @@ export const CoursesPage = () => {
               {t.courses.publishNow}
             </label>
             <p className="form-hint">{t.courses.publishRequirement}</p>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="table-actions">
               <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}

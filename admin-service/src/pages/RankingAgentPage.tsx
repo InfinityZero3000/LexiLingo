@@ -116,8 +116,8 @@ export function RankingAgentPage() {
           <p className="text-sm text-muted">Tạo job đầu tiên để bắt đầu.</p>
         </div>
       ) : (
-        <div className="data-table-wrapper">
-          <table className="data-table">
+        <div className="table-wrap">
+          <table>
             <thead>
               <tr>
                 <th>Loại</th>

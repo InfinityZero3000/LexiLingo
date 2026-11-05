@@ -410,7 +410,7 @@ export const CourseImportModal = ({
       <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
         <label className="ghost-button small" style={{ cursor: "pointer" }}>
           Tải file lên
-          <input type="file" accept=".txt,.md,.json,.csv,.pdf" onChange={handleFileUpload} style={{ display: "none" }} />
+          <input type="file" accept=".txt,.md,.json,.csv,.pdf" onChange={handleFileUpload} hidden />
         </label>
         <button className="ghost-button small" onClick={loadSample}>Xem mẫu</button>
         <span style={{ fontSize: 12, color: "var(--muted)" }}>

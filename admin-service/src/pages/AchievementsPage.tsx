@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "../components/DataTable";
@@ -219,6 +220,7 @@ const BadgeImage = ({ badge, size = 44 }: { badge: BadgeSource; size?: number })
 
 export const AchievementsPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [items, setItems] = useState<AchievementItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -307,7 +309,7 @@ export const AchievementsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.achievements.deleteConfirm)) return;
+    if (!(await confirm({ message: t.achievements.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteAchievement(id);
       await loadItems();
@@ -385,6 +387,7 @@ export const AchievementsPage = () => {
               },
               {
                 header: "Achievement",
+                sortValue: (row) => row.name,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.name}</div>
@@ -395,11 +398,13 @@ export const AchievementsPage = () => {
               },
               {
                 header: t.achievements.category,
+                sortValue: (row) => row.category,
                 render: (row) => <span className="table-meta">{row.category}</span>,
                 align: "center",
               },
               {
                 header: t.achievements.rarity,
+                sortValue: (row) => row.rarity,
                 render: (row) => (
                   <StatusPill tone={rarityColor[row.rarity] || "info"} label={row.rarity} />
                 ),
@@ -478,7 +483,7 @@ export const AchievementsPage = () => {
                       ref={fileInputRef}
                       type="file"
                       accept="image/png,image/jpeg,image/webp"
-                      style={{ display: "none" }}
+                      hidden
                       onChange={handleFileUpload}
                     />
                   </div>
@@ -565,7 +570,7 @@ export const AchievementsPage = () => {
               />
               {t.achievements.hiddenUntilUnlocked}
             </label>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="table-actions">
               <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}

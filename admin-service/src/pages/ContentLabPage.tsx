@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import React, { useEffect, useRef, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { DataTable } from "../components/DataTable";
@@ -33,6 +34,7 @@ const tabs = [
 type TabKey = (typeof tabs)[number]["key"];
 
 export const ContentLabPage = () => {
+  const confirm = useConfirm();
   const [tab, setTab] = useState<TabKey>("grammar");
   const [grammar, setGrammar] = useState<GrammarItem[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
@@ -298,7 +300,7 @@ export const ContentLabPage = () => {
                 accept=".csv,.pdf"
                 ref={grammarFileRef}
                 onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportGrammar, grammarFileRef)}
-                style={{ display: "none" }}
+                hidden
               />
               <button className="ghost-button small" onClick={() => grammarFileRef.current?.click()} disabled={importing}>
                 {importing ? "Đang import..." : "Import CSV/PDF"}
@@ -308,6 +310,7 @@ export const ContentLabPage = () => {
               columns={[
                 {
                   header: "Tiêu đề",
+                  sortValue: (row) => row.title,
                   render: (row) => (
                     <div>
                       <div className="table-title">{row.title}</div>
@@ -317,6 +320,7 @@ export const ContentLabPage = () => {
                 },
                 {
                   header: "Level",
+                  sortValue: (row) => row.level,
                   render: (row) => <span className="table-meta">{row.level}</span>,
                   align: "center"
                 },
@@ -327,8 +331,8 @@ export const ContentLabPage = () => {
                       <button className="ghost-button small" onClick={() => handleEditGrammar(row)}>
                         Sửa
                       </button>
-                      <button className="ghost-button small danger" onClick={() => {
-                        if (!confirm("Xóa grammar rule này?")) return;
+                      <button className="ghost-button small danger" onClick={async () => {
+                        if (!(await confirm({ message: "Xóa grammar rule này?", confirmLabel: "Xóa", danger: true }))) return;
                         deleteGrammar(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
                       }}>
                         Xóa
@@ -395,7 +399,7 @@ export const ContentLabPage = () => {
                 accept=".csv,.pdf"
                 ref={questionFileRef}
                 onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportQuestions, questionFileRef)}
-                style={{ display: "none" }}
+                hidden
               />
               <button className="ghost-button small" onClick={() => questionFileRef.current?.click()} disabled={importing}>
                 {importing ? "Đang import..." : "Import CSV/PDF"}
@@ -405,6 +409,7 @@ export const ContentLabPage = () => {
               columns={[
                 {
                   header: "Prompt",
+                  sortValue: (row) => row.prompt,
                   render: (row) => (
                     <div>
                       <div className="table-title">{(row.prompt || "").length > 60 ? `${row.prompt.slice(0, 60)}…` : (row.prompt || "—")}</div>
@@ -414,6 +419,7 @@ export const ContentLabPage = () => {
                 },
                 {
                   header: "Level",
+                  sortValue: (row) => row.difficulty_level,
                   render: (row) => <span className="table-meta">{row.difficulty_level}</span>,
                   align: "center"
                 },
@@ -424,8 +430,8 @@ export const ContentLabPage = () => {
                       <button className="ghost-button small" onClick={() => handleEditQuestion(row)}>
                         Sửa
                       </button>
-                      <button className="ghost-button small danger" onClick={() => {
-                        if (!confirm("Xóa câu hỏi này?")) return;
+                      <button className="ghost-button small danger" onClick={async () => {
+                        if (!(await confirm({ message: "Xóa câu hỏi này?", confirmLabel: "Xóa", danger: true }))) return;
                         deleteQuestion(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
                       }}>
                         Xóa
@@ -500,7 +506,7 @@ export const ContentLabPage = () => {
                 accept=".csv,.pdf"
                 ref={testFileRef}
                 onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportTestExams, testFileRef)}
-                style={{ display: "none" }}
+                hidden
               />
               <button className="ghost-button small" onClick={() => testFileRef.current?.click()} disabled={importing}>
                 {importing ? "Đang import..." : "Import CSV/PDF"}
@@ -510,6 +516,7 @@ export const ContentLabPage = () => {
               columns={[
                 {
                   header: "Bài test",
+                  sortValue: (row) => row.title,
                   render: (row) => (
                     <div>
                       <div className="table-title">{row.title}</div>
@@ -519,6 +526,7 @@ export const ContentLabPage = () => {
                 },
                 {
                   header: "Publish",
+                  sortValue: (row) => (row.is_published ? 1 : 0),
                   render: (row) => <span className="table-meta">{row.is_published ? "Yes" : "No"}</span>,
                   align: "center"
                 },
@@ -529,8 +537,8 @@ export const ContentLabPage = () => {
                       <button className="ghost-button small" onClick={() => handleEditTest(row)}>
                         Sửa
                       </button>
-                      <button className="ghost-button small danger" onClick={() => {
-                        if (!confirm("Xóa bài test này?")) return;
+                      <button className="ghost-button small danger" onClick={async () => {
+                        if (!(await confirm({ message: "Xóa bài test này?", confirmLabel: "Xóa", danger: true }))) return;
                         deleteTestExam(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
                       }}>
                         Xóa

@@ -114,7 +114,7 @@ export const AdminManagementPage = () => {
           title={t.adminManagement.title}
           description={t.adminManagement.description}
         />
-        <button className="btn-primary" onClick={() => { setShowAddModal(true); setModalError(null); }}>
+        <button className="primary-button" onClick={() => { setShowAddModal(true); setModalError(null); }}>
           <UserPlus size={16} />
           {t.adminManagement.addAdmin}
         </button>
@@ -124,8 +124,8 @@ export const AdminManagementPage = () => {
 
       {/* Admin List */}
       <div className="panel">
-        <div className="table-container">
-          <table className="data-table">
+        <div className="table-wrap">
+          <table>
             <thead>
               <tr>
                 <th>{t.adminManagement.email}</th>
@@ -196,7 +196,7 @@ export const AdminManagementPage = () => {
                   </td>
                   <td>
                     <button
-                      className="btn-ghost btn-sm"
+                      className="ghost-button small"
                       onClick={() => handleToggleStatus(admin.id, admin.is_active)}
                     >
                       {admin.is_active ? t.adminManagement.deactivate : t.adminManagement.activate}
@@ -242,10 +242,10 @@ export const AdminManagementPage = () => {
               </select>
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-              <button className="btn-secondary" onClick={() => setShowAddModal(false)} disabled={adding}>
+              <button className="ghost-button" onClick={() => setShowAddModal(false)} disabled={adding}>
                 {t.common.cancel}
               </button>
-              <button className="btn-primary" onClick={handleAddAdmin} disabled={adding || !newEmail}>
+              <button className="primary-button" onClick={handleAddAdmin} disabled={adding || !newEmail}>
                 {adding ? t.common.saving : t.adminManagement.addAdmin}
               </button>
             </div>

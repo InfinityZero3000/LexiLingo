@@ -72,9 +72,9 @@ export const DatabasePage = () => {
 
       {/* Connection Details */}
       <div className="grid-2">
-        <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>{t.database.backendDb}</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="panel panel--pad">
+          <h3 className="panel-title">{t.database.backendDb}</h3>
+          <table className="kv-table">
             <tbody>
               <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={beOk ? "success" : "danger"} label={beOk ? t.common.healthy : t.common.offline} />} />
               <ConfigRow label={t.database.version} value={backendHealth?.version || "N/A"} />
@@ -85,9 +85,9 @@ export const DatabasePage = () => {
           </table>
         </div>
 
-        <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>{t.database.aiDb}</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="panel panel--pad">
+          <h3 className="panel-title">{t.database.aiDb}</h3>
+          <table className="kv-table">
             <tbody>
               <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.connected : t.common.offline} />} />
               <ConfigRow label="Redis Cache" value={
@@ -105,7 +105,7 @@ export const DatabasePage = () => {
 
       {/* Table Overview */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>{t.database.tableOverview}</h3>
+        <h3 className="panel-heading">{t.database.tableOverview}</h3>
         <DataTable
           columns={[
             { header: t.database.tableCol, render: (r) => <span className="table-title">{r.name}</span> },
@@ -118,7 +118,7 @@ export const DatabasePage = () => {
 
       {/* Migration History */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>{t.database.migrationHistory}</h3>
+        <h3 className="panel-heading">{t.database.migrationHistory}</h3>
         <DataTable
           columns={[
             { header: "#", render: (r) => <span className="table-meta">{r.id}</span>, align: "center" },
@@ -134,8 +134,8 @@ export const DatabasePage = () => {
 };
 
 const ConfigRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-    <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{label}</td>
-    <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14 }}>{value}</td>
+  <tr>
+    <td className="kv-label">{label}</td>
+    <td className="kv-value">{value}</td>
   </tr>
 );

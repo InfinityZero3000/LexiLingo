@@ -3,7 +3,7 @@
  * Phase 2 - Admin Panel
  */
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import {
   getUsers,
   updateUserStatus,
@@ -11,7 +11,6 @@ import {
   permanentlyDeleteUser,
   getUserDetail,
   getRoleLabel,
-  getRoleColor,
   type UserFilters,
   type UserListItem as ApiUserListItem,
 } from '../lib/userManagementApi';
@@ -20,6 +19,9 @@ import { SectionHeader } from '../components/SectionHeader';
 import UserDetailModal from '../components/user-management/UserDetailModal';
 import UserFiltersPanel from '../components/user-management/UserFiltersPanel';
 import { useAuth } from '../components/AuthProvider';
+import { useI18n } from '../lib/i18n';
+import { useConfirm } from '../components/ConfirmDialog';
+import { DataTable, type Column } from '../components/DataTable';
 
 type UserListItem = ApiUserListItem & {
   avatar_url: string | null;
@@ -30,6 +32,11 @@ type UserListItem = ApiUserListItem & {
 export default function UserManagementPage() {
   const queryClient = useQueryClient();
   const { user: currentAdmin, role } = useAuth();
+  const { t, locale } = useI18n();
+  const confirm = useConfirm();
+  const fill = (text: string, vars: Record<string, string | number>) =>
+    Object.entries(vars).reduce((out, [k, v]) => out.replace(`{${k}}`, String(v)), text);
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
 
   // State
   const [filters, setFilters] = useState<UserFilters>({
@@ -47,6 +54,7 @@ export default function UserManagementPage() {
     queryKey: ['users', filters],
     queryFn: () => getUsers(filters),
     staleTime: 30000, // 30 seconds
+    placeholderData: keepPreviousData, // keep the table on screen while a new sort/page loads
   });
 
   const { data: dashboardStats } = useQuery({
@@ -110,45 +118,51 @@ export default function UserManagementPage() {
     }
   };
   
-  const handleBulkAction = (action: 'activate' | 'deactivate') => {
+  const handleBulkAction = async (action: 'activate' | 'deactivate') => {
     if (selectedUsers.size === 0) return;
-    
-    if (confirm(`Are you sure you want to ${action} ${selectedUsers.size} user(s)?`)) {
-      bulkActionMutation.mutate({
-        user_ids: Array.from(selectedUsers),
-        action,
-      });
-    }
+    const label = action === 'activate' ? t.userList.activate : t.userList.deactivate;
+    const ok = await confirm({ message: fill(t.userList.bulkConfirm, { action: label, n: selectedUsers.size }), confirmLabel: label });
+    if (ok) bulkActionMutation.mutate({ user_ids: Array.from(selectedUsers), action });
   };
-  
-  const handleToggleStatus = (userId: string, currentStatus: boolean) => {
-    if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) {
-      statusMutation.mutate({ userId, isActive: !currentStatus });
-    }
+
+  const handleToggleStatus = async (userId: string, currentStatus: boolean) => {
+    const label = currentStatus ? t.userList.deactivate : t.userList.activate;
+    const ok = await confirm({ message: fill(t.userList.toggleConfirm, { action: label }), confirmLabel: label });
+    if (ok) statusMutation.mutate({ userId, isActive: !currentStatus });
   };
-  
+
+  const handleSort = (key: string) => {
+    const sort_by = key as UserFilters['sort_by'];
+    const order = filters.sort_by === sort_by ? (filters.order === 'asc' ? 'desc' : 'asc') : (sort_by === 'email' || sort_by === 'role' ? 'asc' : 'desc');
+    setFilters((prev) => ({ ...prev, sort_by, order, page: 1 }));
+  };
+
   const handleViewDetail = (userId: string) => {
     setDetailModalUserId(userId);
   };
 
-  const handlePermanentDelete = (userId: string, email: string) => {
-    if (confirm(`Xóa vĩnh viễn tài khoản "${email}"? Toàn bộ dữ liệu của người dùng sẽ bị xóa và KHÔNG THỂ hoàn tác.`)) {
-      deleteMutation.mutate(userId);
-    }
+  const handlePermanentDelete = async (userId: string, email: string) => {
+    const ok = await confirm({
+      message: fill(t.userList.deleteConfirm, { email }),
+      confirmLabel: t.userList.deletePermanent,
+      danger: true,
+      requireText: email,
+    });
+    if (ok) deleteMutation.mutate(userId);
   };
-  
+
   // Render
   if (error) {
     return (
-      <div className="stack" style={{ padding: 32 }}>
-        <div className="form-error" style={{ padding: 20 }}>
-          <h3 style={{ margin: '0 0 8px', fontWeight: 600 }}>Lỗi tải dữ liệu</h3>
-          <p style={{ margin: 0, fontSize: 14 }}>{error instanceof Error ? error.message : 'Lỗi không xác định'}</p>
+      <div className="stack">
+        <div className="form-error">
+          <h3 className="state-title">{t.userList.loadErrorTitle}</h3>
+          <p className="state-text">{error instanceof Error ? error.message : t.userList.loadErrorUnknown}</p>
         </div>
       </div>
     );
   }
-  
+
   // Calculate stats
   const users = (data?.users ?? []) as UserListItem[];
   // Active/inactive counts come from the global dashboard endpoint, not the
@@ -159,42 +173,168 @@ export default function UserManagementPage() {
   // XP totals are page-local by necessity (no global XP aggregate endpoint exists yet).
   const pageTotalXP = users.reduce((sum, u) => sum + (u.total_xp || 0), 0);
   const pageAvgXP = users.length ? Math.round(pageTotalXP / users.length) : 0;
+  const pct = (n: number) => fill(t.userList.ofTotal, { p: globalTotal > 0 ? Math.round((n / globalTotal) * 100) : 0 });
+  const allSelected = users.length > 0 && selectedUsers.size === users.length;
+  const canDelete = (u: UserListItem) => role === 'super_admin' && u.id !== currentAdmin?.id && u.role_level < 2;
+  const roleTone = (level: number) => (level === 2 ? 'badge--danger' : level === 1 ? 'badge--warn' : 'badge--muted');
+  const sort = filters.sort_by ? { key: filters.sort_by, dir: filters.order ?? 'desc' } : undefined;
+
+  const columns: Column<UserListItem>[] = [
+    {
+      header: (
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={handleSelectAll}
+          aria-label={t.userList.selectAll}
+        />
+      ),
+      render: (user) => (
+        <input
+          type="checkbox"
+          checked={selectedUsers.has(user.id)}
+          onChange={() => handleToggleSelect(user.id)}
+          aria-label={fill(t.userList.selectOne, { name: user.display_name || user.email })}
+        />
+      ),
+    },
+    {
+      header: t.userList.colUser,
+      sortKey: 'email',
+      render: (user) => (
+        <div className="user-cell">
+          <div className="user-cell__avatar" aria-hidden="true">{(user.display_name || user.email)[0].toUpperCase()}</div>
+          <div>
+            <button type="button" className="link-button table-title" onClick={() => handleViewDetail(user.id)}>
+              {user.display_name || user.email.split('@')[0]}
+            </button>
+            <div className="table-sub">{user.email}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: t.userList.colRole,
+      sortKey: 'role',
+      render: (user) => <span className={`badge ${roleTone(user.role_level)}`}>{getRoleLabel(user.role_level)}</span>,
+    },
+    {
+      header: t.userList.colProgress,
+      sortKey: 'total_xp',
+      render: (user) => (
+        <div className="stack stack--tight">
+          <div className="xp-row">
+            <div className="xp-meter"><span style={{ width: `${Math.min(100, (user.total_xp || 0) / 100)}%` }} /></div>
+            <span className="table-meta xp-row__value">{(user.total_xp || 0).toLocaleString()} XP</span>
+          </div>
+          <span className="table-meta">{fill(t.userList.streak, { n: user.streak_days || 0 })}</span>
+        </div>
+      ),
+    },
+    {
+      header: t.userList.colStatus,
+      render: (user) => (
+        <span className={`badge ${user.is_active ? 'badge--ok' : 'badge--muted'}`}>
+          {user.is_active ? t.userList.statusActive : t.userList.statusPaused}
+        </span>
+      ),
+    },
+    {
+      header: t.userList.colJoined,
+      sortKey: 'created_at',
+      render: (user) => (
+        <div className="stack stack--tight">
+          <div className="table-meta">{new Date(user.created_at).toLocaleDateString(dateLocale)}</div>
+          <div className="table-sub">
+            {user.last_login
+              ? fill(t.userList.lastLogin, { d: new Date(user.last_login).toLocaleDateString(dateLocale) })
+              : t.userList.neverLoggedIn}
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: t.userList.colActions,
+      align: 'right',
+      render: (user) => {
+        const toggleLabel = user.is_active ? t.userList.deactivate : t.userList.activate;
+        return (
+          <div className="table-actions">
+            <button type="button" onClick={() => handleViewDetail(user.id)} className="icon-button" title={t.userList.view} aria-label={t.userList.view}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleStatus(user.id, user.is_active)}
+              disabled={statusMutation.isPending}
+              className="icon-button"
+              title={toggleLabel}
+              aria-label={toggleLabel}
+            >
+              {user.is_active ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="15" y1="9" x2="9" y2="15"/>
+                  <line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+              )}
+            </button>
+            {canDelete(user) && (
+              <button
+                type="button"
+                onClick={() => handlePermanentDelete(user.id, user.email)}
+                disabled={deleteMutation.isPending}
+                className="icon-button icon-button--danger"
+                title={t.userList.deletePermanent}
+                aria-label={t.userList.deletePermanent}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/>
+                  <line x1="10" y1="11" x2="10" y2="17"/>
+                  <line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+              </button>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+
+  const page = filters.page || 1;
 
   return (
     <div className="stack">
-      {/* Header */}
-      <div className="cluster" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <SectionHeader title="Quản lý Người dùng" description="Quản lý người dùng, vai trò và quyền hạn" />
-        
+      <div className="cluster cluster--between">
+        <SectionHeader title={t.userList.title} description={t.userList.description} />
+
         {selectedUsers.size > 0 && (
-          <div className="cluster" style={{ gap: 12, alignItems: 'center', padding: '12px 16px', background: 'var(--panel)', borderRadius: 12, border: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 600 }}>{selectedUsers.size} đã chọn</span>
-            <button
-              onClick={() => handleBulkAction('activate')}
-              disabled={bulkActionMutation.isPending}
-              className="btn-secondary"
-              style={{ minWidth: 100 }}
-            >
-              Kích hoạt
+          <div className="bulk-bar" role="region" aria-live="polite">
+            <span className="bulk-bar__count">{fill(t.userList.selected, { n: selectedUsers.size })}</span>
+            <button onClick={() => handleBulkAction('activate')} disabled={bulkActionMutation.isPending} className="ghost-button">
+              {t.userList.activate}
             </button>
-            <button
-              onClick={() => handleBulkAction('deactivate')}
-              disabled={bulkActionMutation.isPending}
-              className="ghost-button"
-              style={{ minWidth: 100 }}
-            >
-              Hủy kích hoạt
+            <button onClick={() => handleBulkAction('deactivate')} disabled={bulkActionMutation.isPending} className="ghost-button">
+              {t.userList.deactivate}
             </button>
           </div>
         )}
       </div>
-      
-      {/* Stats Cards */}
+
       {data && (
         <div className="card-grid">
           <div className="stat-card">
             <div className="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
                 <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -202,282 +342,110 @@ export default function UserManagementPage() {
               </svg>
             </div>
             <div>
-              <div className="stat-label">Tổng người dùng</div>
+              <div className="stat-label">{t.userList.statTotal}</div>
               <div className="stat-value">{data.total.toLocaleString()}</div>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
               </svg>
             </div>
             <div>
-              <div className="stat-label">Đang hoạt động</div>
+              <div className="stat-label">{t.userList.statActive}</div>
               <div className="stat-value">{activeUsers}</div>
-              <div className="stat-meta">{globalTotal > 0 ? Math.round((activeUsers / globalTotal) * 100) : 0}% tổng số</div>
+              <div className="stat-meta">{pct(activeUsers)}</div>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>
                 <line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
             </div>
             <div>
-              <div className="stat-label">Ngừng hoạt động</div>
+              <div className="stat-label">{t.userList.statInactive}</div>
               <div className="stat-value">{inactiveUsers}</div>
-              <div className="stat-meta">{globalTotal > 0 ? Math.round((inactiveUsers / globalTotal) * 100) : 0}% tổng số</div>
+              <div className="stat-meta">{pct(inactiveUsers)}</div>
             </div>
           </div>
-          
+
           <div className="stat-card">
             <div className="stat-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
             </div>
             <div>
-              <div className="stat-label">Trung bình XP (trang này)</div>
+              <div className="stat-label">{t.userList.avgXp}</div>
               <div className="stat-value">{pageAvgXP.toLocaleString()}</div>
-              <div className="stat-meta">Tổng trang này: {pageTotalXP.toLocaleString()} XP</div>
+              <div className="stat-meta">{fill(t.userList.pageXp, { n: pageTotalXP.toLocaleString() })}</div>
             </div>
           </div>
         </div>
       )}
-      
-      {/* Filters */}
+
       <UserFiltersPanel filters={filters} onFilterChange={handleFilterChange} />
-      
-      {/* Table */}
-      <div className="panel" style={{ padding: 0, overflow: 'hidden' }}>
-        {isLoading ? (
-          <div style={{ padding: '64px 32px', textAlign: 'center' }}>
-            <div className="spinner" style={{ width: 48, height: 48, margin: '0 auto' }}></div>
-            <p style={{ marginTop: 16, color: 'var(--muted)' }}>Đang tải người dùng...</p>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--panel-soft)', borderBottom: '1px solid var(--line)' }}>
-                  <th style={{ padding: '12px 16px', textAlign: 'left', width: 40 }}>
-                    <input
-                      type="checkbox"
-                      checked={data?.users && selectedUsers.size === data.users.length}
-                      onChange={handleSelectAll}
-                      style={{ cursor: 'pointer' }}
-                    />
-                  </th>
-                  <th className="table-header">Người dùng</th>
-                  <th className="table-header">Role</th>
-                  <th className="table-header">Tiến trình</th>
-                  <th className="table-header">Trạng thái</th>
-                  <th className="table-header">Tham gia</th>
-                  <th className="table-header" style={{ textAlign: 'right', paddingRight: 16 }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.id} style={{ borderBottom: '1px solid var(--line)', transition: 'background 0.15s', cursor: 'pointer' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--panel-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '16px', width: 40 }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers.has(user.id)}
-                        onChange={() => handleToggleSelect(user.id)}
-                        style={{ cursor: 'pointer' }}
-                      />
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <div className="cluster" style={{ gap: 12, alignItems: 'center' }}>
-                        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg, var(--accent), #ff8c42)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
-                          {(user.display_name || user.email)[0].toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="table-title">{user.display_name || user.email.split('@')[0]}</div>
-                          <div className="table-sub">{user.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <span className="badge" style={{ 
-                        background: user.role_level === 2 ? 'rgba(239, 68, 68, 0.1)' : user.role_level === 1 ? 'rgba(255, 77, 0, 0.1)' : 'var(--panel-soft)',
-                        color: user.role_level === 2 ? '#dc2626' : user.role_level === 1 ? 'var(--accent)' : 'var(--muted)'
-                      }}>
-                        {getRoleLabel(user.role_level)}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <div className="stack" style={{ gap: 6 }}>
-                        <div className="cluster" style={{ gap: 8, alignItems: 'center' }}>
-                          <div style={{ flex: 1, height: 6, background: 'var(--panel-soft)', borderRadius: 3, overflow: 'hidden' }}>
-                            <div style={{ width: `${Math.min(100, (user.total_xp || 0) / 100)}%`, height: '100%', background: 'linear-gradient(90deg, var(--accent), #fbbf24)', borderRadius: 3, transition: 'width 0.3s' }}></div>
-                          </div>
-                          <span className="table-meta" style={{ minWidth: 60 }}>{(user.total_xp || 0).toLocaleString()} XP</span>
-                        </div>
-                        <span className="table-meta">
-                          Streak: {user.streak_days || 0} days
-                        </span>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <span className="badge" style={{ 
-                        background: user.is_active ? 'rgba(34, 197, 94, 0.1)' : 'rgba(156, 163, 175, 0.1)',
-                        color: user.is_active ? '#16a34a' : '#6b7280'
-                      }}>
-                        {user.is_active ? 'Hoạt động' : 'Tạm dừng'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px' }}>
-                      <div className="stack" style={{ gap: 4 }}>
-                        <div className="table-meta">{new Date(user.created_at).toLocaleDateString('vi-VN')}</div>
-                        <div className="table-sub" style={{ fontSize: 11 }}>
-                          {user.last_login ? `Đăng nhập: ${new Date(user.last_login).toLocaleDateString('vi-VN')}` : 'Chưa đăng nhập'}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px', textAlign: 'right' }}>
-                      <div className="cluster" style={{ gap: 6, justifyContent: 'flex-end' }}>
-                        <button
-                          onClick={() => handleViewDetail(user.id)}
-                          className="icon-button"
-                          title="Xem chi tiết"
-                          aria-label="Xem chi tiết"
-                          style={{ width: 32, height: 32 }}
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleToggleStatus(user.id, user.is_active)}
-                          disabled={statusMutation.isPending}
-                          className="icon-button"
-                          title={user.is_active ? 'Hủy kích hoạt' : 'Kích hoạt'}
-                          aria-label={user.is_active ? 'Hủy kích hoạt' : 'Kích hoạt'}
-                          style={{ width: 32, height: 32, opacity: statusMutation.isPending ? 0.5 : 1 }}
-                        >
-                          {user.is_active ? (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="10"/>
-                              <line x1="15" y1="9" x2="9" y2="15"/>
-                              <line x1="9" y1="9" x2="15" y2="15"/>
-                            </svg>
-                          ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                              <polyline points="22 4 12 14.01 9 11.01"/>
-                            </svg>
-                          )}
-                        </button>
-                        {role === 'super_admin' && user.id !== currentAdmin?.id && user.role_level < 2 && (
-                          <button
-                            onClick={() => handlePermanentDelete(user.id, user.email)}
-                            disabled={deleteMutation.isPending}
-                            className="icon-button"
-                            title="Xóa vĩnh viễn"
-                            aria-label="Xóa vĩnh viễn"
-                            style={{ width: 32, height: 32, color: '#dc2626', opacity: deleteMutation.isPending ? 0.5 : 1 }}
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="3 6 5 6 21 6"/>
-                              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/>
-                              <line x1="10" y1="11" x2="10" y2="17"/>
-                              <line x1="14" y1="11" x2="14" y2="17"/>
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            
-            {data?.users.length === 0 && (
-              <div className="empty-state" style={{ margin: 32, border: 'none' }}>
-                <div className="empty-title">Không tìm thấy người dùng</div>
-                <div className="empty-description">Thử thay đổi bộ lọc của bạn</div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      
-      {/* Pagination */}
+
+      {isLoading ? (
+        <div className="panel center-state" role="status">
+          <div className="spinner" />
+          <p>{t.userList.loading}</p>
+        </div>
+      ) : users.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-title">{t.userList.emptyTitle}</div>
+          <div className="empty-description">{t.userList.emptyDescription}</div>
+        </div>
+      ) : (
+        <DataTable columns={columns} rows={users} sort={sort} onSort={handleSort} rowKey={(u) => u.id} />
+      )}
+
       {data && data.total_pages > 1 && (
-        <div className="panel" style={{ padding: 16 }}>
-          <div className="cluster" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-            <button
-              onClick={() => handlePageChange(filters.page! - 1)}
-              disabled={filters.page === 1}
-              className="btn-secondary"
-              style={{ minWidth: 100, opacity: filters.page === 1 ? 0.4 : 1 }}
-            >
-              ← Trước
+        <nav className="panel pagination" aria-label={t.userList.colUser}>
+          <div className="cluster cluster--between">
+            <button onClick={() => handlePageChange(page - 1)} disabled={page === 1} className="ghost-button">
+              {t.userList.prev}
             </button>
-            
-            <div className="cluster" style={{ gap: 6 }}>
+
+            <div className="cluster">
               {Array.from({ length: data.total_pages }, (_, i) => {
-                const page = i + 1;
-                const isCurrentPage = filters.page === page;
-                const showPage = page === 1 || page === data.total_pages || Math.abs(page - (filters.page || 1)) <= 2;
-                const showEllipsis = (page === 2 && (filters.page || 1) > 4) || (page === data.total_pages - 1 && (filters.page || 1) < data.total_pages - 3);
-                
-                if (showEllipsis) {
-                  return <span key={page} style={{ padding: '0 4px', color: 'var(--muted)' }}>...</span>;
-                }
-                
+                const n = i + 1;
+                const showPage = n === 1 || n === data.total_pages || Math.abs(n - page) <= 2;
+                const showEllipsis = (n === 2 && page > 4) || (n === data.total_pages - 1 && page < data.total_pages - 3);
+
+                if (showEllipsis) return <span key={n} className="pagination__gap">...</span>;
                 if (!showPage) return null;
-                
+
                 return (
                   <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    style={{
-                      minWidth: 36,
-                      height: 36,
-                      padding: '0 12px',
-                      borderRadius: 8,
-                      border: 'none',
-                      background: isCurrentPage ? 'var(--accent)' : 'var(--panel-soft)',
-                      color: isCurrentPage ? 'white' : 'var(--text)',
-                      fontWeight: isCurrentPage ? 600 : 500,
-                      fontSize: 14,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => !isCurrentPage && (e.currentTarget.style.background = 'var(--line)')}
-                    onMouseLeave={(e) => !isCurrentPage && (e.currentTarget.style.background = 'var(--panel-soft)')}
+                    key={n}
+                    onClick={() => handlePageChange(n)}
+                    className={n === page ? 'page-button active' : 'page-button'}
+                    aria-current={n === page ? 'page' : undefined}
                   >
-                    {page}
+                    {n}
                   </button>
                 );
               })}
             </div>
-            
-            <button
-              onClick={() => handlePageChange(filters.page! + 1)}
-              disabled={filters.page === data.total_pages}
-              className="btn-secondary"
-              style={{ minWidth: 100, opacity: filters.page === data.total_pages ? 0.4 : 1 }}
-            >
-              Sau →
+
+            <button onClick={() => handlePageChange(page + 1)} disabled={page === data.total_pages} className="ghost-button">
+              {t.userList.next}
             </button>
           </div>
-          <div style={{ marginTop: 12, textAlign: 'center' }}>
-            <span className="table-meta">Trang {filters.page} / {data.total_pages} • Tổng {data.total} người dùng</span>
+          <div className="pagination__info table-meta">
+            {fill(t.userList.pageInfo, { page, pages: data.total_pages, total: data.total })}
           </div>
-        </div>
+        </nav>
       )}
-      
-      {/* Detail Modal */}
+
       {detailModalUserId && (
         <UserDetailModal
           userId={detailModalUserId}

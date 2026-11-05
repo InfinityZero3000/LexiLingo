@@ -364,6 +364,7 @@ export const TopicsPage = () => {
             columns={[
               {
                 header: "Topic",
+                sortValue: (row) => row.title.en,
                 render: (row) => {
                   const Icon = iconFor(row.icon_key || row.category);
                   return (
@@ -379,10 +380,10 @@ export const TopicsPage = () => {
                   );
                 },
               },
-              { header: "Category", render: (row) => <StatusPill tone="info" label={row.category} /> },
-              { header: "Level", render: (row) => <StatusPill tone="warning" label={row.difficulty_level} />, align: "center" },
+              { header: "Category", sortValue: (row) => row.category, render: (row) => <StatusPill tone="info" label={row.category} /> },
+              { header: "Level", sortValue: (row) => row.difficulty_level, render: (row) => <StatusPill tone="warning" label={row.difficulty_level} />, align: "center" },
               { header: "Icon", render: (row) => <span className="table-meta">{row.icon_key || row.category}</span> },
-              { header: "Minutes", render: (row) => <span className="table-meta">{row.estimated_minutes}</span>, align: "center" },
+              { header: "Minutes", sortValue: (row) => row.estimated_minutes, render: (row) => <span className="table-meta">{row.estimated_minutes}</span>, align: "center" },
               {
                 header: "",
                 render: (row) => (

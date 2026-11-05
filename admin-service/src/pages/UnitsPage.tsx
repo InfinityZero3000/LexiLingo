@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
@@ -20,6 +21,7 @@ export const UnitsPage = () => {
   const { courseId: paramCourseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export const UnitsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.units.deleteUnit)) return;
+    if (!(await confirm({ message: t.units.deleteUnit, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteUnit(id);
       await loadUnits();
@@ -179,11 +181,13 @@ export const UnitsPage = () => {
             columns={[
               {
                 header: "#",
+                sortValue: (row: UnitItem) => row.order_index,
                 render: (row) => <span className="table-meta">{row.order_index}</span>,
                 align: "center",
               },
               ...(isStandalone ? [{
                 header: "Khóa học",
+                sortValue: (row: UnitItem) => courseMap.get(row.course_id) || row.course_id,
                 render: (row: UnitItem) => (
                   <span className="table-meta" style={{ color: "var(--text)", fontWeight: 500 }}>
                     {courseMap.get(row.course_id) || row.course_id.slice(0, 8)}
@@ -192,6 +196,7 @@ export const UnitsPage = () => {
               }] : []),
               {
                 header: t.units.unit,
+                sortValue: (row: UnitItem) => row.title,
                 render: (row: UnitItem) => (
                   <div>
                     <div
@@ -207,6 +212,7 @@ export const UnitsPage = () => {
               },
               {
                 header: "Bài học",
+                sortValue: (row: UnitItem) => row.total_lessons,
                 render: (row: UnitItem) => <span className="table-meta">{row.total_lessons}</span>,
                 align: "center",
               },
@@ -291,7 +297,7 @@ export const UnitsPage = () => {
               Icon URL
               <input value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })} />
             </label>
-            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+            <div className="table-actions">
               <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}

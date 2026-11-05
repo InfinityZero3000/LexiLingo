@@ -45,7 +45,7 @@ export const AiQualityDashboardPage = () => {
         title="AI Quality"
         description="Lexi latency, correction quality, STT/TTS failures, and recent AI audit incidents."
         action={
-          <button className="btn-secondary btn-sm" onClick={load} disabled={loading}>
+          <button className="ghost-button small" onClick={load} disabled={loading}>
             <RefreshCw size={14} /> Refresh
           </button>
         }
@@ -77,7 +77,7 @@ export const AiQualityDashboardPage = () => {
           </div>
 
           <div className="panel">
-            <h3 style={{ padding: "16px 16px 0" }}>Endpoint breakdown</h3>
+            <h3 className="panel-heading">Endpoint breakdown</h3>
             {!summary.endpoint_breakdown.length ? (
               <EmptyState title="No endpoint data" description="No AI endpoint events were found in the selected window." />
             ) : (
@@ -114,7 +114,7 @@ export const AiQualityDashboardPage = () => {
           </div>
 
           <div className="panel">
-            <h3 style={{ padding: "16px 16px 0" }}>Latest failures</h3>
+            <h3 className="panel-heading">Latest failures</h3>
             {!summary.latest_failures.length ? (
               <EmptyState title="No recent failures" description="The latest AI audit window has no failed events." />
             ) : (
