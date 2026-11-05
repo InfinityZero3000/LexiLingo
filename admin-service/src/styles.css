@@ -20,6 +20,9 @@
   --bg-primary: var(--panel);
   --bg-secondary: var(--surface-2);
   --border: var(--line);
+  --surface: var(--panel);
+  --foreground: var(--text);
+  --ink-purple: #6f3fa3;
   --surface-2: #f7fbff;
   --tint-orange: #fff0e7;
   --ink-orange: #8a330e;
@@ -45,6 +48,7 @@
   --ink-orange: #ffb27a;
   --ink-teal: #5fd4cc;
   --ink-red: #ff8a9f;
+  --ink-purple: #c9a8f0;
   --body-bg: radial-gradient(circle at top left, #1d1410 0%, #0b1220 45%, #080e19 100%);
 }
 
@@ -657,7 +661,7 @@ h3,
 
 .status-pill.info {
   background: rgba(43, 47, 59, 0.12);
-  color: var(--accent-4);
+  color: var(--text);
 }
 
 .status-pill.danger {
@@ -858,6 +862,8 @@ textarea {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
   font-family: inherit;
   font-size: 14px;
 }
@@ -3678,7 +3684,7 @@ textarea:focus {
 }
 
 .tone-blue { background: rgba(47, 111, 237, 0.14); color: #2f6fed; }
-.tone-purple { background: rgba(111, 63, 163, 0.14); color: var(--accent-3); }
+.tone-purple { background: rgba(111, 63, 163, 0.14); color: var(--ink-purple); }
 .tone-teal { background: rgba(42, 167, 161, 0.15); color: var(--accent-2); }
 .tone-gold { background: rgba(196, 148, 16, 0.16); color: #a97c0c; }
 .tone-orange { background: rgba(255, 77, 0, 0.13); color: var(--accent); }
@@ -4172,7 +4178,7 @@ textarea:focus {
   align-items: center;
   gap: 6px;
   margin: 0 0 6px;
-  color: var(--accent-3);
+  color: var(--ink-purple);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -4379,3 +4385,50 @@ textarea:focus {
 .recharts-legend-item-text {
   fill: var(--muted);
 }
+
+/* ─── Tailwind modals/drawers follow the theme (ranking-agent, notification-campaign) ─── */
+:root[data-theme="dark"] .bg-white { background-color: var(--panel); }
+:root[data-theme="dark"] .bg-gray-50 { background-color: var(--surface-2); }
+:root[data-theme="dark"] .bg-gray-100,
+:root[data-theme="dark"] .bg-gray-200,
+:root[data-theme="dark"] .hover\:bg-gray-100:hover { background-color: var(--panel-soft); }
+:root[data-theme="dark"] .bg-red-50,
+:root[data-theme="dark"] .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.14); }
+:root[data-theme="dark"] .bg-purple-50,
+:root[data-theme="dark"] .bg-indigo-50 { background-color: rgba(139, 92, 246, 0.16); }
+:root[data-theme="dark"] .bg-amber-50 { background-color: rgba(245, 158, 11, 0.14); }
+:root[data-theme="dark"] .bg-green-50 { background-color: rgba(34, 197, 94, 0.14); }
+:root[data-theme="dark"] .bg-blue-50,
+:root[data-theme="dark"] .hover\:bg-blue-50:hover { background-color: rgba(59, 130, 246, 0.16); }
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800,
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .hover\:text-gray-800:hover,
+:root[data-theme="dark"] .hover\:text-gray-700:hover { color: var(--text); }
+:root[data-theme="dark"] .text-gray-600,
+:root[data-theme="dark"] .text-gray-500,
+:root[data-theme="dark"] .text-gray-400,
+:root[data-theme="dark"] .hover\:text-gray-600:hover { color: var(--muted); }
+:root[data-theme="dark"] .text-red-500,
+:root[data-theme="dark"] .text-red-600,
+:root[data-theme="dark"] .text-red-700,
+:root[data-theme="dark"] .hover\:text-red-700:hover { color: var(--ink-red); }
+:root[data-theme="dark"] .text-amber-500,
+:root[data-theme="dark"] .text-amber-600,
+:root[data-theme="dark"] .text-amber-700 { color: var(--ink-orange); }
+:root[data-theme="dark"] .text-green-600 { color: var(--ink-teal); }
+:root[data-theme="dark"] .text-blue-500,
+:root[data-theme="dark"] .text-blue-600 { color: #7db4ff; }
+:root[data-theme="dark"] .text-indigo-600,
+:root[data-theme="dark"] .text-purple-500,
+:root[data-theme="dark"] .text-purple-600,
+:root[data-theme="dark"] .text-purple-700,
+:root[data-theme="dark"] .text-purple-800,
+:root[data-theme="dark"] .text-purple-900 { color: var(--ink-purple); }
+:root[data-theme="dark"] .border-gray-300,
+:root[data-theme="dark"] .hover\:border-gray-400:hover { border-color: var(--line-strong); }
+:root[data-theme="dark"] .border-red-200 { border-color: rgba(239, 68, 68, 0.35); }
+:root[data-theme="dark"] .border-purple-100,
+:root[data-theme="dark"] .border-purple-200 { border-color: rgba(139, 92, 246, 0.35); }
+:root[data-theme="dark"] .border-amber-200 { border-color: rgba(245, 158, 11, 0.35); }
+:root[data-theme="dark"] .border-blue-200 { border-color: rgba(59, 130, 246, 0.35); }
