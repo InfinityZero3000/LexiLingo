@@ -44,19 +44,13 @@ type LoadingState = "idle" | "loading" | "ok" | "error";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const statusColor = (s: string) => {
-  if (s === "healthy") return "var(--accent-2)";
-  if (s === "unhealthy") return "var(--accent)";
-  if (s === "unreachable") return "#e55";
-  return "var(--muted)";
-};
+const KNOWN_STATUS = ["healthy", "unhealthy", "unreachable"] as const;
+const toneOf = (s: string) => (KNOWN_STATUS as readonly string[]).includes(s) ? s : "unknown";
 
 const StatusIcon = ({ status }: { status: string }) => {
-  if (status === "healthy")
-    return <CheckCircle size={16} color="var(--accent-2)" />;
-  if (status === "unhealthy" || status === "unreachable")
-    return <XCircle size={16} color="var(--accent)" />;
-  return <AlertTriangle size={16} color="#f90" />;
+  if (status === "healthy") return <CheckCircle size={16} aria-hidden="true" />;
+  if (status === "unhealthy" || status === "unreachable") return <XCircle size={16} aria-hidden="true" />;
+  return <AlertTriangle size={16} aria-hidden="true" />;
 };
 
 const fmt = (n: number | undefined, dec = 1) =>
@@ -65,6 +59,9 @@ const fmt = (n: number | undefined, dec = 1) =>
 const nowLabel = () =>
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
+const fill = (text: string, vars: Record<string, string | number>) =>
+  text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
+
 // ─── GaugeBar ─────────────────────────────────────────────────────────────────
 
 const GaugeBar = ({
@@ -72,7 +69,7 @@ const GaugeBar = ({
   value,
   max = 100,
   unit = "%",
-  color = "var(--accent-2)",
+  color,
 }: {
   label: string;
   value: number;
@@ -81,42 +78,28 @@ const GaugeBar = ({
   color?: string;
 }) => {
   const pct = Math.min(100, (value / max) * 100);
-  const barColor =
-    pct > 85 ? "var(--accent)" : pct > 60 ? "#f90" : color;
+  const level = pct > 85 ? "crit" : pct > 60 ? "warn" : "ok";
 
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: 12,
-          marginBottom: 4,
-          color: "var(--muted)",
-        }}
-      >
+    <div className="mon-gauge">
+      <div className="mon-gauge-head">
         <span>{label}</span>
-        <span style={{ fontWeight: 600, color: "var(--text)" }}>
+        <span className="mon-gauge-value">
           {fmt(value, unit === "%" ? 1 : 2)}
           {unit}
         </span>
       </div>
       <div
-        style={{
-          height: 8,
-          borderRadius: 4,
-          background: "var(--line)",
-          overflow: "hidden",
-        }}
+        className="mon-gauge-track"
+        role="meter"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
       >
         <div
-          style={{
-            height: "100%",
-            width: `${pct}%`,
-            background: barColor,
-            borderRadius: 4,
-            transition: "width 0.6s ease",
-          }}
+          className={`mon-gauge-fill mon-gauge-fill--${level}`}
+          style={{ width: `${pct}%`, ...(level === "ok" && color ? { "--gauge-color": color } as React.CSSProperties : {}) }}
         />
       </div>
     </div>
@@ -125,24 +108,12 @@ const GaugeBar = ({
 
 // ─── ServiceBadge ─────────────────────────────────────────────────────────────
 
-const ServiceBadge = ({ name, status, icon }: { name: string; status: string; icon: React.ReactNode }) => (
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      padding: "10px 14px",
-      borderRadius: 10,
-      background: "var(--panel-soft-2)",
-      border: `1px solid var(--line)`,
-    }}
-  >
-    <div style={{ color: statusColor(status) }}>{icon}</div>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 13, fontWeight: 600 }}>{name}</div>
-      <div style={{ fontSize: 11, color: statusColor(status), textTransform: "capitalize" }}>
-        {status}
-      </div>
+const ServiceBadge = ({ name, status, label, icon }: { name: string; status: string; label: string; icon: React.ReactNode }) => (
+  <div className={`mon-service mon-tone--${toneOf(status)}`}>
+    <div className="mon-service-icon">{icon}</div>
+    <div className="mon-service-main">
+      <div className="mon-service-name">{name}</div>
+      <div className="mon-service-status">{label}</div>
     </div>
     <StatusIcon status={status} />
   </div>
@@ -231,56 +202,55 @@ export const MonitoringPage = () => {
   const load15 = system?.load_avg?.["15m"] ?? (aiDash?.system?.load_avg?.[2]);
 
   const radialData = [
-    { name: "CPU", value: cpu ?? 0, fill: "#ff4d00" },
-    { name: "Memory", value: mem ?? 0, fill: "#2aa7a1" },
-    { name: "Disk", value: disk ?? 0, fill: "#6f3fa3" },
+    { name: "CPU", value: cpu ?? 0, fill: "var(--accent)" },
+    { name: t.monitoring.memory, value: mem ?? 0, fill: "var(--accent-2)" },
+    { name: t.monitoring.disk, value: disk ?? 0, fill: "var(--accent-3)" },
   ];
 
   const dbCounts = db?.counts;
+  const m = t.monitoring;
+  const statusLabel = (status: string) => {
+    const tone = toneOf(status);
+    return tone === "healthy" ? m.statusHealthy
+      : tone === "unhealthy" ? m.statusUnhealthy
+      : tone === "unreachable" ? m.statusUnreachable
+      : m.statusUnknown;
+  };
+  const aiCpu = aiDash?.system?.cpu?.percent ?? aiDash?.system?.cpu_percent;
+  const aiMem = aiDash?.system?.memory?.percent ?? aiDash?.system?.memory_percent;
+  const backendStatus = aiDash?.health?.healthy !== undefined
+    ? (aiDash.health.healthy ? "healthy" : "unhealthy")
+    : "unknown";
 
   return (
     <div className="stack">
-      {/* Header */}
       <SectionHeader
-        title={t.monitoring.title}
-        description={t.monitoring.description}
+        title={m.title}
+        description={m.description}
         action={
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {lastUpdated && (
-              <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                Updated {lastUpdated}
-              </span>
-            )}
+          <div className="mon-actions">
+            {lastUpdated && <span className="mon-updated">{fill(m.updatedAt, { time: lastUpdated })}</span>}
             <button
-              className="ghost-button small"
+              className="ghost-button small with-icon"
               onClick={fetchAll}
               disabled={loadState === "loading"}
-              style={{ display: "flex", alignItems: "center", gap: 6 }}
             >
-              <RefreshCw
-                size={14}
-                style={
-                  loadState === "loading"
-                    ? { animation: "spin 0.8s linear infinite" }
-                    : undefined
-                }
-              />
-              Refresh
+              <RefreshCw size={14} className={loadState === "loading" ? "is-spinning" : undefined} aria-hidden="true" />
+              {m.refresh}
             </button>
             <button
               className="ghost-button small"
               onClick={() => setPaused((p) => !p)}
               aria-pressed={paused}
-              title={paused ? t.monitoring.resumeAuto : t.monitoring.pauseAuto}
-              aria-label={paused ? t.monitoring.resumeAuto : t.monitoring.pauseAuto}
+              title={paused ? m.resumeAuto : m.pauseAuto}
+              aria-label={paused ? m.resumeAuto : m.pauseAuto}
             >
-              {paused ? <Play size={14} /> : <Pause size={14} />}
+              {paused ? <Play size={14} aria-hidden="true" /> : <Pause size={14} aria-hidden="true" />}
             </button>
           </div>
         }
       />
 
-      {/* ── Row 1: Stat cards ─────────────────────────────────────────────────── */}
       <div className="card-grid">
         <StatCard
           label="CPU"
@@ -288,7 +258,7 @@ export const MonitoringPage = () => {
           note={load1 !== undefined ? `Load: ${fmt(load1)} / ${fmt(load5)} / ${fmt(load15)}` : undefined}
         />
         <StatCard
-          label={t.monitoring.memory}
+          label={m.memory}
           value={mem !== undefined ? `${fmt(mem)}%` : "--"}
           note={
             system?.memory
@@ -298,7 +268,7 @@ export const MonitoringPage = () => {
           accent="teal"
         />
         <StatCard
-          label={t.monitoring.disk}
+          label={m.disk}
           value={disk !== undefined ? `${fmt(disk)}%` : "--"}
           note={
             system?.disk
@@ -308,30 +278,26 @@ export const MonitoringPage = () => {
           accent="berry"
         />
         <StatCard
-          label="Connections"
+          label={m.connections}
           value={reqStats?.active_connections !== undefined ? String(reqStats.active_connections) : "--"}
-          note={reqStats?.requests_last_minute !== undefined ? `${reqStats.requests_last_minute} req/min` : undefined}
+          note={reqStats?.requests_last_minute !== undefined ? fill(m.reqPerMin, { n: reqStats.requests_last_minute }) : undefined}
           accent="ink"
         />
       </div>
 
-      {/* ── Row 2: Time-series chart + Gauge ──────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: 20 }}>
-        {/* Area chart */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>
-            CPU &amp; Memory — last {HISTORY_MAX} samples
-          </div>
+      <div className="mon-row mon-row--chart">
+        <div className="card">
+          <div className="mon-card-title mon-card-title--plain">{fill(m.cpuMemChart, { n: HISTORY_MAX })}</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={history} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradCpu" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ff4d00" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#ff4d00" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradMem" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2aa7a1" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#2aa7a1" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--accent-2)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--accent-2)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
@@ -339,155 +305,101 @@ export const MonitoringPage = () => {
               <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
               <Legend />
-              <Area
-                type="monotone"
-                dataKey="cpu"
-                name="CPU %"
-                stroke="#ff4d00"
-                fill="url(#gradCpu)"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Area
-                type="monotone"
-                dataKey="memory"
-                name="Memory %"
-                stroke="#2aa7a1"
-                fill="url(#gradMem)"
-                strokeWidth={2}
-                dot={false}
-              />
+              <Area type="monotone" dataKey="cpu" name="CPU %" stroke="var(--accent)" fill="url(#gradCpu)" strokeWidth={2} dot={false} />
+              <Area type="monotone" dataKey="memory" name={m.memoryPct} stroke="var(--accent-2)" fill="url(#gradMem)" strokeWidth={2} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Radial gauge */}
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 14 }}>
-            Resource Usage
-          </div>
+        <div className="card">
+          <div className="mon-card-title mon-card-title--plain">{m.resourceUsage}</div>
           <ResponsiveContainer width="100%" height={160}>
-            <RadialBarChart
-              cx="50%"
-              cy="50%"
-              innerRadius="30%"
-              outerRadius="90%"
-              data={radialData}
-              startAngle={90}
-              endAngle={-270}
-            >
+            <RadialBarChart cx="50%" cy="50%" innerRadius="30%" outerRadius="90%" data={radialData} startAngle={90} endAngle={-270}>
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
               <RadialBar dataKey="value" background angleAxisId={0} label={{ position: "insideStart", fill: "#fff", fontSize: 10 }} />
               <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
               <Legend iconSize={10} />
             </RadialBarChart>
           </ResponsiveContainer>
-          <div style={{ marginTop: 12 }}>
+          <div className="mon-gauges">
             <GaugeBar label="CPU" value={cpu ?? 0} />
-            <GaugeBar label="Memory" value={mem ?? 0} color="var(--accent-2)" />
-            <GaugeBar label="Disk" value={disk ?? 0} color="var(--accent-3)" />
+            <GaugeBar label={m.memory} value={mem ?? 0} />
+            <GaugeBar label={m.disk} value={disk ?? 0} color="var(--accent-3)" />
           </div>
         </div>
       </div>
 
-      {/* ── Row 3: Network + Load + Disk I/O ──────────────────────────────────── */}
       {system && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-          <div className="card" style={{ padding: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
-              <Wifi size={15} /> Network I/O
-            </div>
+        <div className="mon-row mon-row--thirds">
+          <div className="card">
+            <div className="mon-card-title mon-card-title--sm"><Wifi size={15} aria-hidden="true" /> {m.networkIo}</div>
             <GaugeBar
-              label={`Sent (${fmt(system.network.bytes_sent_mb / 1024, 2)} GB total)`}
+              label={fill(m.sent, { gb: fmt(system.network.bytes_sent_mb / 1024, 2) })}
               value={system.network.packets_sent}
               max={Math.max(system.network.packets_sent, system.network.packets_recv, 1)}
-              unit=" pkts"
+              unit={m.packets}
             />
             <GaugeBar
-              label={`Recv (${fmt(system.network.bytes_recv_mb / 1024, 2)} GB total)`}
+              label={fill(m.received, { gb: fmt(system.network.bytes_recv_mb / 1024, 2) })}
               value={system.network.packets_recv}
               max={Math.max(system.network.packets_sent, system.network.packets_recv, 1)}
-              unit=" pkts"
+              unit={m.packets}
               color="var(--accent-3)"
             />
           </div>
 
-          <div className="card" style={{ padding: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
-              <Cpu size={15} /> Load Average
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
+          <div className="card">
+            <div className="mon-card-title mon-card-title--sm"><Cpu size={15} aria-hidden="true" /> {m.loadAverage}</div>
+            <div className="mon-load">
               {(
                 [
-                  ["1 min", load1],
-                  ["5 min", load5],
-                  ["15 min", load15],
+                  [m.minutes1, load1],
+                  [m.minutes5, load5],
+                  [m.minutes15, load15],
                 ] as [string, number | undefined][]
               ).map(([label, val]) => (
-                <div key={label} style={{ background: "var(--panel-soft-2)", borderRadius: 8, padding: "10px 8px" }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "var(--text)" }}>
-                    {val !== undefined ? fmt(val, 2) : "--"}
-                  </div>
-                  <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{label}</div>
+                <div key={label} className="mon-load-cell">
+                  <div className="mon-load-value">{val !== undefined ? fmt(val, 2) : "--"}</div>
+                  <div className="mon-load-label">{label}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="card" style={{ padding: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12, fontWeight: 600, fontSize: 13 }}>
-              <HardDrive size={15} /> Disk I/O
-            </div>
+          <div className="card">
+            <div className="mon-card-title mon-card-title--sm"><HardDrive size={15} aria-hidden="true" /> {m.diskIo}</div>
             <GaugeBar
-              label={`Read`}
+              label={m.read}
               value={system.disk_io.read_mb}
               max={Math.max(system.disk_io.read_mb, system.disk_io.write_mb, 1)}
               unit=" MB"
             />
             <GaugeBar
-              label={`Write`}
+              label={m.write}
               value={system.disk_io.write_mb}
               max={Math.max(system.disk_io.read_mb, system.disk_io.write_mb, 1)}
               unit=" MB"
               color="var(--accent-3)"
             />
-            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
-              Disk: {fmt(system.disk.used_gb, 1)} / {fmt(system.disk.total_gb, 1)} GB &nbsp;
-              ({fmt(system.disk.percent)}% used)
+            <div className="mon-foot">
+              {fill(m.diskUsed, { used: fmt(system.disk.used_gb, 1), total: fmt(system.disk.total_gb, 1), pct: fmt(system.disk.percent) })}
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Row 4: Services + DB stats ────────────────────────────────────────── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, fontWeight: 600, fontSize: 14 }}>
-            <Server size={15} /> Service Health
-          </div>
-          <div style={{ display: "grid", gap: 8 }}>
-            <ServiceBadge
-              name="PostgreSQL"
-              status={services?.postgres ?? "unknown"}
-              icon={<Database size={18} />}
-            />
-            <ServiceBadge
-              name="Redis"
-              status={services?.redis ?? "unknown"}
-              icon={<Activity size={18} />}
-            />
-            <ServiceBadge
-              name="AI Service"
-              status={services?.ai_service ?? "unknown"}
-              icon={<Activity size={18} />}
-            />
-            <ServiceBadge
-              name="Backend"
-              status={aiDash?.health?.healthy !== undefined
-                ? (aiDash.health.healthy ? "healthy" : "unhealthy")
-                : "unknown"}
-              icon={<Server size={18} />}
-            />
+      <div className="mon-row mon-row--halves">
+        <div className="card">
+          <div className="mon-card-title"><Server size={15} aria-hidden="true" /> {m.serviceHealth}</div>
+          <div className="mon-service-list">
+            {([
+              ["PostgreSQL", services?.postgres ?? "unknown", <Database size={18} aria-hidden="true" />],
+              ["Redis", services?.redis ?? "unknown", <Activity size={18} aria-hidden="true" />],
+              ["AI Service", services?.ai_service ?? "unknown", <Activity size={18} aria-hidden="true" />],
+              ["Backend", backendStatus, <Server size={18} aria-hidden="true" />],
+            ] as [string, string, React.ReactNode][]).map(([name, status, icon]) => (
+              <ServiceBadge key={name} name={name} status={status} label={statusLabel(status)} icon={icon} />
+            ))}
           </div>
           {aiDash?.health?.warnings && aiDash.health.warnings.length > 0 && (
             <div className="monitor-warning">
@@ -496,18 +408,16 @@ export const MonitoringPage = () => {
           )}
         </div>
 
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14, fontWeight: 600, fontSize: 14 }}>
-            <Database size={15} /> Database Overview
-          </div>
+        <div className="card">
+          <div className="mon-card-title"><Database size={15} aria-hidden="true" /> {m.dbOverview}</div>
           {dbCounts ? (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart
                 data={[
-                  { name: "Users", count: dbCounts.users ?? 0 },
-                  { name: "Courses", count: dbCounts.courses ?? 0 },
-                  { name: "Lessons", count: dbCounts.lessons ?? 0 },
-                  { name: "Vocab", count: dbCounts.vocabulary_items ?? 0 },
+                  { name: m.users, count: dbCounts.users ?? 0 },
+                  { name: m.courses, count: dbCounts.courses ?? 0 },
+                  { name: m.lessons, count: dbCounts.lessons ?? 0 },
+                  { name: m.vocab, count: dbCounts.vocabulary_items ?? 0 },
                 ]}
                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
               >
@@ -515,49 +425,33 @@ export const MonitoringPage = () => {
                 <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="count" name="Rows" fill="var(--accent-2)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" name={m.rows} fill="var(--accent-2)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <div style={{ color: "var(--muted)", fontSize: 13 }}>No DB stats available</div>
+            <div className="mon-empty">{m.noDbStats}</div>
           )}
         </div>
       </div>
 
-      {/* ── Row 5: AI service metrics ──────────────────────────────────────────── */}
       {aiDash && (
-        <div className="card" style={{ padding: 20 }}>
-          <div style={{ fontWeight: 600, marginBottom: 14, fontSize: 14 }}>
-            AI Service Metrics
-          </div>
+        <div className="card">
+          <div className="mon-card-title">{m.aiMetrics}</div>
           <div className="card-grid">
+            <StatCard label={m.aiCpu} value={aiCpu !== undefined ? `${fmt(aiCpu)}%` : "--"} />
+            <StatCard label={m.aiMemory} value={aiMem !== undefined ? `${fmt(aiMem)}%` : "--"} accent="teal" />
             <StatCard
-              label="AI CPU"
-              value={(aiDash.system?.cpu?.percent ?? aiDash.system?.cpu_percent) !== undefined ? `${fmt(aiDash.system?.cpu?.percent ?? aiDash.system?.cpu_percent)}%` : "--"}
-            />
-            <StatCard
-              label="AI Memory"
-              value={(aiDash.system?.memory?.percent ?? aiDash.system?.memory_percent) !== undefined ? `${fmt(aiDash.system?.memory?.percent ?? aiDash.system?.memory_percent)}%` : "--"}
-              accent="teal"
-            />
-            <StatCard
-              label="Process Threads"
+              label={m.threads}
               value={aiDash.process?.num_threads !== undefined ? String(aiDash.process.num_threads) : "--"}
               accent="berry"
             />
             <StatCard
-              label="AI Status"
-              value={
-                aiDash.health?.healthy !== undefined
-                  ? aiDash.health.healthy
-                    ? "Healthy"
-                    : "Warning"
-                  : "--"
-              }
+              label={m.aiStatusLabel}
+              value={aiDash.health?.healthy !== undefined ? (aiDash.health.healthy ? m.healthy : m.warning) : "--"}
               accent={aiDash.health?.healthy ? "teal" : "orange"}
               note={
                 aiDash.health
-                  ? `${aiDash.health.critical_count ?? 0} critical, ${aiDash.health.warning_count ?? 0} warnings`
+                  ? fill(m.issueCount, { c: aiDash.health.critical_count ?? 0, w: aiDash.health.warning_count ?? 0 })
                   : undefined
               }
             />
