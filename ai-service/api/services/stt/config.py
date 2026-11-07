@@ -29,11 +29,12 @@ class STTConfig:
     vad_engine: str = "silero"
     silero_model_path: str = "models/sherpa/silero_vad.onnx"
     verify_enabled: bool = True
-    verify_model: str = "base.en"
+    verify_model: str = "small"
     verify_device: str = "cpu"
     verify_compute_type: str = "int8"
     verify_language: str = "en"
     verify_beam_size: int = 1
+    whisper_model_dir: str = "models/whisper"
     verify_timeout_ms: int = 10000
     confidence_accept: float = 0.85
     confidence_verify: float = 0.78
@@ -88,7 +89,7 @@ class STTConfig:
                 "STT_SILERO_MODEL_PATH", "models/sherpa/silero_vad.onnx"
             ),
             verify_enabled=_bool("STT_VERIFY_ENABLED", True),
-            verify_model=os.getenv("STT_VERIFY_MODEL", legacy_model or "base.en"),
+            verify_model=os.getenv("STT_VERIFY_MODEL", legacy_model or "small"),
             verify_device=os.getenv(
                 "STT_VERIFY_DEVICE", os.getenv("STT_DEVICE", "cpu")
             ),
@@ -100,6 +101,7 @@ class STTConfig:
             ),
             verify_language=os.getenv("STT_VERIFY_LANGUAGE", "en"),
             verify_beam_size=int(os.getenv("STT_VERIFY_BEAM_SIZE", "1")),
+            whisper_model_dir=os.getenv("STT_WHISPER_MODEL_DIR", "models/whisper"),
             verify_timeout_ms=int(os.getenv("STT_VERIFY_TIMEOUT_MS", "10000")),
             confidence_accept=float(os.getenv("STT_CONFIDENCE_ACCEPT", "0.85")),
             confidence_verify=float(os.getenv("STT_CONFIDENCE_VERIFY", "0.78")),

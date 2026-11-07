@@ -106,7 +106,7 @@ export const AiChatSettingsPage = () => {
           description={t.aiChat.description} 
         />
         <button 
-          className="btn-primary" 
+          className="primary-button" 
           onClick={handleSave}
           disabled={saving}
         >
@@ -328,7 +328,7 @@ export const AiChatSettingsPage = () => {
             <button 
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
-              className="btn-secondary"
+              className="ghost-button"
               style={{ minWidth: 100 }}
             >
               {showApiKey ? t.aiChat.hide : t.aiChat.show}

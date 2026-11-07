@@ -122,3 +122,30 @@ def test_rebuild_promotion_failure_rolls_source_and_metadata_back(tmp_path, monk
     assert source_metadata.read_text() == "old metadata"
     assert not quarantine.exists()
     assert not Path(f"{quarantine}_synced_files.json").exists()
+
+
+def test_snapshot_builds_outside_data_and_refuses_overwrite(tmp_path, monkeypatch):
+    root = tmp_path / "ai-service"
+    (root / "data").mkdir(parents=True)
+    kg_dir = tmp_path / "kg"
+    kg_dir.mkdir()
+    out = tmp_path / "snaps" / "snap.db"
+    out.parent.mkdir()
+    monkeypatch.setattr(rebuild, "AI_SERVICE_ROOT", root)
+    built = []
+
+    def fake_build(path, source):
+        built.append((path, source))
+        path.write_text("snap")
+
+    monkeypatch.setattr(rebuild, "_build", fake_build)
+    monkeypatch.setattr(rebuild, "validate", lambda _path: 1)
+
+    assert rebuild.snapshot(out, kg_dir) == out.resolve()
+    assert built == [(out.resolve(), kg_dir)]
+    assert list((root / "data").iterdir()) == []
+
+    with pytest.raises(FileExistsError):
+        rebuild.snapshot(out, kg_dir)
+    assert out.read_text() == "snap"
+    assert len(built) == 1

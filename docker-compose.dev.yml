@@ -251,7 +251,12 @@ services:
       - ./backend-service/alembic:/app/alembic
       - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
       - ./backend-service/data:/app/data
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips="*"
+    # The Dockerfile entrypoint applies pending migrations, but Compose's dev
+    # command overrides it. Keep hot reload while ensuring model changes never
+    # start against an older schema.
+    command: >-
+      sh -c 'alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0
+      --port 8000 --reload --proxy-headers --forwarded-allow-ips="*"'
     networks:
       - lexilingo-network
 
@@ -348,6 +353,7 @@ services:
       LEARNER_STATE_INTERNAL_TOKEN: ${LEARNER_STATE_INTERNAL_TOKEN:-}
       LEARNER_STATE_INTERNAL_AUDIENCE: lexilingo-backend
       KUZU_USER_MASTERY_WRITES_ENABLED: ${KUZU_USER_MASTERY_WRITES_ENABLED:-true}
+      VOICE_DUPLEX_ENABLED: ${VOICE_DUPLEX_ENABLED:-false}
     depends_on:
       mongodb:
         condition: service_healthy

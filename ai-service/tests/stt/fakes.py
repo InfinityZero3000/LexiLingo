@@ -53,6 +53,7 @@ class FakeVerifier:
         self.confidence = confidence
         self.fail = fail
         self.loads = 0
+        self.last_language = None
 
     async def load(self):
         self.loads += 1
@@ -62,6 +63,7 @@ class FakeVerifier:
     async def verify(self, audio, language):
         if self.fail:
             raise RuntimeError("verifier failed")
+        self.last_language = language
         return VerificationResult(
             text=self.text,
             confidence=self.confidence,

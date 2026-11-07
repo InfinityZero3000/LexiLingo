@@ -36,7 +36,7 @@ from api.services.stt.audio_ingest import (
 )
 from api.services.stt.errors import STTErrorCode, STTProtocolError
 from api.services.stt.runtime import get_stt_config, get_stt_sessions
-from api.services.stt.schemas import ResumeMessage, StartMessage
+from api.services.stt.schemas import ResumeMessage, StartMessage, normalize_stt_language
 from api.services.stt_service import get_stt_service
 
 router = APIRouter()
@@ -424,9 +424,13 @@ async def stream_audio(websocket: WebSocket):
 async def transcribe_audio(
     request_context: Request,
     audio: UploadFile = File(...),
-    language: str = "en",
+    language: str = "auto",
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
+    try:
+        language = normalize_stt_language(language)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     start_time = time.time()
     request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
     quota = await enforce_user_quota(

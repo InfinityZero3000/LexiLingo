@@ -14,6 +14,14 @@ import 'duplex_voice_phase.dart';
 import 'pcm_frame_chunker.dart';
 import 'voice_audio_normalizer.dart';
 
+typedef _StartArgs = ({
+  String sessionId,
+  String learnerLevel,
+  String nativeLanguage,
+  String spokenLanguage,
+  double ttsSpeed,
+});
+
 class DuplexVoiceClient {
   DuplexVoiceClient({
     required this.authHeaders,
@@ -24,8 +32,8 @@ class DuplexVoiceClient {
 
   static const _replayCapSeconds = 30;
 
-  /// Process-wide capability hint used by the chat UI after a 404 ticket
-  /// response proves that duplex voice is disabled on this deployment.
+  /// Set once the server answers 404 to the ticket request: its duplex switch
+  /// is off, so the UI should fall back to the legacy recorder.
   static bool serverUnavailable = false;
 
   final BackendAuthHeaderProvider authHeaders;
@@ -44,13 +52,17 @@ class DuplexVoiceClient {
   SoundHandle? _handle;
   int _audioSeq = 0;
   int? _activeTurnSeq;
+  int? _cancelledTurnSeq;
+  bool _cancelPending = false;
   int _expectedAudioSeq = 0;
   final _clock = Stopwatch();
   Future<void> _incoming = Future.value();
   Future<void> _captureTransition = Future.value();
-  Completer<void>? _drainAbort;
   bool _stopping = false;
   bool _replaying = false;
+  int _retries = 0;
+  _StartArgs? _args;
+  Completer<void>? _drainAbort;
   final _replay = BytesBuilder(copy: false);
   int _replayRate = 22050;
 
@@ -66,12 +78,28 @@ class DuplexVoiceClient {
     required String sessionId,
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
+    String spokenLanguage = 'auto',
     double ttsSpeed = 1.0,
   }) async {
     if (_channel != null) await stop();
+    _args = (
+      sessionId: sessionId,
+      learnerLevel: learnerLevel,
+      nativeLanguage: nativeLanguage,
+      spokenLanguage: spokenLanguage,
+      ttsSpeed: ttsSpeed,
+    );
+    _retries = 0;
+    await _open();
+  }
+
+  Future<void> _open() async {
+    final args = _args!;
     phase.value = DuplexVoicePhase.connecting;
     lastErrorCode = null;
     _stopping = false;
+    _cancelPending = false;
+    _cancelledTurnSeq = null;
     _clock
       ..reset()
       ..start();
@@ -89,7 +117,6 @@ class DuplexVoiceClient {
       if (response.statusCode == 404) {
         serverUnavailable = true;
         lastErrorCode = 'UNAVAILABLE';
-        phase.value = DuplexVoicePhase.unavailable;
         throw StateError('Voice is disabled on the server');
       }
       if (response.statusCode != 200) {
@@ -128,25 +155,24 @@ class DuplexVoiceClient {
       );
       await _channel!.ready;
       _channel!.sink.add(
-        jsonEncode({
-          'type': 'start',
-          'session_id': sessionId,
-          'sample_rate': 16000,
-          'channels': 1,
-          'format': 'pcm16',
-          'duplex': true,
-          'tts_enabled': true,
-          'learner_level': learnerLevel,
-          'native_language': nativeLanguage,
-          if (ttsSpeed != 1.0) 'tts_speed': ttsSpeed,
-        }),
+        jsonEncode(
+          buildDuplexStartMessage(
+            sessionId: args.sessionId,
+            learnerLevel: args.learnerLevel,
+            nativeLanguage: args.nativeLanguage,
+            spokenLanguage: args.spokenLanguage,
+            ttsSpeed: args.ttsSpeed,
+          ),
+        ),
       );
 
       await _startCapture();
     } catch (_) {
-      if (phase.value != DuplexVoicePhase.unavailable) {
+      if (phase.value.isLive) {
+        phase.value = serverUnavailable && lastErrorCode == 'UNAVAILABLE'
+            ? DuplexVoicePhase.unavailable
+            : DuplexVoicePhase.error;
         lastErrorCode ??= 'CONNECT_FAILED';
-        phase.value = DuplexVoicePhase.error;
       }
       await stop(failed: true);
       rethrow;
@@ -211,13 +237,6 @@ class DuplexVoiceClient {
     return next;
   }
 
-  Future<void> cancelTurn() async {
-    _channel?.sink.add(jsonEncode({'type': 'cancel_turn'}));
-    await _resetPlayback();
-    _activeTurnSeq = null;
-    await _startCapture();
-  }
-
   Future<void> interrupt() async {
     if (!phase.value.canInterrupt) return;
     if (_replaying) {
@@ -225,7 +244,21 @@ class DuplexVoiceClient {
       return;
     }
     await cancelTurn();
+  }
+
+  Future<void> cancelTurn() async {
+    if (_channel == null) return;
+    if (_activeTurnSeq == null) {
+      _cancelPending = true;
+    } else {
+      _cancelledTurnSeq = _activeTurnSeq;
+    }
+    _channel?.sink.add(jsonEncode({'type': 'cancel_turn'}));
+    _replay.clear();
+    await _resetPlayback();
+    _activeTurnSeq = null;
     phase.value = DuplexVoicePhase.listening;
+    await _startCapture();
   }
 
   Future<void> replayLast() async {
@@ -239,10 +272,10 @@ class DuplexVoiceClient {
       _soloud.addAudioDataStream(_source!, pcm);
       await _drainPlayback();
     } catch (_) {
-      // _drainPlayback has already moved the client to an error state.
+      // _drainPlayback already reported the failure to listeners.
     } finally {
       _replaying = false;
-      if (!_stopping) {
+      if (!_stopping && phase.value == DuplexVoicePhase.speaking) {
         phase.value = DuplexVoicePhase.listening;
         await _startCapture();
       }
@@ -255,8 +288,8 @@ class DuplexVoiceClient {
     if (!failed && phase.value != DuplexVoicePhase.unavailable) {
       phase.value = DuplexVoicePhase.idle;
     }
-    // Abort any TTS drain before waiting for the serialized inbound handler.
-    // Otherwise stop() can wait for the full playback timeout.
+    // Silence first: a drain waiting on playback would otherwise hold stop()
+    // (through _incoming) until Lexi finished the sentence.
     await _resetPlayback();
     final channel = _channel;
     final socketSubscription = _socketSubscription;
@@ -281,6 +314,8 @@ class DuplexVoiceClient {
     }
     await _resetPlayback();
     _replay.clear();
+    _activeTurnSeq = null;
+    _cancelledTurnSeq = null;
     _normalizer.reset();
     _chunker.reset();
   }
@@ -297,13 +332,25 @@ class DuplexVoiceClient {
     if (data is String) {
       final event = jsonDecode(data) as Map<String, dynamic>;
       final type = event['type'];
-      if (type == 'stt.final' || type == 'tts.audio.start') {
+      final turnSeq = event['turn_seq'];
+      if (turnSeq is int && turnSeq == _cancelledTurnSeq) {
+        if (type == 'turn.done' || type == 'turn.cancelled') events.add(event);
+        return;
+      }
+      final hasText = (event['text']?.toString().trim() ?? '').isNotEmpty;
+      if ((type == 'stt.final' && hasText) || type == 'tts.audio.start') {
         await _stopCapture();
       }
       if (type == 'turn_started') {
         _replay.clear();
-        _activeTurnSeq = event['turn_seq'] as int?;
         _expectedAudioSeq = 0;
+        _activeTurnSeq = turnSeq as int?;
+        if (_cancelPending) {
+          _cancelPending = false;
+          _cancelledTurnSeq = _activeTurnSeq;
+          _channel?.sink.add(jsonEncode({'type': 'cancel_turn'}));
+          return;
+        }
       }
       if (type == 'tts.audio.start') {
         _replayRate = event['sample_rate'] as int;
@@ -312,6 +359,7 @@ class DuplexVoiceClient {
       if (type == 'tts.audio.end') {
         await _drainPlayback();
       }
+      if (type == 'turn.done') _retries = 0;
       if (type == 'turn.cancelled' || type == 'voice.error') {
         await _resetPlayback();
         _activeTurnSeq = null;
@@ -319,20 +367,14 @@ class DuplexVoiceClient {
       if (type == 'voice.error' || type == 'stt.error') {
         lastErrorCode = event['code']?.toString();
       }
-      if (type == 'voice.error') {
-        if (isRecoverableVoiceError(lastErrorCode)) {
-          await _startCapture();
-        } else {
-          _stopping = true;
-          await _stopCapture();
-          await _channel?.sink.close();
-        }
-      } else if (type == 'stt.error') {
+      if ((type == 'voice.error' && isRecoverableVoiceError(lastErrorCode)) ||
+          type == 'turn.done' ||
+          type == 'turn.cancelled') {
+        await _startCapture();
+      } else if (type == 'voice.error' || type == 'stt.error') {
         _stopping = true;
         await _stopCapture();
         await _channel?.sink.close();
-      } else if (type == 'turn.done' || type == 'turn.cancelled') {
-        await _startCapture();
       }
       phase.value = reduceVoicePhase(phase.value, event);
       events.add(event);
@@ -398,6 +440,20 @@ class DuplexVoiceClient {
     _stopping = true;
     await _stopCapture();
     await _resetPlayback();
+    if (!events.isClosed) events.add({'type': 'connection.lost'});
+    if (_args != null && _retries < 1 && phase.value.isLive) {
+      _retries++;
+      phase.value = DuplexVoicePhase.connecting;
+      await Future<void>.delayed(const Duration(seconds: 1));
+      if (phase.value != DuplexVoicePhase.connecting) return;
+      try {
+        _channel = null;
+        await _open();
+      } catch (_) {
+        // _open has already moved the phase to error or unavailable.
+      }
+      return;
+    }
     lastErrorCode = 'CONNECTION_CLOSED';
     phase.value = DuplexVoicePhase.error;
     if (!events.isClosed) {
@@ -419,6 +475,26 @@ class DuplexVoiceClient {
   }
 }
 
+Map<String, dynamic> buildDuplexStartMessage({
+  required String sessionId,
+  required String learnerLevel,
+  required String nativeLanguage,
+  String spokenLanguage = 'auto',
+  double ttsSpeed = 1.0,
+}) => {
+  'type': 'start',
+  'session_id': sessionId,
+  'sample_rate': 16000,
+  'channels': 1,
+  'format': 'pcm16',
+  'duplex': true,
+  'tts_enabled': true,
+  'learner_level': learnerLevel,
+  'language': spokenLanguage,
+  'native_language': nativeLanguage,
+  if (ttsSpeed != 1.0) 'tts_speed': ttsSpeed,
+};
+
 Uint8List packMicrophoneFrame({
   required int sequence,
   required int clientTimestampMs,
@@ -429,7 +505,9 @@ Uint8List packMicrophoneFrame({
   header.setUint8(0, 1);
   header.setUint8(1, 0);
   header.setUint32(2, sequence, Endian.big);
-  header.setUint64(6, clientTimestampMs, Endian.big);
+  // setUint64 is unsupported by dart2js; the wire format is two big-endian words.
+  header.setUint32(6, clientTimestampMs ~/ 0x100000000, Endian.big);
+  header.setUint32(10, clientTimestampMs % 0x100000000, Endian.big);
   frame.setRange(14, frame.length, pcm);
   return frame;
 }

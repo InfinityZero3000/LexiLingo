@@ -61,6 +61,43 @@ def test_profile_brief_skips_email_names_and_is_empty_without_a_card():
     assert lc.render_profile_brief({}, "") == ""
 
 
+def test_profile_brief_rejects_foreign_script_as_a_guessed_name():
+    brief = lc.render_profile_brief(
+        {"display_name": "بالتأكيد", "native_language": "vi"},
+        "Vietnamese",
+    )
+
+    assert "First name" not in brief
+    assert "بالتأكيد" not in brief
+
+
+def test_profile_brief_keeps_a_vietnamese_name_with_diacritics():
+    brief = lc.render_profile_brief(
+        {"display_name": "Thắng Nguyễn", "native_language": "vi"},
+        "Vietnamese",
+    )
+
+    assert "First name: Thắng" in brief
+
+
+def test_profile_brief_accepts_name_script_matching_native_language():
+    brief = lc.render_profile_brief(
+        {"display_name": "王小明", "native_language": "zh"},
+        "Chinese",
+    )
+
+    assert "First name: 王小明" in brief
+
+
+def test_profile_brief_accepts_romanized_name_for_an_asian_locale():
+    brief = lc.render_profile_brief(
+        {"display_name": "Ken Tanaka", "native_language": "ja"},
+        "Japanese",
+    )
+
+    assert "First name: Ken" in brief
+
+
 def test_profile_defaults_carry_level_goal_interest_only_when_present():
     assert lc.profile_defaults(CARD) == {
         "level": "A2",

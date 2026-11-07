@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import React, { useEffect, useRef, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { DataTable } from "../components/DataTable";
@@ -33,6 +34,7 @@ const tabs = [
 type TabKey = (typeof tabs)[number]["key"];
 
 export const ContentLabPage = () => {
+  const confirm = useConfirm();
   const [tab, setTab] = useState<TabKey>("grammar");
   const [grammar, setGrammar] = useState<GrammarItem[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
@@ -262,10 +264,12 @@ export const ContentLabPage = () => {
   return (
     <div className="panel">
       <SectionHeader title="Content Lab" description="Grammar / Questions / Test-Exam" />
-      <div className="tab-row">
+      <div className="tab-row" role="tablist">
         {tabs.map((t) => (
           <button
             key={t.key}
+            role="tab"
+            aria-selected={tab === t.key}
             className={tab === t.key ? "tab active" : "tab"}
             onClick={() => setTab(t.key)}
           >
@@ -276,10 +280,10 @@ export const ContentLabPage = () => {
       {error && <div className="form-error">{error}</div>}
       {loading && <div className="loading">Đang tải dữ liệu...</div>}
       {importResult && (
-        <div className="panel" style={{ padding: "12px 16px", background: "#f0fdf4" }}>
+        <div className="panel" style={{ padding: "12px 16px", background: "rgba(34, 197, 94, 0.12)" }}>
           <strong>Import hoàn tất:</strong> {importResult.created} tạo mới, {importResult.skipped} bỏ qua
           {importResult.errors.length > 0 && (
-            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "#b91c1c" }}>
+            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "var(--ink-red)" }}>
               {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           )}
@@ -296,7 +300,7 @@ export const ContentLabPage = () => {
                 accept=".csv,.pdf"
                 ref={grammarFileRef}
                 onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportGrammar, grammarFileRef)}
-                style={{ display: "none" }}
+                hidden
               />
               <button className="ghost-button small" onClick={() => grammarFileRef.current?.click()} disabled={importing}>
                 {importing ? "Đang import..." : "Import CSV/PDF"}
@@ -306,6 +310,7 @@ export const ContentLabPage = () => {
               columns={[
                 {
                   header: "Tiêu đề",
+                  sortValue: (row) => row.title,
                   render: (row) => (
                     <div>
                       <div className="table-title">{row.title}</div>
@@ -315,6 +320,7 @@ export const ContentLabPage = () => {
                 },
                 {
                   header: "Level",
+                  sortValue: (row) => row.level,
                   render: (row) => <span className="table-meta">{row.level}</span>,
                   align: "center"
                 },
@@ -325,8 +331,8 @@ export const ContentLabPage = () => {
                       <button className="ghost-button small" onClick={() => handleEditGrammar(row)}>
                         Sửa
                       </button>
-                      <button className="ghost-button small danger" onClick={() => {
-                        if (!confirm("Xóa grammar rule này?")) return;
+                      <button className="ghost-button small danger" onClick={async () => {
+                        if (!(await confirm({ message: "Xóa grammar rule này?", confirmLabel: "Xóa", danger: true }))) return;
                         deleteGrammar(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
                       }}>
                         Xóa
@@ -393,7 +399,7 @@ export const ContentLabPage = () => {
                 accept=".csv,.pdf"
                 ref={questionFileRef}
                 onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportQuestions, questionFileRef)}
-                style={{ display: "none" }}
+                hidden
               />
               <button className="ghost-button small" onClick={() => questionFileRef.current?.click()} disabled={importing}>
                 {importing ? "Đang import..." : "Import CSV/PDF"}
@@ -403,6 +409,7 @@ export const ContentLabPage = () => {
               columns={[
                 {
                   header: "Prompt",
+                  sortValue: (row) => row.prompt,
                   render: (row) => (
                     <div>
                       <div className="table-title">{(row.prompt || "").length > 60 ? `${row.prompt.slice(0, 60)}…` : (row.prompt || "—")}</div>
@@ -412,6 +419,7 @@ export const ContentLabPage = () => {
                 },
                 {
                   header: "Level",
+                  sortValue: (row) => row.difficulty_level,
                   render: (row) => <span className="table-meta">{row.difficulty_level}</span>,
                   align: "center"
                 },
@@ -422,8 +430,8 @@ export const ContentLabPage = () => {
                       <button className="ghost-button small" onClick={() => handleEditQuestion(row)}>
                         Sửa
                       </button>
-                      <button className="ghost-button small danger" onClick={() => {
-                        if (!confirm("Xóa câu hỏi này?")) return;
+                      <button className="ghost-button small danger" onClick={async () => {
+                        if (!(await confirm({ message: "Xóa câu hỏi này?", confirmLabel: "Xóa", danger: true }))) return;
                         deleteQuestion(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
                       }}>
                         Xóa
@@ -498,7 +506,7 @@ export const ContentLabPage = () => {
                 accept=".csv,.pdf"
                 ref={testFileRef}
                 onChange={(e) => handleBulkImport(e.target.files?.[0], bulkImportTestExams, testFileRef)}
-                style={{ display: "none" }}
+                hidden
               />
               <button className="ghost-button small" onClick={() => testFileRef.current?.click()} disabled={importing}>
                 {importing ? "Đang import..." : "Import CSV/PDF"}
@@ -508,6 +516,7 @@ export const ContentLabPage = () => {
               columns={[
                 {
                   header: "Bài test",
+                  sortValue: (row) => row.title,
                   render: (row) => (
                     <div>
                       <div className="table-title">{row.title}</div>
@@ -517,6 +526,7 @@ export const ContentLabPage = () => {
                 },
                 {
                   header: "Publish",
+                  sortValue: (row) => (row.is_published ? 1 : 0),
                   render: (row) => <span className="table-meta">{row.is_published ? "Yes" : "No"}</span>,
                   align: "center"
                 },
@@ -527,8 +537,8 @@ export const ContentLabPage = () => {
                       <button className="ghost-button small" onClick={() => handleEditTest(row)}>
                         Sửa
                       </button>
-                      <button className="ghost-button small danger" onClick={() => {
-                        if (!confirm("Xóa bài test này?")) return;
+                      <button className="ghost-button small danger" onClick={async () => {
+                        if (!(await confirm({ message: "Xóa bài test này?", confirmLabel: "Xóa", danger: true }))) return;
                         deleteTestExam(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
                       }}>
                         Xóa

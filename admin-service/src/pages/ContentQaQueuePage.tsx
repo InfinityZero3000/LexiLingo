@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle, Pencil, RefreshCw, RotateCcw, XCircle } from "lucide-react";
 import { EmptyState } from "../components/EmptyState";
@@ -231,7 +232,7 @@ export const ContentQaQueuePage = () => {
         title="Content QA Queue"
         description="Review, validate, publish, or reject AI-generated learning content."
         action={
-          <button className="btn-secondary btn-sm" onClick={loadQueue} disabled={loading}>
+          <button className="ghost-button small" onClick={loadQueue} disabled={loading}>
             <RefreshCw size={14} /> Refresh
           </button>
         }
@@ -380,63 +381,61 @@ export const ContentQaQueuePage = () => {
       </div>
 
       {editForm && (
-        <div className="modal-overlay" onClick={() => setEditForm(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
-            <h3>Edit exercise</h3>
-            <div className="table-sub" style={{ marginBottom: 8 }}>Lesson: {editForm.lessonTitle}</div>
-            {editError && <div className="form-error">{editError}</div>}
-            <div className="stack" style={{ gap: 10 }}>
-              <label>
-                Question
-                <textarea
-                  rows={2}
-                  value={editForm.question}
-                  onChange={(e) => setEditForm({ ...editForm, question: e.target.value })}
-                />
-              </label>
-              <label>
-                Options (JSON, optional)
-                <textarea
-                  rows={3}
-                  placeholder='["option a", "option b"]'
-                  value={editForm.optionsJson}
-                  onChange={(e) => setEditForm({ ...editForm, optionsJson: e.target.value })}
-                />
-              </label>
-              <label>
-                Correct answer
-                <input
-                  value={editForm.correctAnswer}
-                  onChange={(e) => setEditForm({ ...editForm, correctAnswer: e.target.value })}
-                />
-              </label>
-              <label>
-                Explanation (optional)
-                <textarea
-                  rows={2}
-                  value={editForm.explanation}
-                  onChange={(e) => setEditForm({ ...editForm, explanation: e.target.value })}
-                />
-              </label>
-              <label>
-                Lesson outcome (can-do statement)
-                <textarea
-                  rows={2}
-                  value={editForm.lessonOutcome}
-                  onChange={(e) => setEditForm({ ...editForm, lessonOutcome: e.target.value })}
-                />
-              </label>
-              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                <button className="ghost-button" onClick={() => setEditForm(null)} disabled={savingEdit}>
-                  Cancel
-                </button>
-                <button className="primary-button" onClick={saveEdit} disabled={savingEdit}>
-                  {savingEdit ? "Saving..." : "Save"}
-                </button>
-              </div>
+        <Dialog onClose={() => setEditForm(null)} maxWidth={560}>
+          <h3>Edit exercise</h3>
+          <div className="table-sub" style={{ marginBottom: 8 }}>Lesson: {editForm.lessonTitle}</div>
+          {editError && <div className="form-error">{editError}</div>}
+          <div className="stack" style={{ gap: 10 }}>
+            <label>
+              Question
+              <textarea
+                rows={2}
+                value={editForm.question}
+                onChange={(e) => setEditForm({ ...editForm, question: e.target.value })}
+              />
+            </label>
+            <label>
+              Options (JSON, optional)
+              <textarea
+                rows={3}
+                placeholder='["option a", "option b"]'
+                value={editForm.optionsJson}
+                onChange={(e) => setEditForm({ ...editForm, optionsJson: e.target.value })}
+              />
+            </label>
+            <label>
+              Correct answer
+              <input
+                value={editForm.correctAnswer}
+                onChange={(e) => setEditForm({ ...editForm, correctAnswer: e.target.value })}
+              />
+            </label>
+            <label>
+              Explanation (optional)
+              <textarea
+                rows={2}
+                value={editForm.explanation}
+                onChange={(e) => setEditForm({ ...editForm, explanation: e.target.value })}
+              />
+            </label>
+            <label>
+              Lesson outcome (can-do statement)
+              <textarea
+                rows={2}
+                value={editForm.lessonOutcome}
+                onChange={(e) => setEditForm({ ...editForm, lessonOutcome: e.target.value })}
+              />
+            </label>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button className="ghost-button" onClick={() => setEditForm(null)} disabled={savingEdit}>
+                Cancel
+              </button>
+              <button className="primary-button" onClick={saveEdit} disabled={savingEdit}>
+                {savingEdit ? "Saving..." : "Save"}
+              </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

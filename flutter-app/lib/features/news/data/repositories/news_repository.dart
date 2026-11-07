@@ -117,14 +117,24 @@ class NewsRepository {
   // ──── Quiz ────
 
   /// Get comprehension quiz for an article.
-  Future<NewsQuiz?> getQuiz(String articleId) async {
-    final cacheKey = 'news:quiz:$articleId';
+  Future<NewsQuiz?> getQuiz(String articleId, {NewsArticle? article}) async {
+    final cacheKey = 'news:quiz:v2:$articleId';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
       type: 'news',
       fetchFn: () async {
-        final uri = Uri.parse('$_baseUrl/$articleId/quiz');
+        // The id is a hash, so the server needs the text to write the questions.
+        final uri = Uri.parse('$_baseUrl/$articleId/quiz').replace(
+          queryParameters: {
+            if (article != null && article.title.isNotEmpty)
+              'title': _clip(article.title, 300),
+            if (article != null && article.description.isNotEmpty)
+              'description': _clip(article.description, 600),
+            if (article != null && article.content.isNotEmpty)
+              'content': _clip(article.content, 1500),
+          },
+        );
         final response = await _client.get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
@@ -135,6 +145,9 @@ class NewsRepository {
 
     return NewsQuiz.fromJson(data);
   }
+
+  static String _clip(String s, int max) =>
+      s.length <= max ? s : s.substring(0, max);
 
   // ──── Full Article Content ────
 

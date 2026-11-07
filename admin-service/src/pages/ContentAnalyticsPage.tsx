@@ -52,7 +52,7 @@ export const ContentAnalyticsPage = () => {
 
       {/* Course Performance */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>Hiệu suất Khóa học</h3>
+        <h3 className="panel-heading">Hiệu suất Khóa học</h3>
         {!perf?.courses?.length ? (
           <EmptyState title="Chưa có dữ liệu" description="Chưa có dữ liệu hiệu suất khóa học." />
         ) : (
@@ -100,7 +100,7 @@ export const ContentAnalyticsPage = () => {
 
       {/* Lesson Performance */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>Hiệu suất Bài học</h3>
+        <h3 className="panel-heading">Hiệu suất Bài học</h3>
         {!perf?.lessons?.length ? (
           <EmptyState title="Chưa có dữ liệu" description="Chưa có dữ liệu hiệu suất bài học." />
         ) : (
@@ -138,7 +138,7 @@ export const ContentAnalyticsPage = () => {
 
       {/* Hardest Vocabulary */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>Từ vựng khó nhất</h3>
+        <h3 className="panel-heading">Từ vựng khó nhất</h3>
         {!vocab?.hardest_words?.length ? (
           <EmptyState title="Chưa có dữ liệu" description="Chưa có dữ liệu từ vựng." />
         ) : (

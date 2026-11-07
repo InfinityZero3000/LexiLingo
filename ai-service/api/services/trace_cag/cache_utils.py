@@ -42,6 +42,7 @@ from api.services.trace_cag.dependencies import (
     GRAPH_SCHEMA_VERSION,
     POLICY_SCHEMA_VERSION,
     compile_dependency_trace,
+    policy_version_token,
 )
 from api.services.trace_cag.invalidation import (
     observe_dependency_tokens,
@@ -119,7 +120,7 @@ def _build_admissibility_certificate(
         level=str(fingerprint.get("level") or ""),
         native_language=str(fingerprint.get("native_language") or ""),
         profile_epoch=_hint_profile_epoch(state_hints, profile_epoch),
-        policy_version=str(state_hints.get("policy_version") or f"policy_v{_POLICY_VERSION}"),
+        policy_version=str(state_hints.get("policy_version") or policy_version_token()),
         kg_version=str(state_hints.get("kg_version") or f"kg_schema_v{_GRAPH_SCHEMA_VERSION}"),
         evidence_hash=str(state_hints.get("evidence_hash") or retrieval_meta.get("evidence_hash") or ""),
         source_version=str(state_hints.get("source_version") or retrieval_meta.get("source_version") or ""),
@@ -246,7 +247,7 @@ def _build_l1_request_signature(
         answer_target=_answer_target_hint(user_input),
         relation_hints=primary_relation,
         evidence_hash="",
-        policy_version=f"policy_v{_POLICY_VERSION}",
+        policy_version=policy_version_token(),
         kg_version=f"kg_schema_v{_GRAPH_SCHEMA_VERSION}",
         source_version="",
         freshness_class="",

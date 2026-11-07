@@ -28,6 +28,17 @@ class _UnavailableRecorder extends _Recorder {
 }
 
 void main() {
+  test('start payload separates spoken and native languages', () {
+    final payload = buildDuplexStartMessage(
+      sessionId: 'voice-1',
+      learnerLevel: 'B1',
+      nativeLanguage: 'vi',
+    );
+
+    expect(payload['language'], 'auto');
+    expect(payload['native_language'], 'vi');
+  });
+
   test('exposes the duplex UI contract with safe initial state', () async {
     final client = DuplexVoiceClient(
       authHeaders: _Auth(),

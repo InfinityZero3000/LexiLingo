@@ -270,7 +270,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     vector_hits: List[Dict[str, Any]] = []
     routed_topics: List[str] = []
     stage2_task = None
-    if not benchmark_candidates:
+    if not benchmark_candidates and settings.KG_ENABLED:
         _errors = state.get("diagnosis_errors", [])
         _confidence = float(state.get("diagnosis_confidence", 0.0) or 0.0)
         # Rapid used to skip the vector stage entirely for a turn with no
@@ -292,8 +292,8 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     evidence_items: List[Dict[str, Any]] = []
 
     # Diagnosis evidence carries an item_id because rank_with_learner_overlay
-    # drops any candidate without one, and LEARNER_STATE_MODE is "read" in
-    # production — so the corrections this turn just computed were being
+    # drops any candidate without one when LEARNER_STATE_MODE is read or
+    # primary — without it the corrections this turn just computed were
     # deleted from the prompt before the tutor ever saw them.
     for concept_id in state.get("diagnosis_root_causes", []):
         evidence_items.append({
@@ -327,7 +327,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         })
 
     # Query KG with top-K node retrieval and bounded context packing to control prompt size.
-    if not benchmark_candidates and not benchmark_context:
+    if not benchmark_candidates and not benchmark_context and settings.KG_ENABLED:
         try:
             from api.services.kg_service_v3 import get_kg_service
 

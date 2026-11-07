@@ -20660,6 +20660,32 @@
       }
     },
     {
+      "id": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart::_DailyRewardDialogContentState::BoxDecoration::3",
+      "path": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart",
+      "entryPoint": "surface",
+      "symbol": "_DailyRewardDialogContentState",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 431,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart::_DailyRewardDialogContentState::Card::0",
       "path": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart",
       "entryPoint": "surface",
@@ -20693,6 +20719,32 @@
       "callKind": "Card",
       "ordinal": 1,
       "line": 317,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart::_RewardSparkle::BoxDecoration::0",
+      "path": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart",
+      "entryPoint": "surface",
+      "symbol": "_RewardSparkle",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 516,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",

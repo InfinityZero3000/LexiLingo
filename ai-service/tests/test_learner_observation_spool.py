@@ -284,6 +284,7 @@ async def test_fallback_marker_write_is_bounded_by_timeout(monkeypatch):
     )
     monkeypatch.setattr(spool_module, "get_learner_observation_spool", lambda: spool)
     monkeypatch.setattr("api.core.config.settings.LEARNER_STATE_MODE", "read")
+    monkeypatch.setattr("api.core.config.settings.LEARNER_OBSERVATION_DIAGNOSED_ONLY", False)
     database = MagicMock()
     audit = MagicMock()
 
@@ -308,6 +309,7 @@ async def test_trace_persistence_reports_count_and_any_durability_degradation(
     monkeypatch,
 ):
     monkeypatch.setattr("api.core.config.settings.LEARNER_STATE_MODE", "read")
+    monkeypatch.setattr("api.core.config.settings.LEARNER_OBSERVATION_DIAGNOSED_ONLY", False)
     spool = MagicMock()
     spool.persist_many = AsyncMock(
         return_value=[

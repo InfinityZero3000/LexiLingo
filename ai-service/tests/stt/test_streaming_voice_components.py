@@ -51,6 +51,8 @@ def test_tts_pcm_is_lazy_and_keeps_fragment_order():
 
 
 def test_tts_speed_reaches_piper_as_inverse_length_scale():
+    from unittest.mock import patch
+
     seen = []
 
     class Voice:
@@ -58,10 +60,15 @@ def test_tts_speed_reaches_piper_as_inverse_length_scale():
             seen.append(config)
             return [SimpleNamespace(audio_int16_bytes=b"pcm")]
 
+    # `piper` is a native binary wheel absent in the test environment.
+    # Stub it so iter_pcm_chunks can build SynthesisConfig without the real package.
+    fake_piper = SimpleNamespace(SynthesisConfig=lambda **kw: SimpleNamespace(**kw))
+
     service = TTSService()
     service._voice = Voice()
     list(service.iter_pcm_chunks("Hello."))
-    list(service.iter_pcm_chunks("Hello.", speed=0.5))
+    with patch.dict(sys.modules, {"piper": fake_piper}):
+        list(service.iter_pcm_chunks("Hello.", speed=0.5))
 
     assert seen[0] is None
     assert seen[1].length_scale == pytest.approx(2.0)

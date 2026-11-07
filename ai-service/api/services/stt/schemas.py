@@ -6,7 +6,20 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, field_validator
+
+SUPPORTED_STT_LANGUAGES = frozenset(
+    {"auto", "en", "vi", "ja", "ko", "zh", "es", "fr"}
+)
+
+
+def normalize_stt_language(value: Any, *, default: str = "auto") -> str:
+    """Normalize a locale-like value and reject unsupported STT languages."""
+    language = str(value or default).strip().lower().replace("_", "-")
+    language = language.split("-", 1)[0] or default
+    if language not in SUPPORTED_STT_LANGUAGES:
+        raise ValueError("language is not supported")
+    return language
 
 
 class UseCase(str, Enum):
@@ -26,13 +39,21 @@ class StartMessage(BaseModel):
     sample_rate: Literal[16000] = 16000
     channels: Literal[1] = 1
     format: Literal["pcm16"] = "pcm16"
-    language: str = "en"
+    language: str = Field(
+        default="en",
+        validation_alias=AliasChoices("language", "native_language"),
+    )
     use_case: UseCase = UseCase.CONVERSATION
     client_started_at: Optional[int] = None
     duplex: bool = False
     tts_enabled: bool = True
     tts_speed: float = Field(default=1.0, ge=0.5, le=2.0)
     learner_level: str = Field(default="B1", pattern=r"^(A1|A2|B1|B2|C1|C2)$")
+
+    @field_validator("language", mode="before")
+    @classmethod
+    def normalize_language(cls, value: Any) -> str:
+        return normalize_stt_language(value, default="en")
 
 
 class ResumeMessage(BaseModel):

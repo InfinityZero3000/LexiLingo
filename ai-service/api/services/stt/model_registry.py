@@ -9,6 +9,7 @@ from api.services.stt.config import STTConfig
 from api.services.stt.engines.faster_whisper import (
     FasterWhisperVerifier,
     WhisperChunkPrimary,
+    WhisperChunkSession,
 )
 from api.services.stt.engines.moonshine import MoonshinePrimary
 from api.services.stt.engines.sherpa import SherpaPrimary
@@ -26,6 +27,7 @@ class STTModelRegistry:
             config.verify_device,
             config.verify_compute_type,
             config.verify_beam_size,
+            config.whisper_model_dir,
         )
         self.primary = primary or MoonshinePrimary(config.primary_model)
         self.status = "unavailable"
@@ -89,6 +91,15 @@ class STTModelRegistry:
     async def create_primary_session(self, language: str):
         if self.status not in {"ready", "degraded"}:
             raise RuntimeError("STT primary model is not ready")
+        # Moonshine and the bundled Sherpa Zipformer are English-only. Route
+        # Vietnamese (and every other non-English locale) through the shared
+        # multilingual Faster-Whisper model instead of merely labelling an
+        # English transcript with the requested language.
+        if language.split("-", 1)[0].lower() != "en":
+            await self.verifier.load()
+            # Pass the registry, not the raw verifier: WhisperChunkSession calls
+            # .verify(), which must cross the shared concurrency semaphore.
+            return WhisperChunkSession(self, language)
         return await self.primary.create_session(language)
 
     async def verify(self, audio: AudioSegment, language: str) -> VerificationResult:

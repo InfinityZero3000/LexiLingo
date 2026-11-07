@@ -34,6 +34,14 @@ SAMPLE_COURSE_CATEGORIES: list[dict[str, Any]] = [
         "color": "#2196F3",
         "order_index": 2,
     },
+    {
+        "name": "Conversation",
+        "slug": "conversation",
+        "description": "Practice practical English for real-world conversations",
+        "icon": "💬",
+        "color": "#F59E0B",
+        "order_index": 3,
+    },
 ]
 
 SAMPLE_COURSES: list[dict[str, Any]] = [
@@ -204,6 +212,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "multiple_choice",
                                 "ui_type": "image_based_choice",
                                 "question": "Choose the image that represents: 'She runs.'",
+                                "image_url": "https://images.unsplash.com/photo-1552674605-db6ffd4facb5",
                                 "options": [{"id": "0", "text": "Running", "is_correct": True}, {"id": "1", "text": "Sleeping", "is_correct": False}],
                                 "correct_answer": "Running",
                                 "explanation": "Select the correct action card."
@@ -458,6 +467,7 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                                 "type": "multiple_choice",
                                 "ui_type": "image_based_choice",
                                 "question": "Select the image that shows a table.",
+                                "image_url": "https://images.unsplash.com/photo-1533090481720-856c6e3c1fdc",
                                 "options": [{"id": "0", "text": "Table", "is_correct": True}, {"id": "1", "text": "Chair", "is_correct": False}],
                                 "correct_answer": "Table",
                                 "explanation": "Card with table."
@@ -480,6 +490,214 @@ SAMPLE_COURSES: list[dict[str, Any]] = [
                     },
                 ],
             },
+        ],
+    },
+    {
+        "title": "English for Travel",
+        "description": "Handle common travel situations with clear, confident English.",
+        "language": "en",
+        "level": "A2",
+        "category_slug": "conversation",
+        "skill": "speaking",
+        "tags": ["conversation", "travel", "speaking", "practical-english"],
+        "total_xp": 120,
+        "estimated_duration": 45,
+        "thumbnail_url": "https://images.unsplash.com/photo-1488646953014-85cb44e25828",
+        "units": [
+            {
+                "title": "Your Travel Day",
+                "description": "Communicate from airport check-in to hotel arrival.",
+                "order_index": 1,
+                "background_color": "#B45309",
+                "lessons": [
+                    {
+                        "title": "At the Airport",
+                        "description": "Check in, ask about gates, and understand boarding information.",
+                        "outcome": "You can check in for a flight and ask where your gate is.",
+                        "order_index": 1,
+                        "estimated_minutes": 15,
+                        "xp_reward": 40,
+                        "exercises": [
+                            {
+                                "id": "ex_t1_1",
+                                "type": "multiple_choice",
+                                "ui_type": "multiple_choice",
+                                "question": "What do you show the agent when you check in?",
+                                "options": [{"id": "0", "text": "Your passport", "is_correct": True}, {"id": "1", "text": "A restaurant menu", "is_correct": False}, {"id": "2", "text": "A room key", "is_correct": False}],
+                                "correct_answer": "Your passport",
+                                "explanation": "Airline staff need your passport to confirm your identity."
+                            },
+                            {
+                                "id": "ex_t1_2",
+                                "type": "fill_blank",
+                                "ui_type": "dialogue_completion",
+                                "question": "Agent: May I see your passport? You: Here {blank} are.",
+                                "correct_answer": "you",
+                                "explanation": "Use 'Here you are' when handing something to another person."
+                            },
+                            {
+                                "id": "ex_t1_3",
+                                "type": "reorder",
+                                "ui_type": "arrange_the_sentence",
+                                "question": "Arrange the words to ask for directions to your gate.",
+                                "options": [{"id": "0", "text": "where"}, {"id": "1", "text": "is"}, {"id": "2", "text": "gate"}, {"id": "3", "text": "twelve"}],
+                                "correct_answer": "where is gate twelve",
+                                "explanation": "Use 'Where is ...?' to ask for a location."
+                            },
+                            {
+                                "id": "ex_t1_4",
+                                "type": "true_false",
+                                "ui_type": "true_or_false",
+                                "question": "True or False: A boarding pass shows your flight and seat information.",
+                                "options": [{"id": "0", "text": "True", "is_correct": True}, {"id": "1", "text": "False", "is_correct": False}],
+                                "correct_answer": "True",
+                                "explanation": "A boarding pass normally includes the flight, gate, and seat."
+                            },
+                            {
+                                "id": "ex_t1_5",
+                                "type": "translate",
+                                "ui_type": "translation_choice",
+                                "question": "Choose the English sentence for: 'Chuyến bay có đúng giờ không?'",
+                                "options": [{"id": "0", "text": "Is the flight on time?", "is_correct": True}, {"id": "1", "text": "Is the hotel open?", "is_correct": False}, {"id": "2", "text": "Where is the train?", "is_correct": False}],
+                                "correct_answer": "Is the flight on time?",
+                                "explanation": "'On time' means arriving or departing at the scheduled time."
+                            },
+                            {
+                                "id": "ex_t1_6",
+                                "type": "translate",
+                                "ui_type": "speaking_repeat",
+                                "question": "Repeat: 'Could you tell me where gate twelve is?'",
+                                "correct_answer": "Could you tell me where gate twelve is",
+                                "explanation": "This is a polite way to ask airport staff for directions."
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Checking In at a Hotel",
+                        "description": "Confirm a reservation and ask about hotel services.",
+                        "outcome": "You can check into a hotel and ask for essential information.",
+                        "order_index": 2,
+                        "estimated_minutes": 15,
+                        "xp_reward": 40,
+                        "exercises": [
+                            {
+                                "id": "ex_t2_1",
+                                "type": "multiple_choice",
+                                "ui_type": "multiple_choice",
+                                "question": "Complete the sentence: 'I have a ___ under the name Nguyen.'",
+                                "options": [{"id": "0", "text": "reservation", "is_correct": True}, {"id": "1", "text": "departure", "is_correct": False}, {"id": "2", "text": "platform", "is_correct": False}],
+                                "correct_answer": "reservation",
+                                "explanation": "A reservation is an arrangement to keep a room for you."
+                            },
+                            {
+                                "id": "ex_t2_2",
+                                "type": "fill_blank",
+                                "ui_type": "fill_in_the_blank",
+                                "question": "Complete: 'What time is {blank}?'",
+                                "correct_answer": "check-out",
+                                "explanation": "Ask about check-out time so you know when to leave the room."
+                            },
+                            {
+                                "id": "ex_t2_3",
+                                "type": "fill_blank",
+                                "ui_type": "dialogue_completion",
+                                "question": "Guest: Is breakfast included? Receptionist: Yes, it {blank}.",
+                                "correct_answer": "is",
+                                "explanation": "Use 'it is' as the short answer to a question with 'is'."
+                            },
+                            {
+                                "id": "ex_t2_4",
+                                "type": "multiple_choice",
+                                "ui_type": "collocation_choice",
+                                "question": "Choose the natural phrase: 'Could I ___ the Wi-Fi password?'",
+                                "options": [{"id": "0", "text": "have", "is_correct": True}, {"id": "1", "text": "do", "is_correct": False}, {"id": "2", "text": "make", "is_correct": False}],
+                                "correct_answer": "have",
+                                "explanation": "'Could I have ...?' is a polite way to request something."
+                            },
+                            {
+                                "id": "ex_t2_5",
+                                "type": "reorder",
+                                "ui_type": "arrange_the_sentence",
+                                "question": "Arrange the words to request a quiet room.",
+                                "options": [{"id": "0", "text": "could"}, {"id": "1", "text": "I"}, {"id": "2", "text": "have"}, {"id": "3", "text": "a"}, {"id": "4", "text": "quiet"}, {"id": "5", "text": "room"}],
+                                "correct_answer": "could I have a quiet room",
+                                "explanation": "'Could I have ...?' makes the request polite."
+                            },
+                            {
+                                "id": "ex_t2_6",
+                                "type": "translate",
+                                "ui_type": "speaking_repeat",
+                                "question": "Repeat: 'I have a reservation for two nights.'",
+                                "correct_answer": "I have a reservation for two nights",
+                                "explanation": "Say this at reception to begin checking in."
+                            }
+                        ]
+                    },
+                    {
+                        "title": "Getting Around the City",
+                        "description": "Ask for directions and use public transportation.",
+                        "outcome": "You can ask for directions and buy a public transport ticket.",
+                        "order_index": 3,
+                        "estimated_minutes": 15,
+                        "xp_reward": 40,
+                        "exercises": [
+                            {
+                                "id": "ex_t3_1",
+                                "type": "multiple_choice",
+                                "ui_type": "multiple_choice",
+                                "question": "Which question asks about the nearest train station?",
+                                "options": [{"id": "0", "text": "Where is the nearest station?", "is_correct": True}, {"id": "1", "text": "How much is this room?", "is_correct": False}, {"id": "2", "text": "When does breakfast start?", "is_correct": False}],
+                                "correct_answer": "Where is the nearest station?",
+                                "explanation": "'Nearest' means the one at the shortest distance."
+                            },
+                            {
+                                "id": "ex_t3_2",
+                                "type": "fill_blank",
+                                "ui_type": "fill_in_the_blank",
+                                "question": "Complete: 'Go straight and turn {blank} at the bank.'",
+                                "options": [{"id": "0", "text": "left"}, {"id": "1", "text": "ticket"}, {"id": "2", "text": "station"}],
+                                "correct_answer": "left",
+                                "explanation": "'Turn left' is a standard direction phrase."
+                            },
+                            {
+                                "id": "ex_t3_3",
+                                "type": "translate",
+                                "ui_type": "translation_choice",
+                                "question": "Choose the English sentence for: 'Một vé đến trung tâm thành phố, làm ơn.'",
+                                "options": [{"id": "0", "text": "One ticket to the city center, please.", "is_correct": True}, {"id": "1", "text": "One room near the airport, please.", "is_correct": False}, {"id": "2", "text": "The city center is closed.", "is_correct": False}],
+                                "correct_answer": "One ticket to the city center, please.",
+                                "explanation": "Use this sentence when buying a bus or train ticket."
+                            },
+                            {
+                                "id": "ex_t3_4",
+                                "type": "true_false",
+                                "ui_type": "true_or_false",
+                                "question": "True or False: 'Does this bus go to the museum?' asks about the bus route.",
+                                "options": [{"id": "0", "text": "True", "is_correct": True}, {"id": "1", "text": "False", "is_correct": False}],
+                                "correct_answer": "True",
+                                "explanation": "The question checks whether the museum is on the bus route."
+                            },
+                            {
+                                "id": "ex_t3_5",
+                                "type": "reorder",
+                                "ui_type": "arrange_the_sentence",
+                                "question": "Arrange the words to ask about travel time.",
+                                "options": [{"id": "0", "text": "how"}, {"id": "1", "text": "long"}, {"id": "2", "text": "does"}, {"id": "3", "text": "it"}, {"id": "4", "text": "take"}],
+                                "correct_answer": "how long does it take",
+                                "explanation": "Use 'How long does it take?' to ask about duration."
+                            },
+                            {
+                                "id": "ex_t3_6",
+                                "type": "translate",
+                                "ui_type": "speaking_repeat",
+                                "question": "Repeat: 'Excuse me, am I going the right way?'",
+                                "correct_answer": "Excuse me, am I going the right way",
+                                "explanation": "Use this polite question to confirm your directions."
+                            }
+                        ]
+                    }
+                ]
+            }
         ],
     },
 ]

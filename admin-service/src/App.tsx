@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { I18nProvider, useI18n } from "./lib/i18n";
+import { ConfirmProvider } from "./components/ConfirmDialog";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
@@ -55,35 +56,34 @@ const AppRoutes = () => {
   const { t } = useI18n();
   const { role } = useAuth();
 
+  const { learners, content, growth, system } = t.nav.groups;
+  // Units and lessons are reached from Courses; their routes stay, the sidebar entries do not.
   const adminNav: NavItem[] = [
     { to: "/admin", label: t.nav.dashboard, icon: <LayoutDashboard size={18} /> },
-    { to: "/admin/users", label: t.nav.userManagement, icon: <Users size={18} /> },
-    { to: "/admin/courses", label: t.nav.courses, icon: <BookOpen size={18} /> },
-    { to: "/admin/ielts", label: t.nav.ieltsTests, icon: <GraduationCap size={18} /> },
-    { to: "/admin/units", label: t.nav.units, icon: <Layers size={18} /> },
-    { to: "/admin/lessons", label: t.nav.lessons, icon: <FileText size={18} /> },
-    { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} /> },
-    { to: "/admin/content-lab", label: t.nav.grammarTest, icon: <PenTool size={18} /> },
-    { to: "/admin/content-qa", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} /> },
-    { to: "/admin/content-analytics", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} /> },
-    { to: "/admin/ai-quality", label: t.nav.aiQuality, icon: <Gauge size={18} /> },
-    { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} /> },
-    { to: "/admin/achievements", label: t.nav.achievements, icon: <Trophy size={18} /> },
-    { to: "/admin/shop", label: t.nav.shop, icon: <ShoppingBag size={18} /> },
-    { to: "/admin/ranking-agent", label: t.nav.rankingAgent, icon: <Swords size={18} /> },
-    { to: "/admin/notification-campaign", label: t.nav.notificationCampaign, icon: <Bell size={18} /> },
-    { to: "/admin/ads", label: t.nav.bannerAds, icon: <Megaphone size={18} /> },
-    { to: "/admin/logs", label: t.nav.logs, icon: <ScrollText size={18} /> },
-    { to: "/admin/monitoring", label: t.nav.monitoring, icon: <Activity size={18} /> },
-    { to: "/admin/settings", label: t.nav.settings, icon: <Settings size={18} /> },
-    // Conditionally add "Back to Super Admin" for super_admin users
-    ...(role === "super_admin" ? [{ to: "/super", label: t.nav.superDashboard, icon: <ArrowLeft size={18} /> }] : []),
+    { to: "/admin/users", label: t.nav.userManagement, icon: <Users size={18} />, group: learners },
+    { to: "/admin/achievements", label: t.nav.achievements, icon: <Trophy size={18} />, group: learners },
+    { to: "/admin/ranking-agent", label: t.nav.rankingAgent, icon: <Swords size={18} />, group: learners },
+    { to: "/admin/courses", label: t.nav.courses, icon: <BookOpen size={18} />, group: content },
+    { to: "/admin/ielts", label: t.nav.ieltsTests, icon: <GraduationCap size={18} />, group: content },
+    { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} />, group: content },
+    { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} />, group: content },
+    { to: "/admin/content-lab", label: t.nav.grammarTest, icon: <PenTool size={18} />, group: content },
+    { to: "/admin/content-qa", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} />, group: content },
+    { to: "/admin/content-analytics", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} />, group: content },
+    { to: "/admin/shop", label: t.nav.shop, icon: <ShoppingBag size={18} />, group: growth },
+    { to: "/admin/notification-campaign", label: t.nav.notificationCampaign, icon: <Bell size={18} />, group: growth },
+    { to: "/admin/ads", label: t.nav.bannerAds, icon: <Megaphone size={18} />, group: growth },
+    { to: "/admin/ai-quality", label: t.nav.aiQuality, icon: <Gauge size={18} />, group: system },
+    { to: "/admin/logs", label: t.nav.logs, icon: <ScrollText size={18} />, group: system },
+    { to: "/admin/monitoring", label: t.nav.monitoring, icon: <Activity size={18} />, group: system },
+    { to: "/admin/settings", label: t.nav.settings, icon: <Settings size={18} />, group: system },
+    ...(role === "super_admin" ? [{ to: "/super", label: t.nav.superDashboard, icon: <ArrowLeft size={18} />, group: system }] : []),
   ];
 
   const superNav: NavItem[] = [
     { to: "/super", label: t.nav.superDashboard, icon: <Shield size={18} /> },
-    { to: "/super/admins", label: "Admin Management", icon: <Users size={18} /> },
-    { to: "/super/ai-chat", label: "AI Chat Config", icon: <Bot size={18} /> },
+    { to: "/super/admins", label: t.nav.adminManagement, icon: <Users size={18} /> },
+    { to: "/super/ai-chat", label: t.nav.aiChatConfig, icon: <Bot size={18} /> },
     { to: "/super/db", label: t.nav.database, icon: <Database size={18} /> },
     { to: "/super/ai-models", label: t.nav.aiModels, icon: <Bot size={18} /> },
     { to: "/admin", label: t.nav.adminZone, icon: <ArrowRight size={18} /> },
@@ -146,9 +146,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <I18nProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ConfirmProvider>
     </I18nProvider>
   );
 };

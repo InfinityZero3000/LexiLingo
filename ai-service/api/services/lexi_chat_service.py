@@ -684,7 +684,10 @@ async def run_lexi_pipeline(
         model_used = "trace-cag_safe_response"
         metadata["pipeline_steps"].append("trace-cag_empty_response_guard")
 
-    lexi_response = _sanitize_lexi_response(lexi_response)
+    lexi_response = _sanitize_lexi_response(
+        lexi_response,
+        expected_language=request.native_language,
+    )
     metadata["model_used"] = model_used
 
     # ── TTS ──
@@ -1049,7 +1052,10 @@ async def stream_lexi_chat(
     # 3. Token streaming
     if cache_hit:
         # Cache hit: deliver words quickly — no LLM round-trip needed.
-        lexi_response = _sanitize_lexi_response(str(raw_state["tutor_response"]))
+        lexi_response = _sanitize_lexi_response(
+            str(raw_state["tutor_response"]),
+            expected_language=request.native_language,
+        )
         model_used = f"cached_{raw_state.get('cache_layer', 'L0')}"
         for word in lexi_response.split(" "):
             yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
@@ -1070,7 +1076,14 @@ async def stream_lexi_chat(
             ):
                 tokens.append(token)
             raw_response = "".join(tokens).strip()
-            lexi_response = _sanitize_lexi_response(raw_response) if raw_response else ""
+            lexi_response = (
+                _sanitize_lexi_response(
+                    raw_response,
+                    expected_language=request.native_language,
+                )
+                if raw_response
+                else ""
+            )
             for word in lexi_response.split(" ") if lexi_response else []:
                 yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
         except Exception as gen_err:

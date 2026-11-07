@@ -1,3 +1,5 @@
+import { useConfirm } from "../components/ConfirmDialog";
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -30,6 +32,7 @@ const levelColor: Record<string, "info" | "success" | "warning" | "danger"> = {
 
 export const VocabularyPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [items, setItems] = useState<VocabItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +110,7 @@ export const VocabularyPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.vocabulary.deleteWord)) return;
+    if (!(await confirm({ message: t.vocabulary.deleteWord, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteVocabulary(id);
       await loadItems();
@@ -170,10 +173,10 @@ export const VocabularyPage = () => {
       {error && <div className="form-error">{error}</div>}
 
       {importResult && (
-        <div className="panel" style={{ padding: "12px 16px", background: "#f0fdf4" }}>
+        <div className="panel" style={{ padding: "12px 16px", background: "rgba(34, 197, 94, 0.12)" }}>
           <strong>Import hoàn tất:</strong> {importResult.created} tạo mới, {importResult.skipped} bỏ qua
           {importResult.errors.length > 0 && (
-            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "#b91c1c" }}>
+            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "var(--ink-red)" }}>
               {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           )}
@@ -188,7 +191,7 @@ export const VocabularyPage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} style={{ display: "none" }} />
+          <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} hidden />
           <button className="ghost-button" onClick={() => fileRef.current?.click()} disabled={importing}>
             {importing ? "Đang import..." : "Import CSV/PDF"}
           </button>
@@ -211,6 +214,7 @@ export const VocabularyPage = () => {
             columns={[
               {
                 header: t.vocabulary.word,
+                sortValue: (row) => row.word,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.word}</div>
@@ -220,6 +224,7 @@ export const VocabularyPage = () => {
               },
               {
                 header: "Định nghĩa",
+                sortValue: (row) => row.definition,
                 render: (row) => <span>{row.definition || "—"}</span>,
               },
               {
@@ -232,11 +237,13 @@ export const VocabularyPage = () => {
               },
               {
                 header: "Loại từ",
+                sortValue: (row) => row.part_of_speech,
                 render: (row) => <span className="table-meta">{row.part_of_speech || "—"}</span>,
                 align: "center",
               },
               {
                 header: "Level",
+                sortValue: (row) => row.difficulty_level,
                 render: (row) => (
                   <StatusPill
                     tone={levelColor[row.difficulty_level] || "info"}
@@ -263,49 +270,47 @@ export const VocabularyPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? t.vocabulary.editWord : t.vocabulary.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
+        <Dialog onClose={() => setShowForm(false)} maxWidth={520}>
+          <h3>{editingId ? t.vocabulary.editWord : t.vocabulary.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <label>
+              Từ *
+              <input value={form.word} onChange={(e) => setForm({ ...form, word: e.target.value })} required />
+            </label>
+            <label>
+              Định nghĩa *
+              <textarea rows={2} value={form.definition} onChange={(e) => setForm({ ...form, definition: e.target.value })} required />
+            </label>
+            <label>
+              Dịch nghĩa (Tiếng Việt)
+              <input value={form.translation} onChange={(e) => setForm({ ...form, translation: e.target.value })} />
+            </label>
+            <label>
+              Phát âm
+              <input value={form.pronunciation} onChange={(e) => setForm({ ...form, pronunciation: e.target.value })} placeholder="/prəˌnʌnsiˈeɪʃn/" />
+            </label>
+            <div className="form-row">
               <label>
-                Từ *
-                <input value={form.word} onChange={(e) => setForm({ ...form, word: e.target.value })} required />
+                Loại từ
+                <select value={form.part_of_speech} onChange={(e) => setForm({ ...form, part_of_speech: e.target.value })}>
+                  {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
               </label>
               <label>
-                Định nghĩa *
-                <textarea rows={2} value={form.definition} onChange={(e) => setForm({ ...form, definition: e.target.value })} required />
+                Cấp độ
+                <select value={form.difficulty_level} onChange={(e) => setForm({ ...form, difficulty_level: e.target.value })}>
+                  {LEVEL_OPTIONS.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
               </label>
-              <label>
-                Dịch nghĩa (Tiếng Việt)
-                <input value={form.translation} onChange={(e) => setForm({ ...form, translation: e.target.value })} />
-              </label>
-              <label>
-                Phát âm
-                <input value={form.pronunciation} onChange={(e) => setForm({ ...form, pronunciation: e.target.value })} placeholder="/prəˌnʌnsiˈeɪʃn/" />
-              </label>
-              <div className="form-row">
-                <label>
-                  Loại từ
-                  <select value={form.part_of_speech} onChange={(e) => setForm({ ...form, part_of_speech: e.target.value })}>
-                    {POS_OPTIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Cấp độ
-                  <select value={form.difficulty_level} onChange={(e) => setForm({ ...form, difficulty_level: e.target.value })}>
-                    {LEVEL_OPTIONS.map((l) => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                </label>
-              </div>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <div className="table-actions">
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

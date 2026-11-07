@@ -1,3 +1,4 @@
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
@@ -113,7 +114,7 @@ export const AdminManagementPage = () => {
           title={t.adminManagement.title}
           description={t.adminManagement.description}
         />
-        <button className="btn-primary" onClick={() => { setShowAddModal(true); setModalError(null); }}>
+        <button className="primary-button" onClick={() => { setShowAddModal(true); setModalError(null); }}>
           <UserPlus size={16} />
           {t.adminManagement.addAdmin}
         </button>
@@ -123,8 +124,8 @@ export const AdminManagementPage = () => {
 
       {/* Admin List */}
       <div className="panel">
-        <div className="table-container">
-          <table className="data-table">
+        <div className="table-wrap">
+          <table>
             <thead>
               <tr>
                 <th>{t.adminManagement.email}</th>
@@ -195,7 +196,7 @@ export const AdminManagementPage = () => {
                   </td>
                   <td>
                     <button
-                      className="btn-ghost btn-sm"
+                      className="ghost-button small"
                       onClick={() => handleToggleStatus(admin.id, admin.is_active)}
                     >
                       {admin.is_active ? t.adminManagement.deactivate : t.adminManagement.activate}
@@ -210,48 +211,46 @@ export const AdminManagementPage = () => {
 
       {/* Add Admin Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-            <SectionHeader
-              title={t.adminManagement.addAdmin}
-              description={t.adminManagement.addAdminDesc}
-            />
-            <div className="stack" style={{ gap: 16 }}>
-              {modalError && <div className="form-error">{modalError}</div>}
-              <div className="form-field">
-                <label>{t.adminManagement.email}</label>
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="user@example.com"
-                  className="input"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddAdmin()}
-                />
-                <small>{t.adminManagement.emailHint}</small>
-              </div>
-              <div className="form-field">
-                <label>{t.adminManagement.role}</label>
-                <select
-                  value={newRole}
-                  onChange={(e) => setNewRole(e.target.value as "admin" | "super_admin")}
-                  className="input"
-                >
-                  <option value="admin">{t.adminManagement.admin}</option>
-                  <option value="super_admin">{t.adminManagement.superAdmin}</option>
-                </select>
-              </div>
-              <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-                <button className="btn-secondary" onClick={() => setShowAddModal(false)} disabled={adding}>
-                  {t.common.cancel}
-                </button>
-                <button className="btn-primary" onClick={handleAddAdmin} disabled={adding || !newEmail}>
-                  {adding ? t.common.saving : t.adminManagement.addAdmin}
-                </button>
-              </div>
+        <Dialog onClose={() => setShowAddModal(false)} maxWidth={480}>
+          <SectionHeader
+            title={t.adminManagement.addAdmin}
+            description={t.adminManagement.addAdminDesc}
+          />
+          <div className="stack" style={{ gap: 16 }}>
+            {modalError && <div className="form-error">{modalError}</div>}
+            <div className="form-field">
+              <label>{t.adminManagement.email}</label>
+              <input
+                type="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="user@example.com"
+                className="input"
+                onKeyDown={(e) => e.key === "Enter" && handleAddAdmin()}
+              />
+              <small>{t.adminManagement.emailHint}</small>
+            </div>
+            <div className="form-field">
+              <label>{t.adminManagement.role}</label>
+              <select
+                value={newRole}
+                onChange={(e) => setNewRole(e.target.value as "admin" | "super_admin")}
+                className="input"
+              >
+                <option value="admin">{t.adminManagement.admin}</option>
+                <option value="super_admin">{t.adminManagement.superAdmin}</option>
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+              <button className="ghost-button" onClick={() => setShowAddModal(false)} disabled={adding}>
+                {t.common.cancel}
+              </button>
+              <button className="primary-button" onClick={handleAddAdmin} disabled={adding || !newEmail}>
+                {adding ? t.common.saving : t.adminManagement.addAdmin}
+              </button>
             </div>
           </div>
-        </div>
+        </Dialog>
       )}
     </div>
   );

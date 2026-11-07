@@ -48,6 +48,66 @@ def test_websocket_requires_auth(monkeypatch):
             assert event["type"] == "stt.error"
 
 
+@pytest.mark.parametrize(
+    ("query", "expected_language"),
+    [("", "auto"), ("?language=vi-VN", "vi")],
+)
+def test_legacy_transcribe_normalizes_language_before_inference(
+    monkeypatch, tmp_path, query, expected_language
+):
+    config = STTConfig(temp_dir=str(tmp_path))
+    service = MagicMock()
+    service.transcribe_file = AsyncMock(return_value={"text": "xin chào"})
+    monkeypatch.setattr(stt_route, "get_stt_config", lambda: config)
+    monkeypatch.setattr(stt_route, "get_stt_service", lambda: service)
+    monkeypatch.setattr(stt_route, "enforce_user_quota", AsyncMock(return_value=None))
+    monkeypatch.setattr(stt_route, "emit_ai_audit_event", AsyncMock())
+
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/stt")
+    app.dependency_overrides[stt_route.get_current_user] = lambda: (
+        stt_route.AuthenticatedUser(
+            user_id="u1", token_type="access", claims={}
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            f"/api/v1/stt/transcribe{query}",
+            files={"audio": ("voice.wav", b"RIFF" + b"\x00" * 32, "audio/wav")},
+        )
+
+    assert response.status_code == 200
+    service.transcribe_file.assert_awaited_once()
+    assert service.transcribe_file.await_args.args[1] == expected_language
+
+
+def test_legacy_transcribe_rejects_unsupported_language_before_inference(
+    monkeypatch,
+):
+    service = MagicMock()
+    service.transcribe_file = AsyncMock()
+    monkeypatch.setattr(stt_route, "get_stt_service", lambda: service)
+
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/stt")
+    app.dependency_overrides[stt_route.get_current_user] = lambda: (
+        stt_route.AuthenticatedUser(
+            user_id="u1", token_type="access", claims={}
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/stt/transcribe?language=ar",
+            files={"audio": ("voice.wav", b"RIFF" + b"\x00" * 32, "audio/wav")},
+        )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "language is not supported"
+    service.transcribe_file.assert_not_awaited()
+
+
 def test_websocket_rejects_untrusted_origin(monkeypatch):
     monkeypatch.setattr(stt_route.settings, "ALLOWED_ORIGINS", ["https://app.example"])
     monkeypatch.setattr(stt_route.settings, "CORS_ALLOW_ORIGIN_REGEX", "")

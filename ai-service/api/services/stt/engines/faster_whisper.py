@@ -18,11 +18,13 @@ class FasterWhisperVerifier:
         device: str,
         compute_type: str,
         beam_size: int = 1,
+        download_root: str | None = None,
     ):
         self.model_name = model_name
         self.device = device
         self.compute_type = compute_type
         self.beam_size = beam_size
+        self.download_root = download_root
         self._model = None
         self._load_lock = asyncio.Lock()
 
@@ -39,6 +41,7 @@ class FasterWhisperVerifier:
                 self.model_name,
                 device=self.device,
                 compute_type=self.compute_type,
+                download_root=self.download_root,
             )
 
     async def verify(self, audio: AudioSegment, language: str) -> VerificationResult:
@@ -65,9 +68,10 @@ class FasterWhisperVerifier:
     def _transcribe_path(
         self, path: str, language: str, offset_ms: int
     ) -> VerificationResult:
+        requested_language = None if language == "auto" else language
         segments, info = self._model.transcribe(
             path,
-            language=language,
+            language=requested_language,
             beam_size=self.beam_size,
             word_timestamps=True,
             vad_filter=False,

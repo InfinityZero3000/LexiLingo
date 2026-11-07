@@ -1,3 +1,5 @@
+import { useConfirm } from "../components/ConfirmDialog";
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
@@ -19,6 +21,7 @@ export const UnitsPage = () => {
   const { courseId: paramCourseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +122,7 @@ export const UnitsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.units.deleteUnit)) return;
+    if (!(await confirm({ message: t.units.deleteUnit, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteUnit(id);
       await loadUnits();
@@ -178,11 +181,13 @@ export const UnitsPage = () => {
             columns={[
               {
                 header: "#",
+                sortValue: (row: UnitItem) => row.order_index,
                 render: (row) => <span className="table-meta">{row.order_index}</span>,
                 align: "center",
               },
               ...(isStandalone ? [{
                 header: "Khóa học",
+                sortValue: (row: UnitItem) => courseMap.get(row.course_id) || row.course_id,
                 render: (row: UnitItem) => (
                   <span className="table-meta" style={{ color: "var(--text)", fontWeight: 500 }}>
                     {courseMap.get(row.course_id) || row.course_id.slice(0, 8)}
@@ -191,6 +196,7 @@ export const UnitsPage = () => {
               }] : []),
               {
                 header: t.units.unit,
+                sortValue: (row: UnitItem) => row.title,
                 render: (row: UnitItem) => (
                   <div>
                     <div
@@ -206,6 +212,7 @@ export const UnitsPage = () => {
               },
               {
                 header: "Bài học",
+                sortValue: (row: UnitItem) => row.total_lessons,
                 render: (row: UnitItem) => <span className="table-meta">{row.total_lessons}</span>,
                 align: "center",
               },
@@ -252,54 +259,52 @@ export const UnitsPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-            <h3>{editingId ? t.units.editUnit : t.units.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
-              {isStandalone && !editingId && (
-                <label>
-                  Khóa học *
-                  <select
-                    value={formCourseId}
-                    onChange={(e) => setFormCourseId(e.target.value)}
-                    required
-                  >
-                    <option value="">-- Chọn khóa học --</option>
-                    {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-                  </select>
-                </label>
-              )}
+        <Dialog onClose={() => setShowForm(false)} maxWidth={480}>
+          <h3>{editingId ? t.units.editUnit : t.units.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            {isStandalone && !editingId && (
               <label>
-                {t.units.unitTitle}
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+                Khóa học *
+                <select
+                  value={formCourseId}
+                  onChange={(e) => setFormCourseId(e.target.value)}
+                  required
+                >
+                  <option value="">-- Chọn khóa học --</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                </select>
+              </label>
+            )}
+            <label>
+              {t.units.unitTitle}
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </label>
+            <label>
+              {t.common.description}
+              <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+            <div className="form-row">
+              <label>
+                {t.units.order}
+                <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
               </label>
               <label>
-                {t.common.description}
-                <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                Màu nền
+                <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#4CAF50" />
               </label>
-              <div className="form-row">
-                <label>
-                  {t.units.order}
-                  <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
-                </label>
-                <label>
-                  Màu nền
-                  <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#4CAF50" />
-                </label>
-              </div>
-              <label>
-                Icon URL
-                <input value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })} />
-              </label>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <label>
+              Icon URL
+              <input value={form.icon_url} onChange={(e) => setForm({ ...form, icon_url: e.target.value })} />
+            </label>
+            <div className="table-actions">
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

@@ -14,7 +14,7 @@ import asyncio
 import hashlib
 import logging
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 import os
 import time
 import re
@@ -72,6 +72,7 @@ _LOW_VALUE_RELATIONS = frozenset({
     "etymologically_derived_from",
 })
 _LOW_VALUE_RELATION_WEIGHT = 0.15
+_MASTERY_BETA = 0.5
 
 
 def _env_enabled(name: str) -> bool:
@@ -705,6 +706,9 @@ class KnowledgeGraphServiceV3:
         learner_level: str = "B1",
         max_hops: int = 2,
         max_nodes: int = 10,
+        *,
+        mastery: Optional[Mapping[str, float]] = None,
+        cefr_weight: bool = True,
     ) -> KGHits:
         """
         Level-aware best-first graph expansion (paper Alg. 4).
@@ -730,25 +734,31 @@ class KnowledgeGraphServiceV3:
                 f"{sorted(seed_nodes)}:{learner_level}:{max_hops}:{max_nodes}".encode()
             ).hexdigest()
         )
-        try:
-            from api.core.redis_client import RedisClient
-            _redis = await RedisClient.get_instance()
-            _cached = await _redis.get(_cache_key)
-            if _cached:
-                _data = _json.loads(_cached)
-                return KGHits(
-                    seed_nodes=_data["seeds"],
-                    expanded_nodes=[KGExpandedNode(**n) for n in _data["nodes"]],
-                    paths=[KGPath(**p) for p in _data["paths"]],
-                )
-        except Exception:
-            _redis = None
+        # A personalised walk must never be stored or served under the shared key;
+        # neither may an ablated one (cefr_weight=False is benchmark-only).
+        _redis = None
+        if not mastery and cefr_weight:
+            try:
+                from api.core.redis_client import RedisClient
+                _redis = await RedisClient.get_instance()
+                _cached = await _redis.get(_cache_key)
+                if _cached:
+                    _data = _json.loads(_cached)
+                    return KGHits(
+                        seed_nodes=_data["seeds"],
+                        expanded_nodes=[KGExpandedNode(**n) for n in _data["nodes"]],
+                        paths=[KGPath(**p) for p in _data["paths"]],
+                    )
+            except Exception:
+                _redis = None
         # ─────────────────────────────────────────────────────────────────
 
         CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
         learner_ord = CEFR_ORD.get(learner_level, 3)
 
         def ped_weight(neighbor_level: str) -> float:
+            if not cefr_weight:
+                return 1.0
             n_ord = CEFR_ORD.get(neighbor_level, 3)
             diff = abs(n_ord - learner_ord)
             if diff == 0:
@@ -765,8 +775,11 @@ class KnowledgeGraphServiceV3:
         # Priority queue: (-weight, hop_depth, concept_id, parent_id, relation)
         # Negate weight because heapq is a min-heap
         frontier: list = []
+        # Mastery can lift a neighbour to 1 + beta, so seeds must outrank it or a
+        # weak seed is never queried before max_nodes fills.
+        seed_priority = -(1 + _MASTERY_BETA) if mastery else -1.0
         for s in seed_nodes:
-            heapq.heappush(frontier, (-1.0, 0, s, None, None))
+            heapq.heappush(frontier, (seed_priority, 0, s, None, None))
 
         try:
             while frontier and len(expanded_nodes) < max_nodes:
@@ -807,6 +820,12 @@ class KnowledgeGraphServiceV3:
                         w = ped_weight(neighbor_level)
                         if edge_rel in _LOW_VALUE_RELATIONS:
                             w *= _LOW_VALUE_RELATION_WEIGHT
+                        # ponytail: a personalised turn walks twice (candidates, then weighted);
+                        # memoise adjacency per request if the p95 matters.
+                        if mastery:
+                            m = mastery.get(neighbor_id, mastery.get(cid, 0.5))
+                            m = min(1.0, max(0.0, m)) if math.isfinite(m) else 0.5
+                            w *= 1 + _MASTERY_BETA * (1 - 2 * m)
                         node_titles[neighbor_id] = (row[3] or "", row[4] or "")
                         heapq.heappush(frontier, (-w, depth + 1, neighbor_id, cid, edge_rel))
         except Exception as e:
@@ -816,6 +835,8 @@ class KnowledgeGraphServiceV3:
                     learner_level=learner_level,
                     max_hops=max_hops,
                     max_nodes=max_nodes,
+                    mastery=mastery,
+                    cefr_weight=cefr_weight,
                 )
             logger.warning(f"[KG] expand_best_first error: {e}")
 

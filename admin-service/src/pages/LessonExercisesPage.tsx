@@ -1,3 +1,4 @@
+import { useConfirm } from "../components/ConfirmDialog";
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -316,6 +317,7 @@ const ExerciseRow = ({
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export const LessonExercisesPage = () => {
+  const confirm = useConfirm();
   const { courseId, unitId, lessonId } = useParams<{
     courseId: string;
     unitId: string;
@@ -377,8 +379,8 @@ export const LessonExercisesPage = () => {
     markDirty();
   };
 
-  const handleDelete = (index: number) => {
-    if (!confirm("Xóa bài tập này?")) return;
+  const handleDelete = async (index: number) => {
+    if (!(await confirm({ message: "Xóa bài tập này?", confirmLabel: "Xóa", danger: true }))) return;
     setExercises((prev) => prev.filter((_, i) => i !== index));
     markDirty();
   };

@@ -35,11 +35,11 @@ export function createGlobeScene(canvas: HTMLCanvasElement): GlobeScene {
   camera.lookAt(0, -0.3, 0);
 
   // ── Renderer ───────────────────────────────────────────────────
-  const dpr = Math.min(window.devicePixelRatio, 2);
+  const dpr = Math.min(window.devicePixelRatio, 1.5); // 2x costs 78% more fill for dots this soft
   const renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: true,
-    antialias: true,
+    antialias: false, // soft additive dots gain nothing from MSAA
     powerPreference: "high-performance",
   });
   renderer.setPixelRatio(dpr);

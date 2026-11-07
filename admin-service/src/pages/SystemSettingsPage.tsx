@@ -154,38 +154,10 @@ export const SystemSettingsPage = () => {
           align-items: center;
         }
         
-        .settings-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: 1px solid transparent;
-        }
 
-        .settings-btn-primary {
-          background: var(--accent, #3b82f6);
-          color: white;
-        }
 
-        .settings-btn-primary:hover {
-          opacity: 0.9;
-          transform: translateY(-1px);
-        }
 
-        .settings-btn-secondary {
-          background: transparent;
-          border-color: var(--border, #e5e7eb);
-          color: var(--text, #1f2937);
-        }
 
-        .settings-btn-secondary:hover {
-          background: var(--bg-secondary, #f3f4f6);
-        }
 
         .settings-form-group {
           margin-bottom: 20px;
@@ -289,9 +261,9 @@ export const SystemSettingsPage = () => {
           display: flex;
           align-items: center;
           gap: 8px;
-          background: #d1fae5;
+          background: rgba(16, 185, 129, 0.14);
           border: 1px solid #10b981;
-          color: #065f46;
+          color: var(--ink-teal);
           padding: 12px 16px;
           border-radius: 8px;
           font-size: 14px;
@@ -311,15 +283,15 @@ export const SystemSettingsPage = () => {
         {info && (
           <div className="settings-header-action">
             {!isEditing ? (
-              <button className="settings-btn settings-btn-primary" onClick={handleStartEdit}>
+              <button className="primary-button" onClick={handleStartEdit}>
                 <Edit2 size={16} /> {texts.edit}
               </button>
             ) : (
               <>
-                <button className="settings-btn settings-btn-secondary" onClick={handleCancel} disabled={saving}>
+                <button className="ghost-button" onClick={handleCancel} disabled={saving}>
                   <X size={16} /> {texts.cancel}
                 </button>
-                <button className="settings-btn settings-btn-primary" onClick={handleSave} disabled={saving}>
+                <button className="primary-button" onClick={handleSave} disabled={saving}>
                   <Save size={16} /> {saving ? texts.saving : texts.save}
                 </button>
               </>
@@ -358,8 +330,8 @@ export const SystemSettingsPage = () => {
 
           <div className="grid-2">
             {/* Application Configuration */}
-            <div className="panel" style={{ padding: 20 }}>
-              <h3 style={{ margin: "0 0 16px", fontSize: 16 }}>{t.settings.appConfig}</h3>
+            <div className="panel panel--pad">
+              <h3 className="panel-title panel-title--sm">{t.settings.appConfig}</h3>
               
               {isEditing ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -427,7 +399,7 @@ export const SystemSettingsPage = () => {
                   </div>
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <table className="kv-table">
                   <tbody>
                     <ConfigRow label={t.settings.appName} value={info.app_name} />
                     <ConfigRow label={t.settings.environment} value={
@@ -450,9 +422,9 @@ export const SystemSettingsPage = () => {
             </div>
 
             {/* Integrations */}
-            <div className="panel" style={{ padding: 20 }}>
-              <h3 style={{ margin: "0 0 16px", fontSize: 16 }}>{t.settings.integrations}</h3>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="panel panel--pad">
+              <h3 className="panel-title panel-title--sm">{t.settings.integrations}</h3>
+              <table className="kv-table">
                 <tbody>
                   <ConfigRow label={t.settings.googleOAuth} value={
                     <StatusPill tone={info.google_oauth ? "success" : "danger"} label={info.google_oauth ? t.common.configured : t.common.notConfigured} />
@@ -467,7 +439,7 @@ export const SystemSettingsPage = () => {
 
           {/* Security & Access Settings */}
           <div className="panel" style={{ padding: 20, marginTop: 20 }}>
-            <h3 style={{ margin: "0 0 16px", fontSize: 16 }}>{t.settings.securitySection}</h3>
+            <h3 className="panel-title panel-title--sm">{t.settings.securitySection}</h3>
             
             {isEditing ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 16, maxWidth: 600 }}>
@@ -557,11 +529,11 @@ export const SystemSettingsPage = () => {
 };
 
 const ConfigRow = ({ label, value }: { label: string; value: React.ReactNode }) => (
-  <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-    <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>
+  <tr>
+    <td className="kv-label">
       {label}
     </td>
-    <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14 }}>
+    <td className="kv-value">
       {value}
     </td>
   </tr>

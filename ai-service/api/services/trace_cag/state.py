@@ -5,7 +5,7 @@ Defines the typed state for LangGraph StateGraph.
 This state flows through all nodes in the TraceCAG pipeline.
 """
 
-from typing import TypedDict, List, Optional, Any, Dict, Annotated
+from typing import TypedDict, List, Optional, Any, Dict, Annotated, Union
 from operator import add
 
 
@@ -175,6 +175,7 @@ class TraceCAGState(TypedDict, total=False):
     diagnosis_errors: List[DiagnosisError]
     diagnosis_facts: Dict[str, str]  # learner self-statements, see lexi_memory
     diagnosis_root_causes: List[str]  # concept IDs
+    diagnosis_label_invalid: int  # closed bridge only: errors whose type is not one of the 24 labels
     diagnosis_confidence: float  # 0.0 - 1.0
     
     # ============================================
@@ -245,7 +246,7 @@ class TraceCAGState(TypedDict, total=False):
     models_used: Annotated[List[str], add]  # Accumulator pattern
     latency_ms: int
     ttft_ms: int
-    graph_update: Dict[str, int]
+    graph_update: Dict[str, Union[int, bool, str]]
     cache_hit: bool
     path: str  # "fast" or "slow"
     tokens_saved: int  # Estimated LLM tokens saved via cache (0 on slow path)
