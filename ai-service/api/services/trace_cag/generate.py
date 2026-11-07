@@ -29,12 +29,13 @@ from api.services.trace_cag.llm_client import (
     _throttled_post_json,
 )
 from api.services.trace_cag.cache_utils import _write_cache_entry
-from api.services.trace_cag.dependencies import POLICY_VERSION_TOKEN, dependency_record
+from api.services.trace_cag.dependencies import dependency_record, policy_version_token
 
 from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
 from api.services.trace_cag.benchmark.qa_generation import (
     _generate_extractive_fallback_response,
     _generate_benchmark_qa_response,
+    _ledger_add,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,7 @@ def _state_with_policy_dependency(state: TraceCAGState) -> TraceCAGState:
         **state,
         "dependency_events": [
             *(state.get("dependency_events") or []),
-            dependency_record("policy:tracecag:generation", "policy", POLICY_VERSION_TOKEN, "generation-policy"),
+            dependency_record("policy:tracecag:generation", "policy", policy_version_token(), "generation-policy"),
         ],
     }
 
@@ -687,11 +688,16 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
 
             # Disable Qwen3 thinking to keep token budget for actual response.
             _groq_messages = _qwen_no_think_messages(groq_model, messages)
+            try:
+                _temperature = float(os.getenv("TRACECAG_TUTOR_TEMPERATURE", "0.7"))
+            except ValueError:
+                _temperature = 0.7
 
             async def _try_groq():
                 if not groq_key:
                     return None, None
                 try:
+                    _started = time.monotonic()
                     resp = await _throttled_post_json(
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
@@ -700,13 +706,14 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                             "model": groq_model,
                             "messages": _groq_messages,
                             "max_tokens": 512,
-                            "temperature": 0.7,
+                            "temperature": _temperature,
                             **_qwen_reasoning_overrides(groq_model),
                         },
                         timeout=20.0,
                     )
                     if resp is not None and resp.status_code == 200:
                         data = resp.json()
+                        _ledger_add("tutor", data, wall_started=_started, response=resp)
                         tokens = data.get("usage", {}).get("total_tokens", 500)
                         await record_groq_key_usage(groq_key, tokens)
                         return data["choices"][0]["message"]["content"], f"groq/{groq_model}"

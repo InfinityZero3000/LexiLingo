@@ -166,7 +166,7 @@ def _candidate(
     ],
 )
 def test_expected_patch_drift_probes_are_l1_patch(current, candidate):
-    decision = decide_l1_reuse(current, candidate)
+    decision = decide_l1_reuse(current, candidate, now=candidate.created_at)
 
     assert decision.decision == "patch"
     assert decision.safe_to_reuse is True
@@ -248,7 +248,7 @@ def test_expected_patch_drift_probes_are_l1_patch(current, candidate):
     ],
 )
 def test_unsafe_drift_probes_are_full(current, candidate, reason):
-    decision = decide_l1_reuse(current, candidate)
+    decision = decide_l1_reuse(current, candidate, now=candidate.created_at)
 
     assert decision.decision == "full"
     assert decision.safe_to_reuse is False
