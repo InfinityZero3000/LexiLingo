@@ -41,7 +41,10 @@ class DuplexVoiceClient {
   final AudioRecorder _recorder;
   final _chunker = PcmFrameChunker();
   final _normalizer = VoiceAudioNormalizer();
-  final _soloud = SoLoud.instance;
+  // SoLoud opens its platform library while resolving the singleton. Keep it
+  // lazy so constructing a client (including test doubles) does not require a
+  // native audio plugin before playback is actually used.
+  late final _soloud = SoLoud.instance;
   WebSocketChannel? _channel;
   StreamSubscription? _socketSubscription;
   StreamSubscription<Uint8List>? _captureSubscription;
