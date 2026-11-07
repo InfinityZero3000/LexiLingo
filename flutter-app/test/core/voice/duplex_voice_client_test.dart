@@ -1,7 +1,31 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
+import 'package:lexilingo_app/core/voice/duplex_voice_phase.dart';
+import 'package:record/record.dart';
+
+class _Auth implements BackendAuthHeaderProvider {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+class _Recorder implements AudioRecorder {
+  @override
+  Future<void> dispose() async {}
+
+  @override
+  Future<String?> stop() async => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+class _UnavailableRecorder extends _Recorder {
+  @override
+  Future<bool> isEncoderSupported(AudioEncoder encoder) async => false;
+}
 
 void main() {
   test('start payload separates spoken and native languages', () {
@@ -13,6 +37,39 @@ void main() {
 
     expect(payload['language'], 'auto');
     expect(payload['native_language'], 'vi');
+  });
+
+  test('exposes the duplex UI contract with safe initial state', () async {
+    final client = DuplexVoiceClient(
+      authHeaders: _Auth(),
+      recorder: _Recorder(),
+    );
+    addTearDown(client.dispose);
+
+    expect(client.phase.value, DuplexVoicePhase.idle);
+    expect(client.inputLevel.value, 0);
+    expect(client.lastErrorCode, isNull);
+    expect(client.canReplay, isFalse);
+
+    await client.interrupt();
+    await client.replayLast();
+    expect(client.phase.value, DuplexVoicePhase.idle);
+  });
+
+  test('microphone capability failure becomes a retryable UI error', () async {
+    final client = DuplexVoiceClient(
+      authHeaders: _Auth(),
+      recorder: _UnavailableRecorder(),
+    );
+    addTearDown(client.dispose);
+
+    await expectLater(
+      client.start(sessionId: 'session-1'),
+      throwsA(isA<StateError>()),
+    );
+
+    expect(client.phase.value, DuplexVoicePhase.error);
+    expect(client.lastErrorCode, 'MIC_PERMISSION');
   });
 
   test('packs deployed microphone header', () {
