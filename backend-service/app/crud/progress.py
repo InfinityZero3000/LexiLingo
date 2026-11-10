@@ -3,9 +3,8 @@ Progress CRUD Operations
 Database operations for tracking user progress
 """
 from typing import Optional, List
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from sqlalchemy import select, func, and_, desc, case
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.progress import UserCourseProgress, LessonCompletion
@@ -297,18 +296,6 @@ class ProgressCRUD:
             )
         ).scalar() or 0
         return (completed_count / len(playable_ids)) * 100
-    
-    @staticmethod
-    async def get_user_total_xp(
-        db: AsyncSession,
-        user_id: str
-    ) -> int:
-        """Get user's total XP across all courses"""
-        result = await db.execute(
-            select(func.sum(UserCourseProgress.total_xp_earned))
-            .where(UserCourseProgress.user_id == user_id)
-        )
-        return result.scalar() or 0
     
     @staticmethod
     async def get_user_stats(

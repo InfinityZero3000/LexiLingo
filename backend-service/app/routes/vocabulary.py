@@ -33,7 +33,6 @@ from app.services.streak_service import record_daily_activity, update_user_strea
 from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
-    UserVocabularyCreate,
     UserVocabularyResponse,
     UserVocabularyWithItem,
     UserVocabularyListResponse,
@@ -44,9 +43,6 @@ from app.schemas.vocabulary import (
     PronunciationEvaluationResponse,
     DueVocabularyResponse,
     VocabularyStatsResponse,
-    VocabularySearchParams,
-    VocabularyBulkAddRequest,
-    VocabularyDeckCreate,
     VocabularyDeckResponse,
     AddToDeckRequest
 )
@@ -472,23 +468,6 @@ async def quick_save_to_collection(
     )
 
 
-@router.post("/collection/bulk", response_model=List[UserVocabularyResponse])
-async def bulk_add_to_collection(
-    request: VocabularyBulkAddRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Bulk add multiple vocabulary items to collection.
-    Useful when completing a lesson with many new words.
-    """
-    return await vocabulary_crud.bulk_add_to_collection(
-        db,
-        user_id=current_user.id,
-        vocabulary_ids=request.vocabulary_ids,
-    )
-
-
 # ===== Review System =====
 
 @router.post("/pronunciation/evaluate", response_model=PronunciationEvaluationResponse)
@@ -694,7 +673,6 @@ async def submit_review(
     from app.services.level_service import check_numeric_level_up
     from app.services.rank_service import calculate_rank, apply_rank_info_to_user
     from app.models.games import XPTransaction
-    from app.models.progress import DailyActivity
     from sqlalchemy import select
     
     user_id = current_user.id

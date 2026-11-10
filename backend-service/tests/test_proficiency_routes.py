@@ -16,7 +16,6 @@ BASE = /api/v1/proficiency
 
 import uuid
 import pytest
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -467,92 +466,6 @@ class TestRecordExercises:
             f"{BASE}/record-exercises", json=[]
         )
         assert response.status_code in (401, 403)
-
-
-# ===========================================================================
-# GET /proficiency/level-check
-# ===========================================================================
-
-class TestLevelCheck:
-
-    async def test_level_check_returns_200(self, auth_client):
-        """Level-check endpoint returns 200 OK."""
-        response = await auth_client.get(f"{BASE}/level-check")
-        assert response.status_code == 200
-
-    async def test_level_check_no_profile_returns_defaults(self, auth_client):
-        """When no profile exists, response contains sensible A1 defaults."""
-        response = await auth_client.get(f"{BASE}/level-check")
-        data = response.json()
-        assert data["current_level"] == "A1"
-        assert "qualifies_for_next" in data
-
-    async def test_level_check_has_required_fields(self, auth_client):
-        """Response includes current_level, next_level, overall_progress, blockers."""
-        response = await auth_client.get(f"{BASE}/level-check")
-        data = response.json()
-        for field in ("current_level", "qualifies_for_next", "requirements", "blockers"):
-            assert field in data, f"Missing field: {field}"
-
-    async def test_level_check_with_existing_profile(self, auth_client_with_profile):
-        """Level-check works when a profile exists in DB."""
-        mock_lc = _make_mock_level_check()
-        with patch(
-            "app.routes.proficiency.ProficiencyService.get_level_requirements_check",
-            return_value=mock_lc,
-        ):
-            response = await auth_client_with_profile.get(f"{BASE}/level-check")
-        assert response.status_code == 200
-
-    async def test_level_check_without_auth_returns_401_or_403(self, no_auth_client):
-        """Unauthenticated request is rejected."""
-        response = await no_auth_client.get(f"{BASE}/level-check")
-        assert response.status_code in (401, 403)
-
-
-# ===========================================================================
-# GET /proficiency/level-thresholds
-# ===========================================================================
-
-class TestLevelThresholds:
-
-    async def test_level_thresholds_returns_200(self, no_auth_client):
-        """No auth required — returns 200 OK."""
-        response = await no_auth_client.get(f"{BASE}/level-thresholds")
-        assert response.status_code == 200
-
-    async def test_level_thresholds_has_levels_key(self, no_auth_client):
-        """Response contains 'levels' dictionary."""
-        response = await no_auth_client.get(f"{BASE}/level-thresholds")
-        data = response.json()
-        assert "levels" in data
-        assert isinstance(data["levels"], dict)
-
-    async def test_level_thresholds_contains_all_cefr_levels(self, no_auth_client):
-        """All six CEFR levels are present in the response."""
-        response = await no_auth_client.get(f"{BASE}/level-thresholds")
-        levels = response.json()["levels"]
-        for cefr in ("A1", "A2", "B1", "B2", "C1", "C2"):
-            assert cefr in levels, f"Missing CEFR level: {cefr}"
-
-    async def test_level_thresholds_has_skill_weights(self, no_auth_client):
-        """Response includes 'skill_weights' section."""
-        response = await no_auth_client.get(f"{BASE}/level-thresholds")
-        assert "skill_weights" in response.json()
-
-    async def test_level_threshold_a2_has_required_fields(self, no_auth_client):
-        """A2 threshold contains expected measurement fields."""
-        response = await no_auth_client.get(f"{BASE}/level-thresholds")
-        a2 = response.json()["levels"]["A2"]
-        for field in (
-            "min_vocabulary_score",
-            "min_grammar_score",
-            "min_overall_score",
-            "min_exercises_completed",
-            "min_accuracy",
-        ):
-            assert field in a2, f"A2 threshold missing field: {field}"
-
 
 # ===========================================================================
 # GET /proficiency/history

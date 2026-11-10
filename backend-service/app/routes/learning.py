@@ -895,7 +895,7 @@ def _normalize_answer(answer: any, question_type: str) -> str:
             pairs.sort()
             return ', '.join(f"{k}:{v}" for k, v in pairs)
         except Exception:
-            pass
+            logger.debug("pair normalisation failed; grading the raw answer", exc_info=True)
 
     # Handle boolean types
     if question_type == 'true_false':

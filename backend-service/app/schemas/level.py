@@ -5,7 +5,6 @@ Schemas for level progression, XP tracking, and user statistics.
 """
 
 from typing import Optional
-from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -121,12 +120,6 @@ class WeeklyProgressResponse(BaseModel):
 # =====================
 # XP & Level Operations
 # =====================
-
-class LevelInfoResponse(BaseModel):
-    """Detailed level information."""
-    all_tiers: list[LevelTier]
-    current_level: LevelStatus
-
 
 class LevelFullResponse(BaseModel):
     """Full level info including numeric level, rank, and proficiency."""

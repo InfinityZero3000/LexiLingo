@@ -26,13 +26,13 @@ from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
 )
 from app.schemas.gamification import (
-    AchievementResponse, AchievementProgressResponse, UserAchievementResponse,
-    WalletResponse, WalletHistoryResponse, WalletTransactionResponse,
+    AchievementResponse, UserAchievementResponse,
+    WalletResponse, WalletTransactionResponse,
     LeaderboardResponse, LeaderboardUserEntry, UserLeagueStatusResponse,
     ShopItemResponse, PurchaseRequest, PurchaseResponse,
     EquipAvatarRequest, EquipAvatarResponse,
     InventoryResponse, UserInventoryItemResponse, UseItemRequest, UseItemResponse,
-    FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
+    FollowResponse, UserSocialProfile, FollowersListResponse,
     ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
     LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse,
     StarterRewardResponse,
@@ -759,55 +759,6 @@ async def use_inventory_item(
     )
 
 
-@router.get("/boosts/active", response_model=ApiResponse[List[dict]])
-async def get_active_boosts(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get all currently active boosts for the user.
-    
-    Returns active boosts with their effects and remaining time.
-    Useful for displaying active buffs in the UI.
-    """
-    from app.services.item_effects_service import ItemEffectsService
-    
-    effects_service = ItemEffectsService(db)
-    active_boosts = await effects_service.get_active_boosts(current_user.id)
-    
-    return ApiResponse(
-        success=True,
-        message=f"Found {len(active_boosts)} active boosts",
-        data=active_boosts
-    )
-
-
-@router.get("/boosts/xp-multiplier", response_model=ApiResponse[dict])
-async def get_xp_multiplier(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get current XP multiplier for the user.
-    
-    Checks for active double_xp boosts and returns the multiplier.
-    Returns 1.0 if no boost is active.
-    """
-    from app.services.item_effects_service import ItemEffectsService
-    
-    effects_service = ItemEffectsService(db)
-    multiplier = await effects_service.get_xp_multiplier(current_user.id)
-    
-    return ApiResponse(
-        success=True,
-        message="XP multiplier retrieved",
-        data={
-            "multiplier": multiplier,
-            "has_boost": multiplier > 1.0
-        }
-    )
-
-
 # ============================================================================
 # Social Endpoints
 # ============================================================================
@@ -844,30 +795,6 @@ async def follow_user(
         data=FollowResponse(
             success=success,
             is_following=success,
-            message=message
-        )
-    )
-
-
-@router.delete("/users/{user_id}/follow", response_model=ApiResponse[FollowResponse])
-async def unfollow_user(
-    user_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Unfollow a user.
-    
-    Removes the following relationship.
-    """
-    success, message = await SocialCRUD.unfollow_user(db, current_user.id, user_id)
-    
-    return ApiResponse(
-        success=success,
-        message=message,
-        data=FollowResponse(
-            success=success,
-            is_following=not success,
             message=message
         )
     )

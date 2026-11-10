@@ -23,7 +23,6 @@ from app.models.proficiency import (
     ExerciseAttempt, LevelAssessmentTest,
 )
 from app.models.reminder import UserReminderPreference, ReminderDelivery
-from app.models.rbac import AuditLog
 from app.models.games import GameSession, XPTransaction
 from app.models.reward_grant import UserRewardGrant
 
@@ -32,7 +31,6 @@ _USER_ID_SCOPED_MODELS = (
     ReminderDelivery,
     UserReminderPreference,
     Notification,
-    AuditLog,
     ExerciseAttempt,
     LevelAssessmentTest,
     UserSkillScore,

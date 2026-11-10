@@ -309,115 +309,6 @@ class TestRecordExercises:
         resp = await no_auth_client.post(f"{BASE}/record-exercises", json=sample_exercises)
         assert resp.status_code == 401
 
-
-# ═══════════════════════════════════════════════════════════════════════
-# 3. GET /proficiency/level-check
-# ═══════════════════════════════════════════════════════════════════════
-
-
-class TestLevelCheck:
-    """Test level-check endpoint with seeded B1 user."""
-
-    async def test_returns_200(self, auth_client):
-        resp = await auth_client.get(f"{BASE}/level-check")
-        assert resp.status_code == 200
-
-    async def test_current_level(self, auth_client):
-        data = (await auth_client.get(f"{BASE}/level-check")).json()
-        # Level may have shifted due to record-exercises test; just ensure it's valid CEFR
-        assert data["current_level"] in CEFR_LEVELS
-
-    async def test_next_level_exists(self, auth_client):
-        data = (await auth_client.get(f"{BASE}/level-check")).json()
-        if data["current_level"] != "C2":
-            assert data["next_level"] in CEFR_LEVELS
-            cur_idx = CEFR_LEVELS.index(data["current_level"])
-            nxt_idx = CEFR_LEVELS.index(data["next_level"])
-            assert nxt_idx == cur_idx + 1, "next_level should be one above current"
-
-    async def test_requirements_dict_not_empty(self, auth_client):
-        data = (await auth_client.get(f"{BASE}/level-check")).json()
-        assert len(data["requirements"]) > 0, "Should have B2 requirement checks"
-
-    async def test_each_requirement_has_fields(self, auth_client):
-        data = (await auth_client.get(f"{BASE}/level-check")).json()
-        for name, req in data["requirements"].items():
-            assert "required" in req, f"Requirement '{name}' missing 'required'"
-            assert "current" in req, f"Requirement '{name}' missing 'current'"
-            assert "met" in req, f"Requirement '{name}' missing 'met'"
-            assert "progress" in req, f"Requirement '{name}' missing 'progress'"
-
-    async def test_progress_is_numeric(self, auth_client):
-        data = (await auth_client.get(f"{BASE}/level-check")).json()
-        assert isinstance(data["overall_progress"], (int, float))
-        assert 0 <= data["overall_progress"] <= 100
-
-    async def test_some_blockers_exist_for_b2(self, auth_client):
-        """B1 user with ~500 exercises likely doesn't meet B2's 600 exercise requirement."""
-        data = (await auth_client.get(f"{BASE}/level-check")).json()
-        # Not strictly guaranteed, but with seeded data the user should have some blockers
-        assert isinstance(data["blockers"], list)
-
-    async def test_unauthorized_returns_401(self, no_auth_client):
-        resp = await no_auth_client.get(f"{BASE}/level-check")
-        assert resp.status_code == 401
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# 4. GET /proficiency/level-thresholds
-# ═══════════════════════════════════════════════════════════════════════
-
-
-class TestLevelThresholds:
-    """Test level thresholds endpoint (no auth required)."""
-
-    async def test_returns_200_without_auth(self, no_auth_client):
-        resp = await no_auth_client.get(f"{BASE}/level-thresholds")
-        assert resp.status_code == 200
-
-    async def test_all_cefr_levels_present(self, no_auth_client):
-        data = (await no_auth_client.get(f"{BASE}/level-thresholds")).json()
-        expected = {"A1", "A2", "B1", "B2", "C1", "C2"}
-        assert set(data["levels"].keys()) == expected
-
-    async def test_thresholds_increase_with_level(self, no_auth_client):
-        data = (await no_auth_client.get(f"{BASE}/level-thresholds")).json()
-        levels = data["levels"]
-        # min_overall_score should increase: A1 < A2 < B1 < ... < C2
-        prev_score = -1
-        for level_name in ["A1", "A2", "B1", "B2", "C1", "C2"]:
-            score = levels[level_name]["min_overall_score"]
-            assert score >= prev_score, (
-                f"{level_name} min_overall_score ({score}) < previous ({prev_score})"
-            )
-            prev_score = score
-
-    async def test_skill_weights_sum_to_1(self, no_auth_client):
-        data = (await no_auth_client.get(f"{BASE}/level-thresholds")).json()
-        total = sum(data["skill_weights"].values())
-        assert abs(total - 1.0) < 0.01, f"Skill weights should sum to 1.0, got {total}"
-
-    async def test_c2_has_all_skill_requirements(self, no_auth_client):
-        data = (await no_auth_client.get(f"{BASE}/level-thresholds")).json()
-        c2 = data["levels"]["C2"]
-        assert c2["min_vocabulary_score"] > 0
-        assert c2["min_grammar_score"] > 0
-        assert c2["min_reading_score"] > 0
-        assert c2["min_listening_score"] > 0
-        assert c2["min_speaking_score"] > 0
-        assert c2["min_writing_score"] > 0
-        # Volume gates were lowered when min_skill_confidence took over the
-        # "measured enough to promote" role; C2 still asks for the most.
-        assert c2["min_exercises_completed"] >= 1000
-        assert c2["min_skill_confidence"] >= 0.8
-        assert c2["min_streak_days"] >= 60
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# 5. GET /proficiency/history
-# ═══════════════════════════════════════════════════════════════════════
-
-
 class TestHistory:
     """Test level history with seeded transitions."""
 
@@ -600,30 +491,10 @@ class TestPlacementSubmit:
 class TestCrossEndpointConsistency:
     """Verify data consistency across multiple endpoints."""
 
-    async def test_profile_and_levelcheck_agree_on_level(self, auth_client):
-        profile = (await auth_client.get(f"{BASE}/profile")).json()
-        level_check = (await auth_client.get(f"{BASE}/level-check")).json()
-        assert profile["assessed_level"] == level_check["current_level"]
-
     async def test_profile_and_history_agree_on_level(self, auth_client):
         profile = (await auth_client.get(f"{BASE}/profile")).json()
         history = (await auth_client.get(f"{BASE}/history")).json()
         assert profile["assessed_level"] == history["current_level"]
-
-    async def test_skills_in_profile_match_levelcheck_requirements(self, auth_client):
-        """Profile skill scores should influence level-check requirements."""
-        profile = (await auth_client.get(f"{BASE}/profile")).json()
-        level_check = (await auth_client.get(f"{BASE}/level-check")).json()
-
-        # If vocabulary score is > B2 min, that requirement should be met
-        vocab_score = profile["skills"]["vocabulary"]["score"]
-        if "Vocabulary Score" in level_check["requirements"]:
-            req = level_check["requirements"]["Vocabulary Score"]
-            required_val = float(req["required"].replace("%", ""))
-            if vocab_score >= required_val:
-                assert req["met"] is True, (
-                    f"Vocab score {vocab_score} >= {required_val} but requirement not met"
-                )
 
     async def test_record_exercises_updates_profile(self, auth_client):
         """After recording exercises, profile should reflect updated stats."""

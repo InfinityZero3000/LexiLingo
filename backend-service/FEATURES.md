@@ -14,7 +14,7 @@ FastAPI + SQLAlchemy async (PostgreSQL) + Celery + Redis. Tất cả route dư�
 | `/users` | `me` (GET/PUT/DELETE), `me/permanent` | Hồ sơ cá nhân, xoá mềm & xoá vĩnh viễn |
 | `/users` | `search`, `{user_id}` | Tìm & xem hồ sơ người dùng khác |
 | `/users` | `me/level`, `me/stats`, `me/weekly-activity`, `me/xp` | Level, thống kê, hoạt động tuần |
-| `/devices` | CRUD | Đăng ký thiết bị + push token |
+| `/devices` | Đăng ký, gỡ thiết bị | Đăng ký thiết bị + push token |
 
 ## 2. Nội dung khoá học
 
@@ -34,7 +34,7 @@ FastAPI + SQLAlchemy async (PostgreSQL) + Celery + Redis. Tất cả route dư�
 |----------|-----------|
 | `/vocabulary/word-of-day` | Từ trong ngày |
 | `/vocabulary/items` | Tra cứu kho từ vựng |
-| `/vocabulary/collection` (+ `quick-save`, `bulk`) | Sổ tay từ cá nhân |
+| `/vocabulary/collection` (+ `quick-save`) | Sổ tay từ cá nhân |
 | `/vocabulary/due`, `/review/{id}` | Lịch ôn theo FSRS |
 | `/vocabulary/decks` | Bộ thẻ tự tạo (CRUD + thêm/xoá thẻ) |
 | `/vocabulary/pronunciation/evaluate` | Chấm phát âm (proxy AI service) |
@@ -50,7 +50,6 @@ FastAPI + SQLAlchemy async (PostgreSQL) + Celery + Redis. Tất cả route dư�
 | `/gamification/achievements` | Danh sách, của tôi, gần đây, kiểm tra thành tựu |
 | `/gamification/wallet` | Số dư xu + lịch sử giao dịch |
 | `/gamification/shop`, `/inventory` | Cửa hàng, mua, sử dụng vật phẩm |
-| `/gamification/boosts` | Boost đang hiệu lực, hệ số nhân XP |
 | `/gamification/leaderboard` | Bảng xếp hạng + hạng của tôi |
 | `/gamification/users/*` | Follow/unfollow, followers, following, gợi ý bạn, feed |
 | `/gamification/users/location`, `/nearby` | Vị trí & người học gần đây |
@@ -109,8 +108,8 @@ Có cache (`api_cache`) + quota manager cho API bên thứ ba, và Celery prefet
 | `/admin/achievements`, `/admin/shop` | CRUD thành tựu & vật phẩm shop |
 | `/admin/seed`, `/system-info`, `/quota-usage`, `/quota-reset` | Seed dữ liệu, cấu hình hệ thống, hạn mức API |
 | `/admin/users` | Danh sách/chi tiết/sửa, đổi vai trò & trạng thái, xoá vĩnh viễn, lịch sử hoạt động, thao tác hàng loạt, tặng quà |
-| `/admin/rbac` | Vai trò, quyền, gán vai trò, kích hoạt/vô hiệu user, audit log, dashboard |
-| `/admin/analytics` | KPI, tăng trưởng user, engagement, độ phổ biến khoá, phễu hoàn thành, cohort retention, hiệu quả nội dung & từ vựng |
+| `/admin/rbac` | Vai trò, quyền, audit log, dashboard (gán vai trò và kích hoạt/vô hiệu user nằm ở `/admin/users`) |
+| `/admin/analytics` | KPI, tăng trưởng user, engagement, độ phổ biến khoá, phễu hoàn thành, hiệu quả nội dung & từ vựng |
 | `/admin/monitoring` | Tình trạng hệ thống, services, DB stats, request stats |
 | `/admin/ai-proxy` | Quản lý chủ đề & cấu hình proxy sang AI service |
 | `/admin/content-agent` | Job sinh nội dung bằng AI: xem, preview, apply |

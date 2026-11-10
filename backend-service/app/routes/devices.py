@@ -15,12 +15,10 @@ from app.core.dependencies import get_current_user
 from app.models.user import User, UserDevice
 from app.schemas.devices import (
     DeviceRegisterRequest,
-    DeviceUpdateRequest,
     DeviceResponse
 )
 from app.schemas.common import MessageResponse
 from app.schemas.response import ApiResponse
-from typing import List
 from app.services.starter_reward_service import StarterRewardService
 
 router = APIRouter(prefix="/devices", tags=["Devices"])
@@ -67,6 +65,8 @@ async def register_device(
             .on_conflict_do_update(
                 index_elements=["device_id"],
                 set_=dict(
+                    user_id=current_user.id,
+                    device_type=request.device_type,
                     fcm_token=request.fcm_token,
                     device_name=request.device_name,
                     last_active=now,
@@ -127,58 +127,6 @@ async def register_device(
     )
 
 
-@router.put("/{device_id}", response_model=ApiResponse[DeviceResponse])
-async def update_device(
-    device_id: str,
-    request: DeviceUpdateRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Update device FCM token.
-    
-    Used when FCM token is refreshed by the client.
-    """
-    result = await db.execute(
-        select(UserDevice).where(
-            and_(
-                UserDevice.user_id == current_user.id,
-                UserDevice.device_id == device_id
-            )
-        )
-    )
-    device = result.scalar_one_or_none()
-    
-    if not device:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Device not found"
-        )
-    
-    if request.fcm_token is not None:
-        device.fcm_token = request.fcm_token
-    if request.device_name is not None:
-        device.device_name = request.device_name
-    device.last_active = datetime.now(timezone.utc)
-    
-    await db.commit()
-    await db.refresh(device)
-    
-    return ApiResponse(
-        success=True,
-        message="Device updated",
-        data=DeviceResponse(
-            id=str(device.id),
-            device_id=device.device_id,
-            device_type=device.device_type,
-            device_name=device.device_name,
-            fcm_token=device.fcm_token,
-            last_active=device.last_active,
-            created_at=device.created_at
-        )
-    )
-
-
 @router.delete("/{device_id}", response_model=MessageResponse)
 async def unregister_device(
     device_id: str,
@@ -206,32 +154,3 @@ async def unregister_device(
     await db.commit()
     
     return MessageResponse(message="Device unregistered successfully")
-
-
-@router.get("", response_model=ApiResponse[List[DeviceResponse]])
-async def list_devices(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """List all registered devices for current user."""
-    result = await db.execute(
-        select(UserDevice).where(UserDevice.user_id == current_user.id)
-    )
-    devices = result.scalars().all()
-    
-    return ApiResponse(
-        success=True,
-        message=f"Found {len(devices)} devices",
-        data=[
-            DeviceResponse(
-                id=str(d.id),
-                device_id=d.device_id,
-                device_type=d.device_type,
-                device_name=d.device_name,
-                fcm_token=d.fcm_token,
-                last_active=d.last_active,
-                created_at=d.created_at
-            )
-            for d in devices
-        ]
-    )

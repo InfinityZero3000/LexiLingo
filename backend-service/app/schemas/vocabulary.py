@@ -282,10 +282,3 @@ class VocabularySearchParams(BaseModel):
     status: Optional[str] = Field(None, description="learning, reviewing, mastered")
     limit: int = Field(default=50, ge=1, le=100, description="Results per page")
     offset: int = Field(default=0, ge=0, description="Pagination offset")
-
-
-class VocabularyBulkAddRequest(BaseModel):
-    """Schema for bulk adding vocabulary from lesson"""
-    vocabulary_ids: List[uuid.UUID] = Field(
-        ..., max_length=200, description="List of vocabulary IDs to add"
-    )

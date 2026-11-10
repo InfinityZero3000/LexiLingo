@@ -601,7 +601,7 @@ async def _fetch_word_data(word: str, lang: str = "vi", context: str = "") -> di
                         if ex:
                             examples.append(ex)
         except Exception:
-            pass
+            logger.debug("dictionary response not parseable; continuing without it", exc_info=True)
 
     # ── LLM translation (ai-service) ─────────────────────────────────────────
     if not isinstance(ai_result, dict):

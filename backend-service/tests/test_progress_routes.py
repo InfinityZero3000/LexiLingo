@@ -7,8 +7,6 @@ All progress endpoints require authentication.
 Covers:
 - GET  /api/v1/progress/me                      — overall progress stats
 - GET  /api/v1/progress/courses/{course_id}     — course-specific progress
-- POST /api/v1/progress/lessons/{lesson_id}/complete — complete a lesson
-- GET  /api/v1/progress/xp                      — total XP
 - GET  /api/v1/progress/weekly                  — weekly stats
 - GET  /api/v1/progress/streak                  — streak info
 - POST /api/v1/progress/streak/update           — update streak
@@ -16,7 +14,7 @@ Covers:
 """
 
 import pytest
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -277,41 +275,6 @@ class TestGetCourseProgress:
 
 
 # ============================================================================
-# GET /api/v1/progress/xp  — Total XP
-# ============================================================================
-
-class TestGetTotalXP:
-    """Tests for GET /api/v1/progress/xp."""
-
-    @pytest.mark.asyncio
-    async def test_requires_auth(self, no_auth_client: AsyncClient):
-        response = await no_auth_client.get(f"{BASE}/xp")
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_returns_200_with_total_xp(self, auth_client):
-        client, _, _, _ = auth_client
-        with patch("app.crud.progress.ProgressCRUD.get_user_total_xp", new=AsyncMock(return_value=250)):
-            response = await client.get(f"{BASE}/xp")
-        assert response.status_code == 200
-        assert response.json()["data"]["total_xp"] == 250
-
-    @pytest.mark.asyncio
-    async def test_returns_zero_when_no_xp(self, auth_client):
-        client, _, _, _ = auth_client
-        with patch("app.crud.progress.ProgressCRUD.get_user_total_xp", new=AsyncMock(return_value=0)):
-            response = await client.get(f"{BASE}/xp")
-        assert response.json()["data"]["total_xp"] == 0
-
-    @pytest.mark.asyncio
-    async def test_response_success_true(self, auth_client):
-        client, _, _, _ = auth_client
-        with patch("app.crud.progress.ProgressCRUD.get_user_total_xp", new=AsyncMock(return_value=100)):
-            response = await client.get(f"{BASE}/xp")
-        assert response.json()["success"] is True
-
-
-# ============================================================================
 # GET /api/v1/progress/weekly  — Weekly stats
 # ============================================================================
 
@@ -538,80 +501,6 @@ class TestUseStreakFreeze:
         assert response.status_code == 200
         data = response.json()["data"]
         assert data["freeze_used"] is True
-
-
-# ============================================================================
-# POST /api/v1/progress/lessons/{lesson_id}/complete  — Complete a lesson
-# ============================================================================
-
-class TestCompleteLesson:
-    """Tests for POST /api/v1/progress/lessons/{lesson_id}/complete."""
-
-    @pytest.mark.asyncio
-    async def test_requires_auth(self, no_auth_client: AsyncClient):
-        payload = {"score": 85.0}
-        response = await no_auth_client.post(
-            f"{BASE}/lessons/{LESSON_ID}/complete", json=payload
-        )
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_returns_404_when_lesson_not_found(self, auth_client):
-        client, _, _, _ = auth_client
-        with patch("app.crud.course.LessonCRUD.get_lesson", new=AsyncMock(return_value=None)):
-            response = await client.post(
-                f"{BASE}/lessons/{LESSON_ID}/complete", json={"score": 90.0, "lesson_id": LESSON_ID}
-            )
-        assert response.status_code in (404, 500)
-
-    @pytest.mark.asyncio
-    async def test_missing_score_returns_422(self, auth_client):
-        client, _, _, _ = auth_client
-        response = await client.post(
-            f"{BASE}/lessons/{LESSON_ID}/complete", json={}
-        )
-        assert response.status_code == 422
-
-    @pytest.mark.asyncio
-    async def test_completes_lesson_successfully(self, auth_client):
-        client, mock_session, mock_result, mock_user = auth_client
-
-        mock_lesson = MagicMock()
-        mock_lesson.id = LESSON_ID
-        mock_lesson.unit_id = "00000000-0000-0000-0000-000000000030"
-        mock_lesson.pass_threshold = 80.0
-
-        mock_unit = MagicMock()
-        mock_unit.course_id = "00000000-0000-0000-0000-000000000010"
-
-        mock_completion = MagicMock()
-        mock_completion.is_passed = True
-        mock_completion.best_score = 90.0
-
-        mock_rank_info = MagicMock()
-        mock_rank_info.rank.value = "bronze"
-
-        mock_result.scalar_one_or_none.return_value = None  # No existing DailyActivity
-
-        with patch("app.crud.course.LessonCRUD.get_lesson", new=AsyncMock(return_value=mock_lesson)), \
-             patch("app.crud.course.UnitCRUD.get_unit", new=AsyncMock(return_value=mock_unit)), \
-             patch("app.crud.course.CourseCRUD.is_user_enrolled", new=AsyncMock(return_value=True)), \
-             patch("app.crud.progress.ProgressCRUD.mark_lesson_complete", new=AsyncMock(return_value=(mock_completion, 50))), \
-             patch("app.crud.progress.ProgressCRUD.calculate_course_progress", new=AsyncMock(return_value=60.0)), \
-             patch("app.crud.progress.ProgressCRUD.update_course_progress", new=AsyncMock(return_value=MagicMock())), \
-             patch("app.services.level_service.LevelService.check_level_up", return_value=(False, None)), \
-             patch("app.services.level_service.calculate_numeric_level", return_value=1), \
-             patch("app.services.rank_service.calculate_rank", return_value=mock_rank_info), \
-             patch("app.services.check_achievements_for_user", new=AsyncMock(return_value=[])):
-            response = await client.post(
-                f"{BASE}/lessons/{LESSON_ID}/complete", json={"score": 90.0, "lesson_id": LESSON_ID}
-            )
-
-        assert response.status_code == 200
-        data = response.json()["data"]
-        assert "lesson_id" in data
-        assert "xp_earned" in data
-        assert "is_passed" in data
 
 
 # ============================================================================

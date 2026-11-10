@@ -18,8 +18,7 @@ Covers:
 
 import pytest
 import uuid
-from datetime import UTC, datetime, date, timedelta
-from typing import List
+from datetime import UTC, datetime, date
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -476,66 +475,6 @@ class TestQuickSaveToCollection:
             json={"word": "   "},
         )
         assert response.status_code == 422
-
-
-# ============================================================================
-# POST /api/v1/vocabulary/collection/bulk  — Bulk add to collection (auth)
-# ============================================================================
-
-class TestBulkAddToCollection:
-    """Tests for POST /api/v1/vocabulary/collection/bulk."""
-
-    @pytest.mark.asyncio
-    async def test_requires_auth(self, no_auth_client: AsyncClient):
-        payload = {"vocabulary_ids": [VOCAB_ID]}
-        response = await no_auth_client.post(f"{BASE}/collection/bulk", json=payload)
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_returns_empty_list_when_no_valid_ids(self, auth_client):
-        client, _, _, _ = auth_client
-        # All IDs are invalid (not found), so they are skipped
-        with patch(
-            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
-            new=AsyncMock(return_value=[]),
-        ):
-            response = await client.post(
-                f"{BASE}/collection/bulk",
-                json={"vocabulary_ids": [VOCAB_ID]},
-            )
-        assert response.status_code == 200
-        assert response.json() == []
-
-    @pytest.mark.asyncio
-    async def test_bulk_adds_valid_items(self, auth_client):
-        client, _, _, _ = auth_client
-        mock_user_vocab = _make_mock_user_vocab()
-        with patch(
-            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
-            new=AsyncMock(return_value=[mock_user_vocab]),
-        ):
-            response = await client.post(
-                f"{BASE}/collection/bulk",
-                json={"vocabulary_ids": [VOCAB_ID]},
-            )
-        assert response.status_code == 200
-        assert len(response.json()) == 1
-
-    @pytest.mark.asyncio
-    async def test_missing_body_returns_422(self, auth_client):
-        client, _, _, _ = auth_client
-        response = await client.post(f"{BASE}/collection/bulk", json={})
-        assert response.status_code == 422
-
-    @pytest.mark.asyncio
-    async def test_rejects_more_than_200_ids(self, auth_client):
-        client, _, _, _ = auth_client
-        response = await client.post(
-            f"{BASE}/collection/bulk",
-            json={"vocabulary_ids": [str(uuid.uuid4()) for _ in range(201)]},
-        )
-        assert response.status_code == 422
-
 
 # ============================================================================
 # GET /api/v1/vocabulary/due  — Due for review (auth)
