@@ -6,7 +6,7 @@ from an empty database fails immediately on the very first migration
 because of this. This migration recreates their ORIGINAL shape -- current
 model minus every column/constraint/index a later migration in this same
 chain already adds via ALTER -- so the rest of the chain applies unchanged
-on top. See BACKEND_AUDIT_REPORT.md finding #3.
+on top.
 
 Existing databases (already stamped past this point in alembic_version)
 are unaffected: alembic only runs migrations between a DB's current

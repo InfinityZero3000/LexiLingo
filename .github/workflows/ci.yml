@@ -145,7 +145,7 @@ jobs:
   # Backend — Alembic migration chain must build from an empty database.
   # Separate from the `backend` job's test-DB setup (which uses
   # scripts/create_tables.py for speed) — this is a regression gate on the
-  # migration chain itself. See BACKEND_AUDIT_REPORT.md finding #3.
+  # migration chain itself.
   # ──────────────────────────────────────────────
   backend-migrations:
     name: Backend Migrations Build-From-Clean
