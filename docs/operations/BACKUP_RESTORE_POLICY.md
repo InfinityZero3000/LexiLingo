@@ -11,7 +11,8 @@ This policy standardizes backup/restore for PostgreSQL and MongoDB in production
 
 ## Backup schedule
 
-- Frequency: daily at 02:30 UTC
+- Frequency: every 6 hours (00:30, 06:30, 12:30, 18:30 UTC) with a short random delay
+- Status: each run writes `/var/lib/lexilingo/backup-last.json`; the weekly restore test writes `verify-last.json`. Both feed the Operations Center page in the admin dashboard.
 - Retention: 14 days (default, configurable)
 - Location: `/opt/lexilingo/backups`
 
@@ -72,3 +73,7 @@ bash ./scripts/restore-prod.sh \
 - Backup files may contain sensitive data.
 - Restrict file permissions and transfer over secure channels only.
 - Consider offsite encrypted copy (S3 + SSE or equivalent).
+
+## Khi chạy trong container LXD
+
+Nếu LexiLingo chạy trong một container LXD dùng chung VPS (xem `MULTI_PROJECT_VPS.md`), backup và verify chạy bên trong container như bình thường. Snapshot LXD hằng đêm là lớp bảo vệ thứ hai nhưng nằm cùng đĩa với dữ liệu, nên vẫn phải bật bản sao ngoài máy.

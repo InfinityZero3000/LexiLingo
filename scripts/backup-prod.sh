@@ -29,11 +29,13 @@ MANIFEST_FILE="${BACKUP_DIR}/manifest_${TIMESTAMP}.txt"
 
 # A half-written dump left on disk looks like a valid backup to every later
 # reader, so remove the partial set if we abort anywhere below.
+OFFSITE_OK=false
 cleanup_partial() {
   local code=$?
   if (( code != 0 )); then
     log "FAILED (exit ${code}) — removing partial backup set ${TIMESTAMP}"
     rm -f "${PG_FILE}" "${MONGO_FILE}" "${MANIFEST_FILE}"
+    write_status backup-last.json result=failed at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" error="exit ${code}"
   fi
   exit "${code}"
 }
@@ -105,6 +107,7 @@ if [[ -n "${OFFSITE_RCLONE_REMOTE}" ]]; then
         || die "off-site verify failed for $(basename "${f}"): remote=${remote_size:-missing} local=${local_size}"
     done
     rm -f "${ENC_FILES[@]}"
+    OFFSITE_OK=true
     log "Off-site copy verified (encrypted, sizes match remote)"
   else
     log "WARNING: OFFSITE_RCLONE_REMOTE set but rclone is not installed — backup is LOCAL ONLY"
@@ -126,3 +129,8 @@ else
 fi
 
 log "Done"
+
+write_status backup-last.json result=ok at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  set="${TIMESTAMP}" postgres_bytes="$(file_size "${PG_FILE}")" mongo_bytes="$(file_size "${MONGO_FILE}")" \
+  sets_kept="$(find "${BACKUP_DIR}" -maxdepth 1 -name 'manifest_*.txt' | wc -l | tr -d '[:space:]')" \
+  offsite="${OFFSITE_OK}"
