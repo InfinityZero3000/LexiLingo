@@ -1,12 +1,27 @@
 """Regression tests for TraceCAG cache-gate L1 near-hit routing."""
 
-import hashlib
 import time
 
 import pytest
 
 import api.services.trace_cag.nodes_v2 as nodes
 import api.services.trace_cag.cache_utils as cache_mod
+
+
+@pytest.fixture(autouse=True)
+def _learner_scope(monkeypatch):
+    monkeypatch.setattr(cache_mod.settings, "SECRET_KEY", "test-secret")
+    monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
+    cache_mod._MEM_RESPONSE_CACHE.clear()
+    cache_mod._MEM_GRAPH_BUCKETS.clear()
+
+
+def _scope() -> str:
+    return cache_mod._user_cache_scope({"user_id": "u1"})
+
+
+def _key(text: str, level: str) -> str:
+    return cache_mod._build_cache_key(_scope(), text, level)
 
 
 HOTPot_RELATION_REGRESSIONS = (
@@ -35,6 +50,7 @@ def test_identical_hotpot_query_accepts_certificate_primary_relation(query):
         intent_hint="ask",
         profile_epoch=1,
         conversation_history=[],
+        user_scope=_scope(),
     )
     certificate = cache_mod._build_admissibility_certificate(
         state={"user_input": query},
@@ -42,6 +58,7 @@ def test_identical_hotpot_query_accepts_certificate_primary_relation(query):
         profile_epoch=1,
         state_hints={},
         now=now,
+        user_scope=_scope(),
     )
     candidate = cache_mod._build_l1_candidate_signature(
         cache_key="cached",
@@ -73,12 +90,12 @@ def test_explicit_relation_drift_still_rejects_identical_surface_query():
     )
     certificate = cache_mod._build_admissibility_certificate(
         state={"user_input": query}, fingerprint=fingerprint, profile_epoch=1,
-        state_hints={"relation_path": "birth"}, now=now,
+        state_hints={"relation_path": "birth"}, now=now, user_scope=_scope(),
     )
     request = cache_mod._build_l1_request_signature(
         user_input=query, normalized=query.lower(), fingerprint=fingerprint,
         level="B1", intent_hint="ask", profile_epoch=1, conversation_history=[],
-        state_hints={"relation_path": "time_order"},
+        state_hints={"relation_path": "time_order"}, user_scope=_scope(),
     )
     candidate = cache_mod._build_l1_candidate_signature(
         cache_key="cached",
@@ -114,12 +131,12 @@ def test_secondary_relation_drift_rejects_when_primary_relation_is_unchanged():
     )
     certificate = cache_mod._build_admissibility_certificate(
         state={"user_input": cached_query}, fingerprint=cached_fingerprint,
-        profile_epoch=1, state_hints={}, now=now,
+        profile_epoch=1, state_hints={}, now=now, user_scope=_scope(),
     )
     request = cache_mod._build_l1_request_signature(
         user_input=request_query, normalized=request_query.lower(),
         fingerprint=request_fingerprint, level="B1", intent_hint="ask",
-        profile_epoch=1, conversation_history=[],
+        profile_epoch=1, conversation_history=[], user_scope=_scope(),
     )
     candidate = cache_mod._build_l1_candidate_signature(
         cache_key="cached",
@@ -151,8 +168,8 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
     profile = {"level": level}
     now = time.time()
 
-    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
-    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    current_key = _key(user_input, level)
+    candidate_key = _key(candidate_input, level)
     profile_epoch = nodes._profile_epoch(profile)
     bucket = nodes._build_graph_bucket(
         user_input,
@@ -160,6 +177,7 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
         nodes._infer_intent_pre_diagnosis(user_input),
         profile_epoch,
         [],
+        user_scope=_scope(),
     )
     entry = {
         "fingerprint": {
@@ -170,7 +188,8 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 3,
+            "schema_version": 4,
+            "user_scope": _scope(),
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
             "intent": "correct",
@@ -223,6 +242,7 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
             "learner_profile": profile,
             "conversation_history": [],
             "cache_policy": "on",
+            "user_id": "u1",
         }
     )
 
@@ -240,8 +260,8 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
     profile = {"level": level}
     now = time.time()
 
-    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
-    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    current_key = _key(user_input, level)
+    candidate_key = _key(candidate_input, level)
     entry = {
         "fingerprint": {
             "query_norm": candidate_input.lower(),
@@ -251,7 +271,8 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 3,
+            "schema_version": 4,
+            "user_scope": _scope(),
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
             "intent": "ask",
@@ -302,6 +323,7 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
             "learner_profile": profile,
             "conversation_history": [],
             "cache_policy": "on",
+            "user_id": "u1",
         }
     )
 
@@ -319,8 +341,8 @@ async def test_cache_gate_l1_rejects_answer_target_shift(monkeypatch):
     profile = {"level": level}
     now = time.time()
 
-    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
-    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    current_key = _key(user_input, level)
+    candidate_key = _key(candidate_input, level)
     entry = {
         "fingerprint": {
             "query_norm": candidate_input.lower(),
@@ -365,6 +387,7 @@ async def test_cache_gate_l1_rejects_answer_target_shift(monkeypatch):
             "learner_profile": profile,
             "conversation_history": [],
             "cache_policy": "on",
+            "user_id": "u1",
         }
     )
 
@@ -386,6 +409,7 @@ async def test_cache_gate_l0_rejects_reuse_across_native_languages(monkeypatch):
             "user_input": user_input,
             "learner_profile": {"level": level, "native_language": "Vietnamese"},
             "conversation_history": [],
+            "user_id": "u1",
         },
         response="Cached Vietnamese-hint response.",
         strategy="feedback",
@@ -400,6 +424,7 @@ async def test_cache_gate_l0_rejects_reuse_across_native_languages(monkeypatch):
             "learner_profile": {"level": level, "native_language": "Japanese"},
             "conversation_history": [],
             "cache_policy": "on",
+            "user_id": "u1",
         }
     )
 
@@ -417,8 +442,8 @@ async def test_cache_gate_l1_rejects_near_hit_across_native_languages(monkeypatc
     profile = {"level": level, "native_language": "Japanese"}
     now = time.time()
 
-    current_key = hashlib.md5(f"{user_input.lower()}||{level}".encode()).hexdigest()
-    candidate_key = hashlib.md5(f"{candidate_input.lower()}||{level}".encode()).hexdigest()
+    current_key = _key(user_input, level)
+    candidate_key = _key(candidate_input, level)
     profile_epoch = nodes._profile_epoch(profile)
     bucket = nodes._build_graph_bucket(
         user_input,
@@ -426,6 +451,7 @@ async def test_cache_gate_l1_rejects_near_hit_across_native_languages(monkeypatc
         nodes._infer_intent_pre_diagnosis(user_input),
         profile_epoch,
         [],
+        user_scope=_scope(),
     )
     entry = {
         "fingerprint": {
@@ -472,6 +498,7 @@ async def test_cache_gate_l1_rejects_near_hit_across_native_languages(monkeypatc
             "learner_profile": profile,
             "conversation_history": [],
             "cache_policy": "on",
+            "user_id": "u1",
         }
     )
 

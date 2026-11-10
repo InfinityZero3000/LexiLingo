@@ -175,6 +175,7 @@ class TestTopicFeatures:
         from api.routes.admin import create_admin_topic
 
         mock_redis.delete = AsyncMock()
+        mock_mongodb["stories"].find_one = AsyncMock(return_value=None)
         payload = AdminStoryCreateRequest(
             title=LocalizedTitle(en="Library Study Group", vi="Nhóm học ở thư viện"),
             difficulty_level=DifficultyLevel.B1,
@@ -194,6 +195,31 @@ class TestTopicFeatures:
         assert stored_doc["icon_key"] == "library"
         assert stored_doc["category"] == "education"
         assert mock_redis.delete.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_admin_edit_topic_keeps_conversation_flow_it_was_not_sent(self, mock_mongodb, mock_redis):
+        """The admin form cannot show the opening prompt, so an edit must not reset it."""
+        from api.models.story_schemas import AdminStoryCreateRequest
+        from api.routes.admin import create_admin_topic
+
+        mock_redis.delete = AsyncMock()
+        mock_mongodb["stories"].find_one = AsyncMock(return_value={
+            "story_id": "story_library_study_group",
+            "created_at": "2026-01-01T00:00:00Z",
+            "conversation_flow": {"opening_prompt": "Hand-written opener", "checkpoints": ["a"]},
+        })
+        payload = AdminStoryCreateRequest(
+            story_id="story_library_study_group",
+            title=LocalizedTitle(en="Library Study Group", vi="Nhóm học"),
+            difficulty_level=DifficultyLevel.B1,
+            category="education",
+        )
+
+        await create_admin_topic(payload, _key="admin", db=mock_mongodb, redis_client=mock_redis)
+
+        stored = mock_mongodb["stories"].update_one.call_args[0][1]["$set"]
+        assert stored["conversation_flow"]["opening_prompt"] == "Hand-written opener"
+        assert stored["created_at"] == "2026-01-01T00:00:00Z"
 
     @pytest.mark.asyncio
     async def test_admin_list_topics_accepts_list_item_documents(self, mock_mongodb):

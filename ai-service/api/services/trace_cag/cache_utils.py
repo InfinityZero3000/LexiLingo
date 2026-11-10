@@ -85,6 +85,7 @@ def _build_admissibility_certificate(
     profile_epoch: int,
     state_hints: Mapping[str, Any],
     now: float,
+    user_scope: str,
 ) -> CacheAdmissibilityCertificate:
     """Build the reusable artifact contract checked before cache reuse."""
     dependency_trace = compile_dependency_trace(
@@ -119,6 +120,7 @@ def _build_admissibility_certificate(
         intent=str(state_hints.get("intent") or fingerprint.get("intent") or ""),
         level=str(fingerprint.get("level") or ""),
         native_language=str(fingerprint.get("native_language") or ""),
+        user_scope=user_scope,
         profile_epoch=_hint_profile_epoch(state_hints, profile_epoch),
         policy_version=str(state_hints.get("policy_version") or policy_version_token()),
         kg_version=str(state_hints.get("kg_version") or f"kg_schema_v{_GRAPH_SCHEMA_VERSION}"),
@@ -220,6 +222,7 @@ def _build_l1_request_signature(
     profile_epoch: int,
     conversation_history: list[dict[str, Any]],
     state_hints: Mapping[str, Any] | None = None,
+    user_scope: str = "",
 ) -> L1Request:
     hints = state_hints or {}
     # Certificates store one deterministic coarse relation path.  Compare the
@@ -252,6 +255,7 @@ def _build_l1_request_signature(
         source_version="",
         freshness_class="",
         native_language=str(fingerprint.get("native_language") or ""),
+        user_scope=user_scope,
         schema_version=CERTIFICATE_SCHEMA_VERSION,
         required_dimensions=required_dimensions,
     )
@@ -317,6 +321,7 @@ def _build_l1_candidate_signature(
         source_version=str(certificate.get("source_version") or ""),
         freshness_class=str(certificate.get("freshness_class") or ""),
         native_language=str(certificate.get("native_language") or candidate_fp.get("native_language") or ""),
+        user_scope=str(certificate.get("user_scope") or ""),
         schema_version=int(certificate.get("schema_version") or 1),
         required_dimensions={str(item) for item in (certificate.get("required_dimensions") or [])},
         created_at=float(entry.get("created_at") or time.time()),
@@ -719,12 +724,15 @@ def _build_graph_bucket(
     intent: str,
     profile_epoch: int,
     conversation_history: list[dict[str, Any]],
+    *,
+    user_scope: str,
 ) -> str:
     """Cheap graph-aware bucket used for L1 candidate lookup."""
     concepts = _extract_lightweight_graph_concepts(user_input)
     if not concepts:
         concepts = ["token:generic"]
     bucket_material = "|".join([
+        user_scope,
         level,
         intent,
         str(profile_epoch),
@@ -739,9 +747,13 @@ def _build_l1_bucket_aliases(
     intent: str,
     profile_epoch: int,
     conversation_history: list[dict[str, Any]],
+    *,
+    user_scope: str,
 ) -> list[str]:
     """Return primary and SCAR-L1 alias buckets for near-hit candidate pooling."""
-    primary = _build_graph_bucket(user_input, level, intent, profile_epoch, conversation_history)
+    primary = _build_graph_bucket(
+        user_input, level, intent, profile_epoch, conversation_history, user_scope=user_scope,
+    )
     aliases = [primary]
     conv_bucket = str(len(conversation_history) // 2)
     entities = sorted(_extract_l1_entities(user_input))[:8]
@@ -750,6 +762,7 @@ def _build_l1_bucket_aliases(
 
     if entities or relations:
         material = "|".join([
+            user_scope,
             "scar_l1_state",
             str(level),
             str(intent),
@@ -761,6 +774,7 @@ def _build_l1_bucket_aliases(
 
     if entities:
         material = "|".join([
+            user_scope,
             "scar_l1_entity",
             str(level),
             str(intent),
@@ -775,6 +789,7 @@ def _build_l1_bucket_aliases(
     # downstream by the PCC hard gates and risk scoring in decide_l1_reuse.
     for entity in entities[:5]:
         material = "|".join([
+            user_scope,
             "scar_l1_entity1",
             str(level),
             str(profile_epoch),
@@ -808,8 +823,12 @@ def _register_l1_bucket_aliases(
     profile_epoch: int,
     conversation_history: list[dict[str, Any]],
     cache_key: str,
+    *,
+    user_scope: str,
 ) -> list[str]:
-    buckets = _build_l1_bucket_aliases(user_input, level, intent, profile_epoch, conversation_history)
+    buckets = _build_l1_bucket_aliases(
+        user_input, level, intent, profile_epoch, conversation_history, user_scope=user_scope,
+    )
     for alias in buckets:
         _register_graph_bucket(alias, cache_key, profile_epoch=profile_epoch)
     return buckets
@@ -931,15 +950,17 @@ async def _write_cache_entry(
     if state.get("user_id") and user_scope is None:
         logger.warning("[_write_cache_entry] Skip personalized cache: scope secret unavailable")
         return
-    scoped_input = f"{user_scope}:{user_input}" if user_scope else user_input
+    if not user_scope:
+        return
 
     cache_key = _build_cache_key(user_scope, user_input, level, _benchmark_cache_scope(state))
     graph_bucket = _build_graph_bucket(
-        scoped_input,
+        user_input,
         level,
         intent_hint,
         profile_epoch,
         state.get("conversation_history", []),
+        user_scope=user_scope,
     )
 
     ttl = 3600 if errors else 1800
@@ -962,6 +983,7 @@ async def _write_cache_entry(
             profile_epoch=profile_epoch,
             state_hints=state_hints,
             now=now,
+            user_scope=user_scope,
         )
     except (TypeError, ValueError) as exc:
         logger.warning("[_write_cache_entry] Skip cache: invalid dependency trace (%s)", exc)
@@ -1013,12 +1035,13 @@ async def _write_cache_entry(
 
     if _is_pcc_stable(state):
         buckets = _register_l1_bucket_aliases(
-            scoped_input,
+            user_input,
             level,
             intent_hint,
             profile_epoch,
             state.get("conversation_history", []),
             cache_key,
+            user_scope=user_scope,
         )
         logger.debug(
             f"[_write_cache_entry] L1 promote key={cache_key[:8]} "
@@ -1038,11 +1061,12 @@ async def _write_cache_entry(
         )
         if should_promote_l1:
             for alias in _build_l1_bucket_aliases(
-                scoped_input,
+                user_input,
                 level,
                 intent_hint,
                 profile_epoch,
                 state.get("conversation_history", []),
+                user_scope=user_scope,
             ):
                 await _register_graph_bucket_redis(alias, cache_key, ttl)
         logger.debug(f"[_write_cache_entry] Cached key={cache_key[:8]} ttl={ttl}s")
@@ -1150,9 +1174,31 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
                 "risk": 1.0,
             },
         }
-    scoped_input = f"{user_scope}:{user_input}" if user_scope else user_input
-    bucket = _build_graph_bucket(scoped_input, level, intent_hint, profile_epoch, conversation_history)
-    l1_buckets = _build_l1_bucket_aliases(scoped_input, level, intent_hint, profile_epoch, conversation_history)
+    if not user_scope:
+        # Every artifact belongs to one learner; an anonymous L0 key is global and ignores conversation history.
+        try:
+            from api.services.telemetry import get_telemetry
+
+            get_telemetry().increment_counter("tracecag_cache_bypass_no_user_scope_total")
+        except Exception:
+            pass
+        return {
+            "cache_hit": False,
+            "cache_decision": "full",
+            "reuse_risk": 1.0,
+            "path": "slow",
+            "cache_gate_meta": {
+                "pcc_passed": False,
+                "reasons": ["no_user_cache_scope"],
+                "risk": 1.0,
+            },
+        }
+    bucket = _build_graph_bucket(
+        user_input, level, intent_hint, profile_epoch, conversation_history, user_scope=user_scope,
+    )
+    l1_buckets = _build_l1_bucket_aliases(
+        user_input, level, intent_hint, profile_epoch, conversation_history, user_scope=user_scope,
+    )
 
     native_language = learner_profile.get("native_language", "Vietnamese")
     fingerprint = CacheFingerprint(
@@ -1172,6 +1218,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         profile_epoch=profile_epoch,
         state_hints=state_hints,
         now=time.time(),
+        user_scope=user_scope,
     )
     observe_dependency_tokens(request_certificate.get("dependencies") or [])
     benchmark_mode = str(benchmark_metadata.get("_benchmark_mode") or "").strip().lower()
@@ -1260,6 +1307,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         profile_epoch=profile_epoch,
         conversation_history=conversation_history,
         state_hints=state_hints,
+        user_scope=user_scope,
     )
     best_rejection: tuple[float, tuple[str, ...]] | None = None
 

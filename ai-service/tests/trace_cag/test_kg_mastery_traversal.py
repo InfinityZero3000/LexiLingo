@@ -373,6 +373,7 @@ def test_default_certificate_and_request_carry_policy_v3(monkeypatch):
         profile_epoch=1,
         state_hints={},
         now=time.time(),
+        user_scope="u",
     )
     assert certificate["policy_version"] == "policy_v3"
     override = cache_mod._build_admissibility_certificate(
@@ -381,6 +382,7 @@ def test_default_certificate_and_request_carry_policy_v3(monkeypatch):
         profile_epoch=1,
         state_hints={"policy_version": "pinned"},
         now=time.time(),
+        user_scope="u",
     )
     assert override["policy_version"] == "pinned"
 
@@ -396,7 +398,13 @@ class _DictRedis:
         self.store[key] = value
 
 
+def _cache_user(monkeypatch):
+    monkeypatch.setattr(settings, "SECRET_KEY", "test-secret")
+    monkeypatch.setattr(settings, "LEARNER_STATE_MODE", "off")
+
+
 GATE_STATE = {
+    "user_id": "gate-user",
     "user_input": "Who founded ExampleCo?",
     "session_id": "s-gate",
     "learner_profile": {"level": "B1"},
@@ -413,6 +421,7 @@ GATE_STATE = {
 )
 async def test_l0_entry_written_under_one_flag_value_is_rejected_after_the_flip(monkeypatch, field, flipped):
     _flags(monkeypatch)
+    _cache_user(monkeypatch)
     fake = _DictRedis()
 
     async def get_instance():

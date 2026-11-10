@@ -19,7 +19,7 @@ from api.services.model_gateway import ModelGateway
 from api.services.trace_cag import nodes_v2
 from api.services.trace_cag.dependencies import policy_version_token
 
-from .test_kg_mastery_traversal import GATE_STATE, _DictRedis, _flags
+from .test_kg_mastery_traversal import GATE_STATE, _cache_user, _DictRedis, _flags
 
 AI_SERVICE = Path(__file__).resolve().parents[2]
 LABEL_MAP = AI_SERVICE / "model-development" / "benchmark" / "data" / "diagnosis_label_map.json"
@@ -353,6 +353,7 @@ def test_policy_token_stays_distinct_across_all_flag_combinations_including_the_
 @pytest.mark.parametrize("before, after", [("off", "map"), ("off", "closed"), ("map", "closed"), ("closed", "off")])
 async def test_l0_entry_is_rejected_across_a_bridge_flip(monkeypatch, before, after):
     _flags(monkeypatch)
+    _cache_user(monkeypatch)
     _bridge(monkeypatch, before)
     fake = _DictRedis()
 
