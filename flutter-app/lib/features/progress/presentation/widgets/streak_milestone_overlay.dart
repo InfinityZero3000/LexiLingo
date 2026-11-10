@@ -29,14 +29,10 @@ class StreakMilestoneOverlay extends StatefulWidget {
       barrierLabel: 'Streak Milestone',
       barrierColor: Colors.black.withValues(alpha: 0.75),
       transitionDuration: const Duration(milliseconds: 350),
-      transitionBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: anim,
-        child: child,
-      ),
-      pageBuilder: (ctx, _, __) => StreakMilestoneOverlay(
-        streakDays: streakDays,
-        onDismiss: onDismiss,
-      ),
+      transitionBuilder: (ctx, anim, _, child) =>
+          FadeTransition(opacity: anim, child: child),
+      pageBuilder: (ctx, _, __) =>
+          StreakMilestoneOverlay(streakDays: streakDays, onDismiss: onDismiss),
     );
   }
 
@@ -64,15 +60,18 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
       duration: const Duration(milliseconds: 600),
     );
 
-    _numberScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _number, curve: Curves.elasticOut),
-    );
-    _numberBounce = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _number, curve: Curves.bounceOut),
-    );
-    _badgeScale = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _badge, curve: Curves.elasticOut),
-    );
+    _numberScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _number, curve: Curves.elasticOut));
+    _numberBounce = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _number, curve: Curves.bounceOut));
+    _badgeScale = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _badge, curve: Curves.elasticOut));
 
     Future.delayed(const Duration(milliseconds: 150), () {
       if (mounted) _badge.forward();
@@ -113,9 +112,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
           children: [
             // Background celebration
             const Positioned.fill(
-              child: IgnorePointer(
-                child: LottieAnimationWidget.starBurst(),
-              ),
+              child: IgnorePointer(child: LottieAnimationWidget.starBurst()),
             ),
 
             // Content card
@@ -128,9 +125,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                   vertical: 36,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceDarkElevated
-                      : Colors.white,
+                  color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
@@ -166,9 +161,8 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                         width: 100,
                         height: 100,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => _FallbackFireIcon(
-                          color: fireOrange,
-                        ),
+                        errorBuilder: (_, __, ___) =>
+                            _FallbackFireIcon(color: fireOrange),
                       )
                     else
                       _FallbackFireIcon(color: fireOrange),
@@ -222,9 +216,9 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                       'common.tapAnywhereToContinue'.tr(),
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColorRoles.textMuted(isDark).withValues(
-                          alpha: 0.6,
-                        ),
+                        color: AppColorRoles.textMuted(
+                          isDark,
+                        ).withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -272,11 +266,7 @@ class _FallbackFireIcon extends StatelessWidget {
         shape: BoxShape.circle,
         color: color.withValues(alpha: 0.12),
       ),
-      child: Icon(
-        Icons.local_fire_department_rounded,
-        size: 60,
-        color: color,
-      ),
+      child: Icon(Icons.local_fire_department_rounded, size: 60, color: color),
     );
   }
 }

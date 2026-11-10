@@ -31,10 +31,8 @@ class _RewardRepository implements ProgressRepository {
   ) async => throw UnimplementedError();
 
   @override
-  Future<Either<Failure, LessonCompletionResult>> completeLesson({
-    required String lessonId,
-    required double score,
-  }) async => throw UnimplementedError();
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyBonus() async =>
+      throw UnimplementedError();
 
   @override
   Future<Either<Failure, ContentActivityEntity>> getContentActivity({
@@ -53,9 +51,6 @@ class _RewardRepository implements ProgressRepository {
   @override
   Future<Either<Failure, ProgressStatsEntity>> getMyProgress() async =>
       throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, int>> getTotalXp() async => throw UnimplementedError();
 
   @override
   Future<Either<Failure, WeeklyProgressEntity>> getWeeklyProgress() async =>

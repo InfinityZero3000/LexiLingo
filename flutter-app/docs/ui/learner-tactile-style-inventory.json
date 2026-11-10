@@ -12306,13 +12306,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::CollocationChoiceWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart::CollocationChoiceWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "CollocationChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1392,
+      "line": 62,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12332,13 +12332,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::CollocationChoiceWidget::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart::CollocationChoiceWidget::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "CollocationChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 1443,
+      "line": 113,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12358,13 +12358,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::CollocationChoiceWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart::CollocationChoiceWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "CollocationChoiceWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 1429,
+      "line": 99,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12384,13 +12384,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::CollocationChoiceWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart::CollocationChoiceWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/collocation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "CollocationChoiceWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 1471,
+      "line": 143,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12410,13 +12410,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::GrammarCorrectionWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart::GrammarCorrectionWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart",
       "entryPoint": "surface",
       "symbol": "GrammarCorrectionWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1687,
+      "line": 64,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12436,13 +12436,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::GrammarCorrectionWidget::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart::GrammarCorrectionWidget::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart",
       "entryPoint": "surface",
       "symbol": "GrammarCorrectionWidget",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 1700,
+      "line": 77,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12462,13 +12462,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::GrammarCorrectionWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart::GrammarCorrectionWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart",
       "entryPoint": "surface",
       "symbol": "GrammarCorrectionWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 1748,
+      "line": 125,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12488,13 +12488,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::GrammarCorrectionWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart::GrammarCorrectionWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/grammar_correction_widget.dart",
       "entryPoint": "surface",
       "symbol": "GrammarCorrectionWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 1767,
+      "line": 144,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12514,13 +12514,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ImageBasedChoiceWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/image_based_choice_widget.dart::ImageBasedChoiceWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/image_based_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "ImageBasedChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1898,
+      "line": 35,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12540,13 +12540,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ImageBasedChoiceWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/image_based_choice_widget.dart::ImageBasedChoiceWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/image_based_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "ImageBasedChoiceWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 1921,
+      "line": 82,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12566,13 +12566,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ImageBasedChoiceWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/image_based_choice_widget.dart::ImageBasedChoiceWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/image_based_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "ImageBasedChoiceWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 1933,
+      "line": 94,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12592,13 +12592,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ListeningChoiceWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/listening_choice_widget.dart::ListeningChoiceWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/listening_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "ListeningChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1988,
+      "line": 54,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12618,13 +12618,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ListeningChoiceWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/listening_choice_widget.dart::ListeningChoiceWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/listening_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "ListeningChoiceWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 2016,
+      "line": 86,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12644,13 +12644,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ListeningChoiceWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/listening_choice_widget.dart::ListeningChoiceWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/listening_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "ListeningChoiceWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 2028,
+      "line": 98,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12670,13 +12670,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::MultipleChoiceWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/multiple_choice_widget.dart::MultipleChoiceWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/multiple_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "MultipleChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 453,
+      "line": 62,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12696,13 +12696,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::MultipleChoiceWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/multiple_choice_widget.dart::MultipleChoiceWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/multiple_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "MultipleChoiceWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 496,
+      "line": 105,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12722,13 +12722,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::MultipleChoiceWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/multiple_choice_widget.dart::MultipleChoiceWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/multiple_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "MultipleChoiceWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 508,
+      "line": 117,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12748,13 +12748,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ReadingComprehensionWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/reading_comprehension_widget.dart::ReadingComprehensionWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/reading_comprehension_widget.dart",
       "entryPoint": "surface",
       "symbol": "ReadingComprehensionWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 2661,
+      "line": 73,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12774,13 +12774,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ReadingComprehensionWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/reading_comprehension_widget.dart::ReadingComprehensionWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/reading_comprehension_widget.dart",
       "entryPoint": "surface",
       "symbol": "ReadingComprehensionWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 2695,
+      "line": 107,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12800,13 +12800,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::ReadingComprehensionWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/reading_comprehension_widget.dart::ReadingComprehensionWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/reading_comprehension_widget.dart",
       "entryPoint": "surface",
       "symbol": "ReadingComprehensionWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 2707,
+      "line": 119,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12826,13 +12826,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TranslationChoiceWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart::TranslationChoiceWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "TranslationChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1012,
+      "line": 71,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12852,13 +12852,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TranslationChoiceWidget::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart::TranslationChoiceWidget::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "TranslationChoiceWidget",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 1021,
+      "line": 80,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12878,13 +12878,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TranslationChoiceWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart::TranslationChoiceWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "TranslationChoiceWidget",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 1054,
+      "line": 113,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12904,13 +12904,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TranslationChoiceWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart::TranslationChoiceWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/translation_choice_widget.dart",
       "entryPoint": "surface",
       "symbol": "TranslationChoiceWidget",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 1066,
+      "line": 125,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -12930,11 +12930,323 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TrueOrFalseWidget::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/true_or_false_widget.dart::TrueOrFalseWidget::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/true_or_false_widget.dart",
       "entryPoint": "surface",
       "symbol": "TrueOrFalseWidget",
       "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 42,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/true_or_false_widget.dart::TrueOrFalseWidget::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/true_or_false_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "TrueOrFalseWidget",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 66,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/true_or_false_widget.dart::TrueOrFalseWidget::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/true_or_false_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "TrueOrFalseWidget",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 79,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart::_ArrangeSentenceWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_ArrangeSentenceWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 119,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart::_ArrangeSentenceWidgetState::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_ArrangeSentenceWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 179,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart::_ArrangeSentenceWidgetState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_ArrangeSentenceWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 2,
+      "line": 217,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart::_ArrangeSentenceWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/arrange_sentence_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_ArrangeSentenceWidgetState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 244,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::ExerciseBadge::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
+      "entryPoint": "surface",
+      "symbol": "ExerciseBadge",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 17,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart::_CategorizationWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_CategorizationWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 161,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart::_CategorizationWidgetState::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_CategorizationWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 228,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart::_CategorizationWidgetState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_CategorizationWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 2,
+      "line": 278,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart::_CategorizationWidgetState::BoxDecoration::3",
+      "path": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_CategorizationWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 293,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart::_CategorizationWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/categorization_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_CategorizationWidgetState",
+      "callKind": "Card",
       "ordinal": 0,
       "line": 355,
       "category": "eligible",
@@ -12956,65 +13268,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TrueOrFalseWidget::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::CircleAudioButton::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "TrueOrFalseWidget",
-      "callKind": "Card",
-      "ordinal": 0,
-      "line": 379,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::TrueOrFalseWidget::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "TrueOrFalseWidget",
-      "callKind": "Card",
-      "ordinal": 1,
-      "line": 392,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ArrangeSentenceWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_ArrangeSentenceWidgetState",
+      "symbol": "CircleAudioButton",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 841,
+      "line": 309,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13034,273 +13294,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ArrangeSentenceWidgetState::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_ArrangeSentenceWidgetState",
-      "callKind": "BoxDecoration",
-      "ordinal": 1,
-      "line": 869,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ArrangeSentenceWidgetState::BoxDecoration::2",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_ArrangeSentenceWidgetState",
-      "callKind": "BoxDecoration",
-      "ordinal": 2,
-      "line": 903,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ArrangeSentenceWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_ArrangeSentenceWidgetState",
-      "callKind": "Card",
-      "ordinal": 0,
-      "line": 930,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_Badge::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_Badge",
-      "callKind": "BoxDecoration",
-      "ordinal": 0,
-      "line": 70,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_CategorizationWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_CategorizationWidgetState",
-      "callKind": "BoxDecoration",
-      "ordinal": 0,
-      "line": 3127,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_CategorizationWidgetState::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_CategorizationWidgetState",
-      "callKind": "BoxDecoration",
-      "ordinal": 1,
-      "line": 3188,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_CategorizationWidgetState::BoxDecoration::2",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_CategorizationWidgetState",
-      "callKind": "BoxDecoration",
-      "ordinal": 2,
-      "line": 3219,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_CategorizationWidgetState::BoxDecoration::3",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_CategorizationWidgetState",
-      "callKind": "BoxDecoration",
-      "ordinal": 3,
-      "line": 3234,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_CategorizationWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_CategorizationWidgetState",
-      "callKind": "Card",
-      "ordinal": 0,
-      "line": 3302,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_CircleAudioBtn::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
-      "entryPoint": "surface",
-      "symbol": "_CircleAudioBtn",
-      "callKind": "BoxDecoration",
-      "ordinal": 0,
-      "line": 293,
-      "category": "eligible",
-      "group": 2,
-      "status": "inventoried",
-      "colors": {
-        "light": {
-          "accent": "0xFF000000",
-          "fill": "0xFFFFFFFF",
-          "pageBackground": "0xFFFFFFFF",
-          "intermediateFill": null
-        },
-        "dark": {
-          "accent": "0xFFFFFFFF",
-          "fill": "0xFF121212",
-          "pageBackground": "0xFF121212",
-          "intermediateFill": null
-        }
-      }
-    },
-    {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DialogueCompletionWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart::_DialogueCompletionWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DialogueCompletionWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1183,
+      "line": 113,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13320,13 +13320,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DialogueCompletionWidgetState::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart::_DialogueCompletionWidgetState::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DialogueCompletionWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 1216,
+      "line": 150,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13346,13 +13346,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DialogueCompletionWidgetState::BoxDecoration::2",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart::_DialogueCompletionWidgetState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DialogueCompletionWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 1290,
+      "line": 225,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13372,13 +13372,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DialogueCompletionWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart::_DialogueCompletionWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DialogueCompletionWidgetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 1250,
+      "line": 184,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13398,13 +13398,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DialogueCompletionWidgetState::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart::_DialogueCompletionWidgetState::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/dialogue_completion_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DialogueCompletionWidgetState",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 1262,
+      "line": 196,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13424,13 +13424,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DictationWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dictation_widget.dart::_DictationWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/dictation_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DictationWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1580,
+      "line": 106,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13450,13 +13450,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_DictationWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/dictation_widget.dart::_DictationWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/dictation_widget.dart",
       "entryPoint": "surface",
       "symbol": "_DictationWidgetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 1619,
+      "line": 147,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13476,13 +13476,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ExplanationCard::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::ExerciseExplanationCard::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "_ExplanationCard",
+      "symbol": "ExerciseExplanationCard",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 245,
+      "line": 209,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13502,13 +13502,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ExplanationCard::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::ExerciseExplanationCard::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "_ExplanationCard",
+      "symbol": "ExerciseExplanationCard",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 239,
+      "line": 189,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13528,13 +13528,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_FillBlankWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart::_FillBlankWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart",
       "entryPoint": "surface",
       "symbol": "_FillBlankWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 606,
+      "line": 104,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13554,13 +13554,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_FillBlankWidgetState::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart::_FillBlankWidgetState::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart",
       "entryPoint": "surface",
       "symbol": "_FillBlankWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 625,
+      "line": 123,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13580,13 +13580,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_FillBlankWidgetState::BoxDecoration::2",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart::_FillBlankWidgetState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart",
       "entryPoint": "surface",
       "symbol": "_FillBlankWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 676,
+      "line": 174,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13606,13 +13606,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_FillBlankWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart::_FillBlankWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart",
       "entryPoint": "surface",
       "symbol": "_FillBlankWidgetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 691,
+      "line": 189,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13632,13 +13632,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_FillBlankWidgetState::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart::_FillBlankWidgetState::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/fill_blank_widget.dart",
       "entryPoint": "surface",
       "symbol": "_FillBlankWidgetState",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 750,
+      "line": 248,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13658,13 +13658,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_MatchWordMeaningWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart::_MatchWordMeaningWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart",
       "entryPoint": "surface",
       "symbol": "_MatchWordMeaningWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 2115,
+      "line": 147,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13684,13 +13684,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_MatchWordMeaningWidgetState::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart::_MatchWordMeaningWidgetState::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart",
       "entryPoint": "surface",
       "symbol": "_MatchWordMeaningWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 2184,
+      "line": 225,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13710,13 +13710,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_MatchWordMeaningWidgetState::BoxDecoration::2",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart::_MatchWordMeaningWidgetState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart",
       "entryPoint": "surface",
       "symbol": "_MatchWordMeaningWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 2224,
+      "line": 263,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13736,13 +13736,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_MatchWordMeaningWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart::_MatchWordMeaningWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/match_word_meaning_widget.dart",
       "entryPoint": "surface",
       "symbol": "_MatchWordMeaningWidgetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 2247,
+      "line": 286,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13762,13 +13762,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_OptionCard::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::ExerciseOptionCard::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "_OptionCard",
+      "symbol": "ExerciseOptionCard",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 149,
+      "line": 97,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13788,13 +13788,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_OptionCard::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::ExerciseOptionCard::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "_OptionCard",
+      "symbol": "ExerciseOptionCard",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 172,
+      "line": 120,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13814,13 +13814,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_OptionCard::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::ExerciseOptionCard::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "_OptionCard",
+      "symbol": "ExerciseOptionCard",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 109,
+      "line": 56,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13840,13 +13840,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_PronunciationPracticeWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/pronunciation_practice_widget.dart::_PronunciationPracticeWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/pronunciation_practice_widget.dart",
       "entryPoint": "surface",
       "symbol": "_PronunciationPracticeWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 2537,
+      "line": 66,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13866,13 +13866,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ShortWritingAnswerWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/short_writing_answer_widget.dart::_ShortWritingAnswerWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/short_writing_answer_widget.dart",
       "entryPoint": "surface",
       "symbol": "_ShortWritingAnswerWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 2769,
+      "line": 57,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13892,13 +13892,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_ShortWritingAnswerWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/short_writing_answer_widget.dart::_ShortWritingAnswerWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/short_writing_answer_widget.dart",
       "entryPoint": "surface",
       "symbol": "_ShortWritingAnswerWidgetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 2868,
+      "line": 156,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13918,13 +13918,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_SpeakingRepeatWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/speaking_repeat_widget.dart::_SpeakingRepeatWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/speaking_repeat_widget.dart",
       "entryPoint": "surface",
       "symbol": "_SpeakingRepeatWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 2935,
+      "line": 69,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13944,13 +13944,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_VocabularyFlashcardWidgetState::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart::_VocabularyFlashcardWidgetState::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart",
       "entryPoint": "surface",
       "symbol": "_VocabularyFlashcardWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 2311,
+      "line": 61,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13970,13 +13970,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_VocabularyFlashcardWidgetState::BoxDecoration::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart::_VocabularyFlashcardWidgetState::BoxDecoration::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart",
       "entryPoint": "surface",
       "symbol": "_VocabularyFlashcardWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 2373,
+      "line": 124,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -13996,13 +13996,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_VocabularyFlashcardWidgetState::BoxDecoration::2",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart::_VocabularyFlashcardWidgetState::BoxDecoration::2",
+      "path": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart",
       "entryPoint": "surface",
       "symbol": "_VocabularyFlashcardWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 2408,
+      "line": 159,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -14022,13 +14022,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_VocabularyFlashcardWidgetState::Card::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart::_VocabularyFlashcardWidgetState::Card::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart",
       "entryPoint": "surface",
       "symbol": "_VocabularyFlashcardWidgetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 2460,
+      "line": 212,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -14048,13 +14048,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_VocabularyFlashcardWidgetState::Card::1",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart::_VocabularyFlashcardWidgetState::Card::1",
+      "path": "lib/features/learning/presentation/widgets/exercises/vocabulary_flashcard_widget.dart",
       "entryPoint": "surface",
       "symbol": "_VocabularyFlashcardWidgetState",
       "callKind": "Card",
       "ordinal": 1,
-      "line": 2473,
+      "line": 225,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -28108,13 +28108,13 @@
       }
     },
     {
-      "id": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart::_PairAnswerChips::BoxDecoration::0",
-      "path": "lib/features/learning/presentation/widgets/premium_exercise_widgets.dart",
+      "id": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart::PairAnswerChips::BoxDecoration::0",
+      "path": "lib/features/learning/presentation/widgets/exercises/exercise_chrome.dart",
       "entryPoint": "surface",
-      "symbol": "_PairAnswerChips",
+      "symbol": "PairAnswerChips",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 1123,
+      "line": 361,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -30109,6 +30109,96 @@
       "line": 184,
       "category": "eligible",
       "group": 5,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/ielts/presentation/pages/ielts_tests_page.dart::_TestCard::showModalBottomSheet::0",
+      "path": "lib/features/ielts/presentation/pages/ielts_tests_page.dart",
+      "entryPoint": "overlay",
+      "symbol": "_TestCard",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 96,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/ielts/presentation/widgets/ielts_preview_sheet.dart::IeltsPreviewSheet::BoxDecoration::0",
+      "path": "lib/features/ielts/presentation/widgets/ielts_preview_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "IeltsPreviewSheet",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 51,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_LevelHistoryTimelineState::BoxDecoration::0",
+      "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
+      "entryPoint": "surface",
+      "symbol": "_LevelHistoryTimelineState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 35,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_TimelineRow::BoxDecoration::0",
+      "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
+      "entryPoint": "surface",
+      "symbol": "_TimelineRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 161,
+      "category": "eligible",
+      "group": 2,
       "status": "inventoried",
       "colors": {
         "light": {

@@ -82,7 +82,8 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(() {
-      _reminderEnabled = prefs.getBool(NotificationService.checkinEnabledKey) ?? false;
+      _reminderEnabled =
+          prefs.getBool(NotificationService.checkinEnabledKey) ?? false;
       final hour = prefs.getInt(NotificationService.checkinHourKey) ?? 12;
       final minute = prefs.getInt(NotificationService.checkinMinuteKey) ?? 0;
       _reminderTime = TimeOfDay(hour: hour, minute: minute);
@@ -97,14 +98,25 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
         if (!mounted) return;
         setState(() => _reminderEnabled = false);
         messenger?.showSnackBar(
-          SnackBar(content: Text('notifications.checkin.permissionDenied'.tr())),
+          SnackBar(
+            content: Text('notifications.checkin.permissionDenied'.tr()),
+          ),
         );
       }
 
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(NotificationService.checkinEnabledKey, _reminderEnabled);
-      await prefs.setInt(NotificationService.checkinHourKey, _reminderTime.hour);
-      await prefs.setInt(NotificationService.checkinMinuteKey, _reminderTime.minute);
+      await prefs.setBool(
+        NotificationService.checkinEnabledKey,
+        _reminderEnabled,
+      );
+      await prefs.setInt(
+        NotificationService.checkinHourKey,
+        _reminderTime.hour,
+      );
+      await prefs.setInt(
+        NotificationService.checkinMinuteKey,
+        _reminderTime.minute,
+      );
 
       if (_reminderEnabled) {
         await notificationService.scheduleCheckinReminders(

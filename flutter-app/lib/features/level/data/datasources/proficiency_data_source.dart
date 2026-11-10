@@ -49,21 +49,6 @@ class ProficiencyDataSource {
     return ExerciseRecordResult.fromJson(response);
   }
 
-  /// Check detailed requirements for next level
-  Future<Map<String, dynamic>> checkLevelRequirements() async {
-    return await _apiClient.get('/proficiency/level-check');
-  }
-
-  /// Get all level thresholds
-  Future<Map<String, dynamic>> getLevelThresholds() async {
-    final cached = await _cache.getOrFetch(
-      key: 'proficiency:thresholds:v1',
-      type: 'dictionary',
-      fetchFn: () => _apiClient.get('/proficiency/level-thresholds'),
-    );
-    return cached ?? await _apiClient.get('/proficiency/level-thresholds');
-  }
-
   /// Get level change history
   Future<Map<String, dynamic>> getLevelHistory({int limit = 10}) async {
     return await _apiClient.get('/proficiency/history?limit=$limit');

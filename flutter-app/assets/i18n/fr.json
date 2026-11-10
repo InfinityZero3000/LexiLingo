@@ -674,6 +674,12 @@
     "averageScore": "Note moyenne",
     "noScoreYet": "Pas encore de score",
     "yourProficiency": "Votre compétence",
+    "levelJourney": "Parcours de niveau",
+    "levelJourneyEmpty": "Aucun changement de niveau pour l'instant. Continuez à vous entraîner pour progresser.",
+    "levelStart": "Départ au niveau {level}",
+    "levelPromoted": "Progression depuis {from}",
+    "levelDemoted": "Recul depuis {from}",
+    "levelJourneyFailed": "Impossible de charger l'historique de niveau.",
     "proficiencyUnlockHint": "Vos scores s'afficheront après les premières leçons. Commencez à apprendre maintenant !",
     "proficiencyUnlockThreshold": "Vos scores se débloquent après environ les leçons {count}",
     "startLessons": "Commencer les leçons",
@@ -1872,6 +1878,7 @@
     "correctAnswer": "Correct answer",
     "explanation": "Explanation",
     "markReviewed": "Mark reviewed",
+    "reopen": "Rouvrir",
     "delete": "Delete",
     "deleteTitle": "Delete mistake?",
     "deleteMessage": "This removes the item from your notebook."
@@ -1930,5 +1937,19 @@
       "news": "Actualités",
       "book": "Livres"
     }
+  },
+  "ielts": {
+    "previewTitle": "Contenu de ce test",
+    "previewFailed": "Impossible de charger le contenu du test.",
+    "previewStart": "Commencer le test",
+    "previewContinue": "Reprendre",
+    "previewInProgress": "Vous avez une session non terminée pour ce test. Continuer la reprend.",
+    "previewParts": "{count} parties",
+    "previewQuestions": "{count} questions",
+    "previewMinutes": "{count} min",
+    "skillListening": "Compréhension orale",
+    "skillReading": "Compréhension écrite",
+    "skillWriting": "Expression écrite",
+    "skillSpeaking": "Expression orale"
   }
 }

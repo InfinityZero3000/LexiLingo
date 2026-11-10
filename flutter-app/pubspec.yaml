@@ -128,6 +128,7 @@ dependencies:
   flutter_facebook_auth_web: ^6.1.2
   encrypt: ^5.0.3
   phosphor_flutter: ^2.1.0
+  flutter_timezone: ^5.1.1
 
 # Override to fix record_linux 0.7.2 missing startStream implementation
 # record 5.x caps record_linux at <1.0.0 but record_platform_interface

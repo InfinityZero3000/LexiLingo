@@ -521,11 +521,37 @@ class DailyChallengesSheet extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const AppGameIcon(
-                    GameIcon.checkmark,
-                    size: 32,
-                    fallbackColor: AppColors.greenSuccessBright,
-                  ),
+                  if (provider.bonusClaimed)
+                    const AppGameIcon(
+                      GameIcon.checkmark,
+                      size: 32,
+                      fallbackColor: AppColors.greenSuccessBright,
+                    )
+                  else
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(
+                        minHeight: 44,
+                        minWidth: 44,
+                      ),
+                      child: ElevatedButton(
+                        onPressed: provider.isLoading
+                            ? null
+                            : () => _claimBonus(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.greenSuccessBright,
+                          foregroundColor: AppColors.surfaceLight,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          textStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text('home.claimReward'.tr()),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -535,6 +561,23 @@ class DailyChallengesSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _claimBonus(BuildContext context) async {
+    final bonusXp = provider.bonusXp;
+    final success = await provider.claimBonus();
+    if (success && context.mounted) {
+      final levelProvider = context.read<LevelProvider>();
+      levelProvider.updateLevel(levelProvider.totalXp + bonusXp);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('home.rewardClaimed'.tr()),
+          backgroundColor: AppColors.greenSuccessBright,
+        ),
+      );
+      levelProvider.fetchLevelFull();
+    }
   }
 
   void _claimReward(BuildContext context, String challengeId) async {

@@ -674,6 +674,12 @@
     "averageScore": "Average score",
     "noScoreYet": "No score yet",
     "yourProficiency": "Your Proficiency",
+    "levelJourney": "Level journey",
+    "levelJourneyEmpty": "No level changes yet. Keep practising to move up.",
+    "levelStart": "Started at {level}",
+    "levelPromoted": "Moved up from {from}",
+    "levelDemoted": "Moved down from {from}",
+    "levelJourneyFailed": "Could not load your level history.",
     "proficiencyUnlockHint": "Your scores will show after you do first few lessons. Start learning now!",
     "proficiencyUnlockThreshold": "Your scores unlock after around {count} lessons",
     "startLessons": "Start Lessons",
@@ -1126,6 +1132,7 @@
     "correctAnswer": "Correct answer",
     "explanation": "Explanation",
     "markReviewed": "Mark reviewed",
+    "reopen": "Reopen",
     "delete": "Delete",
     "deleteTitle": "Delete mistake?",
     "deleteMessage": "This removes the item from your notebook."
@@ -1930,5 +1937,19 @@
       "news": "News",
       "book": "Books"
     }
+  },
+  "ielts": {
+    "previewTitle": "What's in this test",
+    "previewFailed": "Could not load the test contents.",
+    "previewStart": "Start test",
+    "previewContinue": "Continue sitting",
+    "previewInProgress": "You have an unfinished sitting of this test. Continuing resumes it.",
+    "previewParts": "{count} parts",
+    "previewQuestions": "{count} questions",
+    "previewMinutes": "{count} min",
+    "skillListening": "Listening",
+    "skillReading": "Reading",
+    "skillWriting": "Writing",
+    "skillSpeaking": "Speaking"
   }
 }

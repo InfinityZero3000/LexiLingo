@@ -13,6 +13,10 @@ class SettingsProvider extends ChangeNotifier {
   final NotificationService _notificationService;
   final ThemePreferenceStore _themePreferenceStore;
   final ApiClient _apiClient;
+  // Pushes from the server already carry the due count, so the local daily
+  // reminder is only a fallback for devices that cannot receive them.
+  final bool Function()? _hasServerPush;
+  final Future<String?> Function()? _deviceTimezone;
 
   Settings? _settings;
   String? _activeUserId;
@@ -28,10 +32,14 @@ class SettingsProvider extends ChangeNotifier {
     required NotificationService notificationService,
     required ThemePreferenceStore themePreferenceStore,
     required ApiClient apiClient,
+    bool Function()? hasServerPush,
+    Future<String?> Function()? deviceTimezone,
   }) : _repository = repository,
        _notificationService = notificationService,
        _themePreferenceStore = themePreferenceStore,
-       _apiClient = apiClient {
+       _apiClient = apiClient,
+       _hasServerPush = hasServerPush,
+       _deviceTimezone = deviceTimezone {
     _theme = _themePreferenceStore.readTheme();
   }
 
@@ -192,6 +200,7 @@ class SettingsProvider extends ChangeNotifier {
       // Sync reminder asynchronously — must not block isLoading flag.
       if (_settings != null && _error == null) {
         _syncReminderWithSettings(_settings!).catchError((_) {});
+        _syncDeviceTimezone().catchError((_) {});
       }
     }
   }
@@ -385,7 +394,7 @@ class SettingsProvider extends ChangeNotifier {
         },
         (_) async {
           _error = null;
-          await _syncReminderWithSettings(_settings!);
+          await _syncReminderWithSettings(_settings!, askPermission: true);
         },
       );
     } catch (e) {
@@ -426,7 +435,7 @@ class SettingsProvider extends ChangeNotifier {
         },
         (_) async {
           _error = null;
-          await _syncReminderWithSettings(_settings!);
+          await _syncReminderWithSettings(_settings!, askPermission: true);
         },
       );
     } catch (e) {
@@ -436,13 +445,22 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _syncReminderWithSettings(Settings settings) async {
+  Future<void> _syncReminderWithSettings(
+    Settings settings, {
+    bool askPermission = false,
+  }) async {
     await _notificationService.ensureInitialized();
-    final permissionGranted = await _notificationService.requestPermissions();
 
-    if (!permissionGranted ||
-        !settings.notificationEnabled ||
-        !settings.pushReminderEnabled) {
+    if (!settings.notificationEnabled ||
+        !settings.pushReminderEnabled ||
+        (_hasServerPush?.call() ?? false)) {
+      await _notificationService.cancelDailyReminder();
+      return;
+    }
+
+    // Only prompt in response to the user switching reminders on, never as a
+    // side effect of opening the app.
+    if (askPermission && !await _notificationService.requestPermissions()) {
       await _notificationService.cancelDailyReminder();
       return;
     }
@@ -459,6 +477,28 @@ class SettingsProvider extends ChangeNotifier {
     await _notificationService.scheduleDailyReminder(
       TimeOfDay(hour: hour, minute: minute),
     );
+  }
+
+  /// Reminders fire at the learner's local time, so keep the stored zone in
+  /// step with the device's (the settings screen has no zone picker).
+  Future<void> _syncDeviceTimezone() async {
+    final current = _settings;
+    final zone = await _deviceTimezone?.call();
+    if (current == null ||
+        zone == null ||
+        zone.isEmpty ||
+        zone == current.reminderTimezone) {
+      return;
+    }
+
+    _settings = current.copyWith(reminderTimezone: zone);
+    final result = await _repository.updateSettings(_settings!);
+    result.fold((_) {
+      _settings = _settings?.copyWith(
+        reminderTimezone: current.reminderTimezone,
+      );
+    }, (_) {});
+    notifyListeners();
   }
 
   /// Update sound setting

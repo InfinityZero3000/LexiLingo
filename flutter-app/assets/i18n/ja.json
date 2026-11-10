@@ -674,6 +674,12 @@
     "averageScore": "平均点",
     "noScoreYet": "まだスコアがありません",
     "yourProficiency": "あなたの熟練度",
+    "levelJourney": "レベルの歩み",
+    "levelJourneyEmpty": "まだレベルの変化はありません。練習を続けてレベルアップしましょう。",
+    "levelStart": "{level} からスタート",
+    "levelPromoted": "{from} からレベルアップ",
+    "levelDemoted": "{from} からレベルダウン",
+    "levelJourneyFailed": "レベル履歴を読み込めませんでした。",
     "proficiencyUnlockHint": "最初の数レッスンを終えるとスコアが表示されます。今すぐ学習を始めましょう！",
     "proficiencyUnlockThreshold": "約 {count} レッスン後にスコアがロック解除されます",
     "startLessons": "レッスンを開始する",
@@ -1872,6 +1878,7 @@
     "correctAnswer": "Correct answer",
     "explanation": "Explanation",
     "markReviewed": "Mark reviewed",
+    "reopen": "再び開く",
     "delete": "Delete",
     "deleteTitle": "Delete mistake?",
     "deleteMessage": "This removes the item from your notebook."
@@ -1930,5 +1937,19 @@
       "news": "ニュース",
       "book": "本"
     }
+  },
+  "ielts": {
+    "previewTitle": "このテストの内容",
+    "previewFailed": "テストの内容を読み込めませんでした。",
+    "previewStart": "テストを開始",
+    "previewContinue": "途中から再開",
+    "previewInProgress": "このテストには途中のセッションがあります。続けると再開します。",
+    "previewParts": "{count} パート",
+    "previewQuestions": "{count} 問",
+    "previewMinutes": "{count} 分",
+    "skillListening": "リスニング",
+    "skillReading": "リーディング",
+    "skillWriting": "ライティング",
+    "skillSpeaking": "スピーキング"
   }
 }

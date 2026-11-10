@@ -674,6 +674,12 @@
     "averageScore": "Puntuación media",
     "noScoreYet": "Aún no hay puntuación",
     "yourProficiency": "Tu competencia",
+    "levelJourney": "Recorrido de nivel",
+    "levelJourneyEmpty": "Aún no hay cambios de nivel. Sigue practicando para subir.",
+    "levelStart": "Empezaste en {level}",
+    "levelPromoted": "Subiste desde {from}",
+    "levelDemoted": "Bajaste desde {from}",
+    "levelJourneyFailed": "No se pudo cargar tu historial de nivel.",
     "proficiencyUnlockHint": "Tus puntuaciones se mostrarán después de realizar las primeras lecciones. ¡Empiece a aprender ahora!",
     "proficiencyUnlockThreshold": "Tus puntuaciones se desbloquean después de aproximadamente lecciones {count}",
     "startLessons": "Iniciar lecciones",
@@ -1872,6 +1878,7 @@
     "correctAnswer": "Correct answer",
     "explanation": "Explanation",
     "markReviewed": "Mark reviewed",
+    "reopen": "Reabrir",
     "delete": "Delete",
     "deleteTitle": "Delete mistake?",
     "deleteMessage": "This removes the item from your notebook."
@@ -1930,5 +1937,19 @@
       "news": "Noticias",
       "book": "Libros"
     }
+  },
+  "ielts": {
+    "previewTitle": "Qué incluye este test",
+    "previewFailed": "No se pudo cargar el contenido del test.",
+    "previewStart": "Empezar el test",
+    "previewContinue": "Continuar",
+    "previewInProgress": "Tienes una sesión sin terminar de este test. Continuar la reanuda.",
+    "previewParts": "{count} partes",
+    "previewQuestions": "{count} preguntas",
+    "previewMinutes": "{count} min",
+    "skillListening": "Comprensión auditiva",
+    "skillReading": "Comprensión lectora",
+    "skillWriting": "Expresión escrita",
+    "skillSpeaking": "Expresión oral"
   }
 }

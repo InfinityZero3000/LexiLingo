@@ -20,15 +20,6 @@ abstract class ProgressRepository {
     String courseId,
   );
 
-  /// Complete a lesson with score
-  Future<Either<Failure, LessonCompletionResult>> completeLesson({
-    required String lessonId,
-    required double score,
-  });
-
-  /// Get user's total XP
-  Future<Either<Failure, int>> getTotalXp();
-
   // ============================================================================
   // Weekly Progress Operations (Task 1.3)
   // ============================================================================
@@ -70,8 +61,9 @@ abstract class ProgressRepository {
     String challengeId,
   );
 
+  /// Claim the bonus for completing every daily challenge
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyBonus();
+
   /// Credited activity on the library, podcast, video and news surfaces.
-  Future<Either<Failure, ContentActivityEntity>> getContentActivity({
-    int days,
-  });
+  Future<Either<Failure, ContentActivityEntity>> getContentActivity({int days});
 }

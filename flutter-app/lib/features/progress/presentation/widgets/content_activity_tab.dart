@@ -111,7 +111,9 @@ class _SourceRow extends StatelessWidget {
     // A source that reports time shows minutes; one credited per activity shows
     // how many it credited. Never minutes for the latter — it is always 0.
     final headline = source.tracksMinutes
-        ? 'contentActivity.minutes'.tr(namedArgs: {'value': '${source.minutes}'})
+        ? 'contentActivity.minutes'.tr(
+            namedArgs: {'value': '${source.minutes}'},
+          )
         : 'contentActivity.sessions'.tr(
             namedArgs: {'value': '${source.sessions}'},
           );
@@ -142,14 +144,12 @@ class _SourceRow extends StatelessWidget {
               children: [
                 Text(
                   'contentActivity.source.${source.source}'.tr(),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  source.hasActivity
-                      ? headline
-                      : 'contentActivity.notYet'.tr(),
+                  source.hasActivity ? headline : 'contentActivity.notYet'.tr(),
                   style: TextStyle(fontSize: 12, color: muted),
                 ),
               ],
@@ -201,10 +201,7 @@ class _CenteredNote extends StatelessWidget {
             ),
           ),
           if (onRetry != null)
-            TextButton(
-              onPressed: onRetry,
-              child: Text('common.retry'.tr()),
-            ),
+            TextButton(onPressed: onRetry, child: Text('common.retry'.tr())),
         ],
       ),
     );

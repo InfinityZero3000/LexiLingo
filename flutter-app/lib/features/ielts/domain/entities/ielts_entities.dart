@@ -118,7 +118,9 @@ class IeltsQuestionGroup {
       questions: raw is List
           ? raw
                 .whereType<Map>()
-                .map((q) => IeltsQuestion.fromJson(Map<String, dynamic>.from(q)))
+                .map(
+                  (q) => IeltsQuestion.fromJson(Map<String, dynamic>.from(q)),
+                )
                 .where((q) => q.key.isNotEmpty)
                 .toList()
           : const [],
@@ -181,7 +183,10 @@ class IeltsPart {
       groups: raw is List
           ? raw
                 .whereType<Map>()
-                .map((g) => IeltsQuestionGroup.fromJson(Map<String, dynamic>.from(g)))
+                .map(
+                  (g) =>
+                      IeltsQuestionGroup.fromJson(Map<String, dynamic>.from(g)),
+                )
                 .toList()
           : const [],
     );
@@ -272,7 +277,9 @@ class IeltsAttemptState {
           ? Map<String, dynamic>.from(rawAnswers)
           : const {},
       paper: IeltsPaper.fromJson(
-        json['content'] is Map ? Map<String, dynamic>.from(json['content']) : null,
+        json['content'] is Map
+            ? Map<String, dynamic>.from(json['content'])
+            : null,
       ),
     );
   }

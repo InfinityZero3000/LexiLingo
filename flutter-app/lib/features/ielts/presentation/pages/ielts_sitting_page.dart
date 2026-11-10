@@ -116,7 +116,9 @@ class _SittingViewState extends State<_SittingView> {
                 if (index < sections.length - 1)
                   FilledButton.tonal(
                     onPressed: () => setState(() => _sectionIndex = index + 1),
-                    child: Text('Next: ${ieltsSkillLabel(sections[index + 1].skill)}'),
+                    child: Text(
+                      'Next: ${ieltsSkillLabel(sections[index + 1].skill)}',
+                    ),
                   )
                 else
                   _SubmitButton(onSubmit: () => _submit(context, provider)),
@@ -215,8 +217,9 @@ class _SubmitButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final submitting =
-        context.select<IeltsProvider, bool>((p) => p.isSubmitting);
+    final submitting = context.select<IeltsProvider, bool>(
+      (p) => p.isSubmitting,
+    );
     return FilledButton(
       onPressed: submitting ? null : onSubmit,
       child: submitting
@@ -272,7 +275,10 @@ class _ListeningSection extends StatelessWidget {
             _AudioPlayerBar(url: part.audioUrl!),
           if (part.instructions != null) ...[
             const SizedBox(height: 8),
-            Text(part.instructions!, style: Theme.of(context).textTheme.bodySmall),
+            Text(
+              part.instructions!,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
           const SizedBox(height: 12),
           ...part.groups.map((group) => _QuestionGroup(group: group)),
@@ -326,10 +332,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
     if (_error != null) {
       return Card(
         color: theme.colorScheme.errorContainer,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(_error!),
-        ),
+        child: Padding(padding: const EdgeInsets.all(12), child: Text(_error!)),
       );
     }
 
@@ -450,7 +453,8 @@ class _QuestionGroup extends StatelessWidget {
             ),
           ),
         ...group.questions.map(
-          (question) => _QuestionTile(question: question, type: group.questionType),
+          (question) =>
+              _QuestionTile(question: question, type: group.questionType),
         ),
       ],
     );
@@ -540,10 +544,7 @@ class _WritingSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: [
-        for (final part in section.parts)
-          _WritingTask(part: part),
-      ],
+      children: [for (final part in section.parts) _WritingTask(part: part)],
     );
   }
 }
@@ -557,10 +558,8 @@ class _WritingTask extends StatelessWidget {
     final theme = Theme.of(context);
     final provider = context.read<IeltsProvider>();
     final key = part.partKey ?? 'writing_task_${part.order}';
-    final text = context.select<IeltsProvider, String?>(
-          (p) => p.answerFor(key),
-        ) ??
-        '';
+    final text =
+        context.select<IeltsProvider, String?>((p) => p.answerFor(key)) ?? '';
     final words = text.trim().isEmpty
         ? 0
         : text.trim().split(RegExp(r'\s+')).length;
@@ -634,9 +633,7 @@ class _SpeakingSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: [
-        for (final part in section.parts) _SpeakingPart(part: part),
-      ],
+      children: [for (final part in section.parts) _SpeakingPart(part: part)],
     );
   }
 }
@@ -656,7 +653,8 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   bool _transcribing = false;
   String? _error;
 
-  String get _key => widget.part.partKey ?? 'speaking_part_${widget.part.order}';
+  String get _key =>
+      widget.part.partKey ?? 'speaking_part_${widget.part.order}';
 
   @override
   void initState() {
@@ -690,7 +688,8 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           filename: 'speaking.m4a',
         );
         if (!mounted) return;
-        final transcript = (response['text'] ?? response['transcript'])?.toString();
+        final transcript = (response['text'] ?? response['transcript'])
+            ?.toString();
         if (transcript != null && transcript.trim().isNotEmpty) {
           // The transcript is what gets graded, so it stays editable — Whisper
           // mishearing a word must not cost the learner a band.
@@ -700,7 +699,8 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           setState(() => _error = 'Nothing was transcribed. Try again.');
         }
       } catch (e) {
-        if (mounted) setState(() => _error = 'Could not transcribe the recording.');
+        if (mounted)
+          setState(() => _error = 'Could not transcribe the recording.');
       } finally {
         if (mounted) setState(() => _transcribing = false);
       }
@@ -708,7 +708,8 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     }
 
     if (!await _recorder.hasPermission()) {
-      if (mounted) setState(() => _error = 'Microphone permission is required.');
+      if (mounted)
+        setState(() => _error = 'Microphone permission is required.');
       return;
     }
     final dir = await getTemporaryDirectory();

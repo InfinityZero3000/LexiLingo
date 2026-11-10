@@ -674,6 +674,12 @@
     "averageScore": "평균 점수",
     "noScoreYet": "아직 점수가 없습니다",
     "yourProficiency": "당신의 능력",
+    "levelJourney": "레벨 여정",
+    "levelJourneyEmpty": "아직 레벨 변화가 없습니다. 계속 연습해서 올라가 보세요.",
+    "levelStart": "{level}에서 시작",
+    "levelPromoted": "{from}에서 올라감",
+    "levelDemoted": "{from}에서 내려감",
+    "levelJourneyFailed": "레벨 기록을 불러오지 못했습니다.",
     "proficiencyUnlockHint": "처음 몇 번의 수업을 마친 후에 점수가 표시됩니다. 지금 학습을 시작하세요!",
     "proficiencyUnlockThreshold": "약 {count} 수업 후에 점수가 잠금 해제됩니다.",
     "startLessons": "수업 시작",
@@ -1872,6 +1878,7 @@
     "correctAnswer": "Correct answer",
     "explanation": "Explanation",
     "markReviewed": "Mark reviewed",
+    "reopen": "다시 열기",
     "delete": "Delete",
     "deleteTitle": "Delete mistake?",
     "deleteMessage": "This removes the item from your notebook."
@@ -1930,5 +1937,19 @@
       "news": "뉴스",
       "book": "도서"
     }
+  },
+  "ielts": {
+    "previewTitle": "이 시험의 구성",
+    "previewFailed": "시험 내용을 불러오지 못했습니다.",
+    "previewStart": "시험 시작",
+    "previewContinue": "이어서 풀기",
+    "previewInProgress": "이 시험에 진행 중인 응시가 있습니다. 계속하면 이어서 진행됩니다.",
+    "previewParts": "{count}개 파트",
+    "previewQuestions": "{count}문항",
+    "previewMinutes": "{count}분",
+    "skillListening": "듣기",
+    "skillReading": "읽기",
+    "skillWriting": "쓰기",
+    "skillSpeaking": "말하기"
   }
 }

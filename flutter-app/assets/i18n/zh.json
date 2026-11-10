@@ -674,6 +674,12 @@
     "averageScore": "平均分",
     "noScoreYet": "还没有分数",
     "yourProficiency": "你的熟练程度",
+    "levelJourney": "等级历程",
+    "levelJourneyEmpty": "还没有等级变化。继续练习即可升级。",
+    "levelStart": "从 {level} 开始",
+    "levelPromoted": "从 {from} 升级",
+    "levelDemoted": "从 {from} 降级",
+    "levelJourneyFailed": "无法加载等级历史。",
     "proficiencyUnlockHint": "您的分数将在您完成前几节课程后显示。现在就开始学习吧！",
     "proficiencyUnlockThreshold": "您的分数在大约 {count} 课程后解锁",
     "startLessons": "开始上课",
@@ -1872,6 +1878,7 @@
     "correctAnswer": "Correct answer",
     "explanation": "Explanation",
     "markReviewed": "Mark reviewed",
+    "reopen": "重新打开",
     "delete": "Delete",
     "deleteTitle": "Delete mistake?",
     "deleteMessage": "This removes the item from your notebook."
@@ -1930,5 +1937,19 @@
       "news": "新闻",
       "book": "书籍"
     }
+  },
+  "ielts": {
+    "previewTitle": "本套试题的内容",
+    "previewFailed": "无法加载试题内容。",
+    "previewStart": "开始测试",
+    "previewContinue": "继续作答",
+    "previewInProgress": "此试题有未完成的作答，继续将恢复该次作答。",
+    "previewParts": "{count} 个部分",
+    "previewQuestions": "{count} 题",
+    "previewMinutes": "{count} 分钟",
+    "skillListening": "听力",
+    "skillReading": "阅读",
+    "skillWriting": "写作",
+    "skillSpeaking": "口语"
   }
 }

@@ -60,6 +60,21 @@ void main() {
       expect(entries.map((entry) => entry.id), ['b']);
     });
 
+    test(
+      'reopening a reviewed entry puts it back in the to-review list',
+      () async {
+        final repository = MistakeNotebookRepository();
+        await repository.saveMistake(_entry(id: 'r'));
+        await repository.markReviewed('r');
+
+        await repository.reopen('r');
+
+        final entry = (await repository.getEntries()).single;
+        expect(entry.isReviewed, isFalse);
+        expect(entry.reviewCount, 1);
+      },
+    );
+
     test('buildId is stable for identical quiz context', () {
       final first = MistakeNotebookEntry.buildId(
         sourceType: 'book_quiz',
@@ -142,6 +157,17 @@ void main() {
       expect(remote.saved.map((entry) => entry.id), ['delete-pending']);
     });
 
+    test('syncs a reopen to the remote datasource', () async {
+      final remote = _FakeMistakeRemoteDataSource();
+      final repository = MistakeNotebookRepository(remoteDataSource: remote);
+
+      await repository.saveMistake(_entry(id: 'reopen-me'));
+      await repository.markReviewed('reopen-me');
+      await repository.reopen('reopen-me');
+
+      expect(remote.reopenedIds, ['reopen-me']);
+    });
+
     test('syncs review and delete operations to remote datasource', () async {
       final remote = _FakeMistakeRemoteDataSource();
       final repository = MistakeNotebookRepository(remoteDataSource: remote);
@@ -194,6 +220,7 @@ MistakeNotebookEntry _entry({required String id, DateTime? createdAt}) {
 class _FakeMistakeRemoteDataSource implements MistakeNotebookRemoteDataSource {
   final saved = <MistakeNotebookEntry>[];
   final reviewedIds = <String>[];
+  final reopenedIds = <String>[];
   final deletedIds = <String>[];
   bool shouldFail;
   bool failDeletes = false;
@@ -226,6 +253,7 @@ class _FakeMistakeRemoteDataSource implements MistakeNotebookRemoteDataSource {
   @override
   Future<MistakeNotebookEntry> reopen(String id) async {
     if (shouldFail) throw Exception('offline');
+    reopenedIds.add(id);
     return saved.firstWhere((entry) => entry.id == id);
   }
 

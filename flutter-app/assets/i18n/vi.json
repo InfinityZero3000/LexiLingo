@@ -674,6 +674,12 @@
     "averageScore": "Điểm trung bình",
     "noScoreYet": "Chưa có điểm",
     "yourProficiency": "Trình độ của bạn",
+    "levelJourney": "Hành trình trình độ",
+    "levelJourneyEmpty": "Chưa có thay đổi trình độ nào. Hãy tiếp tục luyện tập để lên cấp.",
+    "levelStart": "Bắt đầu ở {level}",
+    "levelPromoted": "Lên cấp từ {from}",
+    "levelDemoted": "Hạ cấp từ {from}",
+    "levelJourneyFailed": "Không tải được lịch sử trình độ.",
     "proficiencyUnlockHint": "Điểm của bạn sẽ hiển thị sau khi hoàn thành vài bài học. Bắt đầu học ngay!",
     "proficiencyUnlockThreshold": "Điểm của bạn sẽ được mở khóa sau khoảng {count} bài học",
     "startLessons": "Bắt đầu học",
@@ -1126,6 +1132,7 @@
     "correctAnswer": "Đáp án đúng",
     "explanation": "Giải thích",
     "markReviewed": "Đánh dấu đã ôn",
+    "reopen": "Mở lại",
     "delete": "Xóa",
     "deleteTitle": "Xóa lỗi sai?",
     "deleteMessage": "Mục này sẽ bị xóa khỏi sổ lỗi sai."
@@ -1930,5 +1937,19 @@
       "news": "Tin tức",
       "book": "Sách"
     }
+  },
+  "ielts": {
+    "previewTitle": "Bài thi gồm những gì",
+    "previewFailed": "Không tải được nội dung bài thi.",
+    "previewStart": "Bắt đầu làm bài",
+    "previewContinue": "Làm tiếp bài đang dở",
+    "previewInProgress": "Bạn đang có một lượt làm dở của đề này. Tiếp tục sẽ mở lại lượt đó.",
+    "previewParts": "{count} phần",
+    "previewQuestions": "{count} câu hỏi",
+    "previewMinutes": "{count} phút",
+    "skillListening": "Nghe",
+    "skillReading": "Đọc",
+    "skillWriting": "Viết",
+    "skillSpeaking": "Nói"
   }
 }

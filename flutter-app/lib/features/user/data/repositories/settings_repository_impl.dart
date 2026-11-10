@@ -69,14 +69,20 @@ class SettingsRepositoryImpl implements SettingsRepository {
   Future<Either<Failure, void>> updateSettings(Settings settings) async {
     try {
       final settingsModel = SettingsModel.fromEntity(settings);
-      await localDataSource.updateSettings(settingsModel);
-      if (remoteDataSource != null) {
+      final remote = remoteDataSource;
+      if (remote != null) {
+        final previous = await localDataSource.getSettings(settings.userId);
+        final remindersChanged =
+            previous != null && _reminderFieldsDiffer(previous, settings);
         try {
-          await remoteDataSource!.updateReminderPreferences(settings);
-        } catch (_) {
-          // Keep offline/local-first settings behavior.
+          await remote.updateReminderPreferences(settings);
+        } catch (e) {
+          // A reminder change the server never heard about would look saved
+          // while nothing fires, so fail it. Other settings stay local-first.
+          if (remindersChanged) return Left(ServerFailure(e.toString()));
         }
       }
+      await localDataSource.updateSettings(settingsModel);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(e.toString()));
@@ -105,4 +111,13 @@ class SettingsRepositoryImpl implements SettingsRepository {
       return Left(CacheFailure(e.toString()));
     }
   }
+
+  bool _reminderFieldsDiffer(Settings a, Settings b) =>
+      a.notificationEnabled != b.notificationEnabled ||
+      a.notificationTime != b.notificationTime ||
+      a.pushReminderEnabled != b.pushReminderEnabled ||
+      a.emailReminderEnabled != b.emailReminderEnabled ||
+      a.emailCadenceDays != b.emailCadenceDays ||
+      a.reminderMinDueCount != b.reminderMinDueCount ||
+      a.reminderTimezone != b.reminderTimezone;
 }

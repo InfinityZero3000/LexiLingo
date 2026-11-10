@@ -1,6 +1,8 @@
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/progress_firestore_data_source.dart';
 import 'package:lexilingo_app/core/services/progress_sync_service.dart';
@@ -152,6 +154,8 @@ void registerUserModule({required bool skipDatabase}) {
       notificationService: sl(),
       themePreferenceStore: sl<ThemePreferenceStore>(),
       apiClient: sl<ApiClient>(),
+      hasServerPush: () => FirebaseMessagingService.instance.token != null,
+      deviceTimezone: _readDeviceTimezone,
     ),
   );
 
@@ -166,5 +170,13 @@ void registerUserModule({required bool skipDatabase}) {
         firestoreService: sl(),
       ),
     );
+  }
+}
+
+Future<String?> _readDeviceTimezone() async {
+  try {
+    return (await FlutterTimezone.getLocalTimezone()).identifier;
+  } catch (_) {
+    return null;
   }
 }

@@ -22,6 +22,16 @@ class IeltsDataSource {
         .toList();
   }
 
+  /// The paper without starting a sitting, so a learner can see what the test
+  /// holds first. The server strips answer keys and refuses unpublished tests.
+  Future<IeltsPaper> getTestPaper(String testId) async {
+    final response = await _apiClient.get('/ielts/tests/$testId');
+    final content = response['content'];
+    return IeltsPaper.fromJson(
+      content is Map ? Map<String, dynamic>.from(content) : null,
+    );
+  }
+
   Future<IeltsAttemptState> startAttempt(
     String testId, {
     String skillScope = 'full',

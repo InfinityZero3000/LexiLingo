@@ -53,44 +53,6 @@ class ProgressRepositoryImpl implements ProgressRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, LessonCompletionResult>> completeLesson({
-    required String lessonId,
-    required double score,
-  }) async {
-    try {
-      final result = await remoteDataSource.completeLesson(
-        lessonId: lessonId,
-        score: score,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    } on UnauthorizedException catch (e) {
-      return Left(UnauthorizedFailure(e.message));
-    } catch (e) {
-      return Left(mapFailure(e));
-    }
-  }
-
-  @override
-  Future<Either<Failure, int>> getTotalXp() async {
-    try {
-      final result = await remoteDataSource.getTotalXp();
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(e.message));
-    } on UnauthorizedException catch (e) {
-      return Left(UnauthorizedFailure(e.message));
-    } catch (e) {
-      return Left(mapFailure(e));
-    }
-  }
-
   // ============================================================================
   // Weekly Progress Operations (Task 1.3)
   // ============================================================================
@@ -222,6 +184,21 @@ class ProgressRepositoryImpl implements ProgressRepository {
     try {
       final result = await remoteDataSource.claimChallengeReward(challengeId);
       return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
+    } on NetworkException catch (e) {
+      return Left(NetworkFailure(e.message));
+    } on UnauthorizedException catch (e) {
+      return Left(UnauthorizedFailure(e.message));
+    } catch (e) {
+      return Left(mapFailure(e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> claimDailyBonus() async {
+    try {
+      return Right(await remoteDataSource.claimDailyBonus());
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on NetworkException catch (e) {

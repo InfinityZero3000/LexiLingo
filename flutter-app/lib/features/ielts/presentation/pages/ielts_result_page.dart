@@ -174,7 +174,9 @@ class _GradingCard extends StatelessWidget {
 
   String get _label {
     final parts = grading.partKey.split('_');
-    return parts.map((p) => p.isEmpty ? p : p[0].toUpperCase() + p.substring(1)).join(' ');
+    return parts
+        .map((p) => p.isEmpty ? p : p[0].toUpperCase() + p.substring(1))
+        .join(' ');
   }
 
   @override
@@ -203,7 +205,9 @@ class _GradingCard extends StatelessWidget {
         child: ListTile(
           leading: const Icon(Icons.error_outline),
           title: Text(_label),
-          subtitle: const Text('Grading failed — your answer is saved and can be re-graded.'),
+          subtitle: const Text(
+            'Grading failed — your answer is saved and can be re-graded.',
+          ),
         ),
       );
     }
@@ -234,7 +238,9 @@ class _GradingCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Expanded(child: Text(label, style: theme.textTheme.bodySmall)),
+                  Expanded(
+                    child: Text(label, style: theme.textTheme.bodySmall),
+                  ),
                   SizedBox(
                     width: 120,
                     child: LinearProgressIndicator(

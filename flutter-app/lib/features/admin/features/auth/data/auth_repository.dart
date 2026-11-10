@@ -14,12 +14,6 @@ class AdminUser {
   final bool isAdmin;
   final bool hasUserAccount;
 
-  // Accounts that also have a learner profile in the user app.
-  static const _userZoneWhitelist = [
-    'nhthang312@gmail.com',
-    'thefirestar312@gmail.com',
-  ];
-
   const AdminUser({
     required this.id,
     required this.email,
@@ -32,8 +26,9 @@ class AdminUser {
     required this.hasUserAccount,
   });
 
-  bool get hasUserZoneAccess =>
-      _userZoneWhitelist.contains(email.toLowerCase());
+  /// The panel is opened from inside the learner app, so every admin signed in
+  /// here has a learner account to go back to.
+  bool get hasUserZoneAccess => hasUserAccount;
 
   factory AdminUser.fromJson(Map<String, dynamic> json) {
     final roleSlug = (json['role_slug'] ?? json['role'] ?? 'admin').toString();
@@ -101,7 +96,8 @@ class AuthRepository {
       data: {'id_token': idToken, 'source': 'admin'},
     );
     final data = _unwrapData(resp);
-    final email = (data['user'] as Map?)?['email']?.toString() ??
+    final email =
+        (data['user'] as Map?)?['email']?.toString() ??
         data['email']?.toString() ??
         '';
     return _persistAdminSession(data, fallbackEmail: email);
