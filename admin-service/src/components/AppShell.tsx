@@ -12,6 +12,8 @@ export type NavItem = {
   description?: string;
   badge?: string;
   group?: string;
+  /** Hidden when the signed-in admin lacks it; the server enforces it either way. */
+  permission?: string;
 };
 
 export const AppShell = ({

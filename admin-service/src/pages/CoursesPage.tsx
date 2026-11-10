@@ -1,6 +1,7 @@
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
@@ -23,6 +24,7 @@ import {
 import { CourseImportModal } from "../components/CourseImportModal";
 import { useI18n } from "../lib/i18n";
 import { downloadCSV } from "../lib/csvExport";
+import { listCategories } from "../lib/categoriesApi";
 import {
   listContentAgentJobs,
   type ContentAgentJob,
@@ -52,6 +54,8 @@ export const CoursesPage = () => {
   const [search, setSearch] = useState("");
   const [filterLevel, setFilterLevel] = useState("");
   const [filterPublished, setFilterPublished] = useState<string>("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const categories = useQuery({ queryKey: ["admin-categories"], queryFn: listCategories });
 
   // Create/Edit form state
   const [showForm, setShowForm] = useState(false);
@@ -65,11 +69,12 @@ export const CoursesPage = () => {
     skill: "",
     tags: "",
     thumbnail_url: "",
+    category_id: "",
     is_published: false,
   });
 
   const resetForm = () => {
-    setForm({ title: "", description: "", language: "en", level: "A1", skill: "", tags: "", thumbnail_url: "", is_published: false });
+    setForm({ title: "", description: "", language: "en", level: "A1", skill: "", tags: "", thumbnail_url: "", category_id: "", is_published: false });
     setEditingId(null);
   };
 
@@ -83,6 +88,7 @@ export const CoursesPage = () => {
         search: search || undefined,
         level: filterLevel || undefined,
         is_published: filterPublished === "" ? undefined : filterPublished === "true",
+        category_id: filterCategory || undefined,
       });
       const data = res.data;
       if (data) {
@@ -96,7 +102,7 @@ export const CoursesPage = () => {
     }
   };
 
-  useEffect(() => { void loadCourses(); }, [page, filterLevel, filterPublished]);
+  useEffect(() => { void loadCourses(); }, [page, filterLevel, filterPublished, filterCategory]);
 
   useEffect(() => {
     let disposed = false;
@@ -137,6 +143,7 @@ export const CoursesPage = () => {
       skill: course.skill || "",
       tags: (course.tags || []).join(", "),
       thumbnail_url: course.thumbnail_url || "",
+      category_id: course.category_id || "",
       is_published: course.is_published,
     });
     setShowForm(true);
@@ -152,6 +159,8 @@ export const CoursesPage = () => {
         // "" is the form's "no label yet" choice; the API accepts a real
         // skill name or null, and null keeps the tag-based fallback.
         skill: form.skill || null,
+        // "" is "uncategorised"; null (not undefined) tells the server to clear an existing link.
+        category_id: form.category_id || null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       if (editingId) {
@@ -228,6 +237,11 @@ export const CoursesPage = () => {
             <option value="">{t.courses.allStatus}</option>
             <option value="true">{t.common.published}</option>
             <option value="false">{t.common.draft}</option>
+          </select>
+          <select className="filter-select" aria-label={t.courses.category} value={filterCategory}
+            onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
+            <option value="">{t.courses.allCategories}</option>
+            {(categories.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <button
             className="ghost-button"
@@ -307,6 +321,11 @@ export const CoursesPage = () => {
                   sortValue: (row) => row.level,
                   render: (row) => <StatusPill tone="info" label={row.level} />,
                   align: "center",
+                },
+                {
+                  header: t.courses.category,
+                  sortValue: (row) => row.category_name ?? "",
+                  render: (row) => <span className="table-meta">{row.category_name || "—"}</span>,
                 },
                 {
                   header: t.courses.lessons,
@@ -394,6 +413,13 @@ export const CoursesPage = () => {
                 </select>
               </label>
             </div>
+            <label>
+              {t.courses.category}
+              <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+                <option value="">{t.courses.noCategory}</option>
+                {(categories.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}{c.is_active ? "" : ` (${t.categoriesPage.hidden})`}</option>)}
+              </select>
+            </label>
             <label>
               {t.courses.tags}
               <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />

@@ -1,3 +1,4 @@
+import { useI18n } from "../lib/i18n";
 import React, { useEffect, useState } from "react";
 import {
   BadgeCheck,
@@ -98,6 +99,7 @@ const splitTags = (value: string) =>
     .filter(Boolean);
 
 export const TopicsPage = () => {
+  const { t } = useI18n();
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -124,7 +126,7 @@ export const TopicsPage = () => {
       const res = await listTopicStoriesAdmin();
       setTopics(res.data?.topics || []);
     } catch (err: any) {
-      setError(err?.message || "Không tải được topic.");
+      setError(err?.message || t.adminPages.topicsLoadFailed);
     } finally {
       setLoading(false);
     }
@@ -192,7 +194,7 @@ export const TopicsPage = () => {
       setIsEditing(false);
       await loadTopics();
     } catch (err: any) {
-      setError(err?.message || "Không tạo được topic");
+      setError(err?.message || t.adminPages.topicSaveFailed);
     } finally {
       setSaving(false);
     }
@@ -220,7 +222,7 @@ export const TopicsPage = () => {
               setShowForm((value) => !value);
             }}
           >
-            {showForm && !isEditing ? "Ẩn form" : "Create Topic"}
+            {showForm && !isEditing ? t.adminPages.topicsHideForm : t.adminPages.topicsCreate}
           </button>
         </div>
       </div>
@@ -228,7 +230,7 @@ export const TopicsPage = () => {
       {showForm && (
         <form className="panel" onSubmit={handleSave} style={{ padding: 16 }}>
           <h4 style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 600 }}>
-            {isEditing ? `Sửa topic: ${form.title_en}` : "Tạo topic mới"}
+            {isEditing ? t.adminPages.topicsEditing.replace("{title}", form.title_en) : t.adminPages.topicsNew}
           </h4>
           <div className="form-grid">
             <label>
@@ -343,7 +345,7 @@ export const TopicsPage = () => {
               Cancel
             </button>
             <button className="primary-button" type="submit" disabled={saving}>
-              {saving ? "Saving..." : isEditing ? "Cập nhật Topic" : "Save Topic"}
+              {saving ? t.common.saving : isEditing ? t.adminPages.topicsUpdate : t.adminPages.topicsSave}
             </button>
           </div>
         </form>
@@ -392,7 +394,7 @@ export const TopicsPage = () => {
                     onClick={() => handleEdit(row)}
                     type="button"
                   >
-                    Sửa
+                    {t.adminPages.topicsEdit}
                   </button>
                 ),
                 align: "right",

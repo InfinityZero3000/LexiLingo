@@ -18,6 +18,11 @@ vi.mock("../../lib/userManagementApi", () => ({
   ...api,
   getRoleLabel: (level: number) => (level === 2 ? "Super Admin" : level === 1 ? "Admin" : "User"),
 }));
+vi.mock("../../lib/gemLimitsApi", () => ({
+  getGemLimits: vi.fn().mockResolvedValue({
+    usage: { role: "admin", max_per_action: 500, daily_budget: 2000, spent_today: 150, remaining_today: 1850, item_gift_max_qty: 100 },
+  }),
+}));
 vi.mock("../../lib/adminApi", () => ({
   listCoursesAdmin: vi.fn().mockResolvedValue({ data: { courses: [] } }),
   listShopItems: vi.fn().mockResolvedValue({ data: [] }),
@@ -117,6 +122,7 @@ describe("UserDetailModal", () => {
     await screen.findByText("Personal info");
     fireEvent.click(screen.getByRole("tab", { name: "Send gift" }));
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "course" } });
+    fireEvent.change(screen.getByLabelText("Reason for the gift"), { target: { value: "welcome back" } });
     const form = (await screen.findByText("Choose a course")).closest("form") as HTMLFormElement;
     fireEvent.submit(form);
     expect((await screen.findByRole("alert")).textContent).toBe("Please choose a course");
@@ -128,8 +134,21 @@ describe("UserDetailModal", () => {
     mount();
     await screen.findByText("Personal info");
     fireEvent.click(screen.getByRole("tab", { name: "Send gift" }));
+    expect(await screen.findByText("Up to 500 gems per gift · 1,850/2,000 gems left today")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Reason for the gift"), { target: { value: "support goodwill" } });
     fireEvent.click(await screen.findByRole("button", { name: "Send gift" }));
     expect((await screen.findByRole("status")).textContent).toBe("Gift sent: 100 Gems");
-    expect(api.giftToUser).toHaveBeenCalledWith("u1", { gift_type: "gems", amount: 100 });
+    expect(api.giftToUser).toHaveBeenCalledWith("u1", { gift_type: "gems", amount: 100, reason: "support goodwill" });
+  });
+
+  it("will not send a gift without a written reason", async () => {
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("tab", { name: "Send gift" }));
+    const form = (await screen.findByLabelText("Reason for the gift")).closest("form") as HTMLFormElement;
+    fireEvent.change(screen.getByLabelText("Reason for the gift"), { target: { value: "hi" } });
+    fireEvent.submit(form);
+    expect((await screen.findByRole("alert")).textContent).toBe("Please enter a reason (min. 5 characters)");
+    expect(api.giftToUser).not.toHaveBeenCalled();
   });
 });

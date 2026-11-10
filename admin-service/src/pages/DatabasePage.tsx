@@ -9,16 +9,6 @@ import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status: string; message?: string; version?: string };
 
-const MIGRATIONS = [
-  { id: "001", name: "add_rbac_system", description: "Hệ thống phân quyền RBAC", status: "applied" },
-  { id: "002", name: "add_admin_content_and_seed_roles", description: "Nội dung admin & role mặc định", status: "applied" },
-  { id: "003", name: "add_level_rank_system", description: "Hệ thống cấp bậc & rank", status: "applied" },
-  { id: "004", name: "add_proficiency_assessment", description: "Bảng đánh giá trình độ", status: "applied" },
-  { id: "005", name: "merge_level_rank_heads", description: "Merge migration heads", status: "applied" },
-  { id: "006", name: "add_phase_3_vocabulary_srs", description: "Từ vựng & SRS tables", status: "applied" },
-  { id: "007", name: "add_phase_4_gamification", description: "Gamification tables", status: "applied" },
-];
-
 export const DatabasePage = () => {
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
@@ -52,6 +42,8 @@ export const DatabasePage = () => {
   ];
 
   const totalRecords = tables.reduce((s, t) => s + t.count, 0);
+  const migration = info?.migration;
+  const revisions = (list?: string[] | null) => (list && list.length ? list.join(", ") : "—");
   const beOk = backendHealth?.status === "healthy";
   const aiOk = aiHealth?.status === "healthy" || aiHealth?.status === "ok";
 
@@ -67,7 +59,11 @@ export const DatabasePage = () => {
         <StatCard label="PostgreSQL" value={beOk ? t.common.connected : t.common.error} accent={beOk ? "teal" : "orange"} note="Backend Service" />
         <StatCard label="MongoDB" value={aiOk ? t.common.connected : t.common.error} accent={aiOk ? "teal" : "orange"} note="AI Service" />
         <StatCard label={t.database.totalRecords} value={totalRecords.toLocaleString()} accent="berry" />
-        <StatCard label="Migrations" value={String(MIGRATIONS.length)} accent="ink" note={t.database.applied} />
+        <StatCard
+          label="Migrations"
+          value={migration?.up_to_date == null ? t.database.migrationUnknown : migration.up_to_date ? t.database.applied : t.database.migrationPending}
+          accent={migration?.up_to_date === false ? "orange" : "ink"}
+        />
       </div>
 
       {/* Connection Details */}
@@ -116,18 +112,24 @@ export const DatabasePage = () => {
         />
       </div>
 
-      {/* Migration History */}
-      <div className="panel">
-        <h3 className="panel-heading">{t.database.migrationHistory}</h3>
-        <DataTable
-          columns={[
-            { header: "#", render: (r) => <span className="table-meta">{r.id}</span>, align: "center" },
-            { header: t.database.migrationCol, render: (r) => <span className="table-title" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.name}</span> },
-            { header: t.database.descriptionCol, render: (r) => <span className="table-meta">{r.description}</span> },
-            { header: t.database.migrationStatus, render: (r) => <StatusPill tone="success" label={t.database.applied} />, align: "center" },
-          ]}
-          rows={MIGRATIONS}
-        />
+      {/* Migration state: what the database is at versus what the deployed code ships */}
+      <div className="panel panel--pad">
+        <h3 className="panel-title">{t.database.migrationHistory}</h3>
+        <table className="kv-table">
+          <tbody>
+            <ConfigRow label={t.database.migrationCurrent} value={<span className="mono">{revisions(migration?.current)}</span>} />
+            <ConfigRow label={t.database.migrationHead} value={<span className="mono">{revisions(migration?.head)}</span>} />
+            <ConfigRow
+              label={t.database.migrationStatus}
+              value={
+                <StatusPill
+                  tone={migration?.up_to_date == null ? "neutral" : migration.up_to_date ? "success" : "warning"}
+                  label={migration?.up_to_date == null ? t.database.migrationUnknown : migration.up_to_date ? t.database.applied : t.database.migrationPending}
+                />
+              }
+            />
+          </tbody>
+        </table>
       </div>
     </div>
   );

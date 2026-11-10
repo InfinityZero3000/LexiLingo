@@ -48,6 +48,9 @@ export default function UserManagementPage() {
   
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [detailModalUserId, setDetailModalUserId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const reportFailure = (err: unknown) =>
+    setActionError(err instanceof Error && err.message ? err.message : t.userList.actionFailed);
   
   // Queries
   const { data, isLoading, error } = useQuery({
@@ -67,24 +70,30 @@ export default function UserManagementPage() {
   const statusMutation = useMutation({
     mutationFn: ({ userId, isActive }: { userId: string; isActive: boolean }) =>
       updateUserStatus(userId, { is_active: isActive }),
+    onMutate: () => setActionError(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+    onError: reportFailure,
   });
   
   const bulkActionMutation = useMutation({
     mutationFn: bulkUserAction,
+    onMutate: () => setActionError(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setSelectedUsers(new Set());
     },
+    onError: reportFailure,
   });
 
   const deleteMutation = useMutation({
     mutationFn: permanentlyDeleteUser,
+    onMutate: () => setActionError(null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
+    onError: reportFailure,
   });
 
   // Handlers
@@ -314,6 +323,7 @@ export default function UserManagementPage() {
 
   return (
     <div className="stack">
+      {actionError && <div className="form-error" role="alert">{actionError}</div>}
       <div className="cluster cluster--between">
         <SectionHeader title={t.userList.title} description={t.userList.description} />
 

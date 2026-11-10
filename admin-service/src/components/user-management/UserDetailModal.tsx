@@ -18,6 +18,10 @@ import {
   type GiftRequest,
 } from '../../lib/userManagementApi';
 import { listCoursesAdmin, listShopItems } from '../../lib/adminApi';
+import { usePermissions } from '../../lib/usePermissions';
+import { getGemLimits } from '../../lib/gemLimitsApi';
+import { UserWalletPanel } from './UserWalletPanel';
+import { UserPremiumPanel } from './UserPremiumPanel';
 import { useI18n } from '../../lib/i18n';
 
 type UserUpdateData = ApiUserUpdateData & {
@@ -38,9 +42,10 @@ interface UserDetailModalProps {
 export default function UserDetailModal({ userId, onClose }: UserDetailModalProps) {
   const { t } = useI18n();
   const confirm = useConfirm();
+  const { can } = usePermissions();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'info' | 'activity' | 'gift'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'activity' | 'gift' | 'wallet' | 'premium'>('info');
   
   // Form state
   const [formData, setFormData] = useState<UserUpdateData>({});
@@ -50,6 +55,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedShopItemId, setSelectedShopItemId] = useState<string>('');
   const [amount, setAmount] = useState<number>(100);
+  const [reason, setReason] = useState('');
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const GiftTypeIcon = {
@@ -125,6 +131,12 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     if (ok) roleChangeMutation.mutate(level);
   };
 
+  const { data: gemLimits } = useQuery({
+    queryKey: ['gem-limits'],
+    queryFn: getGemLimits,
+    enabled: activeTab === 'gift',
+  });
+
   const giftMutation = useMutation({
     mutationFn: (payload: GiftRequest) => giftToUser(userId, payload),
     onSuccess: (res) => {
@@ -133,6 +145,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
         setErrorMessage(null);
         queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
         queryClient.invalidateQueries({ queryKey: ['users'] });
+        queryClient.invalidateQueries({ queryKey: ['gem-limits'] });
+        queryClient.invalidateQueries({ queryKey: ['gem-grants'] });
+        setReason('');
         setAmount(giftType === 'gems' ? 100 : 1);
         setSelectedCourseId('');
         setSelectedShopItemId('');
@@ -152,8 +167,13 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     setSuccessMessage(null);
     setErrorMessage(null);
 
+    if (reason.trim().length < 5) {
+      setErrorMessage(t.userDetail.errGiftReason);
+      return;
+    }
     const payload: GiftRequest = {
       gift_type: giftType,
+      reason: reason.trim(),
     };
 
     if (giftType === 'gems') {
@@ -223,7 +243,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const tabs = [
     { id: 'info', label: t.userDetail.tabInfo },
     { id: 'activity', label: t.userDetail.tabActivity },
-    { id: 'gift', label: t.userDetail.tabGift },
+    ...(can('gifts:grant') ? [{ id: 'gift' as const, label: t.userDetail.tabGift }] : []),
+    { id: 'wallet', label: t.support.tabWallet },
+    { id: 'premium', label: t.support.tabPremium },
   ] as const;
 
   const roleStatusTone = user.role_level === 2 ? 'danger' : user.role_level === 1 ? 'warning' : 'info';
@@ -385,6 +407,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
           </div>
         )}
 
+        {activeTab === 'wallet' && <UserWalletPanel userId={userId} />}
+        {activeTab === 'premium' && <UserPremiumPanel userId={userId} />}
+
         {activeTab === 'activity' && (
           <div className="stack stack--flush">
             {activities && activities.length > 0 ? (
@@ -509,6 +534,27 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                       required
                     />
                   </label>
+                )}
+
+                <label className="ud-field">
+                  {t.userDetail.giftReason}
+                  <input
+                    type="text"
+                    value={reason}
+                    maxLength={300}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder={t.userDetail.giftReasonHint}
+                    required
+                  />
+                </label>
+
+                {gemLimits?.usage && (
+                  <p className="text-muted" role="note">
+                    {t.userDetail.giftLimits
+                      .replace('{max}', gemLimits.usage.max_per_action.toLocaleString())
+                      .replace('{left}', gemLimits.usage.remaining_today.toLocaleString())
+                      .replace('{budget}', gemLimits.usage.daily_budget.toLocaleString())}
+                  </p>
                 )}
 
                 <div className="ud-submit-row">

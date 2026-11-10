@@ -14,17 +14,17 @@ type AiHealth = {
 };
 
 const AI_MODELS = [
-  { name: "Gemini 2.0 Flash", type: "LLM / Chat", provider: "Google AI", mode: "API Cloud", usage: "Chat, Grammar Check, Topic Conversation" },
+  { name: "Qwen 3.8 27B", type: "LLM / Chat", provider: "Groq", mode: "API Cloud", usage: "Chat, Grammar Check, Topic Conversation" },
   { name: "Whisper Base", type: "STT (Speech-to-Text)", provider: "OpenAI", mode: "Local CPU", usage: "Phát âm, Listening exercises" },
   { name: "Piper TTS", type: "TTS (Text-to-Speech)", provider: "Piper", mode: "Local CPU", usage: "Phát âm từ vựng, đọc câu" },
   { name: "TRACECAG", type: "Knowledge Graph", provider: "Custom", mode: "Local", usage: "Trả lời câu hỏi ngữ pháp, context-aware" },
 ];
 
 const PIPELINES = [
-  { name: "Chat Pipeline", components: "Gemini → Response Filter → Cache", status: "active" },
-  { name: "Voice Pipeline", components: "Whisper STT → Gemini → Piper TTS", status: "active" },
-  { name: "Grammar Check", components: "Input → Gemini → Correction → Score", status: "active" },
-  { name: "TRACECAG Query", components: "Query → Graph Lookup → LLM Synthesis", status: "active" },
+  { name: "Chat Pipeline", components: "LLM → Response Filter → Cache" },
+  { name: "Voice Pipeline", components: "Whisper STT → LLM → Piper TTS" },
+  { name: "Grammar Check", components: "Input → LLM → Correction → Score" },
+  { name: "TRACECAG Query", components: "Query → Graph Lookup → LLM Synthesis" },
 ];
 
 export const AiModelsPage = () => {
@@ -154,7 +154,7 @@ export const AiModelsPage = () => {
                 <span className="table-meta" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.components}</span>
               )
             },
-            { header: t.aiModelsPage.pipelineStatus, render: (r) => <StatusPill tone="success" label={t.common.active} />, align: "center" },
+            { header: t.aiModelsPage.pipelineStatus, render: () => <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />, align: "center" },
           ]}
           rows={PIPELINES}
         />

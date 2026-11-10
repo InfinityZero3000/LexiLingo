@@ -40,34 +40,6 @@ export const getCoursePopularity = () =>
 export const getCompletionFunnel = () =>
   apiFetch<{ data: FunnelData[] }>(`${base()}/dashboard/completion-funnel`);
 
-/* ─── User Analytics ─────────────────────────────────── */
-
-export type UserMetrics = {
-  dau: number;
-  wau: number;
-  mau: number;
-  total_signups: number;
-  avg_session_duration: number;
-};
-
-export type RetentionCohort = {
-  cohort_date: string;
-  users: number;
-  d1_retention: number;
-  d7_retention: number;
-  d30_retention: number;
-};
-
-export const getUserMetrics = (startDate?: string, endDate?: string) => {
-  const params = new URLSearchParams();
-  if (startDate) params.append("start_date", startDate);
-  if (endDate) params.append("end_date", endDate);
-  return apiFetch<{ metrics: UserMetrics }>(`${base()}/user-metrics?${params.toString()}`);
-};
-
-export const getRetentionCohorts = () =>
-  apiFetch<{ cohorts: RetentionCohort[] }>(`${base()}/retention-cohorts`);
-
 /* ─── Content Performance ─────────────────────────────── */
 
 export type CoursePerformance = {

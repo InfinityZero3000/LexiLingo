@@ -242,6 +242,7 @@ export interface GiftRequest {
   course_id?: string;
   shop_item_id?: string;
   amount?: number;
+  reason: string;
 }
 
 export async function giftToUser(

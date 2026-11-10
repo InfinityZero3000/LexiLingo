@@ -57,7 +57,7 @@ export const AdminManagementPage = () => {
       ];
       setAdmins(all);
     } catch (err: any) {
-      setError(err?.message || "Không tải được danh sách admin");
+      setError(err?.message || t.adminPages.adminsLoadFailed);
     } finally {
       setLoading(false);
     }
@@ -75,7 +75,7 @@ export const AdminManagementPage = () => {
         (u: any) => u.email.toLowerCase() === newEmail.toLowerCase()
       );
       if (!target) {
-        setModalError("Không tìm thấy user. Đảm bảo họ đã đăng ký tài khoản trước.");
+        setModalError(t.adminPages.adminUserNotFound);
         return;
       }
       await apiFetch(`${ENV.backendUrl}/admin/users/${target.id}/role`, {
@@ -87,7 +87,7 @@ export const AdminManagementPage = () => {
       setModalError(null);
       await fetchAdmins();
     } catch (err: any) {
-      setModalError(err?.message || "Không thể cấp quyền admin");
+      setModalError(err?.message || t.adminPages.adminGrantFailed);
     } finally {
       setAdding(false);
     }
@@ -101,7 +101,7 @@ export const AdminManagementPage = () => {
       });
       await fetchAdmins();
     } catch (err: any) {
-      setError(err?.message || "Không thể thay đổi trạng thái user");
+      setError(err?.message || t.adminPages.adminStatusFailed);
     }
   };
 
@@ -141,7 +141,7 @@ export const AdminManagementPage = () => {
               {admins.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--muted)" }}>
-                    Chưa có admin nào
+                    {t.adminPages.adminsEmpty}
                   </td>
                 </tr>
               ) : admins.map((admin) => (
