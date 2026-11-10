@@ -14,7 +14,7 @@ from sqlalchemy.orm.attributes import flag_modified
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import _get_user_role_level, get_current_admin
+from app.core.dependencies import _get_user_role_level, require_resource
 from app.models.content_agent import ContentAgentUpload
 from app.models.rbac import AuditLog
 from app.models.user import User
@@ -105,7 +105,7 @@ async def upload_source_file(
         ),
     ),
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("content_agent")),
 ):
     _require_enabled()
     if not rights_confirmed:
@@ -167,7 +167,7 @@ async def upload_source_file(
     response_model=ApiResponse[list[SourceSnapshotDescriptor]],
 )
 async def list_sources(
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_resource("content_agent")),
 ):
     _require_enabled()
     try:
@@ -193,7 +193,7 @@ async def list_sources(
 async def create_job(
     payload: ContentAgentJobCreate,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("content_agent")),
 ):
     _require_enabled()
     active_count = await ContentAgentJobService.count_active_by_requester(db, admin.id)
@@ -278,7 +278,7 @@ async def list_jobs(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_resource("content_agent")),
 ):
     jobs = await ContentAgentJobService.list(db, limit=limit, offset=offset)
     return ApiResponse(data=[_job_response(job) for job in jobs])
@@ -309,7 +309,7 @@ def _require_job_owner(job, admin: User) -> None:
 async def get_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_resource("content_agent")),
 ):
     return ApiResponse(data=_job_response(await _get_job_or_404(db, job_id)))
 
@@ -318,7 +318,7 @@ async def get_job(
 async def get_preview(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_resource("content_agent")),
 ):
     job = await _get_job_or_404(db, job_id)
     if not job.artifact:
@@ -340,7 +340,7 @@ async def update_job_record(
     record_id: str,
     payload: ContentAgentRecordUpdate,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("content_agent")),
 ):
     """Edit one generated exercise (and optionally its lesson's outcome)
     before the job is approved. Applies to the preview artifact only —
@@ -396,7 +396,7 @@ async def update_job_record(
 async def apply_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("content_agent")),
 ):
     _require_enabled()
     _require_job_owner(await _get_job_or_404(db, job_id), admin)
@@ -428,7 +428,7 @@ async def apply_job(
 async def retry_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("content_agent")),
 ):
     _require_enabled()
     job = await _get_job_or_404(db, job_id, lock=True)
@@ -457,7 +457,7 @@ async def retry_job(
 async def cancel_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("content_agent")),
 ):
     job = await _get_job_or_404(db, job_id, lock=True)
     _require_job_owner(job, admin)

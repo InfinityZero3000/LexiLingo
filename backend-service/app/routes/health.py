@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.common import HealthResponse
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin
+from app.core.dependencies import require_permission
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ async def readiness_check(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/health/integrations", tags=["Health"])
-async def integration_health(_admin=Depends(get_current_admin)):
+async def integration_health(_admin=Depends(require_permission("ops:read"))):
     """Prove each third-party credential still works.
 
     Admin-only: it makes real outbound calls and names which feature is down.

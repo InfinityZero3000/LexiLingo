@@ -22,7 +22,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin as require_admin
+from app.core.dependencies import require_resource
 from app.models.ielts import IeltsAttempt, IeltsTest
 from app.models.user import User
 from app.schemas.response import ApiResponse
@@ -158,7 +158,7 @@ async def admin_list_tests(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     result = await db.execute(
         select(IeltsTest).order_by(IeltsTest.created_at.desc()).limit(limit).offset(offset)
@@ -180,7 +180,7 @@ async def admin_list_tests(
 async def admin_get_test(
     test_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     test = await db.get(IeltsTest, test_id)
     if not test:
@@ -192,7 +192,7 @@ async def admin_get_test(
 async def admin_create_test(
     payload: IeltsTestPayload,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     test = IeltsTest(
         title=payload.title,
@@ -216,7 +216,7 @@ async def admin_update_test(
     test_id: UUID,
     payload: IeltsTestPayload,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     test = await db.get(IeltsTest, test_id)
     if not test:
@@ -249,7 +249,7 @@ async def admin_update_test(
 async def admin_validate_test(
     test_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     test = await db.get(IeltsTest, test_id)
     if not test:
@@ -269,7 +269,7 @@ async def admin_validate_test(
 async def admin_delete_test(
     test_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     test = await db.get(IeltsTest, test_id)
     if not test:
@@ -284,7 +284,7 @@ async def admin_list_attempts(
     test_id: Optional[UUID] = Query(None),
     limit: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     query = select(IeltsAttempt).order_by(IeltsAttempt.started_at.desc()).limit(limit)
     if test_id:
@@ -315,7 +315,7 @@ _MAX_AUDIO_BYTES = 20 * 1024 * 1024
 @router.post("/upload-audio", response_model=ApiResponse[dict])
 async def admin_upload_listening_audio(
     file: UploadFile = File(...),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_resource("ielts")),
 ):
     """Store a Listening recording and return the URL to put in `audio_url`.
 

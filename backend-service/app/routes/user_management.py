@@ -6,21 +6,29 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, HTTPException, status
+from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select, func, or_, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.schemas.response import ApiResponse
-from app.core.dependencies import get_current_admin, get_current_super_admin
+from app.core.dependencies import get_current_super_admin, require_permission
 from app.models.user import User
 from app.models.rbac import Role
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
+from app.services.admin_audit import record_admin_action
+from app.services.gem_limits import get_gem_limits, reserve_gems
 from app.services.user_deletion_service import permanently_delete_user
 
 
 router = APIRouter(prefix="/admin/users", tags=["Admin - User Management"])
+
+
+def _audit(
+    db: AsyncSession, admin: User, action: str, target: User, details: dict, request: Request
+) -> None:
+    record_admin_action(db, admin, action, "user", target.id, details, request)
 
 
 # ============================================================================
@@ -91,8 +99,8 @@ class StatusUpdateRequest(BaseModel):
 
 class BulkActionRequest(BaseModel):
     """Bulk operations on users"""
-    user_ids: List[str]
-    action: str = Field(..., description="activate, deactivate, delete")
+    user_ids: List[str] = Field(..., max_length=100)
+    action: str = Field(..., description="activate, deactivate, delete (disables the account)")
 
 
 class ActivityLogResponse(BaseModel):
@@ -127,7 +135,7 @@ async def list_users(
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     sort_by: str = Query("created_at", pattern="^(created_at|last_login|email|role|total_xp)$"),
     order: str = Query("desc", pattern="^(asc|desc)$"),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("users:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -234,7 +242,7 @@ async def list_users(
 @router.get("/{user_id}", response_model=ApiResponse[UserDetailResponse])
 async def get_user_detail(
     user_id: UUID,
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("users:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -311,7 +319,8 @@ async def get_user_detail(
 async def update_user(
     user_id: UUID,
     data: UserUpdateRequest,
-    admin: User = Depends(get_current_admin),
+    request: Request,
+    admin: User = Depends(require_permission("users:update")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -342,12 +351,17 @@ async def update_user(
             )
     
     # Update fields
+    changes = {}
     if data.display_name is not None:
+        changes["display_name"] = {"from": user.display_name, "to": data.display_name}
         user.display_name = data.display_name
-    
+
     if data.is_active is not None:
+        changes["is_active"] = {"from": user.is_active, "to": data.is_active}
         user.is_active = data.is_active
-    
+
+    if changes:
+        _audit(db, admin, "update", user, changes, request)
     await db.commit()
     await db.refresh(user)
     
@@ -410,6 +424,7 @@ async def update_user(
 async def update_user_role(
     user_id: UUID,
     data: RoleUpdateRequest,
+    request: Request,
     admin: User = Depends(get_current_super_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -440,6 +455,13 @@ async def update_user_role(
             detail="Cannot demote yourself"
         )
     
+    # A super admin may not rewrite another super admin (or anyone at their level)
+    if user.id != admin.id and user.role_level >= admin.role_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot modify a user with equal or higher role level"
+        )
+
     # Find role by level
     role_result = await db.execute(
         select(Role).where(Role.level == data.level)
@@ -452,7 +474,9 @@ async def update_user_role(
             detail=f"Role with level {data.level} not found"
         )
     
+    old_role = user.role_slug
     user.role_id = new_role.id
+    _audit(db, admin, "assign_role", user, {"from": old_role, "to": new_role.slug}, request)
     await db.commit()
     await db.refresh(user)
     
@@ -475,7 +499,8 @@ async def update_user_role(
 async def update_user_status(
     user_id: UUID,
     data: StatusUpdateRequest,
-    admin: User = Depends(get_current_admin),
+    request: Request,
+    admin: User = Depends(require_permission("users:update")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -508,6 +533,14 @@ async def update_user_status(
         )
     
     user.is_active = data.is_active
+    _audit(
+        db,
+        admin,
+        "activate" if data.is_active else "deactivate",
+        user,
+        {"username": user.username, "is_active": data.is_active},
+        request,
+    )
     await db.commit()
 
     return ApiResponse(
@@ -523,6 +556,7 @@ async def update_user_status(
 @router.delete("/{user_id}/permanent")
 async def permanently_delete_user_account(
     user_id: UUID,
+    request: Request,
     admin: User = Depends(get_current_super_admin),
     db: AsyncSession = Depends(get_db),
 ):
@@ -553,6 +587,12 @@ async def permanently_delete_user_account(
             detail="Cannot delete users with equal or higher role level"
         )
 
+    # Recorded first, with who the account was: afterwards nothing else says.
+    _audit(
+        db, admin, "permanent_delete", user,
+        {"email": user.email, "username": user.username, "role": user.role_slug},
+        request,
+    )
     await permanently_delete_user(db, user)
     await db.commit()
 
@@ -571,7 +611,7 @@ async def permanently_delete_user_account(
 async def get_user_activity(
     user_id: UUID,
     days: int = Query(30, ge=1, le=365),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("users:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -664,7 +704,8 @@ async def get_user_activity(
 @router.post("/bulk-action")
 async def bulk_user_action(
     data: BulkActionRequest,
-    admin: User = Depends(get_current_admin),
+    request: Request,
+    admin: User = Depends(require_permission("users:update")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -673,7 +714,8 @@ async def bulk_user_action(
     **Actions:**
     - activate: Activate selected users
     - deactivate: Deactivate selected users
-    - delete: Soft delete selected users (requires super_admin)
+    - delete: Disable selected users like deactivate, but only a super_admin may (the
+      accounts are kept; use the permanent-delete endpoint to erase one)
     """
     if not data.user_ids:
         raise HTTPException(
@@ -750,6 +792,15 @@ async def bulk_user_action(
             detail=f"Unknown action: {data.action}"
         )
     
+    record_admin_action(
+        db, admin, f"bulk_{data.action}", "user", None,
+        {
+            "user_ids": [str(u.id) for u in actionable_users],
+            "requested": len(data.user_ids),
+            "skipped_equal_or_higher_role": skipped_count,
+        },
+        request,
+    )
     await db.commit()
     
     return ApiResponse(
@@ -778,20 +829,28 @@ class GiftRequest(BaseModel):
     gift_type: GiftType
     course_id: Optional[UUID] = None
     shop_item_id: Optional[UUID] = None
-    amount: Optional[int] = Field(None, ge=1, description="Number of gems or item quantity")
+    amount: Optional[int] = Field(None, ge=1, le=100000, description="Number of gems or item quantity")
+    reason: str = Field(..., min_length=5, max_length=300, description="Why this gift is being given")
 
 
 @router.post("/{user_id}/gift", response_model=ApiResponse[dict])
 async def send_gift_to_user(
     user_id: UUID,
     data: GiftRequest,
-    admin: User = Depends(get_current_admin),
+    request: Request,
+    admin: User = Depends(require_permission("gifts:grant")),
     db: AsyncSession = Depends(get_db),
 ):
     """
     Send a gift to a user from Admin.
     Allows gifting Gems, Course enrollment, Avatars, or other Shop Items.
     """
+    if user_id == admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot gift to your own account"
+        )
+
     # 1. Verify user exists
     user_result = await db.execute(select(User).where(User.id == user_id))
     user = user_result.scalar_one_or_none()
@@ -803,6 +862,20 @@ async def send_gift_to_user(
 
     gift_desc = ""
 
+    # Queued before any branch commits, so the audit row lands atomically with the
+    # gift; a validation error below rolls both back.
+    record_admin_action(
+        db, admin, "gift", "user", user_id,
+        {
+            "gift_type": data.gift_type.value,
+            "amount": data.amount,
+            "course_id": data.course_id,
+            "shop_item_id": data.shop_item_id,
+            "reason": data.reason,
+        },
+        request,
+    )
+
     # 2. Process based on gift type
     if data.gift_type == GiftType.gems:
         if not data.amount:
@@ -810,7 +883,8 @@ async def send_gift_to_user(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Amount is required for gems gift"
             )
-        
+        await reserve_gems(db, admin, user_id, "gift", data.amount, data.reason)
+
         from app.crud.gamification import WalletCRUD
         await WalletCRUD.add_gems(
             db,
@@ -883,6 +957,12 @@ async def send_gift_to_user(
             )
 
         qty = data.amount or 1
+        item_cap = (await get_gem_limits(db))["gems.item_gift_max_qty"]
+        if qty > item_cap:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"A single item gift is limited to {item_cap} units"
+            )
 
         # Avatars can only be owned once
         from app.models.gamification import UserInventory

@@ -7,7 +7,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin
+from app.core.dependencies import require_resource
 from app.models.user import User
 from app.models.gamification import Achievement, ShopItem
 from app.schemas.response import ApiResponse
@@ -15,7 +15,8 @@ from app.schemas.gamification import ShopItemAdminCreate, ShopItemAdminUpdate
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-require_admin = get_current_admin
+require_achievements = require_resource("achievements")
+require_shop = require_resource("shop")
 
 # ============================================================================
 # Achievement Admin CRUD
@@ -24,7 +25,7 @@ require_admin = get_current_admin
 @router.get("/achievements", response_model=ApiResponse[List[dict]])
 async def list_achievements_admin(
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_achievements)
 ):
     """
     List all achievements (admin view).
@@ -72,7 +73,7 @@ async def create_achievement(
     badge_color: Optional[str] = None,
     slug: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_achievements)
 ):
     """
     Create a new achievement.
@@ -124,7 +125,7 @@ async def update_achievement(
     badge_color: Optional[str] = None,
     slug: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_achievements)
 ):
     """Update an achievement. Admin only."""
     result = await db.execute(
@@ -162,7 +163,7 @@ async def update_achievement(
 async def delete_achievement(
     achievement_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_achievements)
 ):
     """
     Delete an achievement.
@@ -198,7 +199,7 @@ async def delete_achievement(
 async def list_shop_items_admin(
     include_unavailable: bool = Query(False),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_shop)
 ):
     """
     List all shop items (admin view).
@@ -233,7 +234,7 @@ async def list_shop_items_admin(
 async def create_shop_item(
     payload: ShopItemAdminCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_shop)
 ):
     """
     Create a new shop item.
@@ -270,7 +271,7 @@ async def update_shop_item(
     item_id: UUID,
     payload: ShopItemAdminUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_shop)
 ):
     """
     Update a shop item.
@@ -324,7 +325,7 @@ async def update_shop_item(
 async def delete_shop_item(
     item_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_shop)
 ):
     """
     Delete a shop item.

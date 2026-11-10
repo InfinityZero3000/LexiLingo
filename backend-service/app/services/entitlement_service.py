@@ -78,6 +78,17 @@ class EntitlementService:
             status = "active" if is_active else "expired"
             product_id = grant.get("product_identifier")
 
+        # A premium an admin granted is not in RevenueCat, so "no grant there" must not
+        # erase it before it runs out; a real paid grant (status == "active") still wins.
+        if (
+            row is not None
+            and row.source == "admin"
+            and row.status == "active"
+            and status != "active"
+            and (row.expires_at is None or row.expires_at > datetime.now(timezone.utc))
+        ):
+            return row, False
+
         if row is None:
             row = UserEntitlement(
                 user_id=user_id,

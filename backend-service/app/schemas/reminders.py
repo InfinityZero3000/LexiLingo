@@ -1,6 +1,7 @@
 """Schemas for user reminder preferences."""
 
 from datetime import datetime
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -42,4 +43,16 @@ class ReminderPreferenceUpdate(BaseModel):
         hour, minute = [int(part) for part in value.split(":")]
         if hour > 23 or minute > 59:
             raise ValueError("reminder_time_local must be HH:MM")
+        return value
+
+    @field_validator("timezone")
+    @classmethod
+    def validate_timezone(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
+
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValueError("timezone must be an IANA name such as Asia/Ho_Chi_Minh")
         return value

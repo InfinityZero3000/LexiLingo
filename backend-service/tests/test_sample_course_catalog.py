@@ -52,7 +52,7 @@ def test_travel_course_seed_has_complete_learning_path():
 @pytest.mark.asyncio
 async def test_admin_seed_is_idempotent_for_travel_course(
     async_client: AsyncClient,
-    admin_headers: dict,
+    super_admin_headers: dict,
     db_session: AsyncSession,
     monkeypatch,
 ):
@@ -61,7 +61,7 @@ async def test_admin_seed_is_idempotent_for_travel_course(
     monkeypatch.setattr(admin_system.settings, "APP_ENV", "development")
 
     for _ in range(2):
-        response = await async_client.post("/api/v1/admin/seed", headers=admin_headers)
+        response = await async_client.post("/api/v1/admin/seed", headers=super_admin_headers)
         assert response.status_code == 200
 
     categories = list(

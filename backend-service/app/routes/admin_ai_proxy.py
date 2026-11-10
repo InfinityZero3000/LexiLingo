@@ -17,7 +17,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.config import settings
-from app.core.dependencies import get_current_admin, get_current_super_admin
+from app.core.dependencies import get_current_super_admin, require_resource
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ async def _forward(method: str, path: str, *, params: dict | None = None, json: 
 @router.get("/topics")
 async def list_topics(
     limit: int = Query(default=200, le=500),
-    _admin: User = Depends(get_current_admin),
+    _admin: User = Depends(require_resource("topics")),
 ) -> Any:
     return await _forward("GET", "/topics", params={"limit": limit})
 
@@ -59,7 +59,7 @@ async def list_topics(
 @router.post("/topics")
 async def create_topic(
     payload: dict,
-    _admin: User = Depends(get_current_admin),
+    _admin: User = Depends(require_resource("topics")),
 ) -> Any:
     return await _forward("POST", "/topics", json=payload)
 

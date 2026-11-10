@@ -323,6 +323,7 @@ class Settings(BaseSettings):
     REMINDER_DRY_RUN: bool = True
     REMINDER_SCAN_BATCH_SIZE: int = 250
     REMINDER_SCAN_INTERVAL_SECONDS: int = 300
+    REMINDER_MAX_LATENESS_MINUTES: int = 180
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
 
     # Event Worker — drains the content_interaction Redis Stream and
@@ -330,6 +331,16 @@ class Settings(BaseSettings):
     EVENT_WORKER_DRAIN_INTERVAL_SECONDS: int = 10
     EVENT_WORKER_DRAIN_BATCH_SIZE: int = 500
     REMINDER_REVIEW_ROUTE: str = "/vocabulary/review"
+
+    # Most gems one admin gift (or one manual wallet adjustment) may move.
+    ADMIN_GIFT_MAX_GEMS: int = 500
+    SUPER_ADMIN_GIFT_MAX_GEMS: int = 10000
+    # Gems one admin may hand out per UTC day (gifts plus manual adjustments).
+    ADMIN_GIFT_DAILY_BUDGET_GEMS: int = 2000
+    SUPER_ADMIN_GIFT_DAILY_BUDGET_GEMS: int = 50000
+    ADMIN_GIFT_MAX_ITEM_QTY: int = 100
+    # Where scripts/backup-prod.sh and verify-backup.sh leave their status files (mounted read-only).
+    BACKUP_STATE_DIR: str = "/var/lib/lexilingo"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
 
     # Deep-link / Universal Links

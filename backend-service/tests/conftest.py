@@ -252,6 +252,15 @@ def auth_headers(test_user: User) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
 
 
+async def seed_admin_permissions(db_session: AsyncSession) -> None:
+    """Production gets these from the seed migration; the test schema is built by create_all."""
+    from app.core.permissions import PERMISSION_CATALOG
+    from app.services.permission_seed import seed_permissions
+
+    await db_session.run_sync(lambda s: seed_permissions(s.connection(), PERMISSION_CATALOG))
+    await db_session.commit()
+
+
 @pytest.fixture
 async def admin_user(db_session: AsyncSession) -> User:
     """Create a test admin user with admin role for testing admin endpoints."""
@@ -271,6 +280,7 @@ async def admin_user(db_session: AsyncSession) -> User:
         db_session.add(admin_role)
         await db_session.commit()
         await db_session.refresh(admin_role)
+        await seed_admin_permissions(db_session)
 
     # Check if admin user already exists to avoid unique constraint violations
     res_user = await db_session.execute(select(User).where(User.email == "admin@example.com"))
@@ -293,6 +303,37 @@ async def admin_user(db_session: AsyncSession) -> User:
         await db_session.commit()
         await db_session.refresh(user)
     return user
+
+
+@pytest.fixture
+async def super_admin_user(db_session: AsyncSession) -> User:
+    res = await db_session.execute(select(Role).where(Role.slug == "super_admin"))
+    role = res.scalar_one_or_none()
+    if not role:
+        role = Role(
+            name="Super Admin", slug="super_admin", level=2,
+            description="Super admin role", is_system=True, is_active=True,
+        )
+        db_session.add(role)
+        await db_session.commit()
+        await db_session.refresh(role)
+    user = (await db_session.execute(select(User).where(User.email == "root@example.com"))).scalar_one_or_none()
+    if not user:
+        user = User(
+            email="root@example.com", username="rootuser", display_name="Root User",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            is_active=True, is_verified=True, native_language="vi", target_language="en",
+            level="beginner", role_id=role.id,
+        )
+        db_session.add(user)
+        await db_session.commit()
+        await db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def super_admin_headers(super_admin_user: User) -> dict:
+    return {"Authorization": f"Bearer {create_access_token(data={'sub': str(super_admin_user.id)})}"}
 
 
 @pytest.fixture

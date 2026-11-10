@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 
 import anyio
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -30,6 +30,7 @@ from app.core.security import (
     verify_password_async,
 )
 from app.core.token_blacklist import TokenBlacklist
+from app.services.admin_audit import record_admin_action
 from app.services.starter_reward_service import StarterRewardService
 from app.models.user import User, RefreshToken
 from app.services.email_service import EmailService
@@ -160,6 +161,23 @@ def _build_user_response(user: User) -> UserResponse:
 # exists or not, preventing user enumeration via timing side-channels.
 _DUMMY_HASH: str = get_password_hash("_lexilingo_timing_normalization_placeholder_")
 
+
+
+async def _audit_admin_login(
+    db: AsyncSession, http_request: Request, outcome: str, user=None, email: str | None = None, via: str = "password"
+) -> None:
+    """Admin sign-ins, including refusals, are committed on their own: a refusal raises right after."""
+    try:
+        record_admin_action(
+            db, user, "login" if outcome == "ok" else f"login_{outcome}", "auth",
+            str(user.id) if user is not None else email,
+            {"email": email or getattr(user, "email", None), "via": via},
+            http_request,
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logger.warning("Admin login audit row not written", exc_info=True)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -425,6 +443,7 @@ async def logout(
 @router.post("/google", response_model=LoginResponse)
 async def google_login(
     request: GoogleLoginRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -572,6 +591,7 @@ async def google_login(
         user_role = user.role.slug if user.role else None
         
         if user_role not in ["admin", "super_admin"]:
+            await _audit_admin_login(db, http_request, "denied", user, via="google")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. Admin privileges required."
@@ -585,6 +605,8 @@ async def google_login(
     
     # Update last login
     user.last_login = datetime.now(timezone.utc)
+    if request.source == "admin":
+        await _audit_admin_login(db, http_request, "ok", user, via="google")
     await db.commit()
     
     # Create tokens
@@ -874,6 +896,7 @@ async def verify_email(
 @router.post("/admin/login")
 async def admin_login(
     body: dict,
+    http_request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -893,6 +916,7 @@ async def admin_login(
     password_ok = await verify_password_async(password, hash_to_check)
 
     if not user or not password_ok:
+        await _audit_admin_login(db, http_request, "failed", None, email=email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -908,10 +932,14 @@ async def admin_login(
         )
 
     if getattr(user, "role_level", 0) < 1:
+        await _audit_admin_login(db, http_request, "denied", user)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
 
     user_id = str(user.id)
     user.last_login = datetime.now(timezone.utc)
+    record_admin_action(
+        db, user, "login", "auth", user.id, {"email": user.email, "via": "password"}, http_request
+    )
     try:
         await db.commit()
     except Exception:

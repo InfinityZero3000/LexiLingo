@@ -198,7 +198,6 @@ async def main():
         print("\n Migration completed successfully!")
         print("\nNext steps:")
         print("1. Assign categories to existing courses via admin panel or API")
-        print("2. Run: POST /api/v1/categories/update-counts to update course counts")
         
     except Exception as e:
         print(f"\n Migration failed: {e}")

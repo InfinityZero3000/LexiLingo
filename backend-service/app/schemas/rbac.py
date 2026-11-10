@@ -78,12 +78,8 @@ class AuditLogResponse(BaseModel):
 
 # ── Role Assignment ───────────────────────────────────────
 
-class AssignRoleRequest(BaseModel):
-    user_id: UUID4
-    role_slug: str = Field(..., description="Role slug: user, admin, super_admin")
 
-
-# ── Notification ──────────────────────────────────────────
+# ── Notification ─────────────────────────────
 
 class NotificationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)

@@ -1,5 +1,4 @@
-"""Concurrency regression test for BACKEND_AUDIT_REPORT.md #1
-(reward/XP atomicity): two simultaneous requests awarding XP for the same
+"""Concurrency regression test for reward/XP atomicity: two simultaneous requests awarding XP for the same
 (user_id, source, source_id) must produce exactly one XPTransaction.
 
 Requires a real Postgres connection (TEST_DATABASE_URL) — row locking and

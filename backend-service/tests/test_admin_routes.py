@@ -790,7 +790,7 @@ class TestAdminSeed:
     async def test_seed_data(
         self,
         async_client: AsyncClient,
-        admin_headers: dict,
+        super_admin_headers: dict,
         monkeypatch,
     ):
         """Test seeding sample data"""
@@ -799,7 +799,7 @@ class TestAdminSeed:
         monkeypatch.setattr(admin_system.settings, "APP_ENV", "development")
         response = await async_client.post(
             "/api/v1/admin/seed",
-            headers=admin_headers
+            headers=super_admin_headers
         )
         
         assert response.status_code == 200
@@ -812,7 +812,7 @@ class TestAdminSeed:
     async def test_seed_data_hidden_outside_development(
         self,
         async_client: AsyncClient,
-        admin_headers: dict,
+        super_admin_headers: dict,
         monkeypatch,
     ):
         from app.routes import admin_system
@@ -821,7 +821,7 @@ class TestAdminSeed:
 
         response = await async_client.post(
             "/api/v1/admin/seed",
-            headers=admin_headers,
+            headers=super_admin_headers,
         )
 
         assert response.status_code == 404

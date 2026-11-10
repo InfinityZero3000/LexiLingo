@@ -55,6 +55,10 @@ from app.routes.admin_ielts import router as admin_ielts_router
 from app.routes.ielts import router as ielts_router
 from app.routes.admin_gamification import router as admin_gamification_router
 from app.routes.admin_system import router as admin_system_router
+from app.routes.admin_ops import router as admin_ops_router
+from app.routes.admin_user_support import router as admin_user_support_router
+from app.routes.admin_gem_ledger import router as admin_gem_ledger_router
+from app.routes.admin_partner_keys import router as admin_partner_keys_router
 from app.routes.content_agent import router as content_agent_router
 from app.routes.notification_campaign import router as notification_campaign_router
 from app.routes.ranking_agent import router as ranking_agent_router
@@ -83,6 +87,7 @@ from app.routes.referral import router as referral_router
 from app.routes.learner_card import router as learner_card_router
 from app.routes.learner_state import router as learner_state_router
 from app.routes.concepts import router as concepts_router
+from app.core.admin_audit_middleware import AdminAuditMiddleware
 from app.routes.mistakes import router as mistakes_router
 from app.routes.well_known import router as well_known_router
 from app.routes.product_events import router as product_events_router
@@ -238,6 +243,9 @@ if settings.is_production:
         TrustedHostMiddleware,
         allowed_hosts=settings.ALLOWED_HOSTS
     )
+
+# 1b. Admin audit - one generic row per successful admin write (innermost custom layer)
+app.add_middleware(AdminAuditMiddleware)
 
 # 2. Request Logging - Log all requests
 app.add_middleware(RequestLoggingMiddleware)
@@ -405,6 +413,10 @@ app.include_router(admin_ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=
 app.include_router(ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["IELTS"])
 app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
+app.include_router(admin_ops_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(admin_user_support_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(admin_gem_ledger_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(admin_partner_keys_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(content_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")

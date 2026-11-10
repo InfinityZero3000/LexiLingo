@@ -5,7 +5,7 @@ Database operations for course categories.
 """
 
 from typing import List, Optional, Tuple
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
@@ -131,40 +131,15 @@ class CourseCategoryCRUD:
         return True
     
     @staticmethod
-    async def update_course_counts(db: AsyncSession) -> None:
-        """
-        Update course_count for all categories.
-        Should be called periodically or after course changes.
-        """
-        # Get counts grouped by category
-        query = select(
-            Course.category_id,
-            func.count(Course.id).label('count')
-        ).where(
-            Course.is_published == True
-        ).group_by(Course.category_id)
-        
-        result = await db.execute(query)
-        counts = {row.category_id: row.count for row in result}
-        
-        # Update all categories
-        for category_id, count in counts.items():
-            if category_id:
-                await db.execute(
-                    update(CourseCategory)
-                    .where(CourseCategory.id == category_id)
-                    .values(course_count=count)
-                )
-        
-        # Set 0 for categories not in counts
-        await db.execute(
-            update(CourseCategory)
-            .where(CourseCategory.id.notin_(counts.keys()))
-            .values(course_count=0)
+    async def published_course_counts(db: AsyncSession) -> dict[uuid.UUID, int]:
+        """Published courses per category, read live so the number cannot go stale."""
+        result = await db.execute(
+            select(Course.category_id, func.count(Course.id))
+            .where(Course.is_published.is_(True), Course.category_id.is_not(None))
+            .group_by(Course.category_id)
         )
-        
-        await db.commit()
-    
+        return {category_id: count for category_id, count in result.all()}
+
     @staticmethod
     async def get_courses_by_category(
         db: AsyncSession,

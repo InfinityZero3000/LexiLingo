@@ -38,14 +38,14 @@ def test_compose_ports_restricted_to_loopback():
                 in_ports = False
 
     # Ensure postgres, redis, prometheus, and grafana bind strictly to 127.0.0.1
-    assert "127.0.0.1:5432:5432" in all_mapped_ports
-    assert "127.0.0.1:6379:6379" in all_mapped_ports
-    assert "127.0.0.1:9090:9090" in all_mapped_ports
-    assert "127.0.0.1:3001:3000" in all_mapped_ports
+    assert "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432" in all_mapped_ports
+    assert "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379" in all_mapped_ports
+    assert "127.0.0.1:${PROMETHEUS_HOST_PORT:-9090}:9090" in all_mapped_ports
+    assert "127.0.0.1:${GRAFANA_HOST_PORT:-3001}:3000" in all_mapped_ports
 
     # Ensure only gateway ports are publicly exposed (0.0.0.0)
     public_ports = [p for p in all_mapped_ports if "127.0.0.1" not in p]
     
     assert len(public_ports) == 2
-    assert "80:80" in public_ports
-    assert "443:443" in public_ports
+    assert "${NGINX_HTTP_PORT:-80}:80" in public_ports
+    assert "${NGINX_HTTPS_PORT:-443}:443" in public_ports

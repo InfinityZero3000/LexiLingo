@@ -14,7 +14,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin
+from app.core.dependencies import require_permission
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def _bytes_to_mb(b: float) -> float:
 
 @router.get("/system")
 async def get_system_metrics(
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_permission("ops:read")),
 ):
     """
     Return live system resource metrics via psutil.
@@ -81,7 +81,7 @@ async def get_system_metrics(
 @router.get("/services")
 async def get_services_health(
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_permission("ops:read")),
 ):
     """
     Check health of all backend dependencies:
@@ -134,7 +134,7 @@ async def get_services_health(
 @router.get("/db-stats")
 async def get_db_stats(
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_permission("ops:read")),
 ):
     """Quick row-count stats from main tables for dashboard overview."""
     try:
@@ -154,7 +154,7 @@ async def get_db_stats(
 
 @router.get("/request-stats")
 async def get_request_stats(
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_permission("ops:read")),
 ):
     """
     Return request counters from Redis if available.

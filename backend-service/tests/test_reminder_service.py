@@ -50,3 +50,95 @@ def test_compute_next_check_at_moves_past_time_to_next_day():
 
     assert next_check > now
     assert next_check.astimezone(timezone.utc).date().isoformat() == "2026-06-02"
+
+
+# --- timezone validation -----------------------------------------------------
+
+import pytest
+from pydantic import ValidationError
+
+from app.schemas.reminders import ReminderPreferenceUpdate
+
+
+def test_timezone_must_be_an_iana_name():
+    assert ReminderPreferenceUpdate(timezone="Europe/Paris").timezone == "Europe/Paris"
+    with pytest.raises(ValidationError):
+        ReminderPreferenceUpdate(timezone="Mars/Olympus")
+
+
+# --- scan: stale rows are skipped, one failure does not sink the batch -------
+
+from contextlib import asynccontextmanager
+from datetime import timedelta
+from types import SimpleNamespace
+
+from app.services.reminder_service import ReminderProcessResult
+
+
+class _Prefs:
+    def __init__(self, rows):
+        self._rows = rows
+
+    def scalars(self):
+        return self
+
+    def all(self):
+        return self._rows
+
+
+class _ScanDb:
+    def __init__(self, rows):
+        self._rows = rows
+
+    async def execute(self, _stmt):
+        return _Prefs(self._rows)
+
+    @asynccontextmanager
+    async def begin_nested(self):
+        yield
+
+
+def _pref(now, *, late_minutes):
+    return SimpleNamespace(
+        user_id=uuid4(),
+        reminder_time_local="09:00",
+        timezone="Asia/Ho_Chi_Minh",
+        next_check_at=now - timedelta(minutes=late_minutes),
+    )
+
+
+class _Service(ReminderService):
+    def __init__(self, failing):
+        super().__init__(fsrs_scheduler=object(), push_service=object())
+        self.failing = failing
+        self.processed_users = []
+
+    async def process_preference(self, db, *, preference, now_utc):
+        if preference.user_id == self.failing:
+            raise RuntimeError("boom")
+        self.processed_users.append(preference.user_id)
+        return ReminderProcessResult(processed=1, sent=1)
+
+
+async def test_scan_skips_stale_and_isolates_failures(monkeypatch):
+    monkeypatch.setattr(settings, "REMINDERS_ENABLED", True)
+    monkeypatch.setattr(settings, "REMINDER_MAX_LATENESS_MINUTES", 180)
+    now = datetime(2026, 6, 1, 3, 0, tzinfo=timezone.utc)
+
+    stale = _pref(now, late_minutes=600)
+    bad = _pref(now, late_minutes=5)
+    good = _pref(now, late_minutes=5)
+    service = _Service(failing=bad.user_id)
+
+    totals = await service.scan_due_preferences(
+        _ScanDb([stale, bad, good]), now_utc=now
+    )
+
+    assert totals["processed"] == 3
+    assert totals["sent"] == 1
+    assert totals["skipped"] == 1
+    assert totals["failed"] == 1
+    assert service.processed_users == [good.user_id]
+    # Stale and failed rows are pushed to the next slot so they do not loop.
+    assert stale.next_check_at > now
+    assert bad.next_check_at > now

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.celery_app import celery_app
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import _get_user_role_level, get_current_admin
+from app.core.dependencies import _get_user_role_level, require_resource
 from app.models.rbac import AuditLog
 from app.models.user import User
 from app.schemas.notification_campaign import (
@@ -81,7 +81,7 @@ def _require_job_owner(job, admin: User) -> None:
 async def create_job(
     payload: NotificationCampaignJobCreate,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("notifications")),
 ):
     _require_enabled()
     active_count = await NotificationCampaignJobService.count_active_by_requester(db, admin.id)
@@ -116,7 +116,7 @@ async def list_jobs(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("notifications")),
 ):
     _require_enabled()
     requester_filter = None if _get_user_role_level(admin) >= 2 else admin.id
@@ -133,7 +133,7 @@ async def list_jobs(
 async def get_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("notifications")),
 ):
     _require_enabled()
     job = await NotificationCampaignJobService.get(db, job_id)
@@ -150,7 +150,7 @@ async def get_job(
 async def apply_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("notifications")),
 ):
     _require_enabled()
     job = await NotificationCampaignJobService.get(db, job_id, lock=True)
@@ -218,7 +218,7 @@ async def apply_job(
 async def cancel_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("notifications")),
 ):
     _require_enabled()
     job = await NotificationCampaignJobService.get(db, job_id, lock=True)
@@ -247,7 +247,7 @@ async def cancel_job(
 async def retry_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("notifications")),
 ):
     _require_enabled()
     job = await NotificationCampaignJobService.get(db, job_id, lock=True)

@@ -8,16 +8,18 @@ import uuid
 from typing import Optional
 
 import anyio
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.permissions import ACTION_BY_METHOD
 from app.core.security import decode_token, is_locally_issued_token
 from app.core.token_blacklist import TokenBlacklist
 from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
+from app.models.rbac import Permission, RolePermission
 from app.models.user import User
 
 # HTTP Bearer token scheme
@@ -167,6 +169,7 @@ def _get_user_role_level(user: User) -> int:
 
 
 async def get_current_admin(
+    request: Request,
     current_user: User = Depends(get_current_user),
 ) -> User:
     """
@@ -183,9 +186,56 @@ async def get_current_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",
         )
+    request.state.admin_actor_id = current_user.id
     return current_user
 
+async def _has_permission(db: AsyncSession, user: User, slugs: tuple[str, ...]) -> bool:
+    if _get_user_role_level(user) >= 2:
+        return True
+    if not getattr(user, "role_id", None):
+        return False
+    found = await db.execute(
+        select(Permission.slug)
+        .join(RolePermission, RolePermission.permission_id == Permission.id)
+        .where(RolePermission.role_id == user.role_id, Permission.slug.in_(slugs))
+        .limit(1)
+    )
+    return found.first() is not None
+
+
+def require_permission(slug: str):
+    """Admin guard for one fixed permission. Super admins always pass."""
+    resource = slug.split(":", 1)[0]
+
+    async def dependency(
+        current_user: User = Depends(get_current_admin),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        if not await _has_permission(db, current_user, (slug, f"{resource}:manage")):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=f"Permission required: {slug}")
+        return current_user
+
+    return dependency
+
+
+def require_resource(resource: str):
+    """Like require_permission, with the action taken from the HTTP method (GET read, POST create...)."""
+
+    async def dependency(
+        request: Request,
+        current_user: User = Depends(get_current_admin),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        slug = f"{resource}:{ACTION_BY_METHOD.get(request.method, 'update')}"
+        if not await _has_permission(db, current_user, (slug, f"{resource}:manage")):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, detail=f"Permission required: {slug}")
+        return current_user
+
+    return dependency
+
+
 async def get_current_super_admin(
+    request: Request,
     current_user: User = Depends(get_current_user),
 ) -> User:
     """
@@ -202,6 +252,7 @@ async def get_current_super_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Super admin privileges required",
         )
+    request.state.admin_actor_id = current_user.id
     return current_user
 
 
