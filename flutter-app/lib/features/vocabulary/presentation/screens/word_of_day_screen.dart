@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -71,7 +72,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
           ),
         ],
       ),
-      body: FadeTransition(
+      body: ContentWidth(maxWidth: ContentWidth.reading, child: FadeTransition(
         opacity: _fade,
         child: SlideTransition(
           position: _slide,
@@ -282,7 +283,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
             ),
           ),
         ),
-      ),
+      ),),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -106,23 +107,30 @@ class _SittingViewState extends State<_SittingView> {
             ),
           ),
         ),
-        body: _SectionBody(section: section),
-        bottomNavigationBar: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                const Expanded(child: _AnsweredCount()),
-                if (index < sections.length - 1)
-                  FilledButton.tonal(
-                    onPressed: () => setState(() => _sectionIndex = index + 1),
-                    child: Text(
-                      'Next: ${ieltsSkillLabel(sections[index + 1].skill)}',
-                    ),
-                  )
-                else
-                  _SubmitButton(onSubmit: () => _submit(context, provider)),
-              ],
+        body: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: _SectionBody(section: section),
+        ),
+        bottomNavigationBar: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  const Expanded(child: _AnsweredCount()),
+                  if (index < sections.length - 1)
+                    FilledButton.tonal(
+                      onPressed: () =>
+                          setState(() => _sectionIndex = index + 1),
+                      child: Text(
+                        'Next: ${ieltsSkillLabel(sections[index + 1].skill)}',
+                      ),
+                    )
+                  else
+                    _SubmitButton(onSubmit: () => _submit(context, provider)),
+                ],
+              ),
             ),
           ),
         ),

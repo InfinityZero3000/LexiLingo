@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -126,7 +127,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             ],
           ),
         ),
-        body: TabBarView(
+        body: ContentWidth(child: TabBarView(
           children: [
             // Tab 1: Words
             Column(
@@ -229,7 +230,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             // Tab 2: Topics
             _buildTopicFlashcardsTab(context),
           ],
-        ),
+        ),),
       ),
     );
   }
@@ -256,8 +257,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 300,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               mainAxisExtent: 210,
@@ -293,8 +294,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 300,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               mainAxisExtent: 210,

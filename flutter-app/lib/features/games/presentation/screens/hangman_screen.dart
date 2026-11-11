@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -358,7 +359,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                   ),
                 ],
               ),
-              body: Column(
+              body: ContentWidth(maxWidth: ContentWidth.reading, child: Column(
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -599,7 +600,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                     ),
                   ),
                 ],
-              ),
+              ),),
             );
           },
         ),

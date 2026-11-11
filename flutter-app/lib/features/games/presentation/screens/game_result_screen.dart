@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -125,7 +126,7 @@ class _GameResultScreenState extends State<GameResultScreen>
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
+        child: ContentWidth(maxWidth: ContentWidth.reading, child: Column(
           children: [
             const SizedBox(height: 8),
             _buildStarRow(result.stars),
@@ -140,7 +141,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             const SizedBox(height: 32),
             _buildButtons(context),
           ],
-        ),
+        ),),
       ),
     );
   }

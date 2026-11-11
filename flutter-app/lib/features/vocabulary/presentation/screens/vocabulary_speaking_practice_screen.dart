@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -330,45 +331,48 @@ class _VocabularySpeakingPracticeScreenState
           const SizedBox(width: 6),
         ],
       ),
-      body: Consumer<FlashcardProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && !provider.hasSession) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Consumer<FlashcardProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading && !provider.hasSession) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-          if (provider.errorMessage != null) {
-            return _buildMessageState(
-              icon: Icons.error_outline,
-              message: provider.errorMessage!,
-              actionLabel: 'voice.tryAgain'.tr(),
-              onAction: () {
-                provider.clearError();
-                provider.startReviewSession();
-              },
+            if (provider.errorMessage != null) {
+              return _buildMessageState(
+                icon: Icons.error_outline,
+                message: provider.errorMessage!,
+                actionLabel: 'voice.tryAgain'.tr(),
+                onAction: () {
+                  provider.clearError();
+                  provider.startReviewSession();
+                },
+              );
+            }
+
+            final session = provider.currentSession;
+            final card = session?.currentCard;
+            if (session == null || card == null) {
+              return _buildMessageState(
+                icon: Icons.check_circle_outline,
+                message: 'vocabulary.noSpeakingDue'.tr(),
+                actionLabel: 'common.close'.tr(),
+                onAction: () => Navigator.of(context).pop(),
+              );
+            }
+
+            return SafeArea(
+              child: Column(
+                children: [
+                  _buildTopBar(session, card),
+                  Expanded(child: _buildPracticeBody(card)),
+                  _buildResultPanel(provider),
+                ],
+              ),
             );
-          }
-
-          final session = provider.currentSession;
-          final card = session?.currentCard;
-          if (session == null || card == null) {
-            return _buildMessageState(
-              icon: Icons.check_circle_outline,
-              message: 'vocabulary.noSpeakingDue'.tr(),
-              actionLabel: 'common.close'.tr(),
-              onAction: () => Navigator.of(context).pop(),
-            );
-          }
-
-          return SafeArea(
-            child: Column(
-              children: [
-                _buildTopBar(session, card),
-                Expanded(child: _buildPracticeBody(card)),
-                _buildResultPanel(provider),
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }

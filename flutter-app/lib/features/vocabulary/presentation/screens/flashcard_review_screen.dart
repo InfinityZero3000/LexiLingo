@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -121,120 +122,123 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
           const SizedBox(width: 8),
         ],
       ),
-      body: Consumer<FlashcardProvider>(
-        builder: (context, provider, child) {
-          // Loading state
-          if (provider.isLoading && !provider.hasSession) {
-            return LoadingScreen(message: 'flashcard.loadingVocabulary'.tr());
-          }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Consumer<FlashcardProvider>(
+          builder: (context, provider, child) {
+            // Loading state
+            if (provider.isLoading && !provider.hasSession) {
+              return LoadingScreen(message: 'flashcard.loadingVocabulary'.tr());
+            }
 
-          // Error state
-          if (provider.errorMessage != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: AppColors.orange,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      provider.errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () {
-                        provider.clearError();
-                        provider.startReviewSession();
-                      },
-                      child: Text('flashcard.tryAgain'.tr()),
-                    ),
-                  ],
+            // Error state
+            if (provider.errorMessage != null) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: AppColors.orange,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        provider.errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          provider.clearError();
+                          provider.startReviewSession();
+                        },
+                        child: Text('flashcard.tryAgain'.tr()),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }
-
-          // No session
-          if (!provider.hasSession) {
-            return Center(
-              child: Text('flashcard.noReviewSessionAvailable'.tr()),
-            );
-          }
-
-          final session = provider.currentSession!;
-          final currentCard = session.currentCard;
-
-          if (currentCard == null) {
-            if (!session.isCompleted) {
-              // Loaded cards exhausted while background preload is still running
-              return const Center(
-                child: CircularProgressIndicator(strokeWidth: 3),
               );
             }
-            return Center(child: Text('flashcard.sessionComplete'.tr()));
-          }
 
-          return SafeArea(
-            child: Column(
-              children: [
-                // Session Header (Progress, Stats)
-                SessionHeader(session: session),
+            // No session
+            if (!provider.hasSession) {
+              return Center(
+                child: Text('flashcard.noReviewSessionAvailable'.tr()),
+              );
+            }
 
-                // Flashcard — fixed position, never shifts when buttons appear
-                Expanded(
-                  child: Align(
-                    alignment: const Alignment(0, -0.15),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: SlideTransition(
-                        position: _slideAnimation,
-                        child: FlashcardWidget(
-                          card: currentCard,
-                          isFlipped: provider.isCardFlipped,
-                          onTap: () {
-                            provider.flipCard();
-                          },
+            final session = provider.currentSession!;
+            final currentCard = session.currentCard;
+
+            if (currentCard == null) {
+              if (!session.isCompleted) {
+                // Loaded cards exhausted while background preload is still running
+                return const Center(
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                );
+              }
+              return Center(child: Text('flashcard.sessionComplete'.tr()));
+            }
+
+            return SafeArea(
+              child: Column(
+                children: [
+                  // Session Header (Progress, Stats)
+                  SessionHeader(session: session),
+
+                  // Flashcard — fixed position, never shifts when buttons appear
+                  Expanded(
+                    child: Align(
+                      alignment: const Alignment(0, -0.15),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: SlideTransition(
+                          position: _slideAnimation,
+                          child: FlashcardWidget(
+                            card: currentCard,
+                            isFlipped: provider.isCardFlipped,
+                            onTap: () {
+                              provider.flipCard();
+                            },
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                // Review Quality Buttons — always occupies space to keep card fixed
-                Visibility(
-                  visible: provider.isCardFlipped,
-                  maintainSize: true,
-                  maintainAnimation: true,
-                  maintainState: true,
-                  child: AnimatedSlide(
-                    offset: provider.isCardFlipped
-                        ? Offset.zero
-                        : const Offset(0, 0.3),
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeOutCubic,
-                    child: AnimatedOpacity(
-                      opacity: provider.isCardFlipped ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 250),
-                      child: ReviewQualityButtons(
-                        onQualitySelected: _handleReview,
-                        isLoading: provider.isLoading,
+                  // Review Quality Buttons — always occupies space to keep card fixed
+                  Visibility(
+                    visible: provider.isCardFlipped,
+                    maintainSize: true,
+                    maintainAnimation: true,
+                    maintainState: true,
+                    child: AnimatedSlide(
+                      offset: provider.isCardFlipped
+                          ? Offset.zero
+                          : const Offset(0, 0.3),
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                      child: AnimatedOpacity(
+                        opacity: provider.isCardFlipped ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 250),
+                        child: ReviewQualityButtons(
+                          onQualitySelected: _handleReview,
+                          isLoading: provider.isLoading,
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
-              ],
-            ),
-          );
-        },
+                  const SizedBox(height: 16),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
