@@ -81,7 +81,13 @@ async def _run() -> dict:
     against a fake client without touching RedisClient's real connect path."""
     if not RedisClient.is_connected():
         await RedisClient.connect()
-    return await _drain()
+    try:
+        return await _drain()
+    finally:
+        # asyncio.run() closes its loop on return; a client left in the
+        # singleton stays bound to it and the next tick dies with
+        # "Event loop is closed".
+        await RedisClient.close()
 
 
 async def _drain() -> dict:

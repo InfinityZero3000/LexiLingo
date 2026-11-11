@@ -21,4 +21,4 @@ devices:
     path: /
     pool: default
     type: disk
-    size: 25GB                # quota; works because the pool is btrfs
+    size: 20GB                # quota; works because the pool is btrfs (pool is 24GiB on ovh-vps)
