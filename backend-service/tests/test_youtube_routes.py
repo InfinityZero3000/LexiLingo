@@ -795,3 +795,10 @@ class TestTranslateEndpoint:
         body = resp.json()
         assert body["word"] == "test"
         assert body["translation"] == ""
+
+
+def test_unescape_text_decodes_html_entities_in_titles():
+    from app.routes.youtube import _unescape_text
+
+    out = _unescape_text({"title": "I&#39;m scared &amp; won&#39;t", "channel_title": "BBC", "video_id": "x"})
+    assert out == {"title": "I'm scared & won't", "channel_title": "BBC"}
