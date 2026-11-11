@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import gzip
 import hashlib
-import json
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote

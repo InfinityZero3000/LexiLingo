@@ -391,7 +391,7 @@ async def stream_audio(websocket: WebSocket):
         if session:
             await manager.close(session.start.session_id, "error")
         await websocket.close(code=4400)
-    except Exception as exc:
+    except Exception:
         logger.exception("Unhandled error in stream_audio session=%s", session.start.session_id if session else None)
         if sender and not sender.done():
             sender.cancel()
