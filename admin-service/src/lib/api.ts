@@ -231,9 +231,10 @@ export const apiFetch = async <T>(
     : await response.text();
 
   if (!response.ok) {
-    if (response.status === 401) {
+    if (response.status === 401 && !skipAuth) {
       authStore.clear();
-      window.location.href = "/login";
+      // Already on /login: a reload here re-fires the same 401 forever.
+      if (window.location.pathname !== "/login") window.location.href = "/login";
     }
     
     let message = "Request failed";
