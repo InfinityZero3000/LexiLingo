@@ -171,29 +171,34 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Top app bar
-                    Row(
+                    // Top app bar: the logo is centred on the full width; the side
+                    // controls differ in width (48 vs the language pill), so a Row
+                    // with Expanded would push it off-centre.
+                    Stack(
+                      alignment: Alignment.center,
                       children: [
-                        canPop
-                            ? AppBackButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: Icons.arrow_back,
-                                color: isDark
-                                    ? Colors.white
-                                    : AppColors.surfaceDarkInput,
-                              )
-                            : const SizedBox(width: 48),
-                        Expanded(
-                          child: Center(
-                            child: Image.asset(
-                              'assets/out-app/lexilingo-text.png',
-                              height: logoHeight,
-                              fit: BoxFit.contain,
-                              color: isDark ? Colors.white : null,
-                            ),
-                          ),
+                        Image.asset(
+                          'assets/out-app/lexilingo-text.png',
+                          height: logoHeight,
+                          fit: BoxFit.contain,
+                          color: isDark ? Colors.white : null,
                         ),
-                        const LanguageSwitcherButton(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            canPop
+                                ? AppBackButton(
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
+                                    icon: Icons.arrow_back,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColors.surfaceDarkInput,
+                                  )
+                                : const SizedBox(width: 48),
+                            const LanguageSwitcherButton(),
+                          ],
+                        ),
                       ],
                     ),
 
