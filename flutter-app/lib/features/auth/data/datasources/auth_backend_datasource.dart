@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../../../core/network/api_client.dart';
 import '../../../../core/services/user_scope_service.dart';
 import '../../../../core/utils/app_logger.dart';
@@ -194,6 +196,21 @@ class AuthBackendDataSource {
     );
 
     return UserModel.fromJson(envelope.data);
+  }
+
+  /// Upload a JPEG/PNG/WebP picked on the device as the avatar
+  /// POST /users/me/avatar
+  Future<UserModel> uploadAvatar({
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    final data = await apiClient.postMultipart(
+      '/users/me/avatar',
+      fileField: 'file',
+      fileBytes: bytes,
+      filename: filename,
+    );
+    return UserModel.fromJson(data);
   }
 
   /// Register device for push notifications

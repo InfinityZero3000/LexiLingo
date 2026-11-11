@@ -2,12 +2,16 @@
 User Routes
 """
 
-from fastapi import APIRouter, Depends, Query
+import uuid as uuid_lib
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from datetime import UTC, datetime
 
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.crud.user import UserCRUD
@@ -138,6 +142,51 @@ async def update_current_user_profile(
     await db.commit()
     await db.refresh(current_user)
     
+    return _serialize_user_response(current_user)
+
+
+_AVATAR_MEDIA_DIR = Path("/app/data/media")
+_MAX_AVATAR_BYTES = 2 * 1024 * 1024
+
+
+def _avatar_extension(head: bytes) -> str | None:
+    """Sniff the real format; the client-declared content type and filename are not trusted."""
+    if head.startswith(b"\xff\xd8\xff"):
+        return ".jpg"
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return ".png"
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return ".webp"
+    return None
+
+
+@router.post("/me/avatar", response_model=UserResponse)
+async def upload_current_user_avatar(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Store an uploaded JPEG/PNG/WebP (max 2 MB) as the caller's avatar."""
+    contents = await file.read(_MAX_AVATAR_BYTES + 1)
+    if len(contents) > _MAX_AVATAR_BYTES:
+        raise HTTPException(status.HTTP_413_CONTENT_TOO_LARGE, "Avatar too large. Maximum 2MB allowed.")
+    extension = _avatar_extension(contents[:12])
+    if extension is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Avatar must be a JPEG, PNG or WebP image.")
+
+    target_dir = _AVATAR_MEDIA_DIR / "avatars"
+    target_dir.mkdir(parents=True, exist_ok=True)
+    name = f"{current_user.id}-{uuid_lib.uuid4().hex[:12]}{extension}"
+    (target_dir / name).write_bytes(contents)
+    for old in target_dir.glob(f"{current_user.id}-*"):
+        if old.name != name:
+            old.unlink(missing_ok=True)
+
+    origin = settings.MEDIA_PUBLIC_BASE_URL.rstrip("/") or str(request.base_url).rstrip("/")
+    current_user.avatar_url = f"{origin}/media/avatars/{name}"
+    await db.commit()
+    await db.refresh(current_user)
     return _serialize_user_response(current_user)
 
 

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../entities/user_entity.dart';
@@ -41,6 +43,12 @@ abstract class AuthRepository {
     String? goal,
     String? interest,
     bool? isOnboardingCompleted,
+  });
+
+  /// Upload a picked image as the avatar; returns the updated user
+  Future<Either<Failure, UserEntity>> uploadAvatar({
+    required Uint8List bytes,
+    required String filename,
   });
 
   /// Check if user is authenticated

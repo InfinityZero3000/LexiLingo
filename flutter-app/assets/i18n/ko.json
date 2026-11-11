@@ -649,6 +649,8 @@
     "saveChanges": "변경 사항 저장",
     "tapCameraToChangeAvatar": "아바타를 변경하려면 카메라를 탭하세요.",
     "chooseAvatar": "아바타를 선택하세요",
+    "uploadFromDevice": "기기에서 사진 업로드",
+    "avatarUploadFailed": "사진을 업로드하지 못했습니다. 2MB 미만의 JPEG, PNG, WebP를 사용하세요.",
     "useCustomUrl": "맞춤 URL 사용",
     "customAvatarUrl": "맞춤 아바타 URL",
     "avatarUrlHint": "https://example.com/avatar.png",

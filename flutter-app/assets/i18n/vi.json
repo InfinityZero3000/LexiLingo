@@ -649,6 +649,8 @@
     "saveChanges": "Lưu thay đổi",
     "tapCameraToChangeAvatar": "Chạm biểu tượng camera để đổi ảnh đại diện",
     "chooseAvatar": "Chọn ảnh đại diện",
+    "uploadFromDevice": "Tải ảnh từ máy",
+    "avatarUploadFailed": "Không tải được ảnh. Hãy dùng ảnh JPEG, PNG hoặc WebP dưới 2 MB.",
     "useCustomUrl": "Dùng URL tùy chỉnh",
     "customAvatarUrl": "URL ảnh đại diện tùy chỉnh",
     "avatarUrlHint": "https://example.com/avatar.png",

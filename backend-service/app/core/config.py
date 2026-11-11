@@ -342,6 +342,8 @@ class Settings(BaseSettings):
     # Where scripts/backup-prod.sh and verify-backup.sh leave their status files (mounted read-only).
     BACKUP_STATE_DIR: str = "/var/lib/lexilingo"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
+    # Origin that serves /media (e.g. https://api.lexilingo.me); empty falls back to the request's own origin.
+    MEDIA_PUBLIC_BASE_URL: str = ""
 
     # Deep-link / Universal Links
     # SHA-256 fingerprint of the Android signing certificate (colon-separated hex).

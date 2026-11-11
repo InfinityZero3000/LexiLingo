@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
@@ -516,6 +517,34 @@ class AuthProvider extends ChangeNotifier {
       final result = await authRepository.updateProfile(
         displayName: displayName,
         avatarUrl: avatarUrl,
+      );
+
+      result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          throw Exception(_errorMessage);
+        },
+        (updatedUser) {
+          _user = updatedUser;
+          _errorMessage = null;
+        },
+      );
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Upload a picked image as the avatar; throws on failure.
+  Future<void> uploadAvatar(Uint8List bytes, String filename) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.uploadAvatar(
+        bytes: bytes,
+        filename: filename,
       );
 
       result.fold(
