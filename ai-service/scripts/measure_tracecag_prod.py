@@ -121,9 +121,41 @@ def reconcile(db: Any) -> dict[str, Any]:
     }
 
 
+def turns(db: Any) -> dict[str, Any]:
+    rows = list(db["tracecag_turn_metrics"].find({}))
+    n = len(rows)
+
+    def nums(key: str) -> list[float]:
+        return [r[key] for r in rows if isinstance(r.get(key), (int, float))]
+
+    def rate(key: str) -> float | None:
+        return round(sum(bool(r.get(key)) for r in rows) / n, 3) if n else None
+
+    fresh = [r["latency_ms"] for r in rows if not r.get("cache_hit") and isinstance(r.get("latency_ms"), (int, float))]
+    return {
+        "turns": n,
+        "by_path": dict(collections.Counter(r.get("path") for r in rows)),
+        "cache_hit_rate": rate("cache_hit"),
+        "error_rate": rate("error"),
+        "learner_state_degraded_rate": rate("learner_state_degraded"),
+        "latency_ms": dist(nums("latency_ms")),
+        "latency_ms_uncached": dist(fresh),
+        "ttft_ms": dist(nums("ttft_ms")),
+        "learner_state_ms": dist(nums("learner_state_ms")),
+        "kg_seed": dist(nums("kg_seed")),
+        "kg_expanded": dist(nums("kg_expanded")),
+        "retrieved": dist(nums("retrieved")),
+        "diagnosis_errors": dist(nums("diagnosis_errors")),
+        "prompt_tokens": dist(nums("prompt_tokens")),
+        "models": dict(collections.Counter(m for r in rows for m in r.get("models") or [])),
+        "first": str(min(r["ts"] for r in rows)) if rows else None,
+        "last": str(max(r["ts"] for r in rows)) if rows else None,
+    }
+
+
 def main() -> None:
     db = MongoClient(os.environ.get("MONGODB_URI", "mongodb://mongodb:27017"), serverSelectionTimeoutMS=10000)[os.environ.get("MONGODB_DATABASE", "lexilingo")]
-    report = {"chat": chat(db), "spool": spool(db, kg_ids()), "reconcile": reconcile(db)}
+    report = {"turn_metrics": turns(db), "chat": chat(db), "spool": spool(db, kg_ids()), "reconcile": reconcile(db)}
     print(json.dumps(report, indent=2, default=str, ensure_ascii=False))
 
 
