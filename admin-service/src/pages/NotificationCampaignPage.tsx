@@ -110,8 +110,8 @@ export function NotificationCampaignPage() {
           description="Tạo campaign đầu tiên để bắt đầu."
         />
       ) : (
-        <div className="table-container">
-          <table className="data-table">
+        <div className="table-wrap">
+          <table>
             <thead>
               <tr>
                 <th>Loại</th>

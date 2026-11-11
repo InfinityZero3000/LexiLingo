@@ -12,7 +12,6 @@ Covers:
 - POST /api/v1/categories                   — create (auth required)
 - PUT  /api/v1/categories/{id}              — update (auth required)
 - DELETE /api/v1/categories/{id}            — delete (auth required)
-- POST /api/v1/categories/update-counts     — update course counts (auth required)
 """
 
 import pytest
@@ -62,6 +61,7 @@ async def auth_client():
     mock_user.target_language = "en"
     mock_user.total_xp = 100
     mock_user.display_name = "Test User"
+    mock_user.role_level = 2  # super admin: permission checks need no DB rows
 
     async def mock_get_db():
         yield mock_session
@@ -186,6 +186,26 @@ class TestListCategories:
             await no_auth_client.get(f"{BASE}?active_only=false")
         _, call_kwargs = mock_get_all.call_args
         assert call_kwargs["active_only"] is False
+
+
+    @pytest.mark.asyncio
+    async def test_course_count_is_the_live_published_count_not_the_stored_column(
+        self, no_auth_client: AsyncClient
+    ):
+        cat = _make_mock_category()  # stored course_count is 5
+        with patch(
+            "app.crud.course_category.CourseCategoryCRUD.get_all_categories",
+            new=AsyncMock(return_value=([cat], 1)),
+        ), patch(
+            "app.crud.course_category.CourseCategoryCRUD.published_course_counts",
+            new=AsyncMock(return_value={cat.id: 2}),
+        ), patch(
+            "app.routes.course_categories.get_cached", new=AsyncMock(return_value=None)
+        ), patch(
+            "app.routes.course_categories.set_cached", new=AsyncMock()
+        ):
+            response = await no_auth_client.get(BASE)
+        assert response.json()["data"][0]["course_count"] == 2
 
 
 # ============================================================================
@@ -415,26 +435,3 @@ class TestDeleteCategory:
             response = await auth_client.delete(f"{BASE}/{CATEGORY_ID}")
         assert response.status_code == 200
         assert response.json()["data"]["id"] == CATEGORY_ID
-
-
-# ============================================================================
-# POST /api/v1/categories/update-counts  — Update course counts (auth required)
-# ============================================================================
-
-class TestUpdateCourseCounts:
-    """Tests for POST /api/v1/categories/update-counts."""
-
-    @pytest.mark.asyncio
-    async def test_requires_auth(self, no_auth_client: AsyncClient):
-        response = await no_auth_client.post(f"{BASE}/update-counts")
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_returns_200_on_success(self, auth_client: AsyncClient):
-        with patch(
-            "app.crud.course_category.CourseCategoryCRUD.update_course_counts",
-            new=AsyncMock(return_value=None),
-        ):
-            response = await auth_client.post(f"{BASE}/update-counts")
-        assert response.status_code == 200
-        assert response.json()["data"]["status"] == "completed"

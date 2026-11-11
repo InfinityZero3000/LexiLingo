@@ -19,7 +19,9 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  final bool isActive;
+
+  const ProfilePage({super.key, this.isActive = true});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -34,6 +36,12 @@ class _ProfilePageState extends State<ProfilePage> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant ProfilePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) _loadData();
+  }
+
   Future<void> _loadData() async {
     final authProvider = context.read<AuthProvider>();
     final levelProvider = context.read<LevelProvider>();
@@ -42,9 +50,10 @@ class _ProfilePageState extends State<ProfilePage> {
     final gamificationProvider = context.read<GamificationProvider>();
     final proficiencyProvider = context.read<ProficiencyProvider>();
 
-    // Fetch authoritative level data from backend.
-    // Falls back to local formula if network is unavailable.
+    // Refresh the authoritative account state so email verification changes
+    // are reflected in the profile badge after returning from the email link.
     if (authProvider.currentUser != null) {
+      await authProvider.refreshCurrentUser();
       await levelProvider.fetchLevelFull();
     }
 
@@ -207,7 +216,9 @@ class _ProfilePageState extends State<ProfilePage> {
         onRefresh: _loadData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.only(bottom: 24),
+          padding: EdgeInsets.only(
+            bottom: 24 + MediaQuery.paddingOf(context).bottom,
+          ),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 960),
@@ -237,8 +248,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   // Admin Panel shortcut (only for authorised accounts)
                   if (_isAdminUser(user))
                     AdminPanelTile(onTap: _openAdminPanel),
-
-                  const SizedBox(height: 80),
                 ],
               ),
             ),

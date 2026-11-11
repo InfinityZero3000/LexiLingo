@@ -40,6 +40,18 @@ async def test_lock_contention_does_not_consume_http_retry(monkeypatch):
     assert [response.status_code for response in responses] == [200, 200]
 
 
+@pytest.mark.parametrize(
+    ("body", "expected"),
+    [
+        ("Rate limit on tokens per minute (TPM): Limit 6000. Need more tokens? Upgrade at https://console.groq.com/settings/billing", False),
+        ("Rate limit on tokens per day (TPD): Limit 200000. Need more tokens? Upgrade at https://console.groq.com/settings/billing", True),
+        ('{"error": {"status": "RESOURCE_EXHAUSTED"}}', True),
+    ],
+)
+def test_billing_link_alone_does_not_make_a_429_a_daily_limit(body, expected):
+    assert llm_client._is_daily_limit(body) is expected
+
+
 @pytest.mark.asyncio
 async def test_groq_quota_cooldown_is_scoped_to_one_key(monkeypatch):
     quota = SimpleNamespace(

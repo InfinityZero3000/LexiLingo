@@ -145,7 +145,7 @@ jobs:
   # Backend — Alembic migration chain must build from an empty database.
   # Separate from the `backend` job's test-DB setup (which uses
   # scripts/create_tables.py for speed) — this is a regression gate on the
-  # migration chain itself. See BACKEND_AUDIT_REPORT.md finding #3.
+  # migration chain itself.
   # ──────────────────────────────────────────────
   backend-migrations:
     name: Backend Migrations Build-From-Clean
@@ -269,6 +269,22 @@ jobs:
             tests/test_llm_client_pacing.py \
             --tb=short -q
 
+      # The licensed-content ETL, its adapters and the content-agent that
+      # consumes it (seed/reference enrichment) had no CI coverage at all.
+      - name: Run content ETL and content-agent tests
+        run: |
+          pytest \
+            tests/content_etl \
+            tests/test_reference_enrichment_flow.py \
+            tests/test_content_agent_adapters.py \
+            tests/test_content_agent_generator.py \
+            tests/test_content_agent_planner.py \
+            tests/test_content_agent_policies.py \
+            tests/test_content_agent_routes.py \
+            tests/test_content_agent_store.py \
+            tests/integration/test_licensed_etl_content_agent_flow.py \
+            --tb=short -q
+
   # ──────────────────────────────────────────────
   # MCP server — import and startup protocol smoke
   # ──────────────────────────────────────────────
@@ -362,6 +378,8 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          # Pinned: phosphor_flutter 2.1.0 extends IconData, which is final from Flutter 3.47 on.
+          flutter-version: 3.38.9
           channel: stable
           cache: true
 

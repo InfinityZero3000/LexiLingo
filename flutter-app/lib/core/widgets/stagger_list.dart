@@ -41,16 +41,14 @@ class _StaggeredListState extends State<StaggeredList>
     super.initState();
     _controllers = List.generate(
       widget.children.length,
-      (i) => AnimationController(
-        vsync: this,
-        duration: widget.itemDuration,
-      ),
+      (i) => AnimationController(vsync: this, duration: widget.itemDuration),
     );
 
     _fadeAnimations = _controllers.map((c) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOut),
-      );
+      return Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut));
     }).toList();
 
     _slideAnimations = _controllers.map((c) {
@@ -134,16 +132,14 @@ class _SliverStaggeredListState extends State<SliverStaggeredList>
     super.initState();
     _controllers = List.generate(
       widget.children.length,
-      (i) => AnimationController(
-        vsync: this,
-        duration: widget.itemDuration,
-      ),
+      (i) => AnimationController(vsync: this, duration: widget.itemDuration),
     );
 
     _fadeAnimations = _controllers.map((c) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: c, curve: Curves.easeOut),
-      );
+      return Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(CurvedAnimation(parent: c, curve: Curves.easeOut));
     }).toList();
 
     _slideAnimations = _controllers.map((c) {

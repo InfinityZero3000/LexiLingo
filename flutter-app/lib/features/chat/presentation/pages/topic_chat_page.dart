@@ -1138,6 +1138,8 @@ class _TopicMessageBubble extends StatelessWidget {
                         : MarkdownMessageContent(
                             content: message.displayContent,
                             isDark: isDark,
+                            saveSourceType: 'topic_chat',
+                            saveSourceReference: message.sessionId,
                           ),
                   ),
                 ),

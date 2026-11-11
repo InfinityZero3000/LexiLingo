@@ -21,6 +21,10 @@ class LexiMessage {
   /// they pronounced what they said, not whether it was "correct."
   final PronunciationScore? pronunciationScore;
 
+  /// Voice transcript the recogniser itself was unsure of. Session-only: it
+  /// describes this utterance's audio, so it is not persisted.
+  final bool heardUncertain;
+
   const LexiMessage({
     required this.id,
     required this.role,
@@ -36,6 +40,7 @@ class LexiMessage {
     this.syncStatus = 'synced',
     this.clientRequestId,
     this.pronunciationScore,
+    this.heardUncertain = false,
   });
 
   bool get isUser => role == 'user';
@@ -59,6 +64,7 @@ class LexiMessage {
     String? syncStatus,
     String? clientRequestId,
     PronunciationScore? pronunciationScore,
+    bool? heardUncertain,
   }) {
     return LexiMessage(
       id: id ?? this.id,
@@ -75,6 +81,7 @@ class LexiMessage {
       syncStatus: syncStatus ?? this.syncStatus,
       clientRequestId: clientRequestId ?? this.clientRequestId,
       pronunciationScore: pronunciationScore ?? this.pronunciationScore,
+      heardUncertain: heardUncertain ?? this.heardUncertain,
     );
   }
 }

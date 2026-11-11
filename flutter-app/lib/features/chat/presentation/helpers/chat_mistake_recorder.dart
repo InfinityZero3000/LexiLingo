@@ -30,7 +30,6 @@ class ChatMistakeRecorder {
           sourceType: sourceType,
           sourceId: sourceId,
           questionId: '$original->$corrected',
-          selectedAnswer: original,
         ),
         sourceType: sourceType,
         sourceId: sourceId,

@@ -3,48 +3,28 @@ RBAC Management Routes
 Super admin endpoints for managing roles, permissions, users, and audit logs.
 """
 
+import csv
+import io
+from datetime import datetime
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin, get_current_super_admin
+from app.core.dependencies import get_current_admin, get_current_super_admin, require_permission
 from app.models.user import User
+from app.services.admin_audit import record_admin_action
 from app.models.rbac import Role, Permission, RolePermission, AuditLog
 from app.schemas.rbac import (
     RoleResponse,
     RoleWithPermissions,
     PermissionResponse,
-    AuditLogResponse,
-    AssignRoleRequest,
 )
-from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/admin/rbac", tags=["RBAC Management"])
-
-
-# ── Helper: log admin actions ─────────────────────────────
-
-async def _audit(
-    db: AsyncSession,
-    user_id: UUID,
-    action: str,
-    resource_type: str,
-    resource_id: str = None,
-    details: str = None,
-):
-    """Write an audit log entry."""
-    log = AuditLog(
-        user_id=user_id,
-        action=action,
-        resource_type=resource_type,
-        resource_id=resource_id,
-        details=details,
-    )
-    db.add(log)
 
 
 # ============================================================================
@@ -53,7 +33,7 @@ async def _audit(
 
 @router.get("/roles", response_model=List[RoleResponse])
 async def list_roles(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("rbac:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """List all system roles."""
@@ -64,7 +44,7 @@ async def list_roles(
 @router.get("/roles/{role_slug}", response_model=RoleWithPermissions)
 async def get_role_with_permissions(
     role_slug: str,
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("rbac:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """Get a role with its permissions."""
@@ -101,7 +81,7 @@ async def get_role_with_permissions(
 
 @router.get("/permissions", response_model=List[PermissionResponse])
 async def list_permissions(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("rbac:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """List all permissions."""
@@ -111,175 +91,123 @@ async def list_permissions(
     return result.scalars().all()
 
 
+class RolePermissionsUpdate(BaseModel):
+    permission_slugs: List[str]
+
+
+@router.put("/roles/{role_slug}/permissions", response_model=RoleWithPermissions)
+async def set_role_permissions(
+    role_slug: str,
+    data: RolePermissionsUpdate,
+    request: Request,
+    admin: User = Depends(get_current_super_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Replace the permissions of an admin-level role. Super admin is never editable."""
+    role = (await db.execute(select(Role).where(Role.slug == role_slug))).scalar_one_or_none()
+    if not role:
+        raise HTTPException(status_code=404, detail=f"Role '{role_slug}' not found")
+    if role.level != 1:
+        raise HTTPException(status_code=400, detail="Only admin-level roles can be edited")
+
+    wanted = set(data.permission_slugs)
+    known = {
+        p.slug: p
+        for p in (await db.execute(select(Permission).where(Permission.slug.in_(wanted)))).scalars().all()
+    }
+    unknown = sorted(wanted - known.keys())
+    if unknown:
+        raise HTTPException(status_code=422, detail=f"Unknown permissions: {', '.join(unknown)}")
+
+    current_rows = (
+        await db.execute(
+            select(RolePermission, Permission.slug)
+            .join(Permission, Permission.id == RolePermission.permission_id)
+            .where(RolePermission.role_id == role.id)
+        )
+    ).all()
+    current = {slug: row for row, slug in current_rows}
+    removed = sorted(current.keys() - wanted)
+    added = sorted(wanted - current.keys())
+    for slug in removed:
+        await db.delete(current[slug])
+    for slug in added:
+        db.add(RolePermission(role_id=role.id, permission_id=known[slug].id))
+    if added or removed:
+        record_admin_action(
+            db, admin, "role_permissions_update", "role", role.slug, {"added": added, "removed": removed}, request
+        )
+    await db.commit()
+    return await get_role_with_permissions(role_slug, admin, db)
+
+
+@router.get("/me/permissions")
+async def my_permissions(
+    admin: User = Depends(get_current_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """What the caller may do, so the UI can hide what the server would refuse."""
+    if admin.role_level >= 2:
+        return {"all": True, "permissions": []}
+    rows = await db.execute(
+        select(Permission.slug)
+        .join(RolePermission, RolePermission.permission_id == Permission.id)
+        .where(RolePermission.role_id == admin.role_id)
+    )
+    return {"all": False, "permissions": sorted(rows.scalars().all())}
+
+
 # ============================================================================
 # User Role Assignment (super_admin only)
 # ============================================================================
-
-@router.get("/users", response_model=dict)
-async def list_users_with_roles(
-    page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
-    role_slug: Optional[str] = Query(None, description="Filter by role slug"),
-    search: Optional[str] = Query(None, description="Search by username or email"),
-    admin: User = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """List users with their roles. Admin and super_admin can access this."""
-    query = select(User).order_by(User.created_at.desc())
-
-    if role_slug:
-        query = query.join(Role, User.role_id == Role.id).where(Role.slug == role_slug)
-
-    if search:
-        query = query.where(
-            (User.username.ilike(f"%{search}%")) | (User.email.ilike(f"%{search}%"))
-        )
-
-    # Count total
-    count_query = select(func.count()).select_from(query.subquery())
-    total = (await db.execute(count_query)).scalar()
-
-    # Paginate
-    query = query.offset((page - 1) * per_page).limit(per_page)
-    result = await db.execute(query)
-    users = result.scalars().all()
-
-    return {
-        "users": [
-            {
-                "id": str(u.id),
-                "username": u.username,
-                "email": u.email,
-                "display_name": u.display_name,
-                "role": u.role_slug,
-                "is_active": u.is_active,
-                "is_verified": u.is_verified,
-                "numeric_level": u.numeric_level,
-                "total_xp": u.total_xp,
-                "created_at": u.created_at.isoformat(),
-            }
-            for u in users
-        ],
-        "total": total,
-        "page": page,
-        "per_page": per_page,
-        "pages": (total + per_page - 1) // per_page if total else 0,
-    }
-
-
-@router.post("/users/assign-role", response_model=dict)
-async def assign_role_to_user(
-    request: AssignRoleRequest,
-    super_admin: User = Depends(get_current_super_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Assign a role to a user. Super admin only.
-    Cannot demote yourself or another super_admin.
-    """
-    # Find target user
-    result = await db.execute(select(User).where(User.id == request.user_id))
-    target_user = result.scalar_one_or_none()
-    if not target_user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Find role
-    result = await db.execute(select(Role).where(Role.slug == request.role_slug))
-    role = result.scalar_one_or_none()
-    if not role:
-        raise HTTPException(status_code=404, detail=f"Role '{request.role_slug}' not found")
-
-    # Prevent self-demotion
-    if target_user.id == super_admin.id and role.level < super_admin.role_level:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot demote yourself",
-        )
-
-    # Prevent demoting another super_admin (only higher or equal level can modify)
-    if target_user.role_level >= super_admin.role_level and target_user.id != super_admin.id:
-        raise HTTPException(
-            status_code=403,
-            detail="Cannot modify a user with equal or higher role level",
-        )
-
-    old_role = target_user.role_slug
-    target_user.role_id = role.id
-
-    await _audit(
-        db,
-        user_id=super_admin.id,
-        action="assign_role",
-        resource_type="user",
-        resource_id=str(target_user.id),
-        details=f"Role changed from '{old_role}' to '{role.slug}'",
-    )
-
-    await db.commit()
-    await db.refresh(target_user)
-
-    return {
-        "message": f"Role '{role.slug}' assigned to user '{target_user.username}'",
-        "user_id": str(target_user.id),
-        "username": target_user.username,
-        "old_role": old_role,
-        "new_role": role.slug,
-    }
-
-
-@router.post("/users/{user_id}/deactivate", response_model=dict)
-async def deactivate_user(
-    user_id: UUID,
-    admin: User = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """Deactivate (soft-ban) a user. Admin can deactivate regular users, super_admin can deactivate anyone."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    target = result.scalar_one_or_none()
-    if not target:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # Admin can't deactivate other admins
-    if target.role_level >= admin.role_level and target.id != admin.id:
-        raise HTTPException(status_code=403, detail="Cannot deactivate a user with equal or higher role")
-
-    # Can't deactivate yourself
-    if target.id == admin.id:
-        raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
-
-    target.is_active = False
-
-    await _audit(db, admin.id, "deactivate", "user", str(target.id),
-                 f"User {target.username} deactivated by {admin.username}")
-    await db.commit()
-
-    return {"message": f"User '{target.username}' has been deactivated", "user_id": str(target.id)}
-
-
-@router.post("/users/{user_id}/activate", response_model=dict)
-async def activate_user(
-    user_id: UUID,
-    admin: User = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """Re-activate a deactivated user."""
-    result = await db.execute(select(User).where(User.id == user_id))
-    target = result.scalar_one_or_none()
-    if not target:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    target.is_active = True
-
-    await _audit(db, admin.id, "activate", "user", str(target.id),
-                 f"User {target.username} reactivated by {admin.username}")
-    await db.commit()
-
-    return {"message": f"User '{target.username}' has been activated", "user_id": str(target.id)}
 
 
 # ============================================================================
 # Audit Logs (admin can read)
 # ============================================================================
+
+def _audit_filters(
+    action: Optional[str],
+    resource_type: Optional[str],
+    resource_id: Optional[str],
+    user_id: Optional[UUID],
+    date_from: Optional[datetime],
+    date_to: Optional[datetime],
+    q: Optional[str],
+):
+    conditions = []
+    if action:
+        conditions.append(AuditLog.action == action)
+    if resource_type:
+        conditions.append(AuditLog.resource_type == resource_type)
+    if resource_id:
+        conditions.append(AuditLog.resource_id == resource_id)
+    if user_id:
+        conditions.append(AuditLog.user_id == user_id)
+    if date_from:
+        conditions.append(AuditLog.created_at >= date_from)
+    if date_to:
+        conditions.append(AuditLog.created_at <= date_to)
+    if q:
+        like = f"%{q}%"
+        conditions.append(
+            or_(
+                AuditLog.details.ilike(like),
+                AuditLog.resource_id.ilike(like),
+                User.username.ilike(like),
+                User.email.ilike(like),
+            )
+        )
+    return conditions
+
+
+def _audit_select(conditions):
+    return (
+        select(AuditLog, User.username, User.email)
+        .outerjoin(User, User.id == AuditLog.user_id)
+        .where(*conditions)
+    )
+
 
 @router.get("/audit-logs", response_model=dict)
 async def list_audit_logs(
@@ -287,47 +215,114 @@ async def list_audit_logs(
     per_page: int = Query(50, ge=1, le=100),
     action: Optional[str] = Query(None),
     resource_type: Optional[str] = Query(None),
+    resource_id: Optional[str] = Query(None),
     user_id: Optional[UUID] = Query(None),
-    admin: User = Depends(get_current_admin),
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
+    q: Optional[str] = Query(None, max_length=100),
+    admin: User = Depends(require_permission("rbac:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """List audit logs with filtering and pagination."""
-    query = select(AuditLog).order_by(AuditLog.created_at.desc())
+    conditions = _audit_filters(action, resource_type, resource_id, user_id, date_from, date_to, q)
 
-    if action:
-        query = query.where(AuditLog.action == action)
-    if resource_type:
-        query = query.where(AuditLog.resource_type == resource_type)
-    if user_id:
-        query = query.where(AuditLog.user_id == user_id)
-
-    # Count
-    count_query = select(func.count()).select_from(query.subquery())
+    count_query = select(func.count()).select_from(_audit_select(conditions).subquery())
     total = (await db.execute(count_query)).scalar()
 
-    # Paginate
-    query = query.offset((page - 1) * per_page).limit(per_page)
-    result = await db.execute(query)
-    logs = result.scalars().all()
+    query = (
+        _audit_select(conditions)
+        .order_by(AuditLog.created_at.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+    )
+    rows = (await db.execute(query)).all()
 
     return {
         "logs": [
             {
                 "id": str(log.id),
                 "user_id": str(log.user_id) if log.user_id else None,
+                "actor": {"username": username, "email": email} if username or email else None,
                 "action": log.action,
                 "resource_type": log.resource_type,
                 "resource_id": log.resource_id,
                 "details": log.details,
                 "ip_address": log.ip_address,
+                "user_agent": log.user_agent,
                 "created_at": log.created_at.isoformat(),
             }
-            for log in logs
+            for log, username, email in rows
         ],
         "total": total,
         "page": page,
         "per_page": per_page,
     }
+
+
+@router.get("/audit-logs/facets", response_model=dict)
+async def audit_log_facets(
+    admin: User = Depends(require_permission("rbac:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Values that actually occur, so filter dropdowns never drift from the data."""
+    actions = (await db.execute(select(AuditLog.action).distinct().order_by(AuditLog.action))).scalars().all()
+    resource_types = (
+        await db.execute(select(AuditLog.resource_type).distinct().order_by(AuditLog.resource_type))
+    ).scalars().all()
+    return {"actions": list(actions), "resource_types": list(resource_types)}
+
+
+_CSV_MAX_ROWS = 10_000
+
+
+def _csv_cell(value) -> str:
+    text = "" if value is None else str(value)
+    # Spreadsheets run cells that start with these as formulas.
+    return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
+
+
+@router.get("/audit-logs/export")
+async def export_audit_logs(
+    action: Optional[str] = Query(None),
+    resource_type: Optional[str] = Query(None),
+    resource_id: Optional[str] = Query(None),
+    user_id: Optional[UUID] = Query(None),
+    date_from: Optional[datetime] = Query(None),
+    date_to: Optional[datetime] = Query(None),
+    q: Optional[str] = Query(None, max_length=100),
+    admin: User = Depends(require_permission("rbac:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """CSV of the same filtered view, newest first, capped at 10,000 rows."""
+    conditions = _audit_filters(action, resource_type, resource_id, user_id, date_from, date_to, q)
+    query = (
+        _audit_select(conditions).order_by(AuditLog.created_at.desc()).limit(_CSV_MAX_ROWS)
+    )
+    rows = (await db.execute(query)).all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        ["created_at", "actor", "actor_email", "action", "resource_type", "resource_id", "ip_address", "details"]
+    )
+    for log, username, email in rows:
+        writer.writerow(
+            [
+                _csv_cell(log.created_at.isoformat()),
+                _csv_cell(username),
+                _csv_cell(email),
+                _csv_cell(log.action),
+                _csv_cell(log.resource_type),
+                _csv_cell(log.resource_id),
+                _csv_cell(log.ip_address),
+                _csv_cell(log.details),
+            ]
+        )
+    return Response(
+        content="\ufeff" + buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="audit-logs.csv"'},
+    )
 
 
 # ============================================================================
@@ -336,7 +331,7 @@ async def list_audit_logs(
 
 @router.get("/dashboard", response_model=dict)
 async def admin_dashboard(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_permission("rbac:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """Admin dashboard with key metrics."""

@@ -22,7 +22,14 @@ PG_BACKUP="${1:-}"
 REQUIRED_TABLES=(users courses lessons)
 
 cleanup() {
+  local code=$?
   sudo docker rm -f "${CONTAINER}" >/dev/null 2>&1 || true
+  # Every exit path, including die(), lands here, so a failed verify is recorded too.
+  if (( code == 0 )); then
+    write_status verify-last.json result=ok at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" backup="$(basename "${PG_BACKUP:-unknown}")"
+  else
+    write_status verify-last.json result=failed at="$(date -u +%Y-%m-%dT%H:%M:%SZ)" backup="$(basename "${PG_BACKUP:-unknown}")" error="exit ${code}"
+  fi
 }
 trap cleanup EXIT
 

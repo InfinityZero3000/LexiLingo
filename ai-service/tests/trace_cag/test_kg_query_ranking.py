@@ -93,8 +93,11 @@ def test_long_common_word_concept_does_not_win_unrelated_query(kg):
 
 
 def test_scores_stay_within_their_documented_range(kg):
+    # A coverage score is at most the title boost. A named entity (its whole title is a phrase of the query) may exceed it by the
+    # quote bonus (1.0) and a tie-break of 0.05 x the rarest word's IDF: it has to outrank any coverage score.
+    ceiling = max(kg_module._TITLE_MATCH_BOOST, 1.0) + 1.0 + 0.05 * max(kg._keyword_idf.values())
     for node in kg.query_concepts("hotel check in travel", learner_level="A2", top_k=8):
-        assert 0.0 <= node["score"] <= kg_module._TITLE_MATCH_BOOST
+        assert 0.0 <= node["score"] <= ceiling
 
 
 def test_seed_concepts_are_capped_and_ranked(kg):

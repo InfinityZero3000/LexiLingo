@@ -13,6 +13,7 @@ class DailyChallengeModel extends DailyChallengeEntity {
     required super.current,
     required super.xpReward,
     required super.isCompleted,
+    super.isClaimed,
     required super.expiresAt,
   });
 
@@ -27,6 +28,7 @@ class DailyChallengeModel extends DailyChallengeEntity {
       current: json['current'] ?? 0,
       xpReward: json['xp_reward'] ?? 0,
       isCompleted: json['is_completed'] ?? false,
+      isClaimed: json['is_claimed'] ?? false,
       expiresAt: json['expires_at'] != null
           ? DateTime.parse(json['expires_at'])
           : DateTime.now().add(const Duration(days: 1)),
@@ -44,6 +46,7 @@ class DailyChallengeModel extends DailyChallengeEntity {
       'current': current,
       'xp_reward': xpReward,
       'is_completed': isCompleted,
+      'is_claimed': isClaimed,
       'expires_at': expiresAt.toIso8601String(),
     };
   }
@@ -57,14 +60,15 @@ class DailyChallengesResponseModel extends DailyChallengesResponse {
     required super.totalCompleted,
     required super.totalChallenges,
     required super.bonusXp,
+    super.bonusClaimed,
   });
 
   factory DailyChallengesResponseModel.fromJson(Map<String, dynamic> json) {
     final challengesList =
         (json['challenges'] as List?)
-            ?.map((c) => DailyChallengeModel.fromJson(c))
+            ?.map<DailyChallengeEntity>((c) => DailyChallengeModel.fromJson(c))
             .toList() ??
-        [];
+        <DailyChallengeEntity>[];
 
     return DailyChallengesResponseModel(
       date: json['date'] ?? DateTime.now().toIso8601String().split('T').first,
@@ -72,6 +76,7 @@ class DailyChallengesResponseModel extends DailyChallengesResponse {
       totalCompleted: json['total_completed'] ?? 0,
       totalChallenges: json['total_challenges'] ?? challengesList.length,
       bonusXp: json['bonus_xp'] ?? 0,
+      bonusClaimed: json['bonus_claimed'] ?? false,
     );
   }
 }

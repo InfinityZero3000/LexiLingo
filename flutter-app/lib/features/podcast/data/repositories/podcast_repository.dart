@@ -172,22 +172,72 @@ class PodcastRepository {
     return transcript.trim();
   }
 
-  // ──── Listening History (SQLite via LocalCacheService) ────
+  // ──── Listening History (SharedPreferences) ────
+  //
+  // Not the SQLite cache: that one expires entries by TTL, and a learner's
+  // place in an episode must outlive it.
 
-  /// Get listening history for a specific episode from local SQLite cache.
-  ///
-  /// Returns null if no history has been recorded yet.
-  Future<ListeningHistory?> getListeningHistory(String episodeGuid) async {
-    final key = 'podcast:history:$episodeGuid';
-    final raw = await _cache.get(key);
-    if (raw == null) return null;
-    return ListeningHistory.fromJson(raw as Map<String, dynamic>);
+  static const _historyKey = 'podcast_listening_history';
+  static const historyCap = 30;
+
+  /// Newest-first. Entries that fail to parse are dropped, not fatal.
+  Future<List<ListeningHistory>> getRecentListening() async {
+    final prefs = await SharedPreferences.getInstance();
+    final entries = <ListeningHistory>[];
+    for (final raw in prefs.getStringList(_historyKey) ?? const <String>[]) {
+      try {
+        entries.add(
+          ListeningHistory.fromJson(jsonDecode(raw) as Map<String, dynamic>),
+        );
+      } catch (_) {
+        continue;
+      }
+    }
+    entries.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return entries;
   }
 
-  /// Save or update listening history for an episode in local SQLite cache.
+  /// Episodes worth offering again: started, not finished, and replayable.
+  Future<List<ListeningHistory>> getContinueListening({int limit = 5}) async {
+    final recent = await getRecentListening();
+    return recent
+        .where(
+          (h) =>
+              !h.completed && h.lastPositionSeconds >= 10 && h.episode != null,
+        )
+        .take(limit)
+        .toList();
+  }
+
+  /// Get listening history for a specific episode, or null if never played.
+  Future<ListeningHistory?> getListeningHistory(String episodeGuid) async {
+    for (final h in await getRecentListening()) {
+      if (h.episodeGuid == episodeGuid) return h;
+    }
+    return null;
+  }
+
+  /// Save or update one episode's history, keeping the newest [historyCap].
   Future<void> saveListeningHistory(ListeningHistory history) async {
-    final key = 'podcast:history:${history.episodeGuid}';
-    await _cache.put(key, 'podcast', history.toJson());
+    final all = await getRecentListening();
+    final next = [
+      history,
+      ...all.where((h) => h.episodeGuid != history.episodeGuid),
+    ].take(historyCap);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_historyKey, [
+      for (final h in next) jsonEncode(h.toJson()),
+    ]);
+  }
+
+  /// Forget one episode, e.g. when the learner dismisses its card.
+  Future<void> removeListeningHistory(String episodeGuid) async {
+    final all = await getRecentListening();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_historyKey, [
+      for (final h in all)
+        if (h.episodeGuid != episodeGuid) jsonEncode(h.toJson()),
+    ]);
   }
 
   // ──── Followed Podcasts (SharedPreferences) ────

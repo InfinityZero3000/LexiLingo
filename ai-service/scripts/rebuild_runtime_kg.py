@@ -51,12 +51,7 @@ def validate(path: Path) -> int:
     return total
 
 
-def rebuild(target: Path, contaminated_source: Path | None = None) -> Path | None:
-    target = _validate_target(target)
-    replacement = target.with_name(f"{target.name}.rebuild.{os.getpid()}")
-    if replacement.exists():
-        raise FileExistsError(f"Replacement path already exists: {replacement}")
-
+def _build(replacement: Path, kg_dir: Path) -> None:
     env_names = (
         "KUZU_DB_PATH",
         "KG_DATA_DIR",
@@ -67,7 +62,7 @@ def rebuild(target: Path, contaminated_source: Path | None = None) -> Path | Non
     previous_setting = None
     try:
         os.environ["KUZU_DB_PATH"] = str(replacement)
-        os.environ["KG_DATA_DIR"] = str((AI_SERVICE_ROOT / "data" / "kg").resolve())
+        os.environ["KG_DATA_DIR"] = str(kg_dir.resolve())
         os.environ.pop("TRACECAG_KG_ALLOW_BENCHMARK", None)
         os.environ.pop("TRACECAG_KG_STRICT_SNAPSHOT", None)
 
@@ -88,6 +83,23 @@ def rebuild(target: Path, contaminated_source: Path | None = None) -> Path | Non
                 os.environ.pop(name, None)
             else:
                 os.environ[name] = value
+
+
+def snapshot(out: Path, kg_dir: Path | None = None) -> Path:
+    out = out.resolve()
+    if out.exists() or Path(f"{out}_synced_files.json").exists():
+        raise FileExistsError(f"Refusing to overwrite snapshot: {out}")
+    _build(out, kg_dir or AI_SERVICE_ROOT / "data" / "kg")
+    validate(out)
+    return out
+
+
+def rebuild(target: Path, contaminated_source: Path | None = None) -> Path | None:
+    target = _validate_target(target)
+    replacement = target.with_name(f"{target.name}.rebuild.{os.getpid()}")
+    if replacement.exists():
+        raise FileExistsError(f"Replacement path already exists: {replacement}")
+    _build(replacement, AI_SERVICE_ROOT / "data" / "kg")
     validate(replacement)
 
     timestamp = time.strftime("%Y%m%d-%H%M%S", time.gmtime())
@@ -126,18 +138,27 @@ def rebuild(target: Path, contaminated_source: Path | None = None) -> Path | Non
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--target", type=Path, required=True)
+    parser.add_argument("--target", type=Path)
+    parser.add_argument("--snapshot-out", type=Path, help="Build a standalone snapshot at this path (never promotes or touches data/)")
+    parser.add_argument("--kg-dir", type=Path, help="Source directory for --snapshot-out (default: data/kg)")
     parser.add_argument(
         "--contaminated-source",
         type=Path,
         help="Optional legacy runtime DB to quarantine when target path changes",
     )
-    mode = parser.add_mutually_exclusive_group(required=True)
+    mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--apply", action="store_true")
     mode.add_argument("--dry-run", action="store_true")
     mode.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
 
+    if args.snapshot_out:
+        if args.target or args.apply or args.dry_run or args.validate_only:
+            parser.error("--snapshot-out cannot be combined with --target or a mode flag")
+        print(f"Built snapshot {snapshot(args.snapshot_out, args.kg_dir)}")
+        return
+    if not args.target or not (args.apply or args.dry_run or args.validate_only):
+        parser.error("--target and one of --apply/--dry-run/--validate-only are required")
     target = _validate_target(args.target)
     if args.validate_only:
         validate(target)

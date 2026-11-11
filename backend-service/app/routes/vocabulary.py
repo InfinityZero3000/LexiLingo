@@ -12,6 +12,7 @@ Endpoints:
 - GET    /vocabulary/stats          - Get user vocabulary statistics
 """
 
+import asyncio
 import logging
 import math
 import uuid
@@ -27,12 +28,11 @@ from app.core.dependencies import get_current_user
 from app.core.cache import build_cache_key, get_cached, set_cached, delete_cached
 from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
-from app.crud.vocabulary import vocabulary_crud
+from app.crud.vocabulary import USER_SAVED_PLACEHOLDER, vocabulary_crud
 from app.services.streak_service import record_daily_activity, update_user_streak
 from app.schemas.common import MessageResponse
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
-    UserVocabularyCreate,
     UserVocabularyResponse,
     UserVocabularyWithItem,
     UserVocabularyListResponse,
@@ -43,9 +43,6 @@ from app.schemas.vocabulary import (
     PronunciationEvaluationResponse,
     DueVocabularyResponse,
     VocabularyStatsResponse,
-    VocabularySearchParams,
-    VocabularyBulkAddRequest,
-    VocabularyDeckCreate,
     VocabularyDeckResponse,
     AddToDeckRequest
 )
@@ -355,6 +352,17 @@ async def add_to_collection(
     return user_vocab
 
 
+async def _lookup_word(word: str) -> dict:
+    """Dictionary + LLM lookup for a word the catalog has no definition for; {} on failure."""
+    from app.routes.youtube import _fetch_word_data
+
+    try:
+        return await asyncio.wait_for(_fetch_word_data(word), timeout=12.0)
+    except Exception as exc:
+        logger.warning("Quick-save lookup failed for %r (%s)", word, type(exc).__name__)
+        return {}
+
+
 @router.post("/collection/quick-save", response_model=QuickSaveVocabularyResponse, status_code=status.HTTP_201_CREATED)
 async def quick_save_to_collection(
     request: QuickSaveVocabularyRequest,
@@ -380,15 +388,37 @@ async def quick_save_to_collection(
     vocab_item = await vocabulary_crud.find_vocabulary_by_word(db, normalized_word)
     created_new_item = False
 
-    if not vocab_item:
+    needs_lookup = (
+        not vocab_item
+        and not (request.definition and request.translation)
+    ) or (
+        vocab_item is not None
+        and (vocab_item.definition or "").startswith(USER_SAVED_PLACEHOLDER)
+    )
+    looked_up = await _lookup_word(normalized_word) if needs_lookup else {}
+
+    if vocab_item:
+        await vocabulary_crud.fill_placeholder_item(
+            db,
+            vocab_item,
+            definition=looked_up.get("definition"),
+            translation=looked_up.get("translation"),
+            part_of_speech=looked_up.get("part_of_speech"),
+            pronunciation=looked_up.get("phonetic"),
+        )
+    else:
+        defined_by_lookup = not request.definition and bool(looked_up.get("definition"))
         try:
             vocab_item = await vocabulary_crud.create_vocabulary_item(
                 db,
                 word=normalized_word,
-                definition=request.definition,
-                translation=request.translation,
-                part_of_speech=request.part_of_speech,
+                definition=request.definition or looked_up.get("definition"),
+                translation=request.translation or looked_up.get("translation"),
+                part_of_speech=(
+                    looked_up.get("part_of_speech") if defined_by_lookup else request.part_of_speech
+                ),
                 difficulty_level=request.difficulty_level,
+                pronunciation=looked_up.get("phonetic"),
             )
             created_new_item = True
         except ValueError as exc:
@@ -435,23 +465,6 @@ async def quick_save_to_collection(
         created_new_item=created_new_item,
         already_in_collection=already_in_collection,
         normalized_word=normalized_word,
-    )
-
-
-@router.post("/collection/bulk", response_model=List[UserVocabularyResponse])
-async def bulk_add_to_collection(
-    request: VocabularyBulkAddRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Bulk add multiple vocabulary items to collection.
-    Useful when completing a lesson with many new words.
-    """
-    return await vocabulary_crud.bulk_add_to_collection(
-        db,
-        user_id=current_user.id,
-        vocabulary_ids=request.vocabulary_ids,
     )
 
 
@@ -657,10 +670,9 @@ async def submit_review(
     streak_bonus = updated_vocab.streak >= 5
     
     # Update User XP, level, and rank
-    from app.services.level_service import check_numeric_level_up, LevelService
+    from app.services.level_service import check_numeric_level_up
     from app.services.rank_service import calculate_rank, apply_rank_info_to_user
     from app.models.games import XPTransaction
-    from app.models.progress import DailyActivity
     from sqlalchemy import select
     
     user_id = current_user.id
@@ -668,16 +680,13 @@ async def submit_review(
     new_xp = old_xp + xp_awarded
     
     leveled_up, old_level, new_level = check_numeric_level_up(old_xp, new_xp)
-    cefr_status = LevelService.calculate_level_status(new_xp)
-    new_cefr_level = cefr_status.current_tier.code
-    
+
     # Calculate new rank
-    new_rank_info = calculate_rank(new_level, new_cefr_level)
+    new_rank_info = calculate_rank(new_level, current_user.level or "A1")
     
     # Apply user updates
     current_user.total_xp = new_xp
     current_user.numeric_level = new_level
-    current_user.level = new_cefr_level
     apply_rank_info_to_user(current_user, new_rank_info)
     db.add(current_user)
     

@@ -145,11 +145,18 @@ class TTSService:
     def sample_rate(self) -> int:
         return int(self._load_voice().config.sample_rate)
 
-    def iter_pcm_chunks(self, text: str, *, max_fragment_chars: int = 24) -> Iterator[bytes]:
+    def iter_pcm_chunks(
+        self, text: str, *, max_fragment_chars: int = 24, speed: float = 1.0
+    ) -> Iterator[bytes]:
         """Yield Piper PCM as soon as the first short fragment is synthesized."""
         voice = self._load_voice()
+        extra = ()
+        if speed != 1.0:
+            from piper import SynthesisConfig
+
+            extra = (SynthesisConfig(length_scale=1.0 / speed),)
         for fragment in split_speakable_fragments(text, max_fragment_chars):
-            for chunk in voice.synthesize(fragment):
+            for chunk in voice.synthesize(fragment, *extra):
                 if chunk.audio_int16_bytes:
                     yield chunk.audio_int16_bytes
 

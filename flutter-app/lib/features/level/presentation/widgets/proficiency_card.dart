@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/widgets/level_history_timeline.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_radar_chart.dart';
 
 /// Proficiency card with radar chart for profile page
@@ -15,6 +16,15 @@ class ProficiencyCard extends StatelessWidget {
 
   /// Minimum lessons/interactions before scores are shown
   static const int unlockThreshold = 15;
+
+  static const _radarSkills = [
+    SkillType.listening,
+    SkillType.speaking,
+    SkillType.reading,
+    SkillType.writing,
+    SkillType.vocabulary,
+    SkillType.grammar,
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +48,11 @@ class ProficiencyCard extends StatelessWidget {
         profile.exercisesCompleted >= unlockThreshold ||
         profile.lessonsCompleted >= unlockThreshold;
 
-    // Map backend 6 skills → 5 display dimensions
-    final displayScores = _mapToDisplayDimensions(profile.skills);
+    // Backend scores are 0-100; the chart draws 0-1.
+    final displayScores = {
+      for (final skill in _radarSkills)
+        skill.displayName: (profile.skills[skill]?.score ?? 0) / 100,
+    };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -93,11 +106,8 @@ class ProficiencyCard extends StatelessWidget {
                         scores: hasEnoughData
                             ? displayScores
                             : {
-                                'Pronunciation': 0.0,
-                                'Vocabulary': 0.0,
-                                'Fluency': 0.0,
-                                'Grammar': 0.0,
-                                'Intonation': 0.0,
+                                for (final skill in _radarSkills)
+                                  skill.displayName: 0.0,
                               },
                         size: 240,
                         fillColor: isDark
@@ -255,6 +265,11 @@ class ProficiencyCard extends StatelessWidget {
             ],
           ),
         ),
+        if (hasEnoughData)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: LevelHistoryTimeline(),
+          ),
       ],
     );
   }
@@ -312,25 +327,5 @@ class ProficiencyCard extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  /// Map 6 backend skill scores to 5 display dimensions
-  Map<String, double> _mapToDisplayDimensions(
-    Map<SkillType, SkillScore> skills,
-  ) {
-    final speaking = skills[SkillType.speaking]?.score ?? 0;
-    final listening = skills[SkillType.listening]?.score ?? 0;
-    final vocabulary = skills[SkillType.vocabulary]?.score ?? 0;
-    final grammar = skills[SkillType.grammar]?.score ?? 0;
-    final reading = skills[SkillType.reading]?.score ?? 0;
-    final writing = skills[SkillType.writing]?.score ?? 0;
-
-    return {
-      'Pronunciation': speaking,
-      'Vocabulary': vocabulary * 0.7 + reading * 0.3,
-      'Fluency': speaking * 0.6 + listening * 0.4,
-      'Grammar': grammar * 0.8 + writing * 0.2,
-      'Intonation': speaking * 0.5 + listening * 0.5,
-    };
   }
 }

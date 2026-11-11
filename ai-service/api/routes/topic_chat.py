@@ -10,7 +10,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime, timezone
-import json
 import uuid
 import time
 import logging
@@ -19,9 +18,7 @@ from fastapi.responses import StreamingResponse
 
 from api.utils.cursor import (
     build_pagination,
-    decode_cursor_dt,
     encode_cursor,
-    load_full_cursor,
     to_iso_timestamp,
 )
 
@@ -31,7 +28,7 @@ from api.repositories.topic_chat_repository import TopicChatRepository
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.config import settings
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
-from api.services.subgraph_hot_cache import warm_subgraph, get_subgraph
+from api.services.subgraph_hot_cache import warm_subgraph
 from api.models.story_schemas import (
     StartTopicSessionRequest,
     StartTopicSessionResponse,
@@ -345,7 +342,9 @@ async def start_topic_session(
             except Exception as exc:
                 logger.warning("Background KG warm failed for session %s: %s", session_id, exc)
 
-        asyncio.create_task(_warm_and_update_session())
+        from api.core.background import spawn
+
+        spawn(_warm_and_update_session(), name="topic_chat_kg_warm")
 
         opening_message = story.conversation_flow.opening_prompt
 

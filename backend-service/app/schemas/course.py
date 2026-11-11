@@ -39,6 +39,7 @@ class CourseBase(BaseModel):
     )
     tags: Optional[List[str]] = Field(default_factory=list)
     thumbnail_url: Optional[str] = Field(None, max_length=500)
+    category_id: Optional[uuid.UUID] = Field(None, description="Course category; null leaves it uncategorised")
 
     @field_validator("level")
     @classmethod
@@ -68,6 +69,7 @@ class CourseUpdate(BaseModel):
     skill: Optional[str] = None
     tags: Optional[List[str]] = None
     thumbnail_url: Optional[str] = Field(None, max_length=500)
+    category_id: Optional[uuid.UUID] = None
     is_published: Optional[bool] = None
 
     @field_validator("level")
@@ -133,6 +135,7 @@ class CourseListItem(BaseModel):
     total_xp: int = 0
     estimated_duration: int = 0
     is_enrolled: Optional[bool] = None
+    user_progress: Optional[float] = None  # 0-100%
     
     @field_validator("tags", mode="before")
     @classmethod

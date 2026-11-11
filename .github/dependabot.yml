@@ -56,6 +56,15 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    # react and react-dom must resolve to the exact same version at runtime;
+    # separate PRs (auto-merged) once left react 19.3.1 beside react-dom 19.3.0.
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
     labels:
       - "dependencies"
       - "admin-service"

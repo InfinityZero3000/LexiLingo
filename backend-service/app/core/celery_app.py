@@ -10,11 +10,13 @@ from app.core.logging_config import set_request_id
 try:  # pragma: no cover - exercised only when dependency is installed
     from celery import Celery
     from celery.schedules import crontab
-    from celery.signals import task_prerun
+    from celery.signals import task_failure, task_postrun, task_prerun
 except ImportError:  # pragma: no cover - local test env may not install Celery yet
     Celery = None  # type: ignore[assignment]
     crontab = None  # type: ignore[assignment]
     task_prerun = None  # type: ignore[assignment]
+    task_postrun = None  # type: ignore[assignment]
+    task_failure = None  # type: ignore[assignment]
 
 
 if Celery is not None:
@@ -48,6 +50,20 @@ if Celery is not None:
         unit, the same way an inbound HTTP request's ID ties its logs
         together (see RequestIDMiddleware)."""
         set_request_id(f"task:{task_id}" if task_id else "-")
+
+    @task_postrun.connect
+    def _record_task_run(sender=None, state=None, **_kwargs) -> None:
+        """Last-run time per task, for the admin Operations Center."""
+        from app.core.celery_status import record_run
+
+        record_run(getattr(sender, "name", None), state or "SUCCESS")
+
+    @task_failure.connect
+    def _record_task_failure(sender=None, exception=None, **_kwargs) -> None:
+        from app.core.celery_status import record_run
+
+        record_run(getattr(sender, "name", None), "FAILURE", error=repr(exception))
+
     celery_app.conf.beat_schedule = {
         "scan-fsrs-reminders": {
             "task": "app.tasks.reminders.scan_fsrs_reminders",

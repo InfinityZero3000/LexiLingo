@@ -85,7 +85,7 @@ async def test_ircot_augment_returns_contract_telemetry(monkeypatch):
     # trap as a more permissive one: it passes until the real callee grows a
     # keyword, then fails on a signature rather than on behaviour.
     async def fake_reason_call(
-        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none"
+        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none", ledger_role="aux"
     ):
         return "Bridge Target", "groq/qwen/qwen3-32b"
 
@@ -113,7 +113,7 @@ async def test_benchmark_response_exposes_ircot_metadata_and_reason_model(monkey
     # trap as a more permissive one: it passes until the real callee grows a
     # keyword, then fails on a signature rather than on behaviour.
     async def fake_reason_call(
-        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none"
+        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none", ledger_role="aux"
     ):
         return "Bridge Target", "groq/qwen/qwen3-32b"
 
@@ -234,7 +234,7 @@ async def test_answer_grounded_only_in_the_ircot_passage_survives_postprocessing
     # trap as a more permissive one: it passes until the real callee grows a
     # keyword, then fails on a signature rather than on behaviour.
     async def fake_reason_call(
-        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none"
+        messages, max_tokens, *, estimated_tokens=96, reasoning_effort="none", ledger_role="aux"
     ):
         return "Bridge Target", "groq/qwen"
 

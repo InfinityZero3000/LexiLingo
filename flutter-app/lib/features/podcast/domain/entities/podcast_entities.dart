@@ -193,31 +193,61 @@ class PodcastEpisode {
 }
 
 /// Listening history record for a podcast episode.
+///
+/// Carries a snapshot of the episode so a "continue listening" card and the
+/// player can be rebuilt offline, without refetching the feed.
 class ListeningHistory {
+  /// Share of an episode that counts it as finished.
+  static const completedFraction = 0.8;
+
   final String episodeGuid;
   final String feedUrl;
   final int lastPositionSeconds;
   final int totalListenedSeconds;
+  final int durationSeconds;
   final bool completed; // 80%+ listened
   final DateTime? completedAt;
   final DateTime updatedAt;
+  final PodcastEpisode? episode;
+  final String podcastTitle;
+  final String artworkUrl;
 
   const ListeningHistory({
     required this.episodeGuid,
     required this.feedUrl,
     this.lastPositionSeconds = 0,
     this.totalListenedSeconds = 0,
+    this.durationSeconds = 0,
     this.completed = false,
     this.completedAt,
     required this.updatedAt,
+    this.episode,
+    this.podcastTitle = '',
+    this.artworkUrl = '',
   });
 
+  /// 0–1 share of the episode already heard; 0 when the length is unknown.
+  double get progress => durationSeconds > 0
+      ? (lastPositionSeconds / durationSeconds).clamp(0.0, 1.0)
+      : 0.0;
+
+  /// Where to pick up, or null to start from the top (finished or barely begun).
+  int? get resumeFromSeconds =>
+      !completed && lastPositionSeconds > 5 ? lastPositionSeconds : null;
+
+  /// Whole minutes left, rounded up; null when the length is unknown.
+  int? get minutesLeft => durationSeconds > lastPositionSeconds
+      ? ((durationSeconds - lastPositionSeconds) / 60).ceil()
+      : null;
+
   factory ListeningHistory.fromJson(Map<String, dynamic> json) {
+    final episodeJson = json['episode'];
     return ListeningHistory(
       episodeGuid: json['episode_guid'] as String? ?? '',
       feedUrl: json['feed_url'] as String? ?? '',
       lastPositionSeconds: json['last_position_seconds'] as int? ?? 0,
       totalListenedSeconds: json['total_listened_seconds'] as int? ?? 0,
+      durationSeconds: json['duration_seconds'] as int? ?? 0,
       completed: json['completed'] as bool? ?? false,
       completedAt: json['completed_at'] != null
           ? DateTime.parse(json['completed_at'] as String)
@@ -225,6 +255,11 @@ class ListeningHistory {
       updatedAt: DateTime.parse(
         json['updated_at'] as String? ?? DateTime.now().toIso8601String(),
       ),
+      episode: episodeJson is Map<String, dynamic>
+          ? PodcastEpisode.fromJson(episodeJson)
+          : null,
+      podcastTitle: json['podcast_title'] as String? ?? '',
+      artworkUrl: json['artwork_url'] as String? ?? '',
     );
   }
 
@@ -233,9 +268,13 @@ class ListeningHistory {
     'feed_url': feedUrl,
     'last_position_seconds': lastPositionSeconds,
     'total_listened_seconds': totalListenedSeconds,
+    'duration_seconds': durationSeconds,
     'completed': completed,
     'completed_at': completedAt?.toIso8601String(),
     'updated_at': updatedAt.toIso8601String(),
+    'episode': episode?.toJson(),
+    'podcast_title': podcastTitle,
+    'artwork_url': artworkUrl,
   };
 }
 

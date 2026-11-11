@@ -38,9 +38,12 @@ def test_oewn_parses_the_published_gzipped_release(tmp_path):
 
     records = parse(gzipped)
 
-    assert [r["word"] for r in records] == ["journey"]
+    assert [r["word"] for r in records] == ["journey", "journey"]
     assert records[0]["definition"] == "An act of travelling from one place to another."
+    # the first synset example; the real release has no SenseExample at all
     assert records[0]["example"] == "Their journey took three days."
+    assert records[1]["example"] is None
+    assert [r["metadata"]["sense_rank"] for r in records] == [1, 2]
 
 
 def test_oewn_pos_mapping():
@@ -89,9 +92,23 @@ def test_oewn_lineage_fields():
     for record in records:
         lineage = record["lineage"]
         assert lineage["adapter"] == "oewn"
-        assert lineage["adapter_version"] == 1
+        assert lineage["adapter_version"] == 2
         assert lineage["raw_path"] == "oewn_mini.xml"
         assert lineage["source_location"]
+
+
+def test_oewn_records_the_rank_of_each_sense_within_its_entry():
+    from collections import defaultdict
+
+    from api.services.content_etl.adapters.oewn import parse
+
+    ranks = defaultdict(list)
+    for record in parse(FIXTURES / "oewn_mini.xml"):
+        ranks[(record["word"], record["part_of_speech"])].append(
+            record["metadata"]["sense_rank"]
+        )
+
+    assert ranks and all(r == list(range(1, len(r) + 1)) for r in ranks.values())
 
 
 def test_oewn_record_ids_are_unique():
@@ -120,18 +137,15 @@ def test_cmudict_parses_entries():
     # uppercase-only fixture hid that the adapter parsed 0 of its 135k lines.
     assert "aalborg" in words
     pronunciation = next(r for r in records if r["word"] == "aalborg")["pronunciation"]
-    assert pronunciation == "AO L B AO R G"
+    assert pronunciation == "AO1 L B AO0 R G"
 
 
-def test_cmudict_normalises_arpabet_stress():
+def test_cmudict_keeps_stress_digits_the_ipa_conversion_needs():
     from api.services.content_etl.adapters.cmudict import parse
 
     records = {r["word"]: r for r in parse(FIXTURES / "cmudict_mini.dict")}
 
-    # Stress digits must be stripped.
-    assert "1" not in records["journey"]["pronunciation"]
-    assert "2" not in records["journey"]["pronunciation"]
-    assert "0" not in records["journey"]["pronunciation"]
+    assert records["journey"]["pronunciation"] == "JH ER1 N IY0"
 
 
 def test_cmudict_variant_collapses_to_single_record():
@@ -166,6 +180,72 @@ def test_cefr_j_parses_labels():
     assert cefr_map["journey"] == "A2"
     assert cefr_map["research"] == "B2"
     assert cefr_map["sophisticated"] == "C1"
+
+
+def test_cefr_j_reads_the_published_file_layout():
+    """Rows copied from the real profile: one headword per part of speech,
+    full pos names, and spelling variants sharing a row."""
+    from api.services.content_etl.adapters.cefr_j import parse
+
+    records = parse(FIXTURES / "cefr_j_real_sample.csv")
+
+    assert len({r["record_id"] for r in records}) == len(records) == 17
+    pos = {(r["word"], r["part_of_speech"]): r["declared_cefr"] for r in records}
+    assert pos[("about", "adverb")] == pos[("about", "preposition")] == "A1"
+    assert pos[("can", "noun")] == "A2"
+    assert pos[("be", "verb")] == "A1"  # be-verb
+    # classes the lexicon has no slot for map to the nearest WordNet class
+    assert pos[("eight", "noun")] == "A1" and pos[("a", "adjective")] == "A1"
+    # a modal "can", the infinitive marker "to" (the preposition stays) and the
+    # contraction "'m" have no lexical meaning to teach
+    assert ("can", "verb") not in pos
+    assert ("to", "preposition") in pos and len([w for w, _ in pos if w == "to"]) == 1
+    assert "'m" not in {word for word, _ in pos}
+    # first spelling of a variant row, which is the American one
+    assert ("color", "noun") in pos and ("colour", "noun") not in pos
+    assert ("a.m.", "adverb") in pos
+    assert ("internet", "noun") in pos
+
+
+def test_cefr_j_real_layout_clears_the_pipeline_without_quarantine(tmp_path):
+    from api.services.content_etl.adapters.cefr_j import (
+        ATTRIBUTION_TEXT,
+        LICENSE_ID,
+        LICENSE_URL,
+        OFFICIAL_URL,
+        parse,
+    )
+    from api.services.content_etl.pipeline import ETLPipeline
+    from api.services.content_etl.storage import SnapshotStorage
+
+    raw_path = FIXTURES / "cefr_j_real_sample.csv"
+    storage = SnapshotStorage(tmp_path)
+    temp = storage.create_temp_file()
+    temp.write_bytes(raw_path.read_bytes())
+    import hashlib
+
+    storage.promote_raw(
+        temp,
+        source_name="cefr_j",
+        version="1" * 40,
+        filename=raw_path.name,
+        sha256=hashlib.sha256(raw_path.read_bytes()).hexdigest(),
+    )
+
+    report = ETLPipeline(storage=storage).run(
+        source_name="cefr_j",
+        source_version="1" * 40,
+        adapter_name="cefr_j",
+        adapter_version=1,
+        license_id=LICENSE_ID,
+        license_url=LICENSE_URL,
+        attribution_text=ATTRIBUTION_TEXT,
+        raw_records=parse(raw_path),
+        raw_bytes=raw_path.read_bytes(),
+        official_url=OFFICIAL_URL,
+    )
+
+    assert (report.status, report.approved, report.quarantined) == ("approved", 17, 0)
 
 
 def test_cefr_j_rejects_sharealike_file():

@@ -419,6 +419,10 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      // Needs the live session, so it goes before the sign-out request.
+      await FirebaseMessagingService.instance.unregisterFromBackend(
+        sl<ApiClient>(),
+      );
       await googleSignInService.signOut();
       await signOutUseCase(NoParams());
       // Clear stored FCM token so it gets re-registered on next login

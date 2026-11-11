@@ -542,7 +542,31 @@ class TestGetArticleQuiz:
             await no_db_client.get("/api/v1/news/myArticle001/quiz")
 
         call_kwargs = mock_cache.get_or_fetch.call_args.kwargs
-        assert call_kwargs["cache_key"] == "news:quiz:v2:myArticle001"
+        assert call_kwargs["cache_key"] == "news:quiz:v3:bare:myArticle001"
+
+    @pytest.mark.asyncio
+    async def test_quiz_with_article_text_uses_its_own_cache_key_and_topic(
+        self, no_db_client: AsyncClient
+    ):
+        mock_result = MagicMock()
+        mock_result.data = {"questions": [], "total_questions": 0, "xp_reward": 15}
+        mock_result.source = "db"
+        mock_result.is_stale = False
+
+        with patch("app.routes.news.APICacheService") as MockCache, patch(
+            "app.routes.news._generate_quiz", autospec=True
+        ) as mock_generate:
+            mock_cache = AsyncMock()
+            mock_cache.get_or_fetch.return_value = mock_result
+            MockCache.return_value = mock_cache
+
+            await no_db_client.get(
+                "/api/v1/news/eebe9e48414b/quiz", params={"title": "Solar Panels Power School"}
+            )
+            await mock_cache.get_or_fetch.call_args.kwargs["fetch_fn"]()
+
+        assert mock_cache.get_or_fetch.call_args.kwargs["cache_key"] == "news:quiz:v3:eebe9e48414b"
+        assert mock_generate.call_args.args[1]["title"] == "Solar Panels Power School"
 
     @pytest.mark.asyncio
     async def test_429_on_quota_error(self, no_db_client: AsyncClient):
@@ -599,6 +623,14 @@ class TestGenerateQuizStructure:
         assert "option a" not in serialized
         assert "ai-generated" not in serialized
         assert quiz["total_questions"] == len(quiz["questions"])
+
+    @pytest.mark.asyncio
+    async def test_quiz_never_shows_a_hash_id_as_the_topic(self):
+        from app.routes.news import _generate_quiz
+
+        quiz = await _generate_quiz("eebe9e48414b")
+
+        assert "eebe9e48414b" not in str(quiz)
 
     @pytest.mark.asyncio
     async def test_quiz_has_5_questions(self):

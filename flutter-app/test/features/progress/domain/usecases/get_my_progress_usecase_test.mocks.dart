@@ -7,6 +7,8 @@ import 'dart:async' as _i4;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:lexilingo_app/core/error/failures.dart' as _i5;
+import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart'
+    as _i10;
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart'
     as _i9;
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart'
@@ -81,42 +83,6 @@ class MockProgressRepository extends _i1.Mock
                 ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, _i6.CourseProgressWithUnits>>);
-
-  @override
-  _i4.Future<_i2.Either<_i5.Failure, _i6.LessonCompletionResult>>
-  completeLesson({required String? lessonId, required double? score}) =>
-      (super.noSuchMethod(
-            Invocation.method(#completeLesson, [], {
-              #lessonId: lessonId,
-              #score: score,
-            }),
-            returnValue:
-                _i4.Future<
-                  _i2.Either<_i5.Failure, _i6.LessonCompletionResult>
-                >.value(
-                  _FakeEither_0<_i5.Failure, _i6.LessonCompletionResult>(
-                    this,
-                    Invocation.method(#completeLesson, [], {
-                      #lessonId: lessonId,
-                      #score: score,
-                    }),
-                  ),
-                ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, _i6.LessonCompletionResult>>);
-
-  @override
-  _i4.Future<_i2.Either<_i5.Failure, int>> getTotalXp() =>
-      (super.noSuchMethod(
-            Invocation.method(#getTotalXp, []),
-            returnValue: _i4.Future<_i2.Either<_i5.Failure, int>>.value(
-              _FakeEither_0<_i5.Failure, int>(
-                this,
-                Invocation.method(#getTotalXp, []),
-              ),
-            ),
-          )
-          as _i4.Future<_i2.Either<_i5.Failure, int>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, _i7.WeeklyProgressEntity>>
@@ -239,4 +205,35 @@ class MockProgressRepository extends _i1.Mock
                 ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>> claimDailyBonus() =>
+      (super.noSuchMethod(
+            Invocation.method(#claimDailyBonus, []),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>.value(
+                  _FakeEither_0<_i5.Failure, Map<String, dynamic>>(
+                    this,
+                    Invocation.method(#claimDailyBonus, []),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, Map<String, dynamic>>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i10.ContentActivityEntity>>
+  getContentActivity({int? days}) =>
+      (super.noSuchMethod(
+            Invocation.method(#getContentActivity, [], {#days: days}),
+            returnValue:
+                _i4.Future<
+                  _i2.Either<_i5.Failure, _i10.ContentActivityEntity>
+                >.value(
+                  _FakeEither_0<_i5.Failure, _i10.ContentActivityEntity>(
+                    this,
+                    Invocation.method(#getContentActivity, [], {#days: days}),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i10.ContentActivityEntity>>);
 }

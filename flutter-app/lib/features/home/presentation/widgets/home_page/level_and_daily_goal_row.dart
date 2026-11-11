@@ -305,9 +305,18 @@ class _DailyGoalCard extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final accent = AppColorRoles.primary(isDark);
     final accentDeep = AppColorRoles.primaryDeep(isDark);
+    // Dark mode shows the success state as neon so it glows like the accent.
+    final success = isDark
+        ? AppColors.successNeon
+        : AppColors.greenSuccessBright;
+    final successDeep = isDark ? AppColors.successNeon : AppColors.greenSuccess;
+    final glow = isCompleted ? success : accent;
+    final glowShadows = isDark
+        ? [Shadow(color: glow.withValues(alpha: 0.6), blurRadius: 12)]
+        : null;
     final surfaceBg = colorScheme.surfaceContainerHighest;
     final compactBg = isCompleted
-        ? AppColors.greenSuccessBright.withValues(alpha: 0.10)
+        ? success.withValues(alpha: 0.10)
         : accent.withValues(alpha: 0.07);
     final cardPadding = compact ? 14.0 : 20.0;
     final ringSize = compact ? 58.0 : 70.0;
@@ -333,10 +342,16 @@ class _DailyGoalCard extends StatelessWidget {
               color: compact ? compactBg : surfaceBg,
               borderRadius: borderRadius,
               border: Border.all(
-                color: isCompleted
-                    ? AppColors.greenSuccessBright.withValues(alpha: 0.3)
-                    : accent.withValues(alpha: 0.35),
+                color: glow.withValues(alpha: isDark ? 0.6 : 0.35),
               ),
+              boxShadow: isDark
+                  ? [
+                      BoxShadow(
+                        color: glow.withValues(alpha: 0.18),
+                        blurRadius: 18,
+                      ),
+                    ]
+                  : null,
             ),
             child: compact
                 ? Column(
@@ -354,10 +369,9 @@ class _DailyGoalCard extends StatelessWidget {
                             ),
                             child: Icon(
                               isCompleted ? Icons.emoji_events : Icons.bolt,
-                              color: isCompleted
-                                  ? AppColors.greenSuccessBright
-                                  : accent,
+                              color: isCompleted ? success : accent,
                               size: badgeIconSize,
+                              shadows: glowShadows,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -371,8 +385,9 @@ class _DailyGoalCard extends StatelessWidget {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 15,
                                     color: isCompleted
-                                        ? AppColors.greenSuccess
+                                        ? successDeep
                                         : accentDeep,
+                                    shadows: glowShadows,
                                   ),
                             ),
                           ),
@@ -385,25 +400,31 @@ class _DailyGoalCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: colorScheme.surface,
+                              boxShadow: isDark
+                                  ? [
+                                      BoxShadow(
+                                        color: glow.withValues(alpha: 0.45),
+                                        blurRadius: 16,
+                                      ),
+                                    ]
+                                  : null,
                             ),
                             child: glass.AnimatedProgressRing(
                               progress: percentage.clamp(0.0, 1.0),
                               size: ringSize + 10,
                               strokeWidth: ringStroke,
                               gradientColors: isCompleted
-                                  ? const [
-                                      AppColors.greenSuccessBright,
-                                      AppColors.greenSuccess,
-                                    ]
+                                  ? [success, successDeep]
                                   : AppColorRoles.primaryGradient(isDark),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (isCompleted)
-                                    const Icon(
+                                    Icon(
                                       Icons.check,
-                                      color: AppColors.greenSuccessBright,
+                                      color: success,
                                       size: 18,
+                                      shadows: glowShadows,
                                     )
                                   else
                                     Text(
@@ -412,6 +433,7 @@ class _DailyGoalCard extends StatelessWidget {
                                         fontSize: ringValueFontSize,
                                         fontWeight: FontWeight.bold,
                                         color: accent,
+                                        shadows: glowShadows,
                                       ),
                                     ),
                                 ],
@@ -429,9 +451,8 @@ class _DailyGoalCard extends StatelessWidget {
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: isCompleted
-                                  ? AppColors.greenSuccessBright
-                                  : accent,
+                              color: isCompleted ? success : accent,
+                              shadows: glowShadows,
                             ),
                       ),
                     ],
@@ -450,20 +471,13 @@ class _DailyGoalCard extends StatelessWidget {
                           size: ringSize,
                           strokeWidth: ringStroke,
                           gradientColors: isCompleted
-                              ? const [
-                                  AppColors.greenSuccessBright,
-                                  AppColors.greenSuccess,
-                                ]
+                              ? [success, successDeep]
                               : const [AppColors.primary, AppColors.primary],
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (isCompleted)
-                                const Icon(
-                                  Icons.check,
-                                  color: AppColors.greenSuccessBright,
-                                  size: 20,
-                                )
+                                Icon(Icons.check, color: success, size: 20)
                               else
                                 Text(
                                   '${(percentage * 100).toInt()}%',
@@ -471,7 +485,7 @@ class _DailyGoalCard extends StatelessWidget {
                                     fontSize: ringValueFontSize,
                                     fontWeight: FontWeight.bold,
                                     color: isCompleted
-                                        ? AppColors.greenSuccessBright
+                                        ? success
                                         : AppColors.primary,
                                   ),
                                 ),
@@ -497,9 +511,7 @@ class _DailyGoalCard extends StatelessWidget {
                                     isCompleted
                                         ? Icons.emoji_events
                                         : Icons.bolt,
-                                    color: isCompleted
-                                        ? AppColors.greenSuccessBright
-                                        : accent,
+                                    color: isCompleted ? success : accent,
                                     size: badgeIconSize,
                                   ),
                                 ),
@@ -516,7 +528,7 @@ class _DailyGoalCard extends StatelessWidget {
                                           fontWeight: FontWeight.bold,
                                           fontSize: titleFontSize,
                                           color: isCompleted
-                                              ? AppColors.greenSuccess
+                                              ? successDeep
                                               : accentDeep,
                                         ),
                                   ),
@@ -530,9 +542,7 @@ class _DailyGoalCard extends StatelessWidget {
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     fontSize: valueFontSize,
-                                    color: isCompleted
-                                        ? AppColors.greenSuccessBright
-                                        : accent,
+                                    color: isCompleted ? success : accent,
                                   ),
                             ),
                             SizedBox(height: compact ? 2 : 4),
@@ -553,9 +563,7 @@ class _DailyGoalCard extends StatelessWidget {
                                         ? Icons.celebration
                                         : Icons.trending_up,
                                     size: 14,
-                                    color: isCompleted
-                                        ? AppColors.greenSuccessBright
-                                        : accent,
+                                    color: isCompleted ? success : accent,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -565,9 +573,7 @@ class _DailyGoalCard extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: chipFontSize,
                                       fontWeight: FontWeight.w600,
-                                      color: isCompleted
-                                          ? AppColors.greenSuccessBright
-                                          : accent,
+                                      color: isCompleted ? success : accent,
                                     ),
                                   ),
                                 ],

@@ -80,17 +80,10 @@ class TokenStorage {
 
   /// Get complete stored tokens
   Future<AuthTokens?> getTokens() async {
-    logDebug(_tag, 'Getting tokens...');
     try {
       final accessToken = await getAccessToken();
       final refreshToken = await getRefreshToken();
       final tokenType = await _read(_tokenTypeKey);
-
-      logDebug(
-        _tag,
-        'accessToken=${accessToken != null ? "found (${accessToken.length} chars)" : "null"}',
-      );
-      logDebug(_tag, 'refreshToken=${refreshToken != null ? "found" : "null"}');
 
       if (accessToken == null || refreshToken == null) {
         logWarn(_tag, 'Tokens not found');

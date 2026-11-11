@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.da
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/answer_feedback.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
 
@@ -43,7 +44,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   bool _answered = false;
   bool _gameLoaded = false;
   bool _isFinishing = false;
-  String? _feedbackText;
+  AnswerVerdict? _verdict;
+  String? _masteryNote;
+  final _scroll = ScrollController();
   final Map<String, String> _submittedAnswers = {};
   final Set<int> _eliminatedIndices = {};
   bool _luckyCloverActive = false;
@@ -71,6 +74,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   void dispose() {
     _timer?.cancel();
     _confettiController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -82,9 +86,11 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       _timeLeft = game.timerSecondsPerQuestion;
       _selectedIndex = null;
       _answered = false;
-      _feedbackText = null;
+      _verdict = null;
+      _masteryNote = null;
       _eliminatedIndices.clear();
     });
+    if (_scroll.hasClients) _scroll.jumpTo(0);
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
@@ -118,8 +124,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       case ShopItemEntity.effectSkipToken:
         _timer?.cancel();
         _submittedAnswers[q.id] = '';
-        setState(() => _answered = true);
-        Future.delayed(const Duration(milliseconds: 300), _nextQuestion);
+        _answered = true;
+        _nextQuestion();
         break;
       case ShopItemEntity.effectRevealHint:
         final wrongIndices = List.generate(q.options.length, (i) => i)
@@ -152,10 +158,21 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _recordTopic(q.topic, false);
     setState(() {
       _answered = true;
-      _feedbackText =
-          '${'grammarQuiz.timeoutFeedback'.tr()} ${q.explanation.isNotEmpty ? q.explanation : ''}';
+      _verdict = AnswerVerdict.timeout;
+      _masteryNote = _buildMasteryMessage(q.topic);
     });
-    Future.delayed(const Duration(seconds: 2), _nextQuestion);
+    _revealFeedback();
+  }
+
+  void _revealFeedback() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _selectAnswer(int index) {
@@ -175,13 +192,10 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     setState(() {
       _selectedIndex = index;
       _answered = true;
-      _feedbackText = correct
-          ? q.explanation.isNotEmpty
-                ? q.explanation
-                : 'grammarQuiz.correctFeedback'.tr()
-          : '${q.explanation.isNotEmpty ? q.explanation : 'grammarQuiz.incorrectFeedback'.tr()}${masteryMsg.isNotEmpty ? '\n$masteryMsg' : ''}';
+      _verdict = correct ? AnswerVerdict.correct : AnswerVerdict.wrong;
+      _masteryNote = masteryMsg;
     });
-    Future.delayed(const Duration(seconds: 2), _nextQuestion);
+    _revealFeedback();
   }
 
   void _recordTopic(String topic, bool correct) {
@@ -219,7 +233,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       .join(' ');
 
   void _nextQuestion() {
-    if (!mounted || _isFinishing) return;
+    if (!mounted || _isFinishing || !_answered) return;
     final game = context.read<GamesProvider>().grammarQuiz;
     if (game == null) return;
     if (_questionIndex + 1 >= game.questions.length) {
@@ -395,6 +409,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                   ),
                   Expanded(
                     child: SingleChildScrollView(
+                      controller: _scroll,
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,50 +557,29 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               ),
                             );
                           }),
-                          // Feedback
-                          if (_feedbackText != null) ...[
+                          if (_verdict != null) ...[
                             const SizedBox(height: 8),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color:
-                                    _answered &&
-                                        _selectedIndex != null &&
-                                        q.options[_selectedIndex!] ==
-                                            q.correctAnswer
-                                    ? AppColors.greenSuccess.withValues(
-                                        alpha: 0.08,
-                                      )
-                                    : Colors.red.withValues(alpha: 0.07),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color:
-                                      _answered &&
-                                          _selectedIndex != null &&
-                                          q.options[_selectedIndex!] ==
-                                              q.correctAnswer
-                                      ? AppColors.greenSuccess
-                                      : AppColors.errorBright,
-                                ),
-                              ),
-                              child: Text(
-                                _feedbackText!,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                  height: 1.4,
-                                ),
-                              ),
+                            AnswerFeedbackPanel(
+                              verdict: _verdict!,
+                              chosen: _selectedIndex == null
+                                  ? ''
+                                  : q.options[_selectedIndex!],
+                              correctAnswer: q.correctAnswer,
+                              explanation: q.explanation,
+                              extra: _masteryNote,
                             ),
                           ],
                         ],
                       ),
                     ),
                   ),
+                  if (_answered)
+                    GameNextBar(
+                      label: _questionIndex + 1 >= game.questions.length
+                          ? 'games.answerFeedback.seeResults'.tr()
+                          : 'games.answerFeedback.next'.tr(),
+                      onPressed: _nextQuestion,
+                    ),
                 ],
               ),
               // Confetti overlay (skill: gamification-confetti-win)

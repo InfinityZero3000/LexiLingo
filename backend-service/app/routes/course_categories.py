@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_user_optional, get_current_admin
-from app.core.cache import build_cache_key, get_cached, set_cached
+from app.core.dependencies import get_current_user_optional, require_resource
+from app.core.cache import build_cache_key, get_cached, invalidate_cache, set_cached
 from app.models.user import User
 from app.crud.course_category import CourseCategoryCRUD
 from app.schemas.course_category import (
@@ -58,8 +58,13 @@ async def get_categories(
         limit=100  # Get all for now
     )
     
+    counts = await CourseCategoryCRUD.published_course_counts(db)
     category_items = [
-        CourseCategoryListItem.model_validate(cat).model_dump(mode="json") for cat in categories
+        {
+            **CourseCategoryListItem.model_validate(cat).model_dump(mode="json"),
+            "course_count": counts.get(cat.id, 0),
+        }
+        for cat in categories
     ]
     
     await set_cached(cache_key, category_items, ttl=120)
@@ -195,7 +200,7 @@ async def get_courses_by_category(
 async def create_category(
     category_data: CourseCategoryCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+    current_user: User = Depends(require_resource("categories"))
 ):
     """
     Create a new course category.
@@ -221,6 +226,7 @@ async def create_category(
         order_index=category_data.order_index,
         is_active=category_data.is_active
     )
+    await invalidate_cache("categories")
     
     return ApiResponse(
         success=True,
@@ -234,7 +240,7 @@ async def update_category(
     category_id: uuid.UUID,
     update_data: CourseCategoryUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+    current_user: User = Depends(require_resource("categories"))
 ):
     """
     Update a course category.
@@ -259,6 +265,7 @@ async def update_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found"
         )
+    await invalidate_cache("categories")
     
     return ApiResponse(
         success=True,
@@ -271,7 +278,7 @@ async def update_category(
 async def delete_category(
     category_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
+    current_user: User = Depends(require_resource("categories"))
 ):
     """
     Delete a course category (soft delete).
@@ -286,29 +293,10 @@ async def delete_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found"
         )
+    await invalidate_cache("categories")
     
     return ApiResponse(
         success=True,
         data={"id": str(category_id)},
         message="Category deleted successfully"
-    )
-
-
-@router.post("/update-counts", response_model=ApiResponse[dict])
-async def update_course_counts(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_admin)
-):
-    """
-    Update course counts for all categories.
-    
-    **Admin only** - Should be called periodically or after course changes.
-    """
-    
-    await CourseCategoryCRUD.update_course_counts(db)
-    
-    return ApiResponse(
-        success=True,
-        data={"status": "completed"},
-        message="Course counts updated successfully"
     )

@@ -11,7 +11,9 @@ from dataclasses import dataclass, field
 import time
 
 
-CERTIFICATE_SCHEMA_VERSION = 3
+CERTIFICATE_SCHEMA_VERSION = 4
+# ponytail: keeps the pre-fix effective bound (evidence_drift 0.20 + 0.15a <= tau_reuse 0.25 <=> a <= 1/3); fixed before measuring, not tuned
+UNVERIFIED_EVIDENCE_MAX_AGE_RATIO = 1 / 3
 BASE_REQUIRED_DIMENSIONS = frozenset({
     "intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target",
 })
@@ -43,6 +45,7 @@ class L1Request:
     source_version: str = ""
     freshness_class: str = ""
     native_language: str = ""
+    user_scope: str = ""
     schema_version: int = CERTIFICATE_SCHEMA_VERSION
     required_dimensions: set[str] = field(default_factory=lambda: set(BASE_REQUIRED_DIMENSIONS))
 
@@ -67,6 +70,7 @@ class L1Candidate:
     source_version: str = ""
     freshness_class: str = ""
     native_language: str = ""
+    user_scope: str = ""
     schema_version: int = CERTIFICATE_SCHEMA_VERSION
     required_dimensions: set[str] = field(default_factory=lambda: set(BASE_REQUIRED_DIMENSIONS))
     created_at: float = 0.0
@@ -122,6 +126,10 @@ def decide_l1_reuse(
     if candidate.schema_version != CERTIFICATE_SCHEMA_VERSION:
         return L1Decision("full", 1.0, 0.0, ("unsupported_certificate_schema",), False)
 
+    # Unconditional (not a required dimension): an artifact belongs to exactly one learner.
+    if request.user_scope != candidate.user_scope:
+        reasons.append("mismatch:user_scope")
+
     required = set(request.required_dimensions) | set(candidate.required_dimensions) | BASE_REQUIRED_DIMENSIONS
     for dimension in sorted(required):
         if _missing(_dimension_value(request, dimension)) or _missing(_dimension_value(candidate, dimension)):
@@ -160,7 +168,11 @@ def decide_l1_reuse(
 
     relation_overlap = _jaccard(request.relation_hints, candidate.relation_hints)
     intent_drift = 0.0 if request.intent == candidate.intent else 1.0
-    evidence_drift = 0.0 if request.evidence_hash == candidate.evidence_hash else 1.0
+    evidence_comparable = bool(request.evidence_hash and candidate.evidence_hash)
+    evidence_drift = float(evidence_comparable and request.evidence_hash != candidate.evidence_hash)
+    # The gate runs before retrieval, so the request cannot yet prove its evidence is unchanged.
+    if candidate.evidence_hash and not request.evidence_hash and age_ratio > UNVERIFIED_EVIDENCE_MAX_AGE_RATIO:
+        reasons.append("unverified_evidence_age")
     version_drift = float(
         request.profile_epoch != candidate.profile_epoch
         or request.policy_version != candidate.policy_version

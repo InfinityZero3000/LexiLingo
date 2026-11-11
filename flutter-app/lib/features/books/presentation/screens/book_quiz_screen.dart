@@ -151,78 +151,91 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           ),
           const SizedBox(height: 28),
 
-          // Question
-          Text(
-            question.question,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              height: 1.45,
-              color: isDark ? Colors.white : AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Options
-          ...question.options.asMap().entries.map((entry) {
-            final i = entry.key;
-            final option = entry.value as String;
-            return _OptionTile(
-              option: option,
-              index: i,
-              selected: _selectedAnswer == i,
-              answered: _answered,
-              isCorrect: question.correctIndex == i,
-              onTap: () => _selectAnswer(i),
-              isDark: isDark,
-            );
-          }),
-
-          // Explanation after answering
-          if (_answered && question.explanation.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: accentColor.withValues(alpha: 0.2)),
-              ),
-              child: Row(
+          // Question, options and explanation scroll; the action stays put.
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    color: accentColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      question.explanation,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.5,
-                        color: isDark ? Colors.white70 : AppColors.textGrey,
-                      ),
+                  // Question
+                  Text(
+                    question.question,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      height: 1.45,
+                      color: isDark ? Colors.white : AppColors.textDark,
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Options
+                  ...question.options.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final option = entry.value as String;
+                    return _OptionTile(
+                      option: option,
+                      index: i,
+                      selected: _selectedAnswer == i,
+                      answered: _answered,
+                      isCorrect: question.correctIndex == i,
+                      onTap: () => _selectAnswer(i),
+                      isDark: isDark,
+                    );
+                  }),
+
+                  // Explanation after answering
+                  if (_answered && question.explanation.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: accentColor.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: accentColor,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              question.explanation,
+                              style: TextStyle(
+                                fontSize: 13,
+                                height: 1.5,
+                                color: isDark
+                                    ? Colors.white70
+                                    : AppColors.textGrey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-          ],
-
-          const Spacer(),
+          ),
 
           // Next / Finish button
-          if (_answered)
+          if (_answered) ...[
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () => _nextQuestion(provider),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -230,8 +243,8 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                 ),
                 child: Text(
                   _currentQuestion < quiz.questions.length - 1
-                      ? 'Next Question'
-                      : 'See Results',
+                      ? 'books.nextQuestion'.tr()
+                      : 'books.seeResults'.tr(),
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
@@ -239,6 +252,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -265,10 +279,10 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         ? AppColors.greenSuccessBright
         : AppColorRoles.primary(isDark);
     final msg = pct >= 0.8
-        ? 'Excellent!'
+        ? 'books.quizExcellent'.tr()
         : pct >= 0.6
-        ? 'Good job!'
-        : 'Keep reading!';
+        ? 'books.quizGood'.tr()
+        : 'books.quizKeepReading'.tr();
 
     final xpEarned = quiz != null && score > 0
         ? (quiz.xpReward * pct).round().clamp(5, quiz.xpReward)
@@ -293,7 +307,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'books.quizScore'.tr(namedArgs: {'score': '$score', 'total': '$total'}),
+              'books.quizScore'.tr(
+                namedArgs: {'score': '$score', 'total': '$total'},
+              ),
               style: TextStyle(
                 fontSize: 16,
                 color: isDark ? Colors.white60 : AppColors.textGrey,
@@ -334,7 +350,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

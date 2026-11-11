@@ -3,12 +3,14 @@ Authentication Routes
 """
 import logging
 import asyncio
+import hashlib
 import secrets
+import time
 import uuid
 from datetime import datetime, timezone
 
 import anyio
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -28,6 +30,7 @@ from app.core.security import (
     verify_password_async,
 )
 from app.core.token_blacklist import TokenBlacklist
+from app.services.admin_audit import record_admin_action
 from app.services.starter_reward_service import StarterRewardService
 from app.models.user import User, RefreshToken
 from app.services.email_service import EmailService
@@ -49,6 +52,70 @@ from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorRe
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+_VERIFICATION_RESEND_COOLDOWN_SECONDS = 60
+_VERIFICATION_RESEND_WINDOW_SECONDS = 3600
+_VERIFICATION_RESEND_MAX_PER_WINDOW = 5
+_VERIFICATION_RESEND_KEY_PREFIX = "auth:verification-resend:"
+_VERIFICATION_RESEND_QUOTA_PREFIX = "auth:verification-resend-quota:"
+_verification_resend_cooldowns: dict[str, float] = {}
+_verification_resend_history: dict[str, list[float]] = {}
+_verification_resend_lock = asyncio.Lock()
+
+
+async def _claim_verification_resend_cooldown(email: str) -> bool:
+    """Enforce recipient cooldown and rolling-hour quota atomically."""
+    normalized = email.strip().lower()
+    recipient_id = hashlib.sha256(normalized.encode()).hexdigest()
+    key = f"{_VERIFICATION_RESEND_KEY_PREFIX}{recipient_id}"
+    redis = await RedisClient.get_instance()
+    if redis is not None:
+        now_ms = int(time.time() * 1000)
+        result = await redis.eval(
+            """
+            redis.call("ZREMRANGEBYSCORE", KEYS[2], "-inf", ARGV[1] - ARGV[2])
+            if redis.call("ZCARD", KEYS[2]) >= tonumber(ARGV[3]) then
+                return 0
+            end
+            if not redis.call("SET", KEYS[1], "1", "EX", ARGV[4], "NX") then
+                return 0
+            end
+            redis.call("ZADD", KEYS[2], ARGV[1], ARGV[5])
+            redis.call("EXPIRE", KEYS[2], math.ceil(ARGV[2] / 1000))
+            return 1
+            """,
+            2,
+            key,
+            f"{_VERIFICATION_RESEND_QUOTA_PREFIX}{recipient_id}",
+            now_ms,
+            _VERIFICATION_RESEND_WINDOW_SECONDS * 1000,
+            _VERIFICATION_RESEND_MAX_PER_WINDOW,
+            _VERIFICATION_RESEND_COOLDOWN_SECONDS,
+            f"{now_ms}:{secrets.token_hex(8)}",
+        )
+        return int(result) == 1
+
+    # Test/dev fallback. In production the middleware marks this endpoint as
+    # sensitive and fails closed before reaching this branch if Redis is down.
+    async with _verification_resend_lock:
+        now = time.monotonic()
+        expires_at = _verification_resend_cooldowns.get(recipient_id, 0)
+        recent = [
+            sent_at
+            for sent_at in _verification_resend_history.get(recipient_id, [])
+            if sent_at > now - _VERIFICATION_RESEND_WINDOW_SECONDS
+        ]
+        _verification_resend_history[recipient_id] = recent
+        if (
+            expires_at > now
+            or len(recent) >= _VERIFICATION_RESEND_MAX_PER_WINDOW
+        ):
+            return False
+        _verification_resend_cooldowns[recipient_id] = (
+            now + _VERIFICATION_RESEND_COOLDOWN_SECONDS
+        )
+        recent.append(now)
+        return True
 
 
 def _safe_str(value, default: str) -> str:
@@ -96,6 +163,23 @@ _DUMMY_HASH: str = get_password_hash("_lexilingo_timing_normalization_placeholde
 
 
 
+async def _audit_admin_login(
+    db: AsyncSession, http_request: Request, outcome: str, user=None, email: str | None = None, via: str = "password"
+) -> None:
+    """Admin sign-ins, including refusals, are committed on their own: a refusal raises right after."""
+    try:
+        record_admin_action(
+            db, user, "login" if outcome == "ok" else f"login_{outcome}", "auth",
+            str(user.id) if user is not None else email,
+            {"email": email or getattr(user, "email", None), "via": via},
+            http_request,
+        )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logger.warning("Admin login audit row not written", exc_info=True)
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
@@ -121,7 +205,7 @@ async def register(
             to_email=user.email, token=token, display_name=user.display_name,
         )
     except Exception as exc:
-        logger.warning("Could not send verification email to %s: %s", user.email, exc)
+        logger.warning("Could not send verification email: %s", exc)
 
     return _build_user_response(user)
 
@@ -129,26 +213,29 @@ async def register(
 @router.post("/resend-verification")
 async def resend_verification_email(
     body: ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """Resend email verification link."""
+    can_send = await _claim_verification_resend_cooldown(body.email)
     result = await db.execute(select(User).where(User.email == body.email))
     user = result.scalar_one_or_none()
     # Always return 200 to avoid email enumeration
-    if user and not user.is_verified:
+    if can_send and user and not user.is_verified:
         try:
             from app.core.security import create_verification_token
             token = create_verification_token(
                 {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
                 expires_minutes=1440,
             )
-            await EmailService.send_verification_email(
-                to_email=user.email,
-                token=token,
-                display_name=user.display_name,
+            background_tasks.add_task(
+                EmailService.send_verification_email,
+                user.email,
+                token,
+                user.display_name,
             )
         except Exception as exc:
-            logger.warning("Could not resend verification email to %s: %s", user.email, exc)
+            logger.warning("Could not schedule verification email: %s", exc)
     return {"message": "If your email is registered and unverified, a verification link has been sent."}
 
 
@@ -356,6 +443,7 @@ async def logout(
 @router.post("/google", response_model=LoginResponse)
 async def google_login(
     request: GoogleLoginRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -503,6 +591,7 @@ async def google_login(
         user_role = user.role.slug if user.role else None
         
         if user_role not in ["admin", "super_admin"]:
+            await _audit_admin_login(db, http_request, "denied", user, via="google")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. Admin privileges required."
@@ -516,6 +605,8 @@ async def google_login(
     
     # Update last login
     user.last_login = datetime.now(timezone.utc)
+    if request.source == "admin":
+        await _audit_admin_login(db, http_request, "ok", user, via="google")
     await db.commit()
     
     # Create tokens
@@ -805,6 +896,7 @@ async def verify_email(
 @router.post("/admin/login")
 async def admin_login(
     body: dict,
+    http_request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -824,6 +916,7 @@ async def admin_login(
     password_ok = await verify_password_async(password, hash_to_check)
 
     if not user or not password_ok:
+        await _audit_admin_login(db, http_request, "failed", None, email=email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -839,10 +932,14 @@ async def admin_login(
         )
 
     if getattr(user, "role_level", 0) < 1:
+        await _audit_admin_login(db, http_request, "denied", user)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
 
     user_id = str(user.id)
     user.last_login = datetime.now(timezone.utc)
+    record_admin_action(
+        db, user, "login", "auth", user.id, {"email": user.email, "via": "password"}, http_request
+    )
     try:
         await db.commit()
     except Exception:
@@ -869,8 +966,6 @@ async def admin_login(
 # ============================================================================
 # Admin passwordless OTP login (kept for backward compatibility)
 # ============================================================================
-
-import time
 
 # Dev/test fallback store: {email: (otp, expires_at)}. Production requires Redis.
 _admin_otp_store: dict[str, tuple[str, float]] = {}

@@ -8,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:lexilingo_app/core/widgets/locale_refresher.dart';
 import 'package:lexilingo_app/core/widgets/error_widget.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -92,6 +93,29 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_cha
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 
+String? _lastFlutterError;
+bool _announcedRepeat = false;
+
+// A throw inside MouseTracker leaves `_debugDuringDeviceUpdate` stuck, so every
+// later pointer event re-asserts; print the first and swallow the identical rest.
+void _onFlutterError(FlutterErrorDetails details) {
+  final key = details.exceptionAsString();
+  if (key == _lastFlutterError) {
+    if (!_announcedRepeat) {
+      _announcedRepeat = true;
+      debugPrint(
+        'Flutter Error repeating; duplicates suppressed. The first occurrence '
+        'above is the root cause — hot restart to clear a stuck assertion.',
+      );
+    }
+    return;
+  }
+  _lastFlutterError = key;
+  _announcedRepeat = false;
+  FlutterError.presentError(details);
+  debugPrint('Flutter Error: ${details.exception}');
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -102,10 +126,7 @@ void main() async {
   }
 
   // Add error handler for Flutter and Dart errors
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-    debugPrint('Flutter Error: ${details.exception}');
-  };
+  FlutterError.onError = _onFlutterError;
 
   try {
     // Load only public client config. Raw .env files may contain server
@@ -132,7 +153,7 @@ void main() async {
     if (!kIsWeb) {
       FlutterError.onError = kReleaseMode
           ? FirebaseCrashlytics.instance.recordFlutterFatalError
-          : FlutterError.presentError;
+          : _onFlutterError;
       // Also catch async errors thrown outside the Flutter widget tree
     }
 
@@ -343,9 +364,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
           create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges(),
         ),
         // No eager load: the Content tab calls load() when first opened.
-        ChangeNotifierProvider(
-          create: (_) => di.sl<ContentActivityProvider>(),
-        ),
+        ChangeNotifierProvider(create: (_) => di.sl<ContentActivityProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<NotificationProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<LevelProvider>()),
@@ -395,7 +414,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 value: AppTheme.systemUiOverlayStyle(
                   Theme.of(context).brightness,
                 ),
-                child: child ?? const SizedBox.shrink(),
+                child: LocaleRefresher(child: child ?? const SizedBox.shrink()),
               );
             },
             // Localization — easy_localization handles locale state

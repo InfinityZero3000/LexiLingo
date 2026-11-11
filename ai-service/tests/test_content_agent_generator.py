@@ -256,7 +256,7 @@ def test_groq_mission_generator_does_not_borrow_the_short_call_model(monkeypatch
     monkeypatch.setenv("GROQ_MODEL", "some/other-model")
     monkeypatch.delenv("CONTENT_AGENT_GROQ_MODEL", raising=False)
 
-    assert GroqMissionGenerator()._model == "qwen/qwen3.6-27b"
+    assert GroqMissionGenerator()._model == "qwen/qwen3.8-27b"
 
     monkeypatch.setenv("CONTENT_AGENT_GROQ_MODEL", "openai/gpt-oss-20b")
     assert GroqMissionGenerator()._model == "openai/gpt-oss-20b"
@@ -283,7 +283,7 @@ async def test_groq_mission_generator_sends_the_qwen_reasoning_override(monkeypa
     monkeypatch.setattr(generator_module, "get_available_groq_key", fake_key)
     request = GenerationRequest(levels=["A1"], units_per_course=1, lessons_per_unit=1)
     plan = plan_curriculum(_records(), request)
-    gen = generator_module.GroqMissionGenerator(model="qwen/qwen3.6-27b")
+    gen = generator_module.GroqMissionGenerator(model="qwen/qwen3.8-27b")
 
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         await gen._call_model(client, plan.courses[0].units[0].lessons[0],

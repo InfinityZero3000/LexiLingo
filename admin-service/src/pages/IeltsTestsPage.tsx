@@ -508,7 +508,7 @@ export const IeltsTestsPage = () => {
             <input
               type="file"
               accept="audio/*"
-              style={{ display: "none" }}
+              hidden
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) void handleAudioUpload(file);

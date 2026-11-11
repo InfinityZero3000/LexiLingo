@@ -20,7 +20,10 @@ class ApiConfig {
   static bool get isDev => environment == 'development';
   static bool get isProd => environment == 'production';
 
+  /// Off on the web even when the flag is set: SoLoud there needs its 1.4 MB
+  /// wasm bundle declared in index.html, which the app does not ship.
   static bool get enableDuplexVoice =>
+      !kIsWeb &&
       _readEnv('VOICE_DUPLEX_ENABLED')?.trim().toLowerCase() == 'true';
 
   /// Starter rewards require backend routes and a database migration.
@@ -158,7 +161,15 @@ class ApiConfig {
     }
   }
 
+  // flutter run --dart-define=API_BASE_URL=http://<lan-ip>:8000/api/v1
+  static const _definedEnv = {
+    'API_BASE_URL': String.fromEnvironment('API_BASE_URL'),
+    'AI_SERVICE_URL': String.fromEnvironment('AI_SERVICE_URL'),
+  };
+
   static String? _readEnv(String key) {
+    final defined = _definedEnv[key];
+    if (defined != null && defined.isNotEmpty) return defined;
     if (!dotenv.isInitialized) return null;
     return dotenv.env[key];
   }

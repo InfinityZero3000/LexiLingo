@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 import 'package:lexilingo_app/features/podcast/data/repositories/podcast_repository.dart';
+import 'package:lexilingo_app/features/podcast/data/services/listening_history_recorder.dart';
 import 'package:lexilingo_app/features/podcast/presentation/providers/podcast_provider.dart';
 
 /// Register Podcast feature dependencies.
@@ -15,6 +16,11 @@ import 'package:lexilingo_app/features/podcast/presentation/providers/podcast_pr
 Future<void> registerPodcastModule() async {
   // Repository
   sl.registerLazySingleton<PodcastRepository>(() => PodcastRepository());
+
+  // Outlives any one screen: playback goes on after the player is popped.
+  sl.registerLazySingleton<ListeningHistoryRecorder>(
+    () => ListeningHistoryRecorder(sl<PodcastRepository>()),
+  );
 
   // Provider
   sl.registerFactory<PodcastProvider>(

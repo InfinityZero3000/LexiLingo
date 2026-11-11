@@ -9,8 +9,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
 from app.core.cache import build_cache_key, set_cached
+from app.core.security import create_access_token
+from app.crud.gamification import LeaderboardCRUD
 from app.models.gamification import (
     Achievement,
+    LeaderboardEntry,
     ShopItem,
     UserInventory,
     UserWallet,
@@ -182,6 +185,162 @@ class TestLeaderboard:
         data = response.json()
         assert data["success"] is True
         assert "league" in data["data"]
+
+    @pytest.mark.asyncio
+    async def test_tied_weekly_xp_uses_the_same_rank_for_entries_and_viewer(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        db_session: AsyncSession,
+        test_user: User,
+    ):
+        competitor = User(
+            email=f"leaderboard-{uuid4()}@test.dev",
+            username=f"leaderboard_{uuid4().hex[:8]}",
+            hashed_password="hashed",
+            display_name="Tied Competitor",
+            target_language="en",
+            level="A1",
+            numeric_level=1,
+            total_xp=500,
+            rank="bronze",
+            is_active=True,
+        )
+        test_user.rank = "bronze"
+        test_user.total_xp = 100
+        db_session.add(competitor)
+        await db_session.flush()
+
+        week_start, week_end = LeaderboardCRUD.get_current_week_range()
+        db_session.add_all(
+            [
+                LeaderboardEntry(
+                    user_id=test_user.id,
+                    week_start=week_start,
+                    week_end=week_end,
+                    league="bronze",
+                    xp_earned=100,
+                ),
+                LeaderboardEntry(
+                    user_id=competitor.id,
+                    week_start=week_start,
+                    week_end=week_end,
+                    league="bronze",
+                    xp_earned=100,
+                ),
+            ]
+        )
+        await db_session.commit()
+
+        response = await async_client.get(
+            "/api/v1/gamification/leaderboard?league=bronze",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200, response.text
+        payload = response.json()["data"]
+        entries = {entry["user_id"]: entry for entry in payload["entries"]}
+        viewer = entries[str(test_user.id)]
+        tied_competitor = entries[str(competitor.id)]
+        assert viewer["rank"] == tied_competitor["rank"] == 1
+        assert payload["current_user_rank"] == viewer["rank"]
+
+    @pytest.mark.asyncio
+    async def test_shared_cache_personalizes_each_viewer_without_resyncing(
+        self,
+        async_client: AsyncClient,
+        auth_headers: dict,
+        db_session: AsyncSession,
+        test_user: User,
+        monkeypatch,
+    ):
+        from app.routes import gamification as gamification_route
+
+        competitor = User(
+            email=f"cache-viewer-{uuid4()}@test.dev",
+            username=f"cache_viewer_{uuid4().hex[:8]}",
+            hashed_password="hashed",
+            display_name="Cache Viewer",
+            target_language="en",
+            level="A1",
+            numeric_level=1,
+            total_xp=100,
+            rank="bronze",
+            is_active=True,
+        )
+        test_user.rank = "bronze"
+        db_session.add(competitor)
+        await db_session.flush()
+
+        week_start, week_end = LeaderboardCRUD.get_current_week_range()
+        db_session.add_all(
+            [
+                LeaderboardEntry(
+                    user_id=test_user.id,
+                    week_start=week_start,
+                    week_end=week_end,
+                    league="bronze",
+                    xp_earned=200,
+                ),
+                LeaderboardEntry(
+                    user_id=competitor.id,
+                    week_start=week_start,
+                    week_end=week_end,
+                    league="bronze",
+                    xp_earned=100,
+                ),
+            ]
+        )
+        await db_session.commit()
+
+        cache: dict[str, dict] = {}
+        sync_calls = 0
+        original_sync = LeaderboardCRUD.sync_current_week_entries_to_user_rank
+
+        async def fake_get_cached(key: str):
+            return cache.get(key)
+
+        async def fake_set_cached(key: str, value: dict, ttl: int):
+            cache[key] = value
+
+        async def counted_sync(db: AsyncSession):
+            nonlocal sync_calls
+            sync_calls += 1
+            await original_sync(db)
+
+        monkeypatch.setattr(gamification_route, "get_cached", fake_get_cached)
+        monkeypatch.setattr(gamification_route, "set_cached", fake_set_cached)
+        monkeypatch.setattr(
+            LeaderboardCRUD,
+            "sync_current_week_entries_to_user_rank",
+            staticmethod(counted_sync),
+        )
+
+        first = await async_client.get(
+            "/api/v1/gamification/leaderboard?league=bronze",
+            headers=auth_headers,
+        )
+        competitor_headers = {
+            "Authorization": f"Bearer {create_access_token(data={'sub': str(competitor.id)})}"
+        }
+        second = await async_client.get(
+            "/api/v1/gamification/leaderboard?league=bronze",
+            headers=competitor_headers,
+        )
+
+        assert first.status_code == second.status_code == 200
+        first_entries = first.json()["data"]["entries"]
+        second_entries = second.json()["data"]["entries"]
+        assert next(entry for entry in first_entries if entry["is_current_user"])[
+            "user_id"
+        ] == str(test_user.id)
+        assert next(entry for entry in second_entries if entry["is_current_user"])[
+            "user_id"
+        ] == str(competitor.id)
+        assert first.headers["X-Cache-Source"] == "origin"
+        assert second.headers["X-Cache-Source"] == "redis"
+        assert sync_calls == 1
+        assert len(cache) == 1
 
 
 class TestShop:

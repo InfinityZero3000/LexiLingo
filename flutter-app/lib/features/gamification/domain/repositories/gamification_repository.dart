@@ -12,6 +12,7 @@ abstract class GamificationRepository {
   Future<List<ShopItemEntity>> getShopItems();
   Future<bool> purchaseItem(String itemId, {int quantity = 1});
   Future<List<InventoryItemEntity>> getInventory();
+
   /// Uses an inventory item; returns its applied effects payload on
   /// success, or null on failure.
   Future<Map<String, dynamic>?> useItem(String inventoryId);

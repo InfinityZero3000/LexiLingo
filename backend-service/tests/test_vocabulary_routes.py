@@ -18,8 +18,7 @@ Covers:
 
 import pytest
 import uuid
-from datetime import UTC, datetime, date, timedelta
-from typing import List
+from datetime import UTC, datetime, date
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -393,8 +392,16 @@ class TestQuickSaveToCollection:
         mock_vocab.word = "consistency"
         mock_user_vocab = _make_mock_user_vocab()
 
+        mock_create = AsyncMock(return_value=mock_vocab)
+        looked_up = {
+            "definition": "the quality of always behaving in the same way",
+            "translation": "sự nhất quán",
+            "part_of_speech": "noun",
+            "phonetic": "/kənˈsɪstənsi/",
+        }
         with patch("app.crud.vocabulary.vocabulary_crud.find_vocabulary_by_word", new=AsyncMock(return_value=None)), \
-             patch("app.crud.vocabulary.vocabulary_crud.create_vocabulary_item", new=AsyncMock(return_value=mock_vocab)), \
+             patch("app.routes.vocabulary._lookup_word", new=AsyncMock(return_value=looked_up)), \
+             patch("app.crud.vocabulary.vocabulary_crud.create_vocabulary_item", new=mock_create), \
              patch("app.crud.vocabulary.vocabulary_crud.get_user_vocabulary", new=AsyncMock(return_value=None)), \
              patch("app.crud.vocabulary.vocabulary_crud.add_to_collection", new=AsyncMock(return_value=mock_user_vocab)):
             response = await client.post(
@@ -412,6 +419,31 @@ class TestQuickSaveToCollection:
         assert data["already_in_collection"] is False
         assert "user_vocabulary" in data
         assert "vocabulary" in data
+        kwargs = mock_create.call_args.kwargs
+        assert kwargs["definition"] == looked_up["definition"]
+        assert kwargs["translation"] == "sự nhất quán"
+        assert kwargs["pronunciation"] == "/kənˈsɪstənsi/"
+
+    @pytest.mark.asyncio
+    async def test_fills_placeholder_definition_on_resave(self, auth_client):
+        client, _, _, _ = auth_client
+        mock_vocab = _make_mock_vocab_item()
+        mock_vocab.word = "eating"
+        mock_vocab.definition = "A user-saved word: eating"
+        mock_user_vocab = _make_mock_user_vocab()
+        mock_fill = AsyncMock(return_value=mock_vocab)
+
+        with patch("app.crud.vocabulary.vocabulary_crud.find_vocabulary_by_word", new=AsyncMock(return_value=mock_vocab)), \
+             patch("app.routes.vocabulary._lookup_word", new=AsyncMock(return_value={"definition": "taking in food"})), \
+             patch("app.crud.vocabulary.vocabulary_crud.fill_placeholder_item", new=mock_fill), \
+             patch("app.crud.vocabulary.vocabulary_crud.get_user_vocabulary", new=AsyncMock(return_value=mock_user_vocab)):
+            response = await client.post(
+                f"{BASE}/collection/quick-save",
+                json={"word": "eating"},
+            )
+
+        assert response.status_code == 201
+        assert mock_fill.call_args.kwargs["definition"] == "taking in food"
 
     @pytest.mark.asyncio
     async def test_uses_existing_item_when_already_in_collection(self, auth_client):
@@ -443,66 +475,6 @@ class TestQuickSaveToCollection:
             json={"word": "   "},
         )
         assert response.status_code == 422
-
-
-# ============================================================================
-# POST /api/v1/vocabulary/collection/bulk  — Bulk add to collection (auth)
-# ============================================================================
-
-class TestBulkAddToCollection:
-    """Tests for POST /api/v1/vocabulary/collection/bulk."""
-
-    @pytest.mark.asyncio
-    async def test_requires_auth(self, no_auth_client: AsyncClient):
-        payload = {"vocabulary_ids": [VOCAB_ID]}
-        response = await no_auth_client.post(f"{BASE}/collection/bulk", json=payload)
-        assert response.status_code == 401
-
-    @pytest.mark.asyncio
-    async def test_returns_empty_list_when_no_valid_ids(self, auth_client):
-        client, _, _, _ = auth_client
-        # All IDs are invalid (not found), so they are skipped
-        with patch(
-            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
-            new=AsyncMock(return_value=[]),
-        ):
-            response = await client.post(
-                f"{BASE}/collection/bulk",
-                json={"vocabulary_ids": [VOCAB_ID]},
-            )
-        assert response.status_code == 200
-        assert response.json() == []
-
-    @pytest.mark.asyncio
-    async def test_bulk_adds_valid_items(self, auth_client):
-        client, _, _, _ = auth_client
-        mock_user_vocab = _make_mock_user_vocab()
-        with patch(
-            "app.crud.vocabulary.vocabulary_crud.bulk_add_to_collection",
-            new=AsyncMock(return_value=[mock_user_vocab]),
-        ):
-            response = await client.post(
-                f"{BASE}/collection/bulk",
-                json={"vocabulary_ids": [VOCAB_ID]},
-            )
-        assert response.status_code == 200
-        assert len(response.json()) == 1
-
-    @pytest.mark.asyncio
-    async def test_missing_body_returns_422(self, auth_client):
-        client, _, _, _ = auth_client
-        response = await client.post(f"{BASE}/collection/bulk", json={})
-        assert response.status_code == 422
-
-    @pytest.mark.asyncio
-    async def test_rejects_more_than_200_ids(self, auth_client):
-        client, _, _, _ = auth_client
-        response = await client.post(
-            f"{BASE}/collection/bulk",
-            json={"vocabulary_ids": [str(uuid.uuid4()) for _ in range(201)]},
-        )
-        assert response.status_code == 422
-
 
 # ============================================================================
 # GET /api/v1/vocabulary/due  — Due for review (auth)

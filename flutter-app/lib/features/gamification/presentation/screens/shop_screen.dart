@@ -97,7 +97,11 @@ class _ShopScreenState extends State<ShopScreen>
 
     if (success) {
       if (item.category == ShopItemEntity.categoryBoosts) {
-        await BoostPurchaseAnimation.show(context, item: item, onComplete: () {});
+        await BoostPurchaseAnimation.show(
+          context,
+          item: item,
+          onComplete: () {},
+        );
         if (!mounted) return;
       }
       _showPurchaseSuccess(item);
@@ -441,7 +445,7 @@ class _ShopScreenState extends State<ShopScreen>
               padding: const EdgeInsets.all(16),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.75,
+                childAspectRatio: 0.68,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),

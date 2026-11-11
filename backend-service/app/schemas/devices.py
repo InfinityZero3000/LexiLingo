@@ -17,12 +17,6 @@ class DeviceRegisterRequest(BaseModel):
     fcm_token: Optional[str] = Field(None, description="Firebase Cloud Messaging token")
 
 
-class DeviceUpdateRequest(BaseModel):
-    """Device update request (for FCM token updates)."""
-    fcm_token: Optional[str] = Field(None, description="New FCM token")
-    device_name: Optional[str] = Field(None, description="Updated device name")
-
-
 class DeviceResponse(BaseModel):
     """Device response."""
     id: str

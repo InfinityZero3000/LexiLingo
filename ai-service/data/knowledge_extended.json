@@ -251,7 +251,7 @@
     {
       "id": "concept:conversation.making_appointments",
       "title": "Making Appointments",
-      "level": "A2",
+      "level": "B1",
       "keywords": "appointment book schedule meeting available time date when free reschedule cancel confirm"
     },
     {
@@ -299,13 +299,13 @@
     {
       "id": "concept:grammar.prepositions_place",
       "title": "Prepositions of Place",
-      "level": "A2",
+      "level": "A1",
       "keywords": "preposition place at on in under above below beside next between behind front"
     },
     {
       "id": "concept:grammar.quantifiers",
       "title": "Quantifiers",
-      "level": "A2",
+      "level": "B1",
       "keywords": "quantifier much many some any few little lot enough plenty several"
     },
     {
@@ -323,7 +323,7 @@
     {
       "id": "concept:grammar.word_order",
       "title": "Word Order",
-      "level": "B1",
+      "level": "A2",
       "keywords": "word order sentence structure subject verb object adjective adverb position"
     },
     {

@@ -12,11 +12,10 @@ Provides endpoints for:
 import asyncio
 import logging
 from typing import List, Optional, Dict, Any
-from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from datetime import datetime, timezone
 
@@ -34,24 +33,15 @@ from app.models.proficiency import (
     SkillType as ModelSkillType,
 )
 from app.schemas.proficiency import (
-    ProficiencyProfile,
-    SkillAssessment,
     ProficiencyLevel,
     ExerciseResult,
-    UpdateProficiencyRequest,
-    ProficiencyAssessmentResult,
-    LevelCheckResponse,
-    LEVEL_THRESHOLDS,
     SkillType,
-    ExamGatedProgressionRequest,
-    ExamGatedProgressionResponse,
 )
 from app.services.proficiency_service import (
     LEVEL_DIFFICULTY_MULTIPLIER,
     ProficiencyService,
 )
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank
-from app.services.level_service import calculate_numeric_level
 from app.services.learner_error_service import record_learner_error
 from app.services.learner_state import record_concept_observation
 from app.clients.ai_service_client import diagnose_error, invalidate_learner_card
@@ -658,6 +648,9 @@ async def record_exercise_results_for_user(
         accuracy=profile.accuracy,
         current_level=ProficiencyLevel(profile.assessed_level),
         skill_confidences=skill_confidences_dict,
+        floor=ProficiencyLevel(profile.placement_level)
+        if profile.placement_level
+        else None,
     )
     
     level_changed = new_level.value != previous_level
@@ -690,9 +683,12 @@ async def record_exercise_results_for_user(
 
     profile.last_assessment_at = datetime.now(timezone.utc)
 
+    # users.level can disagree with the profile (older rows, or a profile created
+    # by this very call), so compare it too, not just profile.assessed_level.
+    user_level_moved = current_user.level != new_level.value
     current_user.level = new_level.value
 
-    if level_changed:
+    if level_changed or user_level_moved:
         # Rank depends on proficiency_level (current_user.level, just synced
         # above), so it has to be recomputed whenever that changed even though
         # no XP moved here. Otherwise a lesson/game completion that levels up
@@ -710,7 +706,7 @@ async def record_exercise_results_for_user(
     # card the moment it is dropped, so dropping it earlier would just cache
     # the old level again. XP and streak drift is what the card's TTL is for;
     # invalidating on every exercise batch would be one request per answer.
-    if level_changed:
+    if level_changed or user_level_moved:
         await invalidate_learner_card(current_user.id)
 
     return {
@@ -758,117 +754,6 @@ async def record_exercise_results(
     return await record_exercise_results_for_user(
         db, current_user, results
     )
-
-
-@router.get("/level-check", response_model=dict)
-async def check_level_requirements(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Check detailed requirements for the next level.
-    
-    Returns:
-    - Current level
-    - Requirements for next level with met/unmet status
-    - Progress percentage toward each requirement
-    - Blockers preventing level up
-    """
-    # Get profile
-    result = await db.execute(
-        select(UserProficiencyProfile)
-        .where(UserProficiencyProfile.user_id == current_user.id)
-    )
-    profile = result.scalar_one_or_none()
-    
-    if not profile:
-        return {
-            "current_level": "A1",
-            "next_level": "A2",
-            "overall_progress": 0,
-            "qualifies_for_next": False,
-            "requirements": {},
-            "blockers": ["No proficiency data yet. Complete exercises to start tracking."],
-        }
-    
-    # Get skill scores
-    skill_result = await db.execute(
-        select(UserSkillScore)
-        .where(UserSkillScore.profile_id == profile.id)
-    )
-    skill_scores = skill_result.scalars().all()
-    
-    skill_scores_dict = {
-        SkillType(skill_score.skill.value): skill_score.score
-        for skill_score in skill_scores
-    }
-    skill_confidences_dict = {
-        SkillType(skill_score.skill.value): skill_score.confidence or 0.0
-        for skill_score in skill_scores
-    }
-
-    streak_result2 = await db.execute(select(Streak).where(Streak.user_id == current_user.id))
-    streak_row2 = streak_result2.scalar_one_or_none()
-    streak_days2 = streak_row2.current_streak if streak_row2 else 0
-
-    level_check = ProficiencyService.get_level_requirements_check(
-        current_level=ProficiencyLevel(profile.assessed_level),
-        skill_scores=skill_scores_dict,
-        exercises_completed=profile.total_exercises_completed,
-        lessons_completed=profile.total_lessons_completed,
-        accuracy=profile.accuracy,
-        streak_days=streak_days2,
-        skill_confidences=skill_confidences_dict,
-    )
-    
-    return {
-        "current_level": profile.assessed_level,
-        "next_level": level_check.next_level.value if level_check.next_level else None,
-        "overall_progress": level_check.overall_progress,
-        "qualifies_for_next": level_check.qualifies_for_next,
-        "requirements": level_check.requirements,
-        "blockers": level_check.blockers,
-    }
-
-
-@router.get("/level-thresholds", response_model=dict)
-async def get_level_thresholds():
-    """
-    Get all level threshold requirements.
-    
-    Returns the requirements for each CEFR level (A1-C2).
-    Useful for displaying level requirements in the UI.
-    """
-    thresholds = {}
-    
-    for level, threshold in LEVEL_THRESHOLDS.items():
-        thresholds[level.value] = {
-            "min_vocabulary_score": threshold.min_vocabulary_score,
-            "min_grammar_score": threshold.min_grammar_score,
-            "min_reading_score": threshold.min_reading_score,
-            "min_listening_score": threshold.min_listening_score,
-            "min_speaking_score": threshold.min_speaking_score,
-            "min_writing_score": threshold.min_writing_score,
-            "min_overall_score": threshold.min_overall_score,
-            "min_exercises_completed": threshold.min_exercises_completed,
-            "min_lessons_completed": threshold.min_lessons_completed,
-            "min_accuracy": threshold.min_accuracy,
-            "min_streak_days": threshold.min_streak_days,
-            "min_skill_confidence": threshold.min_skill_confidence,
-        }
-    
-    return {
-        "levels": thresholds,
-        "skill_weights": {
-            "vocabulary": 0.25,
-            "grammar": 0.25,
-            "reading": 0.15,
-            "listening": 0.15,
-            "speaking": 0.10,
-            "writing": 0.10,
-        },
-        "description": "Requirements for each CEFR level. Users must meet ALL criteria to advance.",
-    }
 
 
 @router.get("/history", response_model=dict)
@@ -1016,6 +901,8 @@ async def submit_placement_test(
             last_assessment_at=now,
         )
         db.add(profile)
+    profile.placement_level = assessed_level
+    profile.placement_at = now
 
     # The test's own percentage belongs to the test record, not to
     # profile.overall_score: that field is the weighted skill total, and
@@ -1064,87 +951,3 @@ async def submit_placement_test(
         "rank_name": new_rank.name,
         "details": details,
     }
-
-
-@router.post("/exam-gated/submit", response_model=ExamGatedProgressionResponse)
-async def submit_exam_gated_progression(
-    payload: ExamGatedProgressionRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Skeleton endpoint for CEFR exam-gated progression.
-
-    Rules implemented in ProficiencyService:
-    - must pass exam at threshold,
-    - exam tier must be current tier or higher,
-    - promotion is at most one CEFR tier.
-    """
-    # Ensure profile exists.
-    profile_result = await db.execute(
-        select(UserProficiencyProfile).where(UserProficiencyProfile.user_id == current_user.id)
-    )
-    profile = profile_result.scalar_one_or_none()
-    if profile is None:
-        profile = UserProficiencyProfile(
-            user_id=current_user.id,
-            assessed_level=(current_user.level or "A1").upper(),
-        )
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
-
-    previous_level = ProficiencyLevel((profile.assessed_level or current_user.level or "A1").upper())
-    new_level, decision = ProficiencyService.apply_exam_gated_promotion(
-        current_level=previous_level,
-        exam_level=payload.exam_level,
-        passed=payload.passed,
-        score=payload.score,
-        passing_score=payload.passing_score,
-    )
-
-    promoted = bool(decision.get("promoted")) and new_level != previous_level
-
-    if promoted:
-        profile.assessed_level = new_level.value
-        profile.last_level_change_at = datetime.now(timezone.utc)
-        profile.last_assessment_at = datetime.now(timezone.utc)
-
-        # Keep compatibility field in users table aligned.
-        current_user.level = new_level.value
-
-        # Keep rank compatibility in sync.
-        rank_info = calculate_rank(
-            numeric_level=current_user.numeric_level or 1,
-            proficiency_level=current_user.level,
-        )
-        apply_rank_info_to_user(current_user, rank_info)
-
-        history = UserLevelHistory(
-            profile_id=profile.id,
-            previous_level=previous_level.value,
-            new_level=new_level.value,
-            change_type="promotion",
-            reason=f"Exam-gated progression via {payload.exam_source or 'assessment'}",
-            overall_score=profile.overall_score or 0.0,
-            skill_scores_snapshot={},
-            exercises_completed=profile.total_exercises_completed or 0,
-            accuracy=profile.accuracy,
-        )
-        db.add(history)
-        await db.commit()
-        await db.refresh(profile)
-        await invalidate_learner_card(current_user.id)
-
-    return ExamGatedProgressionResponse(
-        previous_level=previous_level,
-        current_level=new_level,
-        promoted=promoted,
-        promoted_to=new_level if promoted else None,
-        eligible=bool(decision.get("eligible")),
-        reason=str(decision.get("reason")),
-        exam_level=payload.exam_level,
-        passed=payload.passed,
-        score=payload.score,
-        passing_score=payload.passing_score,
-    )

@@ -28,37 +28,30 @@ export type RoleWithPermissions = Role & {
   permissions: Permission[];
 };
 
-export type AdminUser = {
-  id: string;
-  username: string;
-  email: string;
-  display_name: string;
-  role: string;
-  is_active: boolean;
-  is_verified: boolean;
-  numeric_level: number;
-  total_xp: number;
-  created_at: string;
-};
-
-export type UsersListResponse = {
-  users: AdminUser[];
-  total: number;
-  page: number;
-  per_page: number;
-  pages: number;
-};
-
 export type AuditLogEntry = {
   id: string;
   user_id: string | null;
+  actor: { username: string | null; email: string | null } | null;
   action: string;
   resource_type: string;
   resource_id: string | null;
   details: string | null;
   ip_address: string | null;
+  user_agent: string | null;
   created_at: string;
 };
+
+export type AuditQuery = {
+  action?: string;
+  resource_type?: string;
+  resource_id?: string;
+  user_id?: string;
+  date_from?: string;
+  date_to?: string;
+  q?: string;
+};
+
+export type AuditFacets = { actions: string[]; resource_types: string[] };
 
 export type AuditLogsResponse = {
   logs: AuditLogEntry[];
@@ -95,48 +88,34 @@ export const getRoleWithPermissions = (slug: string) =>
 export const getPermissions = () =>
   apiFetch<Permission[]>(`${base()}/admin/rbac/permissions`);
 
-export const getUsers = (params: {
-  page?: number;
-  per_page?: number;
-  role_slug?: string;
-  search?: string;
-}) => {
+export const setRolePermissions = (slug: string, permissionSlugs: string[]) =>
+  apiFetch<RoleWithPermissions>(`${base()}/admin/rbac/roles/${slug}/permissions`, {
+    method: "PUT",
+    body: JSON.stringify({ permission_slugs: permissionSlugs }),
+  });
+
+export type MyPermissions = { all: boolean; permissions: string[] };
+
+export const getMyPermissions = () =>
+  apiFetch<MyPermissions>(`${base()}/admin/rbac/me/permissions`);
+
+const auditQueryString = (params: AuditQuery & { page?: number; per_page?: number }) => {
   const qs = new URLSearchParams();
-  if (params.page) qs.set("page", String(params.page));
-  if (params.per_page) qs.set("per_page", String(params.per_page));
-  if (params.role_slug) qs.set("role_slug", params.role_slug);
-  if (params.search) qs.set("search", params.search);
-  return apiFetch<UsersListResponse>(`${base()}/admin/rbac/users?${qs}`);
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") qs.set(key, String(value));
+  });
+  return qs.toString();
 };
 
-export const assignRole = (userId: string, roleSlug: string) =>
-  apiFetch<{ message: string; user_id: string; username: string; old_role: string; new_role: string }>(
-    `${base()}/admin/rbac/users/assign-role`,
-    {
-      method: "POST",
-      body: JSON.stringify({ user_id: userId, role_slug: roleSlug }),
-    }
-  );
+export const getAuditLogs = (params: AuditQuery & { page?: number; per_page?: number }) =>
+  apiFetch<AuditLogsResponse>(`${base()}/admin/rbac/audit-logs?${auditQueryString(params)}`);
 
-export const deactivateUser = (userId: string) =>
-  apiFetch<{ message: string }>(`${base()}/admin/rbac/users/${userId}/deactivate`, { method: "POST" });
+export const getAuditFacets = () =>
+  apiFetch<AuditFacets>(`${base()}/admin/rbac/audit-logs/facets`);
 
-export const activateUser = (userId: string) =>
-  apiFetch<{ message: string }>(`${base()}/admin/rbac/users/${userId}/activate`, { method: "POST" });
-
-export const getAuditLogs = (params: {
-  page?: number;
-  per_page?: number;
-  action?: string;
-  resource_type?: string;
-}) => {
-  const qs = new URLSearchParams();
-  if (params.page) qs.set("page", String(params.page));
-  if (params.per_page) qs.set("per_page", String(params.per_page));
-  if (params.action) qs.set("action", params.action);
-  if (params.resource_type) qs.set("resource_type", params.resource_type);
-  return apiFetch<AuditLogsResponse>(`${base()}/admin/rbac/audit-logs?${qs}`);
-};
+/** CSV text of the same filtered view (the server caps it at 10,000 rows). */
+export const exportAuditLogs = (params: AuditQuery) =>
+  apiFetch<string>(`${base()}/admin/rbac/audit-logs/export?${auditQueryString(params)}`);
 
 export const getDashboardStats = () =>
   apiFetch<DashboardStats>(`${base()}/admin/rbac/dashboard`);

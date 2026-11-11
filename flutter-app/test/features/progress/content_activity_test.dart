@@ -69,24 +69,22 @@ void main() {
     test('exposes timed and counted sources separately', () async {
       final provider = ContentActivityProvider(
         repository: FakeProgressRepository(
-          activity: _activity(
-            const [
-              ContentSourceActivityEntity(
-                source: 'youtube',
-                sessions: 1,
-                minutes: 10,
-                tracksMinutes: true,
-                xpEarned: 5,
-              ),
-              ContentSourceActivityEntity(
-                source: 'book',
-                sessions: 2,
-                minutes: 0,
-                tracksMinutes: false,
-                xpEarned: 40,
-              ),
-            ],
-          ),
+          activity: _activity(const [
+            ContentSourceActivityEntity(
+              source: 'youtube',
+              sessions: 1,
+              minutes: 10,
+              tracksMinutes: true,
+              xpEarned: 5,
+            ),
+            ContentSourceActivityEntity(
+              source: 'book',
+              sessions: 2,
+              minutes: 0,
+              tracksMinutes: false,
+              xpEarned: 40,
+            ),
+          ]),
         ),
       );
 

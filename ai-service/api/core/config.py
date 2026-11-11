@@ -98,9 +98,16 @@ class Settings(BaseSettings):
     LEARNER_STATE_CONNECT_TIMEOUT_MS: int = Field(default=10, ge=1, le=100)
     LEARNER_STATE_POOL_TIMEOUT_MS: int = Field(default=5, ge=1, le=100)
     LEARNER_STATE_MAX_INFLIGHT: int = Field(default=100, ge=1, le=1000)
+    # Idle connections kept open to backend-service. None keeps as many as LEARNER_STATE_MAX_INFLIGHT.
+    LEARNER_STATE_MAX_KEEPALIVE: Optional[int] = Field(default=None, ge=1, le=1000)
     LEARNER_STATE_CIRCUIT_FAILURES: int = Field(default=5, ge=1, le=100)
     LEARNER_STATE_CIRCUIT_RESET_SECONDS: float = Field(default=30.0, ge=0.1, le=600.0)
+    LEARNER_OBSERVATION_DIAGNOSED_ONLY: bool = False
     KUZU_USER_MASTERY_WRITES_ENABLED: bool = True
+    KG_ENABLED: bool = True
+    KG_EXPANSION_ENABLED: bool = True
+    KG_MASTERY_TRAVERSAL: bool = False
+    KG_DIAGNOSIS_BRIDGE: str = Field(default="off", pattern=r"^(off|map|closed)$")
 
     # ============================================================
     # Internal CEFR Content Agent

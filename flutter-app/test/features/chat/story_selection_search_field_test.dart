@@ -43,7 +43,7 @@ void main() {
     await tester.pump();
 
     final fieldCenter = tester.getCenter(find.byType(TextField));
-    final iconCenter = tester.getCenter(find.byIcon(Icons.search));
+    final iconCenter = tester.getCenter(find.byIcon(Icons.search_rounded));
     final hintCenter = tester.getCenter(find.text('storySelection.searchHint'));
 
     final centers = 'field: $fieldCenter, icon: $iconCenter, hint: $hintCenter';

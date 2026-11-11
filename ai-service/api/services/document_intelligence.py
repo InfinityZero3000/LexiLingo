@@ -4,60 +4,137 @@ Supports Local Docs + Web Scraping + Automatic Web Search.
 Tiered logic: L0/L1 (Fast) -> L2 Local (Moderate) -> L2 Search (Deep).
 """
 
-import os
+import asyncio
 import hashlib
 import logging
+import os
+import time
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
 import httpx
-from typing import List, Dict, Any
 import numpy as np
+
 from api.services.embedding_service_v3 import EmbeddingServiceV3
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_DOCS_PATH = Path(__file__).resolve().parents[2] / "data" / "external_docs"
+MIN_CHUNK_CHARS = 40
+WEB_SOURCE = "Web Search"
+
+LOCAL_MIN_SCORE = float(os.getenv("DOC_INTEL_MIN_SCORE", "0.70"))
+# Web results are realtime answers ("today", "latest"): serving them days later is wrong.
+WEB_TTL_SECONDS = float(os.getenv("DOC_INTEL_WEB_TTL_SECONDS", "1800"))
+WEB_MAX_CHUNKS = int(os.getenv("DOC_INTEL_WEB_MAX_CHUNKS", "200"))
+
+
 class DocumentIntelligenceService:
-    def __init__(self):
+    def __init__(self, docs_path: Optional[str] = None):
         self.embedder = EmbeddingServiceV3()
-        self.external_docs_path = "data/external_docs"
+        self.external_docs_path = str(docs_path or DEFAULT_DOCS_PATH)
         self.knowledge_index: List[Dict[str, Any]] = []
+        self._by_id: Dict[str, Dict[str, Any]] = {}
+        self._warned_no_key = False
+        self._warned_dim = False
         # Cấu hình API Search (Ví dụ: Tavily - rất phổ biến cho AI RAG)
         self.search_api_key = os.getenv("TAVILY_API_KEY", "")
         self.search_depth = os.getenv("TAVILY_SEARCH_DEPTH", "fast").strip().lower() or "fast"
         self._load_local_docs()
 
-    def _load_local_docs(self):
-        """Nạp tài liệu local làm nền tảng."""
-        if os.path.exists(self.external_docs_path):
-            for file in os.listdir(self.external_docs_path):
-                if file.endswith((".md", ".txt")):
-                    with open(os.path.join(self.external_docs_path, file), "r") as f:
-                        self._process_text(f.read(), file)
-
-    def _process_text(self, content: str, source: str):
-        """Chuyển đổi văn bản thô thành các cặp KV thông minh, tránh trùng lặp."""
-        chunks = content.split("\n\n")
-        for chunk in chunks:
-            text = chunk.strip()
-            if len(text) < 40: continue
-            
-            chunk_id = hashlib.md5(text.encode()).hexdigest()
-            # Kiểm tra xem KV này đã có trong index chưa
-            if any(item["id"] == chunk_id for item in self.knowledge_index):
+    def _load_local_docs(self) -> None:
+        """Nạp tài liệu local làm nền tảng; một file hỏng không làm hỏng cả service."""
+        if not os.path.isdir(self.external_docs_path):
+            logger.warning("[L2_Local] Docs dir missing: %s", self.external_docs_path)
+            return
+        for file in sorted(os.listdir(self.external_docs_path)):
+            if not file.endswith((".md", ".txt")):
                 continue
+            try:
+                with open(os.path.join(self.external_docs_path, file), "r", encoding="utf-8") as f:
+                    self._process_text(f.read(), file)
+            except Exception as e:
+                logger.warning("[L2_Local] Skipped %s: %s", file, e)
+        logger.info("[L2_Local] Indexed %d chunks", len(self.knowledge_index))
 
-            embedding = self.embedder.embed_text(text)
-            self.knowledge_index.append({
+    def _new_chunks(self, content: str, ephemeral: bool) -> List[Tuple[str, str]]:
+        """Chunk chưa có trong index; chunk web đã có thì được làm tươi lại TTL."""
+        fresh: List[Tuple[str, str]] = []
+        seen = set()
+        now = time.monotonic()
+        for chunk in content.split("\n\n"):
+            text = chunk.strip()
+            if len(text) < MIN_CHUNK_CHARS:
+                continue
+            chunk_id = hashlib.md5(text.encode()).hexdigest()
+            existing = self._by_id.get(chunk_id)
+            if existing is not None:
+                if ephemeral and existing["ephemeral"]:
+                    existing["created_at"] = now
+                continue
+            if chunk_id in seen:
+                continue
+            seen.add(chunk_id)
+            fresh.append((chunk_id, text))
+        return fresh
+
+    def _add_chunks(
+        self,
+        fresh: List[Tuple[str, str]],
+        vectors: Any,
+        source: str,
+        ephemeral: bool,
+    ) -> None:
+        now = time.monotonic()
+        for (chunk_id, text), vec in zip(fresh, vectors):
+            if chunk_id in self._by_id:
+                continue
+            item = {
                 "id": chunk_id,
                 "content": text,
-                "embedding": embedding,
+                "embedding": np.asarray(vec),
                 "source": source,
                 "hit_count": 0,
-                "created_at": os.times().elapsed
-            })
+                "created_at": now,
+                "ephemeral": ephemeral,
+            }
+            self.knowledge_index.append(item)
+            self._by_id[chunk_id] = item
 
-    async def _search_tavily(self, query: str) -> List[str]:
-        """Thực hiện tìm kiếm web qua API chuyên dụng (Fast & Accurate)."""
+    def _process_text(self, content: str, source: str, ephemeral: bool = False) -> None:
+        """Chuyển văn bản thô thành các chunk đã embed theo batch, tránh trùng lặp."""
+        fresh = self._new_chunks(content, ephemeral)
+        if fresh:
+            vectors = self.embedder.embed_texts([text for _, text in fresh])
+            self._add_chunks(fresh, vectors, source, ephemeral)
+
+    async def _process_text_async(self, content: str, source: str, ephemeral: bool = False) -> None:
+        fresh = self._new_chunks(content, ephemeral)
+        if fresh:
+            vectors = await asyncio.to_thread(
+                self.embedder.embed_texts, [text for _, text in fresh]
+            )
+            self._add_chunks(fresh, vectors, source, ephemeral)
+
+    def _evict_web(self) -> None:
+        """Bỏ chunk web quá hạn rồi cắt phần vượt trần; chunk local không bao giờ bị bỏ."""
+        now = time.monotonic()
+        web = [i for i in self.knowledge_index if i["ephemeral"]]
+        drop = {i["id"] for i in web if now - i["created_at"] > WEB_TTL_SECONDS}
+        live = sorted((i for i in web if i["id"] not in drop), key=lambda i: i["created_at"])
+        drop.update(i["id"] for i in live[: max(0, len(live) - WEB_MAX_CHUNKS)])
+        if not drop:
+            return
+        self.knowledge_index = [i for i in self.knowledge_index if i["id"] not in drop]
+        for chunk_id in drop:
+            self._by_id.pop(chunk_id, None)
+
+    async def _search_tavily(self, query: str) -> List[Dict[str, str]]:
+        """Thực hiện tìm kiếm web qua API chuyên dụng; trả về nội dung kèm URL nguồn."""
         if not self.search_api_key:
-            logger.warning("[L2_Search] No TAVILY_API_KEY found. Auto-search disabled.")
+            log = logger.debug if self._warned_no_key else logger.warning
+            log("[L2_Search] No TAVILY_API_KEY found. Auto-search disabled.")
+            self._warned_no_key = True
             return []
 
         allowed_depths = {"ultra-fast", "fast", "basic", "advanced"}
@@ -77,7 +154,11 @@ class DocumentIntelligenceService:
                 )
                 if response.status_code == 200:
                     results = response.json().get("results", [])
-                    return [r["content"] for r in results if len(r["content"]) > 100]
+                    return [
+                        {"content": r["content"], "url": r.get("url") or ""}
+                        for r in results
+                        if len(r.get("content") or "") > 100
+                    ]
                 logger.warning(
                     "[L2_Search] Tavily returned status %s: %s",
                     response.status_code,
@@ -88,65 +169,78 @@ class DocumentIntelligenceService:
         return []
 
     async def query_l2(self, query: str, top_k: int = 3) -> List[Dict[str, Any]]:
-        """Truy xuất tầng L2 với cơ chế Tự động Tìm kiếm khi tri thức thiếu hụt."""
-        
-        # 1. Tìm trong tri thức Local L2 hiện có
-        local_hits = self._get_top_matches(query, top_k)
-        best_score = local_hits[0]["score"] if local_hits else 0
+        """Truy xuất tầng L2: tìm local trước, chỉ lên Web khi không có kết quả đủ tốt."""
+        self._evict_web()
+        query_vec = await asyncio.to_thread(self.embedder.embed_text, query)
 
-        # 2. Cơ chế Tự động (Quality Gate): Nếu không có kết quả tốt (> 0.65), lên Web tìm
-        if best_score < 0.65:
-            logger.info(f"[L2_Auto] Low confidence ({best_score:.2f}). Triggering Web Search...")
-            web_contents = await self._search_tavily(query)
-            
-            if web_contents:
-                for content in web_contents:
-                    self._process_text(content, "Web Search")
-                # Tìm lại lần nữa sau khi đã nạp tri thức Web
-                local_hits = self._get_top_matches(query, top_k)
-                if not local_hits:
-                    # Fallback an toàn: vẫn trả context web để không mất dữ liệu realtime
-                    local_hits = [
-                        {
-                            "content": content,
-                            "score": 0.55,
-                            "id": hashlib.md5(content.encode()).hexdigest(),
-                            "source": "Web Search",
-                        }
-                        for content in web_contents[:top_k]
-                        if len(content) > 40
-                    ]
+        hits = self._rank(query_vec, top_k)
+        if hits:
+            return hits
 
-        return local_hits
+        logger.info(f"[L2_Auto] No local hit >= {LOCAL_MIN_SCORE:.2f}. Triggering Web Search...")
+        results = await self._search_tavily(query)
+        if not results:
+            return []
+
+        for r in results:
+            await self._process_text_async(r["content"], r["url"] or WEB_SOURCE, ephemeral=True)
+        self._evict_web()
+
+        hits = self._rank(query_vec, top_k)
+        if hits:
+            return hits
+        # Fallback an toàn: vẫn trả context web để không mất dữ liệu realtime
+        return [
+            {
+                "content": r["content"],
+                "score": 0.55,
+                "id": hashlib.md5(r["content"].encode()).hexdigest(),
+                "source": r["url"] or WEB_SOURCE,
+            }
+            for r in results[:top_k]
+        ]
+
+    def _rank(self, query_vec: np.ndarray, top_k: int) -> List[Dict[str, Any]]:
+        """Top-k chunk có cosine >= ngưỡng; chỉ chunk được trả về mới tăng hit_count."""
+        scored = []
+        skipped = 0
+        for item in self.knowledge_index:
+            # ponytail: chunk embed bằng backend khác chiều bị bỏ qua, không re-embed
+            if item["embedding"].shape != query_vec.shape:
+                skipped += 1
+                continue
+            score = float(np.dot(query_vec, item["embedding"]))
+            if score >= LOCAL_MIN_SCORE:
+                scored.append((score, item))
+
+        if skipped and not self._warned_dim:
+            self._warned_dim = True
+            logger.warning(
+                "[L2_Local] %d chunks skipped: embedding dim differs from query (%s). "
+                "The embedder backend changed since indexing.",
+                skipped, query_vec.shape,
+            )
+
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        top = scored[:top_k]
+        for _, item in top:
+            item["hit_count"] += 1
+        return [
+            {"content": i["content"], "score": s, "id": i["id"], "source": i["source"]}
+            for s, i in top
+        ]
 
     def _get_top_matches(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """Tìm các KV khớp nhất trong index hiện tại."""
-        if not self.knowledge_index: return []
-        
-        query_vec = self.embedder.embed_text(query)
-        scored_chunks = []
-
-        for item in self.knowledge_index:
-            score = np.dot(query_vec, item["embedding"])
-            if score > 0.70: # Chỉ lấy KV chuẩn xác cao
-                scored_chunks.append({
-                    "content": item["content"],
-                    "score": score,
-                    "id": item["id"],
-                    "source": item["source"]
-                })
-                item["hit_count"] += 1
-
-        scored_chunks.sort(key=lambda x: x["score"], reverse=True)
-        return scored_chunks[:top_k]
+        if not self.knowledge_index:
+            return []
+        return self._rank(self.embedder.embed_text(query), top_k)
 
     def should_promote_to_cache(self, chunk_id: str) -> bool:
         """Cơ chế thăng hạng: Nếu thông tin được hỏi nhiều, lưu vào L1 (Redis)."""
-        for item in self.knowledge_index:
-            if item["id"] == chunk_id:
-                # Dữ liệu web/external nếu hit > 3 lần sẽ thăng hạng lên L1
-                return item["hit_count"] >= 3
-        return False
+        item = self._by_id.get(chunk_id)
+        # Dữ liệu web/external nếu hit >= 3 lần sẽ thăng hạng lên L1
+        return item is not None and item["hit_count"] >= 3
 
 # Singleton
 _doc_intel_service = None

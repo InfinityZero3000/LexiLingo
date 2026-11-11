@@ -54,7 +54,6 @@ class FirebaseMessagingService {
           debugPrint(
             ' Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.',
           );
-          _fcmToken = 'simulator_dummy_token';
         } else {
           _fcmToken = await _messaging.getToken().timeout(
             const Duration(seconds: 5),
@@ -184,6 +183,19 @@ class FirebaseMessagingService {
       debugPrint('FCM token registered with backend ($deviceType)');
     } catch (e) {
       debugPrint('FCM token registration failed: $e');
+    }
+  }
+
+  /// Tell the backend this device no longer belongs to the signed-in user, so
+  /// the next account on it is the only one that gets its pushes. Best-effort:
+  /// call while the session is still valid, before the sign-out request.
+  Future<void> unregisterFromBackend(ApiClient client) async {
+    if (kIsWeb) return;
+    try {
+      final deviceId = await _getDeviceId();
+      await client.delete('/devices/${Uri.encodeComponent(deviceId)}');
+    } catch (e) {
+      debugPrint('Device unregister failed (ignored): $e');
     }
   }
 

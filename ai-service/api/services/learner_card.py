@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from typing import Any
 
 import httpx
@@ -175,7 +176,7 @@ def render_card_facts(card: dict[str, Any], intents: set[str]) -> str:
     lines: list[str] = []
 
     if "identity" in intents or "progress" in intents:
-        name = card.get("display_name")
+        name = _first_name(card)
         if name:
             lines.append(f"Name: {name}")
         if card.get("native_language"):
@@ -242,6 +243,117 @@ def render_card_facts(card: dict[str, Any], intents: set[str]) -> str:
         "plainly — never invent a fact that is not listed here, and if they ask "
         "for something not listed (such as their age), say the app does not "
         "have it rather than guessing.\n"
+    )
+
+
+_CEFR = ("A1", "A2", "B1", "B2", "C1", "C2")
+_MIN_EXERCISES_FOR_WEAKEST = 3
+_MIN_STREAK_TO_MENTION = 3
+
+
+def card_level(card: dict[str, Any] | None) -> str | None:
+    """The learner's CEFR band per the database, or None.
+
+    The app sends a fixed "B1" with every message, so this is the only real
+    source of the level on a chat turn.
+    """
+    for key in ("assessed_level", "cefr_level"):
+        level = str((card or {}).get(key) or "").strip().upper()
+        if level in _CEFR:
+            return level
+    return None
+
+
+def _first_name(card: dict[str, Any]) -> str | None:
+    name = unicodedata.normalize("NFC", str(card.get("display_name") or "").strip())
+    if not name or "@" in name:
+        return None
+    first = name.split()[0]
+    if not 1 < len(first) <= 30:
+        return None
+    language = str(card.get("native_language") or "").lower().split("-", 1)[0]
+    for char in first:
+        if char in {"-", "'", "’"}:
+            continue
+        category = unicodedata.category(char)
+        if category.startswith("M"):
+            continue
+        if not category.startswith("L") or not _name_script_matches(char, language):
+            return None
+    return first
+
+
+def _name_script_matches(char: str, language: str) -> bool:
+    codepoint = ord(char)
+    if "LATIN" in unicodedata.name(char, ""):
+        return True
+    if language == "ja":
+        return 0x3040 <= codepoint <= 0x30FF or 0x3400 <= codepoint <= 0x9FFF
+    if language == "ko":
+        return 0xAC00 <= codepoint <= 0xD7AF or 0x3400 <= codepoint <= 0x9FFF
+    if language == "zh":
+        return 0x3400 <= codepoint <= 0x9FFF
+    return False
+
+
+def profile_defaults(card: dict[str, Any] | None) -> dict[str, str]:
+    """Learner-profile keys the card can fill: level, goal, interest."""
+    if not card:
+        return {}
+    found = {
+        "level": card_level(card),
+        "goal": str(card.get("goal") or "").strip(),
+        "interest": str(card.get("interest") or "").strip(),
+    }
+    return {key: value for key, value in found.items() if value}
+
+
+def render_profile_brief(card: dict[str, Any] | None, native_language_name: str) -> str:
+    """Who this learner is, for every turn — small enough to always send.
+
+    The intent-gated `render_card_facts` answers "what is my XP"; this is what
+    lets an ordinary reply sound like it knows the person. Level, goal and
+    interest travel separately (`profile_defaults`) so they are not said twice.
+    """
+    if not card:
+        return ""
+    lines: list[str] = []
+    name = _first_name(card)
+    if name:
+        lines.append(f"First name: {name}")
+    if native_language_name:
+        lines.append(f"Native language: {native_language_name}")
+
+    enrolled = card.get("enrolled_courses") or []
+    if enrolled and isinstance(enrolled[0], dict) and enrolled[0].get("title"):
+        current = enrolled[0]
+        lines.append(
+            f"Currently studying: {current['title']} ({current.get('progress', 0)}% done)"
+        )
+
+    skills = [
+        (_SKILL_LABELS[skill], data)
+        for skill, data in (card.get("skills") or {}).items()
+        if skill in _SKILL_LABELS
+        and isinstance(data, dict)
+        and int(data.get("exercises") or 0) >= _MIN_EXERCISES_FOR_WEAKEST
+    ]
+    if skills:
+        label, data = min(skills, key=lambda item: item[1].get("score", 0))
+        lines.append(f"Weakest skill so far: {label}")
+
+    streak = int(card.get("streak_days") or 0)
+    if streak >= _MIN_STREAK_TO_MENTION:
+        lines.append(f"Practice streak: {streak} days")
+
+    if not lines:
+        return ""
+    return (
+        "--- About this learner (from their account) ---\n"
+        + "\n".join(lines)
+        + "\nLet this shape your replies — pick examples they care about, use their "
+        "first name now and then, build on what they are studying. Never recite it "
+        "or say you looked it up.\n"
     )
 
 

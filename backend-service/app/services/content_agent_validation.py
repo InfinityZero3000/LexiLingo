@@ -343,6 +343,45 @@ def _check_courses_present(artifact: dict[str, Any], report: ValidationReport) -
         )
 
 
+def _check_enrichment_lineage(
+    vocab: dict[str, Any],
+    base: str,
+    pinned_by_source: dict[str, dict[str, Any]],
+    report: ValidationReport,
+) -> None:
+    """Fields borrowed from a reference corpus must trace to a snapshot pinned to the job."""
+    lineage = vocab.get("lineage")
+    entries = lineage.get("enrichment") if isinstance(lineage, dict) else None
+    if entries is None:
+        return
+    if not isinstance(entries, list):
+        _blocking(
+            report,
+            "ENRICHMENT_INVALID",
+            f"{base}.lineage.enrichment",
+            "lineage.enrichment must be a list",
+        )
+        return
+    for index, entry in enumerate(entries):
+        path = f"{base}.lineage.enrichment[{index}]"
+        source_name = str(entry.get("source_name") or "") if isinstance(entry, dict) else ""
+        pin = pinned_by_source.get(source_name)
+        if pin is None:
+            _blocking(
+                report,
+                "ENRICHMENT_SOURCE_NOT_PINNED",
+                f"{path}.source_name",
+                f"enrichment source '{source_name}' was not pinned to the job",
+            )
+        elif str(entry.get("snapshot_id")) != str(pin.get("snapshot_id")):
+            _blocking(
+                report,
+                "ENRICHMENT_SNAPSHOT_MISMATCH",
+                f"{path}.snapshot_id",
+                "snapshot_id does not match the snapshot pinned to the job",
+            )
+
+
 def _check_provenance(
     artifact: dict[str, Any],
     index: ArtifactIndex,
@@ -410,6 +449,7 @@ def _check_provenance(
                 f"source '{source_name}' is absent from source_manifest",
             )
             continue
+        _check_enrichment_lineage(vocab, base, pinned_by_source, report)
         pin = pinned_by_source.get(source_name)
         if source_name == "admin_upload":
             required_fields = (

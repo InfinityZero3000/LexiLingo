@@ -36,7 +36,7 @@ from api.services.stt.audio_ingest import (
 )
 from api.services.stt.errors import STTErrorCode, STTProtocolError
 from api.services.stt.runtime import get_stt_config, get_stt_sessions
-from api.services.stt.schemas import ResumeMessage, StartMessage
+from api.services.stt.schemas import ResumeMessage, StartMessage, normalize_stt_language
 from api.services.stt_service import get_stt_service
 
 router = APIRouter()
@@ -268,8 +268,24 @@ async def stream_audio(websocket: WebSocket):
                             assistant_text=assistant_text,
                         )
 
+                    from api.services.lexi_memory import load_memory_block
+
+                    try:
+                        memory_block = await load_memory_block(
+                            mongodb_manager.db, user_id
+                        )
+                    except Exception:
+                        # .db raises while Mongo is down; memory must not cost the turn.
+                        memory_block = ""
+
                     turn_task = asyncio.create_task(
-                        DuplexTurn(send_json, send_bytes, persist=persist).run(
+                        DuplexTurn(
+                            send_json,
+                            send_bytes,
+                            persist=persist,
+                            system_extra=memory_block,
+                            tts_speed=session.start.tts_speed,
+                        ).run(
                             event,
                             turn_seq=turn_seq,
                             tts_enabled=session.start.tts_enabled,
@@ -281,6 +297,8 @@ async def stream_audio(websocket: WebSocket):
         sender = asyncio.create_task(send_events())
         while not session.closed:
             incoming = await websocket.receive()
+            if incoming["type"] == "websocket.disconnect":
+                raise WebSocketDisconnect(incoming.get("code", 1000))
             if incoming.get("bytes") is not None:
                 frame = parse_audio_frame(
                     incoming["bytes"],
@@ -373,7 +391,7 @@ async def stream_audio(websocket: WebSocket):
         if session:
             await manager.close(session.start.session_id, "error")
         await websocket.close(code=4400)
-    except Exception as exc:
+    except Exception:
         logger.exception("Unhandled error in stream_audio session=%s", session.start.session_id if session else None)
         if sender and not sender.done():
             sender.cancel()
@@ -406,9 +424,13 @@ async def stream_audio(websocket: WebSocket):
 async def transcribe_audio(
     request_context: Request,
     audio: UploadFile = File(...),
-    language: str = "en",
+    language: str = "auto",
     current_user: AuthenticatedUser = Depends(get_current_user),
 ):
+    try:
+        language = normalize_stt_language(language)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     start_time = time.time()
     request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
     quota = await enforce_user_quota(

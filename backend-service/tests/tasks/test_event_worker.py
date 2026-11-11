@@ -257,3 +257,20 @@ async def test_run_connects_only_when_not_already_connected(monkeypatch):
     monkeypatch.setattr(worker_module.RedisClient, "is_connected", lambda: True)
     await worker_module._run()
     assert connect.await_count == 1  # unchanged — already connected
+
+
+async def test_run_releases_the_redis_client_so_the_next_tick_can_use_a_new_loop(monkeypatch):
+    """Each Celery tick runs asyncio.run(); a client kept in the singleton stays
+    bound to the closed loop and the following tick raises "Event loop is closed"."""
+    close = AsyncMock()
+    monkeypatch.setattr(worker_module.RedisClient, "is_connected", lambda: True)
+    monkeypatch.setattr(worker_module.RedisClient, "close", close)
+
+    monkeypatch.setattr(worker_module, "_drain", AsyncMock(return_value={"drained": 0}))
+    await worker_module._run()
+    assert close.await_count == 1
+
+    monkeypatch.setattr(worker_module, "_drain", AsyncMock(side_effect=RuntimeError("boom")))
+    with pytest.raises(RuntimeError):
+        await worker_module._run()
+    assert close.await_count == 2

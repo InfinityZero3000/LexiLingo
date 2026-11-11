@@ -1,0 +1,24 @@
+# LXD profile for the LexiLingo box. Apply with:
+#   lxc profile create lexilingo && lxc profile edit lexilingo < deploy/lxd/lexilingo.profile.yaml
+# Then: lxc launch ubuntu:24.04 lexilingo -p default -p lexilingo
+#
+# Numbers assume a 7.6 GB / 4 vCPU host shared with other projects. Re-measure
+# after the first week (see docs/operations/MULTI_PROJECT_VPS.md).
+description: LexiLingo production box (Docker inside, limited RAM/CPU/disk, fixed IP)
+config:
+  limits.memory: 4GB          # hard cap; the host keeps the rest
+  limits.cpu: "3"
+  security.nesting: "true"    # needed to run Docker inside the container
+  boot.autostart: "true"
+  boot.autostart.priority: "10"
+devices:
+  eth0:
+    name: eth0
+    type: nic
+    network: lxdbr0
+    ipv4.address: 10.77.0.10  # next project: 10.77.0.11, ...
+  root:
+    path: /
+    pool: default
+    type: disk
+    size: 20GB                # quota; works because the pool is btrfs (pool is 24GiB on ovh-vps)

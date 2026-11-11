@@ -50,6 +50,39 @@ def test_tts_pcm_is_lazy_and_keeps_fragment_order():
     assert list(chunks) == [b"Second sentence."]
 
 
+def test_tts_speed_reaches_piper_as_inverse_length_scale():
+    from unittest.mock import patch
+
+    seen = []
+
+    class Voice:
+        def synthesize(self, fragment, config=None):
+            seen.append(config)
+            return [SimpleNamespace(audio_int16_bytes=b"pcm")]
+
+    # `piper` is a native binary wheel absent in the test environment.
+    # Stub it so iter_pcm_chunks can build SynthesisConfig without the real package.
+    fake_piper = SimpleNamespace(SynthesisConfig=lambda **kw: SimpleNamespace(**kw))
+
+    service = TTSService()
+    service._voice = Voice()
+    list(service.iter_pcm_chunks("Hello."))
+    with patch.dict(sys.modules, {"piper": fake_piper}):
+        list(service.iter_pcm_chunks("Hello.", speed=0.5))
+
+    assert seen[0] is None
+    assert seen[1].length_scale == pytest.approx(2.0)
+
+
+@pytest.mark.parametrize("speed", [0.4, 2.5])
+def test_start_message_rejects_out_of_range_tts_speed(speed):
+    from api.services.stt.schemas import StartMessage
+
+    with pytest.raises(ValidationError):
+        StartMessage(session_id="s1", tts_speed=speed)
+    assert StartMessage(session_id="s1", tts_speed=0.75).tts_speed == 0.75
+
+
 def test_tts_warmup_stops_after_first_pcm_chunk():
     events = []
 

@@ -93,7 +93,7 @@ def get_groq_definition(word, example, translation_en, translation_vi, tags):
     )
     
     payload = {
-        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b"),
+        "model": os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b"),
         "messages": [
             {"role": "system", "content": system_msg},
             {"role": "user", "content": prompt}

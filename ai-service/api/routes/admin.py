@@ -345,6 +345,19 @@ async def create_admin_topic(
     """Create or update a topic chat story from the admin console."""
     story = _build_admin_story(payload)
     doc = story.model_dump(mode="json")
+    existing = await db["stories"].find_one({"story_id": story.story_id})
+    if existing:
+        # An edit sends only what the form shows; keep what it did not send.
+        keep = ["created_at"]
+        if payload.context_description is None:
+            keep.append("context_description")
+        if payload.role_persona is None:
+            keep.append("role_persona")
+        if payload.conversation_flow is None and not payload.opening_prompt:
+            keep.append("conversation_flow")
+        for key in keep:
+            if existing.get(key) is not None:
+                doc[key] = existing[key]
     await db["stories"].update_one(
         {"story_id": story.story_id},
         {"$set": {**doc, "updated_at": datetime.now(timezone.utc)}},

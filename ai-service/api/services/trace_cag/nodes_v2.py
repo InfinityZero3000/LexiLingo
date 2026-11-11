@@ -17,11 +17,13 @@ import os
 import re
 import json
 import time
-from typing import Dict, Any, List, Optional
+import unicodedata
+from typing import Dict, Any, List, Optional, Sequence
 
 from api.core.groq_key_pool import resolve_groq_model
 from api.core.config import settings
 from api.services.trace_cag.state import TraceCAGState, DiagnosisError
+from api.services.lexi_memory import clean_facts
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.trace_cag.dependencies import (
     dependency_record,
@@ -83,6 +85,39 @@ async def get_gateway():
 # NODE 1: INPUT NODE
 # ============================================================
 
+_INPUT_REDIS_WARN_EVERY_SECONDS = 30.0
+_input_redis_warned_at: Dict[str, float] = {}
+
+
+def _input_redis_budget_seconds() -> float:
+    """Longest input_node waits on Redis for the profile and history (TRACECAG_INPUT_REDIS_BUDGET_MS)."""
+    try:
+        return max(0.05, int(os.getenv("TRACECAG_INPUT_REDIS_BUDGET_MS", "500")) / 1000.0)
+    except ValueError:
+        return 0.5
+
+
+def _note_input_redis_degraded(part: str, exc: Optional[BaseException]) -> None:
+    """Count and (rarely) log a Redis read that input_node had to give up on.
+
+    These failures used to be swallowed: the turn ran with no history and no profile and nothing
+    was logged or counted. A connection-pool limit hits the same path.
+    """
+    try:
+        from api.services.telemetry import get_telemetry
+
+        telemetry = get_telemetry()
+        telemetry.increment_counter("tracecag_input_redis_degraded_total")
+        telemetry.record_metric("tracecag_input_redis_degraded", 1, unit="count", tags={"part": part})
+    except Exception:
+        pass
+    now = time.monotonic()
+    if now - _input_redis_warned_at.get(part, -1e9) >= _INPUT_REDIS_WARN_EVERY_SECONDS:
+        _input_redis_warned_at[part] = now
+        logger.warning("[input_node] Redis %s read failed, continuing without it: %s", part, exc or "budget exceeded")
+
+
+
 async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Parse and validate user input, load learner context.
@@ -104,10 +139,13 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
         import asyncio as _asyncio
         
         learner_profile = state.get("learner_profile", {"level": "B1"})
-        conversation_history = []
         user_id = state.get("user_id")
         session_id = state.get("session_id", "")
         epoch_result = None
+        # A caller that already holds the history (lexi_chat) passes it in; reading Redis for it
+        # again cost a round trip and then replaced it, or emptied it when Redis was down.
+        history_supplied = bool(state.get("conversation_history_supplied"))
+        conversation_history = list(state.get("conversation_history") or []) if history_supplied else []
 
         async def _get_learner_epoch():
             if not user_id or settings.LEARNER_STATE_MODE == "off":
@@ -120,11 +158,8 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             )
 
         epoch_task = _asyncio.create_task(_get_learner_epoch())
-        
-        try:
-            if RedisClient._benchmark_redis_disabled():
-                raise RuntimeError("Redis disabled for benchmark")
 
+        async def _read_redis():
             redis_client = await RedisClient.get_instance()
 
             # Fetch profile and history concurrently.
@@ -133,25 +168,41 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                     try:
                         profile_cache = LearnerProfileCache(redis_client)
                         return await profile_cache.get_profile(user_id)
-                    except Exception:
+                    except Exception as exc:
+                        _note_input_redis_degraded("profile", exc)
                         return None
                 return None
 
             async def _get_history():
-                if session_id:
+                if session_id and not history_supplied:
                     try:
                         conv_cache = ConversationCache(redis_client)
                         return await conv_cache.get_history(session_id)
-                    except Exception:
-                        return []
-                return []
+                    except Exception as exc:
+                        _note_input_redis_degraded("history", exc)
+                        return None
+                return None
 
-            cached_profile, fetched_history = await _asyncio.gather(
-                _get_profile(), _get_history()
-            )
+            return await _asyncio.gather(_get_profile(), _get_history())
+
+        try:
+            if RedisClient._benchmark_redis_disabled():
+                raise RuntimeError("Redis disabled for benchmark")
+
+            # Redis normally answers in about a millisecond. RedisClient retries a failed command
+            # up to 10 times with growing sleeps and a 5 s socket timeout, so without this budget
+            # a sick Redis stalled the whole turn for many seconds before the LLM was even called.
+            try:
+                cached_profile, fetched_history = await _asyncio.wait_for(
+                    _read_redis(), timeout=_input_redis_budget_seconds()
+                )
+            except (_asyncio.TimeoutError, TimeoutError):
+                cached_profile, fetched_history = None, None
+                _note_input_redis_degraded("budget", None)
             if cached_profile:
                 learner_profile = {**cached_profile, **learner_profile}
-            conversation_history = fetched_history or []
+            if not history_supplied:
+                conversation_history = fetched_history or []
 
         except Exception as e:
             if RedisClient._benchmark_redis_disabled():
@@ -214,6 +265,170 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
 # NODE 2: KNOWLEDGE GRAPH EXPANSION
 # ============================================================
 
+GRAMMAR_SEED_PATTERNS: Dict[str, str] = {
+    # ── Subject-verb agreement ────────────────────────────────
+    r"\bi goes\b": "concept:grammar.subject_verb_agreement",
+    r"\b(you|we|they)\s+goes\b": "concept:grammar.subject_verb_agreement",
+    r"\bhe go\b|\bshe go\b|\bit go\b": "concept:grammar.third_person_s",
+    r"\bhe don't\b|\bshe don't\b|\bit don't\b": "concept:grammar.third_person_s",
+
+    # ── Past tense errors ─────────────────────────────────────
+    r"\byesterday\b.*\b(go|want|need|come|eat|buy|see)\b": "concept:grammar.past_time_markers",
+    r"\blast (week|night|month|year).*\b(go|have|is|are)\b": "concept:grammar.past_simple",
+    r"\bhave went\b|\bhas went\b|\bhave came\b|\bhas came\b": "concept:grammar.present_perfect",
+    r"\bdid.*\b(went|came|saw|ate|ran|made|took)\b": "concept:grammar.past_simple",
+
+    # ── Comparatives / superlatives ───────────────────────────
+    r"\bmore better\b|\bmore worse\b|\bmore faster\b": "concept:grammar.comparatives",
+    r"\bthe most best\b|\bthe most biggest\b|\bmore than more\b": "concept:grammar.superlatives",
+
+    # ── Article errors (Vietnamese learner patterns) ──────────
+    r"\ba apple\b|\ba elephant\b|\ba hour\b|\ba umbrella\b": "concept:grammar.articles_a_an",
+    r"\bgo to school\b|\bgo to hospital\b|\bgo to market\b": "concept:error.article_omission",
+
+    # ── Preposition errors ────────────────────────────────────
+    r"\bgo to home\b|\barrived to\b|\bmarried with\b|\blisten\s+music\b": "concept:error.preposition_confusion",
+    r"\bdepend of\b|\binterested of\b|\bat monday\b|\bin the night\b|\bon the morning\b": "concept:error.preposition_confusion",
+
+    # ── Word order errors (Vietnamese SVO influence) ──────────
+    r"\bI very (like|love|enjoy|want|hate)\b": "concept:error.word_order_svo",
+    r"\balways I\b|\bnever I\b|\busually I\b|\bsometimes I (go|eat|like)\b": "concept:grammar.adverbs_frequency",
+
+    # ── Modal errors ──────────────────────────────────────────
+    r"\bcan to\b|\bshould to\b|\bmust to\b|\bwill to\b|\bwould to\b": "concept:grammar.modal_can_could",
+    r"\bcan could\b|\bshould must\b": "concept:grammar.modal_must_should",
+
+    # ── Continuous tense errors ───────────────────────────────
+    r"\bI am go\b|\bhe is eat\b|\bshe is sleep\b|\bwe are go\b": "concept:grammar.present_continuous",
+    r"\b(am|is|are)\s+\w+(?<!ing)\s+(now|currently|at the moment)\b": "concept:grammar.present_continuous",
+
+    # ── Perfect continuous ────────────────────────────────────
+    r"\bhave been (working|studying|living|waiting|doing|learning)\b": "concept:grammar.present_perfect_continuous",
+
+    # ── Gerund / infinitive confusion ─────────────────────────
+    r"\benjoy to\b|\bfinish to\b|\bavoid to\b|\bkeep to\b|\bconsider to\b": "concept:grammar.gerund_infinitive",
+    r"\bwant (going|eating|sleeping|coming)\b|\bneed (going|coming)\b": "concept:grammar.gerund_infinitive",
+
+    # ── Missing auxiliary (questions) ─────────────────────────
+    r"\byou like\?\s*$|\bhe like\?\s*$|\bshe like\?\s*$|\byou know\?\s*$": "concept:error.missing_auxiliary",
+
+    # ── Conditional errors ────────────────────────────────────
+    r"\bif.*\bwill come\b|\bif.*\bwill be\b|\bif.*\bwill go\b": "concept:grammar.conditionals_first",
+    r"\bif (I|he|she) would\b": "concept:grammar.conditionals_second",
+    r"\bif (I|he|she) had\b.*\bwould have\b": "concept:grammar.conditionals_third",
+
+    # ── Wish / regret ─────────────────────────────────────────
+    r"\bi wish (I|he|she|we|they)\b|\bif only\b|\bi'd rather\b|\bwould rather\b": "concept:grammar.wish_regret",
+    r"\bshould have\b|\bcould have\b|\bwould have\b": "concept:grammar.wish_regret",
+
+    # ── Reported speech ───────────────────────────────────────
+    r"\bsaid that\b|\btold (me|him|her|us|them) that\b": "concept:grammar.reported_speech",
+    r"\btell to me\b|\bsay to me\b|\bhe say\b|\bshe say\b": "concept:error.tell_say_confusion",
+
+    # ── Make vs do confusion ──────────────────────────────────
+    r"\bmake homework\b|\bmake exercise\b|\bdo friends\b|\bdo a photo\b": "concept:error.make_do_confusion",
+
+    # ── Demonstratives & question words ──────────────────────
+    r"\b(what|where|when|who|why|how)\s+(do|does|is|are|was|were|did|have|has)\b": "concept:grammar.question_words",
+    r"\b(this|that|these|those)\s+\w+\b": "concept:grammar.demonstratives",
+    r"\bthere\s+(is|are|was|were)\b": "concept:grammar.there_is_are",
+
+    # ── Possessives ───────────────────────────────────────────
+    r"\b\w+'s\s+\w+\b": "concept:grammar.possessive_s",
+
+    # ── Phrasal verbs ─────────────────────────────────────────
+    r"\b(give up|look up|pick up|put off|run out|figure out|turn on|turn off|break down|come across)\b": "concept:grammar.phrasal_verbs_common",
+
+    # ── Topic detection — vocabulary domains ──────────────────
+    r"\b(social media|instagram|tiktok|facebook|twitter|post|hashtag|viral|trending)\b": "concept:vocab.social_media",
+    r"\b(bus|train|metro|subway|taxi|flight|commute|station|platform)\b": "concept:vocab.transport",
+    r"\b(happy|sad|angry|excited|nervous|scared|worried|proud|embarrassed|lonely)\b": "concept:vocab.emotions_feelings",
+    r"\b(job interview|cv|resume|cover letter|salary|hired|applicant)\b": "concept:conversation.job_interview",
+    r"\b(culture|tradition|custom|festival|etiquette|ceremony|heritage)\b": "concept:vocab.culture_customs",
+}
+
+
+def collect_seed_concepts(
+    kg: Any,
+    text: str,
+    level: str,
+    sources: Sequence[str] = ("semantic", "keyword", "regex"),
+) -> List[str]:
+    """Seed concepts for a turn: semantic first, then keyword, then regex rules."""
+    text = text.lower()
+    seed_exact = kg.get_seed_concepts_fast(text, learner_level=level) if "keyword" in sources else []
+    # Semantic first. retrieve_node seeds its vector stage from
+    # kg_seed_concepts[:5], and keyword overlap put five arbitrary
+    # vocab.word.* concepts there while the TF-IDF seeds — which named the
+    # right topic node outright — sat behind hundreds of them.
+    seed_semantic = kg.semantic_seed_concepts(text, top_k=5) if "semantic" in sources else []
+    seeds = list(dict.fromkeys(seed_semantic + seed_exact))
+    if "regex" in sources:
+        for pattern, concept in GRAMMAR_SEED_PATTERNS.items():
+            if re.search(pattern, text, re.IGNORECASE) and concept not in seeds:
+                seeds.append(concept)
+    return seeds
+
+
+def _empty_kg_result(start_time: float) -> Dict[str, Any]:
+    return {
+        "kg_seed_concepts": [],
+        "kg_expanded_nodes": [],
+        "kg_paths": [],
+        "graph_update": {
+            "latency_ms": int((time.time() - start_time) * 1000),
+            "nodes_added": 0,
+            "edges_added": 0,
+        },
+    }
+
+
+def _traversal_off_reason(state: TraceCAGState) -> Optional[str]:
+    if not settings.KG_MASTERY_TRAVERSAL:
+        return "flag_off"
+    if settings.LEARNER_STATE_MODE not in {"read", "primary"}:
+        return "mode_off"
+    if not state.get("user_id"):
+        return "no_user"
+    return None
+
+
+async def _traversal_mastery(
+    state: TraceCAGState, kg: Any, seeds: List[str], level: str
+) -> Dict[str, float]:
+    """Empty dict means flag-off traversal. Never raises."""
+    try:
+        if _traversal_off_reason(state):
+            return {}
+        from api.clients.learner_state_client import get_learner_state_client
+        from api.services.learner_overlay import _clip
+
+        # Learner-free walk: it only proposes which concepts to look up, so it may use the shared cache.
+        candidates = await kg.expand_best_first(seeds, level, 2, 40)
+        ids = list(dict.fromkeys(seeds + [n.id for n in candidates.expanded_nodes]))[:60]
+        deadline = time.monotonic() + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
+        result = await get_learner_state_client().batch_get(
+            str(state["user_id"]), ids, deadline=deadline
+        )
+        if result.degraded:
+            return {}
+        mastery = {
+            cid: _clip(item.get("mastery_probability"), -1.0)
+            for cid, item in result.states.items()
+            if item.get("mastery_probability") is not None
+        }
+        return {cid: m for cid, m in mastery.items() if m >= 0.0}
+    except Exception as exc:
+        logger.warning("[kg_expand_node] mastery traversal unavailable: %s", exc)
+        return {}
+
+
+def _concept_level(known: Any, concept_id: str) -> str:
+    meta = known.get(concept_id) if isinstance(known, dict) else None
+    level = meta.get("level") if isinstance(meta, dict) else ""
+    return level if isinstance(level, str) else ""
+
+
 async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Level-aware best-first KG expansion (paper Alg. 4).
@@ -224,6 +439,9 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
     logger.info("[kg_expand_node] Expanding knowledge graph (best-first)...")
     start_time = time.time()
 
+    if not settings.KG_ENABLED:
+        return _empty_kg_result(start_time)
+
     try:
         from api.services.kg_service_v3 import get_kg_service
 
@@ -231,123 +449,36 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
         learner_level = state.get("learner_profile", {}).get("level", "B1")
 
         # ── Phase 1: Seed concept matching (fast O(words) lookup) ──────
-        user_text = state.get("user_input", "").lower()
-
-        # Phase 1a: IDF-ranked keyword lookup via inverted index
-        seed_exact = kg.get_seed_concepts_fast(user_text, learner_level=learner_level)
-        # Phase 1a-semantic: TF-IDF cosine similarity (catches indirect references)
-        seed_semantic = kg.semantic_seed_concepts(user_text, top_k=5)
-        # Semantic first. retrieve_node seeds its vector stage from
-        # kg_seed_concepts[:5], and keyword overlap put five arbitrary
-        # vocab.word.* concepts there while the TF-IDF seeds — which named the
-        # right topic node outright — sat behind hundreds of them.
-        seed_concepts = list(dict.fromkeys(seed_semantic + seed_exact))
-
-        # Grammar error patterns (Phase 1b)
-        grammar_patterns = {
-            # ── Subject-verb agreement ────────────────────────────────
-            r"\bi goes\b": "concept:grammar.subject_verb_agreement",
-            r"\b(you|we|they)\s+goes\b": "concept:grammar.subject_verb_agreement",
-            r"\bhe go\b|\bshe go\b|\bit go\b": "concept:grammar.third_person_s",
-            r"\bhe don't\b|\bshe don't\b|\bit don't\b": "concept:grammar.third_person_s",
-
-            # ── Past tense errors ─────────────────────────────────────
-            r"\byesterday\b.*\b(go|want|need|come|eat|buy|see)\b": "concept:grammar.past_time_markers",
-            r"\blast (week|night|month|year).*\b(go|have|is|are)\b": "concept:grammar.past_simple",
-            r"\bhave went\b|\bhas went\b|\bhave came\b|\bhas came\b": "concept:grammar.present_perfect",
-            r"\bdid.*\b(went|came|saw|ate|ran|made|took)\b": "concept:grammar.past_simple",
-
-            # ── Comparatives / superlatives ───────────────────────────
-            r"\bmore better\b|\bmore worse\b|\bmore faster\b": "concept:grammar.comparatives",
-            r"\bthe most best\b|\bthe most biggest\b|\bmore than more\b": "concept:grammar.superlatives",
-
-            # ── Article errors (Vietnamese learner patterns) ──────────
-            r"\ba apple\b|\ba elephant\b|\ba hour\b|\ba umbrella\b": "concept:grammar.articles_a_an",
-            r"\bgo to school\b|\bgo to hospital\b|\bgo to market\b": "concept:error.article_omission",
-
-            # ── Preposition errors ────────────────────────────────────
-            r"\bgo to home\b|\barrived to\b|\bmarried with\b|\blisten\s+music\b": "concept:error.preposition_confusion",
-            r"\bdepend of\b|\binterested of\b|\bat monday\b|\bin the night\b|\bon the morning\b": "concept:error.preposition_confusion",
-
-            # ── Word order errors (Vietnamese SVO influence) ──────────
-            r"\bI very (like|love|enjoy|want|hate)\b": "concept:error.word_order_svo",
-            r"\balways I\b|\bnever I\b|\busually I\b|\bsometimes I (go|eat|like)\b": "concept:grammar.adverbs_frequency",
-
-            # ── Modal errors ──────────────────────────────────────────
-            r"\bcan to\b|\bshould to\b|\bmust to\b|\bwill to\b|\bwould to\b": "concept:grammar.modal_can_could",
-            r"\bcan could\b|\bshould must\b": "concept:grammar.modal_must_should",
-
-            # ── Continuous tense errors ───────────────────────────────
-            r"\bI am go\b|\bhe is eat\b|\bshe is sleep\b|\bwe are go\b": "concept:grammar.present_continuous",
-            r"\b(am|is|are)\s+\w+(?<!ing)\s+(now|currently|at the moment)\b": "concept:grammar.present_continuous",
-
-            # ── Perfect continuous ────────────────────────────────────
-            r"\bhave been (working|studying|living|waiting|doing|learning)\b": "concept:grammar.present_perfect_continuous",
-
-            # ── Gerund / infinitive confusion ─────────────────────────
-            r"\benjoy to\b|\bfinish to\b|\bavoid to\b|\bkeep to\b|\bconsider to\b": "concept:grammar.gerund_infinitive",
-            r"\bwant (going|eating|sleeping|coming)\b|\bneed (going|coming)\b": "concept:grammar.gerund_infinitive",
-
-            # ── Missing auxiliary (questions) ─────────────────────────
-            r"\byou like\?\s*$|\bhe like\?\s*$|\bshe like\?\s*$|\byou know\?\s*$": "concept:error.missing_auxiliary",
-
-            # ── Conditional errors ────────────────────────────────────
-            r"\bif.*\bwill come\b|\bif.*\bwill be\b|\bif.*\bwill go\b": "concept:grammar.conditionals_first",
-            r"\bif (I|he|she) would\b": "concept:grammar.conditionals_second",
-            r"\bif (I|he|she) had\b.*\bwould have\b": "concept:grammar.conditionals_third",
-
-            # ── Wish / regret ─────────────────────────────────────────
-            r"\bi wish (I|he|she|we|they)\b|\bif only\b|\bi'd rather\b|\bwould rather\b": "concept:grammar.wish_regret",
-            r"\bshould have\b|\bcould have\b|\bwould have\b": "concept:grammar.wish_regret",
-
-            # ── Reported speech ───────────────────────────────────────
-            r"\bsaid that\b|\btold (me|him|her|us|them) that\b": "concept:grammar.reported_speech",
-            r"\btell to me\b|\bsay to me\b|\bhe say\b|\bshe say\b": "concept:error.tell_say_confusion",
-
-            # ── Make vs do confusion ──────────────────────────────────
-            r"\bmake homework\b|\bmake exercise\b|\bdo friends\b|\bdo a photo\b": "concept:error.make_do_confusion",
-
-            # ── Demonstratives & question words ──────────────────────
-            r"\b(what|where|when|who|why|how)\s+(do|does|is|are|was|were|did|have|has)\b": "concept:grammar.question_words",
-            r"\b(this|that|these|those)\s+\w+\b": "concept:grammar.demonstratives",
-            r"\bthere\s+(is|are|was|were)\b": "concept:grammar.there_is_are",
-
-            # ── Possessives ───────────────────────────────────────────
-            r"\b\w+'s\s+\w+\b": "concept:grammar.possessive_s",
-
-            # ── Phrasal verbs ─────────────────────────────────────────
-            r"\b(give up|look up|pick up|put off|run out|figure out|turn on|turn off|break down|come across)\b": "concept:grammar.phrasal_verbs_common",
-
-            # ── Topic detection — vocabulary domains ──────────────────
-            r"\b(social media|instagram|tiktok|facebook|twitter|post|hashtag|viral|trending)\b": "concept:vocab.social_media",
-            r"\b(bus|train|metro|subway|taxi|flight|commute|station|platform)\b": "concept:vocab.transport",
-            r"\b(happy|sad|angry|excited|nervous|scared|worried|proud|embarrassed|lonely)\b": "concept:vocab.emotions_feelings",
-            r"\b(job interview|cv|resume|cover letter|salary|hired|applicant)\b": "concept:conversation.job_interview",
-            r"\b(culture|tradition|custom|festival|etiquette|ceremony|heritage)\b": "concept:vocab.culture_customs",
-        }
-
-        for pattern, concept in grammar_patterns.items():
-            if re.search(pattern, user_text, re.IGNORECASE):
-                if concept not in seed_concepts:
-                    seed_concepts.append(concept)
+        seed_concepts = collect_seed_concepts(
+            kg, state.get("user_input", ""), learner_level
+        )
 
         # ── Phase 2: Level-aware best-first expansion ────────────────
         expanded_nodes = []
         paths = []
+        mastery: Dict[str, float] = {}
 
-        if seed_concepts:
+        if seed_concepts and settings.KG_EXPANSION_ENABLED:
+            mastery = await _traversal_mastery(state, kg, seed_concepts, learner_level)
             kg_result = await kg.expand_best_first(
                 seed_nodes=seed_concepts,
                 learner_level=learner_level,
                 max_hops=2,
                 max_nodes=10,
+                mastery=mastery or None,
             )
+            # Not in the node's properties: those are the payload of the shared Redis subgraph cache, whose format is pinned.
+            try:
+                known = kg.get_concepts()
+            except Exception:   # a label is decoration: it must never cost the expansion
+                known = {}
             expanded_nodes = [
                 {
                     "id": n.id,
                     "relation": n.properties.get("relation", n.type),
                     "title": n.properties.get("title", ""),
                     "keywords": n.properties.get("keywords", ""),
+                    "level": _concept_level(known, n.id),
                 }
                 for n in kg_result.expanded_nodes
             ]
@@ -363,15 +494,24 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[kg_expand_node] Found {len(seed_concepts)} seed, {len(expanded_nodes)} expanded (level={learner_level})")
 
+        graph_update: Dict[str, Any] = {
+            "latency_ms": latency_ms,
+            "nodes_added": len(seed_concepts) + len(expanded_nodes),
+            "edges_added": len(paths),
+        }
+        if settings.KG_MASTERY_TRAVERSAL:
+            graph_update.update(
+                personalised=bool(mastery),
+                n_states=len(mastery),
+                reason=_traversal_off_reason(state)
+                or ("expansion_off" if not settings.KG_EXPANSION_ENABLED else "ok" if mastery else "no_states"),
+            )
+
         return {
             "kg_seed_concepts": seed_concepts,
             "kg_expanded_nodes": expanded_nodes,
             "kg_paths": paths,
-            "graph_update": {
-                "latency_ms": latency_ms,
-                "nodes_added": len(seed_concepts) + len(expanded_nodes),
-                "edges_added": len(paths),
-            },
+            "graph_update": graph_update,
             "models_used": ["kuzu_kg_bestfirst"],
             "dependency_events": [dependency_record(
                 "kg:tracecag:main", "kg", kg.get_kg_content_version(), "kuzu"
@@ -380,21 +520,128 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"[kg_expand_node] Error: {e}")
-        return {
-            "kg_seed_concepts": [],
-            "kg_expanded_nodes": [],
-            "kg_paths": [],
-            "graph_update": {
-                "latency_ms": int((time.time() - start_time) * 1000),
-                "nodes_added": 0,
-                "edges_added": 0,
-            },
-        }
+        return _empty_kg_result(start_time)
 
 
 # ============================================================
 # NODE 3: DIAGNOSIS (AI-POWERED via ModelGateway)
 # ============================================================
+
+# Frozen copy of model-development/benchmark/data/diagnosis_label_map.json (docs/TRACE_CAG.md 5.7.8);
+# a test pins both the file hash and this copy, so change neither alone.
+DIAGNOSIS_LABELS: Dict[str, Optional[str]] = {
+    "article_missing": "concept:error.article_omission",
+    "article_a_an": "concept:grammar.articles_a_an",
+    "article_the": "concept:grammar.article_the_specific",
+    "preposition": "concept:error.preposition_confusion",
+    "subject_verb_agreement": "concept:grammar.subject_verb_agreement",
+    "verb_tense": "concept:error.tense_confusion",
+    "verb_form": "concept:grammar.gerund_infinitive",
+    "irregular_verb": "concept:grammar.past_simple",
+    "missing_auxiliary": "concept:error.missing_auxiliary",
+    "missing_be": "concept:error.missing_copula",
+    "passive_voice": "concept:grammar.passive_voice",
+    "noun_number": "concept:grammar.plural_nouns",
+    "possessive": "concept:grammar.possessive_s",
+    "pronoun_case": "concept:error.object_pronoun",
+    "pronoun_missing": "concept:error.subject_pronoun_drop",
+    "word_order": "concept:grammar.word_order",
+    "word_form": "concept:error.wrong_word_form",
+    "comparison": "concept:grammar.comparatives",
+    "conjunction": "concept:grammar.conjunctions",
+    "particle": "concept:grammar.phrasal_verbs_common",
+    "spelling": None,
+    "punctuation": None,
+    "word_choice": None,
+    "other": None,
+}
+DIAGNOSIS_LABEL_ALIASES: Dict[str, str] = {
+    "tense": "verb_tense",
+    "article": "article_a_an",
+    "plural": "noun_number",
+}
+DIAGNOSIS_RULE_ID_FIXES: Dict[str, str] = {
+    "concept:grammar.article": "concept:grammar.articles_a_an",
+    "concept:grammar.past_tense": "concept:grammar.past_simple",
+}
+
+_CLOSED_TYPE_LINE = '            "type": "exactly one label from TYPES",'
+_CLOSED_TYPES_LINE = "TYPES: " + ", ".join(DIAGNOSIS_LABELS)
+_TYPE_LINE_RE = re.compile(r'^ {12}"type": "error_type \(grammar, spelling, vocabulary, etc\.\)",$', re.M)
+
+# What diagnose_node mapped before the bridge: free-text type -> id, 3 of 5 ids not in the graph.
+_LEGACY_CONCEPT_MAP: Dict[str, str] = {
+    "subject_verb_agreement": "concept:grammar.subject_verb_agreement",
+    "tense": "concept:grammar.tenses",
+    "article": "concept:grammar.articles",
+    "preposition": "concept:grammar.prepositions",
+    "plural": "concept:grammar.plural_nouns",
+}
+
+
+def normalize_diagnosis_label(raw: Any) -> str:
+    return re.sub(r"[ \-/]+", "_", unicodedata.normalize("NFKC", raw).lower().strip()) if isinstance(raw, str) else ""
+
+
+def root_causes_for(errors: Sequence[Dict[str, Any]], mode: str = "off") -> List[str]:
+    if mode == "off":
+        return [_LEGACY_CONCEPT_MAP[t] for t in (e.get("type", "").lower() for e in errors) if t in _LEGACY_CONCEPT_MAP]
+    out: List[str] = []
+    for e in errors:
+        label = normalize_diagnosis_label(e.get("type"))
+        concept = DIAGNOSIS_LABELS.get(DIAGNOSIS_LABEL_ALIASES.get(label, label))
+        if concept and concept not in out:
+            out.append(concept)
+    return out
+
+
+def count_invalid_labels(errors: Sequence[Dict[str, Any]]) -> int:
+    return sum(1 for e in errors if normalize_diagnosis_label(e.get("type")) not in DIAGNOSIS_LABELS)
+
+
+_DIAGNOSIS_BODY = """Provide a JSON response with:
+{
+    "errors": [
+        {
+            "span": "the incorrect text",
+            "type": "error_type (grammar, spelling, vocabulary, etc.)",
+            "correction": "the correct text",
+            "explanation": "brief explanation in simple English"
+        }
+    ],
+    "intent": "correct|explain|practice|ask",
+    "fluency_score": 0.0-1.0,
+    "grammar_score": 0.0-1.0,
+    "confidence": 0.0-1.0,
+    "facts": {"preferred_name": "", "occupation": "", "goal": "", "interests": ""}
+}
+
+Rules for "errors": list only real mistakes (wrong grammar, spelling or word choice) that a
+teacher would correct. Do NOT list wording that is merely unusual, informal, awkward or
+could be said better — if the sentence is understandable and acceptable, return an empty
+list. If unsure, leave it out. At most 2 errors, most important first.
+Use intent "ask" when the learner is asking a question or requesting something.
+Rules for "facts": fill a field only when the learner states it about THEMSELVES in this
+sentence (name they want to be called, job or field of study, learning goal, interests),
+copying their exact words. Otherwise leave it empty. Never guess or infer."""
+
+
+def _closed_body() -> str:
+    # Rewritten on the static template only: learner text is never in the string this guard inspects.
+    if len(_TYPE_LINE_RE.findall(_DIAGNOSIS_BODY)) != 1 or _DIAGNOSIS_BODY.count('Rules for "errors"') != 1:
+        raise RuntimeError("diagnosis prompt no longer matches the frozen label map")
+    body = _TYPE_LINE_RE.sub(lambda _: _CLOSED_TYPE_LINE, _DIAGNOSIS_BODY, count=1)
+    return body.replace('Rules for "errors"', _CLOSED_TYPES_LINE + '\nRules for "errors"', 1)
+
+
+def build_diagnosis_prompt(user_text: str, learner_level: str, closed: bool = False) -> str:
+    head = f"""Analyze this English sentence from a {learner_level} level learner:
+
+Sentence: "{user_text}"
+
+"""
+    return head + (_closed_body() if closed else _DIAGNOSIS_BODY)
+
 
 async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     """
@@ -414,6 +661,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     user_text = state.get("user_input", "")
     learner_level = state.get("learner_profile", {}).get("level", "B1")
     benchmark_task = state.get("benchmark_task")
+    bridge = settings.KG_DIAGNOSIS_BRIDGE
 
     if benchmark_task in {"multihop_qa", "retrieval_qa"}:
         return {
@@ -428,7 +676,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         }
 
     if state.get("diagnosis_policy", "auto") == "rules":
-        errors, root_causes = _rule_based_diagnosis(user_text)
+        errors, root_causes = _rule_based_diagnosis(user_text, bridge)
         error_count = len(errors)
         confidence = 0.9 if error_count == 0 else (0.75 if error_count <= 2 else 0.65)
         grammar_score = 0.95 if error_count == 0 else 0.7
@@ -448,28 +696,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         gateway = await get_gateway()
         
         # Build diagnosis prompt
-        diagnosis_prompt = f"""Analyze this English sentence from a {learner_level} level learner:
-
-Sentence: "{user_text}"
-
-Provide a JSON response with:
-{{
-    "errors": [
-        {{
-            "span": "the incorrect text",
-            "type": "error_type (grammar, spelling, vocabulary, etc.)",
-            "correction": "the correct text",
-            "explanation": "brief explanation in simple English"
-        }}
-    ],
-    "intent": "correct|explain|practice|ask",
-    "fluency_score": 0.0-1.0,
-    "grammar_score": 0.0-1.0,
-    "confidence": 0.0-1.0
-}}
-
-If no errors, return empty errors array with high scores.
-Be encouraging and focus on the most important errors first."""
+        diagnosis_prompt = build_diagnosis_prompt(user_text, learner_level, bridge == "closed")
 
         # Call local Qwen via ModelGateway (lazy loads if needed).
         # If local Qwen is unavailable (e.g., missing local weights), fall back
@@ -500,12 +727,14 @@ Be encouraging and focus on the most important errors first."""
         # Parse AI response
         errors: List[DiagnosisError] = []
         root_causes: List[str] = []
+        facts: Dict[str, str] = {}
         intent = "correct"
         confidence = 0.9
         grammar_score = 0.8
         fluency_score = 0.8
         
         used_model = "qwen_grammar"
+        parsed = False
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
@@ -517,6 +746,7 @@ Be encouraging and focus on the most important errors first."""
                         {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
                         {"role": "user", "content": diagnosis_prompt},
                     ])
+                    _started = time.monotonic()
                     resp = await _throttled_post_json(
                         provider="groq",
                         url="https://api.groq.com/openai/v1/chat/completions",
@@ -532,6 +762,9 @@ Be encouraging and focus on the most important errors first."""
                     )
                     if resp is not None and resp.status_code == 200:
                         data = resp.json()
+                        from api.services.trace_cag.benchmark.qa_generation import _ledger_add
+
+                        _ledger_add("diagnose", data, wall_started=_started, response=resp)
                         tokens = data.get("usage", {}).get("total_tokens", 150)
                         await record_groq_key_usage(groq_key, tokens)
                         content = data["choices"][0]["message"]["content"]
@@ -562,49 +795,46 @@ Be encouraging and focus on the most important errors first."""
                 # generic span (e.g. "the sentence") instead of quoting the
                 # actual offending text, so drop anything that isn't really
                 # part of what the user typed.
+                facts = clean_facts(ai_data.get("facts"), user_text)
                 for err in ai_data.get("errors", []):
+                    if len(errors) >= 2:
+                        break
                     span = err.get("span", "")
                     if not span or span.lower() not in user_text.lower():
                         continue
+                    err_type = err.get("type", "unknown")
+                    if bridge != "off" and not isinstance(err_type, str):
+                        err_type = "unknown"
                     errors.append(DiagnosisError(
                         span=span,
-                        type=err.get("type", "unknown"),
+                        type=err_type,
                         correction=err.get("correction", ""),
                         explanation=err.get("explanation", ""),
                     ))
 
-                    # Map to KG concept
-                    error_type = err.get("type", "").lower()
-                    concept_map = {
-                        "subject_verb_agreement": "concept:grammar.subject_verb_agreement",
-                        "tense": "concept:grammar.tenses",
-                        "article": "concept:grammar.articles",
-                        "preposition": "concept:grammar.prepositions",
-                        "plural": "concept:grammar.plural_nouns",
-                    }
-                    if error_type in concept_map:
-                        root_causes.append(concept_map[error_type])
-                
+                root_causes = root_causes_for(errors, bridge)
                 intent = ai_data.get("intent", "correct")
                 confidence = ai_data.get("confidence", 0.9)
                 grammar_score = ai_data.get("grammar_score", 0.8)
                 fluency_score = ai_data.get("fluency_score", 0.8)
+                parsed = True
                 
             except (json.JSONDecodeError, TypeError) as e:
                 logger.warning(f"[diagnose_node] Failed to parse AI response: {e}")
                 # Fallback to rule-based
-                errors, root_causes = _rule_based_diagnosis(user_text)
+                errors, root_causes = _rule_based_diagnosis(user_text, bridge)
         else:
             # Fallback to rule-based if AI fails
             logger.warning("[diagnose_node] AI diagnosis failed, using rules")
-            errors, root_causes = _rule_based_diagnosis(user_text)
+            errors, root_causes = _rule_based_diagnosis(user_text, bridge)
         
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[diagnose_node] Found {len(errors)} errors, intent={intent}, latency={latency_ms}ms")
         
-        return {
+        diagnosis = {
             "diagnosis_intent": intent,
             "diagnosis_errors": errors,
+            "diagnosis_facts": facts,
             "diagnosis_root_causes": root_causes,
             "diagnosis_confidence": confidence,
             "grammar_score": grammar_score,
@@ -612,11 +842,14 @@ Be encouraging and focus on the most important errors first."""
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": [used_model],
         }
+        if bridge == "closed" and parsed:
+            diagnosis["diagnosis_label_invalid"] = count_invalid_labels(errors)
+        return diagnosis
         
     except Exception as e:
         logger.error(f"[diagnose_node] Error: {e}")
         # Fallback
-        errors, root_causes = _rule_based_diagnosis(user_text)
+        errors, root_causes = _rule_based_diagnosis(user_text, bridge)
         return {
             "diagnosis_intent": "correct",
             "diagnosis_errors": errors,
@@ -629,7 +862,7 @@ Be encouraging and focus on the most important errors first."""
         }
 
 
-def _rule_based_diagnosis(text: str) -> tuple:
+def _rule_based_diagnosis(text: str, bridge: Optional[str] = None) -> tuple:
     """Fallback rule-based diagnosis when AI is unavailable"""
     errors = []
     root_causes = []
@@ -653,7 +886,9 @@ def _rule_based_diagnosis(text: str) -> tuple:
                 explanation=explanation,
             ))
             root_causes.append(f"concept:grammar.{err_type}")
-    
+
+    if (bridge or settings.KG_DIAGNOSIS_BRIDGE) != "off":
+        root_causes = list(dict.fromkeys(DIAGNOSIS_RULE_ID_FIXES.get(c, c) for c in root_causes))
     return errors, root_causes
 
 

@@ -2,7 +2,7 @@
 User Routes
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -16,12 +16,11 @@ from app.schemas.user import UserResponse, UserUpdate
 from app.services.learner_state import bump_learner_state_epoch
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
-    LevelInfoResponse,
     LevelFullResponse,
     UserStatsResponse,
     WeeklyActivityResponse,
 )
-from app.services.level_service import LevelService, get_numeric_level_progress, calculate_numeric_level
+from app.services.level_service import LevelService, get_numeric_level_progress
 from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
 from app.services.user_stats_service import (
     get_user_stats,
@@ -203,45 +202,9 @@ async def search_users(
     ]
 
 
-@router.get("/{user_id}", response_model=UserResponse)
-async def get_user_by_id(
-    user_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Get user by ID. Returns public user information."""
-    user = await UserCRUD.get_by_id(db, user_id)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return _serialize_user_response(user)
-
-
 # =====================
 # Level & Stats Endpoints
 # =====================
-
-@router.get("/me/level", response_model=ApiResponse[LevelInfoResponse])
-async def get_user_level(
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get current user's level information.
-    
-    Returns:
-    - All level tiers
-    - Current level status with XP progress
-    """
-    level_status = LevelService.calculate_level_status(current_user.total_xp)
-    all_tiers = LevelService.get_all_tiers()
-    
-    return ApiResponse(
-        success=True,
-        data=LevelInfoResponse(
-            all_tiers=all_tiers,
-            current_level=level_status
-        ),
-        message="Level information retrieved successfully"
-    )
 
 
 @router.get("/me/level-full", response_model=ApiResponse[LevelFullResponse])

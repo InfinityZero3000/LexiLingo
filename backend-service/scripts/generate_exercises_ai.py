@@ -35,7 +35,7 @@ load_dotenv()
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 # llama-3.3-70b-versatile and openai/gpt-oss-120b are gone/quota-bound on Groq.
-GROQ_MODEL = os.getenv("EXERCISE_GEN_MODEL", "qwen/qwen3.6-27b")
+GROQ_MODEL = os.getenv("EXERCISE_GEN_MODEL", "qwen/qwen3.8-27b")
 
 # Groq quota is per key AND per model, so rotating the configured pool
 # multiplies the daily token budget instead of exhausting one account.

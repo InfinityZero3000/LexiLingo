@@ -111,46 +111,6 @@ class UnitProgressModel extends UnitProgressEntity {
   }
 }
 
-/// Lesson Completion Result Model
-class LessonCompletionResultModel extends LessonCompletionResult {
-  const LessonCompletionResultModel({
-    required super.lessonId,
-    required super.isPassed,
-    required super.score,
-    required super.bestScore,
-    required super.xpEarned,
-    required super.totalXp,
-    required super.courseProgress,
-    required super.message,
-  });
-
-  factory LessonCompletionResultModel.fromJson(Map<String, dynamic> json) {
-    return LessonCompletionResultModel(
-      lessonId: json['lesson_id'],
-      isPassed: json['is_passed'] ?? false,
-      score: (json['score'] ?? 0.0).toDouble(),
-      bestScore: (json['best_score'] ?? 0.0).toDouble(),
-      xpEarned: json['xp_earned'] ?? 0,
-      totalXp: json['total_xp'] ?? 0,
-      courseProgress: (json['course_progress'] ?? 0.0).toDouble(),
-      message: json['message'] ?? '',
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'lesson_id': lessonId,
-      'is_passed': isPassed,
-      'score': score,
-      'best_score': bestScore,
-      'xp_earned': xpEarned,
-      'total_xp': totalXp,
-      'course_progress': courseProgress,
-      'message': message,
-    };
-  }
-}
-
 /// Progress Stats Model
 class ProgressStatsModel extends ProgressStatsEntity {
   const ProgressStatsModel({

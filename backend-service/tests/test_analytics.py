@@ -27,6 +27,8 @@ async def admin_token(db_session):
     db_session.add(admin_role)
     await db_session.commit()
     await db_session.refresh(admin_role)
+    from tests.conftest import seed_admin_permissions
+    await seed_admin_permissions(db_session)
 
     admin_user = User(
         email="test_admin@test.com",
@@ -93,20 +95,6 @@ class TestDashboardAnalytics:
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get("/api/v1/admin/analytics/dashboard/kpis")
             assert response.status_code == 401
-
-
-@pytest.mark.asyncio
-class TestUserAnalytics:
-    async def test_get_user_metrics(self, admin_token):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-            response = await client.get(
-                "/api/v1/admin/analytics/user-metrics",
-                headers={"Authorization": f"Bearer {admin_token}"},
-            )
-            assert response.status_code == 200
-            data = response.json()
-            assert "metrics" in data
-
 
 @pytest.mark.asyncio
 class TestContentAnalytics:

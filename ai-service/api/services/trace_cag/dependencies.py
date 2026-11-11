@@ -16,10 +16,22 @@ from typing import Iterable
 # cache artifact. Previously these drifted independently (v1 here vs v2 in
 # cache_utils.py), which silently defeated certificate-based invalidation.
 GRAPH_SCHEMA_VERSION = 2
-POLICY_SCHEMA_VERSION = 2
+POLICY_SCHEMA_VERSION = 3
 
 POLICY_VERSION_TOKEN = f"policy_v{POLICY_SCHEMA_VERSION}"
 KG_VERSION_TOKEN = f"kg_schema_v{GRAPH_SCHEMA_VERSION}"
+
+
+def policy_version_token() -> str:
+    from api.core.config import settings
+
+    return (
+        POLICY_VERSION_TOKEN
+        + ("+kg_mastery" if settings.KG_MASTERY_TRAVERSAL else "")
+        + ("" if settings.KG_ENABLED else "+kg_off")
+        + ("" if settings.KG_EXPANSION_ENABLED else "+kg_noexp")
+        + ("" if settings.KG_DIAGNOSIS_BRIDGE == "off" else f"+diag_bridge:{settings.KG_DIAGNOSIS_BRIDGE}")
+    )
 
 
 @dataclass(frozen=True, order=True)

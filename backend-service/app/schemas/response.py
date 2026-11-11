@@ -2,7 +2,7 @@
 Generic API response schemas
 """
 
-from typing import Generic, TypeVar, Any
+from typing import Generic, TypeVar
 from pydantic import BaseModel, ConfigDict
 
 T = TypeVar('T')

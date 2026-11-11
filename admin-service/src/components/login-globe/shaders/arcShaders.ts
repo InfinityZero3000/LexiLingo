@@ -22,6 +22,7 @@ export const arcFragmentShader = /* glsl */ `
 uniform float uProgress;
 uniform vec3  uColorStart;
 uniform vec3  uColorEnd;
+uniform vec3  uHeadColor;
 
 varying vec2  vUv;
 
@@ -52,7 +53,7 @@ void main() {
 
   // Color gradient from tail (deep orange) to head (white/yellow)
   vec3 color = mix(uColorStart, uColorEnd, lineIntensity);
-  color = mix(color, vec3(1.0, 1.0, 1.0), headDot * dotCross); // pure white core
+  color = mix(color, uHeadColor, headDot * dotCross);
 
   float alpha = (lineIntensity * lineCross * 0.9) + (headDot * dotCross * 2.0);
   alpha = clamp(alpha, 0.0, 1.0);

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
@@ -96,7 +97,13 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   children: [
                     const Icon(Icons.list_alt_rounded, size: 20),
                     const SizedBox(width: 8),
-                    Text('vocabulary.tabWords'.tr()),
+                    Flexible(
+                      child: Text(
+                        'vocabulary.tabWords'.tr(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -106,7 +113,13 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   children: [
                     const Icon(Icons.style_outlined, size: 20),
                     const SizedBox(width: 8),
-                    Text('vocabulary.tabTopics'.tr()),
+                    Flexible(
+                      child: Text(
+                        'vocabulary.tabTopics'.tr(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -247,7 +260,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
+              mainAxisExtent: 210,
             ),
             itemCount: _topics.length,
             itemBuilder: (context, index) {
@@ -284,7 +297,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
               crossAxisCount: 2,
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
-              childAspectRatio: 0.85,
+              mainAxisExtent: 210,
             ),
             itemCount: customDecks.length + 1, // +1 for the "Create Deck" card
             itemBuilder: (context, index) {
@@ -305,22 +318,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     VocabularyDeck deck,
     VocabProvider vocabProvider,
   ) {
-    Color deckColor;
-    try {
-      final hex = deck.color.replaceAll('#', '');
-      deckColor = Color(int.parse('FF$hex', radix: 16));
-    } catch (_) {
-      deckColor = AppColors.primary;
-    }
+    final deckColor = deckColorFromHex(deck.color);
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [deckColor, deckColor.withValues(alpha: 0.7)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: deckGradient(deckColor),
         boxShadow: [
           BoxShadow(
             color: deckColor.withValues(alpha: 0.3),
@@ -493,8 +496,6 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   void _showCreateDeckDialog(BuildContext context, VocabProvider vocabProvider) {
     final nameController = TextEditingController();
     final descController = TextEditingController();
-    String selectedColor = '#2196F3';
-
     final List<String> colors = [
       '#2196F3', // Blue
       '#4CAF50', // Green
@@ -503,6 +504,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       '#9C27B0', // Purple
       '#9E9E9E', // Grey
     ];
+    String selectedColor = colors[Random().nextInt(colors.length)];
 
     showDialog(
       context: context,
@@ -537,40 +539,30 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    SizedBox(
-                      height: 48,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: colors.length,
-                        itemBuilder: (context, index) {
-                          final colorHex = colors[index];
-                          final color = Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16));
-                          final isSelected = selectedColor == colorHex;
-
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                selectedColor = colorHex;
-                              });
-                            },
+                    // Wrap, not ListView: AlertDialog measures intrinsic width and a viewport cannot answer that.
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final colorHex in colors)
+                          GestureDetector(
+                            onTap: () => setState(() => selectedColor = colorHex),
                             child: Container(
-                              margin: const EdgeInsets.only(right: 8),
                               width: 36,
                               height: 36,
                               decoration: BoxDecoration(
-                                color: color,
+                                color: Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16)),
                                 shape: BoxShape.circle,
-                                border: isSelected
+                                border: selectedColor == colorHex
                                     ? Border.all(color: Colors.black, width: 3)
                                     : null,
                               ),
-                              child: isSelected
+                              child: selectedColor == colorHex
                                   ? const Icon(Icons.check, color: Colors.white, size: 18)
                                   : null,
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                      ],
                     ),
                   ],
                 ),

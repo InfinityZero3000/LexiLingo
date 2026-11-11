@@ -77,6 +77,28 @@ Wikidata, Tatoeba, LibriSpeech, and Common Voice are not accepted by the
 automated sync command until a pinned adapter and license filter are
 implemented. Do not replace this with generic web crawling.
 
+### 1.3.1 Reference corpora enrich, they do not seed
+
+`oewn` and `cmudict` carry no CEFR level, so they never choose a course's words.
+A content-agent job must include a labelled source (`admin_upload` with a level
+per word, or `cefr_j`); selecting `oewn` and/or `cmudict` alongside it fills, for
+the words that source chose, a definition and example (OEWN, first sense) and an
+IPA pronunciation (CMUdict). Existing admin-written fields are never overwritten.
+
+After upgrading to adapter v2 (OEWN `sense_rank`, example sentences; CMUdict
+stress digits) run the sync once more. The new snapshots are stored as
+`<version>+a2` and become `active`; the previous snapshot stays on disk for
+rollback:
+
+```bash
+python -m api.services.content_etl.cli sync --sources oewn,cmudict --write
+python -m api.services.content_etl.cli validate --source oewn --version 2025+a2
+```
+
+The job preview reports per-source `matched` counts under
+`quality.metrics.enrichment` and warns when a reference matched few or none of the
+planned words (an adapter-v1 snapshot matches none).
+
 ### 1.4 List registered source policies
 
 ```bash

@@ -477,3 +477,83 @@ def test_metrics_counts_are_accurate() -> None:
     assert report.metrics["vocabulary_count"] == 1
     assert report.metrics["exercise_count"] == 1
     assert report.metrics["unit_count"] == 1
+
+
+# --- enrichment lineage gate ---
+
+
+def _enriched_artifact() -> tuple[dict, list[dict]]:
+    art = _base_artifact()
+    seed = art["source_manifest"][0]
+    oewn = {
+        **seed,
+        "snapshot_id": f"oewn:2025:{'e' * 64}",
+        "source_name": "oewn",
+        "source_version": "2025",
+        "license_id": "CC-BY-4.0",
+        "license_url": "https://creativecommons.org/licenses/by/4.0/",
+        "attribution_text": "Open English WordNet 2025",
+        "raw_checksum": "e" * 64,
+    }
+    art["source_manifest"].append(oewn)
+    vocab = art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    vocab.update(
+        {
+            "definition": "a building for people to live in",
+            "part_of_speech": "noun",
+            "license_mode": "approved_dataset",
+            "source_name": "cefr_j",
+            "source_url": "https://github.com/openlanguageprofiles/olp-en-cefrj",
+            "source_record_id": "row:2",
+            "record_checksum": "f" * 64,
+            "content_usage": "label_only",
+            "source_version": seed["source_version"],
+            "license_id": seed["license_id"],
+            "license_url": seed["license_url"],
+            "attribution_text": seed["attribution_text"],
+            "raw_checksum": seed["raw_checksum"],
+            "lineage": {
+                "adapter": "cefr_j",
+                "adapter_version": 1,
+                "raw_path": "cefrj.csv",
+                "enrichment": [
+                    {
+                        "source_name": "oewn",
+                        "snapshot_id": oewn["snapshot_id"],
+                        "fields": ["definition"],
+                    }
+                ],
+            },
+        }
+    )
+    return art, [dict(seed), dict(oewn)]
+
+
+def test_enrichment_from_a_pinned_reference_snapshot_passes() -> None:
+    art, pins = _enriched_artifact()
+    report = validate_artifact(art, pinned_snapshots=pins)
+    assert not report.is_blocking, [e.code for e in report.blocking_errors]
+
+
+def test_enrichment_from_an_unpinned_source_is_blocking() -> None:
+    art, pins = _enriched_artifact()
+    vocab = art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    vocab["lineage"]["enrichment"][0]["source_name"] = "wikidata"
+    report = validate_artifact(art, pinned_snapshots=pins)
+    assert "ENRICHMENT_SOURCE_NOT_PINNED" in {e.code for e in report.blocking_errors}
+
+
+def test_enrichment_from_a_different_snapshot_is_blocking() -> None:
+    art, pins = _enriched_artifact()
+    vocab = art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    vocab["lineage"]["enrichment"][0]["snapshot_id"] = f"oewn:2024:{'9' * 64}"
+    report = validate_artifact(art, pinned_snapshots=pins)
+    assert "ENRICHMENT_SNAPSHOT_MISMATCH" in {e.code for e in report.blocking_errors}
+
+
+def test_malformed_enrichment_lineage_is_blocking_without_crashing() -> None:
+    art, pins = _enriched_artifact()
+    vocab = art["courses"][0]["units"][0]["lessons"][0]["vocabulary"][0]
+    vocab["lineage"]["enrichment"] = "oewn"
+    report = validate_artifact(art, pinned_snapshots=pins)
+    assert "ENRICHMENT_INVALID" in {e.code for e in report.blocking_errors}

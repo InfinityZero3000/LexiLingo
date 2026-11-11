@@ -5,7 +5,6 @@ Schemas for level progression, XP tracking, and user statistics.
 """
 
 from typing import Optional
-from datetime import datetime
 from pydantic import BaseModel, Field
 
 
@@ -55,6 +54,7 @@ class UserStatsResponse(BaseModel):
     
     # Vocabulary stats
     words_learned: int = Field(default=0)
+    words_reviewed: int = Field(default=0)
     words_mastered: int = Field(default=0)
     
     # Achievements
@@ -67,9 +67,11 @@ class UserStatsResponse(BaseModel):
 class WeeklyActivityData(BaseModel):
     """Weekly activity data for charts."""
     day: str = Field(..., description="Day of week (Mon, Tue, etc.)")
+    date: str = Field(default="", description="ISO date (UTC) of this day")
     xp: int = Field(..., description="XP earned on this day")
     lessons: int = Field(default=0, description="Lessons completed")
     study_time: int = Field(default=0, description="Study time in minutes")
+    vocabulary: int = Field(default=0, description="Vocabulary reviews")
 
 
 class WeeklyActivityResponse(BaseModel):
@@ -78,6 +80,7 @@ class WeeklyActivityResponse(BaseModel):
     total_xp: int
     total_lessons: int
     total_study_time: int
+    total_vocabulary: int = 0
 
 
 class WeeklyProgressData(BaseModel):
@@ -117,12 +120,6 @@ class WeeklyProgressResponse(BaseModel):
 # =====================
 # XP & Level Operations
 # =====================
-
-class LevelInfoResponse(BaseModel):
-    """Detailed level information."""
-    all_tiers: list[LevelTier]
-    current_level: LevelStatus
-
 
 class LevelFullResponse(BaseModel):
     """Full level info including numeric level, rank, and proficiency."""

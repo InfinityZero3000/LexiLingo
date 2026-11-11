@@ -97,41 +97,6 @@ class UnitProgressEntity extends Equatable {
   ];
 }
 
-/// Lesson Completion Result Entity
-class LessonCompletionResult extends Equatable {
-  final String lessonId;
-  final bool isPassed;
-  final double score;
-  final double bestScore;
-  final int xpEarned;
-  final int totalXp;
-  final double courseProgress;
-  final String message;
-
-  const LessonCompletionResult({
-    required this.lessonId,
-    required this.isPassed,
-    required this.score,
-    required this.bestScore,
-    required this.xpEarned,
-    required this.totalXp,
-    required this.courseProgress,
-    required this.message,
-  });
-
-  @override
-  List<Object?> get props => [
-    lessonId,
-    isPassed,
-    score,
-    bestScore,
-    xpEarned,
-    totalXp,
-    courseProgress,
-    message,
-  ];
-}
-
 /// Progress Stats Entity
 class ProgressStatsEntity extends Equatable {
   final UserProgressSummary summary;

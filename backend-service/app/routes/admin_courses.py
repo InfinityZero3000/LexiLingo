@@ -16,11 +16,14 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.cache import invalidate_cache
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin
+from app.core.dependencies import require_resource
 from app.crud.course import CourseCRUD, LessonCRUD, UnitCRUD
+from app.crud.course_category import CourseCategoryCRUD
 from app.models.content import GrammarItem, QuestionItem, TestExam
-from app.models.course import Course, Lesson, Unit, count_exercises
+from app.models.course import Course, Lesson, Unit, count_exercises, exercise_shape_problems
+from app.models.course_category import CourseCategory
 from app.models.user import User
 from app.models.vocabulary import VocabularyItem
 from app.schemas.content import (
@@ -50,7 +53,8 @@ from app.schemas.response import ApiResponse
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
-require_admin = get_current_admin
+require_courses = require_resource("courses")
+require_content = require_resource("content")
 
 
 async def _assert_publishable(db: AsyncSession, course_id: UUID) -> None:
@@ -68,6 +72,23 @@ async def _assert_publishable(db: AsyncSession, course_id: UUID) -> None:
         )
 
 
+def _assert_exercises_playable(content) -> None:
+    """Refuse an exercise the app could not render or grade — otherwise the
+    first person to find out is a learner stuck on an unanswerable question."""
+    exercises = content.get("exercises") if isinstance(content, dict) else None
+    problems = [
+        f"exercise {index + 1} ({exercise.get('ui_type') if isinstance(exercise, dict) else '?'}): {problem}"
+        for index, exercise in enumerate(exercises if isinstance(exercises, list) else [])
+        for problem in exercise_shape_problems(exercise)
+    ]
+    if problems:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid exercises: " + "; ".join(problems[:10])
+            + (f" (and {len(problems) - 10} more)" if len(problems) > 10 else ""),
+        )
+
+
 async def _apply_lesson_update(
     db: AsyncSession, lesson_id: UUID, lesson_update: LessonUpdate
 ) -> Lesson:
@@ -82,6 +103,8 @@ async def _apply_lesson_update(
         )
 
     fields = lesson_update.model_dump(exclude_unset=True)
+    if "content" in fields:
+        _assert_exercises_playable(fields["content"])
     if "content" in fields and not count_exercises(fields["content"]):
         course = await CourseCRUD.get_course(db, lesson.course_id)
         if course and course.is_published:
@@ -170,6 +193,14 @@ async def _bulk_insert_rows(
     return result.rowcount if result.rowcount is not None and result.rowcount >= 0 else len(rows)
 
 
+async def _require_category(db: AsyncSession, category_id: Optional[UUID]) -> None:
+    """A course may be uncategorised (None) but never point at a category that does not exist."""
+    if category_id is None:
+        return
+    if await CourseCategoryCRUD.get_category_by_id(db, category_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+
+
 @router.get("/courses", response_model=ApiResponse[dict])
 async def list_courses_admin(
     page: int = Query(1, ge=1),
@@ -177,8 +208,9 @@ async def list_courses_admin(
     search: Optional[str] = Query(None),
     level: Optional[str] = Query(None),
     is_published: Optional[bool] = Query(None),
+    category_id: Optional[UUID] = Query(None, description="Only courses in this category"),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """List all courses (including unpublished) for admin management."""
     query = select(Course)
@@ -190,6 +222,8 @@ async def list_courses_admin(
         filters.append(Course.level == level)
     if is_published is not None:
         filters.append(Course.is_published == is_published)
+    if category_id:
+        filters.append(Course.category_id == category_id)
     if filters:
         from sqlalchemy import and_
         query = query.where(and_(*filters))
@@ -201,12 +235,23 @@ async def list_courses_admin(
     offset = (page - 1) * page_size
     result = await db.execute(query.offset(offset).limit(page_size))
     courses = result.scalars().all()
+
+    category_ids = {c.category_id for c in courses if c.category_id}
+    category_names = {}
+    if category_ids:
+        rows = await db.execute(
+            select(CourseCategory.id, CourseCategory.name).where(CourseCategory.id.in_(category_ids))
+        )
+        category_names = {cid: name for cid, name in rows.all()}
     
     return ApiResponse(
         success=True,
         message=f"Retrieved {len(courses)} courses",
         data={
-            "courses": [CourseResponse.model_validate(c).model_dump() for c in courses],
+            "courses": [
+                {**CourseResponse.model_validate(c).model_dump(), "category_name": category_names.get(c.category_id)}
+                for c in courses
+            ],
             "total": total,
             "page": page,
             "page_size": page_size,
@@ -220,7 +265,7 @@ async def list_units_admin(
     course_id: Optional[UUID] = Query(None, description="Filter units by course"),
     search: Optional[str] = Query(None, description="Search units by title or description"),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """List all units, optionally filtered by course or searched by title/description."""
     query = select(Unit)
@@ -248,7 +293,7 @@ async def list_lessons_admin(
     unit_id: Optional[UUID] = Query(None, description="Filter by unit"),
     course_id: Optional[UUID] = Query(None, description="Filter by course"),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """List lessons filtered by unit or course."""
     query = select(Lesson)
@@ -270,7 +315,7 @@ async def list_lessons_admin(
 async def create_course(
     course: CourseCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Create a new course.
@@ -281,8 +326,10 @@ async def create_course(
     # gate — land it as a draft rather than rejecting the request, same as
     # bulk import. Publish it once its lessons have exercises.
     course = course.model_copy(update={"is_published": False})
+    await _require_category(db, course.category_id)
 
     new_course = await CourseCRUD.create_course(db, course)
+    await invalidate_cache("categories")
     
     return ApiResponse(
         success=True,
@@ -296,7 +343,7 @@ async def update_course(
     course_id: UUID,
     course_update: CourseUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Update an existing course.
@@ -310,8 +357,11 @@ async def update_course(
         existing = await CourseCRUD.get_course(db, course_id)
         if existing is not None and not existing.is_published:
             await _assert_publishable(db, course_id)
+    if "category_id" in course_update.model_fields_set:
+        await _require_category(db, course_update.category_id)
 
     updated_course = await CourseCRUD.update_course(db, course_id, course_update)
+    await invalidate_cache("categories")
     
     if not updated_course:
         raise HTTPException(
@@ -330,7 +380,7 @@ async def update_course(
 async def delete_course(
     course_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Delete a course (soft delete - unpublish).
@@ -344,6 +394,7 @@ async def delete_course(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Course not found"
         )
+    await invalidate_cache("categories")
     
     return ApiResponse(
         success=True,
@@ -389,7 +440,7 @@ class CourseBulkImportRequest(BaseModel):
 async def bulk_import_courses(
     payload: CourseBulkImportRequest,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ) -> ApiResponse[dict]:
     """
     Bulk import courses with nested units/lessons — one DB round trip per
@@ -488,7 +539,7 @@ async def bulk_import_courses(
 async def create_unit(
     unit: UnitCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Create a new unit within a course.
@@ -517,7 +568,7 @@ async def update_unit(
     unit_id: UUID,
     unit_update: UnitUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Update an existing unit.
@@ -543,7 +594,7 @@ async def update_unit(
 async def delete_unit(
     unit_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Delete a unit (cascade deletes lessons).
@@ -573,7 +624,7 @@ async def delete_unit(
 async def create_lesson(
     lesson: LessonCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Create a new lesson within a unit.
@@ -602,7 +653,7 @@ async def update_lesson(
     lesson_id: UUID,
     lesson_update: LessonUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Update an existing lesson.
@@ -622,7 +673,7 @@ async def update_lesson(
 async def delete_lesson(
     lesson_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """
     Delete a lesson.
@@ -648,7 +699,7 @@ async def delete_lesson(
 async def get_lesson_detail(
     lesson_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """Get a single lesson with full content/exercises (admin only)."""
     lesson = await LessonCRUD.get_lesson(db, lesson_id)
@@ -664,7 +715,7 @@ async def update_lesson_content(
     lesson_id: UUID,
     payload: LessonUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_courses)
 ):
     """Update lesson exercises and estimated_minutes (admin only).
 
@@ -686,7 +737,7 @@ async def list_vocabulary(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     """
     List all vocabulary items.
@@ -725,7 +776,7 @@ async def create_vocabulary(
     pronunciation: Optional[str] = None,
     difficulty_level: str = "A1",
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     """
     Create a new vocabulary item.
@@ -768,7 +819,7 @@ async def create_vocabulary(
 async def delete_vocabulary(
     vocab_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     """
     Delete a vocabulary item.
@@ -806,7 +857,7 @@ async def update_vocabulary(
     pronunciation: Optional[str] = None,
     difficulty_level: Optional[str] = None,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     """Update a vocabulary item."""
     result = await db.execute(
@@ -844,7 +895,7 @@ async def update_vocabulary(
 async def bulk_import_vocabulary(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ) -> ApiResponse[dict]:
     """
     Bulk import vocabulary from CSV or PDF containing CSV-formatted text.
@@ -919,7 +970,7 @@ async def bulk_import_vocabulary(
 @router.post("/import/extract-pdf-text", response_model=ApiResponse[dict])
 async def extract_pdf_text(
     file: UploadFile = File(...),
-    admin_user: User = Depends(require_admin),
+    admin_user: User = Depends(require_content),
 ) -> ApiResponse[dict]:
     """Extract text from a PDF for the existing course text parser."""
     text = await _read_import_text(file, pdf_only=True)
@@ -934,7 +985,7 @@ async def extract_pdf_text(
 @router.post("/upload/badge", response_model=ApiResponse[dict])
 async def upload_badge_image(
     file: UploadFile = File(...),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     """
     Upload a badge image. Returns the URL path to the uploaded file.
@@ -997,7 +1048,7 @@ async def list_grammar_admin(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(
         select(GrammarItem).order_by(GrammarItem.created_at.desc()).limit(limit).offset(offset)
@@ -1014,7 +1065,7 @@ async def list_grammar_admin(
 async def create_grammar_admin(
     payload: GrammarCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     item = GrammarItem(
         title=payload.title,
@@ -1037,7 +1088,7 @@ async def update_grammar_admin(
     grammar_id: UUID,
     payload: GrammarUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(select(GrammarItem).where(GrammarItem.id == grammar_id))
     item = result.scalar_one_or_none()
@@ -1056,7 +1107,7 @@ async def update_grammar_admin(
 async def delete_grammar_admin(
     grammar_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(select(GrammarItem).where(GrammarItem.id == grammar_id))
     item = result.scalar_one_or_none()
@@ -1071,7 +1122,7 @@ async def delete_grammar_admin(
 async def bulk_import_grammar(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ) -> ApiResponse[dict]:
     """
     Bulk import grammar rules from CSV or PDF containing CSV-formatted text.
@@ -1138,7 +1189,7 @@ async def list_questions_admin(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(
         select(QuestionItem).order_by(QuestionItem.created_at.desc()).limit(limit).offset(offset)
@@ -1155,7 +1206,7 @@ async def list_questions_admin(
 async def create_question_admin(
     payload: QuestionCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     item = QuestionItem(
         prompt=payload.prompt,
@@ -1179,7 +1230,7 @@ async def update_question_admin(
     question_id: UUID,
     payload: QuestionUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(select(QuestionItem).where(QuestionItem.id == question_id))
     item = result.scalar_one_or_none()
@@ -1198,7 +1249,7 @@ async def update_question_admin(
 async def delete_question_admin(
     question_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(select(QuestionItem).where(QuestionItem.id == question_id))
     item = result.scalar_one_or_none()
@@ -1213,7 +1264,7 @@ async def delete_question_admin(
 async def bulk_import_questions(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ) -> ApiResponse[dict]:
     """
     Bulk import questions from CSV or PDF containing CSV-formatted text.
@@ -1277,7 +1328,7 @@ async def list_test_exams_admin(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(
         select(TestExam).order_by(TestExam.created_at.desc()).limit(limit).offset(offset)
@@ -1294,7 +1345,7 @@ async def list_test_exams_admin(
 async def create_test_exam_admin(
     payload: TestExamCreate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     item = TestExam(
         title=payload.title,
@@ -1316,7 +1367,7 @@ async def update_test_exam_admin(
     test_exam_id: UUID,
     payload: TestExamUpdate,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(select(TestExam).where(TestExam.id == test_exam_id))
     item = result.scalar_one_or_none()
@@ -1338,7 +1389,7 @@ async def update_test_exam_admin(
 async def delete_test_exam_admin(
     test_exam_id: UUID,
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ):
     result = await db.execute(select(TestExam).where(TestExam.id == test_exam_id))
     item = result.scalar_one_or_none()
@@ -1353,7 +1404,7 @@ async def delete_test_exam_admin(
 async def bulk_import_test_exams(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
-    admin_user: User = Depends(require_admin)
+    admin_user: User = Depends(require_content)
 ) -> ApiResponse[dict]:
     """
     Bulk import test exams from CSV or PDF containing CSV-formatted text.

@@ -102,3 +102,36 @@ def test_planner_reports_insufficient_vocabulary():
                 words_per_lesson=8,
             ),
         )
+
+
+def test_a_word_listed_under_two_parts_of_speech_is_taught_once_per_unit():
+    # CEFR-J lists "about" as an adverb and as a preposition.
+    rows = [
+        {"record_id": f"u:{i}:{pos}", "word": f"word{i:02d}", "part_of_speech": pos, "declared_cefr": "A1"}
+        for i in range(20)
+        for pos in (("adverb", "preposition") if i < 6 else ("noun",))
+    ]
+    request = GenerationRequest(
+        levels=["A1"], units_per_course=1, lessons_per_unit=2, words_per_lesson=8
+    )
+
+    plan = plan_curriculum(normalize_source_records(rows, source_name="admin_upload"), request)
+
+    taught = [
+        record.word
+        for lesson in plan.courses[0].units[0].lessons
+        for record in lesson.vocabulary
+    ]
+    assert len(taught) == len(set(taught)) == 16
+
+
+def test_a_level_needs_enough_distinct_words_not_enough_rows():
+    rows = [
+        {"record_id": f"u:{i}:{pos}", "word": f"word{i % 4}", "part_of_speech": pos, "declared_cefr": "A1"}
+        for i in range(8)
+        for pos in ("noun",)
+    ]
+    request = GenerationRequest(levels=["A1"], units_per_course=1, lessons_per_unit=1, words_per_lesson=8)
+
+    with pytest.raises(InsufficientVocabularyError, match="has 4 usable"):
+        plan_curriculum(normalize_source_records(rows, source_name="admin_upload"), request)

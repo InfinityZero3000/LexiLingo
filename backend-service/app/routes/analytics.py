@@ -4,14 +4,13 @@ Endpoints for dashboard charts, user metrics, content performance, and vocabular
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import and_, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_admin
+from app.core.dependencies import require_resource
 from app.models.course import Course
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress
 from app.models.user import User
@@ -26,7 +25,7 @@ router = APIRouter(prefix="/admin/analytics", tags=["Analytics"])
 
 @router.get("/dashboard/kpis")
 async def get_dashboard_kpis(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -81,7 +80,7 @@ async def get_dashboard_kpis(
 @router.get("/dashboard/user-growth")
 async def get_user_growth(
     days: int = Query(30, ge=7, le=90),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -131,7 +130,7 @@ async def get_user_growth(
 @router.get("/dashboard/engagement")
 async def get_engagement(
     weeks: int = Query(12, ge=4, le=52),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -193,7 +192,7 @@ async def get_engagement(
 
 @router.get("/dashboard/course-popularity")
 async def get_course_popularity(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -224,7 +223,7 @@ async def get_course_popularity(
 
 @router.get("/dashboard/completion-funnel")
 async def get_completion_funnel(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -283,117 +282,6 @@ async def get_completion_funnel(
 # User Analytics
 # ============================================================================
 
-@router.get("/user-metrics")
-async def get_user_metrics(
-    start_date: Optional[str] = Query(None),
-    end_date: Optional[str] = Query(None),
-    admin: User = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get user engagement metrics: DAU, WAU, MAU, signups.
-    """
-    if end_date:
-        end = datetime.fromisoformat(end_date).date()
-    else:
-        end = datetime.now(timezone.utc).date()
-
-    if start_date:
-        start = datetime.fromisoformat(start_date).date()
-    else:
-        start = end - timedelta(days=30)
-
-    # DAU (average)
-    dau_result = await db.execute(
-        select(
-            DailyActivity.activity_date,
-            func.count(func.distinct(DailyActivity.user_id)).label("users")
-        )
-        .where(
-            and_(
-                DailyActivity.activity_date >= start,
-                DailyActivity.activity_date <= end
-            )
-        )
-        .group_by(DailyActivity.activity_date)
-    )
-    dau_values = [row.users for row in dau_result.fetchall()]
-    avg_dau = sum(dau_values) / len(dau_values) if dau_values else 0
-
-    # WAU (last 7 days from end)
-    wau_start = end - timedelta(days=7)
-    wau = await db.scalar(
-        select(func.count(func.distinct(DailyActivity.user_id)))
-        .where(
-            and_(
-                DailyActivity.activity_date >= wau_start,
-                DailyActivity.activity_date <= end
-            )
-        )
-    ) or 0
-
-    # MAU (last 30 days from end)
-    mau_start = end - timedelta(days=30)
-    mau = await db.scalar(
-        select(func.count(func.distinct(DailyActivity.user_id)))
-        .where(
-            and_(
-                DailyActivity.activity_date >= mau_start,
-                DailyActivity.activity_date <= end
-            )
-        )
-    ) or 0
-
-    # Total signups in date range
-    signups = await db.scalar(
-        select(func.count(User.id))
-        .where(
-            and_(
-                func.date(User.created_at) >= start,
-                func.date(User.created_at) <= end
-            )
-        )
-    ) or 0
-
-    return {
-        "metrics": {
-            "dau": int(avg_dau),
-            "wau": wau,
-            "mau": mau,
-            "total_signups": signups,
-            "avg_session_duration": 0,  # Placeholder - implement if session tracking exists
-        }
-    }
-
-
-@router.get("/retention-cohorts")
-async def get_retention_cohorts(
-    admin: User = Depends(get_current_admin),
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get cohort retention analysis.
-    Cohorts are grouped by signup week.
-    """
-    # Get cohorts from last 12 weeks
-    end_date = datetime.now(timezone.utc).date()
-    start_date = end_date - timedelta(weeks=12)
-
-    # This is a simplified version - full implementation would require more complex queries
-    # For MVP, return empty or sample data
-    return {
-        "cohorts": [
-            {
-                "cohort_date": (start_date + timedelta(weeks=i)).isoformat(),
-                "users": 0,
-                "d1_retention": 0.0,
-                "d7_retention": 0.0,
-                "d30_retention": 0.0,
-            }
-            for i in range(12)
-        ]
-    }
-
 
 # ============================================================================
 # Content Performance
@@ -401,7 +289,7 @@ async def get_retention_cohorts(
 
 @router.get("/content-performance")
 async def get_content_performance(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -450,7 +338,7 @@ async def get_content_performance(
 
 @router.get("/vocabulary-effectiveness")
 async def get_vocabulary_effectiveness(
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("analytics")),
     db: AsyncSession = Depends(get_db),
 ):
     """

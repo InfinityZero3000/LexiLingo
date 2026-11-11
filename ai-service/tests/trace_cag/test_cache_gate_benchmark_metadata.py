@@ -1,4 +1,3 @@
-import hashlib
 import logging
 import time
 
@@ -26,7 +25,10 @@ async def test_cache_gate_enforces_benchmark_evidence_certificate(
     query = "What verb collocates with decision?"
     level = "B1"
     profile = {"level": level}
-    cache_key = hashlib.md5(f"{query.lower()}||{level}".encode()).hexdigest()
+    monkeypatch.setattr(cache_mod.settings, "SECRET_KEY", "test-secret")
+    monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
+    scope = cache_mod._user_cache_scope({"user_id": "u1"})
+    cache_key = cache_mod._build_cache_key(scope, query, level)
     entry = {
         "fingerprint": {
             "query_norm": query.lower(),
@@ -36,7 +38,8 @@ async def test_cache_gate_enforces_benchmark_evidence_certificate(
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 3,
+            "schema_version": 4,
+            "user_scope": scope,
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target", "evidence_hash"],
             "query_norm": query.lower(),
             "intent": "ask",
@@ -76,6 +79,7 @@ async def test_cache_gate_enforces_benchmark_evidence_certificate(
     monkeypatch.setattr(cache_mod, "_get_bucket_candidate_keys", no_candidates)
 
     result = await nodes.cache_gate_node({
+        "user_id": "u1",
         "user_input": query,
         "learner_profile": profile,
         "conversation_history": [],

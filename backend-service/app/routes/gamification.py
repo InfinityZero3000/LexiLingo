@@ -26,13 +26,13 @@ from app.crud.gamification import (
     AchievementCRUD, WalletCRUD, LeaderboardCRUD, ShopCRUD, SocialCRUD
 )
 from app.schemas.gamification import (
-    AchievementResponse, AchievementProgressResponse, UserAchievementResponse,
-    WalletResponse, WalletHistoryResponse, WalletTransactionResponse,
+    AchievementResponse, UserAchievementResponse,
+    WalletResponse, WalletTransactionResponse,
     LeaderboardResponse, LeaderboardUserEntry, UserLeagueStatusResponse,
     ShopItemResponse, PurchaseRequest, PurchaseResponse,
-    EquipAvatarRequest, EquipAvatarResponse, InventoryResponse,
-    UserInventoryItemResponse, UseItemRequest, UseItemResponse,
-    FollowRequest, FollowResponse, UserSocialProfile, FollowersListResponse,
+    EquipAvatarRequest, EquipAvatarResponse,
+    InventoryResponse, UserInventoryItemResponse, UseItemRequest, UseItemResponse,
+    FollowResponse, UserSocialProfile, FollowersListResponse,
     ActivityFeedResponse, ActivityFeedItem, FriendSuggestionsResponse,
     LocationUpdateRequest, LocationUpdateResponse, NearbyUsersResponse,
     StarterRewardResponse,
@@ -103,14 +103,24 @@ async def get_all_achievements(
 ):
     """
     Get all available achievements.
-    
+
     Returns all achievement definitions. If authenticated, includes
     unlock status for the current user.
+
+    Hidden achievements stay secret until the current user unlocks them.
     """
     achievements = await AchievementCRUD.get_all_achievements(db)
-    
+
+    unlocked_ids: set = set()
+    if current_user is not None:
+        unlocked_ids = await AchievementCRUD.get_unlocked_achievement_ids(
+            db, current_user.id
+        )
+
     response_data = []
     for achievement in achievements:
+        if achievement.is_hidden and achievement.id not in unlocked_ids:
+            continue
         response_data.append(AchievementResponse.model_validate(achievement))
 
     response.headers["X-Cache-Version"] = compute_cache_version(response_data)
@@ -362,9 +372,9 @@ async def _personalize_leaderboard(
     current_user: User,
     normalized_league: str,
 ) -> dict:
-    """Stamp a shared (per-league, not per-user) cached payload with this viewer's rank/flags."""
+    """Add viewer-specific flags to a shared per-league payload."""
     data = dict(base_data)
-    entries = [dict(e) for e in data.get("entries", [])]
+    entries = [dict(entry) for entry in data.get("entries", [])]
     current_user_id = str(current_user.id)
     current_user_rank = None
 
@@ -373,20 +383,25 @@ async def _personalize_leaderboard(
         if entry["is_current_user"]:
             current_user_rank = entry["rank"]
 
-    if current_user_rank is None and normalized_league == (current_user.rank or "bronze").lower():
+    if (
+        current_user_rank is None
+        and normalized_league == (current_user.rank or "bronze").lower()
+    ):
         current_user_rank = await LeaderboardCRUD.get_user_rank(db, current_user.id)
         current_entry = await LeaderboardCRUD.get_or_create_entry(db, current_user.id)
-        entries.append({
-            "rank": current_user_rank or len(entries) + 1,
-            "user_id": current_user_id,
-            "username": current_user.username,
-            "display_name": current_user.display_name,
-            "avatar_url": current_user.avatar_url,
-            "user_rank": current_user.rank,
-            "xp_earned": current_entry.xp_earned,
-            "lessons_completed": current_entry.lessons_completed,
-            "is_current_user": True,
-        })
+        entries.append(
+            {
+                "rank": current_user_rank or len(entries) + 1,
+                "user_id": current_user_id,
+                "username": current_user.username,
+                "display_name": current_user.display_name,
+                "avatar_url": current_user.avatar_url,
+                "user_rank": current_user.rank,
+                "xp_earned": current_entry.xp_earned,
+                "lessons_completed": current_entry.lessons_completed,
+                "is_current_user": True,
+            }
+        )
 
     data["entries"] = entries
     data["current_user_rank"] = current_user_rank
@@ -407,10 +422,6 @@ async def get_leaderboard(
     """
     normalized_league = league.lower().strip()
 
-    # Cache key is per-league only (not per-user): the standings are identical for
-    # every viewer, only is_current_user/current_user_rank differ, which are stamped
-    # on after the cache read. Keying by user_id previously made every request a
-    # guaranteed cache miss under real traffic — each user hit the DB every time.
     cache_key = build_cache_key("leaderboard", league=normalized_league)
     cached = await get_cached(cache_key)
     cached_matches_rank = (
@@ -418,17 +429,19 @@ async def get_leaderboard(
         and str(cached.get("league", "")).lower() == normalized_league
     )
     if cached and cached_matches_rank:
-        leaderboard_data = await _personalize_leaderboard(db, cached, current_user, normalized_league)
+        leaderboard_data = await _personalize_leaderboard(
+            db, cached, current_user, normalized_league
+        )
         response.headers["X-Cache-Version"] = compute_cache_version(cached)
         response.headers["X-Cache-Source"] = "redis"
         return ApiResponse(
             success=True,
             message="Leaderboard retrieved successfully",
-            data=leaderboard_data
+            data=leaderboard_data,
         )
 
-    # Full-table league sync only needs to run once per cache window now that the
-    # cache is shared, not on every single request.
+    # This may scan every entry for the current week, so do it once per shared
+    # cache window instead of once per viewer request.
     await LeaderboardCRUD.sync_current_week_entries_to_user_rank(db)
 
     entries = await LeaderboardCRUD.get_leaderboard(db, league)
@@ -491,14 +504,16 @@ async def get_leaderboard(
     ).model_dump(mode="json")
     await set_cached(cache_key, leaderboard_data, ttl=30)
 
-    personalized_data = await _personalize_leaderboard(db, leaderboard_data, current_user, normalized_league)
+    personalized_data = await _personalize_leaderboard(
+        db, leaderboard_data, current_user, normalized_league
+    )
     response.headers["X-Cache-Version"] = compute_cache_version(leaderboard_data)
     response.headers["X-Cache-Source"] = "origin"
 
     return ApiResponse(
         success=True,
         message="Leaderboard retrieved successfully",
-        data=personalized_data
+        data=personalized_data,
     )
 
 
@@ -526,9 +541,9 @@ async def get_my_league_status(
         current_user.rank,
     )
     _, week_end = LeaderboardCRUD.get_current_week_range()
-    
+
     hours_remaining = int((week_end - datetime.now(timezone.utc)).total_seconds() / 3600)
-    
+
     return ApiResponse(
         success=True,
         message="League status retrieved successfully",
@@ -744,55 +759,6 @@ async def use_inventory_item(
     )
 
 
-@router.get("/boosts/active", response_model=ApiResponse[List[dict]])
-async def get_active_boosts(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get all currently active boosts for the user.
-    
-    Returns active boosts with their effects and remaining time.
-    Useful for displaying active buffs in the UI.
-    """
-    from app.services.item_effects_service import ItemEffectsService
-    
-    effects_service = ItemEffectsService(db)
-    active_boosts = await effects_service.get_active_boosts(current_user.id)
-    
-    return ApiResponse(
-        success=True,
-        message=f"Found {len(active_boosts)} active boosts",
-        data=active_boosts
-    )
-
-
-@router.get("/boosts/xp-multiplier", response_model=ApiResponse[dict])
-async def get_xp_multiplier(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get current XP multiplier for the user.
-    
-    Checks for active double_xp boosts and returns the multiplier.
-    Returns 1.0 if no boost is active.
-    """
-    from app.services.item_effects_service import ItemEffectsService
-    
-    effects_service = ItemEffectsService(db)
-    multiplier = await effects_service.get_xp_multiplier(current_user.id)
-    
-    return ApiResponse(
-        success=True,
-        message="XP multiplier retrieved",
-        data={
-            "multiplier": multiplier,
-            "has_boost": multiplier > 1.0
-        }
-    )
-
-
 # ============================================================================
 # Social Endpoints
 # ============================================================================
@@ -829,30 +795,6 @@ async def follow_user(
         data=FollowResponse(
             success=success,
             is_following=success,
-            message=message
-        )
-    )
-
-
-@router.delete("/users/{user_id}/follow", response_model=ApiResponse[FollowResponse])
-async def unfollow_user(
-    user_id: UUID,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Unfollow a user.
-    
-    Removes the following relationship.
-    """
-    success, message = await SocialCRUD.unfollow_user(db, current_user.id, user_id)
-    
-    return ApiResponse(
-        success=success,
-        message=message,
-        data=FollowResponse(
-            success=success,
-            is_following=not success,
             message=message
         )
     )

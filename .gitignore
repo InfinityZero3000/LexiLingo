@@ -185,6 +185,20 @@ docs/technical-report/*.out
 # Source documents the author keeps locally; the repo tracks the LaTeX in
 # docs/technical-report/ instead.
 docs/report-KLCN/
+docs/thesis/
+docs/UI/
+docs/SRS_LexiLingo_2.0.md
+docs/So_sanh_LexiLingo_vs_ThiTruong.md
+docs/report-response.md
+docs/requirement-klcn.md
+# Local tooling that edits those thesis documents; useless without them.
+scripts/thesis/
+scripts/build_clean_lists.py
+scripts/clean_tc_fields.py
+scripts/finalize_chapter6_figures.py
+scripts/insert_ui_panels.py
+scripts/update_report_klcn.py
+scripts/update_table_of_figures.py
 
 # Generated artifacts: benchmark stats and plots, matplotlib's font cache, and
 # the .pdf/.docx the report build emits. All reproducible from source.

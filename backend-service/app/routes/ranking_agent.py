@@ -13,7 +13,7 @@ from app.core.celery_app import celery_app
 from app.core.cache import invalidate_cache
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import _get_user_role_level, get_current_admin
+from app.core.dependencies import _get_user_role_level, require_resource
 from app.models.rbac import AuditLog
 from app.models.user import User
 from app.schemas.ranking_agent import RankingAgentJobCreate, RankingAgentJobResponse
@@ -75,7 +75,7 @@ def _require_job_owner(job, admin: User) -> None:
 async def create_job(
     payload: RankingAgentJobCreate,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("ranking")),
 ):
     _require_enabled()
     active_count = await RankingAgentJobService.count_active_by_requester(db, admin.id)
@@ -129,7 +129,7 @@ async def list_jobs(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_resource("ranking")),
 ):
     jobs = await RankingAgentJobService.list(db, limit=limit, offset=offset)
     return ApiResponse(data=[_job_response(j) for j in jobs])
@@ -146,34 +146,16 @@ async def _get_job_or_404(db: AsyncSession, job_id: uuid.UUID, *, lock: bool = F
 async def get_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
+    _: User = Depends(require_resource("ranking")),
 ):
     return ApiResponse(data=_job_response(await _get_job_or_404(db, job_id)))
-
-
-@router.get("/jobs/{job_id}/preview", response_model=ApiResponse[dict])
-async def get_preview(
-    job_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db),
-    _: User = Depends(get_current_admin),
-):
-    job = await _get_job_or_404(db, job_id)
-    if not job.artifact:
-        raise HTTPException(status_code=409, detail="Preview is not ready")
-    return ApiResponse(
-        data={
-            "artifact": job.artifact,
-            "warnings": job.warnings,
-            "blocking_errors": job.blocking_errors,
-        }
-    )
 
 
 @router.post("/jobs/{job_id}/apply", response_model=ApiResponse[dict])
 async def apply_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("ranking")),
 ):
     _require_enabled()
     _require_job_owner(await _get_job_or_404(db, job_id), admin)
@@ -204,7 +186,7 @@ async def apply_job(
 async def cancel_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("ranking")),
 ):
     job = await _get_job_or_404(db, job_id, lock=True)
     _require_job_owner(job, admin)
@@ -226,7 +208,7 @@ async def cancel_job(
 async def retry_job(
     job_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    admin: User = Depends(get_current_admin),
+    admin: User = Depends(require_resource("ranking")),
 ):
     _require_enabled()
     job = await _get_job_or_404(db, job_id, lock=True)

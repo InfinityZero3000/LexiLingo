@@ -287,3 +287,79 @@ def test_ircot_summary_counts_gate_and_contract_outcomes():
     }
     assert summary["contract_pass_rate"] == 0.5
     assert summary["avg_reason_latency_ms"] == 15
+
+
+def test_report_validation_counts_unanswered_samples_as_errors_not_violations():
+    config = BenchmarkConfig(require_primary_provider=True)
+    ok = {"mode": "m", "observed_provider": "groq", "error": None}
+    silent = {"mode": "m", "observed_provider": None, "error": "Primary benchmark provider returned no response"}
+    fallback = {"mode": "m", "observed_provider": "gemini", "error": None}
+
+    assert validate_run({"observations": [ok] * 98 + [silent] * 2}, config)["passed"] is True
+    too_many = validate_run({"observations": [ok] * 90 + [silent] * 10}, config)
+    assert too_many["passed"] is False and "10/100 samples unanswered" in too_many["violations"][0]
+    assert validate_run({"observations": [ok] * 99 + [fallback]}, config)["passed"] is False
+
+
+@pytest.mark.asyncio
+async def test_public_protocol_asks_unanswered_samples_once_more(monkeypatch):
+    import tracecag_bench.protocols.public_qa as protocol
+
+    monkeypatch.setattr(protocol, "_RETRY_PAUSE_S", 0)
+
+    class Flaky:
+        def __init__(self):
+            self.calls = []
+
+        async def run_public_qa(self, sample, mode, **kwargs):
+            self.calls.append(sample.sample_id)
+            silent = sample.sample_id == "s2" and self.calls.count("s2") == 1
+            return RunObservation(sample_id=sample.sample_id, mode=mode.name, answer="" if silent else "yes", gold_answers=("yes",),
+                                  error="Primary benchmark provider returned no response" if silent else None,
+                                  observed_provider=None if silent else "groq")
+
+    samples = [PublicQASample(sample_id=f"s{i}", dataset="test", question="Q?", answers=("yes",), context_docs=(), supporting_titles=())
+               for i in (1, 2, 3)]
+    runtime = Flaky()
+    config = BenchmarkConfig(cache_repeats=1, generation_policy="extractive", require_primary_provider=False)
+    result = await run_public_qa_protocol(samples, [MODES["rag_topk"]], config, runtime=runtime)
+
+    assert runtime.calls.count("s2") == 2
+    assert [o["error"] for o in result["observations"]] == [None, None, None]
+    assert result["summaries"]["rag_topk"]["exact_match"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_a_run_cut_off_by_the_quota_resumes_from_its_checkpoint(monkeypatch, tmp_path):
+    """Answers already paid for are not asked again; one written under another arm is not mixed in."""
+    import tracecag_bench.protocols.public_qa as protocol
+
+    monkeypatch.setattr(protocol, "_RETRY_PAUSE_S", 0)
+    monkeypatch.setenv("TRACECAG_CHECKPOINT", str(tmp_path / "unit.jsonl"))
+
+    class Runtime:
+        def __init__(self, dead=()):
+            self.calls, self.dead = [], set(dead)
+
+        async def run_public_qa(self, sample, mode, **kwargs):
+            self.calls.append(sample.sample_id)
+            silent = sample.sample_id in self.dead
+            return RunObservation(sample_id=sample.sample_id, mode=mode.name, answer="" if silent else "yes", gold_answers=("yes",),
+                                  error="Primary benchmark provider returned no response" if silent else None,
+                                  observed_provider=None if silent else "groq")
+
+    samples = [PublicQASample(sample_id=f"s{i}", dataset="test", question="Q?", answers=("yes",), context_docs=(), supporting_titles=())
+               for i in (1, 2, 3)]
+    config = BenchmarkConfig(cache_repeats=1, generation_policy="extractive", require_primary_provider=False)
+
+    await run_public_qa_protocol(samples, [MODES["rag_topk"]], config, runtime=Runtime(dead={"s3"}))   # the day ran out at s3
+    again = Runtime()
+    result = await run_public_qa_protocol(samples, [MODES["rag_topk"]], config, runtime=again)
+    assert again.calls == ["s3"]
+    assert [o["sample_id"] for o in result["observations"]] == ["s1", "s2", "s3"]
+    assert result["summaries"]["rag_topk"]["exact_match"] == 1.0
+    assert isinstance(protocol.Checkpoint(tmp_path / "unit.jsonl").get(protocol.Checkpoint.key(MODES["rag_topk"], config), "s1").gold_answers, tuple)
+
+    other = Runtime()
+    await run_public_qa_protocol(samples, [MODES["rag_topk_think_guess"]], config, runtime=other)
+    assert other.calls == ["s1", "s2", "s3"]

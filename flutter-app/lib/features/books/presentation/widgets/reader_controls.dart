@@ -21,6 +21,7 @@ class ReaderControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = Theme.of(context).colorScheme.primary;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
       decoration: BoxDecoration(
@@ -55,7 +56,7 @@ class ReaderControls extends StatelessWidget {
           const SizedBox(height: 20),
 
           // ── Font Size ──────────────────────────────
-          _sectionLabel('Font Size', settings.theme),
+          _sectionLabel('books.fontSize'.tr(), settings.theme),
           Row(
             children: [
               IconButton(
@@ -65,7 +66,7 @@ class ReaderControls extends StatelessWidget {
                       )
                     : null,
                 icon: const Icon(Icons.text_decrease_rounded),
-                color: AppColors.primary,
+                color: accent,
               ),
               Expanded(
                 child: SliderTheme(
@@ -80,8 +81,8 @@ class ReaderControls extends StatelessWidget {
                     min: 14,
                     max: 28,
                     divisions: 14,
-                    activeColor: AppColors.primary,
-                    inactiveColor: AppColors.primary.withValues(alpha: 0.2),
+                    activeColor: accent,
+                    inactiveColor: accent.withValues(alpha: 0.2),
                     onChanged: (v) => onChanged(settings.copyWith(fontSize: v)),
                   ),
                 ),
@@ -93,7 +94,7 @@ class ReaderControls extends StatelessWidget {
                       )
                     : null,
                 icon: const Icon(Icons.text_increase_rounded),
-                color: AppColors.primary,
+                color: accent,
               ),
               Text(
                 '${settings.fontSize.toInt()}px',
@@ -107,7 +108,7 @@ class ReaderControls extends StatelessWidget {
           const SizedBox(height: 16),
 
           // ── Theme ──────────────────────────────────
-          _sectionLabel('Theme', settings.theme),
+          _sectionLabel('books.readerTheme'.tr(), settings.theme),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -115,21 +116,21 @@ class ReaderControls extends StatelessWidget {
               _themeChip(
                 context,
                 ReaderTheme.light,
-                'Light',
+                'books.themeLight'.tr(),
                 AppColors.readingPaper,
                 Colors.black87,
               ),
               _themeChip(
                 context,
                 ReaderTheme.sepia,
-                'Sepia',
+                'books.themeSepia'.tr(),
                 AppColors.readingSepia,
                 AppColors.readingSepiaText,
               ),
               _themeChip(
                 context,
                 ReaderTheme.dark,
-                'Dark',
+                'books.themeDark'.tr(),
                 AppColors.readingNight,
                 Colors.white,
               ),
@@ -138,7 +139,7 @@ class ReaderControls extends StatelessWidget {
           const SizedBox(height: 16),
 
           // ── Line Spacing ───────────────────────────
-          _sectionLabel('Line Spacing', settings.theme),
+          _sectionLabel('books.lineSpacing'.tr(), settings.theme),
           Row(
             children: [
               Expanded(
@@ -154,8 +155,8 @@ class ReaderControls extends StatelessWidget {
                     min: 1.2,
                     max: 2.0,
                     divisions: 4,
-                    activeColor: AppColors.primary,
-                    inactiveColor: AppColors.primary.withValues(alpha: 0.2),
+                    activeColor: accent,
+                    inactiveColor: accent.withValues(alpha: 0.2),
                     onChanged: (v) =>
                         onChanged(settings.copyWith(lineSpacing: v)),
                   ),
@@ -193,25 +194,33 @@ class ReaderControls extends StatelessWidget {
     Color fg,
   ) {
     final isSelected = settings.theme == theme;
-    return GestureDetector(
-      onTap: () => onChanged(settings.copyWith(theme: theme)),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            width: 2,
+    final accent = Theme.of(context).colorScheme.primary;
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      child: InkWell(
+        onTap: () => onChanged(settings.copyWith(theme: theme)),
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 72),
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? accent : Colors.transparent,
+              width: 2,
+            ),
           ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: fg,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 13,
+          child: Text(
+            label,
+            style: TextStyle(
+              color: fg,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 14,
+            ),
           ),
         ),
       ),

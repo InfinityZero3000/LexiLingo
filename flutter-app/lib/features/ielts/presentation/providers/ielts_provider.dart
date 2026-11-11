@@ -37,14 +37,14 @@ class IeltsProvider extends ChangeNotifier {
   bool get isSubmitting => _submitting;
   String? get error => _error;
 
-  int get elapsedSeconds => _startedAt == null
-      ? 0
-      : DateTime.now().difference(_startedAt!).inSeconds;
+  int get elapsedSeconds =>
+      _startedAt == null ? 0 : DateTime.now().difference(_startedAt!).inSeconds;
 
   IeltsPaper get paper => _attempt?.paper ?? const IeltsPaper();
 
-  int get answeredCount =>
-      _answers.values.where((v) => v != null && v.toString().trim().isNotEmpty).length;
+  int get answeredCount => _answers.values
+      .where((v) => v != null && v.toString().trim().isNotEmpty)
+      .length;
 
   @override
   void dispose() {
@@ -66,6 +66,17 @@ class IeltsProvider extends ChangeNotifier {
     }
   }
 
+  /// A look inside a test before committing to a sitting; holds no state.
+  Future<IeltsPaper> previewPaper(String testId) =>
+      _dataSource.getTestPaper(testId);
+
+  /// Whether the learner already has an unfinished sitting of this test.
+  bool hasSittingInProgress(String testId) => _history.any(
+    (attempt) =>
+        attempt['test_id']?.toString() == testId &&
+        attempt['status']?.toString() == 'in_progress',
+  );
+
   Future<void> loadHistory() async {
     try {
       _history = await _dataSource.listAttempts();
@@ -81,7 +92,10 @@ class IeltsProvider extends ChangeNotifier {
     _result = null;
     notifyListeners();
     try {
-      final state = await _dataSource.startAttempt(testId, skillScope: skillScope);
+      final state = await _dataSource.startAttempt(
+        testId,
+        skillScope: skillScope,
+      );
       _attempt = state;
       _answers
         ..clear()

@@ -620,12 +620,12 @@ class _IeltsEntryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'IELTS mock tests',
+                      'practiceLab.ielts.title'.tr(),
                       style: theme.textTheme.titleMedium,
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Full four-skill papers, scored in bands with AI feedback on Writing and Speaking.',
+                      'practiceLab.ielts.subtitle'.tr(),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),

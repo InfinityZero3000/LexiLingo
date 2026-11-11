@@ -12,6 +12,7 @@ class DailyChallengeEntity extends Equatable {
   final int current;
   final int xpReward;
   final bool isCompleted;
+  final bool isClaimed;
   final DateTime expiresAt;
 
   const DailyChallengeEntity({
@@ -24,6 +25,7 @@ class DailyChallengeEntity extends Equatable {
     required this.current,
     required this.xpReward,
     required this.isCompleted,
+    this.isClaimed = false,
     required this.expiresAt,
   });
 
@@ -50,6 +52,7 @@ class DailyChallengeEntity extends Equatable {
     current,
     xpReward,
     isCompleted,
+    isClaimed,
     expiresAt,
   ];
 }
@@ -61,6 +64,7 @@ class DailyChallengesResponse extends Equatable {
   final int totalCompleted;
   final int totalChallenges;
   final int bonusXp;
+  final bool bonusClaimed;
 
   const DailyChallengesResponse({
     required this.date,
@@ -68,6 +72,7 @@ class DailyChallengesResponse extends Equatable {
     required this.totalCompleted,
     required this.totalChallenges,
     required this.bonusXp,
+    this.bonusClaimed = false,
   });
 
   /// Whether all challenges are completed
@@ -93,5 +98,6 @@ class DailyChallengesResponse extends Equatable {
     totalCompleted,
     totalChallenges,
     bonusXp,
+    bonusClaimed,
   ];
 }

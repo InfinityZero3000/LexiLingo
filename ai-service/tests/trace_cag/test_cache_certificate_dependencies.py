@@ -22,6 +22,7 @@ def test_certificate_contains_compiled_dependency_snapshot():
         profile_epoch=3,
         state_hints={},
         now=time.time(),
+        user_scope="u",
     )
 
     assert certificate["dependencies"] == [
@@ -31,11 +32,14 @@ def test_certificate_contains_compiled_dependency_snapshot():
 
 
 @pytest.mark.asyncio
-async def test_invalid_required_dependency_prevents_cache_write():
+async def test_invalid_required_dependency_prevents_cache_write(monkeypatch):
+    monkeypatch.setattr(cache_mod.settings, "SECRET_KEY", "test-secret")
+    monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
     cache_mod._MEM_RESPONSE_CACHE.clear()
 
     await cache_mod._write_cache_entry(
         {
+            "user_id": "u1",
             "user_input": "Who founded ExampleCo?",
             "learner_profile": {"level": "B1"},
             "dependency_events": [
@@ -52,10 +56,13 @@ async def test_invalid_required_dependency_prevents_cache_write():
 
 
 @pytest.mark.asyncio
-async def test_cache_write_stores_projection_hashes():
+async def test_cache_write_stores_projection_hashes(monkeypatch):
+    monkeypatch.setattr(cache_mod.settings, "SECRET_KEY", "test-secret")
+    monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
     cache_mod._MEM_RESPONSE_CACHE.clear()
     await cache_mod._write_cache_entry(
         {
+            "user_id": "u1",
             "user_input": "Who founded ExampleCo?",
             "learner_profile": {"level": "B1"},
             "retrieval_trace": [{"item_id": "exampleco", "title": "ExampleCo"}],
@@ -71,7 +78,8 @@ async def test_cache_write_stores_projection_hashes():
 
     entry = next(iter(cache_mod._MEM_RESPONSE_CACHE.values()))[1]
     certificate = entry["admissibility_certificate"]
-    assert certificate["schema_version"] == 3
+    assert certificate["schema_version"] == 4
+    assert certificate["user_scope"] == cache_mod._user_cache_scope({"user_id": "u1"})
     assert certificate["factual_projection_hash"] == cache_mod._projection_hash(
         "Ada Example founded ExampleCo."
     )

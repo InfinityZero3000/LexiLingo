@@ -1,16 +1,18 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import { I18nProvider, useI18n } from "./lib/i18n";
+import { ConfirmProvider } from "./components/ConfirmDialog";
 import { AuthProvider, useAuth } from "./components/AuthProvider";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireRole } from "./components/RequireRole";
 import { AppShell, NavItem } from "./components/AppShell";
+import { usePermissions } from "./lib/usePermissions";
 import {
   LayoutDashboard, Users, BookOpen, GraduationCap, Layers, FileText,
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
   Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell,
-  ClipboardCheck, Gauge
+  ClipboardCheck, Gauge, KeyRound, Radar, Tags, Handshake, Gem
 } from "lucide-react";
 
 // Lazy-loaded components
@@ -30,6 +32,11 @@ const ShopPage = lazy(() => import("./pages/ShopPage").then(m => ({ default: m.S
 const AdsPage = lazy(() => import("./pages/AdsPage").then(m => ({ default: m.AdsPage })));
 const UserManagementPage = lazy(() => import("./pages/UserManagementPage"));
 const LogsPage = lazy(() => import("./pages/LogsPage").then(m => ({ default: m.LogsPage })));
+const CategoriesPage = lazy(() => import("./pages/CategoriesPage").then(m => ({ default: m.CategoriesPage })));
+const GemLedgerPage = lazy(() => import("./pages/GemLedgerPage").then(m => ({ default: m.GemLedgerPage })));
+const PartnerKeysPage = lazy(() => import("./pages/PartnerKeysPage").then(m => ({ default: m.PartnerKeysPage })));
+const RolesPermissionsPage = lazy(() => import("./pages/RolesPermissionsPage").then(m => ({ default: m.RolesPermissionsPage })));
+const OpsCenterPage = lazy(() => import("./pages/OpsCenterPage").then(m => ({ default: m.OpsCenterPage })));
 const MonitoringPage = lazy(() => import("./pages/MonitoringPage").then(m => ({ default: m.MonitoringPage })));
 const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ default: m.ContentLabPage })));
 const ContentQaQueuePage = lazy(() => import("./pages/ContentQaQueuePage").then(m => ({ default: m.ContentQaQueuePage })));
@@ -54,36 +61,41 @@ const PageLoader = () => (
 const AppRoutes = () => {
   const { t } = useI18n();
   const { role } = useAuth();
+  const { can } = usePermissions();
 
+  const { learners, content, growth, system } = t.nav.groups;
+  // Units and lessons are reached from Courses; their routes stay, the sidebar entries do not.
   const adminNav: NavItem[] = [
     { to: "/admin", label: t.nav.dashboard, icon: <LayoutDashboard size={18} /> },
-    { to: "/admin/users", label: t.nav.userManagement, icon: <Users size={18} /> },
-    { to: "/admin/courses", label: t.nav.courses, icon: <BookOpen size={18} /> },
-    { to: "/admin/ielts", label: t.nav.ieltsTests, icon: <GraduationCap size={18} /> },
-    { to: "/admin/units", label: t.nav.units, icon: <Layers size={18} /> },
-    { to: "/admin/lessons", label: t.nav.lessons, icon: <FileText size={18} /> },
-    { to: "/admin/topics", label: t.nav.topics, icon: <MessageSquare size={18} /> },
-    { to: "/admin/content-lab", label: t.nav.grammarTest, icon: <PenTool size={18} /> },
-    { to: "/admin/content-qa", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} /> },
-    { to: "/admin/content-analytics", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} /> },
-    { to: "/admin/ai-quality", label: t.nav.aiQuality, icon: <Gauge size={18} /> },
-    { to: "/admin/vocabulary", label: t.nav.vocabulary, icon: <Languages size={18} /> },
-    { to: "/admin/achievements", label: t.nav.achievements, icon: <Trophy size={18} /> },
-    { to: "/admin/shop", label: t.nav.shop, icon: <ShoppingBag size={18} /> },
-    { to: "/admin/ranking-agent", label: t.nav.rankingAgent, icon: <Swords size={18} /> },
-    { to: "/admin/notification-campaign", label: t.nav.notificationCampaign, icon: <Bell size={18} /> },
-    { to: "/admin/ads", label: t.nav.bannerAds, icon: <Megaphone size={18} /> },
-    { to: "/admin/logs", label: t.nav.logs, icon: <ScrollText size={18} /> },
-    { to: "/admin/monitoring", label: t.nav.monitoring, icon: <Activity size={18} /> },
-    { to: "/admin/settings", label: t.nav.settings, icon: <Settings size={18} /> },
-    // Conditionally add "Back to Super Admin" for super_admin users
-    ...(role === "super_admin" ? [{ to: "/super", label: t.nav.superDashboard, icon: <ArrowLeft size={18} /> }] : []),
+    { to: "/admin/users", permission: "users:read", label: t.nav.userManagement, icon: <Users size={18} />, group: learners },
+    { to: "/admin/achievements", permission: "achievements:read", label: t.nav.achievements, icon: <Trophy size={18} />, group: learners },
+    { to: "/admin/ranking-agent", permission: "ranking:read", label: t.nav.rankingAgent, icon: <Swords size={18} />, group: learners },
+    { to: "/admin/courses", permission: "courses:read", label: t.nav.courses, icon: <BookOpen size={18} />, group: content },
+    { to: "/admin/categories", permission: "categories:read", label: t.nav.categories, icon: <Tags size={18} />, group: content },
+    { to: "/admin/ielts", permission: "ielts:read", label: t.nav.ieltsTests, icon: <GraduationCap size={18} />, group: content },
+    { to: "/admin/topics", permission: "topics:read", label: t.nav.topics, icon: <MessageSquare size={18} />, group: content },
+    { to: "/admin/vocabulary", permission: "content:read", label: t.nav.vocabulary, icon: <Languages size={18} />, group: content },
+    { to: "/admin/content-lab", permission: "content:read", label: t.nav.grammarTest, icon: <PenTool size={18} />, group: content },
+    { to: "/admin/content-qa", permission: "content:read", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} />, group: content },
+    { to: "/admin/content-analytics", permission: "analytics:read", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} />, group: content },
+    { to: "/admin/shop", permission: "shop:read", label: t.nav.shop, icon: <ShoppingBag size={18} />, group: growth },
+    { to: "/admin/notification-campaign", permission: "notifications:read", label: t.nav.notificationCampaign, icon: <Bell size={18} />, group: growth },
+    { to: "/admin/ads", permission: "banners:read", label: t.nav.bannerAds, icon: <Megaphone size={18} />, group: growth },
+    { to: "/admin/gem-ledger", permission: "gifts:read", label: t.nav.gemLedger, icon: <Gem size={18} />, group: growth },
+    { to: "/admin/ai-quality", permission: "ops:read", label: t.nav.aiQuality, icon: <Gauge size={18} />, group: system },
+    { to: "/admin/logs", permission: "rbac:read", label: t.nav.logs, icon: <ScrollText size={18} />, group: system },
+    { to: "/admin/roles", permission: "rbac:read", label: t.nav.roles, icon: <KeyRound size={18} />, group: system },
+    { to: "/admin/ops", permission: "ops:read", label: t.nav.opsCenter, icon: <Radar size={18} />, group: system },
+    { to: "/admin/monitoring", permission: "ops:read", label: t.nav.monitoring, icon: <Activity size={18} />, group: system },
+    { to: "/admin/settings", permission: "ops:read", label: t.nav.settings, icon: <Settings size={18} />, group: system },
+    ...(role === "super_admin" ? [{ to: "/super", label: t.nav.superDashboard, icon: <ArrowLeft size={18} />, group: system }] : []),
   ];
 
   const superNav: NavItem[] = [
     { to: "/super", label: t.nav.superDashboard, icon: <Shield size={18} /> },
-    { to: "/super/admins", label: "Admin Management", icon: <Users size={18} /> },
-    { to: "/super/ai-chat", label: "AI Chat Config", icon: <Bot size={18} /> },
+    { to: "/super/admins", label: t.nav.adminManagement, icon: <Users size={18} /> },
+    { to: "/super/partner-keys", label: t.nav.partnerKeys, icon: <Handshake size={18} /> },
+    { to: "/super/ai-chat", label: t.nav.aiChatConfig, icon: <Bot size={18} /> },
     { to: "/super/db", label: t.nav.database, icon: <Database size={18} /> },
     { to: "/super/ai-models", label: t.nav.aiModels, icon: <Bot size={18} /> },
     { to: "/admin", label: t.nav.adminZone, icon: <ArrowRight size={18} /> },
@@ -99,10 +111,12 @@ const AppRoutes = () => {
           <Route path="/" element={<RoleRedirectPage />} />
 
           <Route element={<RequireRole allowed={["admin", "super_admin"]} />}>
-            <Route element={<AppShell title={t.appShell.adminDashboard} role="admin" navItems={adminNav} />}>
+            <Route element={<AppShell title={t.appShell.adminDashboard} role="admin" navItems={adminNav.filter((item) => !item.permission || can(item.permission))} />}>
               <Route path="/admin" element={<EnhancedAdminDashboard />} />
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/courses" element={<CoursesPage />} />
+              <Route path="/admin/categories" element={<CategoriesPage />} />
+              <Route path="/admin/gem-ledger" element={<GemLedgerPage />} />
               <Route path="/admin/ielts" element={<IeltsTestsPage />} />
               <Route path="/admin/courses/:courseId/units" element={<UnitsPage />} />
               <Route path="/admin/courses/:courseId/units/:unitId/lessons" element={<LessonsPage />} />
@@ -121,6 +135,8 @@ const AppRoutes = () => {
               <Route path="/admin/notification-campaign" element={<NotificationCampaignPage />} />
               <Route path="/admin/ads" element={<AdsPage />} />
               <Route path="/admin/logs" element={<LogsPage />} />
+              <Route path="/admin/roles" element={<RolesPermissionsPage />} />
+              <Route path="/admin/ops" element={<OpsCenterPage />} />
               <Route path="/admin/monitoring" element={<MonitoringPage />} />
               <Route path="/admin/settings" element={<SystemSettingsPage />} />
             </Route>
@@ -130,6 +146,7 @@ const AppRoutes = () => {
             <Route element={<AppShell title={t.appShell.superAdmin} role="super_admin" navItems={superNav} />}>
               <Route path="/super" element={<SuperAdminDashboard />} />
               <Route path="/super/admins" element={<AdminManagementPage />} />
+              <Route path="/super/partner-keys" element={<PartnerKeysPage />} />
               <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
               <Route path="/super/db" element={<DatabasePage />} />
               <Route path="/super/ai-models" element={<AiModelsPage />} />
@@ -146,9 +163,11 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <I18nProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ConfirmProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ConfirmProvider>
     </I18nProvider>
   );
 };

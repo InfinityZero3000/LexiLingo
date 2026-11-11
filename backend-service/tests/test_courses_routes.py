@@ -168,6 +168,7 @@ class TestGetCourses:
         mock_course.level = "A1"
         mock_course.tags = ["grammar"]
         mock_course.thumbnail_url = None
+        mock_course.category_id = None
         mock_course.total_lessons = 10
         mock_course.total_xp = 500
         mock_course.estimated_duration = 60
@@ -262,6 +263,7 @@ class TestGetCourseDetail:
         mock_course.skill = None
         mock_course.tags = []
         mock_course.thumbnail_url = None
+        mock_course.category_id = None
         mock_course.total_lessons = 5
         mock_course.total_xp = 250
         mock_course.estimated_duration = 30

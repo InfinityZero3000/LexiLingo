@@ -23,6 +23,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy application code
 COPY api ./api
+COPY service ./service
 
 # The L2 external-knowledge corpus. DocumentIntelligenceService reads
 # data/external_docs at startup and silently indexes nothing when the directory

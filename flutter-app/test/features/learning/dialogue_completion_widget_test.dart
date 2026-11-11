@@ -45,4 +45,37 @@ void main() {
     expect(draftAnswer, 'work');
     expect(find.text('work'), findsOneWidget);
   });
+
+  testWidgets('a blank in speaker A\'s line still gets an input', (
+    tester,
+  ) async {
+    String? draftAnswer;
+    final exercise = Exercise(
+      id: 'dialogue-2',
+      type: ExerciseType.fillInBlank,
+      uiType: 'dialogue_completion',
+      question: 'A: I {blank} from Vietnam. B: Nice to meet you!',
+      correctAnswer: 'am',
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DialogueCompletionWidget(
+            exercise: exercise,
+            onAnswer: (_) {},
+            onInputChanged: (value) => draftAnswer = value,
+            isAnswered: false,
+          ),
+        ),
+      ),
+    );
+
+    final input = find.byKey(const Key('dialogue-blank-input'));
+    expect(input, findsOneWidget);
+    expect(find.textContaining('{blank}'), findsNothing);
+
+    await tester.enterText(input, 'am');
+    expect(draftAnswer, 'am');
+  });
 }

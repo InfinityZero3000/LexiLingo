@@ -1,5 +1,7 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+
+from tests.trace_cag.fake_redis_pipeline import with_empty_pipeline
 from datetime import UTC, datetime
 
 import pytest
@@ -118,7 +120,10 @@ def mock_lexi_store(monkeypatch):
     monkeypatch.setattr(
         "api.routes.lexi_chat.enforce_user_quota", AsyncMock(return_value=quota_mock)
     )
-    monkeypatch.setattr("api.core.redis_client.RedisClient.get_instance", AsyncMock())
+    monkeypatch.setattr(
+        "api.core.redis_client.RedisClient.get_instance",
+        AsyncMock(return_value=with_empty_pipeline(AsyncMock())),
+    )
     return store
 
 

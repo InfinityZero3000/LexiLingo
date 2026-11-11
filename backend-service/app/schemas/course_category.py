@@ -59,6 +59,8 @@ class CourseCategoryListItem(BaseModel):
     description: Optional[str] = None
     icon: Optional[str] = None
     color: Optional[str] = None
+    order_index: int = 0
+    is_active: bool = True
     course_count: int
     
     model_config = ConfigDict(from_attributes=True)

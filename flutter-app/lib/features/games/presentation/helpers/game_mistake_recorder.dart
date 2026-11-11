@@ -78,7 +78,6 @@ class GameMistakeRecorder {
         sourceType: sourceType,
         sourceId: sourceId,
         questionId: questionId,
-        selectedAnswer: selectedAnswer,
       ),
       sourceType: sourceType,
       sourceId: sourceId,

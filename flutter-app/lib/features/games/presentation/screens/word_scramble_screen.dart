@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.da
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/letter_tile.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/answer_feedback.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
@@ -46,6 +47,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
   bool _isFinishing = false;
   String? _xpPopup;
   String? _translationReveal;
+  AnswerVerdict? _verdict;
   int _scoreMultiplier = 1;
   final Map<String, String> _submittedAnswers = {};
 
@@ -90,6 +92,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       _slotWrong = List<bool>.filled(_answerSlots.length, false);
       _showHint = false;
       _wordAnswered = false;
+      _verdict = null;
       _xpPopup = null;
       _translationReveal = null;
       _timeLeft = game.timerSeconds;
@@ -151,8 +154,19 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       setState(() => _timeLeft--);
       if (_timeLeft <= 0) {
         t.cancel();
-        _skipWord();
+        _handleTimeout();
       }
+    });
+  }
+
+  void _handleTimeout() {
+    if (_wordAnswered) return;
+    final game = context.read<GamesProvider>().wordScramble;
+    if (game == null) return;
+    _submittedAnswers.putIfAbsent(game.words[_currentWordIndex].wordId, () => '');
+    setState(() {
+      _wordAnswered = true;
+      _verdict = AnswerVerdict.timeout;
     });
   }
 
@@ -198,10 +212,10 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       setState(() {
         _slotCorrect = List<bool>.filled(_answerSlots.length, true);
         _wordAnswered = true;
+        _verdict = AnswerVerdict.correct;
         _xpPopup = '+${word.xpValue * _scoreMultiplier} XP';
       });
       _confettiController.play();
-      Future.delayed(const Duration(milliseconds: 1400), _nextWord);
     } else if (_answerSlots.every((s) => s != null)) {
       setState(() {
         _slotWrong = List<bool>.filled(_answerSlots.length, true);
@@ -478,6 +492,26 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                               );
                             }),
                           ),
+                          if (_wordAnswered)
+                            Expanded(
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.only(top: 20),
+                                child: AnswerFeedbackPanel(
+                                  verdict: _verdict ?? AnswerVerdict.correct,
+                                  correctAnswer: [
+                                    word.word,
+                                    if (word.ipaPronunciation?.isNotEmpty ??
+                                        false)
+                                      word.ipaPronunciation!,
+                                  ].join('  '),
+                                  explanation: word.definition,
+                                  explanationLabel:
+                                      'games.answerFeedback.meaningLabel'.tr(),
+                                  extra: word.vietnameseTranslation,
+                                ),
+                              ),
+                            )
+                          else ...[
                           const SizedBox(height: 24),
                           // Letter pool
                           Text(
@@ -538,10 +572,20 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
+                          ],
                         ],
                       ),
                     ),
                   ),
+                  if (_wordAnswered)
+                    GameNextBar(
+                      label: _currentWordIndex + 1 >= game.words.length
+                          ? 'games.answerFeedback.seeResults'.tr()
+                          : 'games.answerFeedback.nextWord'.tr(),
+                      onPressed: () {
+                        if (_wordAnswered) _nextWord();
+                      },
+                    ),
                 ],
               ),
             );

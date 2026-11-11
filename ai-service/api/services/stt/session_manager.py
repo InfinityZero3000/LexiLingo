@@ -31,6 +31,15 @@ class SessionManager:
 
     async def create(self, message: StartMessage) -> VoiceSession:
         async with self._create_lock:
+            stale = self.sessions.get(message.session_id)
+            if (
+                stale
+                and not stale.closed
+                and stale.disconnected_at is not None
+                and stale.start.user_id == message.user_id
+            ):
+                # Its socket is gone; the client restarted instead of resuming.
+                await self.close(message.session_id, "replaced")
             if (
                 len(self.sessions) + len(self._pending_sessions)
                 >= self.config.max_active_sessions

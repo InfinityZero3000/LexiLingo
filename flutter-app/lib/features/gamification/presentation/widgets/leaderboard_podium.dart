@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -203,6 +201,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                     child: entry != null
                         ? NetworkAvatarImage(
                             imageUrl: entry.avatarUrl,
+                            cacheSize: avatarSize,
                             fallback: _buildInitialAvatar(context, entry),
                           )
                         : Icon(
@@ -347,15 +346,14 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
       alpha: isDark ? 0.14 : 0.68,
     );
     final panelColor = isDark
-        ? AppColors.surfaceDark.withValues(alpha: 0.82)
-        : AppColors.surfaceLight.withValues(alpha: 0.85);
+        ? AppColors.surfaceDark.withValues(alpha: 0.94)
+        : AppColors.surfaceLight.withValues(alpha: 0.94);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: RepaintBoundary(
           child: Container(
             decoration: BoxDecoration(
               color: panelColor,
@@ -367,13 +365,6 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                 left: BorderSide(color: borderColor, width: 1.2),
                 right: BorderSide(color: borderColor, width: 1.2),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 24,
-                  offset: const Offset(0, -4),
-                ),
-              ],
             ),
             child: RefreshIndicator(
               onRefresh: widget.onRefresh ?? () async {},
@@ -579,6 +570,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               child: ClipOval(
                 child: NetworkAvatarImage(
                   imageUrl: entry.avatarUrl,
+                  cacheSize: 42,
                   fallback: _buildInitialAvatar(context, entry),
                 ),
               ),
@@ -642,7 +634,12 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          'gamification.rankLessons'.tr(namedArgs: {'rank': rankDisplayNameFor(entry.userRank), 'count': '${entry.lessonsCompleted}'}),
+                          'gamification.rankLessons'.tr(
+                            namedArgs: {
+                              'rank': rankDisplayNameFor(entry.userRank),
+                              'count': '${entry.lessonsCompleted}',
+                            },
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -821,7 +818,9 @@ class LeaderboardEntryRow extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    'gamification.lessonsCompletedCount'.tr(namedArgs: {'count': '${entry.lessonsCompleted}'}),
+                    'gamification.lessonsCompletedCount'.tr(
+                      namedArgs: {'count': '${entry.lessonsCompleted}'},
+                    ),
                     style: TextStyle(
                       fontSize: 12,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,

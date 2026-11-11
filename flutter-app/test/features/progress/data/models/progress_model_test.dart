@@ -101,65 +101,6 @@ void main() {
     });
   });
 
-  group('LessonCompletionResultModel', () {
-    final tJson = {
-      'lesson_id': 'lesson-456',
-      'is_passed': true,
-      'score': 85.0,
-      'best_score': 90.0,
-      'xp_earned': 20,
-      'total_xp': 120,
-      'course_progress': 45.0,
-      'message': 'Great job!',
-    };
-
-    final tModel = LessonCompletionResultModel(
-      lessonId: 'lesson-456',
-      isPassed: true,
-      score: 85.0,
-      bestScore: 90.0,
-      xpEarned: 20,
-      totalXp: 120,
-      courseProgress: 45.0,
-      message: 'Great job!',
-    );
-
-    test('should be a subclass of LessonCompletionResult entity', () {
-      expect(tModel, isA<LessonCompletionResult>());
-    });
-
-    test('should return a valid model from JSON', () {
-      final result = LessonCompletionResultModel.fromJson(tJson);
-
-      expect(result, equals(tModel));
-    });
-
-    test('should return a JSON map containing proper data', () {
-      final result = tModel.toJson();
-
-      expect(result, equals(tJson));
-    });
-
-    test('should handle failed completion', () {
-      final failedJson = {
-        'lesson_id': 'lesson-789',
-        'is_passed': false,
-        'score': 65.0,
-        'best_score': 65.0,
-        'xp_earned': 0,
-        'total_xp': 100,
-        'course_progress': 40.0,
-        'message': 'Try again',
-      };
-
-      final result = LessonCompletionResultModel.fromJson(failedJson);
-
-      expect(result.isPassed, false);
-      expect(result.xpEarned, 0);
-      expect(result.message, 'Try again');
-    });
-  });
-
   group('UnitProgressModel', () {
     final tJson = {
       'unit_id': 'unit-001',

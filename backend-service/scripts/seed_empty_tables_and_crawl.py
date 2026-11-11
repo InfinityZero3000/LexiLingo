@@ -552,29 +552,29 @@ async def seed_remaining_empty_tables(db: AsyncSession, empty_set: set[str], for
 
     if can_seed("game_words"):
         words = [
-            ("adapt", "To change for a new purpose", "A2", "general"),
-            ("insight", "A deep understanding", "B1", "business"),
-            ("sustain", "To maintain over time", "B2", "environment"),
-            ("negotiate", "To discuss for agreement", "B1", "business"),
-            ("commute", "To travel regularly for work", "A2", "daily"),
-            ("resilient", "Able to recover quickly", "B2", "mindset"),
-            ("predict", "To say what will happen", "A2", "general"),
-            ("accurate", "Correct and precise", "B1", "study"),
-            ("fluency", "Smoothness in language use", "B1", "language"),
-            ("collaborate", "To work together", "B1", "work"),
+            ("adapt", "To change for a new purpose", "A2", "general", "Change to fit a new situation", "thích nghi"),
+            ("insight", "A deep understanding", "B1", "business", "A clear, deep understanding", "sự thấu hiểu"),
+            ("sustain", "To maintain over time", "B2", "environment", "Keep something going", "duy trì"),
+            ("negotiate", "To discuss for agreement", "B1", "business", "Talk until both sides agree", "đàm phán"),
+            ("commute", "To travel regularly for work", "A2", "daily", "Daily trip to your job", "đi làm hằng ngày"),
+            ("resilient", "Able to recover quickly", "B2", "mindset", "Bounces back after trouble", "kiên cường"),
+            ("predict", "To say what will happen", "A2", "general", "Say what comes next", "dự đoán"),
+            ("accurate", "Correct and precise", "B1", "study", "Without mistakes", "chính xác"),
+            ("fluency", "Smoothness in language use", "B1", "language", "Speaking without stopping", "sự trôi chảy"),
+            ("collaborate", "To work together", "B1", "work", "Work with others", "cộng tác"),
         ]
-        for word, definition, level, category in words:
+        for word, definition, level, category, hint, vi in words:
             db.add(
                 GameWord(
                     word=word,
                     definition=definition,
-                    hint=f"Category: {category}",
+                    hint=hint,
                     example_sentence=f"Use '{word}' in your own sentence.",
                     ipa_pronunciation=None,
                     cefr_level=level,
                     category=category,
                     synonyms=[],
-                    vietnamese_translation="(auto)",
+                    vietnamese_translation=vi,
                     letter_count=len(word),
                     xp_value=10,
                 )

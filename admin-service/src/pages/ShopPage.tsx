@@ -1,3 +1,5 @@
+import { useConfirm } from "../components/ConfirmDialog";
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -84,6 +86,7 @@ const EMPTY_FORM: ShopItemForm = {
 
 export const ShopPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [items, setItems] = useState<ShopItemType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -194,7 +197,7 @@ export const ShopPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.shop.deleteConfirm)) return;
+    if (!(await confirm({ message: t.shop.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteShopItem(id);
       await loadItems();
@@ -236,6 +239,7 @@ export const ShopPage = () => {
             columns={[
               {
                 header: t.shop.item,
+                sortValue: (row) => row.name,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.name}</div>
@@ -245,16 +249,19 @@ export const ShopPage = () => {
               },
               {
                 header: t.shop.type,
+                sortValue: (row) => row.item_type,
                 render: (row) => <span className="table-meta">{row.item_type}</span>,
                 align: "center",
               },
               {
                 header: t.shop.price,
+                sortValue: (row) => row.price_gems,
                 render: (row) => <span className="table-meta">{row.price_gems} Gems</span>,
                 align: "center",
               },
               {
                 header: t.shop.stock,
+                sortValue: (row) => row.stock_quantity ?? Number.MAX_SAFE_INTEGER,
                 render: (row) => (
                   <span className="table-meta">
                     {row.stock_quantity === null || row.stock_quantity === undefined ? "∞" : row.stock_quantity}
@@ -297,95 +304,93 @@ export const ShopPage = () => {
 
       {/* Create/Edit Modal */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
-            <h3>{editingId ? t.shop.editItem : t.shop.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
-              <div className="form-row">
-                <label style={{ flex: 1 }}>
-                  {t.shop.itemTypeRequired}
-                  <select
-                    value={form.item_type}
-                    disabled={!!editingId}
-                    onChange={(e) => setForm({ ...form, item_type: e.target.value })}
-                  >
-                    {ITEM_TYPES.map((it) => <option key={it} value={it}>{it}</option>)}
-                  </select>
-                </label>
-                {!editingId && (
-                  <button
-                    type="button"
-                    className="ghost-button"
-                    style={{ alignSelf: "flex-end" }}
-                    onClick={() => applyTemplate(form.item_type)}
-                  >
-                    {t.shop.useTemplate}
-                  </button>
-                )}
-              </div>
-              <label>
-                {t.shop.nameRequired}
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+        <Dialog onClose={() => setShowForm(false)} maxWidth={560}>
+          <h3>{editingId ? t.shop.editItem : t.shop.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <div className="form-row">
+              <label style={{ flex: 1 }}>
+                {t.shop.itemTypeRequired}
+                <select
+                  value={form.item_type}
+                  disabled={!!editingId}
+                  onChange={(e) => setForm({ ...form, item_type: e.target.value })}
+                >
+                  {ITEM_TYPES.map((it) => <option key={it} value={it}>{it}</option>)}
+                </select>
               </label>
-              <label>
-                {t.shop.descriptionRequired}
-                <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
-              </label>
-              <div className="form-row">
-                <label>
-                  {t.shop.priceRequired}
-                  <input type="number" min={0} value={form.price_gems} onChange={(e) => setForm({ ...form, price_gems: Number(e.target.value) })} required />
-                </label>
-                <label>
-                  {t.shop.stockQuantity}
-                  <input
-                    type="number"
-                    min={0}
-                    placeholder={t.shop.unlimitedPlaceholder}
-                    value={form.stock_quantity ?? ""}
-                    onChange={(e) => setForm({ ...form, stock_quantity: e.target.value ? Number(e.target.value) : undefined })}
-                  />
-                </label>
-              </div>
-              <label>
-                {t.shop.iconUrl}
-                <input
-                  value={form.icon_url}
-                  placeholder={t.shop.iconUrlPlaceholder}
-                  onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
-                />
-              </label>
-              <label>
-                {t.shop.effectsLabel}
-                <textarea
-                  rows={3}
-                  style={{ fontFamily: "monospace" }}
-                  value={form.effectsText}
-                  onChange={(e) => { setForm({ ...form, effectsText: e.target.value }); setEffectsError(null); }}
-                />
-              </label>
-              {effectsError ? (
-                <div className="form-error">{effectsError}</div>
-              ) : (
-                <div className="table-sub">{t.shop.effectsHint}</div>
-              )}
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_available}
-                  onChange={(e) => setForm({ ...form, is_available: e.target.checked })}
-                />
-                {t.shop.onSale}
-              </label>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              {!editingId && (
+                <button
+                  type="button"
+                  className="ghost-button"
+                  style={{ alignSelf: "flex-end" }}
+                  onClick={() => applyTemplate(form.item_type)}
+                >
+                  {t.shop.useTemplate}
                 </button>
-              </div>
-            </form>
-          </div>
-        </div>
+              )}
+            </div>
+            <label>
+              {t.shop.nameRequired}
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+            </label>
+            <label>
+              {t.shop.descriptionRequired}
+              <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+            </label>
+            <div className="form-row">
+              <label>
+                {t.shop.priceRequired}
+                <input type="number" min={0} value={form.price_gems} onChange={(e) => setForm({ ...form, price_gems: Number(e.target.value) })} required />
+              </label>
+              <label>
+                {t.shop.stockQuantity}
+                <input
+                  type="number"
+                  min={0}
+                  placeholder={t.shop.unlimitedPlaceholder}
+                  value={form.stock_quantity ?? ""}
+                  onChange={(e) => setForm({ ...form, stock_quantity: e.target.value ? Number(e.target.value) : undefined })}
+                />
+              </label>
+            </div>
+            <label>
+              {t.shop.iconUrl}
+              <input
+                value={form.icon_url}
+                placeholder={t.shop.iconUrlPlaceholder}
+                onChange={(e) => setForm({ ...form, icon_url: e.target.value })}
+              />
+            </label>
+            <label>
+              {t.shop.effectsLabel}
+              <textarea
+                rows={3}
+                style={{ fontFamily: "monospace" }}
+                value={form.effectsText}
+                onChange={(e) => { setForm({ ...form, effectsText: e.target.value }); setEffectsError(null); }}
+              />
+            </label>
+            {effectsError ? (
+              <div className="form-error">{effectsError}</div>
+            ) : (
+              <div className="table-sub">{t.shop.effectsHint}</div>
+            )}
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={form.is_available}
+                onChange={(e) => setForm({ ...form, is_available: e.target.checked })}
+              />
+              {t.shop.onSale}
+            </label>
+            <div className="table-actions">
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

@@ -68,7 +68,6 @@ class BackendAuthHeaderProvider {
         }
       }
 
-      logDebug(_tag, 'Token available (length: ${tokens.accessToken.length})');
       return {'Authorization': 'Bearer ${tokens.accessToken}'};
     } catch (e) {
       logError(_tag, 'Error getting tokens: $e');

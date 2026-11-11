@@ -44,6 +44,15 @@ abstract class LexiChatRepository {
   /// Delete a session and its messages.
   Future<void> deleteSession({required String sessionId});
 
+  /// What Lexi remembers about the learner from chat, keyed by fact name.
+  Future<Map<String, String>> getMemory();
+
+  /// Forget everything Lexi remembered from chat.
+  Future<void> forgetMemory();
+
+  /// Forget one remembered fact.
+  Future<void> forgetMemoryFact(String key);
+
   /// Send a message to Lexi and receive an SSE stream of typed events.
   Stream<LexiStreamEvent> sendMessageStream({
     required String userId,

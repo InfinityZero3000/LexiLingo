@@ -5,7 +5,7 @@ Defines the typed state for LangGraph StateGraph.
 This state flows through all nodes in the TraceCAG pipeline.
 """
 
-from typing import TypedDict, List, Optional, Any, Dict, Annotated
+from typing import TypedDict, List, Optional, Any, Dict, Annotated, Union
 from operator import add
 
 
@@ -69,6 +69,7 @@ class CacheAdmissibilityCertificate(TypedDict, total=False):
     intent: str
     level: str
     native_language: str
+    user_scope: str
     profile_epoch: int
     policy_version: str
     kg_version: str
@@ -153,6 +154,7 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     learner_profile: LearnerProfile
     conversation_history: List[Dict[str, Any]]
+    conversation_history_supplied: bool   # True when the caller passed the history in
     learner_concept_states: Dict[str, Dict[str, Any]]
     learner_state_epoch: int
     learner_state_degraded: bool
@@ -172,7 +174,9 @@ class TraceCAGState(TypedDict, total=False):
     # ============================================
     diagnosis_intent: str  # "correct", "explain", "practice", "ask"
     diagnosis_errors: List[DiagnosisError]
+    diagnosis_facts: Dict[str, str]  # learner self-statements, see lexi_memory
     diagnosis_root_causes: List[str]  # concept IDs
+    diagnosis_label_invalid: int  # closed bridge only: errors whose type is not one of the 24 labels
     diagnosis_confidence: float  # 0.0 - 1.0
     
     # ============================================
@@ -243,7 +247,7 @@ class TraceCAGState(TypedDict, total=False):
     models_used: Annotated[List[str], add]  # Accumulator pattern
     latency_ms: int
     ttft_ms: int
-    graph_update: Dict[str, int]
+    graph_update: Dict[str, Union[int, bool, str]]
     cache_hit: bool
     path: str  # "fast" or "slow"
     tokens_saved: int  # Estimated LLM tokens saved via cache (0 on slow path)
@@ -294,6 +298,7 @@ def create_initial_state(
         # Context (will be populated by input_node)
         learner_profile=learner_profile or {"level": "B1"},
         conversation_history=[],
+        conversation_history_supplied=False,
         learner_concept_states={},
         learner_state_epoch=0,
         learner_state_degraded=False,

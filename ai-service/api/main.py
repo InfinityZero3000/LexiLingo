@@ -17,6 +17,8 @@ import logging
 import os
 import httpx
 from dotenv import load_dotenv
+
+from api import __version__
 from datetime import datetime, timezone
 from typing import Optional
 from pymongo import ASCENDING, DESCENDING
@@ -149,6 +151,12 @@ async def _ensure_mongo_indexes() -> None:
         name="lexi_sessions_user_updated_at_idx",
     )
     await _create_index_safe(
+        "lexi_user_memory",
+        [("user_id", ASCENDING)],
+        name="lexi_user_memory_user_id_uq",
+        unique=True,
+    )
+    await _create_index_safe(
         "lexi_messages",
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="lexi_messages_session_timestamp_idx",
@@ -256,7 +264,9 @@ async def lifespan(app: FastAPI):
         try:
             from api.services.content_etl.staleness import run_staleness_loop
 
-            asyncio.create_task(run_staleness_loop())
+            from api.core.background import spawn
+
+            spawn(run_staleness_loop(), name="content_etl_staleness")
             logger.info(" content_etl staleness watch started")
         except Exception as e:
             logger.error(
@@ -378,7 +388,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="LexiLingo AI Service",
     description="AI Service for Chat, STT, TTS with ModelGateway",
-    version="2.1.0",
+    version=__version__,
     docs_url=None if settings.ENVIRONMENT == "production" else "/docs",
     redoc_url=None if settings.ENVIRONMENT == "production" else "/redoc",
     openapi_url=None if settings.ENVIRONMENT == "production" else "/openapi.json",

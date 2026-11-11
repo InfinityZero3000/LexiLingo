@@ -160,7 +160,10 @@ class NewsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentQuiz = await _repository.getQuiz(articleId);
+      _currentQuiz = await _repository.getQuiz(
+        articleId,
+        article: _currentQuizArticle,
+      );
     } catch (e) {
       debugPrint('Failed to load quiz: $e');
     } finally {
@@ -307,7 +310,6 @@ class NewsProvider extends ChangeNotifier {
               sourceType: 'news_quiz',
               sourceId: sourceId,
               questionId: '${question.id}:${question.question}',
-              selectedAnswer: selectedAnswer,
             ),
             sourceType: 'news_quiz',
             sourceId: sourceId,

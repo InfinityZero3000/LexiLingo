@@ -48,6 +48,66 @@ def test_websocket_requires_auth(monkeypatch):
             assert event["type"] == "stt.error"
 
 
+@pytest.mark.parametrize(
+    ("query", "expected_language"),
+    [("", "auto"), ("?language=vi-VN", "vi")],
+)
+def test_legacy_transcribe_normalizes_language_before_inference(
+    monkeypatch, tmp_path, query, expected_language
+):
+    config = STTConfig(temp_dir=str(tmp_path))
+    service = MagicMock()
+    service.transcribe_file = AsyncMock(return_value={"text": "xin chào"})
+    monkeypatch.setattr(stt_route, "get_stt_config", lambda: config)
+    monkeypatch.setattr(stt_route, "get_stt_service", lambda: service)
+    monkeypatch.setattr(stt_route, "enforce_user_quota", AsyncMock(return_value=None))
+    monkeypatch.setattr(stt_route, "emit_ai_audit_event", AsyncMock())
+
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/stt")
+    app.dependency_overrides[stt_route.get_current_user] = lambda: (
+        stt_route.AuthenticatedUser(
+            user_id="u1", token_type="access", claims={}
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            f"/api/v1/stt/transcribe{query}",
+            files={"audio": ("voice.wav", b"RIFF" + b"\x00" * 32, "audio/wav")},
+        )
+
+    assert response.status_code == 200
+    service.transcribe_file.assert_awaited_once()
+    assert service.transcribe_file.await_args.args[1] == expected_language
+
+
+def test_legacy_transcribe_rejects_unsupported_language_before_inference(
+    monkeypatch,
+):
+    service = MagicMock()
+    service.transcribe_file = AsyncMock()
+    monkeypatch.setattr(stt_route, "get_stt_service", lambda: service)
+
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/stt")
+    app.dependency_overrides[stt_route.get_current_user] = lambda: (
+        stt_route.AuthenticatedUser(
+            user_id="u1", token_type="access", claims={}
+        )
+    )
+
+    with TestClient(app) as client:
+        response = client.post(
+            "/api/v1/stt/transcribe?language=ar",
+            files={"audio": ("voice.wav", b"RIFF" + b"\x00" * 32, "audio/wav")},
+        )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "language is not supported"
+    service.transcribe_file.assert_not_awaited()
+
+
 def test_websocket_rejects_untrusted_origin(monkeypatch):
     monkeypatch.setattr(stt_route.settings, "ALLOWED_ORIGINS", ["https://app.example"])
     monkeypatch.setattr(stt_route.settings, "CORS_ALLOW_ORIGIN_REGEX", "")
@@ -229,9 +289,13 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
     import api.services.stt.duplex_turn as duplex_module
 
     class FakeTurn:
-        def __init__(self, send_json, _send_bytes, persist=None):
+        def __init__(
+            self, send_json, _send_bytes, persist=None, system_extra="", tts_speed=1.0
+        ):
             self.send_json = send_json
             assert persist is not None
+            assert system_extra == ""  # Mongo is not connected in this test
+            assert tts_speed == 0.75
 
         async def run(self, final, *, turn_seq, tts_enabled):
             assert turn_seq == 1
@@ -260,6 +324,7 @@ def test_websocket_final_event_starts_duplex_turn(monkeypatch, tmp_path):
                     "user_id": "u1",
                     "duplex": True,
                     "tts_enabled": False,
+                    "tts_speed": 0.75,
                 }
             )
             assert socket.receive_json()["type"] == "session_started"
@@ -359,6 +424,34 @@ def test_websocket_start_message_times_out(monkeypatch, tmp_path):
         ) as socket:
             event = socket.receive_json()
             assert event["message"] == "Start message timeout"
+
+
+def test_dropped_socket_marks_session_disconnected_for_resume(monkeypatch, tmp_path):
+    monkeypatch.setenv("SECRET_KEY", "test-secret")
+    config = STTConfig(temp_dir=str(tmp_path))
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    manager = SessionManager(config, registry)
+    monkeypatch.setattr(stt_route, "get_stt_config", lambda: config)
+    monkeypatch.setattr(stt_route, "get_stt_sessions", lambda: manager)
+
+    async def allow_quota(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(stt_route, "enforce_user_quota", allow_quota)
+    app = FastAPI()
+    app.include_router(stt_route.router, prefix="/api/v1/stt")
+
+    with TestClient(app) as client:
+        with client.websocket_connect(
+            "/api/v1/stt/stream",
+            headers={"Authorization": f"Bearer {_access_token()}"},
+        ) as socket:
+            socket.send_json({"type": "start", "session_id": "s1", "user_id": "u1"})
+            assert socket.receive_json()["type"] == "session_started"
+
+    session = manager.sessions["s1"]
+    assert not session.closed and session.disconnected_at is not None
 
 
 def test_websocket_resume_replays_final_transcripts(monkeypatch, tmp_path):

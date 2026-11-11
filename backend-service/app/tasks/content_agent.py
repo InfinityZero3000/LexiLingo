@@ -85,6 +85,11 @@ def _public_error_message(exc: Exception) -> str:
         return "Generated content failed schema validation"
     if isinstance(exc, (httpx.TimeoutException, httpx.TransportError)):
         return "AI content service is temporarily unavailable"
+    if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code == 413:
+        return (
+            "Selected word lists hold more records than one job can carry; "
+            "split the list across several jobs"
+        )
     if isinstance(exc, httpx.HTTPStatusError):
         return f"AI content service request failed with status {exc.response.status_code}"
     if isinstance(exc, SourceResolutionError):

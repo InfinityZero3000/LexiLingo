@@ -86,3 +86,26 @@ verify_against_manifest() {
     || die "$(basename "${file}"): checksum mismatch — backup is corrupt or was tampered with"
   log "$(basename "${file}"): checksum matches manifest"
 }
+
+# Status files the admin dashboard reads (backend mounts STATE_DIR read-only).
+# One flat JSON object per file, written atomically; never fatal to the caller.
+# Usage: write_status backup-last.json result=ok at="$(date -u +%FT%TZ)" bytes=123
+STATE_DIR="${STATE_DIR:-/var/lib/lexilingo}"
+write_status() {
+  local name="$1"; shift
+  local tmp="${STATE_DIR}/.${name}.$$" first=1 pair key val body=""
+  mkdir -p "${STATE_DIR}" 2>/dev/null || return 0
+  for pair in "$@"; do
+    key="${pair%%=*}"; val="${pair#*=}"
+    (( first )) || body+=","
+    first=0
+    if [[ "${val}" =~ ^[0-9]+$ || "${val}" == true || "${val}" == false ]]; then
+      body+="\"${key}\":${val}"
+    else
+      val="${val//\\/}"; val="${val//\"/}"
+      body+="\"${key}\":\"${val}\""
+    fi
+  done
+  { printf '{%s}\n' "${body}" > "${tmp}" && chmod 0644 "${tmp}" && mv -f "${tmp}" "${STATE_DIR}/${name}"; } 2>/dev/null || rm -f "${tmp}" 2>/dev/null
+  return 0
+}

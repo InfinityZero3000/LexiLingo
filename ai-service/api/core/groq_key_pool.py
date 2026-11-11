@@ -20,10 +20,10 @@ _GROQ_FREE_RPD = 14_400
 _VOICE_LEASE_MS = 45_000
 
 # The model every Groq caller uses. It lived as a repeated
-# `os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")` default in ten call sites, so a
+# `os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")` default in ten call sites, so a
 # stale GROQ_MODEL in one deployed env file silently pointed all of them at a
 # model Groq had already decommissioned.
-DEFAULT_GROQ_MODEL = "qwen/qwen3.6-27b"
+DEFAULT_GROQ_MODEL = "qwen/qwen3.8-27b"
 
 # Groq removed these without notice; `llama-3.1-8b-instant` and
 # `llama-3.3-70b-versatile` are gone, and `openai/gpt-oss-120b` is quota-bound

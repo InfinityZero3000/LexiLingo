@@ -1,5 +1,9 @@
+import 'package:lexilingo_app/core/network/api_config.dart';
+
 class ApiEndpoints {
-  static const String baseUrl = 'https://api.lexilingo.me/api/v1';
+  /// Follows the app's environment (dart-define / .env) like every other client;
+  /// a hard-coded production URL made a development build edit production data.
+  static String get baseUrl => ApiConfig.baseUrl;
 
   // Auth
   static const String userLogin = '/auth/login';

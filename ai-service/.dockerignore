@@ -64,3 +64,9 @@ docs/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Research data and eval sets: no runtime code reads them (Dockerfile.prod copies all of data/)
+data/corpora/
+data/eval/
+data/MANIFEST.json
+data/README.md

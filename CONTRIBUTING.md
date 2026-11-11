@@ -56,7 +56,7 @@ flutter run
 
 ## 🌳 Branching Strategy
 
-We follow **Git Flow** branching model. See [Git Workflow](docs/Report/RPT-011_GIT_WORKFLOW.md) for detailed guidelines.
+We follow **Git Flow** branching model.
 
 ### Branch Types
 ```
@@ -373,8 +373,6 @@ refactor(core): apply clean architecture
 test(chat): add unit tests for message service
 ```
 
-See [Git Workflow](docs/Report/RPT-011_GIT_WORKFLOW.md) for detailed commit guidelines.
-
 ## 🔄 Pull Request Process
 
 ### Before Creating PR
@@ -521,8 +519,5 @@ By contributing, you agree that your contributions will be licensed under the pr
 Thank you for contributing to LexiLingo! Your efforts help make this project better for everyone.
 
 ---
-
-**For detailed branching strategy, see:** [Git Workflow](docs/Report/RPT-011_GIT_WORKFLOW.md)
-**For quick reference, see:** [Git Quick Reference](docs/Report/RPT-012_GIT_QUICK_REFERENCE.md)
 
 **Last Updated:** January 10, 2026

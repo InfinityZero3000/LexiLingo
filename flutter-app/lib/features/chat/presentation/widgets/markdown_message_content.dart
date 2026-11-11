@@ -3,12 +3,12 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'chat_chart_block.dart';
+import 'chat_rich_blocks.dart';
 
 /// Widget for rendering markdown content in AI messages.
 ///
-/// Supports GFM tables (for comparisons) and a `\`\`\`chart` fenced code
-/// block (JSON spec) rendered as an fl_chart widget — see [ChatChartElementBuilder].
+/// Supports GFM tables plus fenced `chart`, `callout`, `vocab`, `fix` and
+/// `steps` blocks rendered as cards — see [splitChatBlocks].
 class MarkdownMessageContent extends StatelessWidget {
   final String content;
   final bool isDark;
@@ -21,6 +21,10 @@ class MarkdownMessageContent extends StatelessWidget {
   /// Background highlight applied to **bold** / *italic* runs, if desired.
   final Color? highlightColor;
 
+  /// When set, `vocab` cards get a "save word" button tagged with this source.
+  final String? saveSourceType;
+  final String? saveSourceReference;
+
   const MarkdownMessageContent({
     super.key,
     required this.content,
@@ -28,15 +32,36 @@ class MarkdownMessageContent extends StatelessWidget {
     this.selectable = true,
     this.baseTextStyle,
     this.highlightColor,
+    this.saveSourceType,
+    this.saveSourceReference,
   });
 
   @override
   Widget build(BuildContext context) {
+    final segments = splitChatBlocks(content);
+    if (segments.length == 1 && segments.first.kind == null) {
+      return _markdown(context, segments.first.markdown!);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final s in segments)
+          s.kind == null ? _markdown(context, s.markdown!) : buildChatBlock(
+                s,
+                saveSource: saveSourceType == null
+                    ? null
+                    : (type: saveSourceType!, ref: saveSourceReference),
+              ),
+      ],
+    );
+  }
+
+  Widget _markdown(BuildContext context, String data) {
     final theme = Theme.of(context);
     final p = baseTextStyle ?? theme.textTheme.bodyMedium;
 
     return MarkdownBody(
-      data: content,
+      data: data,
       selectable: selectable,
       // fromTheme() fills in every style (table, checkbox, ...) with sane
       // defaults; the bare MarkdownStyleSheet() constructor leaves them
@@ -101,7 +126,6 @@ class MarkdownMessageContent extends StatelessWidget {
         tableColumnWidth: const IntrinsicColumnWidth(),
         tableCellsPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       ),
-      builders: {'code': ChatChartElementBuilder()},
       onTapLink: (text, href, title) {
         if (href != null) {
           _launchURL(href);

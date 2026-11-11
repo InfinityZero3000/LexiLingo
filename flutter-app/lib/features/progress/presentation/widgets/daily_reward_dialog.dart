@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
+import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart'
+    show AnimatedSuccessDialog;
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
@@ -51,6 +52,7 @@ class _DailyRewardDialogContent extends StatefulWidget {
 class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulseController;
+  final GlobalKey _activeCardKey = GlobalKey();
   bool _isClaiming = false;
 
   final List<int> _rewardsCycle = const [5, 10, 15, 20, 25, 30, 50];
@@ -60,8 +62,18 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _activeCardKey.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.5,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   @override
@@ -115,12 +127,12 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     final streak = widget.streakProvider.streak ?? StreakEntity.empty();
     final currentStreak = streak.currentStreak;
     final dayIndex = (currentStreak > 0 ? (currentStreak - 1) : 0) % 7;
+    final canClaim = streak.isDailyRewardAvailable && !_isClaiming;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgGradient = isDark
         ? const [Color(0xFF132333), Color(0xFF0F1B26)]
         : const [AppColors.surfaceLight, Color(0xFFF0F6FB)];
-    final primaryColor = AppColorRoles.primary(isDark);
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
@@ -149,19 +161,6 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Ambient StarBurst design decoration
-            const Positioned(
-              top: -60,
-              child: IgnorePointer(
-                child: LottieAnimationWidget(
-                  animation: LottieAnimation.starBurst,
-                  width: 320,
-                  height: 320,
-                  repeat: false,
-                ),
-              ),
-            ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
               child: Column(
@@ -169,40 +168,104 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 12),
-                  // Animated Gift Icon
+                  // Keep the celebration decoration local to the gift. The
+                  // old full-size StarBurst left a large star frozen behind
+                  // the icon after its one-shot animation completed.
                   AnimatedBuilder(
                     animation: _pulseController,
                     builder: (context, child) {
-                      final scale = 1.0 + (_pulseController.value * 0.08);
-                      return Transform.scale(
-                        scale: scale,
-                        child: Container(
-                          width: 86,
-                          height: 86,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: const LinearGradient(
-                              colors: AppColors.warmGradient,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.orange.withValues(alpha: 0.4),
-                                blurRadius: 20,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 4),
+                      final pulse = Curves.easeInOut.transform(
+                        _pulseController.value,
+                      );
+                      return Semantics(
+                        label: 'Daily reward gift',
+                        image: true,
+                        child: SizedBox(
+                          key: const ValueKey('daily-reward-gift-emblem'),
+                          width: 124,
+                          height: 112,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Transform.scale(
+                                scale: 0.94 + (pulse * 0.08),
+                                child: Container(
+                                  width: 112,
+                                  height: 112,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        AppColors.orange.withValues(
+                                          alpha: 0.22 - (pulse * 0.06),
+                                        ),
+                                        AppColors.orange.withValues(alpha: 0),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Transform.translate(
+                                offset: Offset(0, 1.5 - (pulse * 3)),
+                                child: Transform.scale(
+                                  scale: 1 + (pulse * 0.025),
+                                  child: Container(
+                                    width: 86,
+                                    height: 86,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: const LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: AppColors.warmGradient,
+                                      ),
+                                      border: Border.all(
+                                        color: AppColors.surfaceLight
+                                            .withValues(alpha: 0.7),
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.orange.withValues(
+                                            alpha: 0.28,
+                                          ),
+                                          blurRadius: 18,
+                                          spreadRadius: 1,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.redeem_rounded,
+                                      color: AppColors.surfaceLight,
+                                      size: 46,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 15 + (pulse * 2),
+                                right: 10,
+                                child: _RewardSparkle(
+                                  size: 8,
+                                  opacity: 0.55 + (pulse * 0.35),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 19 - (pulse * 2),
+                                left: 13,
+                                child: _RewardSparkle(
+                                  size: 6,
+                                  opacity: 0.45 + ((1 - pulse) * 0.35),
+                                ),
                               ),
                             ],
-                          ),
-                          child: const Icon(
-                            Icons.redeem_rounded,
-                            color: AppColors.surfaceLight,
-                            size: 48,
                           ),
                         ),
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
 
                   // Title
                   Text(
@@ -229,11 +292,17 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                       height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 14),
 
-                  // 7-day reward tracker horizontal list
+                  // 7-day reward tracker horizontal list. The padding leaves
+                  // room for the active card's scale, border and glow, which
+                  // the scroll view would otherwise clip.
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(7, (index) {
@@ -243,25 +312,23 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                         final gems = _rewardsCycle[index];
 
                         return _buildRewardDayCard(
-                          context: context,
                           dayNumber: index + 1,
                           gems: gems,
                           isActive: isActive,
                           isClaimed: isClaimed,
                           isLocked: isLocked,
                           isDark: isDark,
-                          primaryColor: primaryColor,
                         );
                       }),
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 18),
 
                   // Action Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isClaiming ? null : _claimReward,
+                      onPressed: canClaim ? _claimReward : null,
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(56),
                         backgroundColor: AppColors.orange,
@@ -317,14 +384,12 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
   }
 
   Widget _buildRewardDayCard({
-    required BuildContext context,
     required int dayNumber,
     required int gems,
     required bool isActive,
     required bool isClaimed,
     required bool isLocked,
     required bool isDark,
-    required Color primaryColor,
   }) {
     Color cardBg;
     Border? border;
@@ -351,76 +416,108 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       );
     }
 
-    final card = Container(
-      width: 44,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: border,
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: AppColors.orange.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'D$dayNumber',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: isActive
-                  ? AppColors.orange
-                  : isDark
-                  ? AppColors.surfaceLight.withValues(alpha: 0.6)
-                  : AppColors.textGrey,
-            ),
-          ),
-          const SizedBox(height: 6),
-          if (isClaimed)
-            const Icon(
-              Icons.check_circle_rounded,
-              color: AppColors.greenSuccessBright,
-              size: 18,
-            )
-          else ...[
-            Icon(
-              Icons.diamond_rounded,
-              color: isActive
-                  ? AppColors.purpleLight
-                  : isDark
-                  ? AppColors.surfaceLight.withValues(alpha: 0.24)
-                  : AppColors.textMuted,
-              size: 16,
-            ),
-            const SizedBox(height: 4),
+    final card = Semantics(
+      label: 'Day $dayNumber, $gems gems',
+      value: isActive
+          ? 'available today'
+          : isClaimed
+          ? 'claimed'
+          : 'locked',
+      child: Container(
+        key: isActive ? _activeCardKey : null,
+        width: 60,
+        height: 66,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: border,
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppColors.orange.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                  ),
+                ]
+              : null,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
             Text(
-              '+$gems',
+              'D$dayNumber',
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.bold,
                 color: isActive
-                    ? (isDark ? AppColors.surfaceLight : AppColors.textDark)
+                    ? AppColors.orange
                     : isDark
-                    ? AppColors.surfaceLight.withValues(alpha: 0.3)
-                    : AppColors.textMuted,
+                    ? AppColors.surfaceLight.withValues(alpha: 0.6)
+                    : AppColors.textGrey,
               ),
             ),
+            const SizedBox(height: 6),
+            if (isClaimed)
+              const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.greenSuccessBright,
+                size: 18,
+              )
+            else ...[
+              Icon(
+                isLocked ? Icons.lock_rounded : Icons.diamond_rounded,
+                color: isActive
+                    ? AppColors.purpleLight
+                    : isDark
+                    ? AppColors.surfaceLight.withValues(alpha: 0.24)
+                    : AppColors.textMuted,
+                size: 16,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '+$gems',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  color: isActive
+                      ? (isDark ? AppColors.surfaceLight : AppColors.textDark)
+                      : isDark
+                      ? AppColors.surfaceLight.withValues(alpha: 0.3)
+                      : AppColors.textMuted,
+                ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 3),
       child: scale != 1.0 ? Transform.scale(scale: scale, child: card) : card,
+    );
+  }
+}
+
+class _RewardSparkle extends StatelessWidget {
+  const _RewardSparkle({required this.size, required this.opacity});
+
+  final double size;
+  final double opacity;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: opacity,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: const BoxDecoration(
+          color: AppColors.orange,
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 }

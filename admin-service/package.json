@@ -1,7 +1,7 @@
 {
   "name": "lexilingo-admin",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.12.0",
   "type": "module",
   "packageManager": "pnpm@11.1.0",
   "scripts": {
@@ -14,34 +14,36 @@
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
-    "@hookform/resolvers": "^5.9.1",
-    "@tanstack/react-query": "^5.104.1",
+    "@hookform/resolvers": "^5.9.2",
+    "@tanstack/react-query": "^5.106.1",
     "@vercel/analytics": "^2.0.1",
-    "antd": "^6.6.5",
-    "axios": "^1.20.0",
+    "antd": "^6.7.0",
+    "axios": "^1.21.0",
     "dayjs": "^1.11.23",
     "dotenv": "^17.4.2",
     "gsap": "^3.15.0",
-    "lucide-react": "^1.54.0",
-    "react": "^19.3.0",
-    "react-dom": "^19.3.0",
-    "react-hook-form": "^7.89.0",
-    "react-router-dom": "^7.18.4",
+    "lucide-react": "^1.69.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-hook-form": "^7.91.0",
+    "react-router-dom": "^7.18.5",
     "recharts": "^3.10.1",
-    "three": "^0.186.1",
-    "zod": "^4.6.5",
-    "zustand": "^5.0.15"
+    "three": "^0.187.0",
+    "zod": "^4.6.7",
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.3.3",
+    "@tailwindcss/cli": "^4.3.4",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^25.9.9",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@types/three": "^0.186.0",
-    "@vitejs/plugin-react": "^6.1.2",
-    "tailwindcss": "^4.3.3",
+    "@types/three": "^0.187.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "jsdom": "^30.1.3",
+    "tailwindcss": "^4.3.4",
     "typescript": "^6.0.3",
-    "vite": "^8.3.4",
-    "vitest": "^4.1.11"
+    "vite": "^8.3.6",
+    "vitest": "^4.1.12"
   }
 }

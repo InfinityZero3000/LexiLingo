@@ -42,6 +42,16 @@ class AchievementCRUD:
             select(Achievement).where(Achievement.id == achievement_id)
         )
         return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_unlocked_achievement_ids(db: AsyncSession, user_id: UUID) -> set[UUID]:
+        """IDs of achievements the user has already unlocked."""
+        result = await db.execute(
+            select(UserAchievement.achievement_id).where(
+                UserAchievement.user_id == user_id
+            )
+        )
+        return {row[0] for row in result.all()}
     
     @staticmethod
     async def get_user_achievements(
@@ -570,8 +580,20 @@ class ShopCRUD:
         item_id: UUID,
         quantity: int = 1
     ) -> Tuple[Optional[UserInventory], str]:
-        """Purchase item from shop. Returns (inventory, message)"""
-        item = await ShopCRUD.get_item(db, item_id)
+        """Purchase item from shop. Returns (inventory, message)
+
+        Locks the ShopItem row before the stock/ownership checks: without
+        this, two concurrent purchases both read the pre-decrement stock
+        (or both see a one-time avatar as "not yet owned") and both go on
+        to spend gems and grant the item. spend_gems already locks the
+        wallet row, so gems can't be double-spent in isolation, but that
+        did not stop the shop's own state — stock count and "owned once"
+        avatars — from being sold twice.
+        """
+        result = await db.execute(
+            select(ShopItem).where(ShopItem.id == item_id).with_for_update()
+        )
+        item = result.scalar_one_or_none()
         if not item:
             return None, "Item not found"
         
@@ -675,10 +697,16 @@ class SocialCRUD:
         follower_id: UUID,
         following_id: UUID
     ) -> Tuple[bool, str]:
-        """Follow a user. Returns (success, message)"""
+        """Follow a user. Returns (success, message)
+
+        The pre-check below is only an optimization (skip a round trip for
+        the common case): `uq_user_following` is what actually prevents a
+        duplicate row when two follow taps race past it, so the insert
+        catches IntegrityError instead of letting it surface as a 500.
+        """
         if follower_id == following_id:
             return False, "Cannot follow yourself"
-        
+
         # Check if already following
         result = await db.execute(
             select(UserFollowing).where(
@@ -690,14 +718,18 @@ class SocialCRUD:
         )
         if result.scalar_one_or_none():
             return False, "Already following this user"
-        
+
         following = UserFollowing(
             follower_id=follower_id,
             following_id=following_id
         )
         db.add(following)
-        await db.commit()
-        
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            return False, "Already following this user"
+
         return True, "Now following user"
     
     @staticmethod

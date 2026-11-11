@@ -52,7 +52,7 @@ async def test_ingest_ai_audit_event_requires_secret(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_ingest_and_list_my_ai_audit_events(monkeypatch):
+async def test_ingest_ai_audit_event(monkeypatch):
     fake_redis = _FakeRedis()
     monkeypatch.setattr(settings, "AI_AUDIT_INGEST_SECRET", "my-secret")
     fake_user_id = "user-smoke-1"
@@ -80,12 +80,6 @@ async def test_ingest_and_list_my_ai_audit_events(monkeypatch):
             )
             assert ingest.status_code == 200
             assert ingest.json().get("success") is True
-
-            me = await client.get("/api/v1/ai-audit/events/me")
-            assert me.status_code == 200
-            payload = me.json()
-            assert payload["total"] >= 1
-            assert payload["events"][0]["request_id"] == "req-123"
     finally:
         app.dependency_overrides.pop(get_current_user, None)
 
@@ -124,7 +118,7 @@ async def test_admin_quality_summary_aggregates_ai_audit_events(monkeypatch):
         return fake_redis
 
     async def _fake_current_admin():
-        return SimpleNamespace(id="admin-1")
+        return SimpleNamespace(id="admin-1", role_level=2)
 
     monkeypatch.setattr(ai_audit_route, "get_redis", _fake_get_redis)
     app.dependency_overrides[get_current_admin] = _fake_current_admin

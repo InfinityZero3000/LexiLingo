@@ -6,10 +6,9 @@ Following agent-skills/language-learning-patterns:
 - progress-learning-streaks: Robust streak system with protections (3-5x engagement)
 - gamification-achievement-badges: Meaningful achievements (25-40% engagement boost)
 """
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 import logging
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,9 +24,6 @@ from app.core.cache import (
 from app.crud.progress import ProgressCRUD
 from app.crud.course import CourseCRUD
 from app.schemas.progress import (
-    LessonCompletionCreate,
-    LessonCompletionResponse,
-    UserProgressSummary,
     CourseProgressResponse,
     ProgressStatsResponse
 )
@@ -35,16 +31,7 @@ from app.schemas.response import ApiResponse
 from app.models.user import User
 from app.models.progress import Streak, DailyActivity, LessonCompletion
 from app.models.course import Lesson, Unit
-from app.services import check_achievements_for_user
-from app.services.level_service import (
-    LevelService, calculate_numeric_level, get_numeric_level_progress,
-    check_numeric_level_up
-)
-from app.services.rank_service import (
-    apply_rank_info_to_user,
-    calculate_rank as calc_rank,
-)
-from app.services.streak_service import record_daily_activity, update_user_streak
+from app.services.streak_service import update_user_streak
 from app.crud.gamification import WalletCRUD
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
@@ -197,226 +184,6 @@ async def get_course_progress(
         success=True,
         message="Course progress retrieved successfully",
         data=progress_detail
-    )
-
-
-@router.post("/lessons/{lesson_id}/complete", response_model=ApiResponse[LessonCompletionResponse])
-async def complete_lesson(
-    lesson_id: str,
-    completion: LessonCompletionCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Mark a lesson as complete with a score
-    
-    Requirements:
-    - User must be enrolled in the course
-    - Score must be between 0-100
-    
-    Logic:
-    - If score >= pass_threshold (80%): Mark as passed, award XP
-    - If already completed: Update only if new score is better
-    - Updates course progress percentage automatically
-    
-    Returns:
-    - Lesson completion details
-    - XP earned (if passed)
-    - Updated course progress
-    """
-    try:
-        # Get lesson and verify it exists
-        from app.crud.course import LessonCRUD
-        lesson = await LessonCRUD.get_lesson(db, lesson_id)
-        if not lesson:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Lesson {lesson_id} not found"
-            )
-        
-        # Get unit to find course_id
-        from app.crud.course import UnitCRUD
-        unit = await UnitCRUD.get_unit(db, str(lesson.unit_id))
-        if not unit:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Unit not found for this lesson"
-            )
-        
-        course_id = str(unit.course_id)
-        
-        # Check if user is enrolled
-        is_enrolled = await CourseCRUD.is_user_enrolled(db, str(current_user.id), course_id)
-        if not is_enrolled:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You must be enrolled in the course to complete lessons"
-            )
-        
-        # Mark lesson complete
-        lesson_completion, xp_earned = await ProgressCRUD.mark_lesson_complete(
-            db,
-            str(current_user.id),
-            lesson_id,
-            completion.score,
-            lesson.pass_threshold or 80.0
-        )
-        
-        # Recalculate course progress
-        new_progress = await ProgressCRUD.calculate_course_progress(
-            db, str(current_user.id), course_id
-        )
-        
-        # Update course progress
-        course_progress = await ProgressCRUD.update_course_progress(
-            db,
-            str(current_user.id),
-            course_id,
-            new_progress,
-            xp_earned
-        )
-        
-        # --- Update User.total_xp and numeric_level ---
-        level_up = False
-        new_level = None
-        rank_up = False
-        new_rank = None
-        
-        if xp_earned > 0:
-            old_xp = current_user.total_xp or 0
-            old_numeric_level = current_user.numeric_level or 1
-            old_proficiency = current_user.level or "A1"
-            
-            new_xp = old_xp + xp_earned
-            current_user.total_xp = new_xp
-            
-            # Update numeric level
-            new_numeric_level = calculate_numeric_level(new_xp)
-            current_user.numeric_level = new_numeric_level
-            
-            # Check CEFR tier change
-            tier_up, _ = LevelService.check_level_up(old_xp, new_xp)
-            if tier_up:
-                cefr_status = LevelService.calculate_level_status(new_xp)
-                current_user.level = cefr_status.current_tier.code
-            
-            # Check numeric level up
-            leveled, _, _ = check_numeric_level_up(old_xp, new_xp)
-            if leveled:
-                level_up = True
-                new_level = new_numeric_level
-            
-            # Check rank change
-            new_rank_info = calc_rank(new_numeric_level, current_user.level)
-            if current_user.rank != new_rank_info.rank.value:
-                rank_up = True
-                new_rank = new_rank_info.rank.value
-            apply_rank_info_to_user(current_user, new_rank_info)
-            
-            # --- Update DailyActivity ---
-            # No study_time_minutes: LessonCompletionCreate carries only a
-            # score, so this route never learns how long the lesson took. The
-            # attempt-based flow in routes/learning.py does, and records it.
-            from datetime import date as date_type
-            await record_daily_activity(
-                db,
-                current_user.id,
-                xp_earned=xp_earned,
-                lessons_completed=1,
-                today=date_type.today(),
-            )
-        
-        await db.commit()
-        
-        # --- Check achievements after lesson completion ---
-        unlocked_from_lesson = await check_achievements_for_user(
-            db, current_user.id, "lesson_complete"
-        )
-        unlocked_from_xp = await check_achievements_for_user(
-            db, current_user.id, "xp_earned"
-        )
-        all_unlocked = unlocked_from_lesson + unlocked_from_xp
-        if completion.score >= 100:
-            perfect_unlocked = await check_achievements_for_user(
-                db, current_user.id, "quiz_complete"
-            )
-            all_unlocked += perfect_unlocked
-        
-        # Get user's total XP
-        total_xp = current_user.total_xp
-        
-        message = "Lesson completed successfully"
-        if xp_earned > 0:
-            message += f" - Earned {xp_earned} XP!"
-        elif lesson_completion.is_passed:
-            message += " - Already passed, no additional XP"
-        else:
-            message += f" - Score too low (need {lesson.pass_threshold or 80}% to pass)"
-        
-        response_data = {
-            'lesson_id': lesson_id,
-            'is_passed': lesson_completion.is_passed,
-            'score': completion.score,
-            'best_score': lesson_completion.best_score,
-            'xp_earned': xp_earned,
-            'total_xp': total_xp,
-            'course_progress': new_progress,
-            'level_up': level_up,
-            'new_level': new_level,
-            'rank_up': rank_up,
-            'new_rank': new_rank,
-            'achievements_unlocked': all_unlocked,
-            'message': message
-        }
-
-        # Invalidate user's progress caches since XP/lessons changed
-        _uid = str(current_user.id)
-        await delete_cached(build_cache_key("progress_me", user_id=_uid))
-        await delete_cached(build_cache_key("progress_xp", user_id=_uid))
-
-        return ApiResponse(
-            success=True,
-            message=message,
-            data=response_data
-        )
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error completing lesson: {str(e)}"
-        )
-
-
-@router.get("/xp", response_model=ApiResponse[dict])
-async def get_total_xp(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get user's total XP across all courses
-    
-    Returns:
-    - total_xp: Sum of XP from all courses
-    """
-    uid = str(current_user.id)
-    cache_key = build_cache_key("progress_xp", user_id=uid)
-    cached = await get_cached(cache_key)
-    if cached is not None:
-        return ApiResponse(success=True, message="Total XP retrieved successfully", data=cached)
-
-    total_xp = await ProgressCRUD.get_user_total_xp(db, uid)
-    payload = {'total_xp': total_xp}
-    await set_cached(cache_key, payload, ttl=30)
-
-    return ApiResponse(
-        success=True,
-        message="Total XP retrieved successfully",
-        data=payload
     )
 
 

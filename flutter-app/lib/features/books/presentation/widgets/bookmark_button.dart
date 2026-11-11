@@ -1,6 +1,5 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-
-import '../../../../core/theme/app_theme.dart';
 
 /// Animated bookmark toggle button for the reader screen.
 ///
@@ -58,7 +57,7 @@ class _BookmarkButtonState extends State<BookmarkButton>
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = widget.color ?? AppColors.primary;
+    final activeColor = widget.color ?? Theme.of(context).colorScheme.primary;
 
     return ScaleTransition(
       scale: _scaleAnim,
@@ -75,7 +74,9 @@ class _BookmarkButtonState extends State<BookmarkButton>
             color: widget.isBookmarked ? activeColor : Colors.grey,
           ),
         ),
-        tooltip: widget.isBookmarked ? 'Remove bookmark' : 'Add bookmark',
+        tooltip: widget.isBookmarked
+            ? 'books.removeBookmark'.tr()
+            : 'books.addBookmark'.tr(),
         onPressed: widget.onToggle,
       ),
     );

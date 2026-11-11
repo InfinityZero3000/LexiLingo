@@ -87,6 +87,77 @@ def arrange_bank_matches(options, correct_answer) -> bool:
     )
 
 
+# The learner taps exactly one option, so the answer has to be one of them.
+_SINGLE_CHOICE_UI_TYPES = {
+    "multiple_choice",
+    "collocation_choice",
+    "translation_choice",
+    "listen_and_choose",
+    "reading_comprehension",
+    "image_based_choice",
+    "vocabulary_flashcard",
+}
+_PAIR_UI_TYPES = {"match_word_to_meaning", "categorization", "cognitive_fluidity"}
+
+
+def exercise_shape_problems(exercise) -> list[str]:
+    """Why the app could not render or grade this exercise; [] when it can.
+
+    Every rule here is a shape a learner has already met as an unanswerable
+    question — nothing else checks an exercise before someone tries to play it.
+    """
+    if not isinstance(exercise, dict):
+        return ["not an object"]
+    ui_type = str(exercise.get("ui_type") or "")
+    if base_type_for(ui_type) is None:
+        return [f"unknown ui_type {ui_type!r}"]
+
+    problems = []
+    question = str(exercise.get("question") or "").strip()
+    answer = str(exercise.get("correct_answer") or "").strip()
+    options = [option_text(o).strip() for o in exercise.get("options") or []]
+    if not question:
+        problems.append("question is empty")
+    if not answer and ui_type != "short_writing_answer":
+        problems.append("correct_answer is empty")
+        return problems
+
+    if ui_type in _SINGLE_CHOICE_UI_TYPES:
+        if len([o for o in options if o]) < 2:
+            problems.append("needs at least 2 options")
+        elif answer not in options:
+            problems.append("correct_answer is not one of the options")
+        if ui_type == "image_based_choice" and not exercise.get("image_url"):
+            problems.append("image_based_choice needs image_url")
+    elif ui_type == "true_or_false":
+        if answer.lower() not in ("true", "false"):
+            problems.append("correct_answer must be True or False")
+    elif ui_type in _PAIR_UI_TYPES:
+        half = len(options) // 2
+        pairs = [p.split(":", 1) for p in answer.split(",")]
+        if len(options) < 4 or len(options) % 2:
+            problems.append("options must be every key then every value (2+ pairs)")
+        elif len(pairs) != half or any(len(p) != 2 for p in pairs):
+            problems.append(
+                f'correct_answer must be {half} "key:value" pairs joined by ", "'
+            )
+        else:
+            left, right = set(options[:half]), set(options[half:])
+            if {k.strip() for k, _ in pairs} != left or any(
+                v.strip() not in right for _, v in pairs
+            ):
+                problems.append("correct_answer pairs do not match the options")
+    elif ui_type == "arrange_the_sentence":
+        if not arrange_bank_matches(exercise.get("options"), answer):
+            problems.append("options must be exactly the words of correct_answer")
+    elif ui_type == "dialogue_completion" and "{blank}" not in question and not options:
+        problems.append("needs a {blank} in the dialogue or options to choose from")
+    elif options and ui_type in {"fill_in_the_blank", "dialogue_completion", "grammar_correction"}:
+        if answer not in options:
+            problems.append("correct_answer is not one of the options")
+    return problems
+
+
 class Course(Base):
     """
     Course model with hierarchical content structure.
@@ -269,6 +340,13 @@ class Lesson(Base):
         (admin routes, CRUD, content agent, seeds, scripts) — it used to be
         set by hand in some paths and left at 0 in others."""
         self.total_exercises = count_exercises(content)
+        # The grader keys off `type`, so a hand-made exercise whose type
+        # disagrees with its ui_type is graded by the wrong rule.
+        exercises = content.get("exercises") if isinstance(content, dict) else None
+        for exercise in exercises if isinstance(exercises, list) else []:
+            base_type = base_type_for(exercise.get("ui_type")) if isinstance(exercise, dict) else None
+            if base_type:
+                exercise["type"] = base_type
         return content
 
     def __repr__(self) -> str:

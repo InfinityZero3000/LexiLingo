@@ -541,6 +541,12 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "is_hidden": True,
     },
     # Special (time-based)
+    #
+    # is_hidden=True below, not by design (unlike year_legend/xp_legend) but
+    # because AchievementCheckerService._get_user_stats() hardcodes these
+    # stats to 0 — no route tracks hour-of-day or lesson duration yet, so
+    # these were visible, promised a specific completable goal, and could
+    # never actually be completed. Un-hide once that tracking exists.
     {
         "slug": "night_owl",
         "name": "Night Owl",
@@ -552,7 +558,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 35,
         "gems_reward": 20,
         "badge_color": "#5C6BC0",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "early_bird",
@@ -565,7 +571,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 35,
         "gems_reward": 20,
         "badge_color": "#FFA726",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "speed_demon",
@@ -578,9 +584,15 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 100,
         "gems_reward": 50,
         "badge_color": "#EF5350",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     # Skill
+    #
+    # is_hidden=True below: same reason as the time-based set above — these
+    # key on lesson-category tagging that doesn't exist yet
+    # (grammar_mastered/culture_lesson/writing_complete/listening_complete
+    # are all hardcoded to 0 in _get_user_stats()). Un-hide once lessons are
+    # tagged by category.
     {
         "slug": "grammar_guardian",
         "name": "Grammar Guardian",
@@ -592,7 +604,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 130,
         "gems_reward": 65,
         "badge_color": "#26C6DA",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "culture_explorer",
@@ -605,7 +617,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 90,
         "gems_reward": 45,
         "badge_color": "#AB47BC",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "writing_wizard",
@@ -618,7 +630,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 130,
         "gems_reward": 65,
         "badge_color": "#26A69A",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "listening_legend",
@@ -631,9 +643,14 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 260,
         "gems_reward": 130,
         "badge_color": "#5E35B1",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     # Social
+    #
+    # is_hidden=True below: same reason again — no route records a social
+    # interaction, chat completion, or "helped another learner" event, so
+    # these are hardcoded to 0 in _get_user_stats(). Un-hide once that
+    # tracking exists.
     {
         "slug": "social_butterfly",
         "name": "Social Butterfly",
@@ -645,7 +662,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 60,
         "gems_reward": 30,
         "badge_color": "#29B6F6",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "conversation_champion",
@@ -658,7 +675,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 140,
         "gems_reward": 70,
         "badge_color": "#42A5F5",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     {
         "slug": "feedback_friend",
@@ -671,7 +688,7 @@ ACHIEVEMENT_SEED: list[dict[str, Any]] = [
         "xp_reward": 100,
         "gems_reward": 50,
         "badge_color": "#26A69A",
-        "is_hidden": False,
+        "is_hidden": True,
     },
     # Milestones
     {

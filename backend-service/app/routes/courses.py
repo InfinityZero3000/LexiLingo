@@ -185,7 +185,8 @@ async def get_enrolled_courses(
             "total_lessons": course.total_lessons,
             "total_xp": course.total_xp,
             "estimated_duration": course.estimated_duration,
-            "is_enrolled": True
+            "is_enrolled": True,
+            "user_progress": progress.progress_percentage,
         }
         
         item = CourseListItem(**item_dict)
@@ -293,6 +294,14 @@ async def get_course(
         )
         units_with_lessons.append(unit_with_lessons)
     
+    if current_user and course_response.is_enrolled:
+        shown = [l for u in units_with_lessons for l in u.lessons]
+        course_response.user_progress = (
+            sum(1 for l in shown if l.is_completed) / len(shown) * 100
+            if shown
+            else 0.0
+        )
+
     # Create detailed response
     course_detail = CourseDetailResponse(
         **course_response.model_dump(),

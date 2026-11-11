@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/content_kit.dart';
 
 /// Bottom-bar style audio player controls widget.
 ///
@@ -14,12 +14,15 @@ class AudioPlayerControls extends StatelessWidget {
   final VoidCallback onSkipBack;
   final VoidCallback onSkipForward;
   final ValueChanged<double> onSpeedChange;
+  final ValueChanged<Duration> onSeek;
+  final ValueChanged<Duration?> onSleepTimerSet;
   final bool isPlaying;
   final double playbackSpeed;
   final Duration position;
   final Duration duration;
   final String episodeTitle;
   final String artworkUrl;
+  final int? sleepTimerSecondsRemaining;
 
   const AudioPlayerControls({
     super.key,
@@ -28,130 +31,131 @@ class AudioPlayerControls extends StatelessWidget {
     required this.onSkipBack,
     required this.onSkipForward,
     required this.onSpeedChange,
+    required this.onSeek,
+    required this.onSleepTimerSet,
     required this.isPlaying,
     required this.playbackSpeed,
     required this.position,
     required this.duration,
     required this.episodeTitle,
     required this.artworkUrl,
+    this.sleepTimerSecondsRemaining,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = scheme.brightness == Brightness.dark;
+    final muted = contentMuted(context);
     final progress = duration.inMilliseconds > 0
         ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
         : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: scheme.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.08),
             blurRadius: 20,
-            offset: const Offset(0, -4),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Episode title ──
-          Text(
-            episodeTitle,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: isDark ? Colors.white : AppColors.textDark,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Seek bar ──
+            Semantics(
+              label: episodeTitle,
+              child: _SeekBar(
+                progress: progress.toDouble(),
+                duration: duration,
+                onSeek: onSeek,
+              ),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 14),
 
-          // ── Seek bar ──
-          _SeekBar(progress: progress.toDouble(), isDark: isDark),
-          const SizedBox(height: 6),
-
-          // ── Time labels ──
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _formatDuration(position),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white54 : AppColors.textGrey,
-                ),
-              ),
-              Text(
-                _formatDuration(duration),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.white54 : AppColors.textGrey,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // ── Playback controls ──
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              // Speed button
-              _SpeedButton(
-                speed: playbackSpeed,
-                isDark: isDark,
-                onTap: () => _showSpeedSheet(context),
-              ),
-
-              // Skip back 15 s
-              IconButton(
-                onPressed: onSkipBack,
-                icon: const Icon(Icons.replay_10_rounded),
-                iconSize: 32,
-                color: isDark ? Colors.white70 : AppColors.textDark,
-                tooltip: 'podcast.rewind15'.tr(),
-              ),
-
-              // Play/Pause
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  onPressed: isPlaying ? onPause : onPlay,
-                  icon: Icon(
-                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    size: 30,
-                    color: AppColors.surfaceLight,
+            // ── Time labels ──
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _formatDuration(position),
+                    style: TextStyle(fontSize: 12, color: muted),
                   ),
-                  tooltip: isPlaying ? 'Pause' : 'Play',
+                  Text(
+                    _formatDuration(duration),
+                    style: TextStyle(fontSize: 12, color: muted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Playback controls ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _SpeedButton(
+                  speed: playbackSpeed,
+                  onTap: () => _showSpeedSheet(context),
                 ),
-              ),
-
-              // Skip forward 15 s
-              IconButton(
-                onPressed: onSkipForward,
-                icon: const Icon(Icons.forward_10_rounded),
-                iconSize: 32,
-                color: isDark ? Colors.white70 : AppColors.textDark,
-                tooltip: 'podcast.forward15'.tr(),
-              ),
-
-              // Placeholder for balance (keeps play/pause centred)
-              const SizedBox(width: 40),
-            ],
-          ),
-        ],
+                IconButton(
+                  onPressed: onSkipBack,
+                  icon: const Icon(Icons.fast_rewind_rounded),
+                  iconSize: 32,
+                  color: scheme.onSurface,
+                  tooltip: 'podcast.rewind15'.tr(),
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size.square(48),
+                  ),
+                ),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: scheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    onPressed: isPlaying ? onPause : onPlay,
+                    icon: Icon(
+                      isPlaying
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      size: 36,
+                      color: scheme.onPrimary,
+                    ),
+                    tooltip: isPlaying
+                        ? 'podcast.pause'.tr()
+                        : 'podcast.play'.tr(),
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size.square(64),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onSkipForward,
+                  icon: const Icon(Icons.fast_forward_rounded),
+                  iconSize: 32,
+                  color: scheme.onSurface,
+                  tooltip: 'podcast.forward15'.tr(),
+                  style: IconButton.styleFrom(
+                    minimumSize: const Size.square(48),
+                  ),
+                ),
+                _SleepTimerButton(
+                  secondsRemaining: sleepTimerSecondsRemaining,
+                  onTap: () => _showSleepTimerSheet(context),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -189,22 +193,104 @@ class AudioPlayerControls extends StatelessWidget {
                   return ListTile(
                     leading: const Icon(Icons.speed_rounded),
                     title: Text(
-                      s == 1.0 ? '1.0× (Normal)' : '$s×',
+                      s == 1.0 ? '1.0× · ${'podcast.speedNormal'.tr()}' : '$s×',
                       style: TextStyle(
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.normal,
-                        color: isSelected ? AppColors.primary : null,
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
                       ),
                     ),
                     trailing: isSelected
-                        ? const Icon(
+                        ? Icon(
                             Icons.check_rounded,
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           )
                         : null,
                     onTap: () {
                       onSpeedChange(s);
+                      Navigator.pop(context);
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ──────────────────────────────────────
+  //  Sleep timer bottom sheet
+  // ──────────────────────────────────────
+
+  void _showSleepTimerSheet(BuildContext context) {
+    const presetMinutes = [5, 15, 30, 45, 60];
+    final isActive = sleepTimerSecondsRemaining != null;
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'podcast.sleepTimer'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                if (isActive)
+                  ListTile(
+                    leading: Icon(
+                      Icons.bedtime_rounded,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    title: Text(
+                      'podcast.sleepTimerCancel'.tr(
+                        namedArgs: {
+                          'count':
+                              '${((sleepTimerSecondsRemaining ?? 0) / 60).ceil()}',
+                        },
+                      ),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    onTap: () {
+                      onSleepTimerSet(null);
+                      Navigator.pop(context);
+                    },
+                  )
+                else
+                  ListTile(
+                    leading: const Icon(Icons.bedtime_outlined),
+                    title: Text('podcast.sleepTimerOff'.tr()),
+                    onTap: () => Navigator.pop(context),
+                  ),
+                ...presetMinutes.map((minutes) {
+                  return ListTile(
+                    leading: const Icon(Icons.bedtime_outlined),
+                    title: Text(
+                      'podcast.sleepTimerMinutes'.tr(
+                        namedArgs: {'count': '$minutes'},
+                      ),
+                    ),
+                    onTap: () {
+                      onSleepTimerSet(Duration(minutes: minutes));
                       Navigator.pop(context);
                     },
                   );
@@ -236,56 +322,113 @@ class AudioPlayerControls extends StatelessWidget {
 //  Private sub-widgets
 // ──────────────────────────────────────
 
-class _SeekBar extends StatelessWidget {
-  final double progress; // 0.0 – 1.0
-  final bool isDark;
+class _SeekBar extends StatefulWidget {
+  final double progress; // 0.0 – 1.0, from the live position stream
+  final Duration duration;
+  final ValueChanged<Duration> onSeek;
 
-  const _SeekBar({required this.progress, required this.isDark});
+  const _SeekBar({
+    required this.progress,
+    required this.duration,
+    required this.onSeek,
+  });
+
+  @override
+  State<_SeekBar> createState() => _SeekBarState();
+}
+
+class _SeekBarState extends State<_SeekBar> {
+  // Non-null only while the user's thumb is down — while dragging, the
+  // displayed value must follow the drag, not the live position stream,
+  // or the two fight for control of the thumb.
+  double? _dragValue;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: LinearProgressIndicator(
-        value: progress,
-        minHeight: 4,
-        backgroundColor: isDark
-            ? Colors.white.withValues(alpha: 0.1)
-            : AppColors.grey200,
-        valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+    final scheme = Theme.of(context).colorScheme;
+    final value = (_dragValue ?? widget.progress).clamp(0.0, 1.0);
+    return SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        trackHeight: 4,
+        activeTrackColor: scheme.primary,
+        inactiveTrackColor: scheme.onSurface.withValues(alpha: 0.12),
+        thumbColor: scheme.primary,
+        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+        overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
       ),
+      child: Slider(
+        value: value,
+        onChanged: (v) => setState(() => _dragValue = v),
+        onChangeEnd: (v) {
+          final ms = (v * widget.duration.inMilliseconds).round();
+          widget.onSeek(Duration(milliseconds: ms));
+          setState(() => _dragValue = null);
+        },
+      ),
+    );
+  }
+}
+
+class _SleepTimerButton extends StatelessWidget {
+  final int? secondsRemaining;
+  final VoidCallback onTap;
+
+  const _SleepTimerButton({
+    required this.secondsRemaining,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isActive = secondsRemaining != null;
+    return IconButton(
+      onPressed: onTap,
+      icon: Icon(isActive ? Icons.bedtime_rounded : Icons.bedtime_outlined),
+      iconSize: 24,
+      color: isActive ? scheme.primary : scheme.onSurface,
+      tooltip: 'podcast.sleepTimer'.tr(),
+      style: IconButton.styleFrom(minimumSize: const Size.square(48)),
     );
   }
 }
 
 class _SpeedButton extends StatelessWidget {
   final double speed;
-  final bool isDark;
   final VoidCallback onTap;
 
-  const _SpeedButton({
-    required this.speed,
-    required this.isDark,
-    required this.onTap,
-  });
+  const _SpeedButton({required this.speed, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-        ),
-        child: Text(
-          '$speed×',
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
+    final scheme = Theme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: 'podcast.playbackSpeed'.tr(),
+      child: SizedBox(
+        height: 44,
+        child: Material(
+          color: scheme.primary.withValues(alpha: 0.12),
+          shape: StadiumBorder(
+            side: BorderSide(color: scheme.primary.withValues(alpha: 0.4)),
+          ),
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const StadiumBorder(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  '$speed×',
+                  style: TextStyle(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

@@ -13,11 +13,6 @@ import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_
 abstract class ProgressRemoteDataSource {
   Future<ProgressStatsModel> getMyProgress();
   Future<CourseProgressWithUnitsModel> getCourseProgress(String courseId);
-  Future<LessonCompletionResultModel> completeLesson({
-    required String lessonId,
-    required double score,
-  });
-  Future<int> getTotalXp();
 
   // Weekly progress (Task 1.3)
   Future<WeeklyProgressEntity> getWeeklyProgress();
@@ -32,6 +27,7 @@ abstract class ProgressRemoteDataSource {
   // Daily Challenges methods
   Future<DailyChallengesResponseModel> getDailyChallenges();
   Future<Map<String, dynamic>> claimChallengeReward(String challengeId);
+  Future<Map<String, dynamic>> claimDailyBonus();
 
   // Entertainment surfaces: what the learner was actually credited for.
   Future<ContentActivityModel> getContentActivity({int days});
@@ -60,32 +56,6 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
     try {
       final response = await apiClient.get('/progress/courses/$courseId');
       return CourseProgressWithUnitsModel.fromJson(response);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  @override
-  Future<LessonCompletionResultModel> completeLesson({
-    required String lessonId,
-    required double score,
-  }) async {
-    try {
-      final response = await apiClient.post(
-        '/progress/lessons/$lessonId/complete',
-        body: {'lesson_id': lessonId, 'score': score},
-      );
-      return LessonCompletionResultModel.fromJson(response);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  @override
-  Future<int> getTotalXp() async {
-    try {
-      final response = await apiClient.get('/progress/xp');
-      return response['total_xp'] ?? 0;
     } catch (e) {
       rethrow;
     }
@@ -203,5 +173,10 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
     } catch (e) {
       rethrow;
     }
+  }
+
+  @override
+  Future<Map<String, dynamic>> claimDailyBonus() async {
+    return apiClient.post('/challenges/daily/bonus/claim', body: {});
   }
 }

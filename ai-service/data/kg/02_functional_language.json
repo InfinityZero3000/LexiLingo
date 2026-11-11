@@ -124,7 +124,7 @@
     }
   ],
   "edges": [
-    { "from": "concept:function.greeting", "to": "concept:function.small_talk", "relation": "builds_on" },
+    { "from": "concept:function.small_talk", "to": "concept:function.greeting", "relation": "builds_on" },
     { "from": "concept:function.expressing_opinion", "to": "concept:function.agreeing", "relation": "related_to" },
     { "from": "concept:function.expressing_opinion", "to": "concept:function.disagreeing", "relation": "related_to" },
     { "from": "concept:function.disagreeing", "to": "concept:function.softening", "relation": "related_to" },
@@ -139,7 +139,7 @@
     { "from": "concept:function.making_requests", "to": "concept:grammar.modal_can_could", "relation": "related_to" },
     { "from": "concept:function.describing_cause_effect", "to": "concept:grammar.adverbial_clauses", "relation": "related_to" },
     { "from": "concept:function.expressing_attitude", "to": "concept:grammar.hedging", "relation": "related_to" },
-    { "from": "concept:function.softening", "to": "concept:grammar.hedging", "relation": "builds_on" },
+    { "from": "concept:grammar.hedging", "to": "concept:function.softening", "relation": "builds_on" },
     { "from": "concept:function.turn_taking", "to": "concept:function.small_talk", "relation": "builds_on" },
     { "from": "concept:function.making_suggestions", "to": "concept:grammar.going_to", "relation": "related_to" },
     { "from": "concept:function.agreeing", "to": "concept:grammar.ellipsis_substitution", "relation": "related_to" },

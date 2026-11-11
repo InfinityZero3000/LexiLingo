@@ -28,6 +28,8 @@ from io import StringIO
 from typing import Any, Dict, List, Optional, Tuple
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from .fake_redis_pipeline import with_empty_pipeline
+
 import pytest
 
 # ═══════════════════════════════════════════════════════════════
@@ -181,7 +183,7 @@ def _make_redis_mock(cached_response: Optional[str] = None) -> AsyncMock:
     redis.expire = AsyncMock()
     redis.rpush = AsyncMock()
     redis.delete = AsyncMock(side_effect=_delete)
-    return redis
+    return with_empty_pipeline(redis)
 
 
 def _make_gateway_mock(
@@ -1050,7 +1052,8 @@ async def test_scenario_l1_writeback_pcc_stable():
             # Force bucket registration so L1 has a candidate
             epoch = _cache_mod._profile_epoch({"level": trace.learner_level})
             bucket_raw = _cache_mod._build_graph_bucket(
-                trace.user_input, trace.learner_level, "correct", epoch, []
+                trace.user_input, trace.learner_level, "correct", epoch, [],
+                user_scope=_cache_mod._user_cache_scope({"user_id": "test_user"}),
             )
             _cache_mod._register_graph_bucket(bucket_raw, cache_key)
 
@@ -1151,7 +1154,10 @@ async def test_scenario_l1_invalidation_on_version_change():
 
         # Confirm L1 bucket was written
         epoch = _cache_mod._profile_epoch({"level": "B2"})
-        bucket = _cache_mod._build_graph_bucket(trace.user_input, "B2", "correct", epoch, [])
+        bucket = _cache_mod._build_graph_bucket(
+            trace.user_input, "B2", "correct", epoch, [],
+            user_scope=_cache_mod._user_cache_scope({"user_id": "test_user"}),
+        )
         had_bucket = bucket in _cache_mod._MEM_GRAPH_BUCKETS
         trace.add_check("bucket_populated", had_bucket, f"bucket={bucket[:8]}")
 

@@ -263,14 +263,10 @@ well-known không có tiền tố này.
 | `DELETE` | `/api/v1/users/me` |
 | `DELETE` | `/api/v1/users/me/permanent` |
 | `GET` | `/api/v1/users/search` |
-| `GET` | `/api/v1/users/{user_id}` |
-| `GET` | `/api/v1/users/me/level` |
 | `GET` | `/api/v1/users/me/level-full` |
 | `GET` | `/api/v1/users/me/stats` |
 | `GET` | `/api/v1/users/me/weekly-activity` |
 | `POST` | `/api/v1/devices` |
-| `GET` | `/api/v1/devices` |
-| `PUT` | `/api/v1/devices/{device_id}` |
 | `DELETE` | `/api/v1/devices/{device_id}` |
 | `GET` | `/api/v1/users/me/reminder-preferences` |
 | `PUT` | `/api/v1/users/me/reminder-preferences` |
@@ -293,7 +289,6 @@ well-known không có tiền tố này.
 | `POST` | `/api/v1/categories` |
 | `PUT` | `/api/v1/categories/{category_id}` |
 | `DELETE` | `/api/v1/categories/{category_id}` |
-| `POST` | `/api/v1/categories/update-counts` |
 | `POST` | `/api/v1/learning/lessons/{lesson_id}/start` |
 | `GET` | `/api/v1/learning/lessons/{lesson_id}/content` |
 | `GET` | `/api/v1/learning/lessons/{lesson_id}/context` |
@@ -307,8 +302,6 @@ well-known không có tiền tố này.
 | --- | --- |
 | `GET` | `/api/v1/progress/me` |
 | `GET` | `/api/v1/progress/courses/{course_id}` |
-| `POST` | `/api/v1/progress/lessons/{lesson_id}/complete` |
-| `GET` | `/api/v1/progress/xp` |
 | `GET` | `/api/v1/progress/weekly` |
 | `GET` | `/api/v1/progress/streak` |
 | `POST` | `/api/v1/progress/streak/update` |
@@ -317,8 +310,6 @@ well-known không có tiền tố này.
 | `POST` | `/api/v1/progress/streak/claim-daily-reward` |
 | `GET` | `/api/v1/proficiency/profile` |
 | `POST` | `/api/v1/proficiency/record-exercises` |
-| `GET` | `/api/v1/proficiency/level-check` |
-| `GET` | `/api/v1/proficiency/level-thresholds` |
 | `GET` | `/api/v1/proficiency/history` |
 | `GET` | `/api/v1/proficiency/placement-test` |
 | `POST` | `/api/v1/proficiency/placement-test/submit` |
@@ -334,7 +325,6 @@ well-known không có tiền tố này.
 | `GET` | `/api/v1/vocabulary/collection` |
 | `POST` | `/api/v1/vocabulary/collection` |
 | `POST` | `/api/v1/vocabulary/collection/quick-save` |
-| `POST` | `/api/v1/vocabulary/collection/bulk` |
 | `POST` | `/api/v1/vocabulary/pronunciation/evaluate` |
 | `GET` | `/api/v1/vocabulary/due` |
 | `POST` | `/api/v1/vocabulary/review/{user_vocabulary_id}` |
@@ -370,10 +360,7 @@ well-known không có tiền tố này.
 | `GET` | `/api/v1/gamification/inventory` |
 | `POST` | `/api/v1/gamification/inventory/avatar/equip` |
 | `POST` | `/api/v1/gamification/inventory/use` |
-| `GET` | `/api/v1/gamification/boosts/active` |
-| `GET` | `/api/v1/gamification/boosts/xp-multiplier` |
 | `POST` | `/api/v1/gamification/users/{user_id}/follow` |
-| `DELETE` | `/api/v1/gamification/users/{user_id}/follow` |
 | `POST` | `/api/v1/gamification/users/{user_id}/unfollow` |
 | `GET` | `/api/v1/gamification/users/{user_id}/followers` |
 | `GET` | `/api/v1/gamification/users/{user_id}/following` |
@@ -478,14 +465,14 @@ well-known không có tiền tố này.
 | `GET` | `/api/v1/admin/rbac/roles` |
 | `GET` | `/api/v1/admin/rbac/roles/{role_slug}` |
 | `GET` | `/api/v1/admin/rbac/permissions` |
-| `GET` | `/api/v1/admin/rbac/users` |
-| `POST` | `/api/v1/admin/rbac/users/assign-role` |
-| `POST` | `/api/v1/admin/rbac/users/{user_id}/deactivate` |
-| `POST` | `/api/v1/admin/rbac/users/{user_id}/activate` |
+| `PUT` | `/api/v1/admin/rbac/roles/{role_slug}/permissions` |
+| `GET` | `/api/v1/admin/rbac/me/permissions` |
 | `GET` | `/api/v1/admin/rbac/audit-logs` |
 | `GET` | `/api/v1/admin/rbac/dashboard` |
 | `POST` | `/api/v1/admin/seed` |
-| `GET`, `PUT` | `/api/v1/admin/system-info` |
+| `GET` | `/api/v1/admin/system-info` |
+| `GET`, `PUT` | `/api/v1/admin/gem-limits` |
+| `GET` | `/api/v1/admin/gem-grants` |
 | `GET` | `/api/v1/admin/quota-usage` |
 | `POST` | `/api/v1/admin/quota-reset/{api_name}` |
 | `GET` | `/api/v1/admin/monitoring/system` |
@@ -502,8 +489,6 @@ well-known không có tiền tố này.
 | `GET` | `/api/v1/admin/analytics/dashboard/engagement` |
 | `GET` | `/api/v1/admin/analytics/dashboard/course-popularity` |
 | `GET` | `/api/v1/admin/analytics/dashboard/completion-funnel` |
-| `GET` | `/api/v1/admin/analytics/user-metrics` |
-| `GET` | `/api/v1/admin/analytics/retention-cohorts` |
 | `GET` | `/api/v1/admin/analytics/content-performance` |
 | `GET` | `/api/v1/admin/analytics/vocabulary-effectiveness` |
 | `POST` | `/api/v1/admin/content-agent/uploads` |
@@ -521,7 +506,6 @@ well-known không có tiền tố này.
 | `POST` | `/api/v1/admin/notification-campaign/jobs/{job_id}/retry` |
 | `POST`, `GET` | `/api/v1/admin/ranking-agent/jobs` |
 | `GET` | `/api/v1/admin/ranking-agent/jobs/{job_id}` |
-| `GET` | `/api/v1/admin/ranking-agent/jobs/{job_id}/preview` |
 | `POST` | `/api/v1/admin/ranking-agent/jobs/{job_id}/apply` |
 | `POST` | `/api/v1/admin/ranking-agent/jobs/{job_id}/cancel` |
 | `POST` | `/api/v1/admin/ranking-agent/jobs/{job_id}/retry` |
@@ -533,7 +517,6 @@ well-known không có tiền tố này.
 | `POST` | `/api/v1/internal/learner-state/batch-get` |
 | `POST` | `/api/v1/internal/learner-state/observations:batch` |
 | `POST` | `/api/v1/ai-audit/events` |
-| `GET` | `/api/v1/ai-audit/events/me` |
 | `GET` | `/api/v1/ai-audit/quality-summary` |
 
 ## AI Service

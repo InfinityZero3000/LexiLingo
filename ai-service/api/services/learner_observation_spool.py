@@ -557,6 +557,60 @@ async def stop_learner_observation_forwarder() -> None:
     _SPOOL = None
 
 
+def _diagnosed_only_observations(
+    *,
+    user_id: str,
+    session_id: str,
+    turn_id: str,
+    trace_result: dict[str, Any],
+    skill: str | None,
+    difficulty_level: str | None,
+) -> list[LearnerObservation]:
+    if "diagnosis_errors" in trace_result:
+        errors = list(trace_result.get("diagnosis_errors") or [])
+        root_causes = trace_result.get("diagnosis_root_causes")
+    elif "corrections" in trace_result:
+        errors = list(trace_result.get("corrections") or [])
+        root_causes = trace_result.get("weak_concepts")
+    else:
+        return []
+    outcome = "incorrect" if errors else "correct"
+    confidence = 0.8 if errors else 0.6
+
+    def _observation(concept_id: str, payload: dict[str, Any]) -> LearnerObservation:
+        return LearnerObservation(
+            user_id=str(user_id),
+            session_id=str(session_id),
+            turn_id=str(turn_id),
+            concept_id=concept_id,
+            observation_kind="tracecag_turn",
+            outcome=outcome,
+            confidence=confidence,
+            observed_at=datetime.now(UTC),
+            payload=payload,
+        )
+
+    observations: list[LearnerObservation] = []
+    if skill:
+        anchor: dict[str, Any] = {
+            "error_count": len(errors),
+            "skill": skill,
+            "score": max(0.0, 100.0 - 25.0 * min(len(errors), 4)),
+        }
+        if difficulty_level:
+            anchor["difficulty_level"] = difficulty_level
+        observations.append(_observation(f"skill:{skill}", anchor))
+    if errors:
+        taken = {item.concept_id for item in observations}
+        for concept_id in dict.fromkeys(str(item) for item in (root_causes or []) if item):
+            if concept_id in taken:
+                continue
+            if len(observations) >= 60:
+                break
+            observations.append(_observation(concept_id, {"error_count": len(errors)}))
+    return observations
+
+
 async def persist_trace_observations(
     *,
     user_id: str,
@@ -568,16 +622,16 @@ async def persist_trace_observations(
 ) -> dict[str, Any]:
     """Persist bounded concept evidence without retaining conversational text.
 
-    When `skill` is given, the first observation of the turn also carries the
-    skill/score payload the backend turns into a CEFR skill result — a
-    conversation is speaking or writing practice, and until this existed an
-    hour of talking to Lexi moved neither score.
+    When `skill` is given, one observation of the turn carries the skill/score
+    payload the backend turns into a CEFR skill result — a conversation is
+    speaking or writing practice, and until this existed an hour of talking to
+    Lexi moved neither score.
 
-    Only the first observation carries it, so one turn produces one skill
-    result rather than one per linked concept. That also means a turn that
-    linked no concepts at all records no skill evidence: the anchor rides on
-    a real concept observation, which is what makes it idempotent (the
-    backend dedupes on event_id) without a second dedup table.
+    Default: that anchor is the first concept observation, so a turn with no
+    concepts records no skill evidence, and every concept gets the turn's one
+    outcome. With LEARNER_OBSERVATION_DIAGNOSED_ONLY the anchor is its own
+    `skill:<skill>` observation (so a turn with no concepts still scores) and
+    only diagnosis root causes are recorded, as `incorrect`.
     """
     from api.core.config import settings
 
@@ -585,47 +639,60 @@ async def persist_trace_observations(
         return {"observation_count": 0, "observation_durability_degraded": False}
     if not user_id or not turn_id:
         return {"observation_count": 0, "observation_durability_degraded": False}
-    concept_ids = list(
-        dict.fromkeys(
-            str(item)
-            for item in (
-                list(trace_result.get("linked_concepts") or [])
-                + list(trace_result.get("kg_seed_concepts") or [])
-                + list(trace_result.get("diagnosis_root_causes") or [])
-            )
-            if item
+    if settings.LEARNER_OBSERVATION_DIAGNOSED_ONLY:
+        observations = _diagnosed_only_observations(
+            user_id=user_id,
+            session_id=session_id,
+            turn_id=turn_id,
+            trace_result=trace_result,
+            skill=skill,
+            difficulty_level=difficulty_level,
         )
-    )[:60]
-    errors = list(trace_result.get("diagnosis_errors") or [])
-    outcome = "incorrect" if errors else "correct"
-    confidence = 0.8 if errors else 0.6
-    spool = get_learner_observation_spool()
-
-    def _payload(is_anchor: bool) -> dict[str, Any]:
-        payload: dict[str, Any] = {"error_count": len(errors)}
-        if is_anchor and skill:
-            payload["skill"] = skill
-            # Fewer mistakes is a better turn. Capped at four so a long turn
-            # with many corrections floors at 0 rather than going negative.
-            payload["score"] = max(0.0, 100.0 - 25.0 * min(len(errors), 4))
-            if difficulty_level:
-                payload["difficulty_level"] = difficulty_level
-        return payload
-
-    observations = [
-            LearnerObservation(
-                user_id=str(user_id),
-                session_id=str(session_id),
-                turn_id=str(turn_id),
-                concept_id=concept_id,
-                observation_kind="tracecag_turn",
-                outcome=outcome,
-                confidence=confidence,
-                observed_at=datetime.now(UTC),
-                payload=_payload(index == 0),
+        if not observations:
+            return {"observation_count": 0, "observation_durability_degraded": False}
+        spool = get_learner_observation_spool()
+    else:
+        concept_ids = list(
+            dict.fromkeys(
+                str(item)
+                for item in (
+                    list(trace_result.get("linked_concepts") or [])
+                    + list(trace_result.get("kg_seed_concepts") or [])
+                    + list(trace_result.get("diagnosis_root_causes") or [])
+                )
+                if item
             )
-        for index, concept_id in enumerate(concept_ids)
-    ]
+        )[:60]
+        errors = list(trace_result.get("diagnosis_errors") or [])
+        outcome = "incorrect" if errors else "correct"
+        confidence = 0.8 if errors else 0.6
+        spool = get_learner_observation_spool()
+
+        def _payload(is_anchor: bool) -> dict[str, Any]:
+            payload: dict[str, Any] = {"error_count": len(errors)}
+            if is_anchor and skill:
+                payload["skill"] = skill
+                # Fewer mistakes is a better turn. Capped at four so a long turn
+                # with many corrections floors at 0 rather than going negative.
+                payload["score"] = max(0.0, 100.0 - 25.0 * min(len(errors), 4))
+                if difficulty_level:
+                    payload["difficulty_level"] = difficulty_level
+            return payload
+
+        observations = [
+                LearnerObservation(
+                    user_id=str(user_id),
+                    session_id=str(session_id),
+                    turn_id=str(turn_id),
+                    concept_id=concept_id,
+                    observation_kind="tracecag_turn",
+                    outcome=outcome,
+                    confidence=confidence,
+                    observed_at=datetime.now(UTC),
+                    payload=_payload(index == 0),
+                )
+            for index, concept_id in enumerate(concept_ids)
+        ]
     results = await spool.persist_many(observations)
     degraded = any(not result.durable for result in results)
     if degraded and observations:
@@ -665,6 +732,6 @@ async def persist_trace_observations(
         except Exception:
             logger.critical("learner observation audit reconciliation marker failed")
     return {
-        "observation_count": len(concept_ids),
+        "observation_count": len(observations),
         "observation_durability_degraded": degraded,
     }

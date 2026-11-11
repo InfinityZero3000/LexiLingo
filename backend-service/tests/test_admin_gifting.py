@@ -28,6 +28,7 @@ class TestAdminGifting:
         """Test gifting gems to a user"""
         payload = {
             "gift_type": "gems",
+            "reason": "support goodwill",
             "amount": 150
         }
 
@@ -88,6 +89,7 @@ class TestAdminGifting:
 
         payload = {
             "gift_type": "course",
+            "reason": "support goodwill",
             "course_id": str(course.id)
         }
 
@@ -145,6 +147,7 @@ class TestAdminGifting:
 
         payload = {
             "gift_type": "avatar",
+            "reason": "support goodwill",
             "shop_item_id": str(avatar.id)
         }
 
@@ -202,6 +205,7 @@ class TestAdminGifting:
 
         payload = {
             "gift_type": "shop_item",
+            "reason": "support goodwill",
             "shop_item_id": str(item.id),
             "amount": 3
         }
@@ -237,6 +241,7 @@ class TestAdminGifting:
         """Test that non-admin users are unauthorized to send gifts"""
         payload = {
             "gift_type": "gems",
+            "reason": "support goodwill",
             "amount": 100
         }
 

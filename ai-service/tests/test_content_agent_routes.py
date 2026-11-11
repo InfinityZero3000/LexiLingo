@@ -1,14 +1,12 @@
-import hashlib
-import json
 from types import SimpleNamespace
 
 from api.routes import content_agent as content_agent_routes
 from api.services.content_agent.service import ContentAgentService
 from api.services.content_agent.store import ContentAgentStore
-from api.services.content_etl.pipeline import ETLPipeline
 from api.services.content_etl.storage import SnapshotStorage
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from tests.content_agent_snapshots import cefr_j_records, oewn_senses, stage_snapshot
 
 TOKEN = "test-content-agent-token"
 
@@ -59,43 +57,21 @@ def _client(
 
 
 def _stage_oewn_snapshot(tmp_path, *, count=8):
-    storage = SnapshotStorage(tmp_path)
     records = [
-        {
-            "record_id": f"oewn:2025:{index}",
-            "source_record_id": f"oewn-entry-{index}",
-            "word": f"word{index:02d}",
-            "part_of_speech": "noun",
-            "definition": f"A complete lexical definition for word {index}.",
-            "declared_cefr": "A1",
-        }
+        record
         for index in range(count)
+        for record in oewn_senses(
+            f"word{index:02d}",
+            "noun",
+            [(f"A complete lexical definition for word {index}.", None)],
+        )
     ]
-    raw = json.dumps(records, sort_keys=True).encode("utf-8")
-    digest = hashlib.sha256(raw).hexdigest()
-    temp = storage.create_temp_file()
-    temp.write_bytes(raw)
-    storage.promote_raw(
-        temp,
-        source_name="oewn",
-        version="2025",
-        filename="english-wordnet-2025.xml.gz",
-        sha256=digest,
-    )
-    report = ETLPipeline(storage=storage).run(
-        source_name="oewn",
-        source_version="2025",
-        adapter_name="oewn",
-        adapter_version=1,
-        license_id="CC-BY-4.0",
-        license_url="https://creativecommons.org/licenses/by/4.0/",
-        attribution_text="Open English WordNet 2025",
-        raw_records=records,
-        raw_bytes=raw,
-        official_url="https://en-word.net/static/english-wordnet-2025.xml.gz",
-    )
-    assert report.status == "approved"
-    return storage.read_active_manifest("oewn")
+    return stage_snapshot(SnapshotStorage(tmp_path), "oewn", records)
+
+
+def _stage_cefr_j_snapshot(tmp_path, *, count=8):
+    words = [f"word{index:02d}" for index in range(count)]
+    return stage_snapshot(SnapshotStorage(tmp_path), "cefr_j", cefr_j_records(words))
 
 
 def test_internal_routes_require_correct_service_token(monkeypatch):
@@ -330,7 +306,7 @@ def test_snapshots_endpoint_requires_approved_manifest(monkeypatch, tmp_path):
 
 
 def test_snapshot_attachment_loads_exact_records_for_generation(monkeypatch, tmp_path):
-    manifest = _stage_oewn_snapshot(tmp_path)
+    manifest = _stage_cefr_j_snapshot(tmp_path)
     client = _client(monkeypatch, storage_root=tmp_path)
     headers = {"X-Content-Agent-Token": TOKEN}
     base = "/api/v1/internal/content-agent/jobs/snapshot-job"
@@ -340,7 +316,7 @@ def test_snapshot_attachment_loads_exact_records_for_generation(monkeypatch, tmp
         json={
             "snapshots": [
                 {
-                    "source_id": "oewn",
+                    "source_id": "cefr_j",
                     "source_version": manifest.source_version,
                     "snapshot_id": manifest.snapshot_id,
                 }
@@ -358,7 +334,7 @@ def test_snapshot_attachment_loads_exact_records_for_generation(monkeypatch, tmp
         f"{base}/generate",
         json={
             "levels": ["A1"],
-            "sources": ["oewn"],
+            "sources": ["cefr_j"],
             "units_per_course": 1,
             "lessons_per_unit": 1,
             "words_per_lesson": 8,

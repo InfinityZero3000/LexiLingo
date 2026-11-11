@@ -95,10 +95,19 @@ class StreakModel extends StreakEntity {
     }
 
     final previousStreak = readInt(['previous_streak', 'previousStreak']);
-    final restoresUsedThisMonth = readInt(['restores_used_this_month', 'restoresUsedThisMonth']);
-    final restoresRemaining = readInt(['restores_remaining', 'restoresRemaining'], defaultValue: 3);
+    final restoresUsedThisMonth = readInt([
+      'restores_used_this_month',
+      'restoresUsedThisMonth',
+    ]);
+    final restoresRemaining = readInt([
+      'restores_remaining',
+      'restoresRemaining',
+    ], defaultValue: 3);
     final canRestore = readBool(['can_restore', 'canRestore']);
-    final isDailyRewardAvailable = readBool(['is_daily_reward_available', 'isDailyRewardAvailable']);
+    final isDailyRewardAvailable = readBool([
+      'is_daily_reward_available',
+      'isDailyRewardAvailable',
+    ]);
 
     return StreakModel(
       currentStreak: currentStreak,
@@ -227,10 +236,19 @@ class StreakUpdateResultModel extends StreakUpdateResult {
     if (totalDaysActive < currentStreak) totalDaysActive = currentStreak;
 
     final previousStreak = readInt(['previous_streak', 'previousStreak']);
-    final restoresUsedThisMonth = readInt(['restores_used_this_month', 'restoresUsedThisMonth']);
-    final restoresRemaining = readInt(['restores_remaining', 'restoresRemaining'], defaultValue: 3);
+    final restoresUsedThisMonth = readInt([
+      'restores_used_this_month',
+      'restoresUsedThisMonth',
+    ]);
+    final restoresRemaining = readInt([
+      'restores_remaining',
+      'restoresRemaining',
+    ], defaultValue: 3);
     final canRestore = readBool(['can_restore', 'canRestore']);
-    final isDailyRewardAvailable = readBool(['is_daily_reward_available', 'isDailyRewardAvailable']);
+    final isDailyRewardAvailable = readBool([
+      'is_daily_reward_available',
+      'isDailyRewardAvailable',
+    ]);
 
     return StreakUpdateResultModel(
       currentStreak: currentStreak,

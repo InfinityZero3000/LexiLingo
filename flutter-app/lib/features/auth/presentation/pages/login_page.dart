@@ -149,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
         .clamp(0.0, 1.0);
     double gap(double full, double compact) =>
         compact + (full - compact) * fitT;
-    final logoHeight = gap(40, 32);
+    final logoHeight = gap(64, 48);
     final heroHeight = isKeyboardOpen ? 0.0 : gap(320, 185);
 
     return Scaffold(
@@ -186,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                         Expanded(
                           child: Center(
                             child: Image.asset(
-                              'assets/out-app/lexilingo-logo.png',
+                              'assets/out-app/lexilingo-text.png',
                               height: logoHeight,
                               fit: BoxFit.contain,
                               color: isDark ? Colors.white : null,

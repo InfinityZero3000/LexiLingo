@@ -31,9 +31,7 @@ class CefrBadge extends StatelessWidget {
 
   static Color _bgForLevel(String level, bool isDark) {
     final base = colorForLevel(level);
-    return isDark
-        ? base.withValues(alpha: 0.18)
-        : base.withValues(alpha: 0.12);
+    return isDark ? base.withValues(alpha: 0.18) : base.withValues(alpha: 0.12);
   }
 
   double get _fontSize => switch (size) {
@@ -43,12 +41,18 @@ class CefrBadge extends StatelessWidget {
   };
 
   EdgeInsetsGeometry get _padding => switch (size) {
-    CefrBadgeSize.small =>
-      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-    CefrBadgeSize.medium =>
-      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    CefrBadgeSize.large =>
-      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    CefrBadgeSize.small => const EdgeInsets.symmetric(
+      horizontal: 6,
+      vertical: 2,
+    ),
+    CefrBadgeSize.medium => const EdgeInsets.symmetric(
+      horizontal: 8,
+      vertical: 3,
+    ),
+    CefrBadgeSize.large => const EdgeInsets.symmetric(
+      horizontal: 10,
+      vertical: 4,
+    ),
   };
 
   double get _borderRadius => switch (size) {

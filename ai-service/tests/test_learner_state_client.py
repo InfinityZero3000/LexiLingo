@@ -1,4 +1,5 @@
 import asyncio
+import json
 import time
 from unittest.mock import AsyncMock, MagicMock
 
@@ -254,4 +255,4 @@ async def test_send_observations_preserves_event_id_and_accepts_duplicate_ack():
     assert result["duplicate_event_ids"] == [event_id]
     request = http.post.await_args
     assert request.args[0].endswith("/learner-state/observations:batch")
-    assert request.kwargs["json"]["observations"][0]["event_id"] == event_id
+    assert json.loads(request.kwargs["content"])["observations"][0]["event_id"] == event_id

@@ -1,15 +1,22 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
+import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
+import 'package:lexilingo_app/core/widgets/content_kit.dart';
+import 'package:lexilingo_app/core/widgets/empty_state_widget.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import '../widgets/book_card.dart';
+import '../widgets/book_hero.dart';
 import 'book_detail_screen.dart';
+import 'book_reader_screen.dart';
 
-/// Library screen showing curated books by CEFR level + global search.
+/// Library screen: a hero for what to read next, then curated shelves by CEFR
+/// level, with global search.
 ///
 /// Phase 5: Book Reading — skill: ui-ux-pro-max.
 class BookLibraryScreen extends StatefulWidget {
@@ -25,6 +32,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
   final Map<String, ScrollController> _scrollControllers = {};
 
   static const _cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+  static const _maxHero = 4;
 
   @override
   void initState() {
@@ -35,8 +43,10 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
       _scrollControllers[level] = sc;
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookProvider>().loadRecommendedBooks();
-      context.read<BookProvider>().loadSavedBooks();
+      final provider = context.read<BookProvider>();
+      provider.loadRecommendedBooks();
+      provider.loadSavedBooks();
+      provider.loadContinueReading();
     });
   }
 
@@ -56,483 +66,420 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     }
   }
 
-  void _openBook(BuildContext context, Book book) async {
+  void _toggleSearch() {
+    setState(() {
+      _isSearchMode = !_isSearchMode;
+      if (!_isSearchMode) {
+        _searchController.clear();
+        context.read<BookProvider>().clearSearch();
+      }
+    });
+  }
+
+  Future<void> _refresh() async {
     final provider = context.read<BookProvider>();
-    await provider.openBook(book);
-    if (!context.mounted) return;
-    Navigator.push(
+    await Future.wait([
+      provider.loadRecommendedBooks(),
+      provider.loadContinueReading(),
+    ]);
+  }
+
+  void _refreshShelves() {
+    if (!mounted) return;
+    final provider = context.read<BookProvider>();
+    provider.loadContinueReading();
+    provider.loadSavedBooks();
+  }
+
+  Future<void> _openBook(Book book) async {
+    await context.read<BookProvider>().openBook(book);
+    if (!mounted) return;
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => BookDetailScreen(book: book)),
     );
+    _refreshShelves();
+  }
+
+  /// Straight back into the reader, at the saved page.
+  Future<void> _continue(Book book) async {
+    await context.read<BookProvider>().openBook(book);
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => BookReaderScreen(book: book)),
+    );
+    _refreshShelves();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
-      appBar: AppBar(
-        title: Text(
-          'books.library'.tr(),
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isSearchMode ? Icons.close_rounded : Icons.search_rounded,
+      body: SafeArea(
+        child: Consumer<BookProvider>(
+          builder: (context, provider, _) => RefreshIndicator(
+            onRefresh: _refresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(child: _buildHeader(context)),
+                if (_isSearchMode)
+                  SliverToBoxAdapter(child: _buildSearchField(context)),
+                ..._isSearchMode
+                    ? _buildSearchResults(provider)
+                    : _buildLibrary(context, provider),
+              ],
             ),
-            onPressed: () {
-              setState(() {
-                _isSearchMode = !_isSearchMode;
-                if (!_isSearchMode) {
-                  _searchController.clear();
-                  context.read<BookProvider>().clearSearch();
-                }
-              });
-            },
           ),
-        ],
+        ),
       ),
-      body: Column(
-        children: [
-          // Search bar
-          if (_isSearchMode) _buildSearchBar(context, isDark),
+    );
+  }
 
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+      child: Row(
+        children: [
+          AppBackButton(onPressed: () => Navigator.pop(context)),
           Expanded(
-            child: _isSearchMode
-                ? _buildSearchResults(context, isDark)
-                : _buildLibrary(context, isDark),
+            child: Text(
+              'books.library'.tr(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: contentDisplay(context),
+            ),
+          ),
+          IconButton(
+            onPressed: _toggleSearch,
+            tooltip: MaterialLocalizations.of(context).searchFieldLabel,
+            style: IconButton.styleFrom(minimumSize: const Size.square(48)),
+            icon: Icon(
+              _isSearchMode
+                  ? PhosphorIconsBold.x
+                  : PhosphorIconsBold.magnifyingGlass,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSearchBar(BuildContext context, bool isDark) {
+  Widget _buildSearchField(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final muted = contentMuted(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
       child: TextField(
         controller: _searchController,
         autofocus: true,
+        textInputAction: TextInputAction.search,
+        onChanged: (q) {
+          setState(() {});
+          context.read<BookProvider>().searchBooks(q);
+        },
         decoration: InputDecoration(
           hintText: 'books.searchPlaceholder'.tr(),
-          prefixIcon: const Icon(Icons.search_rounded),
+          hintStyle: TextStyle(color: muted, fontSize: 14),
+          prefixIcon: Icon(PhosphorIconsBold.magnifyingGlass, color: muted),
           filled: true,
-          fillColor: isDark ? AppColors.surfaceDarkElevated : Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+          fillColor: scheme.surface,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide(color: scheme.outlineVariant),
           ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(28),
+            borderSide: BorderSide(color: scheme.primary, width: 2),
+          ),
         ),
-        onChanged: (q) => context.read<BookProvider>().searchBooks(q),
       ),
     );
   }
 
-  Widget _buildSearchResults(BuildContext context, bool isDark) {
-    return Consumer<BookProvider>(
-      builder: (context, provider, _) {
-        if (provider.isSearching) {
-          return const Center(child: LottieLoadingWidget.medium());
-        }
-        if (provider.searchResults.isEmpty &&
-            _searchController.text.length >= 2) {
-          return Center(
-            child: Text(
-              'books.noBooksFound'.tr(
-                namedArgs: {'query': _searchController.text},
-              ),
-              style: TextStyle(
-                color: isDark ? Colors.white54 : AppColors.textGrey,
-              ),
+  // ──────────────────────────────────────
+  //  Search results
+  // ──────────────────────────────────────
+
+  List<Widget> _buildSearchResults(BookProvider provider) {
+    if (provider.isSearching) {
+      return const [
+        // Not hasScrollBody:false — that asks the child for its intrinsic
+        // height, and LottieLoadingWidget's LayoutBuilder cannot answer.
+        SliverFillRemaining(child: Center(child: LottieLoadingWidget.medium())),
+      ];
+    }
+    if (provider.searchResults.isEmpty) {
+      if (_searchController.text.length < 2) return const [];
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: EmptyStateWidget(
+            icon: PhosphorIconsBold.books,
+            iconSize: 48,
+            title: 'books.noBooksFound'.tr(
+              namedArgs: {'query': _searchController.text},
             ),
-          );
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          ),
+        ),
+      ];
+    }
+    return [
+      SliverPadding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+        sliver: SliverList.separated(
           itemCount: provider.searchResults.length,
-          itemBuilder: (context, i) => _buildSearchResultTile(
-            context,
-            provider.searchResults[i],
-            isDark,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSearchResultTile(BuildContext context, Book book, bool isDark) {
-    final cefrColor = _cefrColor(book.cefrLevel);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(10),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: book.coverUrl.isNotEmpty
-              ? Image.network(
-                  book.coverUrl,
-                  width: 48,
-                  height: 64,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _fallbackCoverSmall(cefrColor),
-                )
-              : _fallbackCoverSmall(cefrColor),
-        ),
-        title: Text(
-          book.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
-            color: isDark ? Colors.white : AppColors.textDark,
+          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          itemBuilder: (context, i) => _SearchResultTile(
+            book: provider.searchResults[i],
+            onTap: () => _openBook(provider.searchResults[i]),
           ),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 3),
-            Text(
-              book.author,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white54 : AppColors.textGrey,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: cefrColor,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                book.cefrLevel,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.surface,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        onTap: () => _openBook(context, book),
       ),
-    );
+    ];
   }
 
-  Widget _fallbackCoverSmall(Color cefrColor) => Container(
-    width: 48,
-    height: 64,
-    decoration: BoxDecoration(
-      color: cefrColor.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Icon(Icons.menu_book_rounded, size: 24, color: cefrColor),
-  );
+  // ──────────────────────────────────────
+  //  Library
+  // ──────────────────────────────────────
 
-  Widget _buildLibrary(BuildContext context, bool isDark) {
-    return Consumer<BookProvider>(
-      builder: (context, provider, _) {
-        if (provider.isLoading) {
-          return const Center(child: LottieLoadingWidget.medium());
-        }
+  List<Widget> _buildLibrary(BuildContext context, BookProvider provider) {
+    final hasBooks = provider.recommendedBooks.isNotEmpty;
 
-        if (provider.error != null) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 48,
-                  color: AppColors.textGrey,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'books.loadError'.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                    provider.error!,
-                    textAlign: TextAlign.center,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark
-                          ? Colors.white38
-                          : AppColors.textGrey.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => provider.loadRecommendedBooks(),
-                  child: Text('common.retry'.tr()),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () => provider.loadRecommendedBooks(),
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Saved books section
-              if (provider.savedBooks.isNotEmpty) ...[
-                _buildSavedSection(context, provider, isDark),
-                const SizedBox(height: 20),
-              ],
-
-              // Topic / genre filter chips
-              _buildTopicFilterRow(context, provider, isDark),
-              const SizedBox(height: 20),
-
-              // Sections by CEFR level
-              ..._cefrLevels.map(
-                (level) => _buildLevelSection(context, level, provider, isDark),
-              ),
-
-              const SizedBox(height: 32),
-            ],
+    if (provider.isLoading && !hasBooks) {
+      return const [
+        SliverFillRemaining(child: Center(child: LottieLoadingWidget.medium())),
+      ];
+    }
+    if (provider.error != null && !hasBooks) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: EmptyStateWidget(
+            icon: PhosphorIconsBold.wifiSlash,
+            iconSize: 48,
+            title: 'books.loadError'.tr(),
+            actionLabel: 'common.retry'.tr(),
+            onAction: () {
+              provider.clearError();
+              provider.loadRecommendedBooks();
+            },
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSavedSection(
-    BuildContext context,
-    BookProvider provider,
-    bool isDark,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Icon(Icons.favorite_rounded, color: Colors.red, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              'books.savedBooks'.tr(),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : AppColors.textDark,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '${provider.savedBooks.length}',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
         ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 200,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: provider.savedBooks.length,
+      ];
+    }
+
+    final hero = _heroItems(provider);
+    final topics = ['books.filterAll'.tr(), ...BookProvider.kTopics];
+    final topicIndex = provider.selectedTopic == null
+        ? 0
+        : topics.indexOf(provider.selectedTopic!).clamp(0, topics.length - 1);
+
+    return [
+      if (hero.isNotEmpty)
+        SliverToBoxAdapter(
+          child: ContentCarousel(
+            count: hero.length,
+            height: ContentHero.heightOf(context),
             itemBuilder: (context, i) {
-              final book = provider.savedBooks[i];
-              return BookCard(
-                book: book,
-                onTap: () => _openBook(context, book),
+              final item = hero[i];
+              return BookHero(
+                book: item.book,
+                entry: item.entry,
+                onTap: () => item.entry != null
+                    ? _continue(item.book)
+                    : _openBook(item.book),
               );
             },
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildTopicFilterRow(
-    BuildContext context,
-    BookProvider provider,
-    bool isDark,
-  ) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          _topicChip(context, provider, isDark, null, 'All'),
-          ...BookProvider.kTopics.map(
-            (t) => _topicChip(context, provider, isDark, t, t),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _topicChip(
-    BuildContext context,
-    BookProvider provider,
-    bool isDark,
-    String? topic,
-    String label,
-  ) {
-    final isSelected = provider.selectedTopic == topic;
-    return GestureDetector(
-      onTap: () => provider.setTopicFilter(topic),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.primary
-              : isDark
-              ? AppColors.surfaceDarkElevated
-              : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.grey300,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : isDark
-                ? Colors.white60
-                : AppColors.textGrey,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            fontSize: 12,
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: ContentChipBar(
+            labels: topics,
+            selected: topicIndex,
+            onSelected: (i) => provider.setTopicFilter(
+              i == 0 ? null : BookProvider.kTopics[i - 1],
+            ),
           ),
         ),
       ),
-    );
+      if (provider.savedBooks.isNotEmpty)
+        ..._shelf(
+          title: '${'books.savedBooks'.tr()} · ${provider.savedBooks.length}',
+          books: provider.savedBooks,
+        ),
+      for (final level in _cefrLevels) ..._levelShelf(level, provider),
+      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+    ];
   }
 
-  Widget _buildLevelSection(
-    BuildContext context,
-    String level,
-    BookProvider provider,
-    bool isDark,
-  ) {
-    final books = provider.booksForLevel(level);
-    final isLoadingMore = provider.isLoadingMoreForLevel(level);
-    if (books.isEmpty && !isLoadingMore) return const SizedBox.shrink();
+  /// What the carousel leads with: books in progress, else a few covers worth
+  /// opening (the first curated ones that have artwork).
+  List<({Book book, ReadingEntry? entry})> _heroItems(BookProvider provider) {
+    final reading = provider.continueReading;
+    if (reading.isNotEmpty) {
+      return [for (final e in reading.take(_maxHero)) (book: e.book, entry: e)];
+    }
+    return [
+      for (final b
+          in provider.recommendedBooks
+              .where((b) => b.coverUrl.isNotEmpty)
+              .take(_maxHero))
+        (book: b, entry: null),
+    ];
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _cefrColor(level),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                level,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.surface,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _cefrLabel(level),
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white70 : AppColors.textDark,
-              ),
-            ),
-          ],
+  List<Widget> _shelf({
+    required String title,
+    required List<Book> books,
+    ScrollController? controller,
+    bool loadingMore = false,
+  }) {
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24, bottom: 12),
+          child: ContentSectionHeader(title: title),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 264,
-          child: ListView.builder(
-            controller: _scrollControllers[level],
+      ),
+      SliverToBoxAdapter(
+        child: SizedBox(
+          height: BookCard.rowHeight(context),
+          child: ListView.separated(
+            controller: controller,
             scrollDirection: Axis.horizontal,
-            itemCount: books.length + (isLoadingMore ? 1 : 0),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: books.length + (loadingMore ? 1 : 0),
+            separatorBuilder: (_, _) => const SizedBox(width: 16),
             itemBuilder: (context, i) {
               if (i == books.length) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: LottieLoadingWidget.tiny(),
-                  ),
-                );
+                return const Center(child: LottieLoadingWidget.tiny());
               }
-              return BookCard(
-                book: books[i],
-                onTap: () => _openBook(context, books[i]),
-              );
+              return BookCard(book: books[i], onTap: () => _openBook(books[i]));
             },
           ),
         ),
-        const SizedBox(height: 24),
-      ],
+      ),
+    ];
+  }
+
+  List<Widget> _levelShelf(String level, BookProvider provider) {
+    final books = provider.booksForLevel(level);
+    final loadingMore = provider.isLoadingMoreForLevel(level);
+    if (books.isEmpty && !loadingMore) return const [];
+    return _shelf(
+      title: '$level · ${_levelLabel(level)}',
+      books: books,
+      controller: _scrollControllers[level],
+      loadingMore: loadingMore,
     );
   }
 
-  Color _cefrColor(String level) {
-    switch (level) {
-      case 'A1':
-        return AppColors.greenSuccessBright;
-      case 'A2':
-        return AppColors.greenSuccessSoft;
-      case 'B1':
-        return AppColors.warning;
-      case 'B2':
-        return AppColors.orange;
-      case 'C1':
-        return AppColors.deepOrange;
-      case 'C2':
-        return AppColors.purple;
-      default:
-        return AppColors.primary;
-    }
-  }
+  String _levelLabel(String level) => switch (level) {
+    'A1' => 'course.difficulty.beginner'.tr(),
+    'A2' => 'course.difficulty.elementary'.tr(),
+    'B1' => 'course.difficulty.intermediate'.tr(),
+    'B2' => 'course.difficulty.upperIntermediate'.tr(),
+    'C1' => 'course.difficulty.advanced'.tr(),
+    'C2' => 'books.levelProficiency'.tr(),
+    _ => level,
+  };
+}
 
-  String _cefrLabel(String level) {
-    const map = {
-      'A1': 'Beginner',
-      'A2': 'Elementary',
-      'B1': 'Intermediate',
-      'B2': 'Upper Intermediate',
-      'C1': 'Advanced',
-      'C2': 'Proficiency',
-    };
-    return map[level] ?? level;
+// ──────────────────────────────────────
+//  Search result tile
+// ──────────────────────────────────────
+
+class _SearchResultTile extends StatelessWidget {
+  final Book book;
+  final VoidCallback onTap;
+
+  const _SearchResultTile({required this.book, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return MergeSemantics(
+      child: Semantics(
+        button: true,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: scheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 56,
+                        height: 84,
+                        child: book.coverUrl.isEmpty
+                            ? BookJacket(title: book.title)
+                            : ContentImage(
+                                url: book.coverUrl,
+                                fallbackIcon: PhosphorIconsBold.bookOpenText,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            book.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              height: 1.3,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            book.author,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: contentMuted(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          CefrBadge(
+                            level: book.cefrLevel,
+                            size: CefrBadgeSize.small,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      PhosphorIconsBold.caretRight,
+                      size: 16,
+                      color: contentMuted(context),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

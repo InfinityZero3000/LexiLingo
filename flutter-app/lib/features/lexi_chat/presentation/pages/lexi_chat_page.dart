@@ -3,13 +3,16 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_client.dart';
+import 'package:lexilingo_app/core/voice/duplex_voice_phase.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -17,9 +20,12 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialogue_bubble.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corrections_sheet.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_suggestion_bar.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
 
@@ -32,14 +38,19 @@ import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciatio
 ///  - Free-form conversation focused on natural English practice
 ///  - Dark/light theme support
 class LexiChatPage extends StatefulWidget {
-  const LexiChatPage({super.key});
+  /// False while another bottom-nav tab is showing. The page stays mounted
+  /// under the IndexedStack, so dispose() never runs on a tab switch — this
+  /// flag is what tells it to stop listening and speaking.
+  final bool isActive;
+
+  const LexiChatPage({super.key, this.isActive = true});
 
   @override
   State<LexiChatPage> createState() => _LexiChatPageState();
 }
 
 class _LexiChatPageState extends State<LexiChatPage>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -59,13 +70,30 @@ class _LexiChatPageState extends State<LexiChatPage>
   String _liveTranscript = '';
   DuplexVoiceClient? _duplexVoice;
   StreamSubscription<Map<String, dynamic>>? _duplexVoiceSub;
-  bool _isDuplexVoiceActive = false;
+  final ValueNotifier<String> _voiceCaption = ValueNotifier('');
+  late final Listenable _voiceSignals;
+  bool _voiceStarting = false;
 
   bool get _isVoiceActive =>
       _isRecording ||
       _isTranscribing ||
       _isWebSpeechActive ||
       _isDuplexVoiceActive;
+
+  bool get _isDuplexVoiceActive => _duplexVoice?.phase.value.isLive ?? false;
+
+  bool get _showVoicePanel {
+    final phase = _duplexVoice?.phase.value ?? DuplexVoicePhase.idle;
+    return _voiceStarting ||
+        phase.isLive ||
+        phase == DuplexVoicePhase.error;
+  }
+
+  late LexiChatProvider _chat;
+
+  /// Bumped when the tab is hidden. A mic or transcription that was still
+  /// starting when that happened sees a different value and backs out.
+  int _voiceEpoch = 0;
 
   int _lastMessageCount = 0;
   List<String> get _quickReplies => [
@@ -74,12 +102,28 @@ class _LexiChatPageState extends State<LexiChatPage>
     'lexiChat.quickReply3'.tr(),
   ];
 
+  // Lexi only speaks English: the chips are labelled in the app language but
+  // send these.
+  static const _quickReplyPrompts = [
+    'Hi Lexi, can we practice speaking?',
+    'Can you correct my sentence?',
+    'Give me a daily conversation challenge.',
+  ];
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    if (ApiConfig.enableDuplexVoice) _duplexVoice = sl<DuplexVoiceClient>();
+    _voiceSignals = Listenable.merge([
+      _voiceCaption,
+      if (_duplexVoice != null) _duplexVoice!.phase,
+    ]);
     // Restore latest session first; create new only when needed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<LexiChatProvider>();
+      unawaited(provider.loadVoicePrefs());
+      provider.resumeSpeaking();
       provider.syncTtsWithGlobalSound(
         context.read<SettingsProvider>().soundEnabled,
       );
@@ -100,7 +144,58 @@ class _LexiChatPageState extends State<LexiChatPage>
     // (e.g. switched in Settings while this page stays alive under the
     // bottom-nav IndexedStack), keeping Lexi's native-language hint in
     // sync with whatever the UI is currently displaying.
-    context.read<LexiChatProvider>().setNativeLanguage(_nativeLanguage);
+    _chat = context.read<LexiChatProvider>();
+    _chat.setNativeLanguage(_nativeLanguage);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused && _isDuplexVoiceActive) {
+      unawaited(_stopAllVoice());
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LexiChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive && !widget.isActive) unawaited(_stopAllVoice());
+    if (!oldWidget.isActive && widget.isActive) _chat.resumeSpeaking();
+  }
+
+  /// Ends every mic and speaker path without sending anything. Each step is
+  /// guarded so one failing release (a recorder the user already stopped)
+  /// cannot leave the other paths — or the UI flags — still on.
+  Future<void> _stopAllVoice() async {
+    _voiceEpoch++;
+    unawaited(_chat.stopSpeaking());
+    _recordingTimer?.cancel();
+    final wasListening = _isWebSpeechActive;
+    _webSpeech?.stopListening();
+    _liveTranscript = '';
+    if (wasListening) _controller.clear();
+    for (final stop in <Future<void> Function()>[
+      () async => _webSpeechSub?.cancel(),
+      () async {
+        if (_isRecording) await _recorder.cancel();
+      },
+      () async {
+        await _duplexVoice?.stop();
+        _chat.abortVoiceTurn();
+      },
+    ]) {
+      try {
+        await stop();
+      } catch (error) {
+        debugPrint('stop voice path failed: $error');
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _isRecording = false;
+      _isTranscribing = false;
+      _isWebSpeechActive = false;
+      _voiceStarting = false;
+    });
   }
 
   String get _userId {
@@ -117,6 +212,9 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _voiceCaption.dispose();
+    unawaited(_chat.stopSpeaking());
     _scrollController.removeListener(_handleTopReached);
     _controller.dispose();
     _scrollController.dispose();
@@ -130,51 +228,123 @@ class _LexiChatPageState extends State<LexiChatPage>
     super.dispose();
   }
 
-  Future<void> _toggleDuplexVoice() async {
-    if (_isDuplexVoiceActive) {
-      await _duplexVoice?.stop();
-      if (mounted) setState(() => _isDuplexVoiceActive = false);
-      return;
-    }
+  Future<void> _startDuplexVoice() async {
+    if (_voiceStarting) return;
+    final epoch = _voiceEpoch;
+    setState(() => _voiceStarting = true);
+    // The panel shrinks the list; keep the newest message in view.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    unawaited(HapticFeedback.mediumImpact());
     try {
       final provider = context.read<LexiChatProvider>();
       if (!provider.hasSession) await provider.startSession(_userId);
+      if (epoch != _voiceEpoch) return;
       final sessionId = provider.session?.sessionId;
       if (sessionId == null) throw StateError('Chat session unavailable');
-      _duplexVoice ??= sl<DuplexVoiceClient>();
+      final client = _duplexVoice ??= sl<DuplexVoiceClient>();
+      _voiceCaption.value = '';
       await _duplexVoiceSub?.cancel();
-      _duplexVoiceSub = _duplexVoice!.events.stream.listen((event) {
-        if (!mounted) return;
-        final type = event['type'];
-        if (type == 'stt.partial') {
-          _controller.text = event['text']?.toString() ?? '';
-        } else if (type == 'stt.final') {
-          _controller.clear();
-        }
-        provider.handleDuplexVoiceEvent(event);
-        if (type == 'voice.error') {
-          setState(() => _isDuplexVoiceActive = false);
-          _showSnack(event['message']?.toString() ?? 'Voice failed');
-        }
-      });
-      await _duplexVoice!.start(
+      _duplexVoiceSub = client.events.stream.listen(_onDuplexEvent);
+      await client.start(
         sessionId: sessionId,
         learnerLevel: provider.learnerLevel,
         nativeLanguage: provider.nativeLanguage,
+        ttsSpeed: provider.ttsEnabled ? provider.ttsSpeed : 1.0,
       );
-      if (mounted) setState(() => _isDuplexVoiceActive = true);
+      if (epoch != _voiceEpoch) await client.stop();
     } catch (error) {
-      await _duplexVoice?.stop();
-      if (mounted) {
-        setState(() => _isDuplexVoiceActive = false);
-        _showSnack('Voice unavailable: $error');
+      debugPrint('duplex voice start failed: $error');
+      if (_duplexVoice?.phase.value == DuplexVoicePhase.unavailable) {
+        _showSnack('lexiChat.voice.errorUnavailable'.tr());
       }
+    } finally {
+      if (mounted) setState(() => _voiceStarting = false);
     }
+  }
+
+  void _onDuplexEvent(Map<String, dynamic> event) {
+    if (!mounted) return;
+    final type = event['type'];
+    if (type == 'stt.partial') {
+      _voiceCaption.value = event['text']?.toString() ?? '';
+    } else if (type == 'stt.final') {
+      _voiceCaption.value = '';
+    } else if (type == 'voice.error' && event['code'] == 'SERVER_BUSY') {
+      _showSnack('lexiChat.voice.busyBanner'.tr());
+    }
+    _chat.handleDuplexVoiceEvent(event);
+  }
+
+  Future<void> _endDuplexVoice() async {
+    _voiceEpoch++;
+    await _duplexVoice?.stop();
+    _chat.abortVoiceTurn();
+    _voiceCaption.value = '';
+    if (mounted) setState(() => _voiceStarting = false);
+  }
+
+  void _onVoiceOrbTap(DuplexVoicePhase phase) {
+    if (phase.canInterrupt) {
+      unawaited(HapticFeedback.selectionClick());
+      unawaited(_duplexVoice?.interrupt());
+    } else if (phase == DuplexVoicePhase.error) {
+      unawaited(_startDuplexVoice());
+    }
+  }
+
+  Future<void> _editMisheard(LexiMessage message) async {
+    await _endDuplexVoice();
+    if (!mounted) return;
+    _controller.text = message.content;
+    _controller.selection = TextSelection.collapsed(
+      offset: message.content.length,
+    );
+    _focusNode.requestFocus();
+    _showSnack('lexiChat.voice.misheardEditHint'.tr());
+  }
+
+  String _voiceErrorText() {
+    return switch (_duplexVoice?.lastErrorCode) {
+      'MIC_PERMISSION' => 'lexiChat.voice.errorPermission'.tr(),
+      'QUOTA_EXCEEDED' => 'lexiChat.voice.errorQuota'.tr(),
+      'UNAVAILABLE' => 'lexiChat.voice.errorUnavailable'.tr(),
+      'CONNECTION_CLOSED' ||
+      'CONNECT_FAILED' ||
+      'TICKET_FAILED' => 'lexiChat.voice.errorConnection'.tr(),
+      _ => 'lexiChat.voice.retry'.tr(),
+    };
+  }
+
+  Widget _buildVoicePanelBar() {
+    final client = _duplexVoice;
+    final phase = client?.phase.value ?? DuplexVoicePhase.connecting;
+    final shown = phase == DuplexVoicePhase.idle
+        ? DuplexVoicePhase.connecting
+        : phase;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: ValueListenableBuilder<double>(
+        valueListenable: client?.inputLevel ?? ValueNotifier(0),
+        builder: (context, level, _) => DuplexVoicePanel(
+          phase: shown,
+          level: level,
+          caption: shown == DuplexVoicePhase.error
+              ? _voiceErrorText()
+              : _voiceCaption.value,
+          onEnd: () => unawaited(_endDuplexVoice()),
+          onOrbTap: () => _onVoiceOrbTap(shown),
+          onReplay: client != null && client.canReplay
+              ? () => unawaited(client.replayLast())
+              : null,
+        ),
+      ),
+    );
   }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
       Future.delayed(const Duration(milliseconds: 100), () {
+        if (!mounted || !_scrollController.hasClients) return;
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
@@ -263,8 +433,10 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Mobile/Desktop: Record → REST STT → send as text ─────────────────────
   Future<void> _startMobileRecording() async {
+    final epoch = _voiceEpoch;
     try {
       final hasPermission = await _recorder.hasPermission();
+      if (epoch != _voiceEpoch) return;
       if (!hasPermission) {
         _showSnack('lexiChat.micPermissionRequired'.tr());
         return;
@@ -277,6 +449,10 @@ class _LexiChatPageState extends State<LexiChatPage>
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,
       );
+      if (epoch != _voiceEpoch) {
+        await _recorder.cancel();
+        return;
+      }
 
       setState(() {
         _isRecording = true;
@@ -295,10 +471,11 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   Future<void> _stopMobileRecordingAndTranscribe() async {
     _recordingTimer?.cancel();
+    final epoch = _voiceEpoch;
 
     try {
       final path = await _recorder.stop();
-      if (!mounted) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
@@ -320,7 +497,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
       final transcript = await chatProvider.transcribeAudio(bytes);
-      if (!mounted) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       setState(() => _isTranscribing = false);
 
       if (transcript.isEmpty) {
@@ -427,7 +604,10 @@ class _LexiChatPageState extends State<LexiChatPage>
             children: [
               _buildHeader(isDark),
               Expanded(child: _buildMessageList(isDark)),
-              _buildInputBar(isDark),
+              ListenableBuilder(
+                listenable: _voiceSignals,
+                builder: (_, __) => _buildInputBar(isDark),
+              ),
             ],
           ),
         ),
@@ -452,6 +632,12 @@ class _LexiChatPageState extends State<LexiChatPage>
       ),
       child: Row(
         children: [
+          // A tab in MainScreen, but also pushed as `/lexi` — only then can it pop.
+          if (ModalRoute.of(context)?.canPop ?? false)
+            AppBackButton(
+              color: isDark ? Colors.white70 : AppColors.textDark,
+              onPressed: () => Navigator.of(context).pop(),
+            ),
           Container(
             decoration: BoxDecoration(
               color: isDark
@@ -568,6 +754,36 @@ class _LexiChatPageState extends State<LexiChatPage>
                       padding: const EdgeInsets.all(8),
                     ),
                   ),
+                  if (ApiConfig.enableDuplexVoice &&
+                      !DuplexVoiceClient.serverUnavailable) ...[
+                    const SizedBox(width: 4),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.surfaceDarkChat
+                            : AppColors.backgroundLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        icon: Icon(
+                          provider.captionsVisible
+                              ? Icons.closed_caption_rounded
+                              : Icons.closed_caption_disabled_rounded,
+                          color: provider.captionsVisible
+                              ? AppColorRoles.primary(isDark)
+                              : (isDark ? Colors.white38 : AppColors.textGrey),
+                          size: 20,
+                        ),
+                        onPressed: () => provider.setCaptionsVisible(
+                          !provider.captionsVisible,
+                        ),
+                        tooltip: provider.captionsVisible
+                            ? 'lexiChat.voice.captionsOff'.tr()
+                            : 'lexiChat.voice.captionsOn'.tr(),
+                        padding: const EdgeInsets.all(8),
+                      ),
+                    ),
+                  ],
                 ],
               );
             },
@@ -748,6 +964,15 @@ class _LexiChatPageState extends State<LexiChatPage>
                           },
                         ),
                 ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.psychology_alt_rounded),
+                  title: Text('lexiChat.memory.entry'.tr()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    LexiMemorySheet.show(this.context);
+                  },
+                ),
               ],
             );
           },
@@ -823,6 +1048,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                       ),
                 onSuggestedPracticeTap: (practice) =>
                     _sendQuickReply(practice.prompt),
+                captionHidden: provider.isCaptionHidden(message),
+                onRevealCaption: () => provider.revealCaption(message.id),
+                onMisheardTap: message.heardUncertain
+                    ? () => unawaited(_editMisheard(message))
+                    : null,
               ),
             );
           },
@@ -839,13 +1069,9 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Minimalist Input Bar ────────────────────────────────────────────────
   Widget _buildInputBar(bool isDark) {
+    if (_showVoicePanel) return _buildVoicePanelBar();
     return Container(
-      padding: EdgeInsets.only(
-        left: 16,
-        right: 16,
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
@@ -930,32 +1156,46 @@ class _LexiChatPageState extends State<LexiChatPage>
               ),
             ),
           if (!_isVoiceActive) ...[
-            SizedBox(
-              height: 34,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _quickReplies.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final text = _quickReplies[index];
-                  return ActionChip(
-                    label: Text(text, overflow: TextOverflow.ellipsis),
-                    onPressed: () => _sendQuickReply(text),
-                    labelStyle: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white70 : AppColors.textGrey,
-                    ),
-                    side: BorderSide(
-                      color: isDark
-                          ? AppColors.surfaceDarkChat
-                          : AppColors.chatBgLight,
-                    ),
-                    backgroundColor: isDark
-                        ? AppColors.surfaceDarkInk
-                        : AppColors.backgroundLight,
+            Consumer<LexiChatProvider>(
+              builder: (context, chat, _) {
+                final last = chat.messages.isEmpty ? null : chat.messages.last;
+                if (last != null && last.isLexi && !chat.isLexiResponding) {
+                  return LexiSuggestionBar(
+                    message: last,
+                    nativeLanguage: chat.nativeLanguage,
+                    isDark: isDark,
+                    onSend: _sendQuickReply,
                   );
-                },
-              ),
+                }
+                return SizedBox(
+                  height: 34,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _quickReplies.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final text = _quickReplies[index];
+                      return ActionChip(
+                        label: Text(text, overflow: TextOverflow.ellipsis),
+                        onPressed: () =>
+                            _sendQuickReply(_quickReplyPrompts[index]),
+                        labelStyle: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white70 : AppColors.textGrey,
+                        ),
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.surfaceDarkChat
+                              : AppColors.chatBgLight,
+                        ),
+                        backgroundColor: isDark
+                            ? AppColors.surfaceDarkInk
+                            : AppColors.backgroundLight,
+                      );
+                    },
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 10),
           ],
@@ -1098,10 +1338,14 @@ class _LexiChatPageState extends State<LexiChatPage>
             ),
     );
 
-    if (ApiConfig.enableDuplexVoice) {
-      return GestureDetector(
-        onTap: () => unawaited(_toggleDuplexVoice()),
-        child: button,
+    if (ApiConfig.enableDuplexVoice && !DuplexVoiceClient.serverUnavailable) {
+      return Semantics(
+        button: true,
+        label: 'lexiChat.voice.startVoice'.tr(),
+        child: GestureDetector(
+          onTap: () => unawaited(_startDuplexVoice()),
+          child: button,
+        ),
       );
     }
 

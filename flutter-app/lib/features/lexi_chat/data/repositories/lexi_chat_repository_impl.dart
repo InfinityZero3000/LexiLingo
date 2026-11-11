@@ -139,6 +139,15 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
   }
 
   @override
+  Future<Map<String, String>> getMemory() => dataSource.getMemory();
+
+  @override
+  Future<void> forgetMemory() => dataSource.forgetMemory();
+
+  @override
+  Future<void> forgetMemoryFact(String key) => dataSource.forgetMemoryFact(key);
+
+  @override
   Stream<LexiStreamEvent> sendMessageStream({
     required String userId,
     required String sessionId,

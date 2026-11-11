@@ -22,6 +22,7 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _lastTabIndex = 0;
   bool _didPrecacheRankingAssets = false;
   bool _isLoadingInitialRankTab = true;
   LeaderboardEntryEntity? _selectedLeaderboardEntry;
@@ -56,7 +57,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
     _didPrecacheRankingAssets = true;
 
     precacheImage(
-      const AssetImage('assets/ranking/honor-ranking.png'),
+      const AssetImage('assets/ranking/honor-ranking.webp'),
       context,
     );
     for (final league in _leagues) {
@@ -103,7 +104,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         return;
       }
 
-      _tabController.animateTo(index);
+      _tabController.animateTo(index, duration: Duration.zero);
     } finally {
       if (mounted) {
         setState(() {
@@ -114,6 +115,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
   }
 
   void _onTabChanged() {
+    // Fires on every animation tick; only the index flip matters.
+    if (_tabController.index == _lastTabIndex) return;
+    _lastTabIndex = _tabController.index;
     final league = _leagues[_tabController.index];
     context.read<GamificationProvider>().setLeague(league);
     setState(() {
@@ -261,10 +265,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                             top: 0,
                             height: backgroundHeight,
                             child: Image.asset(
-                              'assets/ranking/honor-ranking.png',
+                              'assets/ranking/honor-ranking.webp',
                               fit: BoxFit.fitWidth,
                               alignment: Alignment.topCenter,
-                              filterQuality: FilterQuality.high,
+                              filterQuality: FilterQuality.medium,
                               gaplessPlayback: true,
                               errorBuilder: (context, error, stackTrace) =>
                                   const SizedBox.shrink(),

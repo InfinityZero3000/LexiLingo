@@ -251,7 +251,12 @@ services:
       - ./backend-service/alembic:/app/alembic
       - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
       - ./backend-service/data:/app/data
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips="*"
+    # The Dockerfile entrypoint applies pending migrations, but Compose's dev
+    # command overrides it. Keep hot reload while ensuring model changes never
+    # start against an older schema.
+    command: >-
+      sh -c 'alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0
+      --port 8000 --reload --proxy-headers --forwarded-allow-ips="*"'
     networks:
       - lexilingo-network
 
@@ -280,6 +285,12 @@ services:
       - ./backend-service/app:/app/app
       - ./backend-service/alembic:/app/alembic
       - ./backend-service/firebase-service-account.json:/app/firebase-service-account.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.core.celery_app:celery_app inspect ping -d celery@$$HOSTNAME --timeout 5 || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     networks:
       - lexilingo-network
 
@@ -302,6 +313,12 @@ services:
         condition: service_healthy
     volumes:
       - ./backend-service/app:/app/app
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'from app.core.celery_status import healthcheck_beat; healthcheck_beat()'"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
     networks:
       - lexilingo-network
 
@@ -336,7 +353,10 @@ services:
       REDIS_DB: 0
       REDIS_URL: redis://redis-ai:6379/0
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GROQ_API_KEYS: ${GROQ_API_KEYS:-}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS in .env}
+      CORS_ALLOW_ORIGIN_REGEX: ${AI_CORS_ALLOW_ORIGIN_REGEX:-https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https?://(localhost|127\.0\.0\.1)(:\d+)?}
       DEBUG: ${DEBUG:-false}
       LEARNER_STATE_MODE: ${LEARNER_STATE_MODE:-off}
       LEARNER_STATE_API_URL: http://backend-service:8000/api/v1/internal
@@ -345,6 +365,7 @@ services:
       LEARNER_STATE_INTERNAL_TOKEN: ${LEARNER_STATE_INTERNAL_TOKEN:-}
       LEARNER_STATE_INTERNAL_AUDIENCE: lexilingo-backend
       KUZU_USER_MASTERY_WRITES_ENABLED: ${KUZU_USER_MASTERY_WRITES_ENABLED:-true}
+      VOICE_DUPLEX_ENABLED: ${VOICE_DUPLEX_ENABLED:-false}
     depends_on:
       mongodb:
         condition: service_healthy

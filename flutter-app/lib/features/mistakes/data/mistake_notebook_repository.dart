@@ -76,6 +76,16 @@ class MistakeNotebookRepository {
     await _syncOrQueue({'type': 'review', 'id': id});
   }
 
+  Future<void> reopen(String id) async {
+    final entries = (await _getLocalEntries()).toList();
+    final index = entries.indexWhere((entry) => entry.id == id);
+    if (index == -1) return;
+
+    entries[index] = entries[index].copyWith(clearReviewedAt: true);
+    await _saveEntries(sortMistakes(entries));
+    await _syncOrQueue({'type': 'reopen', 'id': id});
+  }
+
   Future<void> delete(String id) async {
     final entries = (await _getLocalEntries()).toList();
     entries.removeWhere((entry) => entry.id == id);
@@ -189,6 +199,10 @@ class MistakeNotebookRepository {
       case 'review':
         final id = op['id'] as String?;
         if (id != null && id.isNotEmpty) await remote.markReviewed(id);
+        break;
+      case 'reopen':
+        final id = op['id'] as String?;
+        if (id != null && id.isNotEmpty) await remote.reopen(id);
         break;
       case 'delete':
         final id = op['id'] as String?;

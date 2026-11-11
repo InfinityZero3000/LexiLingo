@@ -258,7 +258,10 @@ const McqForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exercise)
 
 /** True/False — only 2 fixed options */
 const TrueFalseForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exercise) => void }) => {
-  const correct = value.correct_answer === "True" ? "True" : "False";
+  // Nothing is highlighted until one is picked: showing "False" as chosen on a
+  // new exercise looked saved while correct_answer was still empty.
+  const stored = value.correct_answer.trim().toLowerCase();
+  const correct = stored === "true" ? "True" : stored === "false" ? "False" : null;
   return (
     <>
       <div className={fieldCls}>

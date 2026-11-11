@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../domain/entities/ielts_entities.dart';
 import '../providers/ielts_provider.dart';
+import '../widgets/ielts_preview_sheet.dart';
 import 'ielts_sitting_page.dart';
 import 'ielts_result_page.dart';
 
@@ -88,6 +89,26 @@ class _TestCard extends StatelessWidget {
   final IeltsTestSummary test;
   const _TestCard({required this.test});
 
+  /// Opening a test used to create (or resume) a sitting straight away; show
+  /// what is inside first and only start once the learner confirms.
+  Future<void> _preview(BuildContext context) async {
+    final provider = context.read<IeltsProvider>();
+    final start = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => IeltsPreviewSheet(
+        test: test,
+        loadPaper: () => provider.previewPaper(test.id),
+        hasSittingInProgress: provider.hasSittingInProgress(test.id),
+      ),
+    );
+    if (start != true || !context.mounted) return;
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => IeltsSittingPage(test: test)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -95,11 +116,7 @@ class _TestCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => IeltsSittingPage(test: test),
-          ),
-        ),
+        onTap: () => _preview(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -199,7 +216,7 @@ class _HistoryTile extends StatelessWidget {
               ? 'Graded'
               : status == 'submitted'
               ? 'Writing and Speaking still being graded'
-              : 'In progress',
+              : 'In progress — tap to continue',
         ),
         trailing: overall != null
             ? Text(
@@ -210,12 +227,31 @@ class _HistoryTile extends StatelessWidget {
               )
             : const Icon(Icons.chevron_right),
         onTap: () {
+          // An unfinished sitting has no bands to show, so a result page is a
+          // dead end — resume it the same way the test card does, which the
+          // backend keys on (user, test_id, in_progress) regardless of which
+          // attempt_id this history row names.
+          if (status == 'in_progress') {
+            final testId = attempt['test_id']?.toString();
+            if (testId == null) return;
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => IeltsSittingPage(
+                  test: IeltsTestSummary(
+                    id: testId,
+                    title: title,
+                    testType: 'academic',
+                    skillScope: attempt['skill_scope']?.toString() ?? 'full',
+                  ),
+                ),
+              ),
+            );
+            return;
+          }
           final id = attempt['attempt_id']?.toString();
           if (id == null) return;
           Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => IeltsResultPage(attemptId: id),
-            ),
+            MaterialPageRoute(builder: (_) => IeltsResultPage(attemptId: id)),
           );
         },
       ),

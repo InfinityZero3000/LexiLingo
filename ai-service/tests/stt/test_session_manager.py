@@ -29,6 +29,27 @@ async def test_manager_resume_returns_same_session(tmp_path):
 
 
 @pytest.mark.asyncio
+async def test_restart_replaces_a_dropped_session_but_not_a_live_or_foreign_one(tmp_path):
+    config = STTConfig(temp_dir=str(tmp_path))
+    registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())
+    registry.status = "ready"
+    manager = SessionManager(config, registry)
+    first = await manager.create(StartMessage(session_id="s1", user_id="u1"))
+
+    with pytest.raises(STTProtocolError):
+        await manager.create(StartMessage(session_id="s1", user_id="u1"))
+
+    manager.mark_disconnected("s1")
+    with pytest.raises(STTProtocolError):
+        await manager.create(StartMessage(session_id="s1", user_id="u2"))
+
+    second = await manager.create(StartMessage(session_id="s1", user_id="u1"))
+    assert second is not first and first.closed
+    assert manager.sessions["s1"] is second
+    await manager.shutdown()
+
+
+@pytest.mark.asyncio
 async def test_duplex_session_disables_legacy_final_sink(tmp_path):
     config = STTConfig(temp_dir=str(tmp_path))
     registry = STTModelRegistry(config, primary=FakePrimary(), verifier=FakeVerifier())

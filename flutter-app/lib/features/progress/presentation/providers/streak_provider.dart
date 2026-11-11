@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 
@@ -7,9 +8,25 @@ import 'package:lexilingo_app/features/progress/domain/repositories/progress_rep
 /// Clean Architecture: Presentation layer state management
 class StreakProvider extends ChangeNotifier {
   final ProgressRepository _repository;
+  final NotificationService? _notifications;
 
-  StreakProvider({required ProgressRepository repository})
-    : _repository = repository;
+  StreakProvider({
+    required ProgressRepository repository,
+    NotificationService? notificationService,
+  }) : _repository = repository,
+       _notifications = notificationService;
+
+  void _refreshCheckinReminders() {
+    final streak = _streak;
+    if (_notifications == null || streak == null) return;
+    _notifications
+        .refreshCheckinReminders(
+          currentStreak: streak.currentStreak,
+          longestStreak: streak.longestStreak,
+          doneToday: streak.isActiveToday,
+        )
+        .catchError((Object e) => debugPrint('Check-in reminder refresh: $e'));
+  }
 
   // State
   StreakEntity? _streak;
@@ -55,6 +72,7 @@ class StreakProvider extends ChangeNotifier {
       },
       (streakData) {
         _streak = streakData;
+        _refreshCheckinReminders();
       },
     );
 
@@ -105,6 +123,7 @@ class StreakProvider extends ChangeNotifier {
         _milestoneJustReached =
             updateResult.streakIncreased && _streak!.isMilestone;
         success = true;
+        _refreshCheckinReminders();
       },
     );
 

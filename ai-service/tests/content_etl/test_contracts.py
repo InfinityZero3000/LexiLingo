@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from datetime import UTC, datetime
 
 import pytest
@@ -15,6 +16,14 @@ from api.services.content_etl.contracts import (
     SourceName,
     compute_source_record_checksum,
 )
+
+
+@pytest.fixture(autouse=True)
+def _no_inherited_etl_pins(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Settings(_env_file=None) still reads os.environ, which an earlier
+    # api.main import fills from the machine's .env.
+    for name in [k for k in os.environ if k.startswith("CONTENT_ETL_")]:
+        monkeypatch.delenv(name)
 
 
 def _manifest_payload() -> dict:

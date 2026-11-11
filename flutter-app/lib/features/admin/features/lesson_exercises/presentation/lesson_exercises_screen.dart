@@ -1,3 +1,6 @@
+import 'dart:math';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -62,6 +65,31 @@ const _choiceTypes = <String>{
   'vocabulary_flashcard',
   'reading_comprehension',
 };
+
+// Built from fields rather than edited option by option: an arrange bank is
+// the answer's own words, and pair options are every key then every value.
+const _pairTypes = <String>{
+  'match_word_to_meaning',
+  'categorization',
+  'cognitive_fluidity',
+};
+
+/// Word-bank tiles for [sentence], shuffled so the bank never reads as the
+/// answer. Mirrors `arrange_tiles` in backend-service/app/models/course.py.
+List<String> arrangeBankFor(String sentence, int seed) {
+  final tiles = sentence
+      .split(RegExp(r'\s+'))
+      .map((w) => w.replaceAll(RegExp(r'^[.,?!;:]+|[.,?!;:]+$'), ''))
+      .where((w) => w.isNotEmpty)
+      .toList();
+  if (tiles.toSet().length < 2) return tiles;
+  final shuffled = List.of(tiles);
+  final random = Random(seed);
+  do {
+    shuffled.shuffle(random);
+  } while (shuffled.join(' ') == tiles.join(' '));
+  return shuffled;
+}
 
 class LessonExercisesScreen extends StatefulWidget {
   final String lessonId;
@@ -132,11 +160,18 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Exercises saved successfully.')),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
+      // The server names the exercise it refused; a generic message would
+      // leave the admin guessing which one to fix.
+      final body = error is DioException ? error.response?.data : null;
+      final detail = body is Map ? body['error'] : null;
+      final reason = detail is Map ? detail['message'] : null;
       setState(() {
         _saving = false;
-        _error = 'Could not save lesson exercises.';
+        _error = reason is String
+            ? 'Could not save: $reason'
+            : 'Could not save lesson exercises.';
       });
     }
   }
@@ -467,6 +502,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
   late final TextEditingController _difficulty;
   late final TextEditingController _points;
   late List<_EditableOption> _options;
+  late final TextEditingController _pairs;
 
   @override
   void initState() {
@@ -487,6 +523,15 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     if (_choiceTypes.contains(_uiType) && _options.isEmpty) {
       _options = [_EditableOption(), _EditableOption()];
     }
+    _pairs = TextEditingController(
+      text: _pairTypes.contains(_uiType)
+          ? (exercise?.correctAnswer ?? '')
+              .split(',')
+              .map((p) => p.trim())
+              .where((p) => p.isNotEmpty)
+              .join('\n')
+          : '',
+    );
   }
 
   @override
@@ -500,6 +545,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
       _imageUrl,
       _difficulty,
       _points,
+      _pairs,
     ]) {
       controller.dispose();
     }
@@ -543,6 +589,19 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     setState(() => _options[index].isCorrect = selected);
   }
 
+  String? _pairsValidator(String? value) {
+    final lines = (value ?? '').split('\n').where((l) => l.trim().isNotEmpty);
+    if (lines.length < 2) return 'Enter at least 2 pairs, one per line';
+    for (final line in lines) {
+      final parts = line.split(':');
+      if (parts.length != 2 || parts.any((p) => p.trim().isEmpty)) {
+        return 'Each line must be "word: match"';
+      }
+      if (line.contains(',')) return 'A pair cannot contain a comma';
+    }
+    return null;
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
     if (_choiceTypes.contains(_uiType)) {
@@ -555,16 +614,48 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
       }
       _correctAnswer.text = correct.single.text.text.trim();
     }
-    final options = _choiceTypes.contains(_uiType)
-        ? List.generate(
-            _options.length,
-            (index) => ExerciseOption(
-              id: index.toString(),
-              text: _options[index].text.text.trim(),
-              isCorrect: _options[index].isCorrect,
-            ),
-          )
-        : null;
+    List<ExerciseOption>? options;
+    if (_choiceTypes.contains(_uiType)) {
+      options = List.generate(
+        _options.length,
+        (index) => ExerciseOption(
+          id: index.toString(),
+          text: _options[index].text.text.trim(),
+          isCorrect: _options[index].isCorrect,
+        ),
+      );
+    } else if (_uiType == 'arrange_the_sentence') {
+      final bank = arrangeBankFor(
+        _correctAnswer.text.trim(),
+        _question.text.hashCode,
+      );
+      options = [
+        for (var i = 0; i < bank.length; i++)
+          ExerciseOption(id: '$i', text: bank[i], isCorrect: false),
+      ];
+    } else if (_pairTypes.contains(_uiType)) {
+      final pairs = _pairs.text
+          .split('\n')
+          .where((l) => l.trim().isNotEmpty)
+          .map((l) => l.split(':').map((p) => p.trim()).toList())
+          .toList();
+      final texts = [...pairs.map((p) => p[0]), ...pairs.map((p) => p[1])];
+      options = [
+        for (var i = 0; i < texts.length; i++)
+          ExerciseOption(
+            id: '$i',
+            text: texts[i],
+            isCorrect: i >= pairs.length,
+          ),
+      ];
+      // ", " is the separator the grader splits on.
+      _correctAnswer.text = pairs.map((p) => '${p[0]}:${p[1]}').join(', ');
+    } else if (_uiType == widget.exercise?.uiType) {
+      // Types this form has no option editor for (fill-in with choices,
+      // grammar correction in choice mode) keep what they had — dropping
+      // them on save is how one typo fix used to wipe a lesson.
+      options = widget.exercise?.options;
+    }
     Navigator.pop(
       context,
       Exercise(
@@ -688,12 +779,27 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            _Field(
-              controller: _correctAnswer,
-              label: 'Correct answer',
-              validator: _required,
-            ),
+            if (_pairTypes.contains(_uiType)) ...[
+              const SizedBox(height: 16),
+              _Field(
+                controller: _pairs,
+                label: _uiType == 'categorization'
+                    ? 'Pairs, one per line — word: category'
+                    : 'Pairs, one per line — word: meaning',
+                maxLines: 6,
+                validator: _pairsValidator,
+              ),
+            ] else ...[
+              const SizedBox(height: 16),
+              _Field(
+                controller: _correctAnswer,
+                label: _uiType == 'arrange_the_sentence'
+                    ? 'Correct sentence (the word bank is built from it)'
+                    : 'Correct answer',
+                validator:
+                    _uiType == 'short_writing_answer' ? null : _required,
+              ),
+            ],
             const SizedBox(height: 16),
             _Field(
               controller: _explanation,

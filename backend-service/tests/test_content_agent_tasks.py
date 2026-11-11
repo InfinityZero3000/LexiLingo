@@ -62,6 +62,20 @@ def test_public_task_errors_do_not_expose_exception_payloads():
     assert "private uploaded definition" not in message
 
 
+def test_oversized_snapshot_gets_an_actionable_public_message():
+    request = httpx.Request("POST", "https://ai.internal/snapshots")
+    error = httpx.HTTPStatusError(
+        "Job record limit exceeded (20000)",
+        request=request,
+        response=httpx.Response(413, request=request),
+    )
+
+    message = _public_error_message(error)
+
+    assert "more records than one job can carry" in message
+    assert "20000" not in message
+
+
 async def test_worker_attaches_exact_pinned_snapshots_before_generation():
     calls = []
 

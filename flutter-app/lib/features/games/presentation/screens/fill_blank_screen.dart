@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.da
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
 import 'package:lexilingo_app/features/games/presentation/screens/game_result_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/widgets/answer_feedback.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_load_state.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/game_powerup_tray.dart';
 
@@ -43,7 +44,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   bool _answered = false;
   bool _gameLoaded = false;
   bool _isFinishing = false;
-  String? _feedbackTip;
+  AnswerVerdict? _verdict;
+  final _scroll = ScrollController();
   final Map<String, String> _submittedAnswers = {};
   final Set<int> _eliminatedIndices = {};
   bool _luckyCloverActive = false;
@@ -67,6 +69,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   void dispose() {
     _timer?.cancel();
     _confettiController.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -80,9 +83,10 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       _timeLeft = seconds;
       _selectedIndex = null;
       _answered = false;
-      _feedbackTip = null;
+      _verdict = null;
       _eliminatedIndices.clear();
     });
+    if (_scroll.hasClients) _scroll.jumpTo(0);
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
@@ -116,8 +120,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       case ShopItemEntity.effectSkipToken:
         _timer?.cancel();
         _submittedAnswers[q.id] = '';
-        setState(() => _answered = true);
-        Future.delayed(const Duration(milliseconds: 300), _nextQuestion);
+        _answered = true;
+        _nextQuestion();
         break;
       case ShopItemEntity.effectRevealHint:
         final wrongIndices = List.generate(q.options.length, (i) => i)
@@ -149,11 +153,20 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     _submittedAnswers[q.id] = '';
     setState(() {
       _answered = true;
-      _feedbackTip = q.explanation.isNotEmpty
-          ? q.explanation
-          : 'fillBlank.timeoutFeedback'.tr();
+      _verdict = AnswerVerdict.timeout;
     });
-    Future.delayed(const Duration(seconds: 2), _nextQuestion);
+    _revealFeedback();
+  }
+
+  void _revealFeedback() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scroll.hasClients) return;
+      _scroll.animateTo(
+        _scroll.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _selectAnswer(int index) {
@@ -171,19 +184,13 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     setState(() {
       _selectedIndex = index;
       _answered = true;
-      _feedbackTip = correct
-          ? (q.grammarTip.isNotEmpty
-                ? q.grammarTip
-                : 'fillBlank.correctFeedback'.tr())
-          : (q.explanation.isNotEmpty
-                ? q.explanation
-                : 'fillBlank.incorrectFeedback'.tr());
+      _verdict = correct ? AnswerVerdict.correct : AnswerVerdict.wrong;
     });
-    Future.delayed(const Duration(seconds: 2), _nextQuestion);
+    _revealFeedback();
   }
 
   void _nextQuestion() {
-    if (!mounted || _isFinishing) return;
+    if (!mounted || _isFinishing || !_answered) return;
     final game = context.read<GamesProvider>().fillBlank;
     if (game == null) return;
     if (_questionIndex + 1 >= game.questions.length) {
@@ -410,6 +417,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                   ),
                   Expanded(
                     child: SingleChildScrollView(
+                      controller: _scroll,
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,50 +525,33 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                               );
                             }),
                           ),
-                          // Feedback tip
-                          if (_feedbackTip != null) ...[
+                          if (_verdict != null) ...[
                             const SizedBox(height: 16),
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color:
-                                    _answered &&
-                                        _selectedIndex != null &&
-                                        q.options[_selectedIndex!] ==
-                                            q.correctAnswer
-                                    ? AppColors.greenSuccess.withValues(
-                                        alpha: 0.1,
-                                      )
-                                    : Colors.red.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color:
-                                      _answered &&
-                                          _selectedIndex != null &&
-                                          q.options[_selectedIndex!] ==
-                                              q.correctAnswer
-                                      ? AppColors.greenSuccess
-                                      : AppColors.errorBright,
-                                ),
+                            AnswerFeedbackPanel(
+                              verdict: _verdict!,
+                              chosen: _selectedIndex == null
+                                  ? ''
+                                  : q.options[_selectedIndex!],
+                              correctAnswer: q.correctAnswer,
+                              completedText: q.sentence.replaceFirst(
+                                RegExp(r'_{2,}'),
+                                q.correctAnswer,
                               ),
-                              child: Text(
-                                _feedbackTip!,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurface,
-                                  height: 1.4,
-                                ),
-                              ),
+                              explanation: q.explanation,
+                              ruleTip: q.grammarTip,
                             ),
                           ],
                         ],
                       ),
                     ),
                   ),
+                  if (_answered)
+                    GameNextBar(
+                      label: _questionIndex + 1 >= game.questions.length
+                          ? 'games.answerFeedback.seeResults'.tr()
+                          : 'games.answerFeedback.next'.tr(),
+                      onPressed: _nextQuestion,
+                    ),
                 ],
               ),
               // Confetti overlay — fires on win (skill: gamification-confetti-win)

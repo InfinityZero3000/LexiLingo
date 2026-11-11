@@ -8,6 +8,7 @@ class UserStatsModel extends UserStatsEntity {
     required super.totalCoursesCompleted,
     required super.totalLessonsCompleted,
     required super.totalVocabularyMastered,
+    super.totalVocabularyReviewed,
     required super.totalTestsPassed,
     required super.totalCertificatesEarned,
     required super.averageTestScore,
@@ -29,6 +30,10 @@ class UserStatsModel extends UserStatsEntity {
           (json['words_mastered'] ?? json['total_vocabulary_mastered'])
               as int? ??
           0,
+      totalVocabularyReviewed:
+          (json['words_reviewed'] ?? json['total_vocabulary_reviewed'])
+              as int? ??
+          0,
       totalTestsPassed: json['total_tests_passed'] as int? ?? 0,
       totalCertificatesEarned: json['total_certificates_earned'] as int? ?? 0,
       averageTestScore: (json['average_test_score'] as num?)?.toDouble() ?? 0.0,
@@ -42,6 +47,7 @@ class UserStatsModel extends UserStatsEntity {
       'total_courses_completed': totalCoursesCompleted,
       'total_lessons_completed': totalLessonsCompleted,
       'total_vocabulary_mastered': totalVocabularyMastered,
+      'total_vocabulary_reviewed': totalVocabularyReviewed,
       'total_tests_passed': totalTestsPassed,
       'total_certificates_earned': totalCertificatesEarned,
       'average_test_score': averageTestScore,

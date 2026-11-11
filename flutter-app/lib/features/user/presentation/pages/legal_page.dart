@@ -41,81 +41,43 @@ class LegalPage extends StatelessWidget {
   List<Widget> _privacySections(BuildContext context) => [
     _Section(
       title: 'legal.privacy1Title'.tr(),
-      body:
-          'legal.privacy1Body'.tr(),
+      body: 'legal.privacy1Body'.tr(),
     ),
     _Section(
       title: 'legal.privacy2Title'.tr(),
-      body:
-          'legal.privacy2Body'.tr(),
+      body: 'legal.privacy2Body'.tr(),
     ),
     _Section(
       title: 'legal.privacy3Title'.tr(),
-      body:
-          'legal.privacy3Body'.tr(),
+      body: 'legal.privacy3Body'.tr(),
     ),
     _Section(
       title: 'legal.privacy4Title'.tr(),
-      body:
-          'legal.privacy4Body'.tr(),
+      body: 'legal.privacy4Body'.tr(),
     ),
     _Section(
       title: 'legal.privacy5Title'.tr(),
-      body:
-          'legal.privacy5Body'.tr(),
+      body: 'legal.privacy5Body'.tr(),
     ),
     _Section(
       title: 'legal.privacy6Title'.tr(),
-      body:
-          'legal.privacy6Body'.tr(),
+      body: 'legal.privacy6Body'.tr(),
     ),
     _Section(
       title: 'legal.privacy7Title'.tr(),
-      body:
-          'legal.privacy7Body'.tr(),
+      body: 'legal.privacy7Body'.tr(),
     ),
   ];
 
   List<Widget> _termsSections(BuildContext context) => [
-    _Section(
-      title: 'legal.terms1Title'.tr(),
-      body:
-          'legal.terms1Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms2Title'.tr(),
-      body:
-          'legal.terms2Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms3Title'.tr(),
-      body:
-          'legal.terms3Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms4Title'.tr(),
-      body:
-          'legal.terms4Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms5Title'.tr(),
-      body:
-          'legal.terms5Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms6Title'.tr(),
-      body:
-          'legal.terms6Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms7Title'.tr(),
-      body:
-          'legal.terms7Body'.tr(),
-    ),
-    _Section(
-      title: 'legal.terms8Title'.tr(),
-      body: 'legal.terms8Body'.tr(),
-    ),
+    _Section(title: 'legal.terms1Title'.tr(), body: 'legal.terms1Body'.tr()),
+    _Section(title: 'legal.terms2Title'.tr(), body: 'legal.terms2Body'.tr()),
+    _Section(title: 'legal.terms3Title'.tr(), body: 'legal.terms3Body'.tr()),
+    _Section(title: 'legal.terms4Title'.tr(), body: 'legal.terms4Body'.tr()),
+    _Section(title: 'legal.terms5Title'.tr(), body: 'legal.terms5Body'.tr()),
+    _Section(title: 'legal.terms6Title'.tr(), body: 'legal.terms6Body'.tr()),
+    _Section(title: 'legal.terms7Title'.tr(), body: 'legal.terms7Body'.tr()),
+    _Section(title: 'legal.terms8Title'.tr(), body: 'legal.terms8Body'.tr()),
   ];
 }
 

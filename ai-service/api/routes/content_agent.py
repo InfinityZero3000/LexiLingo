@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hmac
 import logging
 from typing import Annotated
@@ -121,6 +122,12 @@ async def get_content_agent_service() -> ContentAgentService:
     return ContentAgentService(store=_store, generator=generator)
 
 
+def _etl_storage() -> SnapshotStorage:
+    return SnapshotStorage(
+        getattr(get_settings(), "CONTENT_ETL_STORAGE_ROOT", "/data/content-etl")
+    )
+
+
 @router.post(
     "/jobs/{job_id}/records",
     response_model=RecordBatchResponse,
@@ -171,7 +178,9 @@ async def generate_artifact(
     service: ContentAgentService = Depends(get_content_agent_service),
 ) -> ContentAgentArtifact:
     try:
-        return await service.generate(job_id, request)
+        return await service.generate(
+            job_id, request, storage_factory=_etl_storage
+        )
     except JobContextNotFound as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -216,39 +225,44 @@ async def list_sources(
     _token: str = Depends(verify_content_agent_token),
 ) -> list[SourceSnapshotDescriptor]:
     """List only active, integrity-verified ETL snapshots."""
-    settings = get_settings()
-    storage = SnapshotStorage(
-        getattr(settings, "CONTENT_ETL_STORAGE_ROOT", "/data/content-etl")
-    )
-    entries: list[SourceSnapshotDescriptor] = []
-    for pointer in sorted((storage.root / "active").glob("*.json")):
-        try:
-            manifest = storage.read_active_manifest(pointer.stem)
-            definition = get_source_definition(manifest.source_name)
-        except (StorageIntegrityError, ValueError):
-            logger.exception("Ignoring invalid active ETL pointer %s", pointer.name)
-            continue
-        entries.append(
-            SourceSnapshotDescriptor(
-                source_id=manifest.source_name.value,
-                source_name=manifest.source_name.value,
-                source_version=manifest.source_version,
-                snapshot_id=manifest.snapshot_id,
-                official_url=str(manifest.official_url),
-                license_id=manifest.license_id.value,
-                license_url=str(manifest.license_url),
-                attribution_text=manifest.attribution_text,
-                retrieved_at=manifest.retrieved_at,
-                raw_checksum=manifest.raw_sha256,
-                normalized_sha256=manifest.normalized_sha256,
-                normalized_bytes=manifest.normalized_bytes,
-                record_checksum_root=manifest.record_checksum_root,
-                adapter_version=manifest.adapter_version,
-                record_count=manifest.counts.approved,
-                enabled=definition.default_enabled,
+    storage = _etl_storage()
+
+    def collect() -> list[SourceSnapshotDescriptor]:
+        entries: list[SourceSnapshotDescriptor] = []
+        for pointer in sorted((storage.root / "active").glob("*.json")):
+            try:
+                manifest = storage.read_active_manifest(pointer.stem)
+                definition = get_source_definition(manifest.source_name)
+            except (StorageIntegrityError, ValueError):
+                logger.exception(
+                    "Ignoring invalid active ETL pointer %s", pointer.name
+                )
+                continue
+            entries.append(
+                SourceSnapshotDescriptor(
+                    source_id=manifest.source_name.value,
+                    source_name=manifest.source_name.value,
+                    source_version=manifest.source_version,
+                    snapshot_id=manifest.snapshot_id,
+                    official_url=str(manifest.official_url),
+                    license_id=manifest.license_id.value,
+                    license_url=str(manifest.license_url),
+                    attribution_text=manifest.attribution_text,
+                    retrieved_at=manifest.retrieved_at,
+                    raw_checksum=manifest.raw_sha256,
+                    normalized_sha256=manifest.normalized_sha256,
+                    normalized_bytes=manifest.normalized_bytes,
+                    record_checksum_root=manifest.record_checksum_root,
+                    adapter_version=manifest.adapter_version,
+                    record_count=manifest.counts.approved,
+                    enabled=definition.default_enabled,
+                )
             )
-        )
-    return entries
+        return entries
+
+    # Verifying a large snapshot is minutes of CPU on first sight; keep it off
+    # the event loop that also serves chat.
+    return await asyncio.to_thread(collect)
 
 
 @router.post(
@@ -263,14 +277,11 @@ async def attach_snapshots(
     service: ContentAgentService = Depends(get_content_agent_service),
 ) -> SnapshotAttachmentResponse:
     """Attach exact approved snapshot records to a job context."""
-    settings = get_settings()
-    storage_root = getattr(settings, "CONTENT_ETL_STORAGE_ROOT", "/data/content-etl")
     try:
-        storage = SnapshotStorage(storage_root)
         return await service.attach_snapshots(
             job_id,
             request.snapshots,
-            storage=storage,
+            storage=_etl_storage(),
         )
     except RecordLimitExceeded as exc:
         raise HTTPException(

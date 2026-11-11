@@ -29,11 +29,11 @@ load_dotenv(os.path.join(ROOT, ".env"), override=False)
 os.environ["KUZU_DB_PATH"] = sys.argv[1]
 os.environ["LEARNER_STATE_MODE"] = "read"          # as production runs it
 os.environ["V3_ENABLE_GRAPH_ANALYTICS"] = "true"
-os.environ["GROQ_MODEL"] = "qwen/qwen3.6-27b"      # prod model, not the local .env one
+os.environ["GROQ_MODEL"] = "qwen/qwen3.8-27b"      # prod model, not the local .env one
 os.environ["TRACECAG_LLM_MAX_RETRIES"] = "2"
 os.environ["OLLAMA_BASE_URL"] = "http://127.0.0.1:1"   # no silent 1.7B replies
 N = int(sys.argv[2]) if len(sys.argv) > 2 else 60
-EXPECTED_GEN = "groq/qwen/qwen3.6-27b"
+EXPECTED_GEN = "groq/qwen/qwen3.8-27b"
 OLLAMA = "http://localhost:11434/api/chat"
 JUDGE_LOCAL = "llama3.1:8b"
 
@@ -85,7 +85,7 @@ async def judge_groq(prompt):
         provider="groq",
         url="https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
-        payload={"model": "qwen/qwen3.6-27b",
+        payload={"model": "qwen/qwen3.8-27b",
                  "messages": [{"role": "user", "content": prompt}],
                  "response_format": {"type": "json_object"},
                  "temperature": 0.0, "max_tokens": 200},

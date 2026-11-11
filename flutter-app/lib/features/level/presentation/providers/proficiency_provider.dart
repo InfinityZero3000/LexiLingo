@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../domain/entities/level_history_entry.dart';
 import '../../domain/entities/proficiency_entity.dart';
 import '../../data/datasources/proficiency_data_source.dart';
 
@@ -23,6 +24,11 @@ class ProficiencyProvider with ChangeNotifier {
   bool _showLevelUpDialog = false;
   String? _previousLevel;
 
+  List<LevelHistoryEntry> _history = const [];
+  bool _historyLoaded = false;
+  bool _historyLoading = false;
+  bool _historyFailed = false;
+
   ProficiencyProvider({ProficiencyDataSource? dataSource})
     : _dataSource = dataSource;
 
@@ -32,6 +38,12 @@ class ProficiencyProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get showLevelUpDialog => _showLevelUpDialog;
   String? get previousLevel => _previousLevel;
+
+  /// Level changes, oldest first.
+  List<LevelHistoryEntry> get history => _history;
+  bool get historyLoaded => _historyLoaded;
+  bool get historyLoading => _historyLoading;
+  bool get historyFailed => _historyFailed;
 
   // Convenience getters
   String get assessedLevel => _profile.assessedLevel;
@@ -91,6 +103,29 @@ class ProficiencyProvider with ChangeNotifier {
     }
   }
 
+  /// Load the CEFR level-change history once; pass [force] to refetch.
+  Future<void> loadHistory({bool force = false}) async {
+    final dataSource = _dataSource;
+    if (dataSource == null || _historyLoading || (_historyLoaded && !force)) {
+      return;
+    }
+
+    _historyLoading = true;
+    _historyFailed = false;
+    notifyListeners();
+
+    try {
+      _history = parseLevelHistory(await dataSource.getLevelHistory());
+      _historyLoaded = true;
+    } catch (e) {
+      _historyFailed = true;
+      debugPrint('Error loading level history: $e');
+    } finally {
+      _historyLoading = false;
+      notifyListeners();
+    }
+  }
+
   /// Record exercise results and update proficiency
   ///
   /// Call this after completing exercises to:
@@ -112,6 +147,7 @@ class ProficiencyProvider with ChangeNotifier {
       if (result.levelChanged) {
         _previousLevel = result.previousLevel;
         _showLevelUpDialog = true;
+        _historyLoaded = false; // a new row now exists
         debugPrint(
           'Level up! ${result.previousLevel} -> ${result.currentLevel}',
         );
@@ -125,19 +161,6 @@ class ProficiencyProvider with ChangeNotifier {
       _errorMessage = 'Failed to record exercises: $e';
       notifyListeners();
       debugPrint('Error recording exercises: $e');
-      return null;
-    }
-  }
-
-  /// Get detailed requirements check for next level
-  Future<Map<String, dynamic>?> checkLevelRequirements() async {
-    final dataSource = _dataSource;
-    if (dataSource == null) return null;
-
-    try {
-      return await dataSource.checkLevelRequirements();
-    } catch (e) {
-      debugPrint('Error checking level requirements: $e');
       return null;
     }
   }

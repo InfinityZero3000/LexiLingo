@@ -41,6 +41,12 @@ class UserProficiencyProfile(Base):
     # Official CEFR level based on proficiency assessment
     assessed_level = Column(String(5), default="A1", nullable=False)
     overall_score = Column(Float, default=0.0)
+
+    # Lowest level the evidence-based recalculation may report: set by a formal
+    # test, lowered only by a newer one. Without it the next lesson recomputes
+    # the level from activity counts alone and erases the test result.
+    placement_level = Column(String(5), nullable=True)
+    placement_at = Column(TZDateTime, nullable=True)
     
     # XP is separate from proficiency (for gamification)
     total_xp = Column(Integer, default=0)

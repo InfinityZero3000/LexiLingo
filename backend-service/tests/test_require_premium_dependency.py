@@ -49,3 +49,21 @@ async def test_decision_reads_the_server_row_for_this_user():
     ):
         await require_premium(current_user=user, db=AsyncMock())
     assert is_active.await_args.args[1] == user.id
+
+
+@pytest.mark.asyncio
+async def test_force_flag_makes_everyone_premium_without_touching_the_db():
+    from app.core.config import settings
+    from app.services.entitlement_service import EntitlementService
+
+    db = AsyncMock()
+    with patch.object(settings, "PREMIUM_FORCE_ENABLED", True):
+        assert await EntitlementService.is_active(db, uuid.uuid4()) is True
+    db.execute.assert_not_called()
+
+
+def test_force_flag_is_refused_in_production():
+    from app.core.config import Settings
+
+    with pytest.raises(ValueError, match="PREMIUM_FORCE_ENABLED"):
+        Settings(APP_ENV="production", PREMIUM_FORCE_ENABLED=True, DEBUG=False)

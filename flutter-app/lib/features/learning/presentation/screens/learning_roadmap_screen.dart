@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/course_roadmap.dart';
 import 'package:lexilingo_app/features/learning/presentation/painters/roadmap_path_painter.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
@@ -286,8 +287,8 @@ class _ZigzagRoadmap extends StatelessWidget {
                             layout: n,
                             onTap: n.lesson.isLocked
                                 ? null
-                                : () {
-                                    Navigator.push(
+                                : () async {
+                                    await Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (_) => LearningSessionScreen(
@@ -295,6 +296,14 @@ class _ZigzagRoadmap extends StatelessWidget {
                                           courseId: courseId,
                                         ),
                                       ),
+                                    );
+                                    if (!context.mounted) return;
+                                    context.read<LearningProvider>().loadRoadmap(
+                                      courseId,
+                                      refresh: true,
+                                    );
+                                    context.read<CourseProvider>().loadCourseDetail(
+                                      courseId,
                                     );
                                   },
                           ),

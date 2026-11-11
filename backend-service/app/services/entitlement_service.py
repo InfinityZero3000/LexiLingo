@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.models.entitlement import UserEntitlement
 from app.services.revenuecat_client import RevenueCatClient, RevenueCatUnavailableError
 
@@ -32,6 +33,8 @@ class EntitlementService:
 
     @staticmethod
     async def is_active(db: AsyncSession, user_id: UUID, entitlement_id: str = "premium") -> bool:
+        if settings.PREMIUM_FORCE_ENABLED:
+            return True
         row = await EntitlementService.get(db, user_id, entitlement_id)
         if row is None or row.status != "active":
             return False
@@ -74,6 +77,17 @@ class EntitlementService:
             is_active = expires_at is None or expires_at > datetime.now(timezone.utc)
             status = "active" if is_active else "expired"
             product_id = grant.get("product_identifier")
+
+        # A premium an admin granted is not in RevenueCat, so "no grant there" must not
+        # erase it before it runs out; a real paid grant (status == "active") still wins.
+        if (
+            row is not None
+            and row.source == "admin"
+            and row.status == "active"
+            and status != "active"
+            and (row.expires_at is None or row.expires_at > datetime.now(timezone.utc))
+        ):
+            return row, False
 
         if row is None:
             row = UserEntitlement(

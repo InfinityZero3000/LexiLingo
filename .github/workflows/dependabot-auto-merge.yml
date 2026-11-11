@@ -28,13 +28,20 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable auto-merge after required checks pass
+      - name: Enable auto-merge when branch protection is configured
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
           steps.metadata.outputs.update-type == 'version-update:semver-minor'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+          REPOSITORY: ${{ github.repository }}
         run: |
-          # --auto only merges when branch protection required checks are green.
+          # GitHub rejects --auto on unprotected branches. Keep the approval,
+          # but leave the merge manual until required checks are configured.
+          if [ "$(gh api "repos/$REPOSITORY/branches/$TARGET_BRANCH" --jq .protected)" != "true" ]; then
+            echo "::warning::Auto-merge skipped: $TARGET_BRANCH has no branch protection"
+            exit 0
+          fi
           gh pr merge --auto --squash "$PR_URL"

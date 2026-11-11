@@ -18,7 +18,9 @@ class GamificationRepositoryImpl implements GamificationRepository {
   }
 
   @override
-  Future<List<WalletTransactionEntity>> getTransactions({int limit = 50}) async {
+  Future<List<WalletTransactionEntity>> getTransactions({
+    int limit = 50,
+  }) async {
     final list = await _remote.getTransactions(limit: limit);
     return list.map((e) => WalletTransactionEntity.fromJson(e)).toList();
   }

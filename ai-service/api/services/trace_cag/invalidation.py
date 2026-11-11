@@ -4,12 +4,29 @@ from __future__ import annotations
 
 from collections import defaultdict
 import hashlib
+import os
 from typing import Iterable, Mapping, Any
+
+from api.services.trace_cag.bounded import LRUDict
 
 
 _MEM_REVERSE_INDEX: dict[str, set[str]] = defaultdict(set)
 _MEM_ARTIFACT_DEPENDENCIES: dict[str, set[str]] = {}
-_MEM_DEPENDENCY_TOKENS: dict[str, str] = {}
+
+
+def _tokens_max() -> int:
+    try:
+        return max(1, int(os.getenv("TRACECAG_MEM_DEP_TOKENS_MAX", "50000")))
+    except ValueError:
+        return 50000
+
+
+# One token per dependency key, and every user adds a `learner:<id>:profile` key, so the registry
+# is capped. A token a cached answer still depends on is pinned; any other is re-seeded from the
+# next request's certificate, so evicting it is not a mutation and cannot roll a version back.
+_MEM_DEPENDENCY_TOKENS: dict[str, str] = LRUDict(
+    _tokens_max(), can_evict=lambda key: key not in _MEM_REVERSE_INDEX
+)
 
 
 def register_reverse_edges(artifact_key: str, dependencies: Iterable[Mapping[str, Any]]) -> None:

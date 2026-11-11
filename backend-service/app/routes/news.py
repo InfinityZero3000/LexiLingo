@@ -384,6 +384,9 @@ def _strip_html_basic(html: str) -> str:
 @router.get("/{article_id}/quiz")
 async def get_article_quiz(
     article_id: str,
+    title: str = Query("", max_length=300),
+    description: str = Query("", max_length=600),
+    content: str = Query("", max_length=1500),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -396,14 +399,18 @@ async def get_article_quiz(
     
     Cache: permanent (article content doesn't change).
     """
-    cache_key = f"news:quiz:v2:{article_id}"
+    # The id is a one-way md5, so the article text has to come from the client.
+    # Without it the quiz is generic and must not share a key with a real one.
+    article = {"title": title, "description": description, "content": content}
+    has_context = any(v.strip() for v in article.values())
+    cache_key = f"news:quiz:v3:{article_id}" if has_context else f"news:quiz:v3:bare:{article_id}"
     cache_service = APICacheService(db)
-    
+
     try:
         result = await cache_service.get_or_fetch(
             cache_key=cache_key,
             api_name="newsapi",  # Minimal cost — uses cached article text
-            fetch_fn=lambda: _generate_quiz(article_id),
+            fetch_fn=lambda: _generate_quiz(article_id, article),
             priority=Priority.LOW,
             redis_ttl=604800,       # 7 days
             db_ttl=31536000,        # 1 year (permanent)
@@ -808,6 +815,8 @@ def _build_quiz_context(article_id: str, article: dict) -> dict:
 
 def _humanize_article_id(article_id: str) -> str:
     """Convert a cache-safe article ID into a readable fallback topic."""
+    if re.fullmatch(r"[0-9a-f]{8,}", article_id.lower()):
+        return "this news article"
     cleaned = re.sub(r"[_\-]+", " ", article_id).strip()
     cleaned = re.sub(r"\s+", " ", cleaned)
     return cleaned or "this news article"

@@ -115,90 +115,6 @@ void main() {
     );
   });
 
-  group('completeLesson', () {
-    const tLessonId = 'lesson-123';
-    const tScore = 85.0;
-
-    final tCompletionResult = LessonCompletionResultModel(
-      lessonId: tLessonId,
-      isPassed: true,
-      score: tScore,
-      bestScore: tScore,
-      xpEarned: 20,
-      totalXp: 140,
-      courseProgress: 50.0,
-      message: 'Great job!',
-    );
-
-    test('should return completion result when call is successful', () async {
-      // arrange
-      when(
-        mockRemoteDataSource.completeLesson(
-          lessonId: anyNamed('lessonId'),
-          score: anyNamed('score'),
-        ),
-      ).thenAnswer((_) async => tCompletionResult);
-
-      // act
-      final result = await repository.completeLesson(
-        lessonId: tLessonId,
-        score: tScore,
-      );
-
-      // assert
-      verify(
-        mockRemoteDataSource.completeLesson(lessonId: tLessonId, score: tScore),
-      );
-      expect(result, Right(tCompletionResult));
-    });
-
-    test('should return ServerFailure when server error occurs', () async {
-      // arrange
-      when(
-        mockRemoteDataSource.completeLesson(
-          lessonId: anyNamed('lessonId'),
-          score: anyNamed('score'),
-        ),
-      ).thenThrow(ServerException('Failed to complete lesson'));
-
-      // act
-      final result = await repository.completeLesson(
-        lessonId: tLessonId,
-        score: tScore,
-      );
-
-      // assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) => expect(failure, isA<ServerFailure>()),
-        (_) => fail('Expected Left but got Right'),
-      );
-    });
-
-    test('should return UnauthorizedFailure when not enrolled', () async {
-      // arrange
-      when(
-        mockRemoteDataSource.completeLesson(
-          lessonId: anyNamed('lessonId'),
-          score: anyNamed('score'),
-        ),
-      ).thenThrow(UnauthorizedException('Not enrolled in course'));
-
-      // act
-      final result = await repository.completeLesson(
-        lessonId: tLessonId,
-        score: tScore,
-      );
-
-      // assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) => expect(failure, isA<UnauthorizedFailure>()),
-        (_) => fail('Expected Left but got Right'),
-      );
-    });
-  });
-
   group('getCourseProgress', () {
     const tCourseId = 'course-123';
 
@@ -240,39 +156,6 @@ void main() {
 
       // act
       final result = await repository.getCourseProgress(tCourseId);
-
-      // assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) => expect(failure, isA<ServerFailure>()),
-        (_) => fail('Expected Left but got Right'),
-      );
-    });
-  });
-
-  group('getTotalXp', () {
-    const tTotalXp = 350;
-
-    test('should return total XP when call is successful', () async {
-      // arrange
-      when(mockRemoteDataSource.getTotalXp()).thenAnswer((_) async => tTotalXp);
-
-      // act
-      final result = await repository.getTotalXp();
-
-      // assert
-      verify(mockRemoteDataSource.getTotalXp());
-      expect(result, const Right(tTotalXp));
-    });
-
-    test('should return ServerFailure when error occurs', () async {
-      // arrange
-      when(
-        mockRemoteDataSource.getTotalXp(),
-      ).thenThrow(ServerException('Failed to fetch XP'));
-
-      // act
-      final result = await repository.getTotalXp();
 
       // assert
       expect(result.isLeft(), true);

@@ -13,7 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 
 from app.core.config import settings
-from app.core.dependencies import get_current_admin, get_current_user
+from app.core.dependencies import require_permission
 from app.core.redis import get_redis
 from app.models.user import User
 
@@ -238,35 +238,10 @@ async def ingest_ai_audit_event(
     return {"success": True}
 
 
-@router.get("/events/me")
-async def list_my_ai_audit_events(
-    limit: int = 50,
-    current_user: User = Depends(get_current_user),
-):
-    """Get latest AI audit events for the current authenticated user."""
-    safe_limit = min(max(limit, 1), 200)
-
-    redis_client = await get_redis()
-    if redis_client is None:
-        return {"events": [], "total": 0}
-
-    key_user = f"ai:audit:user:{str(current_user.id)}"
-    rows = await redis_client.lrange(key_user, 0, safe_limit - 1)
-
-    events: list[dict[str, Any]] = []
-    for row in rows:
-        try:
-            events.append(json.loads(row))
-        except Exception:
-            continue
-
-    return {"events": events, "total": len(events)}
-
-
 @router.get("/quality-summary")
 async def get_ai_quality_summary(
     limit: int = 500,
-    admin_user: User = Depends(get_current_admin),
+    admin_user: User = Depends(require_permission("ops:read")),
 ):
     """Get admin AI quality metrics from the rolling ai-audit event log."""
     safe_limit = min(max(limit, 1), 2000)

@@ -7,9 +7,15 @@ import json
 import pytest
 
 from app.core.redis import RedisClient
+from app.models.course import Course, Lesson, Unit
 from app.models.learner_state import LearnerConceptState
+from app.models.progress import UserCourseProgress
 from app.services.feature_processor import INSIGHTS_CACHE_PREFIX
-from app.services.recommendation_service import attach_mastery, build_profile
+from app.services.recommendation_service import (
+    _lesson_candidates,
+    attach_mastery,
+    build_profile,
+)
 
 pytestmark = pytest.mark.asyncio
 
@@ -126,3 +132,34 @@ async def test_endpoint_degrades_instead_of_failing(
     assert body["degraded"] is True
     assert body["surface"] == "home"
     assert isinstance(body["items"], list)
+
+
+async def test_lesson_candidates_come_only_from_published_enrolled_courses(
+    db_session, test_user
+):
+    """Publish state lives on Course; Lesson has no is_published column."""
+    titles = {}
+    for published in (True, False):
+        course = Course(
+            title=f"c-{published}", language="en", level="A1", is_published=published
+        )
+        db_session.add(course)
+        await db_session.flush()
+        unit = Unit(course_id=course.id, title="u", order_index=0)
+        db_session.add(unit)
+        await db_session.flush()
+        lesson = Lesson(
+            course_id=course.id,
+            unit_id=unit.id,
+            title=f"l-{published}",
+            order_index=0,
+            content={"exercises": [{"id": "e1", "type": "multiple_choice"}]},
+        )
+        db_session.add(lesson)
+        db_session.add(UserCourseProgress(user_id=test_user.id, course_id=course.id))
+        titles[published] = lesson.title
+    await db_session.flush()
+
+    candidates = await _lesson_candidates(db_session, test_user.id)
+
+    assert [c["title"] for c in candidates] == [titles[True]]

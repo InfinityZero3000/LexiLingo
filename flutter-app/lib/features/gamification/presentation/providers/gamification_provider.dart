@@ -13,9 +13,9 @@ class GamificationProvider extends ChangeNotifier {
   GamificationProvider({
     required GamificationRepository repository,
     bool? enableStarterReward,
-  })  : _repository = repository,
-        _enableStarterReward =
-            enableStarterReward ?? ApiConfig.enableStarterReward;
+  }) : _repository = repository,
+       _enableStarterReward =
+           enableStarterReward ?? ApiConfig.enableStarterReward;
 
   final GamificationRepository _repository;
   final bool _enableStarterReward;

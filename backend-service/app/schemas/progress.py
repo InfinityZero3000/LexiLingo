@@ -6,7 +6,7 @@ Enhanced for roadmap/learning path UI
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from uuid import UUID
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 from enum import Enum
 
 
@@ -28,38 +28,6 @@ class MasteryLevel(str, Enum):
     LEARNING = "learning"
     REVIEWING = "reviewing"
     MASTERED = "mastered"
-
-
-class LessonCompletionBase(BaseModel):
-    """Base lesson completion schema"""
-    lesson_id: str = Field(..., description="UUID of the lesson")
-    score: float = Field(..., ge=0, le=100, description="Score achieved (0-100)")
-    
-    @field_validator("score")
-    @classmethod
-    def validate_score(cls, v):
-        if v < 0 or v > 100:
-            raise ValueError('Score must be between 0 and 100')
-        return v
-
-
-class LessonCompletionCreate(LessonCompletionBase):
-    """Schema for marking a lesson as complete"""
-    pass
-
-
-class LessonCompletionResponse(BaseModel):
-    """Response after completing a lesson"""
-    lesson_id: str
-    is_passed: bool
-    score: float
-    best_score: float
-    xp_earned: int
-    total_xp: int
-    course_progress: float
-    message: str
-    
-    model_config = ConfigDict(from_attributes=True)
 
 
 class UserProgressSummary(BaseModel):

@@ -26,6 +26,7 @@ from typing import Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends, Query, Header, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure
 from api.clients.entitlement_client import is_premium
@@ -639,6 +640,62 @@ async def delete_lexi_session(
     await svc.lexi_store.delete_session(session_id)
     await svc.lexi_store.delete_messages(session_id)
     return {"success": True, "session_id": session_id}
+
+
+class SuggestRepliesRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+@router.post("/suggest-replies")
+async def suggest_lexi_replies(
+    body: SuggestRepliesRequest,
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Replies the caller could tap after Lexi asked a question; [] when none apply."""
+    from api.services.lexi_reply_suggestions import ends_with_question, suggest_replies
+
+    if not ends_with_question(body.text):
+        return {"options": []}
+    await enforce_user_quota(current_user.user_id, "lexi.suggest_replies")
+    return {"options": await suggest_replies(body.text)}
+
+
+@router.get("/memory")
+async def get_lexi_memory(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """What Lexi remembers about the caller from earlier chats."""
+    from api.services.lexi_memory import load_facts
+
+    return {"facts": await load_facts(db, current_user.user_id)}
+
+
+@router.delete("/memory")
+async def forget_lexi_memory(
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Wipe everything Lexi remembered about the caller."""
+    from api.services.lexi_memory import forget_facts
+
+    return {"success": True, "deleted": await forget_facts(db, current_user.user_id)}
+
+
+@router.delete("/memory/{key}")
+async def forget_lexi_memory_fact(
+    key: str,
+    db: AsyncIOMotorDatabase = Depends(get_database),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> Dict[str, Any]:
+    """Forget one remembered fact (preferred_name, occupation, goal, interests)."""
+    from api.services.lexi_memory import forget_fact
+
+    try:
+        await forget_fact(db, current_user.user_id, key)
+    except KeyError:
+        raise HTTPException(status_code=404, detail="Unknown memory key")
+    return {"success": True, "key": key}
 
 
 @router.get("/health")

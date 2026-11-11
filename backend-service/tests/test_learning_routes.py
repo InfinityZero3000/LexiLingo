@@ -603,3 +603,80 @@ def test_lesson_complete_response_accepts_achievement_ids():
 
     resp = LessonCompleteResponse(**base, achievements_unlocked=[rich["id"]])
     assert str(resp.achievements_unlocked[0]) == rich["id"]
+
+
+@pytest.mark.asyncio
+class TestProgressAgreesAcrossScreens:
+    """Roadmap, course detail and the enrolled list must report one progress."""
+
+    async def test_completing_a_lesson_moves_every_screen(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_user: User,
+        test_course_with_units: Course,
+    ):
+        test_course_with_units.level = "A1"
+        lesson = (
+            await db_session.execute(
+                select(Lesson)
+                .join(Unit, Unit.id == Lesson.unit_id)
+                .where(Unit.course_id == test_course_with_units.id)
+                .order_by(Unit.order_index, Lesson.order_index)
+            )
+        ).scalars().first()
+        attempt = LessonAttempt(
+            user_id=test_user.id,
+            lesson_id=lesson.id,
+            started_at=datetime.now(UTC),
+            total_questions=1,
+            score=90.0,
+        )
+        db_session.add(attempt)
+        await db_session.commit()
+
+        done = await async_client.post(
+            f"/api/v1/learning/attempts/{attempt.id}/complete", headers=auth_headers
+        )
+        assert done.status_code == 200
+
+        course_id = test_course_with_units.id
+        roadmap = (
+            await async_client.get(
+                f"/api/v1/learning/courses/{course_id}/roadmap", headers=auth_headers
+            )
+        ).json()["data"]
+        detail = (
+            await async_client.get(f"/api/v1/courses/{course_id}", headers=auth_headers)
+        ).json()["data"]
+        enrolled = (
+            await async_client.get("/api/v1/courses/enrolled", headers=auth_headers)
+        ).json()["data"]
+
+        expected = 100 / 6
+        assert roadmap["completed_lessons"] == 1
+        assert roadmap["completion_percentage"] == pytest.approx(expected)
+        assert detail["user_progress"] == pytest.approx(expected)
+        assert [c["user_progress"] for c in enrolled if c["id"] == str(course_id)] == [
+            pytest.approx(expected)
+        ]
+        shown = [l for u in detail["units"] for l in u["lessons"]]
+        assert [l["is_completed"] for l in shown].count(True) == 1
+
+    async def test_a_late_pass_still_counts_when_the_best_score_was_higher(
+        self,
+        db_session: AsyncSession,
+        test_user: User,
+        test_lesson: Lesson,
+    ):
+        from app.crud.progress import ProgressCRUD
+
+        uid, lid = str(test_user.id), str(test_lesson.id)
+        await ProgressCRUD.mark_lesson_complete(db_session, uid, lid, 75.0, 90.0)
+        completion, xp = await ProgressCRUD.mark_lesson_complete(
+            db_session, uid, lid, 70.0, 60.0
+        )
+        assert completion.is_passed is True
+        assert completion.best_score == 75.0
+        assert xp == (test_lesson.xp_reward or 0)

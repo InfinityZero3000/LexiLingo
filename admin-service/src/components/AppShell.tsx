@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { Role } from "../lib/auth";
 import { useI18n } from "../lib/i18n";
+import { ThemeToggle } from "./ThemeToggle";
 
 export type NavItem = {
   to: string;
@@ -10,6 +11,9 @@ export type NavItem = {
   icon?: React.ReactNode;
   description?: string;
   badge?: string;
+  group?: string;
+  /** Hidden when the signed-in admin lacks it; the server enforces it either way. */
+  permission?: string;
 };
 
 export const AppShell = ({
@@ -26,6 +30,33 @@ export const AppShell = ({
   const { user, signOut } = useAuth();
   const { t } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { pathname } = useLocation();
+
+  const sections = navItems.reduce<{ label?: string; items: NavItem[] }[]>((acc, item) => {
+    const last = acc[acc.length - 1];
+    if (last && last.label === item.group) last.items.push(item);
+    else acc.push({ label: item.group, items: [item] });
+    return acc;
+  }, []);
+
+  const current = navItems
+    .filter((i) => pathname === i.to || pathname.startsWith(`${i.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+  const segmentLabels: Record<string, string> = {
+    units: t.nav.units,
+    lessons: t.nav.lessons,
+    exercises: t.nav.exercises,
+  };
+  const crumbs: { label: string; to?: string }[] = [];
+  if (current) {
+    if (current.group) crumbs.push({ label: current.group });
+    crumbs.push({ label: current.label, to: current.to });
+    const segs = pathname.split("/").filter(Boolean);
+    const base = current.to.split("/").filter(Boolean).length;
+    segs.forEach((seg, i) => {
+      if (i >= base && segmentLabels[seg]) crumbs.push({ label: segmentLabels[seg], to: `/${segs.slice(0, i + 1).join("/")}` });
+    });
+  }
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -56,18 +87,23 @@ export const AppShell = ({
         <div className="nav-section">
           <div className="nav-title">{t.appShell.navigation}</div>
           <nav className="nav-links">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === "/admin" || item.to === "/super"}
-                className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                onClick={closeMobileMenu}
-              >
-                {item.icon && <span className="nav-icon">{item.icon}</span>}
-                <span className="nav-label">{item.label}</span>
-                {item.badge && <span className="nav-badge">{item.badge}</span>}
-              </NavLink>
+            {sections.map((section, i) => (
+              <div className="nav-group" key={section.label ?? i} role="group" aria-label={section.label}>
+                {section.label && <div className="nav-group-title">{section.label}</div>}
+                {section.items.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/admin" || item.to === "/super"}
+                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                    onClick={closeMobileMenu}
+                  >
+                    {item.icon && <span className="nav-icon">{item.icon}</span>}
+                    <span className="nav-label">{item.label}</span>
+                    {item.badge && <span className="nav-badge">{item.badge}</span>}
+                  </NavLink>
+                ))}
+              </div>
             ))}
           </nav>
         </div>
@@ -91,13 +127,32 @@ export const AppShell = ({
           <button 
             className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`}
             onClick={toggleMobileMenu}
-            aria-label="Toggle menu"
+            aria-label={t.appShell.toggleMenu}
+            aria-expanded={mobileMenuOpen}
           >
             <span></span>
             <span></span>
             <span></span>
           </button>
           <span className="topbar-brand">LexiLingo</span>
+          {crumbs.length > 1 && (
+            <nav className="breadcrumb" aria-label={t.appShell.breadcrumb}>
+              <ol>
+                {crumbs.map((crumb, i) => (
+                  <li key={`${crumb.label}-${i}`}>
+                    {i === crumbs.length - 1 ? (
+                      <span aria-current="page">{crumb.label}</span>
+                    ) : crumb.to ? (
+                      <Link to={crumb.to}>{crumb.label}</Link>
+                    ) : (
+                      <span>{crumb.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+          <ThemeToggle className="topbar-theme-toggle" />
         </div>
         <div className="topbar-line" />
 

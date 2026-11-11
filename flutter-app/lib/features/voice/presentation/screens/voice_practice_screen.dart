@@ -336,7 +336,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   Widget _buildGuideCard(BuildContext context, VoiceProvider voiceProvider) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -344,7 +344,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
             AppColors.accentMint.withValues(alpha: 0.08),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
       ),
       child: Column(
@@ -354,30 +354,34 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.lightbulb_outline, color: AppColors.primary),
+                child: Icon(
+                  Icons.lightbulb_outline,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   'voice.instructions'.tr(),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    height: 1.45,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    height: 1.35,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: [
               _buildStepChip(
                 context,
@@ -425,7 +429,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         : AppColors.textGrey;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: done || active ? 0.12 : 0.08),
         borderRadius: BorderRadius.circular(999),
@@ -436,17 +440,17 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         children: [
           Text(
             '$number',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(width: 6),
-          Icon(done ? Icons.check_circle : icon, size: 16, color: color),
+          Icon(done ? Icons.check_circle : icon, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w700,
             ),
@@ -467,8 +471,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       children: [
         TextField(
           controller: _phraseController,
-          enabled: !_isRecording && !_isBusy,
-          maxLines: 3,
+          readOnly: _isRecording || _isBusy,
+          minLines: 2,
+          maxLines: null,
           decoration: InputDecoration(
             labelText: 'voice.phraseToPractice'.tr(),
             hintText: 'voice.enterPhraseHint'.tr(),

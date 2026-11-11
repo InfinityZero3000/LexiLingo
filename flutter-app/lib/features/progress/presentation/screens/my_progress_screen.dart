@@ -275,7 +275,13 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
             ),
             const SizedBox(height: 4),
             Text(
-              'progress.weeklySummary'.tr(namedArgs: {'xp': '${weekly.totalXP}', 'lessons': '${weekly.totalLessons}', 'days': '${weekly.daysActive}'}),
+              'progress.weeklySummary'.tr(
+                namedArgs: {
+                  'xp': '${weekly.totalXP}',
+                  'lessons': '${weekly.totalLessons}',
+                  'days': '${weekly.daysActive}',
+                },
+              ),
               style: TextStyle(
                 fontSize: 13,
                 color: AppColorRoles.textMuted(isDark),

@@ -1,4 +1,7 @@
+import { useConfirm } from "../components/ConfirmDialog";
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { BookOpen, Search, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
@@ -21,6 +24,7 @@ import {
 import { CourseImportModal } from "../components/CourseImportModal";
 import { useI18n } from "../lib/i18n";
 import { downloadCSV } from "../lib/csvExport";
+import { listCategories } from "../lib/categoriesApi";
 import {
   listContentAgentJobs,
   type ContentAgentJob,
@@ -36,6 +40,7 @@ const SKILLS = ["vocabulary", "grammar", "reading", "listening", "speaking", "wr
 export const CoursesPage = () => {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -49,6 +54,8 @@ export const CoursesPage = () => {
   const [search, setSearch] = useState("");
   const [filterLevel, setFilterLevel] = useState("");
   const [filterPublished, setFilterPublished] = useState<string>("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const categories = useQuery({ queryKey: ["admin-categories"], queryFn: listCategories });
 
   // Create/Edit form state
   const [showForm, setShowForm] = useState(false);
@@ -62,11 +69,12 @@ export const CoursesPage = () => {
     skill: "",
     tags: "",
     thumbnail_url: "",
+    category_id: "",
     is_published: false,
   });
 
   const resetForm = () => {
-    setForm({ title: "", description: "", language: "en", level: "A1", skill: "", tags: "", thumbnail_url: "", is_published: false });
+    setForm({ title: "", description: "", language: "en", level: "A1", skill: "", tags: "", thumbnail_url: "", category_id: "", is_published: false });
     setEditingId(null);
   };
 
@@ -80,6 +88,7 @@ export const CoursesPage = () => {
         search: search || undefined,
         level: filterLevel || undefined,
         is_published: filterPublished === "" ? undefined : filterPublished === "true",
+        category_id: filterCategory || undefined,
       });
       const data = res.data;
       if (data) {
@@ -93,7 +102,7 @@ export const CoursesPage = () => {
     }
   };
 
-  useEffect(() => { void loadCourses(); }, [page, filterLevel, filterPublished]);
+  useEffect(() => { void loadCourses(); }, [page, filterLevel, filterPublished, filterCategory]);
 
   useEffect(() => {
     let disposed = false;
@@ -134,6 +143,7 @@ export const CoursesPage = () => {
       skill: course.skill || "",
       tags: (course.tags || []).join(", "),
       thumbnail_url: course.thumbnail_url || "",
+      category_id: course.category_id || "",
       is_published: course.is_published,
     });
     setShowForm(true);
@@ -149,6 +159,8 @@ export const CoursesPage = () => {
         // "" is the form's "no label yet" choice; the API accepts a real
         // skill name or null, and null keeps the tag-based fallback.
         skill: form.skill || null,
+        // "" is "uncategorised"; null (not undefined) tells the server to clear an existing link.
+        category_id: form.category_id || null,
         tags: form.tags.split(",").map((t) => t.trim()).filter(Boolean),
       };
       if (editingId) {
@@ -167,7 +179,7 @@ export const CoursesPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.courses.deleteCourse)) return;
+    if (!(await confirm({ message: t.courses.deleteCourse, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteCourse(id);
       await loadCourses();
@@ -225,6 +237,11 @@ export const CoursesPage = () => {
             <option value="">{t.courses.allStatus}</option>
             <option value="true">{t.common.published}</option>
             <option value="false">{t.common.draft}</option>
+          </select>
+          <select className="filter-select" aria-label={t.courses.category} value={filterCategory}
+            onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
+            <option value="">{t.courses.allCategories}</option>
+            {(categories.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <button
             className="ghost-button"
@@ -288,33 +305,43 @@ export const CoursesPage = () => {
               columns={[
                 {
                   header: t.courses.course,
+                  sortValue: (row) => row.title,
                   render: (row) => (
                     <div>
-                      <div className="table-title" style={{ cursor: "pointer", color: "var(--accent)" }}
+                      <button type="button" className="link-button link-button--accent table-title"
                         onClick={() => navigate(`/admin/courses/${row.id}/units`)}>
                         {row.title}
-                      </div>
+                      </button>
                       <div className="table-sub">{row.description || "—"}</div>
                     </div>
                   ),
                 },
                 {
                   header: t.courses.level,
+                  sortValue: (row) => row.level,
                   render: (row) => <StatusPill tone="info" label={row.level} />,
                   align: "center",
                 },
                 {
+                  header: t.courses.category,
+                  sortValue: (row) => row.category_name ?? "",
+                  render: (row) => <span className="table-meta">{row.category_name || "—"}</span>,
+                },
+                {
                   header: t.courses.lessons,
+                  sortValue: (row) => row.total_lessons,
                   render: (row) => <span className="table-meta">{row.total_lessons}</span>,
                   align: "center",
                 },
                 {
                   header: t.courses.xp,
+                  sortValue: (row) => row.total_xp,
                   render: (row) => <span className="table-meta">{row.total_xp}</span>,
                   align: "center",
                 },
                 {
                   header: t.common.status,
+                  sortValue: (row) => (row.is_published ? 1 : 0),
                   render: (row) => (
                     <StatusPill
                       tone={row.is_published ? "success" : "warning"}
@@ -356,64 +383,69 @@ export const CoursesPage = () => {
       </div>
 
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <h3>{editingId ? t.courses.editCourse : t.courses.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
+        <Dialog onClose={() => setShowForm(false)} maxWidth={520}>
+          <h3>{editingId ? t.courses.editCourse : t.courses.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <label>
+              {t.courses.courseTitle}
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </label>
+            <label>
+              {t.common.description}
+              <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+            <div className="form-row">
               <label>
-                {t.courses.courseTitle}
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-              </label>
-              <label>
-                {t.common.description}
-                <textarea rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              </label>
-              <div className="form-row">
-                <label>
-                  {t.courses.language}
-                  <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
-                </label>
-                <label>
-                  {t.courses.level}
-                  <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
-                    {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Kỹ năng chính
-                  <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
-                    <option value="">— Chưa gắn nhãn —</option>
-                    {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </label>
-              </div>
-              <label>
-                {t.courses.tags}
-                <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+                {t.courses.language}
+                <input value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} />
               </label>
               <label>
-                {t.courses.thumbnailUrl}
-                <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
+                {t.courses.level}
+                <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}>
+                  {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
+                </select>
               </label>
-              <label className="checkbox">
-                <input
-                  type="checkbox"
-                  checked={form.is_published}
-                  disabled={!editingId}
-                  onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
-                />
-                {t.courses.publishNow}
+              <label>
+                Kỹ năng chính
+                <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
+                  <option value="">— Chưa gắn nhãn —</option>
+                  {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
               </label>
-              <p className="form-hint">{t.courses.publishRequirement}</p>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <label>
+              {t.courses.category}
+              <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
+                <option value="">{t.courses.noCategory}</option>
+                {(categories.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}{c.is_active ? "" : ` (${t.categoriesPage.hidden})`}</option>)}
+              </select>
+            </label>
+            <label>
+              {t.courses.tags}
+              <input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} />
+            </label>
+            <label>
+              {t.courses.thumbnailUrl}
+              <input value={form.thumbnail_url} onChange={(e) => setForm({ ...form, thumbnail_url: e.target.value })} />
+            </label>
+            <label className="checkbox">
+              <input
+                type="checkbox"
+                checked={form.is_published}
+                disabled={!editingId}
+                onChange={(e) => setForm({ ...form, is_published: e.target.checked })}
+              />
+              {t.courses.publishNow}
+            </label>
+            <p className="form-hint">{t.courses.publishRequirement}</p>
+            <div className="table-actions">
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
 
       {showImport && (

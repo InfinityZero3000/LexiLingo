@@ -3,7 +3,7 @@
 import copy
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.sample_data_catalog import (
@@ -126,5 +126,22 @@ async def seed_courses(
                 )
                 db.add(lesson)
                 lessons_created += 1
+
+    seeded_category_ids = list(category_ids.values())
+    if seeded_category_ids:
+        result = await db.execute(
+            select(Course.category_id, func.count(Course.id))
+            .where(
+                Course.category_id.in_(seeded_category_ids),
+                Course.is_published.is_(True),
+            )
+            .group_by(Course.category_id)
+        )
+        published_counts = dict(result.all())
+        result = await db.execute(
+            select(CourseCategory).where(CourseCategory.id.in_(seeded_category_ids))
+        )
+        for category in result.scalars():
+            category.course_count = published_counts.get(category.id, 0)
 
     return courses_created, units_created, lessons_created

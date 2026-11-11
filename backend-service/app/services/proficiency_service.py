@@ -370,9 +370,13 @@ class ProficiencyService:
         streak_days: int = 0,
         current_level: ProficiencyLevel = ProficiencyLevel.A1,
         skill_confidences: dict[SkillType, float] | None = None,
+        floor: ProficiencyLevel | None = None,
     ) -> tuple[ProficiencyLevel, float]:
         """
         Determine user's CEFR level based on skill scores and requirements.
+
+        `floor` is the level a formal test established; activity evidence can
+        raise the result above it but never drag it below.
 
         This is the core algorithm that prevents "XP grinding" to higher levels.
         Users must demonstrate competency in multiple skills to advance.
@@ -407,6 +411,11 @@ class ProficiencyService:
             ):
                 qualifying_level = level
                 break
+
+        if floor is not None and ProficiencyService.get_level_index(
+            floor
+        ) > ProficiencyService.get_level_index(qualifying_level):
+            qualifying_level = floor
 
         # Calculate progress to next level
         next_level = ProficiencyService.get_next_level(qualifying_level)

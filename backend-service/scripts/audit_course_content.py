@@ -34,6 +34,7 @@ from app.models.course import (
     arrange_bank_matches,
     arrange_tiles,
     base_type_for,
+    exercise_shape_problems,
     option_text,
 )
 
@@ -165,6 +166,23 @@ async def fix_matching_options(db) -> int:
     return fixed
 
 
+async def report_unplayable_shapes(db) -> int:
+    """Exercises the admin editor now refuses to save (same rules as
+    PUT /admin/lessons) — find them here before an admin hits the 422."""
+    result = await db.execute(select(Lesson).order_by(Lesson.title))
+    bad = 0
+    for lesson in result.scalars().all():
+        exercises = lesson.content.get("exercises") if isinstance(lesson.content, dict) else None
+        for index, exercise in enumerate(exercises or []):
+            problems = exercise_shape_problems(exercise)
+            if problems:
+                bad += 1
+                ui_type = exercise.get("ui_type") if isinstance(exercise, dict) else "?"
+                print(f"  {lesson.title} ({lesson.id}) #{index + 1} {ui_type}: {'; '.join(problems)}")
+    print(f"{bad} exercise(s) with an unplayable shape.")
+    return bad
+
+
 async def audit(
     unpublish: bool,
     repair_counters: bool,
@@ -181,6 +199,8 @@ async def audit(
             )
         if repair_counters:
             print(f"Repaired total_exercises on {await fix_counters(db)} lesson(s).")
+
+        await report_unplayable_shapes(db)
 
         result = await db.execute(
             select(Course)

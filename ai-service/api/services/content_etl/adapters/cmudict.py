@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Any
 
 
-ADAPTER_VERSION = 1
+# v2: keeps the stress digit. AH0/AH1 and ER0/ER1 are different vowels, so
+# stripping it made /rʌn/ come out as /rən/ downstream.
+ADAPTER_VERSION = 2
 SOURCE_NAME = "cmudict"
 LICENSE_ID = "LicenseRef-CMUdict"
 LICENSE_URL = "https://github.com/cmusphinx/cmudict/blob/master/LICENSE"
@@ -25,18 +27,13 @@ _INLINE_NOTE_RE = re.compile(r"\s+#.*$")
 _WORD = r"[A-Za-z0-9'._-]+"
 _VARIANT_RE = re.compile(rf"^({_WORD})\((\d+)\)\s+(.+)$")
 _ENTRY_RE = re.compile(rf"^({_WORD})\s+(.+)$")
-# Stress markers are digits 0–2 on vowel phonemes.
-_STRESS_RE = re.compile(r"[012]$")
-
-
 def _sha256_str(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def _normalize_arpabet(phonemes: str) -> str:
-    """Strip stress digits and normalise to uppercase space-separated phonemes."""
-    tokens = phonemes.strip().upper().split()
-    return " ".join(_STRESS_RE.sub("", t) for t in tokens)
+    """Uppercase, space-separated phonemes; stress digits stay on the vowels."""
+    return " ".join(phonemes.strip().upper().split())
 
 
 def parse(raw_path: Path) -> list[dict[str, Any]]:

@@ -73,6 +73,8 @@ async def roles(db_session: AsyncSession):
         select(Role).where(Role.name.in_(["User", "Admin", "Super Admin"]))
     )
     persisted_by_name = {r.name: r for r in persisted_roles.scalars().all()}
+    from tests.conftest import seed_admin_permissions
+    await seed_admin_permissions(db_session)
     return {
         "user": persisted_by_name["User"],
         "admin": persisted_by_name["Admin"],
@@ -320,17 +322,6 @@ class TestSuperAdminOnly:
     """Endpoints that require super_admin (level 2) should deny admin (level 1)."""
 
     @pytest.mark.asyncio
-    async def test_admin_cannot_update_system_info(
-        self, async_client: AsyncClient, admin_headers
-    ):
-        response = await async_client.put(
-            "/api/v1/admin/system-info",
-            headers=admin_headers,
-            json={"app_name": "unauthorized"},
-        )
-        assert response.status_code == 403
-
-    @pytest.mark.asyncio
     async def test_admin_cannot_change_user_role(
         self, async_client: AsyncClient, admin_headers, regular_user
     ):
@@ -360,14 +351,39 @@ class TestSuperAdminOnly:
     async def test_admin_cannot_assign_rbac_role(
         self, async_client: AsyncClient, admin_headers, regular_user
     ):
-        """Admin should NOT be able to use /rbac/users/assign-role."""
-        response = await async_client.post(
-            "/api/v1/admin/rbac/users/assign-role",
+        """Admin should NOT be able to change roles (super_admin only)."""
+        response = await async_client.put(
+            f"/api/v1/admin/users/{regular_user.id}/role",
             headers=admin_headers,
-            json={"user_id": str(regular_user.id), "role_slug": "admin"}
+            json={"level": 1}
         )
         assert response.status_code == 403
 
+
+    @pytest.mark.asyncio
+    async def test_super_admin_cannot_change_a_peer_super_admins_role(
+        self, async_client: AsyncClient, super_admin_headers,
+        db_session: AsyncSession, roles
+    ):
+        """A super_admin may not rewrite another super_admin's role."""
+        peer = User(
+            id=uuid4(),
+            email="peer-super@test.com",
+            username="peer_super",
+            hashed_password="$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYzS6NzE3Fu",
+            is_active=True,
+            is_verified=True,
+            role_id=roles["super_admin"].id,
+        )
+        db_session.add(peer)
+        await db_session.commit()
+
+        response = await async_client.put(
+            f"/api/v1/admin/users/{peer.id}/role",
+            headers=super_admin_headers,
+            json={"level": 0}
+        )
+        assert response.status_code == 403
 
 # ============================================================================
 # Test Suite 4: Privilege Escalation Prevention
@@ -776,10 +792,11 @@ class TestRBACRoutes:
     async def test_rbac_deactivate_user_admin_cannot_deactivate_super_admin(
         self, async_client: AsyncClient, admin_headers, super_admin_user, roles
     ):
-        """Admin should NOT be able to deactivate super_admin via RBAC endpoint."""
-        response = await async_client.post(
-            f"/api/v1/admin/rbac/users/{super_admin_user.id}/deactivate",
-            headers=admin_headers
+        """Admin should NOT be able to deactivate super_admin."""
+        response = await async_client.put(
+            f"/api/v1/admin/users/{super_admin_user.id}/status",
+            headers=admin_headers,
+            json={"is_active": False}
         )
         assert response.status_code == 403
 
@@ -787,10 +804,11 @@ class TestRBACRoutes:
     async def test_rbac_deactivate_regular_user(
         self, async_client: AsyncClient, admin_headers, regular_user, roles
     ):
-        """Admin SHOULD be able to deactivate regular user via RBAC endpoint."""
-        response = await async_client.post(
-            f"/api/v1/admin/rbac/users/{regular_user.id}/deactivate",
-            headers=admin_headers
+        """Admin SHOULD be able to deactivate regular user."""
+        response = await async_client.put(
+            f"/api/v1/admin/users/{regular_user.id}/status",
+            headers=admin_headers,
+            json={"is_active": False}
         )
         assert response.status_code == 200
 

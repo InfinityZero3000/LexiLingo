@@ -104,7 +104,6 @@ export const STATUS_LABELS: Record<RankingAgentJobStatus, string> = {
 // API functions
 // ---------------------------------------------------------------------------
 
-type PreviewData = { artifact: Record<string, unknown>; warnings: string[]; blocking_errors: string[] };
 type ApplyResult = { job: RankingAgentJob; result: Record<string, unknown> };
 
 export async function createRankingAgentJob(
@@ -130,13 +129,6 @@ export async function listRankingAgentJobs(
 export async function getRankingAgentJob(id: string): Promise<RankingAgentJob> {
   const res = await apiFetch<ApiResponse<RankingAgentJob>>(`/api/v1/admin/ranking-agent/jobs/${id}`);
   return res.data as RankingAgentJob;
-}
-
-export async function getRankingAgentPreview(id: string): Promise<PreviewData> {
-  const res = await apiFetch<ApiResponse<PreviewData>>(
-    `/api/v1/admin/ranking-agent/jobs/${id}/preview`
-  );
-  return res.data as PreviewData;
 }
 
 export async function applyRankingAgentJob(id: string): Promise<ApplyResult> {

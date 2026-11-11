@@ -16,6 +16,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   final Set<String> _claimedRewards = {};
+  bool _bonusClaimedLocally = false;
 
   // Getters
   DailyChallengesResponse? get challengesResponse => _challengesResponse;
@@ -45,9 +46,14 @@ class DailyChallengesProvider extends ChangeNotifier {
   /// Progress as percentage (0.0 - 1.0)
   double get progress => _challengesResponse?.progress ?? 0.0;
 
-  /// Check if a reward has been claimed
+  /// Whether the all-challenges bonus has been claimed today
+  bool get bonusClaimed =>
+      _bonusClaimedLocally || (_challengesResponse?.bonusClaimed ?? false);
+
+  /// Check if a reward has been claimed (server state, plus this session's claims)
   bool isRewardClaimed(String challengeId) =>
-      _claimedRewards.contains(challengeId);
+      _claimedRewards.contains(challengeId) ||
+      challenges.any((c) => c.id == challengeId && c.isClaimed);
 
   /// Load daily challenges from API
   Future<void> loadChallenges() async {
@@ -63,10 +69,10 @@ class DailyChallengesProvider extends ChangeNotifier {
       },
       (response) {
         _challengesResponse = response;
-        // Reset claimed rewards for new day
-        if (_challengesResponse != null) {
-          _claimedRewards.clear();
-        }
+        // The server reports is_claimed / bonus_claimed, so local claims only
+        // bridge the gap until this fresh response arrives.
+        _claimedRewards.clear();
+        _bonusClaimedLocally = false;
       },
     );
 
@@ -117,6 +123,26 @@ class DailyChallengesProvider extends ChangeNotifier {
     return success;
   }
 
+  /// Claim the bonus for completing every challenge today
+  Future<bool> claimBonus() async {
+    if (!allCompleted || bonusClaimed) return false;
+
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _repository.claimDailyBonus();
+
+    bool success = false;
+    result.fold((failure) => _errorMessage = failure.message, (_) {
+      _bonusClaimedLocally = true;
+      success = true;
+    });
+
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
+
   /// Refresh challenges (reload from API)
   Future<void> refresh() async {
     await loadChallenges();
@@ -134,6 +160,7 @@ class DailyChallengesProvider extends ChangeNotifier {
     _isLoading = false;
     _errorMessage = null;
     _claimedRewards.clear();
+    _bonusClaimedLocally = false;
     notifyListeners();
   }
 }

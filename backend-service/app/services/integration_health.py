@@ -103,7 +103,7 @@ async def _podcastindex(c, k):
 
 async def _groq_pool(client: httpx.AsyncClient) -> dict:
     raw = (os.getenv("GROQ_API_KEYS") or os.getenv("GROQ_API_KEY") or "").strip()
-    _GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.6-27b")
+    _GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
     keys = [k.strip() for k in raw.split(",") if k.strip()]
     if not keys:
         return _result("groq", "GROQ_API_KEYS", "chat, dịch, TRACE-CAG",

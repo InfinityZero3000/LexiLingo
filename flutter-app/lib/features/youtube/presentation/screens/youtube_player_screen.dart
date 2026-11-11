@@ -32,6 +32,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   late final AnimationController _fadeController;
   late final TabController _tabController;
   final ScrollController _captionScrollController = ScrollController();
+  final Map<int, GlobalKey> _captionRowKeys = {};
 
   int _currentPositionMs = 0;
   Timer? _positionTimer;
@@ -61,9 +62,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
     _tabController = TabController(length: 2, vsync: this);
 
-    _ytController = YoutubePlayerController.fromVideoId(
-      videoId: widget.video.videoId,
-      autoPlay: true,
+    _ytController = YoutubePlayerController(
+      key: widget.video.videoId,
       params: const YoutubePlayerParams(
         showControls: true,
         showFullscreenButton: true,
@@ -72,6 +72,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         playsInline: true,
       ),
     );
+    // fromVideoId(autoPlay:) fires this unawaited, so a player that is not
+    // ready within the package's 30s timeout became an uncaught error.
+    _ytController.loadVideoById(videoId: widget.video.videoId).ignore();
 
     // No start(): the tracker's own ticker would count wall clock, and watching
     // is measured from playback advancing instead.
@@ -132,24 +135,38 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         }
       }
 
+      final changed = newIndex != _activeCaptionIndex;
       setState(() {
         _currentPositionMs = posMs;
         _activeCaptionIndex = newIndex;
       });
 
-      if (newIndex >= 0 && _captionScrollController.hasClients) {
-        const rowHeight = 60.0;
-        final offset = (newIndex * rowHeight).clamp(
-          0.0,
-          _captionScrollController.position.maxScrollExtent,
-        );
-        _captionScrollController.animateTo(
-          offset,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      if (changed && newIndex >= 0) _scrollToCaption(newIndex);
     } catch (_) {}
+  }
+
+  /// Keeps the active line a third of the way down, like synced lyrics.
+  /// Rows vary in height, so position comes from the built row, not an index.
+  void _scrollToCaption(int index, {bool retry = true}) {
+    final ctx = _captionRowKeys[index]?.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        alignment: 0.3,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeInOutCubic,
+      );
+      return;
+    }
+    // Row not built (seeked far away): jump near it, then settle once built.
+    if (!retry || !_captionScrollController.hasClients) return;
+    final pos = _captionScrollController.position;
+    _captionScrollController.jumpTo(
+      (index * 72.0).clamp(pos.minScrollExtent, pos.maxScrollExtent),
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scrollToCaption(index, retry: false);
+    });
   }
 
   void _onWordTap(String word, {String? contextSentence}) {
@@ -263,15 +280,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeController,
-          child: Column(
-            children: [
-              _buildTopHeader(isDark),
-              _buildPlayerArea(isDark),
-              _buildActiveSubtitleCard(isDark),
-              _buildInfoBar(isDark),
-              _buildActionBar(isDark),
-              _buildTabBar(isDark),
-              Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tabs = Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   physics: const NeverScrollableScrollPhysics(),
@@ -280,8 +291,69 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     _buildVocabTab(isDark),
                   ],
                 ),
-              ),
-            ],
+              );
+
+              // A full-width 16:9 player is taller than a landscape window,
+              // so wide screens put the transcript beside the video.
+              if (constraints.maxWidth >= 720 &&
+                  constraints.maxWidth > constraints.maxHeight) {
+                return Column(
+                  children: [
+                    _buildTopHeader(isDark),
+                    Expanded(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  _buildPlayerArea(isDark),
+                                  _buildActiveSubtitleCard(isDark),
+                                  _buildInfoBar(isDark),
+                                  _buildActionBar(isDark),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              children: [
+                                const SizedBox(height: 8),
+                                _buildTabBar(isDark),
+                                tabs,
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Column(
+                children: [
+                  _buildTopHeader(isDark),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: constraints.maxHeight * 0.4,
+                    ),
+                    child: Center(
+                      heightFactor: 1,
+                      child: _buildPlayerArea(isDark),
+                    ),
+                  ),
+                  _buildActiveSubtitleCard(isDark),
+                  _buildInfoBar(isDark),
+                  _buildActionBar(isDark),
+                  _buildTabBar(isDark),
+                  tabs,
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -676,7 +748,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 itemBuilder: (context, index) {
                   final segment = provider.captions[index];
                   final isActive = index == _activeCaptionIndex;
-                  return _buildCaptionRow(segment, isDark, isActive: isActive);
+                  return _buildCaptionRow(index, segment, isDark,
+                      isActive: isActive);
                 },
               ),
             ),
@@ -686,10 +759,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     );
   }
 
-  Widget _buildCaptionRow(CaptionSegment segment, bool isDark,
+  Widget _buildCaptionRow(int index, CaptionSegment segment, bool isDark,
       {required bool isActive}) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      key: _captionRowKeys.putIfAbsent(index, GlobalKey.new),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -735,7 +810,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Wrap(
+            child: AnimatedOpacity(
+              opacity: isActive ? 1 : 0.55,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeOutCubic,
+              child: Wrap(
               spacing: 3,
               runSpacing: 3,
               children: segment.text.split(' ').map((word) {
@@ -746,13 +825,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     '$word ',
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          isActive ? FontWeight.w600 : FontWeight.normal,
-                      color: isActive
-                          ? (isDark ? Colors.white : AppColors.textDark)
-                          : (isDark
-                              ? Colors.white70
-                              : AppColors.textDark.withValues(alpha: 0.75)),
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : AppColors.textDark,
                       decoration: TextDecoration.underline,
                       decorationColor:
                           AppColors.primary.withValues(alpha: 0.25),
@@ -761,6 +835,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   ),
                 );
               }).toList(),
+            ),
             ),
           ),
         ],

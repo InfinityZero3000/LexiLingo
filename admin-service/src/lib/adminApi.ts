@@ -366,6 +366,9 @@ export type CourseItem = {
   skill?: string | null;
   tags?: string[];
   thumbnail_url?: string | null;
+  category_id?: string | null;
+  /** Filled by the admin list only. */
+  category_name?: string | null;
   total_lessons: number;
   total_xp: number;
   estimated_duration: number;
@@ -388,6 +391,7 @@ export const listCoursesAdmin = async (params?: {
   search?: string;
   level?: string;
   is_published?: boolean;
+  category_id?: string;
 }) => {
   const url = new URL(`${ENV.backendUrl}/admin/courses`);
   if (params?.page) url.searchParams.set("page", String(params.page));
@@ -395,6 +399,7 @@ export const listCoursesAdmin = async (params?: {
   if (params?.search) url.searchParams.set("search", params.search);
   if (params?.level) url.searchParams.set("level", params.level);
   if (params?.is_published !== undefined) url.searchParams.set("is_published", String(params.is_published));
+  if (params?.category_id) url.searchParams.set("category_id", params.category_id);
   return apiFetch<AdminResponse<CoursesPaginated>>(url.toString());
 };
 
@@ -403,8 +408,10 @@ export const createCourse = async (payload: {
   description?: string;
   language: string;
   level: string;
+  skill?: string | null;
   tags?: string[];
   thumbnail_url?: string;
+  category_id?: string | null;
   is_published?: boolean;
 }) =>
   apiFetch<AdminResponse<CourseItem>>(`${ENV.backendUrl}/admin/courses`, {
@@ -749,6 +756,7 @@ export type SystemInfo = {
   ai_service_url: string;
   google_oauth: boolean;
   firebase: boolean;
+  migration?: { current: string[] | null; head: string[] | null; up_to_date: boolean | null };
   totals: {
     users: number;
     courses: number;
@@ -759,23 +767,6 @@ export type SystemInfo = {
 
 export const getSystemInfo = async () =>
   apiFetch<AdminResponse<SystemInfo>>(`${ENV.backendUrl}/admin/system-info`);
-
-export type SystemInfoUpdatePayload = {
-  app_name?: string;
-  debug?: boolean;
-  log_level?: string;
-  token_expire_minutes?: number;
-  refresh_token_days?: number;
-  cors_origins?: string;
-  ai_service_url?: string;
-};
-
-export const updateSystemInfo = async (payload: SystemInfoUpdatePayload) =>
-  apiFetch<AdminResponse<SystemInfo>>(`${ENV.backendUrl}/admin/system-info`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  });
-
 
 // ---------------------------------------------------------------------------
 // IELTS mock tests

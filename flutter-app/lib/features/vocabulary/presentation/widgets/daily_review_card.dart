@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
@@ -139,121 +138,116 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AppColorRoles.primary(isDark);
+    const gradient = [AppColors.deepOrange, AppColors.errorDark];
+    const onColor = Colors.white;
+    final hasDue = !_isLoading && _dueCount > 0;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: _handleCardTap,
         borderRadius: BorderRadius.circular(20),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          padding: const EdgeInsets.all(20),
+        child: Ink(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                isDark ? accent : AppColors.primary,
-                isDark
-                    ? AppColorRoles.primaryDeep(true)
-                    : const Color(0xFF0D6ABD),
-              ],
+              colors: gradient,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: (isDark ? accent : AppColors.primary).withValues(
-                  alpha: 0.3,
-                ),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
-              ),
-            ],
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Icon
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.surface.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const AppGameIcon(
-                  GameIcon.flashcards,
-                  size: 32,
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'home.dailyReview'.tr(),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.surface,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    _isLoading
-                        ? const SizedBox(
-                            width: 100,
-                            child: LinearProgressIndicator(
-                              backgroundColor: Colors.white24,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
-                        : Text(
-                            _dueCount > 0
-                                ? 'home.wordsWaiting'.tr(
-                                    namedArgs: {'count': '$_dueCount'},
-                                  )
-                                : 'home.allCaughtUpTapToCheck'.tr(),
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surface.withValues(alpha: 0.9),
-                              fontSize: 14,
-                            ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'home.dailyReview'.tr(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: onColor,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
                           ),
-                  ],
-                ),
-              ),
-
-              // Button
-              if (!_isLoading && _dueCount > 0)
-                Material(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: _handleCardTap,
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      child: Text(
-                        'home.startReview'.tr(),
-                        style: const TextStyle(
-                          color: AppColors.slate900,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (!_isLoading) ...[
+                        const SizedBox(width: 6),
+                        Material(
+                          color: onColor,
+                          borderRadius: BorderRadius.circular(5),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            child: Text(
+                              _dueCount > 99 ? '99+' : '$_dueCount',
+                              style: const TextStyle(
+                                color: AppColors.errorDark,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                height: 1.2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  if (_isLoading)
+                    const SizedBox(
+                      width: 48,
+                      child: LinearProgressIndicator(
+                        backgroundColor: Colors.white24,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  else
+                    Text(
+                      _dueCount > 0
+                          ? 'home.wordsLeftToReview'.tr()
+                          : 'home.allCaughtUpTapToCheck'.tr(),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: onColor.withValues(alpha: 0.9),
+                        fontSize: 11,
+                        height: 1.4,
+                      ),
+                    ),
+                ],
+              ),
+              if (hasDue) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: onColor,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'home.startReview'.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.errorDark,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ),

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import gzip
 import shutil
 from dataclasses import dataclass
@@ -28,7 +29,7 @@ from api.services.content_etl.contracts import AllowedLicenseId, SourceName
 from api.services.content_etl.downloader import SecureDownloader
 from api.services.content_etl.pipeline import ETLPipeline, PipelineReport
 from api.services.content_etl.registry import get_source_definition
-from api.services.content_etl.storage import SnapshotStorage
+from api.services.content_etl.storage import SnapshotStorage, StorageIntegrityError
 
 
 class SourceSyncConfigurationError(ValueError):
@@ -48,6 +49,14 @@ class SourceSyncSpec:
     official_url: str
 
 
+def _snapshot_version(version: str, adapter: SourceAdapter) -> str:
+    # (source, version) is immutable, so output of a newer adapter over the same
+    # upstream artifact needs its own key; v1 snapshots keep their existing name.
+    if adapter.adapter_version == 1:
+        return version
+    return f"{version}+a{adapter.adapter_version}"
+
+
 def build_source_sync_spec(
     source_name: SourceName | str,
     *,
@@ -58,13 +67,14 @@ def build_source_sync_spec(
     definition = get_source_definition(source)
 
     if source == SourceName.OEWN:
+        adapter = OEWNAdapter()
         version = _require_pin(
             "CONTENT_ETL_OEWN_VERSION",
             config.CONTENT_ETL_OEWN_VERSION,
         )
         return SourceSyncSpec(
             source_name=source,
-            source_version=version,
+            source_version=_snapshot_version(version, adapter),
             download_url=(
                 # /static/ 301-redirects to /downloads/ and the downloader
                 # refuses redirects, so point at the final location.
@@ -74,7 +84,7 @@ def build_source_sync_spec(
                 "CONTENT_ETL_OEWN_SHA256",
                 getattr(config, "CONTENT_ETL_OEWN_SHA256", "")
             ),
-            adapter=OEWNAdapter(),
+            adapter=adapter,
             license_id=AllowedLicenseId.CC_BY_4_0,
             license_url=OEWN_LICENSE_URL,
             attribution_text=OEWN_ATTRIBUTION,
@@ -82,10 +92,11 @@ def build_source_sync_spec(
         )
 
     if source == SourceName.CMUDICT:
+        adapter = CMUDictAdapter()
         version = _require_commit("CONTENT_ETL_CMU_REF", config.CONTENT_ETL_CMU_REF)
         return SourceSyncSpec(
             source_name=source,
-            source_version=version,
+            source_version=_snapshot_version(version, adapter),
             download_url=(
                 "https://raw.githubusercontent.com/cmusphinx/cmudict/"
                 f"{version}/cmudict.dict"
@@ -94,7 +105,7 @@ def build_source_sync_spec(
                 "CONTENT_ETL_CMU_SHA256",
                 getattr(config, "CONTENT_ETL_CMU_SHA256", "")
             ),
-            adapter=CMUDictAdapter(),
+            adapter=adapter,
             license_id=AllowedLicenseId.CMUDICT,
             license_url=CMU_LICENSE_URL,
             attribution_text=CMU_ATTRIBUTION,
@@ -102,6 +113,7 @@ def build_source_sync_spec(
         )
 
     if source == SourceName.CEFR_J:
+        adapter = CEFRJAdapter()
         version = _require_commit(
             "CONTENT_ETL_CEFR_J_REF",
             config.CONTENT_ETL_CEFR_J_REF,
@@ -119,7 +131,7 @@ def build_source_sync_spec(
             )
         return SourceSyncSpec(
             source_name=source,
-            source_version=version,
+            source_version=_snapshot_version(version, adapter),
             download_url=(
                 "https://raw.githubusercontent.com/openlanguageprofiles/"
                 f"olp-en-cefrj/{version}/{member}"
@@ -128,7 +140,7 @@ def build_source_sync_spec(
                 "CONTENT_ETL_CEFR_J_SHA256",
                 getattr(config, "CONTENT_ETL_CEFR_J_SHA256", "")
             ),
-            adapter=CEFRJAdapter(),
+            adapter=adapter,
             license_id=AllowedLicenseId.CEFR_J_COMMERCIAL,
             license_url=CEFR_J_LICENSE_URL,
             attribution_text=CEFR_J_ATTRIBUTION,
@@ -155,6 +167,9 @@ async def sync_source(
             source_version=spec.source_version,
             status="dry_run",
         )
+
+    if storage.manifest_path(spec.source_name, spec.source_version).is_file():
+        return await asyncio.to_thread(_reactivate_existing, spec, storage)
 
     download = await downloader.download(
         source_name=spec.source_name,
@@ -187,6 +202,39 @@ async def sync_source(
     finally:
         if cleanup_path is not None:
             cleanup_path.unlink(missing_ok=True)
+
+
+def _reactivate_existing(
+    spec: SourceSyncSpec,
+    storage: SnapshotStorage,
+) -> PipelineReport:
+    """Re-running a synced version is a no-op that re-verifies and re-points `active`."""
+    report = PipelineReport(
+        source_name=spec.source_name.value,
+        source_version=spec.source_version,
+        status="failed",
+    )
+    try:
+        manifest = storage.read_manifest(spec.source_name, spec.source_version)
+        if manifest.raw_sha256 != spec.expected_sha256:
+            raise StorageIntegrityError(
+                "Pinned checksum differs from the approved snapshot of this "
+                "version; bump the version instead of re-pinning it"
+            )
+        storage.activate(spec.source_name, spec.source_version)
+    except StorageIntegrityError as exc:
+        report.errors.append(str(exc))
+        return report
+
+    counts = manifest.counts
+    report.status = "approved"
+    report.activated = True
+    report.extracted = counts.extracted
+    report.normalized = counts.normalized
+    report.approved = counts.approved
+    report.quarantined = counts.quarantined
+    report.duplicates = counts.duplicates
+    return report
 
 
 def _materialize_adapter_input(

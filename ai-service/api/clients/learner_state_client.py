@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import random
 import time
 from dataclasses import dataclass, field
+from datetime import UTC
 from typing import Any
 
 import httpx
 
 from api.core.config import settings
+
+
+def _iso_utc(value: Any) -> str:
+    """Spool rows come from Mongo as naive UTC datetimes; the backend rejects an offset-less observed_at."""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.isoformat()
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +43,7 @@ class LearnerStateClient:
         audience: str = "lexilingo-backend",
         http_client: httpx.AsyncClient | None = None,
         max_inflight: int = 100,
+        max_keepalive: int | None = None,
         circuit_failures: int = 5,
         circuit_reset_seconds: float = 30.0,
         connect_timeout_seconds: float = 0.010,
@@ -44,7 +54,12 @@ class LearnerStateClient:
         self._audience = audience
         self._owns_client = http_client is None
         self._http = http_client or httpx.AsyncClient(
-            limits=httpx.Limits(max_connections=max_inflight, max_keepalive_connections=20),
+            # Idle connections default to the in-flight limit. With only 20 kept alive, any burst
+            # above 20 concurrent turns opened and closed a socket per call, inside a 40 ms deadline.
+            limits=httpx.Limits(
+                max_connections=max_inflight,
+                max_keepalive_connections=max_inflight if max_keepalive is None else max_keepalive,
+            ),
             timeout=None,
         )
         self._bulkhead = asyncio.Semaphore(max_inflight)
@@ -202,13 +217,15 @@ class LearnerStateClient:
         timeout_seconds: float = 5.0,
     ) -> dict[str, Any]:
         """Forward a durable spool batch; failures are replayed by the caller."""
+        body = json.dumps({"observations": observations[:100]}, default=_iso_utc)
         response = await self._http.post(
             f"{self._base_url}/learner-state/observations:batch",
             headers={
                 "X-LexiLingo-Service-Token": self._token,
                 "X-LexiLingo-Audience": self._audience,
+                "Content-Type": "application/json",
             },
-            json={"observations": observations[:100]},
+            content=body,
             timeout=max(0.1, timeout_seconds),
         )
         response.raise_for_status()
@@ -237,6 +254,7 @@ def get_learner_state_client() -> LearnerStateClient:
             token=settings.LEARNER_STATE_INTERNAL_TOKEN,
             audience=settings.LEARNER_STATE_INTERNAL_AUDIENCE,
             max_inflight=settings.LEARNER_STATE_MAX_INFLIGHT,
+            max_keepalive=settings.LEARNER_STATE_MAX_KEEPALIVE,
             circuit_failures=settings.LEARNER_STATE_CIRCUIT_FAILURES,
             circuit_reset_seconds=settings.LEARNER_STATE_CIRCUIT_RESET_SECONDS,
             connect_timeout_seconds=settings.LEARNER_STATE_CONNECT_TIMEOUT_MS / 1000.0,

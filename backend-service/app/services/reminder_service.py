@@ -88,6 +88,13 @@ class ReminderService:
             candidate = candidate + timedelta(days=1)
         return candidate.astimezone(timezone.utc)
 
+    @staticmethod
+    def _is_stale(next_check_at: datetime, now_utc: datetime) -> bool:
+        """True when the worker was down so long that sending now would be mistimed."""
+        if next_check_at.tzinfo is None:
+            next_check_at = next_check_at.replace(tzinfo=timezone.utc)
+        return now_utc - next_check_at > timedelta(minutes=settings.REMINDER_MAX_LATENESS_MINUTES)
+
     async def scan_due_preferences(
         self,
         db: AsyncSession,
@@ -120,7 +127,38 @@ class ReminderService:
 
         totals = ReminderProcessResult()
         for preference in preferences:
-            partial = await self.process_preference(db, preference=preference, now_utc=now_utc)
+            # Read before the savepoint: a rollback expires the instance, and
+            # touching an expired attribute in async code would try to reload.
+            user_id = preference.user_id
+            time_local = preference.reminder_time_local
+            timezone_name = preference.timezone
+
+            if self._is_stale(preference.next_check_at, now_utc):
+                totals.processed += 1
+                totals.skipped += 1
+                preference.next_check_at = self.compute_next_check_at(
+                    reminder_time_local=time_local,
+                    timezone_name=timezone_name,
+                    now_utc=now_utc,
+                )
+                continue
+
+            try:
+                async with db.begin_nested():
+                    partial = await self.process_preference(
+                        db, preference=preference, now_utc=now_utc
+                    )
+            except Exception:
+                logger.exception("Reminder processing failed for user %s", user_id)
+                totals.processed += 1
+                totals.failed += 1
+                preference.next_check_at = self.compute_next_check_at(
+                    reminder_time_local=time_local,
+                    timezone_name=timezone_name,
+                    now_utc=now_utc,
+                )
+                continue
+
             totals.processed += partial.processed
             totals.sent += partial.sent
             totals.skipped += partial.skipped

@@ -1,3 +1,5 @@
+import { useConfirm } from "../components/ConfirmDialog";
+import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
@@ -64,6 +66,7 @@ const toIsoOrUndefined = (local: string) => (local ? new Date(local).toISOString
 
 export const AdsPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [banners, setBanners] = useState<BannerType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -147,7 +150,7 @@ export const AdsPage = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t.ads.deleteConfirm)) return;
+    if (!(await confirm({ message: t.ads.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
     try {
       await deleteBanner(id);
       await loadBanners();
@@ -189,6 +192,7 @@ export const AdsPage = () => {
             columns={[
               {
                 header: t.ads.banner,
+                sortValue: (row) => row.title,
                 render: (row) => (
                   <div>
                     <div className="table-title">{row.title}</div>
@@ -198,16 +202,19 @@ export const AdsPage = () => {
               },
               {
                 header: t.ads.position,
+                sortValue: (row) => row.position,
                 render: (row) => <span className="table-meta">{row.position}</span>,
                 align: "center",
               },
               {
                 header: t.ads.priorityLabel,
+                sortValue: (row) => row.priority,
                 render: (row) => <span className="table-meta">{row.priority}</span>,
                 align: "center",
               },
               {
                 header: t.ads.startDate,
+                sortValue: (row) => row.start_at,
                 render: (row) => (
                   <span className="table-meta">
                     {row.start_at ? new Date(row.start_at).toLocaleDateString() : "—"}
@@ -217,6 +224,7 @@ export const AdsPage = () => {
               },
               {
                 header: t.ads.endDate,
+                sortValue: (row) => row.end_at,
                 render: (row) => (
                   <span className="table-meta">
                     {row.end_at ? new Date(row.end_at).toLocaleDateString() : "—"}
@@ -258,89 +266,87 @@ export const AdsPage = () => {
       </div>
 
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 560 }}>
-            <h3>{editingId ? t.ads.editBanner : t.ads.createNew}</h3>
-            <form className="form" onSubmit={handleSave}>
-              <label>
-                {t.ads.titleRequired}
-                <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+        <Dialog onClose={() => setShowForm(false)} maxWidth={560}>
+          <h3>{editingId ? t.ads.editBanner : t.ads.createNew}</h3>
+          <form className="form" onSubmit={handleSave}>
+            <label>
+              {t.ads.titleRequired}
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+            </label>
+            <label>
+              {t.common.description}
+              <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </label>
+            <label>
+              {t.ads.imageUrlRequired}
+              <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} required />
+            </label>
+            <label>
+              {t.ads.targetUrl}
+              <input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} />
+            </label>
+            <div className="form-row">
+              <label style={{ flex: 1 }}>
+                {t.ads.position}
+                <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value as BannerPosition })}>
+                  {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
               </label>
               <label>
-                {t.common.description}
-                <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                {t.ads.priorityLabel}
+                <input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })} />
               </label>
-              <label>
-                {t.ads.imageUrlRequired}
-                <input value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} required />
+            </div>
+            <div className="form-row">
+              <label style={{ flex: 1 }}>
+                {t.ads.startDate}
+                <input type="datetime-local" value={form.start_at} onChange={(e) => setForm({ ...form, start_at: e.target.value })} />
               </label>
-              <label>
-                {t.ads.targetUrl}
-                <input value={form.link_url} onChange={(e) => setForm({ ...form, link_url: e.target.value })} />
+              <label style={{ flex: 1 }}>
+                {t.ads.endDate}
+                <input type="datetime-local" value={form.end_at} onChange={(e) => setForm({ ...form, end_at: e.target.value })} />
               </label>
-              <div className="form-row">
-                <label style={{ flex: 1 }}>
-                  {t.ads.position}
-                  <select value={form.position} onChange={(e) => setForm({ ...form, position: e.target.value as BannerPosition })}>
-                    {POSITIONS.map((p) => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </label>
-                <label>
-                  {t.ads.priorityLabel}
-                  <input type="number" value={form.priority} onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })} />
-                </label>
-              </div>
-              <div className="form-row">
-                <label style={{ flex: 1 }}>
-                  {t.ads.startDate}
-                  <input type="datetime-local" value={form.start_at} onChange={(e) => setForm({ ...form, start_at: e.target.value })} />
-                </label>
-                <label style={{ flex: 1 }}>
-                  {t.ads.endDate}
-                  <input type="datetime-local" value={form.end_at} onChange={(e) => setForm({ ...form, end_at: e.target.value })} />
-                </label>
-              </div>
-              <div className="form-row">
-                <label style={{ flex: 1 }}>
-                  {t.ads.targetMinLevel}
-                  <select value={form.target_min_level} onChange={(e) => setForm({ ...form, target_min_level: e.target.value })}>
-                    <option value="">{t.ads.anyLevelPlaceholder}</option>
-                    {CEFR_LEVELS.map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
-                  </select>
-                </label>
-                <label style={{ flex: 1 }}>
-                  {t.ads.targetMaxLevel}
-                  <select value={form.target_max_level} onChange={(e) => setForm({ ...form, target_max_level: e.target.value })}>
-                    <option value="">{t.ads.anyLevelPlaceholder}</option>
-                    {CEFR_LEVELS.map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
-                  </select>
-                </label>
-              </div>
-              <label>
-                {t.ads.targetLanguage}
-                <input
-                  value={form.target_language}
-                  placeholder={t.ads.anyLanguagePlaceholder}
-                  onChange={(e) => setForm({ ...form, target_language: e.target.value })}
-                />
+            </div>
+            <div className="form-row">
+              <label style={{ flex: 1 }}>
+                {t.ads.targetMinLevel}
+                <select value={form.target_min_level} onChange={(e) => setForm({ ...form, target_min_level: e.target.value })}>
+                  <option value="">{t.ads.anyLevelPlaceholder}</option>
+                  {CEFR_LEVELS.map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
+                </select>
               </label>
-              <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={form.is_active}
-                  onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-                />
-                {t.common.active}
+              <label style={{ flex: 1 }}>
+                {t.ads.targetMaxLevel}
+                <select value={form.target_max_level} onChange={(e) => setForm({ ...form, target_max_level: e.target.value })}>
+                  <option value="">{t.ads.anyLevelPlaceholder}</option>
+                  {CEFR_LEVELS.map((lvl) => <option key={lvl} value={lvl}>{lvl}</option>)}
+                </select>
               </label>
-              <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+            </div>
+            <label>
+              {t.ads.targetLanguage}
+              <input
+                value={form.target_language}
+                placeholder={t.ads.anyLanguagePlaceholder}
+                onChange={(e) => setForm({ ...form, target_language: e.target.value })}
+              />
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <input
+                type="checkbox"
+                checked={form.is_active}
+                onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+              />
+              {t.common.active}
+            </label>
+            <div className="table-actions">
+              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
     </div>
   );

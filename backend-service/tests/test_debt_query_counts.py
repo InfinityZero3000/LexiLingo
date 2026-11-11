@@ -3,8 +3,9 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from sqlalchemy import event
 
-from app.models.progress import DailyActivity, LessonAttempt, Streak
+from app.models.progress import DailyActivity, Streak
 from app.routes.analytics import get_engagement
+from app.services.streak_service import record_daily_activity
 from app.services.user_stats_service import get_user_stats, get_weekly_activity
 
 
@@ -65,27 +66,32 @@ async def test_user_stats_uses_one_aggregate_query(db_session, test_user):
 
 
 @pytest.mark.asyncio
-async def test_weekly_activity_uses_one_grouped_query(
-    db_session, test_user, test_lesson
+async def test_weekly_activity_reads_daily_activity_in_one_query(
+    db_session, test_user
 ):
-    now = datetime.now(timezone.utc)
+    today = datetime.now(timezone.utc).date()
     db_session.add_all(
         [
-            LessonAttempt(
+            DailyActivity(
                 user_id=test_user.id,
-                lesson_id=test_lesson.id,
-                finished_at=now,
-                passed=True,
+                activity_date=today,
                 xp_earned=10,
-                time_spent_ms=60_000,
+                lessons_completed=1,
+                study_time_minutes=1,
+                vocabulary_reviewed=4,
             ),
-            LessonAttempt(
+            DailyActivity(
                 user_id=test_user.id,
-                lesson_id=test_lesson.id,
-                finished_at=now - timedelta(days=6),
-                passed=True,
+                activity_date=today - timedelta(days=6),
                 xp_earned=20,
-                time_spent_ms=120_000,
+                lessons_completed=0,
+                study_time_minutes=2,
+                vocabulary_reviewed=3,
+            ),
+            DailyActivity(
+                user_id=test_user.id,
+                activity_date=today - timedelta(days=7),
+                xp_earned=999,
             ),
         ]
     )
@@ -95,7 +101,28 @@ async def test_weekly_activity_uses_one_grouped_query(
         result = await get_weekly_activity(db_session, test_user)
 
     assert len(result.week_data) == 7
+    assert result.week_data[-1].date == today.isoformat()
+    assert result.week_data[-1].vocabulary == 4
     assert result.total_xp == 30
-    assert result.total_lessons == 2
+    assert result.total_lessons == 1
     assert result.total_study_time == 3
+    assert result.total_vocabulary == 7
     assert queries.count == 1
+
+
+
+@pytest.mark.asyncio
+async def test_weekly_activity_shows_what_the_single_xp_writer_recorded(
+    db_session, test_user
+):
+    """Vocabulary and game XP never touch LessonAttempt; they only reach DailyActivity."""
+    await record_daily_activity(db_session, test_user.id, xp_earned=5, vocabulary_reviewed=1)
+    await record_daily_activity(
+        db_session, test_user.id, xp_earned=15, lessons_completed=1, study_time_minutes=4
+    )
+    await db_session.commit()
+
+    result = await get_weekly_activity(db_session, test_user)
+
+    today = result.week_data[-1]
+    assert (today.xp, today.lessons, today.study_time, today.vocabulary) == (20, 1, 4, 1)

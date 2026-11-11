@@ -14,17 +14,17 @@ type AiHealth = {
 };
 
 const AI_MODELS = [
-  { name: "Gemini 2.0 Flash", type: "LLM / Chat", provider: "Google AI", mode: "API Cloud", usage: "Chat, Grammar Check, Topic Conversation" },
+  { name: "Qwen 3.8 27B", type: "LLM / Chat", provider: "Groq", mode: "API Cloud", usage: "Chat, Grammar Check, Topic Conversation" },
   { name: "Whisper Base", type: "STT (Speech-to-Text)", provider: "OpenAI", mode: "Local CPU", usage: "Phát âm, Listening exercises" },
   { name: "Piper TTS", type: "TTS (Text-to-Speech)", provider: "Piper", mode: "Local CPU", usage: "Phát âm từ vựng, đọc câu" },
   { name: "TRACECAG", type: "Knowledge Graph", provider: "Custom", mode: "Local", usage: "Trả lời câu hỏi ngữ pháp, context-aware" },
 ];
 
 const PIPELINES = [
-  { name: "Chat Pipeline", components: "Gemini → Response Filter → Cache", status: "active" },
-  { name: "Voice Pipeline", components: "Whisper STT → Gemini → Piper TTS", status: "active" },
-  { name: "Grammar Check", components: "Input → Gemini → Correction → Score", status: "active" },
-  { name: "TRACECAG Query", components: "Query → Graph Lookup → LLM Synthesis", status: "active" },
+  { name: "Chat Pipeline", components: "LLM → Response Filter → Cache" },
+  { name: "Voice Pipeline", components: "Whisper STT → LLM → Piper TTS" },
+  { name: "Grammar Check", components: "Input → LLM → Correction → Score" },
+  { name: "TRACECAG Query", components: "Query → Graph Lookup → LLM Synthesis" },
 ];
 
 export const AiModelsPage = () => {
@@ -91,24 +91,24 @@ export const AiModelsPage = () => {
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="panel" style={{ padding: 16, background: "#FFF7ED", border: "1px solid #FDBA74" }}>
-          <h4 style={{ margin: "0 0 8px", color: "#C2410C" }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
+        <div className="panel" style={{ padding: 16, background: "var(--tint-orange)", border: "1px solid rgba(251, 146, 60, 0.5)" }}>
+          <h4 style={{ margin: "0 0 8px", color: "var(--ink-orange)" }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
           {warnings.map((w, i) => (
-            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "#9A3412" }}>{w.message}</p>
+            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "var(--ink-orange)" }}>{w.message}</p>
           ))}
         </div>
       )}
 
       {/* Service Connections */}
       {health?.services && (
-        <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>{t.aiModelsPage.serviceConns}</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="panel panel--pad">
+          <h3 className="panel-title">{t.aiModelsPage.serviceConns}</h3>
+          <table className="kv-table">
             <tbody>
               {Object.entries(health.services).map(([svc, status]) => (
-                <tr key={svc} style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                  <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14, textTransform: "capitalize" }}>{svc}</td>
-                  <td style={{ padding: "10px 12px" }}>
+                <tr key={svc}>
+                  <td className="kv-value kv-value--cap">{svc}</td>
+                  <td className="kv-cell">
                     <StatusPill
                       tone={status === "connected" ? "success" : status === "not_configured" ? "info" : "danger"}
                       label={status}
@@ -123,7 +123,7 @@ export const AiModelsPage = () => {
 
       {/* AI Models */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>{t.aiModelsPage.aiModelsTitle}</h3>
+        <h3 className="panel-heading">{t.aiModelsPage.aiModelsTitle}</h3>
         <DataTable
           columns={[
             { header: t.aiModelsPage.model, render: (r) => <span className="table-title">{r.name}</span> },
@@ -145,7 +145,7 @@ export const AiModelsPage = () => {
 
       {/* Pipelines */}
       <div className="panel">
-        <h3 style={{ padding: "16px 16px 0" }}>{t.aiModelsPage.processingPipelines}</h3>
+        <h3 className="panel-heading">{t.aiModelsPage.processingPipelines}</h3>
         <DataTable
           columns={[
             { header: t.aiModelsPage.pipeline, render: (r) => <span className="table-title">{r.name}</span> },
@@ -154,7 +154,7 @@ export const AiModelsPage = () => {
                 <span className="table-meta" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.components}</span>
               )
             },
-            { header: t.aiModelsPage.pipelineStatus, render: (r) => <StatusPill tone="success" label={t.common.active} />, align: "center" },
+            { header: t.aiModelsPage.pipelineStatus, render: () => <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />, align: "center" },
           ]}
           rows={PIPELINES}
         />
@@ -162,25 +162,25 @@ export const AiModelsPage = () => {
 
       {/* Process Info */}
       {proc && (
-        <div className="panel" style={{ padding: 20 }}>
-          <h3 style={{ margin: "0 0 16px" }}>{t.aiModelsPage.processInfo}</h3>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <div className="panel panel--pad">
+          <h3 className="panel-title">{t.aiModelsPage.processInfo}</h3>
+          <table className="kv-table">
             <tbody>
-              <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{t.aiModelsPage.processMemory}</td>
-                <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14 }}>
+              <tr>
+                <td className="kv-label">{t.aiModelsPage.processMemory}</td>
+                <td className="kv-value">
                   {proc.memory_percent != null ? `${proc.memory_percent.toFixed(2)}%` : "N/A"}
                 </td>
               </tr>
-              <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{t.aiModelsPage.threads}</td>
-                <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14 }}>
+              <tr>
+                <td className="kv-label">{t.aiModelsPage.threads}</td>
+                <td className="kv-value">
                   {proc.num_threads ?? "N/A"}
                 </td>
               </tr>
               {sys?.load_avg && (
-                <tr style={{ borderBottom: "1px solid var(--border, #eee)" }}>
-                  <td style={{ padding: "10px 12px", color: "var(--muted, #666)", width: "40%", fontSize: 14 }}>{t.aiModelsPage.loadAvg}</td>
+                <tr>
+                  <td className="kv-label">{t.aiModelsPage.loadAvg}</td>
                   <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14, fontFamily: "monospace" }}>
                     {sys.load_avg.map((l) => l.toFixed(2)).join(" / ")}
                   </td>

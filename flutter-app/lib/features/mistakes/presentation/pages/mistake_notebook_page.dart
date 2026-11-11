@@ -49,6 +49,11 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
     await _loadEntries();
   }
 
+  Future<void> _reopen(String id) async {
+    await widget.repository.reopen(id);
+    await _loadEntries();
+  }
+
   Future<void> _deleteEntry(MistakeNotebookEntry entry) async {
     final shouldDelete = await showDialog<bool>(
       context: context,
@@ -132,6 +137,7 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
                       _MistakeCard(
                         entry: entry,
                         onMarkReviewed: () => _markReviewed(entry.id),
+                        onReopen: () => _reopen(entry.id),
                         onDelete: () => _deleteEntry(entry),
                       ),
                       const SizedBox(height: 12),
@@ -400,11 +406,13 @@ class _MistakeCard extends StatelessWidget {
   const _MistakeCard({
     required this.entry,
     required this.onMarkReviewed,
+    required this.onReopen,
     required this.onDelete,
   });
 
   final MistakeNotebookEntry entry;
   final VoidCallback onMarkReviewed;
+  final VoidCallback onReopen;
   final VoidCallback onDelete;
 
   @override
@@ -504,9 +512,14 @@ class _MistakeCard extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              if (entry.isReviewed)
-                _ReviewedPill(reviewCount: entry.reviewCount)
-              else
+              if (entry.isReviewed) ...[
+                _ReviewedPill(reviewCount: entry.reviewCount),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: onReopen,
+                  child: Text('mistakeNotebook.reopen'.tr()),
+                ),
+              ] else
                 OutlinedButton.icon(
                   onPressed: onMarkReviewed,
                   icon: const Icon(Icons.done_rounded, size: 18),
@@ -531,6 +544,8 @@ class _MistakeCard extends StatelessWidget {
       'news_quiz' => 'mistakeNotebook.sourceNewsQuiz'.tr(),
       'game_fill_blank' => 'mistakeNotebook.sourceFillBlank'.tr(),
       'game_grammar_quiz' => 'mistakeNotebook.sourceGrammarQuiz'.tr(),
+      'topic_chat' ||
+      'lexi_chat' => 'mistakeNotebook.sourceChatCorrection'.tr(),
       _ => 'mistakeNotebook.sourceQuiz'.tr(),
     };
   }

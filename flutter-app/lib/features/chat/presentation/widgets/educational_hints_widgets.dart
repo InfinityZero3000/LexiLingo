@@ -3,6 +3,15 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/educational_hints.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'markdown_message_content.dart';
+
+// These cards use fixed light backgrounds, so markdown is always rendered light.
+Widget _md(String text, TextStyle style) => MarkdownMessageContent(
+  content: text,
+  isDark: false,
+  selectable: false,
+  baseTextStyle: style,
+);
 
 /// Educational Hints Card
 /// Displays grammar corrections and vocabulary hints from AI response
@@ -232,9 +241,9 @@ class GrammarCorrectionBadge extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Flexible(
-                          child: Text(
+                          child: _md(
                             correction.corrected,
-                            style: TextStyle(
+                            TextStyle(
                               color: Colors.green.shade700,
                               fontWeight: FontWeight.w500,
                               fontSize: 13,
@@ -262,9 +271,9 @@ class GrammarCorrectionBadge extends StatelessWidget {
                 Icon(Icons.lightbulb, size: 14, color: Colors.amber.shade600),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
+                  child: _md(
                     correction.explanation,
-                    style: const TextStyle(fontSize: 12),
+                    const TextStyle(fontSize: 12, color: AppColors.textDark),
                   ),
                 ),
               ],
@@ -421,7 +430,10 @@ class VocabularyHintCard extends StatelessWidget {
           const SizedBox(height: 8),
 
           // Definition
-          Text(hint.definition, style: const TextStyle(fontSize: 13)),
+          _md(
+            hint.definition,
+            const TextStyle(fontSize: 13, color: AppColors.textDark),
+          ),
 
           // Example
           if (hint.example != null && hint.example!.isNotEmpty)
@@ -443,9 +455,9 @@ class VocabularyHintCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: Text(
+                      child: _md(
                         hint.example!,
-                        style: TextStyle(
+                        TextStyle(
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
                           color: AppColors.grey700,
