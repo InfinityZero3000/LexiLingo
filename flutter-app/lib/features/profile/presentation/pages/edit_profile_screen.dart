@@ -1,4 +1,3 @@
-import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -274,7 +273,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ),
         ],
       ),
-      body: ContentWidth(maxWidth: ContentWidth.reading, child: FadeTransition(
+      body: FadeTransition(
         opacity: _fadeAnimation,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -426,7 +425,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
             ),
           ),
         ),
-      ),),
+      ),
     );
   }
 
