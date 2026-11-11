@@ -12,10 +12,14 @@ services:
       GATEWAY_SERVER_NAME: ${GATEWAY_SERVER_NAME:-api.lexilingo.me}
       GATEWAY_SSL_CERT_PATH: ${GATEWAY_SSL_CERT_PATH:-/etc/letsencrypt/live/api.lexilingo.me/fullchain.pem}
       GATEWAY_SSL_KEY_PATH: ${GATEWAY_SSL_KEY_PATH:-/etc/letsencrypt/live/api.lexilingo.me/privkey.pem}
+      # "off" when a proxy in front terminates TLS: listen on plain :80 only.
+      GATEWAY_TLS: ${GATEWAY_TLS:-on}
+      GATEWAY_TRUSTED_PROXY: ${GATEWAY_TRUSTED_PROXY:-10.77.0.1}
     command: >
       /bin/sh -c "envsubst '$$GATEWAY_SERVER_NAME $$GATEWAY_SSL_CERT_PATH $$GATEWAY_SSL_KEY_PATH'
       < /etc/nginx/templates/default.conf.template
       > /etc/nginx/conf.d/default.conf
+      && if [ \"$$GATEWAY_TLS\" = off ]; then /bin/sh /etc/nginx/render-http-only.sh /etc/nginx/conf.d/default.conf; fi
       && nginx -g 'daemon off;'"
     # Host ports are overridable (see .env.production.example) so the stack can share a VPS.
     ports:
@@ -23,6 +27,7 @@ services:
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - ./gateway/nginx/templates:/etc/nginx/templates:ro
+      - ./gateway/nginx/render-http-only.sh:/etc/nginx/render-http-only.sh:ro
       - ./gateway/nginx/snippets:/etc/nginx/snippets:ro
       - ./gateway/nginx/acme-challenge:/var/www/certbot
       - ./gateway/nginx/logs:/var/log/nginx
@@ -39,7 +44,9 @@ services:
         max-size: "10m"
         max-file: "5"
     networks:
-      - lexilingo-prod
+      lexilingo-prod:
+        # Fixed so TRUSTED_PROXIES (exact match in the backend rate limiter) never drifts.
+        ipv4_address: 172.30.0.8
 
   postgres:
     image: postgres:16-alpine
@@ -263,6 +270,8 @@ services:
       - .env.production
       - .env.production.secrets
     environment:
+      # Keep downloaded HuggingFace models in the ai_models volume, so rebuilds do not re-download them.
+      HF_HOME: /app/models/hf
       ENVIRONMENT: production
       MONGODB_URI: mongodb://mongodb:27017
       MONGODB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
@@ -390,3 +399,6 @@ volumes:
 networks:
   lexilingo-prod:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24

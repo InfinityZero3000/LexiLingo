@@ -61,7 +61,7 @@ Snap `lxd` có thể đã được cài sẵn (xem "Ghi chú về trạng thái 
 
 ```bash
 sudo lxd init --minimal
-sudo lxc storage create default btrfs size=30GiB     # nếu --minimal đã tạo pool 'default' kiểu khác, xoá nó trước khi có container
+sudo lxc storage create default btrfs size=24GiB     # nếu --minimal đã tạo pool 'default' kiểu khác, xoá nó trước khi có container
 sudo lxc network create lxdbr0 ipv4.address=10.77.0.1/24 ipv4.nat=true ipv6.address=none
 sudo lxc profile device add default eth0 nic network=lxdbr0 name=eth0
 ```
@@ -97,6 +97,8 @@ Bên trong container, cấu hình LexiLingo theo các tài liệu sẵn có: rep
 
 ### 4. Phân luồng ở rìa
 
+Hướng dẫn chi tiết (chứng chỉ Cloudflare Origin, vhost, DNS, rollback): `PROXY_DNS_SETUP.md`. Tóm tắt:
+
 1. Lấy chứng chỉ bằng certbot của proxy rìa cho `api.lexilingo.me`.
 2. Chép `deploy/lxd/edge-vhost.example.conf` thành `conf.d/lexilingo.conf` của proxy rìa, sửa tên miền và IP nếu khác.
 3. Container nginx rìa phải tới được 10.77.0.10: thử `docker exec api_gateway wget -qO- http://10.77.0.10/health`. Nếu không tới được, thêm luật `-o lxdbr0` ở bước 2 hoặc nối container nginx vào mạng phù hợp.
@@ -104,7 +106,7 @@ Bên trong container, cấu hình LexiLingo theo các tài liệu sẵn có: rep
 
 ### 5. LexiLingo chạy HTTP sau proxy
 
-Gateway của LexiLingo hiện tự làm TLS (certbot, `api.lexilingo.me`). Khi đứng sau proxy rìa, cần chế độ chỉ nghe HTTP cổng 80 và tin `X-Forwarded-*`. Chế độ `GATEWAY_TLS=off` trong template nginx (`gateway/nginx/templates`) **chưa được viết**; làm trong lúc triển khai thật, kèm test.
+Gateway của LexiLingo hiện tự làm TLS (certbot, `api.lexilingo.me`). Khi đứng sau proxy rìa, cần chế độ chỉ nghe HTTP cổng 80 và tin `X-Forwarded-*`. Đặt `GATEWAY_TLS=off` trong `.env.production`: `gateway/nginx/render-http-only.sh` biến cấu hình đã render thành bản chỉ nghe cổng 80 (bỏ khối chuyển hướng HTTPS và các chỉ thị `ssl_*`) và tin địa chỉ của proxy rìa (`GATEWAY_TRUSTED_PROXY`, mặc định 10.77.0.1) để giới hạn tốc độ vẫn theo từng người dùng qua `CF-Connecting-IP`. Có test trong `backend-service/tests/test_gateway_http_only.py`.
 
 ### 6. Snapshot
 
@@ -142,6 +144,6 @@ Trong lúc khảo sát chỉ đọc ngày 2026-11-10, lệnh `lxc list` đã khi
 
 ## Việc chưa làm
 
-- Chế độ `GATEWAY_TLS=off` của gateway LexiLingo (bước 5).
+- Vhost và chứng chỉ ở proxy rìa (bước 4): chỉ thêm khi đã quyết định chuyển DNS `api.lexilingo.me`, vì vhost trỏ tới chứng chỉ chưa có sẽ làm nginx của dự án khác không khởi động được sau lần reload kế tiếp.
 - Quyết định giữ hay gỡ snap LXD hiện có, và sự đồng ý của chủ máy cho các bước 1, 2, 4.
 - Đo lại RAM thực tế sau tuần đầu để chốt trần 4 GB của container.
