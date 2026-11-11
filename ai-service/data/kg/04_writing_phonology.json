@@ -137,7 +137,7 @@
     { "from": "concept:phonology.word_stress", "to": "concept:phonology.sentence_stress", "relation": "prerequisite_of" },
     { "from": "concept:phonology.sentence_stress", "to": "concept:phonology.intonation", "relation": "builds_on" },
     { "from": "concept:phonology.intonation", "to": "concept:phonology.connected_speech", "relation": "prerequisite_of" },
-    { "from": "concept:phonology.weak_forms", "to": "concept:phonology.connected_speech", "relation": "builds_on" },
+    { "from": "concept:phonology.connected_speech", "to": "concept:phonology.weak_forms", "relation": "builds_on" },
     { "from": "concept:phonology.consonant_clusters", "to": "concept:phonology.final_consonants", "relation": "related_to" },
     { "from": "concept:phonology.vowel_sounds", "to": "concept:phonology.word_stress", "relation": "prerequisite_of" },
     { "from": "concept:skill.punctuation", "to": "concept:skill.formal_writing", "relation": "part_of" }

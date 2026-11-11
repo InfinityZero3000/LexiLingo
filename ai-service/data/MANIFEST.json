@@ -1,0 +1,227 @@
+{
+  "generated_by": "scripts/build_data_manifest.py",
+  "datasets": {
+    "kg/07_vocabulary_anki.json": {
+      "kind": "runtime KG",
+      "source": "Alex123321/english_cefr_dataset + LexiLingo Anki deck",
+      "licence": "Apache-2.0",
+      "gate": "ok",
+      "bytes": 1155118,
+      "sha256": "3e5e7bde71520a7dd8f379856abd20ccd4122b90233b193e1a37a3776e767e5d",
+      "concepts": 6747,
+      "edges": 0
+    },
+    "kg/08_cefr_sentences.json": {
+      "kind": "runtime KG",
+      "source": "UniversalCEFR/cefr_sp_en",
+      "licence": "CC BY-NC-SA 4.0",
+      "gate": "thesis: ok (non-commercial). Before any commercial release: remove or relicense",
+      "bytes": 296538,
+      "sha256": "51727414d87dea2427d406de1ab6f7f98b2f48d509c0663774866cf243eeadb5",
+      "concepts": 1250,
+      "edges": 0
+    },
+    "kg/09_grammar_usage.json": {
+      "kind": "runtime KG",
+      "source": "Teravee/1000_english-grammar-dataset",
+      "licence": "undeclared",
+      "gate": "thesis: ok (non-commercial). Before any commercial release: get the licence or remove",
+      "bytes": 1034859,
+      "sha256": "e3136c193317f270821bc28c0ce1ffa2d54cb885f57871ca79e97c9651c747f9",
+      "concepts": 1000,
+      "edges": 0
+    },
+    "kg/10_collocations.json": {
+      "kind": "runtime KG",
+      "source": "vladvlasov256/opensubs-collocations",
+      "licence": "CC-BY-4.0",
+      "gate": "ok, attribute",
+      "bytes": 185967,
+      "sha256": "f992936b78fcc50657a53dfd89a9040475944afa502316a33d61418eeb2ab534",
+      "concepts": 1000,
+      "edges": 0
+    },
+    "kg/11_idioms.json": {
+      "kind": "runtime KG",
+      "source": "adihaviv/idiomem",
+      "licence": "MIT",
+      "gate": "ok",
+      "bytes": 216393,
+      "sha256": "8e62fc4b3514010e5bfd1e1605a3d4391133d6d20afaa63c51a620ac28884cb1",
+      "concepts": 852,
+      "edges": 0
+    },
+    "kg/12_lexical_relations.json": {
+      "kind": "runtime KG",
+      "source": "ConceptNet 5 via appledora/conceptnet_en2en_relations",
+      "licence": "CC BY 4.0",
+      "gate": "ok, attribute",
+      "bytes": 18428015,
+      "sha256": "d9bf6d8ebfdf6c9f73d24ddc37bfc08fd0625db0a7827ee88ae61f676f00f8ca",
+      "concepts": 0,
+      "edges": 142150
+    },
+    "kg/06_tracecag_topic_expansion.json": {
+      "kind": "runtime KG",
+      "source": "scripts/generate_tracecag_topic_corpus.py (deterministic)",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 3285497,
+      "sha256": "ce2a792d2828c347175dc0d1eb285b29aa4dca47f2d12e41b8f99799d62bdb4a",
+      "concepts": 4040,
+      "edges": 14640
+    },
+    "kg/seed_graph.json": {
+      "kind": "runtime KG",
+      "source": "hand-written curriculum",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 30746,
+      "sha256": "1537cba3daa9e4e08f352c59c919154407ed21581a275748c3aa3f9c8175adeb",
+      "concepts": 92,
+      "edges": 89
+    },
+    "kg/01_grammar_gaps.json": {
+      "kind": "runtime KG",
+      "source": "hand-written curriculum",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 7431,
+      "sha256": "0979c1e0bb96979424bacbab524ad08f4567b4c4ff136b561aa9d544affa0acc",
+      "concepts": 18,
+      "edges": 22
+    },
+    "kg/02_functional_language.json": {
+      "kind": "runtime KG",
+      "source": "hand-written curriculum",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 8164,
+      "sha256": "9213edeb0d350dcfdaf9ad810df659b8b3edc7e351ba769ebe8798d1bb723ec7",
+      "concepts": 20,
+      "edges": 21
+    },
+    "kg/03_errors_vietnamese.json": {
+      "kind": "runtime KG",
+      "source": "hand-written Vietnamese-learner error taxonomy",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 8480,
+      "sha256": "f7dd8c780155a6cb82bf098f9bfa5118d7a6ee635881454429b8bfe9a781eff2",
+      "concepts": 20,
+      "edges": 23
+    },
+    "kg/04_writing_phonology.json": {
+      "kind": "runtime KG",
+      "source": "hand-written curriculum",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 8096,
+      "sha256": "9b298264cf0d8f824c5c40d7302391fef47f33be12fcb31357ccbf4475c4e07e",
+      "concepts": 19,
+      "edges": 23
+    },
+    "kg/05_vocabulary_advanced.json": {
+      "kind": "runtime KG",
+      "source": "hand-written curriculum",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 8264,
+      "sha256": "9fc5425d2a71460d93dc8cff6e050f409135cdbada4d5bdd376e3a412f4187a4",
+      "concepts": 20,
+      "edges": 20
+    },
+    "kg/13_cefrj_vocabulary.json": {
+      "kind": "runtime KG",
+      "source": "CEFR-J 1.5 / Octanove C1C2 1.0 words absent from the other files; definitions and Vietnamese from en.wiktionary.org via kaikki.org",
+      "licence": "CEFR-J: free with citation; Octanove and Wiktionary: CC BY-SA 4.0",
+      "gate": "ok; cite and share alike (see data/ATTRIBUTION.md)",
+      "bytes": 619793,
+      "sha256": "829a03091ead6c85a6499388b8af9fe0d9ae0ad0230d9c3067bf3512476586f6",
+      "concepts": 3191,
+      "edges": 0
+    },
+    "corpora/kaikki_reference/entries.jsonl": {
+      "kind": "corpus",
+      "source": "en.wiktionary.org structured extraction (Wiktextract) from kaikki.org, 9,997 words",
+      "licence": "CC BY-SA 4.0",
+      "gate": "reference for eval and for file 13; excluded from the Docker image",
+      "bytes": 7872809,
+      "sha256": "124a205445c58ced3ddb7d1a30e3bd9e4459b0ebcb05898170355861c9b50121",
+      "records": 9997
+    },
+    "knowledge_extended.json": {
+      "kind": "runtime KG",
+      "source": "hand-written curriculum (legacy file)",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 18886,
+      "sha256": "a534d719d4eb155a380cf9847e3302fe8efcaed47345dff27efd5e08484ad04f",
+      "concepts": 65,
+      "edges": 41
+    },
+    "corpora/gec_pairs/gec_pairs.jsonl": {
+      "kind": "corpus",
+      "source": "jhu-clsp/jfleg (validation + test, 4 references each)",
+      "licence": "CC BY-NC-SA 4.0",
+      "gate": "research only; excluded from the Docker image (.dockerignore)",
+      "bytes": 1045818,
+      "sha256": "8f6e7b1437ab6e4f41161bbc93e0f9d7d925c09584636467ee43b3a63d7bad45",
+      "records": 1501
+    },
+    "corpora/parallel_en_vi/pairs.jsonl": {
+      "kind": "corpus",
+      "source": "Helsinki-NLP/opus-100 en-vi, first 20,000 train rows, noise-filtered",
+      "licence": "unknown (OPUS subtitles)",
+      "gate": "research only; excluded from the Docker image (.dockerignore)",
+      "bytes": 3116909,
+      "sha256": "04a3a64ef5f1476327c025d9664e193c64c1783c40fab332a53ce1d431da66ad",
+      "records": 18444
+    },
+    "corpora/wiktionary_reference/entries.jsonl": {
+      "kind": "corpus",
+      "source": "en.wiktionary.org via Firecrawl (scripts/crawl_wiktionary_reference.py)",
+      "licence": "CC BY-SA 4.0",
+      "gate": "attribute Wiktionary contributors; share-alike",
+      "bytes": 391515,
+      "sha256": "f4d4e680b3eab145049257951bbd7210d1271433f43fc03e83e5e536f9df1b28",
+      "records": 468
+    },
+    "lexicon/cefr_vocabulary.jsonl": {
+      "kind": "lexicon",
+      "source": "CEFR-J Wordlist 1.5 (A1-B2) + Octanove Vocabulary Profile C1/C2 1.0, via openlanguageprofiles/olp-en-cefrj",
+      "licence": "CEFR-J: free with citation; Octanove: CC BY-SA 4.0",
+      "gate": "ok for app use; cite (see data/lexicon/README.md)",
+      "bytes": 1310308,
+      "sha256": "4cdc9f5f7ae6faf62cfd44cdaa7c1dc3e759039d06f4b8570247c0d88263756d",
+      "records": 9935
+    },
+    "lexicon/cefrj_grammar_profile.jsonl": {
+      "kind": "lexicon",
+      "source": "CEFR-J Grammar Profile 20180315",
+      "licence": "free with citation",
+      "gate": "ok for app use; cite (see data/lexicon/README.md)",
+      "bytes": 126320,
+      "sha256": "23035b73fc6595519bf27f90844e74a40bad78a9cd00dd3572c6197e8dea0c58",
+      "records": 500
+    },
+    "eval/kg_grounded_qa.jsonl": {
+      "kind": "eval",
+      "source": "scripts/build_kg_grounded_eval.py from the runtime KG + Wiktionary",
+      "licence": "derived",
+      "gate": "see kg_grounded_qa.manifest.json",
+      "bytes": 913018,
+      "sha256": "804ea711b71b52a095afb0267fd52424b70131ea03793a2d6a7c6b136bb45c6a",
+      "records": 1641
+    },
+    "eval/topic_paraphrases.json": {
+      "kind": "eval",
+      "source": "LLM-written learner phrasings of 60 topics",
+      "licence": "project-owned",
+      "gate": "ok",
+      "bytes": 16613,
+      "sha256": "a354ff3c0532f5a9f69dd10e081a6be6097cac40f4c2c2b929afe7249ee4e76b",
+      "records": 60
+    }
+  }
+}
