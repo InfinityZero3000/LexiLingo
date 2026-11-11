@@ -2,29 +2,7 @@ import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:markdown/markdown.dart' as md;
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-
-/// Intercepts fenced ```chart code blocks in AI chat messages and renders
-/// them as an fl_chart widget instead of literal code text.
-///
-/// Expected JSON spec inside the fence:
-/// `{"type":"bar"|"line"|"pie","title":"optional","labels":["A","B"],
-///   "series":[{"name":"...","values":[1,2]}]}`
-class ChatChartElementBuilder extends MarkdownElementBuilder {
-  @override
-  Widget? visitElementAfterWithContext(
-    BuildContext context,
-    md.Element element,
-    TextStyle? preferredStyle,
-    TextStyle? parentStyle,
-  ) {
-    final lang = element.attributes['class'] ?? '';
-    if (!lang.contains('language-chart')) return null;
-    return _ChatChartCard(rawSpec: element.textContent);
-  }
-}
 
 class _ChartSeries {
   final String name;
@@ -40,9 +18,11 @@ const List<Color> _seriesPalette = [
   AppColors.orange,
 ];
 
-class _ChatChartCard extends StatelessWidget {
+/// Renders a ```chart fence body. Spec: `{"type":"bar"|"line"|"pie","title":"optional",
+/// "labels":["A","B"],"series":[{"name":"...","values":[1,2]}]}`
+class ChatChartCard extends StatelessWidget {
   final String rawSpec;
-  const _ChatChartCard({required this.rawSpec});
+  const ChatChartCard({super.key, required this.rawSpec});
 
   @override
   Widget build(BuildContext context) {

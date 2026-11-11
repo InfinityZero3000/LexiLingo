@@ -27064,13 +27064,13 @@
       }
     },
     {
-      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::_ChatChartCard::Card::0",
+      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::ChatChartCard::Card::0",
       "path": "lib/features/chat/presentation/widgets/chat_chart_block.dart",
       "entryPoint": "surface",
-      "symbol": "_ChatChartCard",
+      "symbol": "ChatChartCard",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 45,
+      "line": 25,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -27090,13 +27090,13 @@
       }
     },
     {
-      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::_ChatChartCard::BoxDecoration::0",
+      "id": "lib/features/chat/presentation/widgets/chat_chart_block.dart::ChatChartCard::BoxDecoration::0",
       "path": "lib/features/chat/presentation/widgets/chat_chart_block.dart",
       "entryPoint": "surface",
-      "symbol": "_ChatChartCard",
+      "symbol": "ChatChartCard",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 84,
+      "line": 64,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -27123,6 +27123,448 @@
       "callKind": "BoxDecoration",
       "ordinal": 0,
       "line": 154,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatSegment::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatSegment",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 45,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatSegment::Card::1",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatSegment",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 46,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatSegment::Card::2",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatSegment",
+      "callKind": "Card",
+      "ordinal": 2,
+      "line": 47,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatSegment::Card::3",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatSegment",
+      "callKind": "Card",
+      "ordinal": 3,
+      "line": 48,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatSegment::Card::4",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatSegment",
+      "callKind": "Card",
+      "ordinal": 4,
+      "line": 49,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::_Card::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "_Card",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 80,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatCalloutCard::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatCalloutCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 104,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatCalloutCard::Card::1",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatCalloutCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 125,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatVocabCard::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatVocabCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 146,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatVocabCard::Card::1",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatVocabCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 157,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatFixCard::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatFixCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 234,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatFixCard::Card::1",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatFixCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 258,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatStepsCard::Card::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatStepsCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 291,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatStepsCard::Card::1",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatStepsCard",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 307,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::_Card::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "_Card",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 88,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatVocabCard::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatVocabCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 178,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart::ChatStepsCard::BoxDecoration::0",
+      "path": "lib/features/chat/presentation/widgets/chat_rich_blocks.dart",
+      "entryPoint": "surface",
+      "symbol": "ChatStepsCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 324,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",

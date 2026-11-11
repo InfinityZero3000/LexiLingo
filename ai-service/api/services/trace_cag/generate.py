@@ -193,6 +193,14 @@ _RICH_FORMATTING_HINT = (
     '{"type":"bar|line|pie","title":"...","labels":["A","B"],'
     '"series":[{"name":"...","values":[1,2]}]}. Omit it unless there\'s real '
     "data to plot — never invent numbers.\n"
+    "Emphasise key words with **bold**. When it genuinely helps, you may add ONE of "
+    "these fenced blocks (never for small talk, never more than one per reply):\n"
+    "```callout — first line tip|warning|note|example, then a short markdown text.\n"
+    "```vocab — lines `word:`, `pos:`, `ipa:`, `meaning:`, `vi:`, `example:` "
+    "(only word is required) to introduce one new word.\n"
+    "```fix — lines `wrong:`, `right:`, `why:` to show one correction.\n"
+    "```steps — one `Title | detail` per line for a process or a tense timeline.\n"
+    "Close every fence with ``` on its own line.\n"
 )
 
 

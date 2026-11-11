@@ -232,6 +232,8 @@ class LexiDialogueBubble extends StatelessWidget {
         selectable: false,
         baseTextStyle: baseTextStyle,
         highlightColor: highlightColor,
+        saveSourceType: 'lexi_chat',
+        saveSourceReference: message.id,
       ),
     );
   }
