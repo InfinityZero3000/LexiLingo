@@ -13,6 +13,7 @@ from langgraph.graph import StateGraph, END
 
 from api.services.trace_cag.state import TraceCAGState, create_initial_state
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
+from api.services.trace_cag.turn_metrics import record_turn_metrics
 # Using nodes_v2 with ModelGateway for lazy loading
 from api.services.trace_cag.nodes_v2 import (
     input_node,
@@ -219,6 +220,7 @@ class TraceCAGPipeline:
             # Add total latency
             total_latency_ms = int((time.time() - start_time) * 1000)
             final_state["latency_ms"] = total_latency_ms
+            record_turn_metrics(final_state)
 
             logger.info(
                 f"[TraceCAG] Completed in {total_latency_ms}ms, "
