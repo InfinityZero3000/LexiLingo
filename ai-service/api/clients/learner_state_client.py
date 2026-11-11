@@ -7,11 +7,19 @@ import json
 import random
 import time
 from dataclasses import dataclass, field
+from datetime import UTC
 from typing import Any
 
 import httpx
 
 from api.core.config import settings
+
+
+def _iso_utc(value: Any) -> str:
+    """Spool rows come from Mongo as naive UTC datetimes; the backend rejects an offset-less observed_at."""
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=UTC)
+    return value.isoformat()
 
 
 @dataclass(frozen=True, slots=True)
@@ -209,8 +217,7 @@ class LearnerStateClient:
         timeout_seconds: float = 5.0,
     ) -> dict[str, Any]:
         """Forward a durable spool batch; failures are replayed by the caller."""
-        # Spool rows come straight from Mongo, so observed_at is a datetime that httpx's json= cannot encode.
-        body = json.dumps({"observations": observations[:100]}, default=lambda o: o.isoformat())
+        body = json.dumps({"observations": observations[:100]}, default=_iso_utc)
         response = await self._http.post(
             f"{self._base_url}/learner-state/observations:batch",
             headers={
