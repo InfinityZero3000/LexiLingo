@@ -12,7 +12,6 @@ We schedule asyncio tasks to avoid blocking the HTTP response.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -44,7 +43,9 @@ class BackgroundJobsV3:
         linked_concepts: List[str],
         error_types: List[str],
     ) -> None:
-        asyncio.create_task(
+        from api.core.background import spawn
+
+        spawn(
             self._run(
                 user_id=user_id,
                 session_id=session_id,

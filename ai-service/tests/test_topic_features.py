@@ -311,7 +311,7 @@ class TestTopicFeatures:
         
         request_context = MagicMock(headers={})
 
-        def close_background_task(coro):
+        def close_background_task(coro, **_kwargs):   # asyncio.create_task(coro, *, name=None, context=None)
             coro.close()
             return MagicMock()
 

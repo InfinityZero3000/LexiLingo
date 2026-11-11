@@ -264,7 +264,9 @@ async def lifespan(app: FastAPI):
         try:
             from api.services.content_etl.staleness import run_staleness_loop
 
-            asyncio.create_task(run_staleness_loop())
+            from api.core.background import spawn
+
+            spawn(run_staleness_loop(), name="content_etl_staleness")
             logger.info(" content_etl staleness watch started")
         except Exception as e:
             logger.error(
