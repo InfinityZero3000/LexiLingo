@@ -25,6 +25,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_dialo
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_typing_indicator.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_corrections_sheet.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_memory_sheet.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_suggestion_bar.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
 
@@ -99,6 +100,14 @@ class _LexiChatPageState extends State<LexiChatPage>
     'lexiChat.quickReply1'.tr(),
     'lexiChat.quickReply2'.tr(),
     'lexiChat.quickReply3'.tr(),
+  ];
+
+  // Lexi only speaks English: the chips are labelled in the app language but
+  // send these.
+  static const _quickReplyPrompts = [
+    'Hi Lexi, can we practice speaking?',
+    'Can you correct my sentence?',
+    'Give me a daily conversation challenge.',
   ];
 
   @override
@@ -1147,32 +1156,46 @@ class _LexiChatPageState extends State<LexiChatPage>
               ),
             ),
           if (!_isVoiceActive) ...[
-            SizedBox(
-              height: 34,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _quickReplies.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final text = _quickReplies[index];
-                  return ActionChip(
-                    label: Text(text, overflow: TextOverflow.ellipsis),
-                    onPressed: () => _sendQuickReply(text),
-                    labelStyle: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white70 : AppColors.textGrey,
-                    ),
-                    side: BorderSide(
-                      color: isDark
-                          ? AppColors.surfaceDarkChat
-                          : AppColors.chatBgLight,
-                    ),
-                    backgroundColor: isDark
-                        ? AppColors.surfaceDarkInk
-                        : AppColors.backgroundLight,
+            Consumer<LexiChatProvider>(
+              builder: (context, chat, _) {
+                final last = chat.messages.isEmpty ? null : chat.messages.last;
+                if (last != null && last.isLexi && !chat.isLexiResponding) {
+                  return LexiSuggestionBar(
+                    message: last,
+                    nativeLanguage: chat.nativeLanguage,
+                    isDark: isDark,
+                    onSend: _sendQuickReply,
                   );
-                },
-              ),
+                }
+                return SizedBox(
+                  height: 34,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _quickReplies.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final text = _quickReplies[index];
+                      return ActionChip(
+                        label: Text(text, overflow: TextOverflow.ellipsis),
+                        onPressed: () =>
+                            _sendQuickReply(_quickReplyPrompts[index]),
+                        labelStyle: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.white70 : AppColors.textGrey,
+                        ),
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.surfaceDarkChat
+                              : AppColors.chatBgLight,
+                        ),
+                        backgroundColor: isDark
+                            ? AppColors.surfaceDarkInk
+                            : AppColors.backgroundLight,
+                      );
+                    },
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 10),
           ],
