@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -110,32 +111,36 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
         ),
       ),
-      body: Consumer<NotificationProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && provider.notifications.isEmpty) {
-            return _buildLoadingState();
-          }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Consumer<NotificationProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading && provider.notifications.isEmpty) {
+              return _buildLoadingState();
+            }
 
-          if (provider.errorMessage != null && provider.notifications.isEmpty) {
-            return _buildErrorState(context, provider);
-          }
+            if (provider.errorMessage != null &&
+                provider.notifications.isEmpty) {
+              return _buildErrorState(context, provider);
+            }
 
-          if (!provider.hasNotifications) {
-            return _buildEmptyState(context);
-          }
+            if (!provider.hasNotifications) {
+              return _buildEmptyState(context);
+            }
 
-          return RefreshIndicator(
-            onRefresh: () => provider.refreshNotifications(),
-            child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 80),
-              itemCount: provider.groupedNotifications.length,
-              itemBuilder: (context, index) {
-                final group = provider.groupedNotifications[index];
-                return _buildNotificationGroup(context, group, provider);
-              },
-            ),
-          );
-        },
+            return RefreshIndicator(
+              onRefresh: () => provider.refreshNotifications(),
+              child: ListView.builder(
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: provider.groupedNotifications.length,
+                itemBuilder: (context, index) {
+                  final group = provider.groupedNotifications[index];
+                  return _buildNotificationGroup(context, group, provider);
+                },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -61,125 +62,128 @@ class _SettingsPageState extends State<SettingsPage> {
         title: Text('settings.title'.tr()),
         leading: const AppBackButton(),
       ),
-      body: settings.isLoading
-          ? const Center(child: LottieLoadingWidget.medium())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                AnimatedListItem(
-                  index: 0,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.language,
-                    title: 'settings.language'.tr(),
-                    subtitle: 'settings.language_subtitle'.tr(),
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: settings.isLoading
+            ? const Center(child: LottieLoadingWidget.medium())
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  AnimatedListItem(
+                    index: 0,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.language,
+                      title: 'settings.language'.tr(),
+                      subtitle: 'settings.language_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildLanguageSelector(context, settings),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 1,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.notifications,
-                    title: 'settings.notifications'.tr(),
-                    subtitle: 'settings.notifications_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildLanguageSelector(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 1,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.notifications,
+                      title: 'settings.notifications'.tr(),
+                      subtitle: 'settings.notifications_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildNotificationSettings(context, settings),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 2,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.volume_up,
-                    title: 'settings.sound'.tr(),
-                    subtitle: 'settings.sound_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildNotificationSettings(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 2,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.volume_up,
+                      title: 'settings.sound'.tr(),
+                      subtitle: 'settings.sound_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildSoundSettings(context, settings),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 3,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.palette,
-                    title: 'settings.theme'.tr(),
-                    subtitle: 'settings.theme_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildSoundSettings(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 3,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.palette,
+                      title: 'settings.theme'.tr(),
+                      subtitle: 'settings.theme_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildThemeSelector(context, settings),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 4,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.person_outline,
-                    title: 'settings.account'.tr(),
-                    subtitle: 'settings.account_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildThemeSelector(context, settings),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 4,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.person_outline,
+                      title: 'settings.account'.tr(),
+                      subtitle: 'settings.account_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildAccountSection(context),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 5,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.cloud_sync_outlined,
-                    title: 'offlineSync.settingsTitle'.tr(),
-                    subtitle: 'offlineSync.settingsSubtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildAccountSection(context),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 5,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.cloud_sync_outlined,
+                      title: 'offlineSync.settingsTitle'.tr(),
+                      subtitle: 'offlineSync.settingsSubtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildOfflineSyncSection(context),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 6,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.people_outline_rounded,
-                    title: 'settings.referral'.tr(),
-                    subtitle: 'settings.referral_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildOfflineSyncSection(context),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 6,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.people_outline_rounded,
+                      title: 'settings.referral'.tr(),
+                      subtitle: 'settings.referral_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildReferralSection(context),
-                const SizedBox(height: 32),
-                AnimatedListItem(
-                  index: 7,
-                  duration: const Duration(milliseconds: 300),
-                  delayPerItem: const Duration(milliseconds: 50),
-                  child: _buildSectionHeader(
-                    context,
-                    icon: Icons.info_outline,
-                    title: 'settings.about'.tr(),
-                    subtitle: 'settings.about_subtitle'.tr(),
+                  const SizedBox(height: 12),
+                  _buildReferralSection(context),
+                  const SizedBox(height: 32),
+                  AnimatedListItem(
+                    index: 7,
+                    duration: const Duration(milliseconds: 300),
+                    delayPerItem: const Duration(milliseconds: 50),
+                    child: _buildSectionHeader(
+                      context,
+                      icon: Icons.info_outline,
+                      title: 'settings.about'.tr(),
+                      subtitle: 'settings.about_subtitle'.tr(),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _buildAboutSection(context),
-                const SizedBox(height: 40),
-              ],
-            ),
+                  const SizedBox(height: 12),
+                  _buildAboutSection(context),
+                  const SizedBox(height: 40),
+                ],
+              ),
+      ),
     );
   }
 

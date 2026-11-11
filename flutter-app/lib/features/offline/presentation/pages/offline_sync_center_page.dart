@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -142,30 +143,33 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: _isLoading && _snapshot == null
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null && _snapshot == null
-            ? _ErrorState(message: _errorMessage!, onRetry: _loadSnapshot)
-            : RefreshIndicator(
-                onRefresh: _loadSnapshot,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                  children: [
-                    _ConnectionCard(snapshot: _snapshot!),
-                    const SizedBox(height: 14),
-                    _CacheCard(
-                      snapshot: _snapshot!,
-                      isMutating: _isMutating,
-                      onClearExpired: _clearExpiredCache,
-                      onClearAll: _confirmClearAllCache,
-                    ),
-                    const SizedBox(height: 14),
-                    _QueueCard(snapshot: _snapshot!),
-                  ],
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: SafeArea(
+          child: _isLoading && _snapshot == null
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null && _snapshot == null
+              ? _ErrorState(message: _errorMessage!, onRetry: _loadSnapshot)
+              : RefreshIndicator(
+                  onRefresh: _loadSnapshot,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                    children: [
+                      _ConnectionCard(snapshot: _snapshot!),
+                      const SizedBox(height: 14),
+                      _CacheCard(
+                        snapshot: _snapshot!,
+                        isMutating: _isMutating,
+                        onClearExpired: _clearExpiredCache,
+                        onClearAll: _confirmClearAllCache,
+                      ),
+                      const SizedBox(height: 14),
+                      _QueueCard(snapshot: _snapshot!),
+                    ],
+                  ),
                 ),
-              ),
+        ),
       ),
     );
   }

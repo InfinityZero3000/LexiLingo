@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -775,63 +776,67 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
           ),
         ],
       ),
-      body: Consumer<VoiceProvider>(
-        builder: (context, voiceProvider, child) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildGuideCard(context, voiceProvider),
-                const SizedBox(height: 24),
-                _buildPhraseSection(context, voiceProvider),
-                const SizedBox(height: 18),
-                _buildListenControls(context),
-                const SizedBox(height: 24),
-                _buildRecordingSection(context, voiceProvider),
-                if (voiceProvider.hasError &&
-                    voiceProvider.errorMessage != null) ...[
-                  const SizedBox(height: 18),
-                  _buildErrorCard(context, voiceProvider),
-                ],
-                if (voiceProvider.lastTranscription != null &&
-                    voiceProvider.lastPronunciationScore == null) ...[
-                  const SizedBox(height: 18),
-                  _buildTranscriptionCard(context, voiceProvider),
-                ],
-                if (voiceProvider.lastPronunciationScore != null) ...[
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Consumer<VoiceProvider>(
+          builder: (context, voiceProvider, child) {
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildGuideCard(context, voiceProvider),
                   const SizedBox(height: 24),
-                  if (voiceProvider.lastPronunciationScore!.overallScore >=
-                      80) ...[
-                    const LottieAnimationWidget.success(
-                      width: 100,
-                      height: 100,
-                      repeat: false,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'voice.excellentPronunciation'.tr(),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.greenSuccessBright,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+                  _buildPhraseSection(context, voiceProvider),
+                  const SizedBox(height: 18),
+                  _buildListenControls(context),
+                  const SizedBox(height: 24),
+                  _buildRecordingSection(context, voiceProvider),
+                  if (voiceProvider.hasError &&
+                      voiceProvider.errorMessage != null) ...[
+                    const SizedBox(height: 18),
+                    _buildErrorCard(context, voiceProvider),
                   ],
-                  PronunciationScoreCard(
-                    score: voiceProvider.lastPronunciationScore!,
-                    onTryAgain: () {
-                      setState(() => _lastRecordingAudioData = null);
-                      voiceProvider.clearResults();
-                    },
-                    onListenExample: _playExample,
-                  ),
+                  if (voiceProvider.lastTranscription != null &&
+                      voiceProvider.lastPronunciationScore == null) ...[
+                    const SizedBox(height: 18),
+                    _buildTranscriptionCard(context, voiceProvider),
+                  ],
+                  if (voiceProvider.lastPronunciationScore != null) ...[
+                    const SizedBox(height: 24),
+                    if (voiceProvider.lastPronunciationScore!.overallScore >=
+                        80) ...[
+                      const LottieAnimationWidget.success(
+                        width: 100,
+                        height: 100,
+                        repeat: false,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'voice.excellentPronunciation'.tr(),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: AppColors.greenSuccessBright,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    PronunciationScoreCard(
+                      score: voiceProvider.lastPronunciationScore!,
+                      onTryAgain: () {
+                        setState(() => _lastRecordingAudioData = null);
+                        voiceProvider.clearResults();
+                      },
+                      onListenExample: _playExample,
+                    ),
+                  ],
+                  const SizedBox(height: 28),
                 ],
-                const SizedBox(height: 28),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
