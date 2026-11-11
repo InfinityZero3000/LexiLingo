@@ -50,7 +50,8 @@ class KGHits(BaseModel):
 class VectorHit(BaseModel):
     id: str
     score: float
-    snippet: str = ""
+    snippet: str = ""   # the concept as prompt text: title, CEFR level where labelled, clipped keywords
+    title: str = ""
 
 
 class ExamplePair(BaseModel):

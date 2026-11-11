@@ -30,6 +30,8 @@ from api.services.kg_data_loader import (
 )
 from api.services.trace_cag.dependencies import KG_VERSION_TOKEN
 
+from api.services.trace_cag.env_helpers import kg_context_v2
+
 logger = logging.getLogger(__name__)
 
 _RUNTIME_KG_SOURCE_FILES = (
@@ -46,11 +48,23 @@ _RUNTIME_KG_SOURCE_FILES = (
     "10_collocations.json",
     "11_idioms.json",
     "12_lexical_relations.json",
+    "13_cefrj_vocabulary.json",
 )
 
 
 # A full-title match in the query outranks partial keyword overlap.
 _TITLE_MATCH_BOOST = 1.8
+# A title phrase counts as a named entity only if its rarest word is rarer than function and template words.
+_NAMED_ENTITY_MIN_IDF = 3.0
+# Words about asking and about language itself. They are real concepts ("level", "word") but in "what level is the word 'x'"
+# they are the question's frame, not what is asked about, and IDF cannot tell them apart ("level" is rarer than "important").
+_QUESTION_FRAME_WORDS = frozenset(
+    "what which who whom whose when where why how word words level levels cefr english mean means meaning define definition "
+    "translate translation vietnamese grammar topic example examples difference different between correct use used say tell "
+    "explain please can could would should does did the and for with this that there here have has are was were you your".split()
+)
+_PHRASE_WORD = re.compile(r"[a-z0-9]+(?:'[a-z0-9]+)*")   # inner apostrophes only: "don't" is one word, "'important'" is "important"
+_QUOTED_SPAN = re.compile(r"(?<![\w])['\"\u201c\u2018]([^'\"\u201d\u2019\n]{2,60})['\"\u201d\u2019](?![\w])")
 # Seeds are popped one-per-KuzuDB-query before expansion begins, so this cap is
 # the graph-expansion latency knob, not a recall knob.
 _SEED_LIMIT = 12
@@ -118,6 +132,7 @@ class KnowledgeGraphServiceV3:
         # keyword → log-scaled IDF, and concept_id → tokens of its title
         self._keyword_idf: Dict[str, float] = {}
         self._title_tokens: Dict[str, frozenset] = {}
+        self._title_phrase: Dict[str, str] = {}
         # TF-IDF structures (Phase 3, pure Python)
         self._tfidf_concept_ids: List[str] = []
         self._tfidf_idf: Dict[str, float] = {}
@@ -430,6 +445,7 @@ class KnowledgeGraphServiceV3:
         cache: Dict[str, Dict[str, str]] = {}
         keyword_index: Dict[str, List[str]] = {}
         title_tokens: Dict[str, frozenset] = {}
+        title_phrase: Dict[str, str] = {}
         try:
             result = self._conn.execute(
                 "MATCH (c:Concept) RETURN c.id, c.title, c.keywords, c.level"
@@ -453,6 +469,7 @@ class KnowledgeGraphServiceV3:
                 }
                 for tok in tokens:
                     keyword_index.setdefault(tok, []).append(cid)
+                title_phrase[cid] = " ".join(_PHRASE_WORD.findall(title.lower()))
                 title_tokens[cid] = frozenset(
                     tok
                     for tok in re.findall(r"[a-z0-9_']+", title.lower())
@@ -468,6 +485,7 @@ class KnowledgeGraphServiceV3:
             for tok, ids in keyword_index.items()
         }
         self._title_tokens = title_tokens
+        self._title_phrase = title_phrase
         self._concepts_cache = cache
         self._keyword_index = keyword_index
         logger.info(
@@ -514,6 +532,7 @@ class KnowledgeGraphServiceV3:
         self._keyword_index = {}
         self._keyword_idf = {}
         self._title_tokens = {}
+        self._title_phrase = {}
         self._tfidf_concept_ids = []
         self._tfidf_idf = {}
         self._tfidf_vectors = []
@@ -1092,6 +1111,8 @@ class KnowledgeGraphServiceV3:
             return []
 
         query_weight = sum(self._keyword_idf.get(tok, 1.0) for tok in token_set) or 1.0
+        query_phrase = " " + " ".join(_PHRASE_WORD.findall(normalized)) + " "
+        quoted = {" ".join(_PHRASE_WORD.findall(m.lower())) for m in _QUOTED_SPAN.findall(str(query or ""))}
 
         CEFR_ORD = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
         learner_ord = CEFR_ORD.get(str(learner_level or "B1").upper(), 3)
@@ -1112,6 +1133,15 @@ class KnowledgeGraphServiceV3:
             title_tokens = self._title_tokens.get(concept_id)
             if title_tokens and title_tokens <= token_set:
                 score *= _TITLE_MATCH_BOOST
+            # The whole title as a phrase of the query is an entity the learner named ("the word 'important'"). Bag-of-words
+            # coverage cannot rank it: a one-word title covers one query token, a long forum-answer node covers "what/level/word".
+            # So a named entity outranks any coverage score; ties go to the rarer title (not "word", "level", "english").
+            phrase = getattr(self, "_title_phrase", {}).get(concept_id, "") if kg_context_v2() else ""
+            if phrase and f" {phrase} " in query_phrase:
+                rarest = max((self._keyword_idf.get(t, 1.0) for t in phrase.split()), default=1.0)
+                # Quotes name the entity outright; without them the frame words of a question do not count.
+                if phrase in quoted or (rarest >= _NAMED_ENTITY_MIN_IDF and phrase not in _QUESTION_FRAME_WORDS):
+                    score = max(score, 1.0) + (1.0 if phrase in quoted else 0.0) + 0.05 * rarest
             scored.append((score, concept_id, meta))
 
         scored.sort(key=lambda item: item[0], reverse=True)

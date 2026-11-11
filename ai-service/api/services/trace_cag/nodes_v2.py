@@ -423,6 +423,12 @@ async def _traversal_mastery(
         return {}
 
 
+def _concept_level(known: Any, concept_id: str) -> str:
+    meta = known.get(concept_id) if isinstance(known, dict) else None
+    level = meta.get("level") if isinstance(meta, dict) else ""
+    return level if isinstance(level, str) else ""
+
+
 async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Level-aware best-first KG expansion (paper Alg. 4).
@@ -461,12 +467,18 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
                 max_nodes=10,
                 mastery=mastery or None,
             )
+            # Not in the node's properties: those are the payload of the shared Redis subgraph cache, whose format is pinned.
+            try:
+                known = kg.get_concepts()
+            except Exception:   # a label is decoration: it must never cost the expansion
+                known = {}
             expanded_nodes = [
                 {
                     "id": n.id,
                     "relation": n.properties.get("relation", n.type),
                     "title": n.properties.get("title", ""),
                     "keywords": n.properties.get("keywords", ""),
+                    "level": _concept_level(known, n.id),
                 }
                 for n in kg_result.expanded_nodes
             ]

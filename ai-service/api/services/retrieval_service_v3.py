@@ -28,6 +28,8 @@ from api.models.v3_schemas import (
 from api.services.embedding_service_v3 import EmbeddingServiceV3
 from api.services.graph_analytics import get_graph_analytics
 from api.services.kg_service_v3 import KnowledgeGraphServiceV3
+from api.services.trace_cag.env_helpers import kg_context_v2
+from api.services.trace_cag.kg_utils import kg_concept_text
 
 
 logger = logging.getLogger(__name__)
@@ -263,14 +265,19 @@ class RetrievalServiceV3:
             if similarity < self.config.min_similarity:
                 continue
                 
-            snippet = meta.get("title", concept_id)
-            scored.append((concept_id, similarity, snippet))
+            # The embedding was made from "title. keywords"; the prompt must get that content back, not the bare title
+            title = meta.get("title", concept_id)
+            if kg_context_v2():
+                snippet = kg_concept_text(title, meta.get("keywords", ""), meta.get("level", ""), concept_id)
+            else:
+                snippet, title = title, ""   # before 2026-11-11 the prompt got the bare title
+            scored.append((concept_id, similarity, snippet, title))
 
         scored.sort(key=lambda x: x[1], reverse=True)
         
         return [
-            VectorHit(id=c_id, score=max(0.0, min(1.0, score)), snippet=snippet)
-            for c_id, score, snippet in scored[:limit]
+            VectorHit(id=c_id, score=max(0.0, min(1.0, score)), snippet=snippet, title=title)
+            for c_id, score, snippet, title in scored[:limit]
         ]
     
     def _rank_by_centrality(
@@ -320,6 +327,7 @@ class RetrievalServiceV3:
                 id=hit.id,
                 score=round(combined, 4),
                 snippet=hit.snippet,
+                title=hit.title,
             ))
         
         return result

@@ -15,7 +15,7 @@ from typing import Any, Dict, List
 
 from api.services.trace_cag.state import TraceCAGState
 from api.services.document_intelligence import get_doc_intel_service
-from api.services.trace_cag.env_helpers import _env_float, _env_int, _clip01
+from api.services.trace_cag.env_helpers import _env_float, _env_int, _clip01, kg_context_v2
 from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
 from api.services.learner_overlay import rank_with_learner_overlay
 from api.core.config import settings
@@ -23,7 +23,7 @@ from api.services.trace_cag.dependencies import dependency_record, stable_versio
 
 from api.services.trace_cag.kg_utils import (
     _KG_QUERY_CACHE, _kg_cache_key, _kg_cache_get, _kg_cache_set,
-    _pack_kg_nodes_for_context,
+    _pack_kg_nodes_for_context, kg_concept_text,
 )
 
 from api.services.trace_cag.benchmark.adaptive import (
@@ -90,6 +90,25 @@ def _fusion_score(
     s_vec = vec_sim
     s_rec = math.exp(-_RECENCY_LAMBDA * last_used_turns_ago)
     return _FUSION_ALPHA * s_kg + _FUSION_BETA * s_vec + _FUSION_GAMMA * s_rec
+
+
+def _merge_duplicate_evidence(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """One concept reaches retrieval by several routes (graph expansion, lexical query, dense stage). Left alone it is written
+    into the prompt once per route and takes that many of the few evidence slots. Keep the first, with the best of each route's
+    scores: the shallowest depth and the highest similarity."""
+    first: Dict[str, Dict[str, Any]] = {}
+    out: List[Dict[str, Any]] = []
+    for item in items:
+        key = str(item.get("item_id") or "")
+        kept = first.get(key) if key else None
+        if kept is None:
+            if key:
+                first[key] = item
+            out.append(item)
+            continue
+        kept["kg_depth"] = min(kept.get("kg_depth", 9), item.get("kg_depth", 9))
+        kept["vec_sim"] = max(float(kept.get("vec_sim") or 0.0), float(item.get("vec_sim") or 0.0))
+    return out
 
 
 async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
@@ -190,8 +209,9 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 local_vector_hits.append({"text": snippet, "score": hit.score})
                 local_evidence.append({
                     "item_id": hit.id,
-                    "title": snippet,
-                    "text": f"Concept ({hit.id}): {snippet}",
+                    "title": getattr(hit, "title", "") or snippet,
+                    # snippet is already the readable concept text; the id was only noise in the prompt
+                    "text": snippet if getattr(hit, "title", "") else f"Concept ({hit.id}): {snippet}",
                     "kg_depth": 2,
                     "vec_sim": hit.score,
                     "turns_ago": session_turn,
@@ -312,11 +332,11 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             # No title means nothing readable to ground on — the id alone
             # ("concept:vocab.word.nerve") is noise in the prompt.
             continue
-        keywords = str(node.get("keywords") or "").strip()
         relation = str(node.get("relation") or "related_to")
-        text = f"Related concept ({relation}): {title}"
-        if keywords:
-            text = f"{text}. Keywords: {keywords}"
+        text = kg_concept_text(
+            title, str(node.get("keywords") or "").strip(), str(node.get("level") or ""), str(node.get("id") or ""),
+            label=f"Related concept ({relation})",
+        )
         evidence_items.append({
             "item_id": str(node.get("id") or title),
             "title": title,
@@ -354,7 +374,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 # task (created above) of any chance to run concurrently.
                 # run_in_executor hands it to a worker thread so Stage 2's
                 # own awaits (network/model calls) can actually interleave.
-                queried_nodes = await asyncio.get_event_loop().run_in_executor(
+                queried_nodes = await asyncio.get_running_loop().run_in_executor(
                     None, lambda: kg.query_concepts(user_input, learner_level=learner_level, top_k=top_k)
                 )
                 _kg_cache_set(cache_key, queried_nodes)
@@ -362,12 +382,11 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
             packed_nodes = _pack_kg_nodes_for_context(queried_nodes, token_budget)
             for node in packed_nodes:
                 title = str(node.get("title") or node.get("id") or "")
-                keywords = str(node.get("keywords") or "")
                 score = float(node.get("score") or 0.0)
                 evidence_items.append({
                     "item_id": str(node.get("id") or title),
                     "title": title,
-                    "text": f"Concept: {title}. Keywords: {keywords}",
+                    "text": node["context_text"],
                     "kg_depth": 1,
                     "vec_sim": max(0.0, min(1.0, score)),
                     "turns_ago": session_turn,
@@ -498,6 +517,9 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 logger.info(f"[retrieve_node] L2 Context injected: {len(external_hits)} chunks")
         except Exception as e3:
             logger.warning(f"[retrieve_node] L2 retrieval failed: {e3}")
+
+    if not benchmark_candidates and kg_context_v2():
+        evidence_items = _merge_duplicate_evidence(evidence_items)
 
     # ── Fusion scoring and ranking ───────────────────────────────────
     if _elapsed_ms() <= total_budget_ms:
