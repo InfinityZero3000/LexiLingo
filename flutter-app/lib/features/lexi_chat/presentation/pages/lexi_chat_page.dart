@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -603,10 +604,18 @@ class _LexiChatPageState extends State<LexiChatPage>
           child: Column(
             children: [
               _buildHeader(isDark),
-              Expanded(child: _buildMessageList(isDark)),
+              Expanded(
+                child: ContentWidth(
+                  maxWidth: ContentWidth.reading,
+                  child: _buildMessageList(isDark),
+                ),
+              ),
               ListenableBuilder(
                 listenable: _voiceSignals,
-                builder: (_, __) => _buildInputBar(isDark),
+                builder: (_, __) => ContentWidth(
+                  maxWidth: ContentWidth.reading,
+                  child: _buildInputBar(isDark),
+                ),
               ),
             ],
           ),

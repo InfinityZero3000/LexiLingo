@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -135,7 +136,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
     return Scaffold(
-      body: Stack(
+      body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
         children: [
           CustomScrollView(
             controller: _scrollController,
@@ -422,7 +423,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               child: _buildQuizButton(cefrColor),
             ),
         ],
-      ),
+      ),),
     );
   }
 

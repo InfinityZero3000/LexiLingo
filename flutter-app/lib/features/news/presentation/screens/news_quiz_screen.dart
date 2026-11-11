@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -69,40 +70,46 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           icon: const Icon(Icons.close_rounded),
         ),
       ),
-      body: FadeTransition(
-        opacity: _fadeController,
-        child: Consumer<NewsProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoadingQuiz) {
-              return const Center(child: LottieLoadingWidget.medium());
-            }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: FadeTransition(
+          opacity: _fadeController,
+          child: Consumer<NewsProvider>(
+            builder: (context, provider, _) {
+              if (provider.isLoadingQuiz) {
+                return const Center(child: LottieLoadingWidget.medium());
+              }
 
-            if (provider.currentQuiz == null) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.quiz_outlined,
-                      size: 64,
-                      color: AppColors.grey400,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'newsQuiz.quizNotAvailable'.tr(),
-                      style: TextStyle(color: AppColors.grey500, fontSize: 16),
-                    ),
-                  ],
-                ),
-              );
-            }
+              if (provider.currentQuiz == null) {
+                return Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.quiz_outlined,
+                        size: 64,
+                        color: AppColors.grey400,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'newsQuiz.quizNotAvailable'.tr(),
+                        style: TextStyle(
+                          color: AppColors.grey500,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-            if (provider.quizSubmitted) {
-              return _buildResultsView(provider, cefrColor, isDark);
-            }
+              if (provider.quizSubmitted) {
+                return _buildResultsView(provider, cefrColor, isDark);
+              }
 
-            return _buildQuizView(provider, cefrColor, isDark);
-          },
+              return _buildQuizView(provider, cefrColor, isDark);
+            },
+          ),
         ),
       ),
     );
