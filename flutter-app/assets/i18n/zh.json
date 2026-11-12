@@ -649,6 +649,8 @@
     "saveChanges": "保存更改",
     "tapCameraToChangeAvatar": "点击相机即可更改头像",
     "chooseAvatar": "选择头像",
+    "uploadFromDevice": "从设备上传",
+    "avatarUploadFailed": "无法上传照片。请使用小于 2 MB 的 JPEG、PNG 或 WebP 图片。",
     "useCustomUrl": "使用自定义 URL",
     "customAvatarUrl": "自定义头像网址",
     "avatarUrlHint": "https://example.com/avatar.png",

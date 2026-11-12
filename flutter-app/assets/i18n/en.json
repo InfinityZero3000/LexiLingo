@@ -649,6 +649,8 @@
     "saveChanges": "Save Changes",
     "tapCameraToChangeAvatar": "Tap camera to change avatar",
     "chooseAvatar": "Choose Avatar",
+    "uploadFromDevice": "Upload from device",
+    "avatarUploadFailed": "Couldn't upload the photo. Use a JPEG, PNG or WebP under 2 MB.",
     "useCustomUrl": "Use custom URL",
     "customAvatarUrl": "Custom Avatar URL",
     "avatarUrlHint": "https://example.com/avatar.png",

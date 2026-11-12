@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -37,6 +39,8 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   Timer? _verificationCooldownTimer;
   String? _errorMessage;
   String? _selectedAvatarUrl;
+  Uint8List? _pickedAvatarBytes;
+  String _pickedAvatarName = 'avatar.jpg';
   late AnimationController _animController;
   late Animation<double> _fadeAnimation;
 
@@ -101,9 +105,23 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         selectedOrTypedAvatar,
       );
 
+      final picked = _pickedAvatarBytes;
+      if (picked != null) {
+        try {
+          await authProvider.uploadAvatar(picked, _pickedAvatarName);
+        } catch (_) {
+          if (mounted) {
+            setState(() => _errorMessage = 'profile.avatarUploadFailed'.tr());
+          }
+          return;
+        }
+        // Saved already; a retry after a later failure must not upload twice.
+        _pickedAvatarBytes = null;
+      }
+
       await authProvider.updateProfile(
         displayName: newDisplayName.isNotEmpty ? newDisplayName : null,
-        avatarUrl: normalizedAvatarUrl,
+        avatarUrl: picked != null ? null : normalizedAvatarUrl,
       );
 
       if (mounted) {
@@ -458,7 +476,14 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   ],
                 ),
                 child: ClipOval(
-                  child: currentAvatar != null && currentAvatar.isNotEmpty
+                  child: _pickedAvatarBytes != null
+                      ? Image.memory(
+                          _pickedAvatarBytes!,
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 120,
+                        )
+                      : currentAvatar != null && currentAvatar.isNotEmpty
                       ? _buildAvatarImage(
                           currentAvatar,
                           fit: BoxFit.cover,
@@ -606,6 +631,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                               url,
                             );
                             setState(() {
+                              _pickedAvatarBytes = null;
                               _selectedAvatarUrl = normalized;
                               _avatarUrlController.text = normalized ?? '';
                             });
@@ -650,14 +676,31 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                     ),
                   ),
                   const SizedBox(height: 8),
-                  // Custom URL option
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showCustomUrlDialog();
-                    },
-                    icon: const Icon(Icons.link),
-                    label: Text('profile.useCustomUrl'.tr()),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _pickAvatarFromDevice();
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: primaryColor,
+                          foregroundColor: AppColors.surfaceLight,
+                        ),
+                        icon: const Icon(Icons.upload_file),
+                        label: Text('profile.uploadFromDevice'.tr()),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _showCustomUrlDialog();
+                        },
+                        icon: const Icon(Icons.link),
+                        label: Text('profile.useCustomUrl'.tr()),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -666,6 +709,36 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         );
       },
     );
+  }
+
+  // Matches the backend cap; the picker downsizes to 512 px so this is a safety net.
+  static const _maxAvatarBytes = 2 * 1024 * 1024;
+
+  Future<void> _pickAvatarFromDevice() async {
+    try {
+      final file = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      if (!mounted) return;
+      if (bytes.length > _maxAvatarBytes) {
+        setState(() => _errorMessage = 'profile.avatarUploadFailed'.tr());
+        return;
+      }
+      setState(() {
+        _pickedAvatarBytes = bytes;
+        _pickedAvatarName = file.name.isNotEmpty ? file.name : 'avatar.jpg';
+        _errorMessage = null;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() => _errorMessage = 'profile.avatarUploadFailed'.tr());
+      }
+    }
   }
 
   void _showCustomUrlDialog() {
@@ -701,6 +774,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                   urlController.text,
                 );
                 setState(() {
+                  _pickedAvatarBytes = null;
                   _selectedAvatarUrl = normalized;
                   _avatarUrlController.text = normalized ?? '';
                 });

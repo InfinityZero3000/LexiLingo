@@ -649,6 +649,8 @@
     "saveChanges": "変更を保存",
     "tapCameraToChangeAvatar": "カメラをタップしてアバターを変更します",
     "chooseAvatar": "アバターの選択",
+    "uploadFromDevice": "端末から写真をアップロード",
+    "avatarUploadFailed": "写真をアップロードできませんでした。2 MB 未満の JPEG、PNG、WebP を使用してください。",
     "useCustomUrl": "カスタム URL を使用する",
     "customAvatarUrl": "カスタムアバターURL",
     "avatarUrlHint": "https://example.com/avatar.png",
