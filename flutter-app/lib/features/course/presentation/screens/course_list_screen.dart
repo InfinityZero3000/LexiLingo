@@ -1,5 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
+// ignore: depend_on_referenced_packages
+import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart' show ImageRenderMethodForWeb;
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -1124,7 +1127,11 @@ class _HorizontalCourseCard extends StatelessWidget {
         CachedNetworkImage(
           imageUrl: url,
           cacheKey: '$heroTag|$url',
-          memCacheWidth: targetWidth,
+          // Web cards painted solid black without erroring, so the fallbacks
+          // never ran. Suspected HtmlImage + resize; HttpGet decodes in-engine
+          // and errors reach errorWidget. Unverified on prod — revert if not.
+          imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
+          memCacheWidth: kIsWeb ? null : targetWidth,
           fit: BoxFit.cover,
           placeholder: (_, __) => gradientLoading(),
           errorWidget: (_, __, ___) => onError(),

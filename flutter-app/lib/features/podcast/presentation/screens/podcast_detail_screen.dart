@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -90,53 +91,58 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Consumer<PodcastProvider>(
-        builder: (context, provider, _) {
-          final isFollowed = provider.followedPodcasts.any(
-            (f) => f.feedUrl == widget.podcast.feedUrl,
-          );
-          final episodes = provider.currentEpisodes;
-          final episodeCount = episodes.isNotEmpty
-              ? episodes.length
-              : widget.podcast.episodeCount;
+      body: ContentWidth(
+        child: Consumer<PodcastProvider>(
+          builder: (context, provider, _) {
+            final isFollowed = provider.followedPodcasts.any(
+              (f) => f.feedUrl == widget.podcast.feedUrl,
+            );
+            final episodes = provider.currentEpisodes;
+            final episodeCount = episodes.isNotEmpty
+                ? episodes.length
+                : widget.podcast.episodeCount;
 
-          return Stack(
-            children: [
-              CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: _Header(
-                      podcast: widget.podcast,
-                      isFollowed: isFollowed,
-                      followLoading: _followLoading,
-                      expanded: _descriptionExpanded,
-                      onToggleExpanded: () => setState(
-                        () => _descriptionExpanded = !_descriptionExpanded,
+            return Stack(
+              children: [
+                CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: _Header(
+                        podcast: widget.podcast,
+                        isFollowed: isFollowed,
+                        followLoading: _followLoading,
+                        expanded: _descriptionExpanded,
+                        onToggleExpanded: () => setState(
+                          () => _descriptionExpanded = !_descriptionExpanded,
+                        ),
+                        onToggleFollow: _toggleFollow,
+                        onPlayLatest: episodes.isEmpty
+                            ? null
+                            : () => _openPlayer(episodes.first),
                       ),
-                      onToggleFollow: _toggleFollow,
-                      onPlayLatest: episodes.isEmpty
-                          ? null
-                          : () => _openPlayer(episodes.first),
                     ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
-                      child: ContentSectionHeader(
-                        title: 'podcast.episodeCount'.tr(
-                          namedArgs: {'count': '$episodeCount'},
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
+                        child: ContentSectionHeader(
+                          title: 'podcast.episodeCount'.tr(
+                            namedArgs: {'count': '$episodeCount'},
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  ..._buildEpisodes(provider),
-                ],
-              ),
-              ContentTopBar(title: widget.podcast.title, collapsed: _collapsed),
-            ],
-          );
-        },
+                    ..._buildEpisodes(provider),
+                  ],
+                ),
+                ContentTopBar(
+                  title: widget.podcast.title,
+                  collapsed: _collapsed,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

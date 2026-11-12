@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -77,31 +78,40 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Consumer<BookProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: LottieLoadingWidget.medium());
-          }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Consumer<BookProvider>(
+          builder: (context, provider, _) {
+            if (provider.isLoading) {
+              return const Center(child: LottieLoadingWidget.medium());
+            }
 
-          if (provider.quizCompleted) {
-            return _buildResultScreen(context, provider, isDark);
-          }
+            if (provider.quizCompleted) {
+              return _buildResultScreen(context, provider, isDark);
+            }
 
-          final quiz = provider.currentQuiz;
-          if (quiz == null || quiz.questions.isEmpty) {
-            return Center(
-              child: Text(
-                'books.quizNotAvailable'.tr(),
-                style: TextStyle(
-                  color: isDark ? Colors.white54 : AppColors.textGrey,
+            final quiz = provider.currentQuiz;
+            if (quiz == null || quiz.questions.isEmpty) {
+              return Center(
+                child: Text(
+                  'books.quizNotAvailable'.tr(),
+                  style: TextStyle(
+                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                  ),
                 ),
-              ),
-            );
-          }
+              );
+            }
 
-          final question = quiz.questions[_currentQuestion];
-          return _buildQuestionView(context, provider, question, quiz, isDark);
-        },
+            final question = quiz.questions[_currentQuestion];
+            return _buildQuestionView(
+              context,
+              provider,
+              question,
+              quiz,
+              isDark,
+            );
+          },
+        ),
       ),
     );
   }

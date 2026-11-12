@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -33,172 +34,176 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('progress.title'.tr()), centerTitle: true),
-      body: Consumer<ProgressProvider>(
-        builder: (context, progressProvider, child) {
-          if (progressProvider.isLoading) {
-            return LoadingScreen(message: 'progress.loadingProgress'.tr());
-          }
+      body: ContentWidth(
+        child: Consumer<ProgressProvider>(
+          builder: (context, progressProvider, child) {
+            if (progressProvider.isLoading) {
+              return LoadingScreen(message: 'progress.loadingProgress'.tr());
+            }
 
-          if (progressProvider.errorMessage != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    progressProvider.errorMessage!,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      progressProvider.fetchMyProgress();
-                      context.read<HomeProvider>().loadWeeklyProgress();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: Text('common.retry'.tr()),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          final summary = progressProvider.summary;
-          final courseProgressList = progressProvider.courseProgressList;
-
-          if (summary == null) {
-            return Center(child: Text('progress.noProgressDataAvailable'.tr()));
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => Future.wait([
-              progressProvider.fetchMyProgress(),
-              context.read<HomeProvider>().loadWeeklyProgress(),
-            ]),
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Overall Stats
-                  ProgressCard(
-                    title: 'progress.overallStatistics'.tr(),
-                    icon: Icons.analytics,
-                    children: [
-                      _buildStatRow(
-                        context,
-                        'profile.totalXp'.tr(),
-                        summary.totalXp.toString(),
-                        Icons.star,
-                      ),
-                      const Divider(),
-                      _buildStatRow(
-                        context,
-                        'progress.coursesEnrolledStat'.tr(),
-                        summary.coursesEnrolled.toString(),
-                        Icons.school,
-                      ),
-                      const Divider(),
-                      _buildStatRow(
-                        context,
-                        'progress.coursesCompletedStat'.tr(),
-                        summary.coursesCompleted.toString(),
-                        Icons.check_circle,
-                      ),
-                      const Divider(),
-                      _buildStatRow(
-                        context,
-                        'progress.lessonsCompletedStat'.tr(),
-                        summary.lessonsCompleted.toString(),
-                        Icons.done_all,
-                      ),
-                      const Divider(),
-                      _buildStatRow(
-                        context,
-                        'profile.currentStreak'.tr(),
-                        'profile.daysCount'.tr(
-                          namedArgs: {'count': '${summary.currentStreak}'},
-                        ),
-                        Icons.local_fire_department,
-                      ),
-                      const Divider(),
-                      _buildStatRow(
-                        context,
-                        'profile.longestStreak'.tr(),
-                        'profile.daysCount'.tr(
-                          namedArgs: {'count': '${summary.longestStreak}'},
-                        ),
-                        Icons.military_tech,
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Weekly Overview Charts
-                  _WeeklyOverviewSection(),
-
-                  const SizedBox(height: 24),
-
-                  // Course Progress
-                  Text(
-                    'progress.courseProgressTitle'.tr(),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+            if (progressProvider.errorMessage != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
                     ),
-                  ),
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 16),
+                    Text(
+                      progressProvider.errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        progressProvider.fetchMyProgress();
+                        context.read<HomeProvider>().loadWeeklyProgress();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: Text('common.retry'.tr()),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-                  if (courseProgressList.isEmpty)
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Center(
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.inbox,
-                                size: 48,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'profile.noEnrolledCoursesYet'.tr(),
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                            ],
+            final summary = progressProvider.summary;
+            final courseProgressList = progressProvider.courseProgressList;
+
+            if (summary == null) {
+              return Center(
+                child: Text('progress.noProgressDataAvailable'.tr()),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => Future.wait([
+                progressProvider.fetchMyProgress(),
+                context.read<HomeProvider>().loadWeeklyProgress(),
+              ]),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Overall Stats
+                    ProgressCard(
+                      title: 'progress.overallStatistics'.tr(),
+                      icon: Icons.analytics,
+                      children: [
+                        _buildStatRow(
+                          context,
+                          'profile.totalXp'.tr(),
+                          summary.totalXp.toString(),
+                          Icons.star,
+                        ),
+                        const Divider(),
+                        _buildStatRow(
+                          context,
+                          'progress.coursesEnrolledStat'.tr(),
+                          summary.coursesEnrolled.toString(),
+                          Icons.school,
+                        ),
+                        const Divider(),
+                        _buildStatRow(
+                          context,
+                          'progress.coursesCompletedStat'.tr(),
+                          summary.coursesCompleted.toString(),
+                          Icons.check_circle,
+                        ),
+                        const Divider(),
+                        _buildStatRow(
+                          context,
+                          'progress.lessonsCompletedStat'.tr(),
+                          summary.lessonsCompleted.toString(),
+                          Icons.done_all,
+                        ),
+                        const Divider(),
+                        _buildStatRow(
+                          context,
+                          'profile.currentStreak'.tr(),
+                          'profile.daysCount'.tr(
+                            namedArgs: {'count': '${summary.currentStreak}'},
+                          ),
+                          Icons.local_fire_department,
+                        ),
+                        const Divider(),
+                        _buildStatRow(
+                          context,
+                          'profile.longestStreak'.tr(),
+                          'profile.daysCount'.tr(
+                            namedArgs: {'count': '${summary.longestStreak}'},
+                          ),
+                          Icons.military_tech,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Weekly Overview Charts
+                    _WeeklyOverviewSection(),
+
+                    const SizedBox(height: 24),
+
+                    // Course Progress
+                    Text(
+                      'progress.courseProgressTitle'.tr(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (courseProgressList.isEmpty)
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.inbox,
+                                  size: 48,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'profile.noEnrolledCoursesYet'.tr(),
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                  else
-                    ...courseProgressList.map((courseProgress) {
-                      return CourseProgressCard(
-                        courseProgress: courseProgress,
-                        onTap: () {
-                          // Navigate to course detail
-                          Navigator.pushNamed(
-                            context,
-                            '/course-detail',
-                            arguments: courseProgress.courseId,
-                          );
-                        },
-                      );
-                    }),
-                ],
+                      )
+                    else
+                      ...courseProgressList.map((courseProgress) {
+                        return CourseProgressCard(
+                          courseProgress: courseProgress,
+                          onTap: () {
+                            // Navigate to course detail
+                            Navigator.pushNamed(
+                              context,
+                              '/course-detail',
+                              arguments: courseProgress.courseId,
+                            );
+                          },
+                        );
+                      }),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

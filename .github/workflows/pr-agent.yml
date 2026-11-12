@@ -27,17 +27,21 @@ jobs:
 
     steps:
       - name: Check GEMINI_API_KEY is configured
+        id: key
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           if [ -z "$GEMINI_API_KEY" ]; then
-            echo "⚠️  GEMINI_API_KEY secret is not set — skipping AI review."
-            echo "Add it at: Settings → Secrets and variables → Actions → New repository secret"
-            exit 1
+            echo "GEMINI_API_KEY secret is not set; skipping AI review."
+            echo "To enable it: Settings > Secrets and variables > Actions > New repository secret"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: PR Agent action step
         id: pragent
+        if: steps.key.outputs.enabled == 'true'
         uses: Codium-ai/pr-agent@main
         env:
           GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}

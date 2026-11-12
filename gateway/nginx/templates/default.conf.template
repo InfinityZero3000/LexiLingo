@@ -3,6 +3,14 @@ map $http_upgrade $connection_upgrade {
     ''      "";
 }
 
+# Behind a TLS-terminating proxy (Cloudflare / shared nginx) this gateway sees
+# plain http, and $scheme would overwrite the https the outer hop already set —
+# the backend then builds http:// proxy URLs that browsers block as mixed content.
+map $http_x_forwarded_proto $forwarded_proto {
+    default $scheme;
+    https   https;
+}
+
 map $request_uri $log_main {
     default 1;
     ~^/health$ 0;

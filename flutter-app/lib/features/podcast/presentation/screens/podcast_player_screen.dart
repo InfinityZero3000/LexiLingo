@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -262,86 +263,89 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            PlayerHeader(
-              title: widget.episode.title,
-              podcastTitle: widget.podcastTitle,
-              artworkUrl: widget.artworkUrl,
-              level: widget.episode.cefrLevel ?? 'B1',
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-              child: Column(
-                children: [
-                  if (_handler == null)
-                    const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: LottieLoadingWidget.medium(),
-                    )
-                  else
-                    AudioPlayerControls(
-                      onPlay: _handler!.play,
-                      onPause: _handler!.pause,
-                      onSkipBack: _skipBack,
-                      onSkipForward: _skipForward,
-                      onSpeedChange: _changeSpeed,
-                      onSeek: _handler!.seek,
-                      onSleepTimerSet: (duration) =>
-                          _handler!.setSleepTimer(duration),
-                      isPlaying: _isPlaying,
-                      playbackSpeed: _playbackSpeed,
-                      position: _position,
-                      duration: _duration,
-                      episodeTitle: widget.episode.title,
-                      artworkUrl: widget.artworkUrl,
-                      sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
-                    ),
-                  if (_loadError) ...[
-                    const SizedBox(height: 12),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: scheme.errorContainer,
-                        borderRadius: BorderRadius.circular(20),
+        child: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: Column(
+            children: [
+              PlayerHeader(
+                title: widget.episode.title,
+                podcastTitle: widget.podcastTitle,
+                artworkUrl: widget.artworkUrl,
+                level: widget.episode.cefrLevel ?? 'B1',
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                child: Column(
+                  children: [
+                    if (_handler == null)
+                      const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: LottieLoadingWidget.medium(),
+                      )
+                    else
+                      AudioPlayerControls(
+                        onPlay: _handler!.play,
+                        onPause: _handler!.pause,
+                        onSkipBack: _skipBack,
+                        onSkipForward: _skipForward,
+                        onSpeedChange: _changeSpeed,
+                        onSeek: _handler!.seek,
+                        onSleepTimerSet: (duration) =>
+                            _handler!.setSleepTimer(duration),
+                        isPlaying: _isPlaying,
+                        playbackSpeed: _playbackSpeed,
+                        position: _position,
+                        duration: _duration,
+                        episodeTitle: widget.episode.title,
+                        artworkUrl: widget.artworkUrl,
+                        sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                'podcast.audioLoadFailed'.tr(),
-                                style: TextStyle(
-                                  color: scheme.onErrorContainer,
-                                  fontSize: 14,
-                                  height: 1.4,
+                    if (_loadError) ...[
+                      const SizedBox(height: 12),
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: scheme.errorContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'podcast.audioLoadFailed'.tr(),
+                                  style: TextStyle(
+                                    color: scheme.onErrorContainer,
+                                    fontSize: 14,
+                                    height: 1.4,
+                                  ),
                                 ),
                               ),
-                            ),
-                            TextButton(
-                              onPressed: _loadEpisode,
-                              style: TextButton.styleFrom(
-                                foregroundColor: scheme.onErrorContainer,
-                                minimumSize: const Size(44, 44),
-                              ),
-                              child: Text(
-                                'common.retry'.tr(),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
+                              TextButton(
+                                onPressed: _loadEpisode,
+                                style: TextButton.styleFrom(
+                                  foregroundColor: scheme.onErrorContainer,
+                                  minimumSize: const Size(44, 44),
+                                ),
+                                child: Text(
+                                  'common.retry'.tr(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
+                    const SizedBox(height: 20),
+                    _buildTranscriptSection(),
                   ],
-                  const SizedBox(height: 20),
-                  _buildTranscriptSection(),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

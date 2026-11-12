@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
@@ -417,11 +418,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final crossAxisCount = width >= 1000
-            ? 4
-            : width >= 680
-            ? 3
-            : 2;
+        final crossAxisCount = adaptiveColumns(width);
 
         return GridView.builder(
           physics: const NeverScrollableScrollPhysics(),

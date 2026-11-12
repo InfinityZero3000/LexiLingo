@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -81,9 +82,15 @@ class _SocialScreenState extends State<SocialScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [_buildFeedTab(), _buildFollowersTab(), _buildFollowingTab()],
+      body: ContentWidth(
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildFeedTab(),
+            _buildFollowersTab(),
+            _buildFollowingTab(),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showSearchSheet,

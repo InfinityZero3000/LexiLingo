@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -80,7 +81,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 : [const Color(0xFF6C63FF), const Color(0xFF3B1F8C)],
           ),
         ),
-        child: SafeArea(
+        child: ContentWidth(maxWidth: ContentWidth.reading, child: SafeArea(
           child: Column(
             children: [
               Align(
@@ -127,7 +128,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
               const SizedBox(height: 24),
             ],
           ),
-        ),
+        ),),
       ),
     );
   }

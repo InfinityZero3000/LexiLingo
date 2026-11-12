@@ -24,6 +24,7 @@ class LexiStreamDone extends LexiStreamEvent {
   final String? fullText;
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
+  final Map<String, String> conceptLabels;
   final LexiSuggestedPractice? suggestedPractice;
   final List<LexiCourseSuggestion> suggestedCourses;
   final String? nativeHint;
@@ -38,6 +39,7 @@ class LexiStreamDone extends LexiStreamEvent {
     this.fullText,
     required this.corrections,
     required this.linkedConcepts,
+    this.conceptLabels = const {},
     this.suggestedPractice,
     this.suggestedCourses = const [],
     this.nativeHint,

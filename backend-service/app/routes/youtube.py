@@ -8,6 +8,7 @@ Phase 1: YouTube Video Integration with Auto Subtitles.
 """
 
 import asyncio
+import html
 import logging
 from typing import Optional
 from urllib.parse import quote
@@ -41,6 +42,12 @@ YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
 YOUTUBE_CHANNEL_THUMBNAIL_COST = 1
 YOUTUBE_SEARCH_COST = 100
 YOUTUBE_NO_DATA_API_COST = 0
+
+
+def _unescape_text(video: dict) -> dict:
+    # search.list returns HTML-escaped snippet text ("I&#39;m"); cached rows hold it too.
+    return {k: html.unescape(video[k]) if isinstance(video.get(k), str) else video.get(k)
+            for k in ("title", "description", "channel_title") if k in video}
 
 
 def _raise_youtube_api_error(response: httpx.Response) -> None:
@@ -280,6 +287,7 @@ async def search_videos(
             data_copy["videos"] = [
                 {
                     **video,
+                    **_unescape_text(video),
                     "thumbnail_url": _proxy_url(video.get("thumbnail_url", ""), request),
                     "thumbnail_medium": _proxy_url(video.get("thumbnail_medium", ""), request),
                 }
@@ -471,6 +479,7 @@ async def get_channel_videos(
             data_copy["videos"] = [
                 {
                     **video,
+                    **_unescape_text(video),
                     "thumbnail_url": _proxy_url(video.get("thumbnail_url", ""), request),
                     "thumbnail_medium": _proxy_url(video.get("thumbnail_medium", ""), request),
                 }

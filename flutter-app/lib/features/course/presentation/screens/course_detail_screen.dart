@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -41,243 +42,250 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Consumer<CourseProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoadingDetail) {
-            return const Center(child: LottieLoadingWidget.medium());
-          }
+      body: ContentWidth(
+        child: Consumer<CourseProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoadingDetail) {
+              return const Center(child: LottieLoadingWidget.medium());
+            }
 
-          if (provider.detailError != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: AppColors.errorBright,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    provider.detailError!,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => provider.loadCourseDetail(widget.courseId),
-                    child: Text('common.retry'.tr()),
-                  ),
-                ],
-              ),
-            );
-          }
+            if (provider.detailError != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.errorBright,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      provider.detailError!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () =>
+                          provider.loadCourseDetail(widget.courseId),
+                      child: Text('common.retry'.tr()),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          final course = provider.courseDetail;
-          if (course == null) {
-            return Center(child: Text('course.notFound'.tr()));
-          }
+            final course = provider.courseDetail;
+            if (course == null) {
+              return Center(child: Text('course.notFound'.tr()));
+            }
 
-          return CustomScrollView(
-            slivers: [
-              // Compact App Bar with smaller title
-              SliverAppBar(
-                pinned: true,
-                backgroundColor: Theme.of(context).primaryColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                titleSpacing: 0,
-                title: Text(
-                  course.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.surface,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 20,
+            return CustomScrollView(
+              slivers: [
+                // Compact App Bar with smaller title
+                SliverAppBar(
+                  pinned: true,
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  titleSpacing: 0,
+                  title: Text(
+                    course.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.surface,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 20,
+                    ),
                   ),
                 ),
-              ),
 
-              // Course Info
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildCourseHeroCard(context, course),
-                      const SizedBox(height: 16),
-
-                      // Description
-                      if (course.description != null) ...[
-                        Text(
-                          course.description!,
-                          style: const TextStyle(fontSize: 16),
-                        ),
+                // Course Info
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildCourseHeroCard(context, course),
                         const SizedBox(height: 16),
-                      ],
 
-                      // Course Stats
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _StatChip(
-                            icon: Icons.language,
-                            label: course.language,
+                        // Description
+                        if (course.description != null) ...[
+                          Text(
+                            course.description!,
+                            style: const TextStyle(fontSize: 16),
                           ),
-                          _StatChip(icon: Icons.bar_chart, label: course.level),
-                          _StatChip(
-                            icon: Icons.star,
-                            label: '${course.totalXp} XP',
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Course Stats
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            _StatChip(
+                              icon: Icons.language,
+                              label: course.language,
+                            ),
+                            _StatChip(
+                              icon: Icons.bar_chart,
+                              label: course.level,
+                            ),
+                            _StatChip(
+                              icon: Icons.star,
+                              label: '${course.totalXp} XP',
+                            ),
+                            _StatChip(
+                              icon: Icons.access_time,
+                              label: 'course.durationMin'.tr(
+                                namedArgs: {
+                                  'count': '${course.estimatedDuration}',
+                                },
+                              ),
+                            ),
+                            _StatChip(
+                              icon: Icons.book,
+                              label: 'course.totalLessonsCount'.tr(
+                                namedArgs: {'count': '${course.totalLessons}'},
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Progress (if enrolled)
+                        if (course.isEnrolled == true) ...[
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'course.yourProgress'.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  LinearProgressIndicator(
+                                    value: (course.userProgress ?? 0) / 100,
+                                    minHeight: 8,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'course.userProgressPercent'.tr(
+                                      namedArgs: {
+                                        'percent':
+                                            course.userProgress
+                                                ?.toStringAsFixed(0) ??
+                                            '0',
+                                      },
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: AppColorRoles.textSecondary(
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          _StatChip(
-                            icon: Icons.access_time,
-                            label: 'course.durationMin'.tr(
-                              namedArgs: {
-                                'count': '${course.estimatedDuration}',
+                          const SizedBox(height: 12),
+                          // View Full Roadmap Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.account_tree_outlined),
+                              label: Text('course.viewFullRoadmap'.tr()),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LearningRoadmapScreen(
+                                      courseId: course.id,
+                                      courseTitle: course.title,
+                                    ),
+                                  ),
+                                );
                               },
                             ),
                           ),
-                          _StatChip(
-                            icon: Icons.book,
-                            label: 'course.totalLessonsCount'.tr(
-                              namedArgs: {'count': '${course.totalLessons}'},
-                            ),
-                          ),
+                          const SizedBox(height: 16),
                         ],
-                      ),
 
-                      const SizedBox(height: 16),
-
-                      // Progress (if enrolled)
-                      if (course.isEnrolled == true) ...[
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'course.yourProgress'.tr(),
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                        // Enroll Button (if not enrolled)
+                        if (course.isEnrolled != true) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              icon: provider.isEnrolling
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: LottieLoadingWidget.tiny(),
+                                    )
+                                  : const Icon(Icons.play_arrow),
+                              label: Text(
+                                provider.isEnrolling
+                                    ? 'course.enrolling'.tr()
+                                    : 'course.startLearning'.tr(),
+                              ),
+                              onPressed: provider.isEnrolling
+                                  ? null
+                                  : () => _enrollInCourse(context, provider),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
                                 ),
-                                const SizedBox(height: 12),
-                                LinearProgressIndicator(
-                                  value: (course.userProgress ?? 0) / 100,
-                                  minHeight: 8,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'course.userProgressPercent'.tr(
-                                    namedArgs: {
-                                      'percent':
-                                          course.userProgress?.toStringAsFixed(
-                                            0,
-                                          ) ??
-                                          '0',
-                                    },
-                                  ),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColorRoles.textSecondary(
-                                      Theme.of(context).brightness ==
-                                          Brightness.dark,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        // View Full Roadmap Button
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.account_tree_outlined),
-                            label: Text('course.viewFullRoadmap'.tr()),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LearningRoadmapScreen(
-                                    courseId: course.id,
-                                    courseTitle: course.title,
-                                  ),
-                                ),
-                              );
-                            },
+                          const SizedBox(height: 16),
+                        ],
+
+                        // Roadmap Header
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Text(
+                          'course.learningRoadmap'.tr(),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 16),
                       ],
-
-                      // Enroll Button (if not enrolled)
-                      if (course.isEnrolled != true) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            icon: provider.isEnrolling
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: LottieLoadingWidget.tiny(),
-                                  )
-                                : const Icon(Icons.play_arrow),
-                            label: Text(
-                              provider.isEnrolling
-                                  ? 'course.enrolling'.tr()
-                                  : 'course.startLearning'.tr(),
-                            ),
-                            onPressed: provider.isEnrolling
-                                ? null
-                                : () => _enrollInCourse(context, provider),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Roadmap Header
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      Text(
-                        'course.learningRoadmap'.tr(),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
+                    ),
                   ),
                 ),
-              ),
 
-              // Units List
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final unit = course.units[index];
-                  return _UnitCard(
-                    unit: unit,
-                    unitNumber: index + 1,
-                    courseId: course.id,
-                  );
-                }, childCount: course.units.length),
-              ),
+                // Units List
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final unit = course.units[index];
+                    return _UnitCard(
+                      unit: unit,
+                      unitNumber: index + 1,
+                      courseId: course.id,
+                    );
+                  }, childCount: course.units.length),
+                ),
 
-              // Bottom Padding
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
-          );
-        },
+                // Bottom Padding
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

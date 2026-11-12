@@ -50,6 +50,7 @@ from api.services.lexi_chat_service import (
     LexiSessionRequest,
     LexiSessionResponse,
     LexiSessionSummary,
+    concept_labels,
 )
 
 logger = logging.getLogger(__name__)
@@ -235,6 +236,7 @@ async def lexi_chat(
         audio_base64=result.audio_b64,
         corrections=result.corrections,
         linked_concepts=result.linked_concepts,
+        concept_labels=concept_labels(result.linked_concepts),
         suggested_practice=result.suggested_practice,
         suggested_courses=result.suggested_courses,
         native_hint=result.native_hint,

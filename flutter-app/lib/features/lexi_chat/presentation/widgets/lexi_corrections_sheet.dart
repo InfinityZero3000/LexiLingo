@@ -9,6 +9,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
   final List<LexiCorrection> corrections;
   final String? nativeHint;
   final List<String> linkedConcepts;
+  final Map<String, String> conceptLabels;
   final String messageId;
 
   const LexiCorrectionsSheet({
@@ -17,6 +18,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
     required this.messageId,
     this.nativeHint,
     this.linkedConcepts = const [],
+    this.conceptLabels = const {},
   });
 
   static void show(BuildContext context, LexiMessage message) {
@@ -35,6 +37,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
         messageId: message.id,
         nativeHint: message.nativeHint,
         linkedConcepts: message.linkedConcepts,
+        conceptLabels: message.conceptLabels,
       ),
     );
   }
@@ -167,21 +170,39 @@ class LexiCorrectionsSheet extends StatelessWidget {
                 ],
                 // Linked concepts
                 if (linkedConcepts.isNotEmpty) ...[
-                  _sectionTitle(context, 'lexiChat.relatedConceptsSection'.tr()),
+                  _sectionTitle(
+                    context,
+                    'lexiChat.relatedConceptsSection'.tr(),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'lexiChat.relatedConceptsHint'.tr(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.4,
+                      color: isDark ? Colors.white54 : AppColors.textGrey,
+                    ),
+                  ),
                   const SizedBox(height: 12),
-                  Builder(builder: (ctx) {
-                    const maxVisible = 8;
-                    final visible = linkedConcepts.take(maxVisible).toList();
-                    final overflow = linkedConcepts.length - maxVisible;
-                    return Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        ...visible.map((c) => _conceptChip(context, c)),
-                        if (overflow > 0) _overflowChip(context, overflow),
-                      ],
-                    );
-                  }),
+                  Builder(
+                    builder: (ctx) {
+                      const maxVisible = 8;
+                      final concepts = describeConcepts(
+                        linkedConcepts,
+                        conceptLabels,
+                      );
+                      final visible = concepts.take(maxVisible).toList();
+                      final overflow = concepts.length - maxVisible;
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ...visible.map((c) => _conceptChip(context, c)),
+                          if (overflow > 0) _overflowChip(context, overflow),
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ],
             ),
@@ -191,63 +212,25 @@ class LexiCorrectionsSheet extends StatelessWidget {
     );
   }
 
-  // Handles: "concept:grammar.question_words", "grammar:story_xxx_yyy", "phonology:weak_forms"
-  (String, String) _parseConcept(String concept) {
-    String raw = concept.trim();
-
-    // Format 1: "concept:grammar.question_words"
-    if (raw.startsWith('concept:')) {
-      raw = raw.replaceFirst('concept:', '');
-      final dot = raw.indexOf('.');
-      if (dot >= 0) {
-        return (raw.substring(0, dot), _toLabel(raw.substring(dot + 1)));
-      }
-      return ('', _toLabel(raw));
-    }
-
-    // Format 2: "grammar:story_city_tour_booking..." or "phonology:weak_forms"
-    final colon = raw.indexOf(':');
-    if (colon >= 0) {
-      final cat = raw.substring(0, colon);
-      var topic = raw.substring(colon + 1);
-      if (topic.startsWith('story_')) topic = topic.replaceFirst('story_', '');
-      // Long story slugs: take first 4 words only
-      final words = topic.replaceAll('_', ' ').trim().split(' ').where((w) => w.isNotEmpty).toList();
-      return (cat, _toLabel(words.take(4).join(' ')));
-    }
-
-    return ('', _toLabel(raw));
-  }
-
-  String _toLabel(String s) => s
-      .replaceAll('_', ' ')
-      .trim()
-      .split(' ')
-      .where((w) => w.isNotEmpty)
-      .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
-      .join(' ');
-
   Color _categoryColor(String category) {
     switch (category) {
-      case 'grammar':      return const Color(0xFF3B82F6);
-      case 'function':     return const Color(0xFF8B5CF6);
-      case 'conversation': return const Color(0xFF10B981);
-      case 'error':        return const Color(0xFFEF4444);
-      case 'vocab':        return const Color(0xFFF59E0B);
-      case 'phonology':    return const Color(0xFF06B6D4);
-      default:             return AppColors.primary;
-    }
-  }
-
-  String _categoryLabel(String category) {
-    switch (category) {
-      case 'grammar':      return 'Grammar';
-      case 'function':     return 'Function';
-      case 'conversation': return 'Speaking';
-      case 'error':        return 'Error';
-      case 'vocab':        return 'Vocab';
-      case 'phonology':    return 'Phonology';
-      default:             return category.isEmpty ? '' : '${category[0].toUpperCase()}${category.substring(1)}';
+      case 'grammar':
+      case 'usage':
+        return const Color(0xFF3B82F6);
+      case 'function':
+        return const Color(0xFF8B5CF6);
+      case 'conversation':
+        return const Color(0xFF10B981);
+      case 'error':
+        return const Color(0xFFEF4444);
+      case 'vocab':
+      case 'phrase':
+      case 'collocation':
+        return const Color(0xFFF59E0B);
+      case 'phonology':
+        return const Color(0xFF06B6D4);
+      default:
+        return AppColors.primary;
     }
   }
 
@@ -274,11 +257,11 @@ class LexiCorrectionsSheet extends StatelessWidget {
     );
   }
 
-  Widget _conceptChip(BuildContext context, String concept) {
+  Widget _conceptChip(BuildContext context, ConceptChip concept) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final (category, label) = _parseConcept(concept);
-    final color = _categoryColor(category);
-    final catLabel = _categoryLabel(category);
+    final color = _categoryColor(concept.kind);
+    final catLabel = concept.categoryLabel;
+    final label = concept.label;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
@@ -323,7 +306,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 13,
@@ -479,4 +462,66 @@ class LexiCorrectionsSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+/// One "Related Concepts" chip, ready to render.
+class ConceptChip {
+  final String kind;
+  final String categoryLabel;
+  final String label;
+  const ConceptChip(this.kind, this.categoryLabel, this.label);
+}
+
+const _kindLabelKeys = {
+  'grammar': 'lexiChat.conceptGrammar',
+  'usage': 'lexiChat.conceptUsage',
+  'function': 'lexiChat.conceptFunction',
+  'conversation': 'lexiChat.conceptConversation',
+  'error': 'lexiChat.conceptError',
+  'vocab': 'lexiChat.conceptVocab',
+  'phrase': 'lexiChat.conceptPhrase',
+  'collocation': 'lexiChat.conceptCollocation',
+  'phonology': 'lexiChat.conceptPhonology',
+  'skill': 'lexiChat.conceptSkill',
+};
+
+final _trailingHash = RegExp(r'-[0-9a-f]{10}$');
+
+String _titleCase(String s) => s
+    .split(' ')
+    .where((w) => w.isNotEmpty)
+    .map((w) => '${w[0].toUpperCase()}${w.substring(1)}')
+    .join(' ');
+
+/// Chips for ids such as "concept:grammar.some-slug-hash" or "grammar:story_x_y".
+/// The server title wins; the slug is only a fallback for older saved messages.
+/// Chips with no readable label are dropped and duplicates collapsed.
+List<ConceptChip> describeConcepts(
+  List<String> ids,
+  Map<String, String> titles,
+) {
+  final seen = <String>{};
+  final chips = <ConceptChip>[];
+  for (final id in ids) {
+    final raw = id.trim().replaceFirst('concept:', '');
+    final cut = raw.indexOf(RegExp(r'[.:]'));
+    if (cut < 0) continue;
+    var kind = raw.substring(0, cut);
+    var slug = raw.substring(cut + 1);
+    final hashed = _trailingHash.hasMatch(slug);
+    // 09_grammar_usage: learner Q&A, not a grammar rule.
+    if (kind == 'grammar' && hashed) kind = 'usage';
+    slug = slug
+        .replaceFirst(_trailingHash, '')
+        .replaceFirst(RegExp(r'^(word\.|story_)'), '');
+    final label = titles[id]?.trim().isNotEmpty == true
+        ? titles[id]!.trim()
+        : _titleCase(slug.replaceAll(RegExp(r'[_\-.]+'), ' ').trim());
+    if (label.isEmpty || !seen.add('$kind|$label')) continue;
+    final key = _kindLabelKeys[kind];
+    chips.add(
+      ConceptChip(kind, key != null ? key.tr() : _titleCase(kind), label),
+    );
+  }
+  return chips;
 }

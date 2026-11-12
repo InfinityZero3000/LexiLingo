@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
@@ -62,77 +63,81 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final book = widget.book;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            controller: _scrollController,
-            child: Column(
-              children: [
-                _Header(book: book),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
-                  child: Consumer<BookProvider>(
-                    builder: (context, provider, _) => Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Actions(book: book, provider: provider),
-                        if (_hasProgress(provider)) ...[
-                          const SizedBox(height: 24),
-                          _ProgressCard(progress: provider.currentProgress!),
-                        ],
-                        if (book.description.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          Text(
-                            'books.about'.tr(),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
+      body: ContentWidth(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
+                children: [
+                  _Header(book: book),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                    child: Consumer<BookProvider>(
+                      builder: (context, provider, _) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Actions(book: book, provider: provider),
+                          if (_hasProgress(provider)) ...[
+                            const SizedBox(height: 24),
+                            _ProgressCard(progress: provider.currentProgress!),
+                          ],
+                          if (book.description.isNotEmpty) ...[
+                            const SizedBox(height: 24),
+                            Text(
+                              'books.about'.tr(),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            book.description,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.6,
-                              color: contentMuted(context),
+                            const SizedBox(height: 8),
+                            Text(
+                              book.description,
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.6,
+                                color: contentMuted(context),
+                              ),
                             ),
-                          ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Consumer<BookProvider>(
-            builder: (context, provider, _) {
-              final saved = provider.isBookSaved(book.id);
-              return ContentTopBar(
-                title: book.title,
-                collapsed: _collapsed,
-                actionsBuilder: (iconColor) => [
-                  IconButton(
-                    onPressed: () => provider.toggleSaveBook(book),
-                    tooltip: saved
-                        ? 'books.unsaveBook'.tr()
-                        : 'books.saveBook'.tr(),
-                    style: IconButton.styleFrom(
-                      minimumSize: const Size.square(48),
-                    ),
-                    icon: Icon(
-                      saved ? PhosphorIconsFill.heart : PhosphorIconsBold.heart,
-                      color: saved
-                          ? Theme.of(context).colorScheme.primary
-                          : iconColor,
+                      ),
                     ),
                   ),
                 ],
-              );
-            },
-          ),
-        ],
+              ),
+            ),
+            Consumer<BookProvider>(
+              builder: (context, provider, _) {
+                final saved = provider.isBookSaved(book.id);
+                return ContentTopBar(
+                  title: book.title,
+                  collapsed: _collapsed,
+                  actionsBuilder: (iconColor) => [
+                    IconButton(
+                      onPressed: () => provider.toggleSaveBook(book),
+                      tooltip: saved
+                          ? 'books.unsaveBook'.tr()
+                          : 'books.saveBook'.tr(),
+                      style: IconButton.styleFrom(
+                        minimumSize: const Size.square(48),
+                      ),
+                      icon: Icon(
+                        saved
+                            ? PhosphorIconsFill.heart
+                            : PhosphorIconsBold.heart,
+                        color: saved
+                            ? Theme.of(context).colorScheme.primary
+                            : iconColor,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

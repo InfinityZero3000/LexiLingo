@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
@@ -179,6 +181,22 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
       return Left(ServerFailure('Profile update failed: $e'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity>> uploadAvatar({
+    required Uint8List bytes,
+    required String filename,
+  }) async {
+    try {
+      return Right(
+        await backendDataSource.uploadAvatar(bytes: bytes, filename: filename),
+      );
+    } on ApiErrorException catch (e) {
+      return Left(_mapApiErrorToFailure(e));
+    } catch (e) {
+      return Left(ServerFailure('Avatar upload failed: $e'));
     }
   }
 

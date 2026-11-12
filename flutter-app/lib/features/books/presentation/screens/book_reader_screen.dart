@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -185,94 +186,102 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 
         return Scaffold(
           backgroundColor: bgColor,
-          body: Stack(
-            children: [
-              // ── Content ────────────────────────────────────
-              if (provider.isLoading)
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const LottieLoadingWidget.medium(),
-                      const SizedBox(height: 16),
-                      Text(
-                        'bookReader.loadingBook'.tr(),
-                        style: TextStyle(
-                          color: textColor.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else if (provider.error != null)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
+          body: ContentWidth(
+            maxWidth: ContentWidth.reading,
+            child: Stack(
+              children: [
+                // ── Content ────────────────────────────────────
+                if (provider.isLoading)
+                  Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          Icons.error_outline_rounded,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'bookReader.couldNotLoad'.tr() +
-                              (provider.error != null
-                                  ? '\n${provider.error}'
-                                  : ''),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.grey),
-                        ),
+                        const LottieLoadingWidget.medium(),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => provider.loadBookText(),
-                          child: Text('bookReader.retry'.tr()),
+                        Text(
+                          'bookReader.loadingBook'.tr(),
+                          style: TextStyle(
+                            color: textColor.withValues(alpha: 0.6),
+                          ),
                         ),
                       ],
                     ),
+                  )
+                else if (provider.error != null)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline_rounded,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'bookReader.couldNotLoad'.tr() +
+                                (provider.error != null
+                                    ? '\n${provider.error}'
+                                    : ''),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => provider.loadBookText(),
+                            child: Text('bookReader.retry'.tr()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (provider.pages.isNotEmpty)
+                  GestureDetector(
+                    onTap: _toggleControls,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: _onPageChanged,
+                      itemCount: provider.pages.length,
+                      itemBuilder: (context, pageIndex) {
+                        return _buildPage(
+                          context,
+                          provider.pages[pageIndex],
+                          settings,
+                          textColor,
+                          bgColor,
+                        );
+                      },
+                    ),
                   ),
-                )
-              else if (provider.pages.isNotEmpty)
-                GestureDetector(
-                  onTap: _toggleControls,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: _onPageChanged,
-                    itemCount: provider.pages.length,
-                    itemBuilder: (context, pageIndex) {
-                      return _buildPage(
-                        context,
-                        provider.pages[pageIndex],
-                        settings,
-                        textColor,
-                        bgColor,
-                      );
-                    },
-                  ),
+
+                // ── Top bar (show/hide on tap) ──────────────────
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
+                  top: _showControls
+                      ? 0
+                      : -(MediaQuery.of(context).padding.top + 60),
+                  left: 0,
+                  right: 0,
+                  child: _buildTopBar(context, provider, settings, textColor),
                 ),
 
-              // ── Top bar (show/hide on tap) ──────────────────
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 200),
-                top: _showControls
-                    ? 0
-                    : -(MediaQuery.of(context).padding.top + 60),
-                left: 0,
-                right: 0,
-                child: _buildTopBar(context, provider, settings, textColor),
-              ),
-
-              // ── Bottom bar ─────────────────────────────────
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 200),
-                bottom: _showControls ? 0 : -80,
-                left: 0,
-                right: 0,
-                child: _buildBottomBar(context, provider, settings, textColor),
-              ),
-            ],
+                // ── Bottom bar ─────────────────────────────────
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
+                  bottom: _showControls ? 0 : -80,
+                  left: 0,
+                  right: 0,
+                  child: _buildBottomBar(
+                    context,
+                    provider,
+                    settings,
+                    textColor,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
