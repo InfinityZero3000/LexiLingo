@@ -707,8 +707,9 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           setState(() => _error = 'Nothing was transcribed. Try again.');
         }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           setState(() => _error = 'Could not transcribe the recording.');
+        }
       } finally {
         if (mounted) setState(() => _transcribing = false);
       }
@@ -716,8 +717,9 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     }
 
     if (!await _recorder.hasPermission()) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Microphone permission is required.');
+      }
       return;
     }
     final dir = await getTemporaryDirectory();

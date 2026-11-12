@@ -274,6 +274,7 @@ class LexiChatDataSource {
       audioBase64: data['audio_base64'],
       corrections: corrections,
       linkedConcepts: linkedConcepts,
+      conceptLabels: parseConceptLabels(data['concept_labels']),
       suggestedPractice: _parseSuggestedPractice(data['suggested_practice']),
       suggestedCourses: _parseSuggestedCourses(data['suggested_courses']),
       nativeHint: data['native_hint'],
@@ -617,6 +618,7 @@ class LexiChatDataSource {
                   fullText: json['lexi_response'] as String?,
                   corrections: corrections,
                   linkedConcepts: linkedConcepts,
+                  conceptLabels: parseConceptLabels(json['concept_labels']),
                   suggestedPractice: _parseSuggestedPractice(
                     json['suggested_practice'],
                   ),
