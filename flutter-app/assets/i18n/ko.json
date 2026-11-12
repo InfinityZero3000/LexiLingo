@@ -1374,6 +1374,17 @@
     "correctionsSection": "수정",
     "nativeHintSection": "모국어 힌트",
     "relatedConceptsSection": "관련 개념",
+    "relatedConceptsHint": "이 메시지와 관련된 주제",
+    "conceptGrammar": "문법",
+    "conceptUsage": "사용법 Q&A",
+    "conceptFunction": "기능 표현",
+    "conceptConversation": "회화",
+    "conceptError": "자주 하는 실수",
+    "conceptVocab": "어휘",
+    "conceptPhrase": "구문",
+    "conceptCollocation": "연어",
+    "conceptPhonology": "발음",
+    "conceptSkill": "스킬",
     "suggestedCoursesLabel": "추천 코스"
   },
   "youtube": {

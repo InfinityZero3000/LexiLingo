@@ -1374,6 +1374,17 @@
     "correctionsSection": "纠错",
     "nativeHintSection": "母语提示",
     "relatedConceptsSection": "相关概念",
+    "relatedConceptsHint": "Lexi 与这条消息关联的主题",
+    "conceptGrammar": "语法",
+    "conceptUsage": "用法问答",
+    "conceptFunction": "功能用语",
+    "conceptConversation": "会话",
+    "conceptError": "常见错误",
+    "conceptVocab": "词汇",
+    "conceptPhrase": "短语",
+    "conceptCollocation": "搭配",
+    "conceptPhonology": "发音",
+    "conceptSkill": "技能",
     "suggestedCoursesLabel": "为你推荐的课程"
   },
   "youtube": {

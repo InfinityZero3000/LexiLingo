@@ -1509,6 +1509,17 @@
     "correctionsSection": "Sửa lỗi",
     "nativeHintSection": "Gợi ý ngôn ngữ mẹ đẻ",
     "relatedConceptsSection": "Khái niệm liên quan",
+    "relatedConceptsHint": "Các chủ đề Lexi liên hệ với tin nhắn này",
+    "conceptGrammar": "Ngữ pháp",
+    "conceptUsage": "Hỏi đáp cách dùng",
+    "conceptFunction": "Chức năng giao tiếp",
+    "conceptConversation": "Hội thoại",
+    "conceptError": "Lỗi thường gặp",
+    "conceptVocab": "Từ vựng",
+    "conceptPhrase": "Cụm từ",
+    "conceptCollocation": "Kết hợp từ",
+    "conceptPhonology": "Phát âm",
+    "conceptSkill": "Kỹ năng",
     "suggestedCoursesLabel": "Khóa học dành cho bạn"
   },
   "youtube": {

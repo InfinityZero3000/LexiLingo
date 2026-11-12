@@ -1374,6 +1374,17 @@
     "correctionsSection": "修正",
     "nativeHintSection": "母語のヒント",
     "relatedConceptsSection": "関連概念",
+    "relatedConceptsHint": "このメッセージに関連するトピック",
+    "conceptGrammar": "文法",
+    "conceptUsage": "使い方Q&A",
+    "conceptFunction": "機能表現",
+    "conceptConversation": "会話",
+    "conceptError": "よくある間違い",
+    "conceptVocab": "語彙",
+    "conceptPhrase": "フレーズ",
+    "conceptCollocation": "コロケーション",
+    "conceptPhonology": "発音",
+    "conceptSkill": "スキル",
     "suggestedCoursesLabel": "あなたにおすすめのコース"
   },
   "youtube": {
