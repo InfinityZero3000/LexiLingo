@@ -1509,6 +1509,17 @@
     "correctionsSection": "Corrections",
     "nativeHintSection": "Native-Language Hint",
     "relatedConceptsSection": "Related Concepts",
+    "relatedConceptsHint": "Topics Lexi connected to this message",
+    "conceptGrammar": "Grammar",
+    "conceptUsage": "Usage Q&A",
+    "conceptFunction": "Function",
+    "conceptConversation": "Speaking",
+    "conceptError": "Common error",
+    "conceptVocab": "Vocabulary",
+    "conceptPhrase": "Phrase",
+    "conceptCollocation": "Collocation",
+    "conceptPhonology": "Pronunciation",
+    "conceptSkill": "Skill",
     "suggestedCoursesLabel": "Courses for you"
   },
   "youtube": {
