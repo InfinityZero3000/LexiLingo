@@ -1,3 +1,16 @@
+/// YouTube's search.list returns HTML-escaped text ("I&#39;m"); cached copies keep it.
+String decodeHtmlEntities(String text) {
+  return text.replaceAllMapped(
+    RegExp(r'&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);'),
+    (m) {
+      final e = m.group(1)!;
+      if (e.startsWith('#x')) return String.fromCharCode(int.parse(e.substring(2), radix: 16));
+      if (e.startsWith('#')) return String.fromCharCode(int.parse(e.substring(1)));
+      return const {'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'"}[e]!;
+    },
+  );
+}
+
 /// YouTube Video entity — represents a single YouTube video.
 ///
 /// Phase 1: YouTube Video Integration.
@@ -27,9 +40,9 @@ class YouTubeVideo {
   factory YouTubeVideo.fromJson(Map<String, dynamic> json) {
     return YouTubeVideo(
       videoId: json['video_id'] as String? ?? '',
-      title: json['title'] as String? ?? '',
+      title: decodeHtmlEntities(json['title'] as String? ?? ''),
       description: json['description'] as String? ?? '',
-      channelTitle: json['channel_title'] as String? ?? '',
+      channelTitle: decodeHtmlEntities(json['channel_title'] as String? ?? ''),
       channelId: json['channel_id'] as String? ?? '',
       publishedAt: json['published_at'] as String? ?? '',
       thumbnailUrl: json['thumbnail_url'] as String? ?? '',
@@ -188,7 +201,7 @@ class SavedVideo {
 
   factory SavedVideo.fromJson(Map<String, dynamic> json) => SavedVideo(
         videoId: json['videoId'] as String? ?? '',
-        title: json['title'] as String? ?? '',
+        title: decodeHtmlEntities(json['title'] as String? ?? ''),
         channelTitle: json['channelTitle'] as String? ?? '',
         thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
         cefrLevel: json['cefrLevel'] as String? ?? '',
