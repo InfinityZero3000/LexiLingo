@@ -56,7 +56,7 @@ jobs:
       PODCASTINDEX_SECRET: ""
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
@@ -178,7 +178,7 @@ jobs:
       DEBUG: "False"
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
@@ -235,7 +235,7 @@ jobs:
       OPENAI_API_KEY: ""
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # ai-service runs on 3.12 (see CLAUDE.md); networkx>=3.7 and the
       # other pinned deps refuse to install on 3.11, so this job was
@@ -297,7 +297,7 @@ jobs:
         working-directory: mcp-server
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v7
@@ -333,7 +333,7 @@ jobs:
         working-directory: admin-service
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # pnpm, matching cd.yml and the packageManager field in package.json.
       # This job used to run `npm ci` off package-lock.json while CD deployed
@@ -346,7 +346,7 @@ jobs:
           package_json_file: admin-service/package.json
 
       - name: Set up Node.js 24
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: pnpm
@@ -373,7 +373,7 @@ jobs:
         working-directory: flutter-app
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
