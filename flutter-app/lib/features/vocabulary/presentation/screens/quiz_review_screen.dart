@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -70,7 +71,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
         ),
         centerTitle: true,
       ),
-      body: Consumer<QuizProvider>(
+      body: ContentWidth(maxWidth: ContentWidth.reading, child: Consumer<QuizProvider>(
         builder: (context, provider, child) {
           if (provider.isLoading && !provider.hasSession) {
             return LoadingScreen(message: 'vocabQuiz.loading'.tr());
@@ -99,7 +100,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
             onAdvance: () => _handleAdvance(provider),
           );
         },
-      ),
+      ),),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -121,45 +122,48 @@ class _PlacementTestPageState extends State<PlacementTestPage> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Consumer<PlacementTestProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoading && provider.questions.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: SafeArea(
+          child: Consumer<PlacementTestProvider>(
+            builder: (context, provider, _) {
+              if (provider.isLoading && provider.questions.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (provider.errorMessage != null && provider.questions.isEmpty) {
-              return _ErrorState(
-                message: provider.errorMessage!,
-                onRetry: () => _loadTest(reset: true),
+              if (provider.errorMessage != null && provider.questions.isEmpty) {
+                return _ErrorState(
+                  message: provider.errorMessage!,
+                  onRetry: () => _loadTest(reset: true),
+                );
+              }
+
+              if (provider.result != null) {
+                return _ResultState(
+                  result: provider.result!,
+                  onRetake: () => _loadTest(reset: true),
+                );
+              }
+
+              if (provider.questions.isEmpty) {
+                return _EmptyState(onRetry: () => _loadTest(reset: true));
+              }
+
+              return _QuestionState(
+                questions: provider.questions,
+                currentIndex: _currentIndex,
+                answers: _answers,
+                isSubmitting: provider.isLoading,
+                elapsedLabel: _formatElapsedTime(),
+                onSelectAnswer: _selectAnswer,
+                onPrevious: () =>
+                    _goToQuestion(_currentIndex - 1, provider.questions.length),
+                onNext: () =>
+                    _goToQuestion(_currentIndex + 1, provider.questions.length),
+                onSubmit: _submit,
               );
-            }
-
-            if (provider.result != null) {
-              return _ResultState(
-                result: provider.result!,
-                onRetake: () => _loadTest(reset: true),
-              );
-            }
-
-            if (provider.questions.isEmpty) {
-              return _EmptyState(onRetry: () => _loadTest(reset: true));
-            }
-
-            return _QuestionState(
-              questions: provider.questions,
-              currentIndex: _currentIndex,
-              answers: _answers,
-              isSubmitting: provider.isLoading,
-              elapsedLabel: _formatElapsedTime(),
-              onSelectAnswer: _selectAnswer,
-              onPrevious: () =>
-                  _goToQuestion(_currentIndex - 1, provider.questions.length),
-              onNext: () =>
-                  _goToQuestion(_currentIndex + 1, provider.questions.length),
-              onSubmit: _submit,
-            );
-          },
+            },
+          ),
         ),
       ),
     );

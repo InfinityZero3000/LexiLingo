@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -310,11 +311,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     return SliverLayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.crossAxisExtent;
-        final crossAxisCount = width >= 1000
-            ? 4
-            : width >= 680
-            ? 3
-            : 2;
+        final crossAxisCount = adaptiveColumns(width);
 
         return SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

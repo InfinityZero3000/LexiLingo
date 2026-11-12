@@ -113,6 +113,7 @@ class LexiChatResponse(BaseModel):
     audio_base64: Optional[str] = None
     corrections: List[LexiCorrection] = []
     linked_concepts: List[str] = []
+    concept_labels: Dict[str, str] = {}
     suggested_practice: Optional[LexiSuggestedPractice] = None
     suggested_courses: List[LexiCourseSuggestion] = []
     native_hint: Optional[str] = None
@@ -193,6 +194,24 @@ async def _build_session_recap(
         # field name, schema drift) with zero production visibility.
         logger.warning("[lexi_chat] session recap lookup failed: %s", exc)
         return None
+
+
+def concept_labels(concept_ids: List[str]) -> Dict[str, str]:
+    """Concept id -> KG title; many ids (hashed slugs) cannot be turned into a label client-side."""
+    if not concept_ids:
+        return {}
+    try:
+        from api.services.kg_service_v3 import get_kg_service
+
+        known = get_kg_service().get_concepts()
+    except Exception:
+        return {}
+    labels: Dict[str, str] = {}
+    for cid in concept_ids:
+        title = (known.get(cid) or {}).get("title")
+        if isinstance(title, str) and title.strip():
+            labels[cid] = title.strip()
+    return labels
 
 
 def _build_suggested_practice(
@@ -1239,6 +1258,7 @@ async def stream_lexi_chat(
             for c in corrections
         ],
         "linked_concepts": linked_concepts,
+        "concept_labels": concept_labels(linked_concepts),
         "suggested_practice": (
             suggested_practice.model_dump() if suggested_practice else None
         ),

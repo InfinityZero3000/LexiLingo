@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
@@ -333,7 +334,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
               ),
             ],
           ),
-          body: Stack(
+          body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
             children: [
               Column(
                 children: [
@@ -458,7 +459,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                 ),
               ),
             ],
-          ),
+          ),),
         );
         },
       ),

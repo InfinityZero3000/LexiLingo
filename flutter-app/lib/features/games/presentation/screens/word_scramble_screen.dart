@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -401,7 +402,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                   ),
                 ],
               ),
-              body: Column(
+              body: ContentWidth(maxWidth: ContentWidth.reading, child: Column(
                 children: [
                   // Progress bar
                   LinearProgressIndicator(
@@ -587,7 +588,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                       },
                     ),
                 ],
-              ),
+              ),),
             );
           },
         ),

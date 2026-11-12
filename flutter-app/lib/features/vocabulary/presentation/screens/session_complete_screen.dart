@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:confetti/confetti.dart';
@@ -66,177 +67,180 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Stack(
-        children: [
-          // Lottie confetti animation (background)
-          Positioned.fill(
-            child: IgnorePointer(
-              child: Lottie.asset(
-                'animation/Confetti.json',
-                fit: BoxFit.cover,
-                repeat: false,
-                renderCache: RenderCache.raster,
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Stack(
+          children: [
+            // Lottie confetti animation (background)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Lottie.asset(
+                  'animation/Confetti.json',
+                  fit: BoxFit.cover,
+                  repeat: false,
+                  renderCache: RenderCache.raster,
+                ),
               ),
             ),
-          ),
 
-          // Confetti widget (additional particles)
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              emissionFrequency: 0.05,
-              numberOfParticles: 20,
-              gravity: 0.3,
-              colors: const [
-                AppColors.primary,
-                AppColors.accentYellow,
-                AppColors.greenSuccess,
-                AppColors.errorBright,
-                AppColors.purple,
-              ],
-            ),
-          ),
-
-          // Content
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  const SizedBox(height: 40),
-
-                  // Success icon
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: AppColors.greenSuccess.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: AnimatedCheckmark(
-                        color: AppColors.greenSuccess,
-                        size: 70,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Title
-                  Text(
-                    'flashcard.sessionCompleteTitle'.tr(),
-                    style: const TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Motivational message
-                  Text(
-                    _getMotivationalMessage(accuracy),
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-
-                  const SizedBox(height: 48),
-
-                  // Stats cards — staggered reveal + XP/count-up micro-interaction
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: StaggeredList(
-                        itemDelay: const Duration(milliseconds: 90),
-                        children: [
-                          _StatCard(
-                            icon: Icons.assignment_turned_in,
-                            label: 'flashcard.wordsReviewed'.tr(),
-                            countTo: session.totalCards,
-                            color: AppColors.primary,
-                          ),
-                          const SizedBox(height: 16),
-                          _StatCard(
-                            icon: Icons.check_circle,
-                            label: 'flashcard.correctAnswers'.tr(),
-                            countTo: session.correctCount,
-                            subtitle: 'flashcard.accuracySubtitle'.tr(
-                              namedArgs: {
-                                'percent': accuracy.toStringAsFixed(1),
-                              },
-                            ),
-                            color: AppColors.greenSuccess,
-                          ),
-                          const SizedBox(height: 16),
-                          _StatCard(
-                            icon: Icons.star,
-                            label: 'flashcard.xpEarned'.tr(),
-                            countTo: session.totalXpEarned,
-                            countPrefix: '+',
-                            color: AppColors.accentYellow,
-                          ),
-                          const SizedBox(height: 16),
-                          _StatCard(
-                            icon: Icons.timer,
-                            label: 'flashcard.timeSpent'.tr(),
-                            value: _formatDuration(duration),
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Action buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text('flashcard.backToLibrary'.tr()),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            // Navigate to review again
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text('flashcard.reviewMore'.tr()),
-                        ),
-                      ),
-                    ],
-                  ),
+            // Confetti widget (additional particles)
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                emissionFrequency: 0.05,
+                numberOfParticles: 20,
+                gravity: 0.3,
+                colors: const [
+                  AppColors.primary,
+                  AppColors.accentYellow,
+                  AppColors.greenSuccess,
+                  AppColors.errorBright,
+                  AppColors.purple,
                 ],
               ),
             ),
-          ),
-        ],
+
+            // Content
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+
+                    // Success icon
+                    Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: AppColors.greenSuccess.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: AnimatedCheckmark(
+                          color: AppColors.greenSuccess,
+                          size: 70,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Title
+                    Text(
+                      'flashcard.sessionCompleteTitle'.tr(),
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Motivational message
+                    Text(
+                      _getMotivationalMessage(accuracy),
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Stats cards — staggered reveal + XP/count-up micro-interaction
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: StaggeredList(
+                          itemDelay: const Duration(milliseconds: 90),
+                          children: [
+                            _StatCard(
+                              icon: Icons.assignment_turned_in,
+                              label: 'flashcard.wordsReviewed'.tr(),
+                              countTo: session.totalCards,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(height: 16),
+                            _StatCard(
+                              icon: Icons.check_circle,
+                              label: 'flashcard.correctAnswers'.tr(),
+                              countTo: session.correctCount,
+                              subtitle: 'flashcard.accuracySubtitle'.tr(
+                                namedArgs: {
+                                  'percent': accuracy.toStringAsFixed(1),
+                                },
+                              ),
+                              color: AppColors.greenSuccess,
+                            ),
+                            const SizedBox(height: 16),
+                            _StatCard(
+                              icon: Icons.star,
+                              label: 'flashcard.xpEarned'.tr(),
+                              countTo: session.totalXpEarned,
+                              countPrefix: '+',
+                              color: AppColors.accentYellow,
+                            ),
+                            const SizedBox(height: 16),
+                            _StatCard(
+                              icon: Icons.timer,
+                              label: 'flashcard.timeSpent'.tr(),
+                              value: _formatDuration(duration),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Action buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text('flashcard.backToLibrary'.tr()),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              // Navigate to review again
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text('flashcard.reviewMore'.tr()),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -127,67 +128,76 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             ),
           ],
         ),
-        body: Consumer<LearningProvider>(
-          builder: (context, provider, child) {
-            if (provider.isLoading) {
-              return LoadingScreen(message: 'lesson.loadingLesson'.tr());
-            }
+        body: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: Consumer<LearningProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
+                return LoadingScreen(message: 'lesson.loadingLesson'.tr());
+              }
 
-            if (provider.error != null) {
-              return _buildErrorState(context, provider);
-            }
+              if (provider.error != null) {
+                return _buildErrorState(context, provider);
+              }
 
-            if (provider.currentLesson == null) {
-              return Center(child: Text('lesson.noLessonData'.tr()));
-            }
+              if (provider.currentLesson == null) {
+                return Center(child: Text('lesson.noLessonData'.tr()));
+              }
 
-            // Show completion screen
-            if (provider.isCompleted) {
-              return _buildCompletionScreen(context, provider);
-            }
+              // Show completion screen
+              if (provider.isCompleted) {
+                return _buildCompletionScreen(context, provider);
+              }
 
-            // Show current exercise
-            return Column(
-              children: [
-                // Progress bar (thick, rounded — matches template)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: provider.progress,
-                      minHeight: 10,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.surfaceContainerHighest,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColorRoles.primary(
-                          Theme.of(context).brightness == Brightness.dark,
+              // Show current exercise
+              return Column(
+                children: [
+                  // Progress bar (thick, rounded — matches template)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: provider.progress,
+                        minHeight: 10,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColorRoles.primary(
+                            Theme.of(context).brightness == Brightness.dark,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
 
-                _buildPhaseIndicator(context, provider.currentExercise?.phase),
+                  _buildPhaseIndicator(
+                    context,
+                    provider.currentExercise?.phase,
+                  ),
 
-                // Mission goal (can-do outcome) — shown only at the start of
-                // the lesson so the learner knows what they're working
-                // toward, per TBLT pre-task framing.
-                if (provider.currentExerciseIndex == 0)
-                  _buildOutcomeBanner(context, provider.currentLesson?.outcome),
+                  // Mission goal (can-do outcome) — shown only at the start of
+                  // the lesson so the learner knows what they're working
+                  // toward, per TBLT pre-task framing.
+                  if (provider.currentExerciseIndex == 0)
+                    _buildOutcomeBanner(
+                      context,
+                      provider.currentLesson?.outcome,
+                    ),
 
-                // Content
-                Expanded(child: _buildExerciseContent(context, provider)),
+                  // Content
+                  Expanded(child: _buildExerciseContent(context, provider)),
 
-                // Action buttons
-                _buildActionButtons(context, provider),
-              ],
-            );
-          },
+                  // Action buttons
+                  _buildActionButtons(context, provider),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );

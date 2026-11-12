@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -64,70 +65,78 @@ class _TodayPlanPageState extends State<TodayPlanPage> {
         title: Text('home.todayPlan.title'.tr()),
         leading: AppBackButton(onPressed: () => Navigator.of(context).pop()),
       ),
-      body:
-          Consumer3<HomeProvider, DailyChallengesProvider, ProficiencyProvider>(
-            builder: (context, home, challenges, proficiency, _) {
-              final snapshot = buildTodayPlanSnapshot(
-                enrolledCourses: home.enrolledCourses,
-                challenges: challenges.challenges,
-                weakestSkills: proficiency.weakestSkills,
-                dueVocabularyCount: _isLoadingVocabulary
-                    ? null
-                    : _dueVocabularyCount,
-              );
-              final nextTask = snapshot.nextTask;
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child:
+            Consumer3<
+              HomeProvider,
+              DailyChallengesProvider,
+              ProficiencyProvider
+            >(
+              builder: (context, home, challenges, proficiency, _) {
+                final snapshot = buildTodayPlanSnapshot(
+                  enrolledCourses: home.enrolledCourses,
+                  challenges: challenges.challenges,
+                  weakestSkills: proficiency.weakestSkills,
+                  dueVocabularyCount: _isLoadingVocabulary
+                      ? null
+                      : _dueVocabularyCount,
+                );
+                final nextTask = snapshot.nextTask;
 
-              return RefreshIndicator(
-                onRefresh: () async {
-                  await Future.wait([home.refreshData(), _loadData()]);
-                },
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-                  children: [
-                    _TodayPlanHero(snapshot: snapshot, color: accent),
-                    const SizedBox(height: 16),
-                    if (nextTask != null)
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton.icon(
-                          onPressed: () => openTodayPlanTask(context, nextTask),
-                          icon: Icon(nextTask.icon),
-                          label: Text('home.todayPlan.startNext'.tr()),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.surface,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    await Future.wait([home.refreshData(), _loadData()]);
+                  },
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                    children: [
+                      _TodayPlanHero(snapshot: snapshot, color: accent),
+                      const SizedBox(height: 16),
+                      if (nextTask != null)
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed: () =>
+                                openTodayPlanTask(context, nextTask),
+                            icon: Icon(nextTask.icon),
+                            label: Text('home.todayPlan.startNext'.tr()),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: accent,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surface,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    const SizedBox(height: 18),
-                    Text(
-                      'home.todayPlan.sequenceTitle'.tr(),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ...snapshot.tasks.map(
-                      (task) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: TodayPlanTaskTile(
-                          task: task,
-                          onTap: () => openTodayPlanTask(context, task),
+                      const SizedBox(height: 18),
+                      Text(
+                        'home.todayPlan.sequenceTitle'.tr(),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
+                      const SizedBox(height: 10),
+                      ...snapshot.tasks.map(
+                        (task) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: TodayPlanTaskTile(
+                            task: task,
+                            onTap: () => openTodayPlanTask(context, task),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+      ),
     );
   }
 }

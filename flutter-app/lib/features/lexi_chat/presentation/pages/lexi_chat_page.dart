@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -150,8 +151,14 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused && _isDuplexVoiceActive) {
-      unawaited(_stopAllVoice());
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      // Spoken replies must stop too, not only a live duplex call.
+      unawaited(
+        _isDuplexVoiceActive ? _stopAllVoice() : _chat.stopSpeaking(),
+      );
+    } else if (state == AppLifecycleState.resumed && widget.isActive) {
+      _chat.resumeSpeaking();
     }
   }
 
@@ -603,10 +610,18 @@ class _LexiChatPageState extends State<LexiChatPage>
           child: Column(
             children: [
               _buildHeader(isDark),
-              Expanded(child: _buildMessageList(isDark)),
+              Expanded(
+                child: ContentWidth(
+                  maxWidth: ContentWidth.reading,
+                  child: _buildMessageList(isDark),
+                ),
+              ),
               ListenableBuilder(
                 listenable: _voiceSignals,
-                builder: (_, __) => _buildInputBar(isDark),
+                builder: (_, __) => ContentWidth(
+                  maxWidth: ContentWidth.reading,
+                  child: _buildInputBar(isDark),
+                ),
               ),
             ],
           ),

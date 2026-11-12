@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -22,18 +23,21 @@ class LegalPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(title), leading: const AppBackButton()),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
-        children: [
-          Text(
-            'legal.last_updated'.tr(namedArgs: {'date': 'June 2025'}),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColorRoles.textMuted(isDark),
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+          children: [
+            Text(
+              'legal.last_updated'.tr(namedArgs: {'date': 'June 2025'}),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColorRoles.textMuted(isDark),
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          ...sections,
-        ],
+            const SizedBox(height: 20),
+            ...sections,
+          ],
+        ),
       ),
     );
   }

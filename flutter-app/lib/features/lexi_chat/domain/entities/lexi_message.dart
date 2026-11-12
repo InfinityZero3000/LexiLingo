@@ -1,5 +1,14 @@
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 
+/// Concept id -> display title as sent by the server; anything malformed is dropped.
+Map<String, String> parseConceptLabels(dynamic raw) => raw is Map
+    ? {
+        for (final e in raw.entries)
+          if (e.value is String && (e.value as String).trim().isNotEmpty)
+            e.key.toString(): (e.value as String).trim(),
+      }
+    : const {};
+
 /// Domain entity for a single message in Lexi chat.
 class LexiMessage {
   final String id;
@@ -9,6 +18,7 @@ class LexiMessage {
   final String? audioBase64;
   final List<LexiCorrection> corrections;
   final List<String> linkedConcepts;
+  final Map<String, String> conceptLabels;
   final LexiSuggestedPractice? suggestedPractice;
   final List<LexiCourseSuggestion> suggestedCourses;
   final String? nativeHint;
@@ -33,6 +43,7 @@ class LexiMessage {
     this.audioBase64,
     this.corrections = const [],
     this.linkedConcepts = const [],
+    this.conceptLabels = const {},
     this.suggestedPractice,
     this.suggestedCourses = const [],
     this.nativeHint,
@@ -57,6 +68,7 @@ class LexiMessage {
     String? audioBase64,
     List<LexiCorrection>? corrections,
     List<String>? linkedConcepts,
+    Map<String, String>? conceptLabels,
     LexiSuggestedPractice? suggestedPractice,
     List<LexiCourseSuggestion>? suggestedCourses,
     String? nativeHint,
@@ -74,6 +86,7 @@ class LexiMessage {
       audioBase64: audioBase64 ?? this.audioBase64,
       corrections: corrections ?? this.corrections,
       linkedConcepts: linkedConcepts ?? this.linkedConcepts,
+      conceptLabels: conceptLabels ?? this.conceptLabels,
       suggestedPractice: suggestedPractice ?? this.suggestedPractice,
       suggestedCourses: suggestedCourses ?? this.suggestedCourses,
       nativeHint: nativeHint ?? this.nativeHint,

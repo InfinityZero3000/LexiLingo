@@ -726,6 +726,7 @@ class LexiChatProvider extends ChangeNotifier {
             :final fullText,
             :final corrections,
             :final linkedConcepts,
+            :final conceptLabels,
             :final suggestedPractice,
             :final suggestedCourses,
             :final nativeHint,
@@ -752,6 +753,7 @@ class LexiChatProvider extends ChangeNotifier {
                 audioBase64: audioBase64,
                 corrections: corrections,
                 linkedConcepts: linkedConcepts,
+                conceptLabels: conceptLabels,
                 suggestedPractice: suggestedPractice,
                 suggestedCourses: suggestedCourses,
                 nativeHint: nativeHint,
@@ -988,6 +990,9 @@ class LexiChatProvider extends ChangeNotifier {
   }
 
   bool _audioMuted = false;
+
+  @visibleForTesting
+  bool get audioMuted => _audioMuted;
 
   /// Silences Lexi without touching the TTS on/off preference, and drops any
   /// reply audio that arrives later — the learner has left the chat.
@@ -1243,6 +1248,7 @@ class LexiChatProvider extends ChangeNotifier {
               'audio_base64': m.audioBase64,
               'native_hint': m.nativeHint,
               'linked_concepts': m.linkedConcepts,
+              'concept_labels': m.conceptLabels,
               'suggested_practice': m.suggestedPractice == null
                   ? null
                   : {
@@ -1320,6 +1326,7 @@ class _CachedChatPage {
         linkedConcepts: (m['linked_concepts'] as List<dynamic>? ?? const [])
             .map((e) => e.toString())
             .toList(),
+        conceptLabels: parseConceptLabels(m['concept_labels']),
         suggestedPractice: m['suggested_practice'] is Map
             ? LexiSuggestedPractice(
                 conceptId:

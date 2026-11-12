@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -398,71 +399,73 @@ class _ShopScreenState extends State<ShopScreen>
           }).toList(),
         ),
       ),
-      body: Consumer<GamificationProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoadingShop && provider.shopItems.isEmpty) {
-            return const Center(child: LottieLoadingWidget.medium());
-          }
+      body: ContentWidth(
+        child: Consumer<GamificationProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoadingShop && provider.shopItems.isEmpty) {
+              return const Center(child: LottieLoadingWidget.medium());
+            }
 
-          if (provider.shopError != null && provider.shopItems.isEmpty) {
-            return ErrorDisplayWidget.fromMessage(
-              message: provider.shopError!,
-              onRetry: () => provider.loadShopItems(),
-            );
-          }
+            if (provider.shopError != null && provider.shopItems.isEmpty) {
+              return ErrorDisplayWidget.fromMessage(
+                message: provider.shopError!,
+                onRetry: () => provider.loadShopItems(),
+              );
+            }
 
-          final items = provider.filteredShopItems;
+            final items = provider.filteredShopItems;
 
-          if (items.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.shopping_bag_outlined,
-                    size: 64,
-                    color: AppColors.grey400,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'shop.noItemsInCategory'.tr(),
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColorRoles.textMuted(isDark),
+            if (items.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.shopping_bag_outlined,
+                      size: 64,
+                      color: AppColors.grey400,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Text(
+                      'shop.noItemsInCategory'.tr(),
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: AppColorRoles.textMuted(isDark),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                await provider.loadShopItems();
+                await provider.loadWallet();
+              },
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 200,
+                  childAspectRatio: 0.68,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                ),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  return ShopItemCard(
+                    item: item,
+                    userGems: provider.gems,
+                    isOwned: item.isAvatar && provider.ownsItem(item.id),
+                    isLoading: _purchasingItemId == item.id,
+                    onPurchase: () => _handlePurchase(item),
+                  );
+                },
               ),
             );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              await provider.loadShopItems();
-              await provider.loadWallet();
-            },
-            child: GridView.builder(
-              padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.68,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return ShopItemCard(
-                  item: item,
-                  userGems: provider.gems,
-                  isOwned: item.isAvatar && provider.ownsItem(item.id),
-                  isLoading: _purchasingItemId == item.id,
-                  onPurchase: () => _handlePurchase(item),
-                );
-              },
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }

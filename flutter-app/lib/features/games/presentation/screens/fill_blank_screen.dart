@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
@@ -341,7 +342,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
               style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
-          body: Stack(
+          body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
             children: [
               Column(
                 children: [
@@ -571,7 +572,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                 ),
               ),
             ],
-          ),
+          ),),
         );
         },
       ),

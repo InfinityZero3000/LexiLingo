@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -111,40 +112,43 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadEntries,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                children: [
-                  _NotebookHeader(
-                    total: _entries.length,
-                    unreviewed: _unreviewedCount,
-                    reviewed: _reviewedCount,
-                  ),
-                  const SizedBox(height: 14),
-                  _FilterRow(
-                    selected: _filter,
-                    onChanged: (filter) => setState(() => _filter = filter),
-                  ),
-                  const SizedBox(height: 14),
-                  if (_filteredEntries.isEmpty)
-                    _NotebookEmptyState(hasAnyEntry: _entries.isNotEmpty)
-                  else
-                    for (final entry in _filteredEntries) ...[
-                      _MistakeCard(
-                        entry: entry,
-                        onMarkReviewed: () => _markReviewed(entry.id),
-                        onReopen: () => _reopen(entry.id),
-                        onDelete: () => _deleteEntry(entry),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
-                ],
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : RefreshIndicator(
+                onRefresh: _loadEntries,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  children: [
+                    _NotebookHeader(
+                      total: _entries.length,
+                      unreviewed: _unreviewedCount,
+                      reviewed: _reviewedCount,
+                    ),
+                    const SizedBox(height: 14),
+                    _FilterRow(
+                      selected: _filter,
+                      onChanged: (filter) => setState(() => _filter = filter),
+                    ),
+                    const SizedBox(height: 14),
+                    if (_filteredEntries.isEmpty)
+                      _NotebookEmptyState(hasAnyEntry: _entries.isNotEmpty)
+                    else
+                      for (final entry in _filteredEntries) ...[
+                        _MistakeCard(
+                          entry: entry,
+                          onMarkReviewed: () => _markReviewed(entry.id),
+                          onReopen: () => _reopen(entry.id),
+                          onDelete: () => _deleteEntry(entry),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }

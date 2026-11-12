@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,54 +33,56 @@ class _IeltsTestsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('IELTS Practice Tests')),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await provider.loadTests();
-          await provider.loadHistory();
-        },
-        child: provider.isLoading && provider.tests.isEmpty
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (provider.error != null)
-                    Card(
-                      color: theme.colorScheme.errorContainer,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Text(
-                          provider.error!,
-                          style: TextStyle(
-                            color: theme.colorScheme.onErrorContainer,
+      body: ContentWidth(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await provider.loadTests();
+            await provider.loadHistory();
+          },
+          child: provider.isLoading && provider.tests.isEmpty
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    if (provider.error != null)
+                      Card(
+                        color: theme.colorScheme.errorContainer,
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            provider.error!,
+                            style: TextStyle(
+                              color: theme.colorScheme.onErrorContainer,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  if (provider.history.isNotEmpty) ...[
-                    Text('Your results', style: theme.textTheme.titleMedium),
+                    if (provider.history.isNotEmpty) ...[
+                      Text('Your results', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      ...provider.history
+                          .take(3)
+                          .map((attempt) => _HistoryTile(attempt: attempt)),
+                      const SizedBox(height: 24),
+                    ],
+                    Text('Available tests', style: theme.textTheme.titleMedium),
                     const SizedBox(height: 8),
-                    ...provider.history
-                        .take(3)
-                        .map((attempt) => _HistoryTile(attempt: attempt)),
-                    const SizedBox(height: 24),
-                  ],
-                  Text('Available tests', style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  if (provider.tests.isEmpty && !provider.isLoading)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 48),
-                      child: Center(
-                        child: Text(
-                          'No published tests yet.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
+                    if (provider.tests.isEmpty && !provider.isLoading)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 48),
+                        child: Center(
+                          child: Text(
+                            'No published tests yet.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ...provider.tests.map((test) => _TestCard(test: test)),
-                ],
-              ),
+                    ...provider.tests.map((test) => _TestCard(test: test)),
+                  ],
+                ),
+        ),
       ),
     );
   }

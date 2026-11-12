@@ -478,6 +478,71 @@ void main() {
     expect(voice.stops, greaterThanOrEqualTo(1));
   });
 
+  // The real order the OS reports; Flutter rejects paused -> resumed directly.
+  void goToBackground(WidgetTester tester) {
+    for (final state in [
+      AppLifecycleState.inactive,
+      AppLifecycleState.hidden,
+      AppLifecycleState.paused,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+  }
+
+  void comeBack(WidgetTester tester) {
+    for (final state in [
+      AppLifecycleState.hidden,
+      AppLifecycleState.inactive,
+      AppLifecycleState.resumed,
+    ]) {
+      tester.binding.handleAppLifecycleStateChanged(state);
+    }
+  }
+
+  pageTest('leaving the tab silences spoken replies until it is back', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+    expect(chat.audioMuted, isFalse);
+
+    await pumpPage(tester, active: false);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(chat.audioMuted, isTrue);
+
+    await pumpPage(tester);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(chat.audioMuted, isFalse);
+  });
+
+  pageTest('backgrounding the app silences spoken replies even without a call', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+    expect(chat.audioMuted, isFalse);
+
+    goToBackground(tester);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(chat.audioMuted, isTrue);
+
+    comeBack(tester);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(chat.audioMuted, isFalse);
+  });
+
+  pageTest('returning to the app does not unmute a tab that is hidden', (
+    tester,
+  ) async {
+    await pumpPage(tester);
+    await pumpPage(tester, active: false);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(chat.audioMuted, isTrue);
+
+    goToBackground(tester);
+    comeBack(tester);
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(chat.audioMuted, isTrue);
+  });
+
   pageTest('without the flag there is no duplex UI at all', (tester) async {
     dotenv.loadFromString(envString: 'ENVIRONMENT=development');
     await pumpPage(tester);

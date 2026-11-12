@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:flutter/material.dart';
@@ -54,7 +55,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: SafeArea(
+      body: ContentWidth(child: SafeArea(
         child: RefreshIndicator(
           onRefresh: () =>
               context.read<NewsProvider>().loadArticles(refresh: true),
@@ -167,7 +168,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
             ],
           ),
         ),
-      ),
+      ),),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../ielts/presentation/pages/ielts_tests_page.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +52,7 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
       appBar: AppBar(title: Text('practiceLab.title'.tr())),
-      body: SafeArea(
+      body: ContentWidth(child: SafeArea(
         child: Consumer<ProficiencyProvider>(
           builder: (context, proficiency, _) {
             final items = buildPracticeLabItems(
@@ -112,7 +113,7 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
             );
           },
         ),
-      ),
+      ),),
     );
   }
 }

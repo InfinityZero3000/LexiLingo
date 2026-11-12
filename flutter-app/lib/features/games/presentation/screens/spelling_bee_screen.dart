@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -287,7 +288,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
-            body: Column(
+            body: ContentWidth(maxWidth: ContentWidth.reading, child: Column(
               children: [
                 LinearProgressIndicator(
                   value: _wordIndex / game.words.length,
@@ -612,7 +613,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                   ),
                 ),
               ],
-            ),
+            ),),
           );
         },
       ),

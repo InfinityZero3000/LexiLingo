@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -53,49 +54,52 @@ class _ResultView extends StatelessWidget {
           ),
         ],
       ),
-      body: result == null
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _OverallCard(result: result),
-                const SizedBox(height: 16),
-                if (result.isAwaitingGrading)
-                  Card(
-                    color: theme.colorScheme.secondaryContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Writing and Speaking are being graded. Pull refresh in a moment.',
-                              style: TextStyle(
-                                color: theme.colorScheme.onSecondaryContainer,
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: result == null
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  _OverallCard(result: result),
+                  const SizedBox(height: 16),
+                  if (result.isAwaitingGrading)
+                    Card(
+                      color: theme.colorScheme.secondaryContainer,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Row(
+                          children: [
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Writing and Speaking are being graded. Pull refresh in a moment.',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
+                  const SizedBox(height: 8),
+                  ...result.gradings.map((g) => _GradingCard(grading: g)),
+                  ...result.review.entries.map(
+                    (entry) => _ReviewSection(
+                      skill: entry.key,
+                      items: entry.value,
+                      raw: result.rawScores[entry.key],
+                    ),
                   ),
-                const SizedBox(height: 8),
-                ...result.gradings.map((g) => _GradingCard(grading: g)),
-                ...result.review.entries.map(
-                  (entry) => _ReviewSection(
-                    skill: entry.key,
-                    items: entry.value,
-                    raw: result.rawScores[entry.key],
-                  ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 }
