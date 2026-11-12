@@ -1,13 +1,21 @@
+# One grouped PR per ecosystem per month, instead of one PR per package per
+# week (30+ a month, many superseded before anyone reviewed them).
+# Security updates ignore the schedule and are not grouped by this file.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "dev"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "02:00"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "github-actions"
@@ -16,13 +24,24 @@ updates:
     directory: "/backend-service"
     target-branch: "dev"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "02:30"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    # requirements.txt uses ">=floor" ranges; the default strategy rewrote the
+    # floor on every release (">=0.162.0" -> ">=0.162.2") for no runtime effect.
+    versioning-strategy: increase-if-necessary
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    groups:
+      python:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "backend"
@@ -31,16 +50,28 @@ updates:
     directory: "/ai-service"
     target-branch: "dev"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "03:00"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    versioning-strategy: increase-if-necessary
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
       # scipy 1.18+ requires Python 3.12; CI runs Python 3.11 (see requirements.txt).
       - dependency-name: "scipy"
         versions: [">=1.18.0"]
+      # Multi-GB wheels that take 15-30 min to build on the prod VPS; bump on purpose.
+      - dependency-name: "torch"
+      - dependency-name: "llama-cpp-python"
+    groups:
+      python:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "ai-service"
@@ -49,13 +80,15 @@ updates:
     directory: "/admin-service"
     target-branch: "dev"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "03:30"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+    # A package joins the first group that matches it, so react stays first:
     # react and react-dom must resolve to the exact same version at runtime;
     # separate PRs (auto-merged) once left react 19.3.1 beside react-dom 19.3.0.
     groups:
@@ -65,6 +98,12 @@ updates:
           - "react-dom"
           - "@types/react"
           - "@types/react-dom"
+      admin-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "admin-service"
@@ -73,10 +112,11 @@ updates:
     directory: "/flutter-app"
     target-branch: "dev"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "04:00"
-    open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
