@@ -287,7 +287,19 @@
     "recReasonGap": "这部分你还没掌握",
     "recReasonLevel": "适合你的{level}水平",
     "recReasonSimilar": "与你正在学习的内容相近",
-    "recReasonDefault": "为你推荐"
+    "recReasonDefault": "为你推荐",
+    "nextUp": "接下来学习",
+    "discover": "发现",
+    "openProfile": "打开个人资料",
+    "activeBoostsChip": "{count} 个加成生效中",
+    "streakKeepAlive": "今天学习，保住连续天数",
+    "streakSemantics": "连续 {count} 天，本周学习 {active} 天。打开日历",
+    "dailyGoalSemantics": "今日目标：{goal} XP 中的 {earned} XP，{percent}%。修改目标",
+    "notificationsSemantics": "通知，{count} 条未读",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night"
   },
   "course": {
     "title": "课程",

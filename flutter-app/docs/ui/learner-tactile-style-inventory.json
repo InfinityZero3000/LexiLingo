@@ -30656,6 +30656,838 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 35,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 51,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::2",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 2,
+      "line": 72,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::3",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 147,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::4",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 4,
+      "line": 164,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::showModalBottomSheet::0",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 22,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "surface",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 65,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Card::1",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "surface",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 69,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCourseCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 144,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCourseCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 253,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCourseCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 86,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCoursesEmptyState::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCoursesEmptyState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 27,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCoursesEmptyState::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCoursesEmptyState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 40,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::_Badge::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "_Badge",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 297,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart::_HeroTaskRow::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_HeroTaskRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 183,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart::_HeroTaskRow::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_HeroTaskRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 227,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart::_NextUpHeroState::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_NextUpHeroState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 69,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart::ProgressChipsRow::showModalBottomSheet::0",
+      "path": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart",
+      "entryPoint": "surface",
+      "symbol": "ProgressChipsRow",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 36,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart::ProgressChipsRow::showModalBottomSheet::1",
+      "path": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart",
+      "entryPoint": "surface",
+      "symbol": "ProgressChipsRow",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 1,
+      "line": 51,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart::_ProgressChip::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart",
+      "entryPoint": "surface",
+      "symbol": "_ProgressChip",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 113,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 158,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 100,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Navigator.pushNamed::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 0,
+      "line": 242,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Navigator.pushNamed::1",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 1,
+      "line": 244,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Navigator.pushNamed::2",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 2,
+      "line": 246,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart::_Flame::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart",
+      "entryPoint": "surface",
+      "symbol": "_Flame",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 212,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart::_WeekDots::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart",
+      "entryPoint": "surface",
+      "symbol": "_WeekDots",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 273,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart::TodayPlanTaskTile::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart",
+      "entryPoint": "surface",
+      "symbol": "TodayPlanTaskTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 27,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart::TodayPlanTaskTile::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart",
+      "entryPoint": "surface",
+      "symbol": "TodayPlanTaskTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 43,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_ui_components.dart::_AvatarRing::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_ui_components.dart",
+      "entryPoint": "surface",
+      "symbol": "_AvatarRing",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 202,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_ui_components.dart::_AvatarRing::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_ui_components.dart",
+      "entryPoint": "surface",
+      "symbol": "_AvatarRing",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 212,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_ui_components.dart::_XpPill::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_ui_components.dart",
+      "entryPoint": "surface",
+      "symbol": "_XpPill",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 243,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [

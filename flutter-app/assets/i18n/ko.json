@@ -287,7 +287,19 @@
     "recReasonGap": "아직 완전히 익히지 못했어요",
     "recReasonLevel": "{level} 수준에 알맞아요",
     "recReasonSimilar": "학습 중인 내용과 비슷해요",
-    "recReasonDefault": "추천 항목"
+    "recReasonDefault": "추천 항목",
+    "nextUp": "다음 학습",
+    "discover": "둘러보기",
+    "openProfile": "프로필 열기",
+    "activeBoostsChip": "부스트 {count}개 적용 중",
+    "streakKeepAlive": "오늘 학습하고 연속 기록을 지키세요",
+    "streakSemantics": "{count}일 연속, 이번 주 {active}일 학습. 캘린더 열기",
+    "dailyGoalSemantics": "오늘의 목표: {goal} XP 중 {earned} XP, {percent}%. 목표 변경",
+    "notificationsSemantics": "알림, 읽지 않은 {count}개",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night"
   },
   "course": {
     "title": "행동",

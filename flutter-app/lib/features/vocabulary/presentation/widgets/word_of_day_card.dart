@@ -7,9 +7,8 @@ import 'package:lexilingo_app/features/home/presentation/providers/home_provider
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-/// Home-screen tile for the Word of the Day. Has no outer margin: the parent
-/// row owns the gutters, and it stretches to the row's height.
-/// Navigates to the full word screen on tap.
+/// One-row Word of the Day tile for Home. Owns its gutters so it takes no
+/// space at all when there is no word. Navigates to the full word screen.
 class WordOfDayCard extends StatelessWidget {
   const WordOfDayCard({super.key});
 
@@ -17,12 +16,16 @@ class WordOfDayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<HomeProvider>(
       builder: (context, provider, _) {
-        if (provider.isLoadingWordOfDay) {
-          return const SkeletonBox(height: 132, borderRadius: 20);
-        }
         final word = provider.wordOfDay;
-        if (word == null) return const SizedBox.shrink();
-        return _WordCard(word: word);
+        if (!provider.isLoadingWordOfDay && word == null) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: word == null
+              ? const SkeletonBox(height: 96, borderRadius: 20)
+              : _WordCard(word: word),
+        );
       },
     );
   }
@@ -34,7 +37,11 @@ class _WordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    const onColor = Colors.white;
+    final meaning =
+        word.getTranslation(context.locale.languageCode) ?? word.definition;
 
     return Material(
       color: Colors.transparent,
@@ -52,64 +59,75 @@ class _WordCard extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(20),
           ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'vocabulary.wordOfTheDay'.tr(),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'vocabulary.wordOfTheDay'.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: onColor.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        CefrBadge(
+                          level: word.difficultyLevel,
+                          size: CefrBadgeSize.small,
+                          onColored: true,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: word.word,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: onColor,
+                            ),
+                          ),
+                          if (word.pronunciation != null)
+                            TextSpan(
+                              text: '  ${word.pronunciation}',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontStyle: FontStyle.italic,
+                                color: onColor.withValues(alpha: 0.8),
+                              ),
+                            ),
+                        ],
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      meaning,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        height: 1.4,
+                        color: onColor.withValues(alpha: 0.92),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  CefrBadge(
-                    level: word.difficultyLevel,
-                    size: CefrBadgeSize.small,
-                    onColored: true,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                word.word,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  ],
                 ),
               ),
-              if (word.pronunciation != null)
-                Text(
-                  word.pronunciation!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.75),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              const SizedBox(height: 4),
-              Text(
-                word.definition,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  height: 1.4,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: onColor.withValues(alpha: 0.9),
               ),
             ],
           ),

@@ -287,7 +287,19 @@
     "recReasonGap": "Phần này bạn chưa nắm vững",
     "recReasonLevel": "Vừa sức với trình độ {level}",
     "recReasonSimilar": "Gần với nội dung bạn đang học",
-    "recReasonDefault": "Gợi ý cho bạn"
+    "recReasonDefault": "Gợi ý cho bạn",
+    "nextUp": "Học tiếp",
+    "discover": "Khám phá",
+    "openProfile": "Mở hồ sơ",
+    "activeBoostsChip": "{count} boost đang chạy",
+    "streakKeepAlive": "Học hôm nay để giữ chuỗi ngày",
+    "streakSemantics": "Chuỗi {count} ngày, {active} ngày học trong tuần. Mở lịch",
+    "dailyGoalSemantics": "Mục tiêu hôm nay: {earned}/{goal} XP, {percent}%. Đổi mục tiêu",
+    "notificationsSemantics": "Thông báo, {count} chưa đọc",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night"
   },
   "course": {
     "title": "Khóa học",

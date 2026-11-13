@@ -287,7 +287,19 @@
     "recReasonGap": "まだ習得できていません",
     "recReasonLevel": "{level}レベルにぴったり",
     "recReasonSimilar": "学習中の内容に近いです",
-    "recReasonDefault": "あなたへのおすすめ"
+    "recReasonDefault": "あなたへのおすすめ",
+    "nextUp": "次に学ぶ",
+    "discover": "見つける",
+    "openProfile": "プロフィールを開く",
+    "activeBoostsChip": "ブースト{count}件有効",
+    "streakKeepAlive": "今日学んで連続記録を守ろう",
+    "streakSemantics": "{count}日連続、今週は{active}日学習。カレンダーを開く",
+    "dailyGoalSemantics": "今日の目標：{goal} XP中{earned} XP（{percent}%）。目標を変更",
+    "notificationsSemantics": "通知、未読{count}件",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night"
   },
   "course": {
     "title": "コース",

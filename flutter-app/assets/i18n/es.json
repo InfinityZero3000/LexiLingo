@@ -287,7 +287,19 @@
     "recReasonGap": "Aún no dominas esto",
     "recReasonLevel": "Adecuado para tu nivel {level}",
     "recReasonSimilar": "Cercano a lo que estás aprendiendo",
-    "recReasonDefault": "Sugerido para ti"
+    "recReasonDefault": "Sugerido para ti",
+    "nextUp": "A continuación",
+    "discover": "Descubrir",
+    "openProfile": "Abrir perfil",
+    "activeBoostsChip": "{count} potenciadores activos",
+    "streakKeepAlive": "Aprende hoy para mantener tu racha",
+    "streakSemantics": "Racha de {count} días, {active} días activos esta semana. Abrir calendario",
+    "dailyGoalSemantics": "Meta diaria: {earned} de {goal} XP, {percent}%. Cambiar meta",
+    "notificationsSemantics": "Notificaciones, {count} sin leer",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night"
   },
   "course": {
     "title": "Cursos",

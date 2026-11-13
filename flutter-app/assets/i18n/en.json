@@ -287,7 +287,19 @@
     "recReasonGap": "You haven't mastered this yet",
     "recReasonLevel": "Fits your {level} level",
     "recReasonSimilar": "Close to what you're learning",
-    "recReasonDefault": "Suggested for you"
+    "recReasonDefault": "Suggested for you",
+    "nextUp": "Up next",
+    "discover": "Discover",
+    "openProfile": "Open profile",
+    "activeBoostsChip": "{count} active boosts",
+    "streakKeepAlive": "Learn today to keep your streak",
+    "streakSemantics": "{count}-day streak, {active} active days this week. Open calendar",
+    "dailyGoalSemantics": "Daily goal: {earned} of {goal} XP, {percent}%. Change goal",
+    "notificationsSemantics": "Notifications, {count} unread",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night"
   },
   "course": {
     "title": "Courses",

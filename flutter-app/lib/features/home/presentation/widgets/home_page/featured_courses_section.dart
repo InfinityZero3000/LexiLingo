@@ -4,143 +4,86 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
-import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/utils/course_thumbnail_resolver.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/course_level_helpers.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 
-class FeaturedCoursesSection extends StatelessWidget {
-  const FeaturedCoursesSection({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<HomeProvider>();
-
-    // Show skeleton loading while courses are loading
-    if (provider.isLoading && provider.featuredCourses.isEmpty) {
-      return SizedBox(
-        height: 220,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          itemCount: 3,
-          itemBuilder: (context, index) {
-            return Container(
-              width: 240,
-              margin: const EdgeInsets.only(right: 16),
-              child: const CardSkeleton(isHorizontal: false),
-            );
-          },
-        ),
-      );
-    }
-
-    if (provider.featuredCourses.isEmpty) {
-      return _FeaturedCoursesEmptyState(provider: provider);
-    }
-
-    return SizedBox(
-      height: 220,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: provider.featuredCourses.length,
-        itemBuilder: (context, index) {
-          final course = provider.featuredCourses[index];
-          // Staggered animation for featured courses
-          return AnimatedListItem(
-            index: index,
-            duration: const Duration(milliseconds: 400),
-            delayPerItem: const Duration(milliseconds: 100),
-            beginOffset: const Offset(0, 60),
-            child: _CourseCard(course: course),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _FeaturedCoursesEmptyState extends StatelessWidget {
+class FeaturedCoursesEmptyState extends StatelessWidget {
   final HomeProvider provider;
 
-  const _FeaturedCoursesEmptyState({required this.provider});
+  const FeaturedCoursesEmptyState({super.key, required this.provider});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primary = AppColorRoles.primary(isDark);
 
-    return SizedBox(
-      height: 220,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: primary.withValues(alpha: isDark ? 0.22 : 0.16),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: primary.withValues(alpha: isDark ? 0.22 : 0.16),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.auto_stories_rounded, size: 24, color: primary),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
+          const SizedBox(height: 12),
+          Text(
+            'home.noFeaturedCourses'.tr(),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'home.noFeaturedCoursesDescription'.tr(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColorRoles.textMuted(isDark),
+              height: 1.35,
+            ),
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              FilledButton.icon(
+                onPressed: () => provider.loadFeaturedCourses(),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: Text('home.reload'.tr()),
               ),
-              child: Icon(Icons.auto_stories_rounded, size: 24, color: primary),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'home.noFeaturedCourses'.tr(),
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'home.noFeaturedCoursesDescription'.tr(),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColorRoles.textMuted(isDark),
-                height: 1.35,
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: () => provider.refreshData(),
+                child: Text('home.refreshData'.tr()),
               ),
-            ),
-            const Spacer(),
-            Row(
-              children: [
-                FilledButton.icon(
-                  onPressed: () => provider.loadFeaturedCourses(),
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: Text('home.reload'.tr()),
-                ),
-                const SizedBox(width: 10),
-                TextButton(
-                  onPressed: () => provider.refreshData(),
-                  child: Text('home.refreshData'.tr()),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class _CourseCard extends StatelessWidget {
+class FeaturedCourseCard extends StatelessWidget {
   final CourseEntity course;
+  final double width;
 
-  const _CourseCard({required this.course});
+  const FeaturedCourseCard({super.key, required this.course, this.width = 220});
 
   @override
   Widget build(BuildContext context) {
@@ -170,24 +113,23 @@ class _CourseCard extends StatelessWidget {
         );
       },
       child: Container(
-        width: 240,
-        margin: const EdgeInsets.only(right: 16),
+        width: width,
+        margin: const EdgeInsets.only(right: 12),
         decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
           fill: isDark ? AppColors.surfaceDarkMuted : Colors.white,
           accent: levelColor,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           diagnosticId: 'home-featured-course',
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero animation for course thumbnail
             Hero(
               tag: 'featured-course-image-${course.id}',
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
+                  top: Radius.circular(14),
                 ),
                 child: Stack(
                   children: [
@@ -197,7 +139,6 @@ class _CourseCard extends StatelessWidget {
                         levelColor: levelColor,
                       ),
                     ),
-                    // Gradient overlay
                     Container(
                       height: 110,
                       decoration: BoxDecoration(
@@ -211,70 +152,30 @@ class _CourseCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Level badge - top left
                     Positioned(
-                      top: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              levelColor,
-                              levelColor.withValues(alpha: 0.85),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: levelColor.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
+                      top: 10,
+                      left: 10,
+                      child: _Badge(
+                        color: levelColor,
                         child: Text(
                           localizedCourseLevel(course.level),
-                          style: TextStyle(
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: AppColors.surfaceLight,
-                            fontSize: 12,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
                           ),
                         ),
                       ),
                     ),
-                    // XP badge - top right
                     Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.orange, AppColors.orange],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFFF59E0B,
-                              ).withValues(alpha: 0.4),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
+                      top: 10,
+                      right: 10,
+                      child: _Badge(
+                        color: AppColors.orange,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.star_rounded,
                               size: 14,
                               color: AppColors.surfaceLight,
@@ -284,9 +185,8 @@ class _CourseCard extends StatelessWidget {
                               'profile.xpValue'.tr(
                                 namedArgs: {'xp': '${course.totalXp}'},
                               ),
-                              style: TextStyle(
+                              style: theme.textTheme.labelMedium?.copyWith(
                                 color: AppColors.surfaceLight,
-                                fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -294,16 +194,14 @@ class _CourseCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Course title overlay at bottom
                     Positioned(
-                      bottom: 12,
+                      bottom: 10,
                       left: 12,
                       right: 12,
                       child: Text(
                         course.title,
-                        style: TextStyle(
+                        style: theme.textTheme.titleSmall?.copyWith(
                           color: AppColors.surfaceLight,
-                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           shadows: [
                             Shadow(
@@ -322,18 +220,13 @@ class _CourseCard extends StatelessWidget {
                 ),
               ),
             ),
-            // Bottom section with info and action
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Info chips row
                     Row(
                       children: [
                         _InfoChip(
@@ -341,44 +234,40 @@ class _CourseCard extends StatelessWidget {
                           label: 'profile.lessonsCount'.tr(
                             namedArgs: {'count': '${course.totalLessons}'},
                           ),
-                          color: AppColorRoles.primary(isDark),
+                          color: AppColorRoles.primaryDeep(isDark),
                         ),
                         const SizedBox(width: 8),
                         _InfoChip(
                           icon: Icons.translate_rounded,
                           label: course.language,
-                          color: AppColors.purple,
+                          color: isDark
+                              ? AppColors.purpleLight
+                              : AppColors.purple,
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Action button
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: levelColor,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: levelColor.withValues(alpha: 0.6),
-                        ),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.play_circle_filled_rounded,
                             size: 20,
                             color: AppColors.surfaceLight,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'home.startLearning'.tr(),
-                            style: TextStyle(
+                            style: theme.textTheme.labelLarge?.copyWith(
                               color: AppColors.surfaceLight,
-                              fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
                             ),
                           ),
                         ],
@@ -391,6 +280,32 @@ class _CourseCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.color, required this.child});
+
+  final Color color;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.45),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }
@@ -473,7 +388,7 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
@@ -486,8 +401,7 @@ class _InfoChip extends StatelessWidget {
           const SizedBox(width: 5),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
