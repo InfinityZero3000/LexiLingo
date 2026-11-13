@@ -36,6 +36,29 @@ Run backup manually:
 bash ./scripts/backup-prod.sh
 ```
 
+## Copy on the developer's Mac (off-box)
+
+The server keeps its dumps on the same disk as the databases, so a lost VPS would take both.
+`scripts/pull-backups-to-mac.sh` copies them to `~/Backups/lexilingo` on the Mac:
+
+- `db/`: every `postgres_*`, `mongodb_*` and `manifest_*` set, each checked against its sha256 manifest
+  (verified sets are listed in `db/.verified`). Kept 60 days locally, never fewer than 20 sets.
+- `files/media/`: uploaded media from `backend-service/data/media`. **Not in the server dumps at all.**
+- `files/ai-service-data/`: `ai-service/data`, minus live lock/WAL files.
+- Never `--delete`: whatever the server loses or prunes stays on the Mac.
+
+Install once with `scripts/pull-backups-to-mac.sh --install` (LaunchAgent `me.lexilingo.backup-pull`,
+runs 20 minutes after each server backup and on login; macOS runs a missed slot on wake).
+Status in `~/Backups/lexilingo/LAST_RUN`, log in `~/Library/Logs/lexilingo-backup-pull.log`;
+a failure or a server backup older than 8 hours raises a macOS notification.
+
+Restore from the Mac copy by pushing a set back first, then using the normal restore procedure:
+
+```bash
+scp ~/Backups/lexilingo/db/postgres_<stamp>.sql.gz ovh-vps:/tmp/
+ssh ovh-vps 'sudo lxc file push /tmp/postgres_<stamp>.sql.gz lexilingo/opt/lexilingo/backups/'
+```
+
 ## Backup format
 
 - PostgreSQL: `postgres_<timestamp>.sql.gz`

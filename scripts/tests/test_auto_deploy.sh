@@ -47,7 +47,30 @@ expect "empty diff" "" "$(printf '' | services_for_changes)"
 
 infra() { if infra_changed <<<"$1"; then echo yes; else echo no; fi; }
 expect "compose change is flagged" "yes" "$(infra 'docker-compose.yml')"
+expect "compose override change is flagged" "yes" "$(infra 'docker-compose.images.yml')"
 expect "gateway change is flagged" "yes" "$(infra $'backend-service/a.py\ngateway/nginx/templates/default.conf.template')"
 expect "app change is not" "no" "$(infra 'backend-service/a.py')"
+
+ALL="backend-service backend-reminder-worker backend-reminder-beat ai-service"
+expect "first switch pins both images" $'BACKEND_TAG=sha-s1\nAI_TAG=sha-s1' "$(next_tags "${ALL}" s1 </dev/null)"
+# A backend-only commit must not move ai-service: its cold start rebuilds the embedding index.
+expect "backend-only keeps ai tag" $'BACKEND_TAG=sha-s2\nAI_TAG=sha-s1' \
+  "$(printf 'BACKEND_TAG=sha-s1\nAI_TAG=sha-s1\n' | next_tags "backend-service backend-reminder-worker backend-reminder-beat" s2)"
+expect "ai-only keeps backend tag" $'BACKEND_TAG=sha-s1\nAI_TAG=sha-s3' \
+  "$(printf 'BACKEND_TAG=sha-s1\nAI_TAG=sha-s1\n' | next_tags "ai-service" s3)"
+
+R="${REGISTRY}"
+expect "prune keeps current and previous" "${R}/backend:sha-old" \
+  "$(printf '%s\n' "${R}/backend:sha-new" "${R}/backend:sha-prev" "${R}/backend:sha-old" | stale_images "${R}/backend:sha-new ${R}/backend:sha-prev")"
+expect "prune with nothing stale" "" "$(printf '%s\n' "${R}/ai-service:sha-a" | stale_images "${R}/ai-service:sha-a")"
+
+tags_file="$(mktemp)"; printf 'BACKEND_TAG=sha-b\nAI_TAG=sha-a\n' > "${tags_file}"
+expect "refs from tags file" "${R}/backend:sha-b ${R}/ai-service:sha-a" "$(refs_from_tags "${tags_file}")"
+rm -f "${tags_file}"
+expect "refs from missing file" "" "$(refs_from_tags /nonexistent/image-tags.env)"
+
+# Data lives in named volumes and bind mounts; nothing in the deploy path may be able to remove it.
+banned="$(grep -nE '(compose[a-z_]*|docker) [^#]*(down|rm)( |$)| -v( |$)|--volumes|volume rm|system prune|--force-recreate|--remove-orphans|rm -rf' "${HERE}/../auto-deploy.sh" | grep -v '^[0-9]*:\s*#' || true)"
+expect "no data-destroying commands in auto-deploy.sh" "" "${banned}"
 
 exit "${fail}"
