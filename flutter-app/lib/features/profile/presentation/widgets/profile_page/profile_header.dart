@@ -248,10 +248,10 @@ class ProfileHeader extends StatelessWidget {
                         if (user != null)
                           Text(
                             user!.email,
-                            style: const TextStyle(
-                              color: AppColors.grey600,
-                              fontSize: 13,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColorRoles.textSecondary(isDark),
+                                ),
                           ),
                         const SizedBox(height: 12),
                         // Level Badge + CEFR Proficiency Badge + Rank Badge

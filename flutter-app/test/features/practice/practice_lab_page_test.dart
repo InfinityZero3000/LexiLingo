@@ -82,6 +82,7 @@ void main() {
     WidgetTester tester,
     ProficiencyProfile profile, {
     double height = 812,
+    double textScale = 1,
   }) async {
     tester.view.physicalSize = Size(375, height);
     tester.view.devicePixelRatio = 1;
@@ -99,6 +100,12 @@ void main() {
             create: (_) =>
                 ProficiencyProvider(dataSource: _DataSource(profile)),
             child: MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: child!,
+              ),
               locale: context.locale,
               supportedLocales: context.supportedLocales,
               localizationsDelegates: context.localizationDelegates,
@@ -130,6 +137,16 @@ void main() {
     );
     // Starter cards are still offered — just not sold as a diagnosis.
     expect(find.text('Recommended practice'), findsOneWidget);
+  });
+
+  testWidgets('200% text: the hero and cards fit on a phone', (tester) async {
+    await pumpLab(
+      tester,
+      _profile([for (final skill in SkillType.values) _score(skill)]),
+      textScale: 2,
+    );
+
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('measured weaknesses show their real count', (tester) async {

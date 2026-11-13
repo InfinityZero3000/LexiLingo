@@ -91,10 +91,9 @@ class QuickActionsGrid extends StatelessWidget {
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 960
+            // 3 or all 6: any other count leaves a short last row.
+            final columns = constraints.maxWidth >= 540
                 ? quickActions.length
-                : constraints.maxWidth >= 640
-                ? 4
                 : 3;
             // Tiles size to their text, so a larger font scale grows the row
             // instead of overflowing a fixed extent.

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
@@ -138,6 +139,36 @@ Future<void> _pumpEditProfile(
 
 void main() {
   setUpAll(initializeDateFormatting);
+
+  testWidgets('email stays readable on the dark hero (token, not a fixed grey)', (
+    tester,
+  ) async {
+    final levelProvider = LevelProvider(apiClient: _ApiClientStub());
+    final profileProvider = _createProfileProvider();
+    final user = _user(isVerified: true);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider<LevelProvider>.value(value: levelProvider),
+          ChangeNotifierProvider<ProfileProvider>.value(value: profileProvider),
+        ],
+        child: MaterialApp(
+          theme: ThemeData(brightness: Brightness.dark),
+          home: SingleChildScrollView(
+            child: ProfileHeader(user: user, onProfileEdited: () {}),
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+
+    final email = tester.widget<Text>(find.text(user.email));
+    expect(email.style?.color, AppColorRoles.textSecondary(true));
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    levelProvider.dispose();
+  });
 
   group('ProfileHeader email verification badge', () {
     testWidgets('shows verified icon only for a verified user', (tester) async {
