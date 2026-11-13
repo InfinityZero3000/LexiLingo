@@ -129,7 +129,19 @@
     "errAlreadyExists": "Ese correo o nombre de usuario ya está en uso",
     "errValidation": "Algunos datos no son válidos. Compruébalos de nuevo.",
     "errNetwork": "Sin conexión de red. Inténtalo de nuevo.",
-    "errRateLimited": "Demasiados intentos. Espera un momento."
+    "errRateLimited": "Demasiados intentos. Espera un momento.",
+    "googleSignInCancelled": "Se canceló el inicio de sesión con Google.",
+    "facebookSignInCancelled": "El inicio de sesión con Facebook se canceló o falló.",
+    "errServerTimeout": "El servidor no responde. Inténtalo de nuevo en un momento.",
+    "errProfileLoad": "Iniciaste sesión, pero no pudimos cargar tu perfil. Inténtalo de nuevo.",
+    "errServer": "Se produjo un error del servidor. Inténtalo más tarde.",
+    "errGoogleConfig": "El inicio de sesión con Google no está configurado correctamente. Contacta con soporte.",
+    "errAccountExists": "Este correo ya está vinculado a otro método de inicio de sesión. Usa ese método primero.",
+    "errCors": "El inicio de sesión está bloqueado temporalmente. Inténtalo de nuevo en un momento.",
+    "errCancelled": "Se canceló el inicio de sesión.",
+    "errInvalidPassword": "Contraseña no válida.",
+    "errUserNotFound": "No se encontró ninguna cuenta con este correo.",
+    "errWrongPassword": "Contraseña incorrecta."
   },
   "home": {
     "wordsLeftToReview": "palabras por repasar",
@@ -495,12 +507,12 @@
     "youSaid": "Usted dijo:",
     "excellentPronunciation": "¡Excelente pronunciación!",
     "microphonePermissionDenied": "Permiso de micrófono denegado",
-    "failedToStartRecording": "No se pudo iniciar la grabación: {error}",
+    "failedToStartRecording": "No se pudo iniciar la grabación.",
     "recordedAudioUnreadable": "El audio grabado no se pudo leer",
     "noRecordedAudioReturned": "No se devolvió ningún audio grabado.",
-    "failedToStopRecording": "No se pudo detener la grabación: {error}",
+    "failedToStopRecording": "No se pudo detener la grabación.",
     "enterPhraseFirst": "Introduce una frase primero",
-    "failedToPlayAudio": "No se pudo reproducir audio: {error}",
+    "failedToPlayAudio": "No se pudo reproducir el audio.",
     "speak": "Hablar",
     "listen": "Escuchar",
     "recording": "Grabando...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "Grabando: toca para detener",
     "recognizing": "Reconociendo tu voz...",
     "notMatchedTryAgain": "Aún no coincide: inténtalo otra vez",
-    "saidCorrectly": "Lo dijiste correctamente"
+    "saidCorrectly": "Lo dijiste correctamente",
+    "noSpeechDetected": "No se detectó ninguna voz. Inténtalo de nuevo.",
+    "microphoneUnavailable": "Micrófono no disponible. Comprueba los permisos.",
+    "recognitionAborted": "El reconocimiento de voz se interrumpió.",
+    "languageNotSupported": "Este idioma no es compatible con el reconocimiento de voz.",
+    "recognitionFailed": "El reconocimiento de voz falló. Inténtalo de nuevo.",
+    "recognitionUnsupported": "Este navegador o dispositivo no admite el reconocimiento de voz.",
+    "textRequired": "Primero escribe un texto.",
+    "transcribeFailed": "No se pudo transcribir la grabación. Inténtalo de nuevo.",
+    "recordingStartFailed": "No se pudo iniciar la grabación. Inténtalo de nuevo.",
+    "recordingStopFailed": "No se pudo detener la grabación. Inténtalo de nuevo.",
+    "playbackFailed": "No se pudo reproducir el audio. Inténtalo de nuevo."
   },
   "chat": {
     "loadMore": "Cargar más...",
@@ -733,7 +756,8 @@
     "emptyChart": "¡Empieza a aprender para ver tu gráfico de progreso!",
     "tabLessons": "Lecciones",
     "tabActivity": "Actividad",
-    "tabContent": "Contenido"
+    "tabContent": "Contenido",
+    "noStreakFreezes": "No tienes protectores de racha disponibles."
   },
   "settings": {
     "title": "Configuración",
@@ -850,7 +874,10 @@
       "yourTimeBody": "Tú elegiste esta hora para estudiar. Abre la app, marca asistencia y vuelve a lo tuyo.",
       "fadingTitle": "Las palabras de ayer se están borrando",
       "fadingBody": "Repasar justo antes de olvidar es cuando más gana la memoria."
-    }
+    },
+    "markReadFailed": "No se pudo marcar como leída. Inténtalo de nuevo.",
+    "deleteFailed": "No se pudo eliminar la notificación. Inténtalo de nuevo.",
+    "restoreFailed": "No se pudo restaurar la notificación. Inténtalo de nuevo."
   },
   "errors": {
     "networkError": "Error de red",
@@ -860,7 +887,17 @@
     "unknown": "Ocurrió un error desconocido",
     "timeout": "Tiempo de espera agotado",
     "noInternet": "Sin conexión a Internet",
-    "genericRetry": "Se produjo un error. Inténtalo de nuevo."
+    "genericRetry": "Se produjo un error. Inténtalo de nuevo.",
+    "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo.",
+    "sessionExpiredOnServer": "Tu sesión caducó en el servidor. Se ha iniciado una nueva.",
+    "sessionOtherAccount": "Esta sesión pertenece a otra cuenta. Inicia un chat nuevo.",
+    "sessionStartFailed": "No se pudo iniciar la sesión. Inténtalo de nuevo.",
+    "noActiveSession": "No hay ninguna sesión activa.",
+    "loadFailed": "No se pudieron cargar los datos. Inténtalo de nuevo.",
+    "saveFailed": "No se pudo guardar. Inténtalo de nuevo.",
+    "submitFailed": "No se pudo enviar. Inténtalo de nuevo.",
+    "networkRetry": "Error de red. Comprueba tu conexión e inténtalo de nuevo.",
+    "localStorage": "Error de almacenamiento local. Inténtalo de nuevo."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -939,7 +976,10 @@
     "nearbyReason": "Cercano",
     "refreshSuggestions": "Actualizar sugerencias",
     "disableNearby": "Desactivar cerca",
-    "refreshNearby": "Actualizar cerca"
+    "refreshNearby": "Actualizar cerca",
+    "searchFailed": "No se pudo buscar usuarios. Inténtalo de nuevo.",
+    "locationPermissionDenied": "Permiso de ubicación denegado.",
+    "locationServicesDisabled": "Los servicios de ubicación están desactivados."
   },
   "onboarding": {
     "welcome": "¡Bienvenido a LexiLingo!",
@@ -1415,7 +1455,10 @@
     "suggestedCoursesLabel": "Cursos para ti",
     "modeFree": "Chat",
     "modeTopics": "Temas",
-    "voiceSpeed": "Velocidad de voz"
+    "voiceSpeed": "Velocidad de voz",
+    "historyUnavailable": "El historial de la sesión no está disponible temporalmente. Puedes seguir chateando.",
+    "offlineQueued": "Estás sin conexión. Tu mensaje se enviará cuando vuelvas a conectarte.",
+    "voiceProcessingFailed": "No se pudo procesar la voz. Inténtalo de nuevo."
   },
   "youtube": {
     "subtitles": "Subtítulos",
@@ -1761,7 +1804,11 @@
     "tagCrawl": "Recopiladas",
     "tagSociety": "Sociedad",
     "tagSeed": "Semilla",
-    "tagHistory": "Historia"
+    "tagHistory": "Historia",
+    "removeFromDeckFailed": "No se pudo quitar del mazo",
+    "alreadyInVocabulary": "\"{}\" ya está en tu vocabulario.",
+    "savedNewWord": "Nueva palabra \"{}\" guardada en tu vocabulario.",
+    "savedWord": "\"{}\" guardada en tu vocabulario."
   },
   "legal": {
     "privacy_title": "Política de privacidad",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "Tenemos problemas de conexión. Inténtalo de nuevo."
   },
   "dailyChallenges": {
-    "rewardClaimed": "¡Recompensa reclamada!"
+    "rewardClaimed": "¡Recompensa reclamada!",
+    "rewardAlreadyClaimed": "Esta recompensa ya se ha reclamado.",
+    "challengeNotCompleted": "Completa el desafío primero para reclamar la recompensa."
   },
   "contentActivity": {
     "summary": "Últimos {days} días: {minutes} min, {sessions} actividades, {xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "Comprensión auditiva",
     "skillReading": "Comprensión lectora",
     "skillWriting": "Expresión escrita",
-    "skillSpeaking": "Expresión oral"
+    "skillSpeaking": "Expresión oral",
+    "audioUnavailable": "Audio no disponible.",
+    "nothingTranscribed": "No se transcribió nada. Inténtalo de nuevo.",
+    "transcribeFailed": "No se pudo transcribir la grabación.",
+    "micPermissionRequired": "Se necesita permiso de micrófono."
   }
 }

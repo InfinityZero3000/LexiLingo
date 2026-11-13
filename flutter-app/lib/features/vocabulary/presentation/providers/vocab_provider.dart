@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -283,11 +284,11 @@ class VocabProvider extends ChangeNotifier {
     if (failure is ServerFailure) {
       return failure.message;
     } else if (failure is NetworkFailure) {
-      return 'Network error. Please check your internet connection.';
+      return 'errors.networkRetry'.tr();
     } else if (failure is CacheFailure) {
-      return 'Local storage error.';
+      return 'errors.localStorage'.tr();
     } else {
-      return 'An error occurred. Please try again.';
+      return 'errors.genericRetry'.tr();
     }
   }
 
@@ -312,7 +313,8 @@ class VocabProvider extends ChangeNotifier {
       }
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'Failed to load decks: $e';
+      _errorMessage = 'errors.loadFailed'.tr();
+      debugPrint('Failed to load decks: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -348,7 +350,8 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return VocabularyDeck.fromJson(data as Map<String, dynamic>);
     } catch (e) {
-      _errorMessage = 'Failed to create deck: $e';
+      _errorMessage = 'vocabulary.createDeckFailed'.tr();
+      debugPrint('Failed to create deck: $e');
       return null;
     } finally {
       _isLoading = false;
@@ -366,7 +369,8 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to add word to deck: $e';
+      _errorMessage = 'vocabulary.addToDeckFailed'.tr();
+      debugPrint('Failed to add word to deck: $e');
       return false;
     }
   }
@@ -383,7 +387,8 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to remove word from deck: $e';
+      _errorMessage = 'vocabulary.removeFromDeckFailed'.tr();
+      debugPrint('Failed to remove word from deck: $e');
       return false;
     }
   }
@@ -397,7 +402,8 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to delete deck: $e';
+      _errorMessage = 'vocabulary.deleteDeckFailed'.tr();
+      debugPrint('Failed to delete deck: $e');
       return false;
     } finally {
       _isLoading = false;

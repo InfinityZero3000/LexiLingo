@@ -176,7 +176,7 @@ class AuthProvider extends ChangeNotifier {
       if (idToken == null) {
         final signInError = googleSignInService.lastError?.toLowerCase();
         if (signInError == null || signInError.contains('cancelled')) {
-          _errorMessage = 'Google sign in was cancelled';
+          _errorMessage = 'auth.googleSignInCancelled'.tr();
         } else {
           _errorMessage = _parseErrorMessage(googleSignInService.lastError!);
         }
@@ -232,7 +232,7 @@ class AuthProvider extends ChangeNotifier {
       // Get Firebase ID token via Facebook authentication
       final idToken = await facebookSignInService.signIn();
       if (idToken == null) {
-        _errorMessage = 'Facebook sign in was cancelled or failed';
+        _errorMessage = 'auth.facebookSignInCancelled'.tr();
         _isLoading = false;
         notifyListeners();
         return;

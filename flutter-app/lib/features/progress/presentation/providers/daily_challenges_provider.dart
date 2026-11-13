@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
@@ -84,7 +85,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   Future<bool> claimReward(String challengeId) async {
     // Check if already claimed
     if (_claimedRewards.contains(challengeId)) {
-      _errorMessage = 'Reward already claimed';
+      _errorMessage = 'dailyChallenges.rewardAlreadyClaimed'.tr();
       notifyListeners();
       return false;
     }
@@ -97,7 +98,7 @@ class DailyChallengesProvider extends ChangeNotifier {
 
     // Check if completed
     if (!challenge.isCompleted) {
-      _errorMessage = 'Challenge not completed yet';
+      _errorMessage = 'dailyChallenges.challengeNotCompleted'.tr();
       notifyListeners();
       return false;
     }

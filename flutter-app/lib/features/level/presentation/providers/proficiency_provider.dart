@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/level_history_entry.dart';
 import '../../domain/entities/proficiency_entity.dart';
@@ -97,7 +98,7 @@ class ProficiencyProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to load proficiency profile: $e';
+      _errorMessage = 'errors.loadFailed'.tr();
       notifyListeners();
       debugPrint('Error loading proficiency: $e');
     }
@@ -158,7 +159,7 @@ class ProficiencyProvider with ChangeNotifier {
 
       return result;
     } catch (e) {
-      _errorMessage = 'Failed to record exercises: $e';
+      _errorMessage = 'errors.saveFailed'.tr();
       notifyListeners();
       debugPrint('Error recording exercises: $e');
       return null;

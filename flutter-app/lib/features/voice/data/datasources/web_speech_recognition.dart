@@ -6,6 +6,8 @@ import 'dart:js' as js;
 // ignore: deprecated_member_use
 import 'dart:js_util' as js_util;
 
+import 'package:easy_localization/easy_localization.dart';
+
 /// Web Speech Recognition Service
 /// Uses browser's native SpeechRecognition API for STT on web platform
 class WebSpeechRecognition {
@@ -92,7 +94,8 @@ class WebSpeechRecognition {
     try {
       _recognition.callMethod('start');
     } catch (e) {
-      _resultController!.addError('Failed to start speech recognition: $e');
+      print('Failed to start speech recognition: $e');
+      _resultController!.addError('voice.recognitionFailed'.tr());
     }
 
     return _resultController!.stream;
@@ -145,26 +148,26 @@ class WebSpeechRecognition {
 
     switch (error) {
       case 'no-speech':
-        errorMessage = 'No speech detected. Please try again.';
+        errorMessage = 'voice.noSpeechDetected'.tr();
         break;
       case 'audio-capture':
-        errorMessage = 'Microphone not available. Please check permissions.';
+        errorMessage = 'voice.microphoneUnavailable'.tr();
         break;
       case 'not-allowed':
-        errorMessage =
-            'Microphone access denied. Please allow microphone access.';
+        errorMessage = 'voice.micPermissionSettings'.tr();
         break;
       case 'network':
-        errorMessage = 'Network error. Please check your connection.';
+        errorMessage = 'errors.networkRetry'.tr();
         break;
       case 'aborted':
-        errorMessage = 'Speech recognition aborted.';
+        errorMessage = 'voice.recognitionAborted'.tr();
         break;
       case 'language-not-supported':
-        errorMessage = 'Language not supported.';
+        errorMessage = 'voice.languageNotSupported'.tr();
         break;
       default:
-        errorMessage = 'Speech recognition error: $error';
+        print('Speech recognition error: $error');
+        errorMessage = 'voice.recognitionFailed'.tr();
     }
 
     _resultController?.addError(errorMessage);

@@ -129,7 +129,19 @@
     "errAlreadyExists": "该邮箱或用户名已被使用",
     "errValidation": "信息无效，请重新检查。",
     "errNetwork": "无网络连接，请重试。",
-    "errRateLimited": "尝试次数过多，请稍候再试。"
+    "errRateLimited": "尝试次数过多，请稍候再试。",
+    "googleSignInCancelled": "Google 登录已取消。",
+    "facebookSignInCancelled": "Facebook 登录已取消或失败。",
+    "errServerTimeout": "服务器无响应，请稍后重试。",
+    "errProfileLoad": "登录成功，但无法加载你的资料，请重试。",
+    "errServer": "服务器出错，请稍后重试。",
+    "errGoogleConfig": "Google 登录配置不正确，请联系客服。",
+    "errAccountExists": "此邮箱已关联其他登录方式，请先使用该方式登录。",
+    "errCors": "登录暂时被阻止，请稍后重试。",
+    "errCancelled": "登录已取消。",
+    "errInvalidPassword": "密码无效。",
+    "errUserNotFound": "未找到使用此邮箱的账号。",
+    "errWrongPassword": "密码错误。"
   },
   "home": {
     "wordsLeftToReview": "个单词待复习",
@@ -495,12 +507,12 @@
     "youSaid": "你说：",
     "excellentPronunciation": "发音很棒！",
     "microphonePermissionDenied": "麦克风权限被拒绝",
-    "failedToStartRecording": "无法开始录制：{error}",
+    "failedToStartRecording": "无法开始录音。",
     "recordedAudioUnreadable": "无法读取录制的音频",
     "noRecordedAudioReturned": "没有返回录制的音频",
-    "failedToStopRecording": "停止录制失败：{error}",
+    "failedToStopRecording": "无法停止录音。",
     "enterPhraseFirst": "先输入一个词组",
-    "failedToPlayAudio": "无法播放音频：{error}",
+    "failedToPlayAudio": "无法播放音频。",
     "speak": "说话",
     "listen": "听",
     "recording": "录音中...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "录音中 — 点击停止",
     "recognizing": "正在识别语音…",
     "notMatchedTryAgain": "还不匹配，请再试一次",
-    "saidCorrectly": "你说对了"
+    "saidCorrectly": "你说对了",
+    "noSpeechDetected": "未检测到语音，请重试。",
+    "microphoneUnavailable": "麦克风不可用，请检查权限。",
+    "recognitionAborted": "语音识别已中断。",
+    "languageNotSupported": "语音识别不支持此语言。",
+    "recognitionFailed": "语音识别失败，请重试。",
+    "recognitionUnsupported": "此浏览器或设备不支持语音识别。",
+    "textRequired": "请先输入文本。",
+    "transcribeFailed": "无法转写录音，请重试。",
+    "recordingStartFailed": "无法开始录音，请重试。",
+    "recordingStopFailed": "无法停止录音，请重试。",
+    "playbackFailed": "无法播放音频，请重试。"
   },
   "chat": {
     "loadMore": "加载更多...",
@@ -733,7 +756,8 @@
     "emptyChart": "开始学习后即可看到进度图表！",
     "tabLessons": "课程",
     "tabActivity": "活动",
-    "tabContent": "内容"
+    "tabContent": "内容",
+    "noStreakFreezes": "没有可用的连胜冻结。"
   },
   "settings": {
     "title": "设置",
@@ -850,7 +874,10 @@
       "yourTimeBody": "这个学习时间是你自己选的。打开应用签到，然后继续忙你的事。",
       "fadingTitle": "昨天的单词正在淡忘",
       "fadingBody": "快要忘记时复习，记忆收获最大。"
-    }
+    },
+    "markReadFailed": "无法标记为已读，请重试。",
+    "deleteFailed": "无法删除通知，请重试。",
+    "restoreFailed": "无法恢复通知，请重试。"
   },
   "errors": {
     "networkError": "网络错误",
@@ -860,7 +887,17 @@
     "unknown": "发生未知错误",
     "timeout": "请求超时",
     "noInternet": "没有网络连接",
-    "genericRetry": "出错了，请重试。"
+    "genericRetry": "出错了，请重试。",
+    "sessionExpired": "登录会话已过期，请重新登录。",
+    "sessionExpiredOnServer": "会话已在服务器上过期，已为你开始新会话。",
+    "sessionOtherAccount": "此会话属于其他账号，请开始新的聊天。",
+    "sessionStartFailed": "无法开始会话，请重试。",
+    "noActiveSession": "没有进行中的会话。",
+    "loadFailed": "无法加载数据，请重试。",
+    "saveFailed": "无法保存，请重试。",
+    "submitFailed": "无法提交，请重试。",
+    "networkRetry": "网络错误，请检查连接后重试。",
+    "localStorage": "本地存储出错，请重试。"
   },
   "gamification": {
     "xpEarned": "+{xp} 经验值",
@@ -939,7 +976,10 @@
     "nearbyReason": "附近",
     "refreshSuggestions": "刷新建议",
     "disableNearby": "附近禁用",
-    "refreshNearby": "附近刷新"
+    "refreshNearby": "附近刷新",
+    "searchFailed": "无法搜索用户，请重试。",
+    "locationPermissionDenied": "位置权限被拒绝。",
+    "locationServicesDisabled": "定位服务已关闭。"
   },
   "onboarding": {
     "welcome": "欢迎来到 LexiLingo！",
@@ -1415,7 +1455,10 @@
     "suggestedCoursesLabel": "为你推荐的课程",
     "modeFree": "聊天",
     "modeTopics": "话题",
-    "voiceSpeed": "语音速度"
+    "voiceSpeed": "语音速度",
+    "historyUnavailable": "会话历史暂时不可用，你可以继续聊天。",
+    "offlineQueued": "你当前离线，重新联网后将发送消息。",
+    "voiceProcessingFailed": "语音处理失败，请重试。"
   },
   "youtube": {
     "subtitles": "字幕",
@@ -1761,7 +1804,11 @@
     "tagCrawl": "采集",
     "tagSociety": "社会",
     "tagSeed": "种子词",
-    "tagHistory": "历史"
+    "tagHistory": "历史",
+    "removeFromDeckFailed": "无法从卡组中移除",
+    "alreadyInVocabulary": "“{}”已在你的词汇表中。",
+    "savedNewWord": "已将新单词“{}”保存到词汇表。",
+    "savedWord": "已将“{}”保存到词汇表。"
   },
   "legal": {
     "privacy_title": "隐私政策",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "连接出现问题，请重试。"
   },
   "dailyChallenges": {
-    "rewardClaimed": "奖励已领取！"
+    "rewardClaimed": "奖励已领取！",
+    "rewardAlreadyClaimed": "该奖励已领取。",
+    "challengeNotCompleted": "请先完成挑战再领取奖励。"
   },
   "contentActivity": {
     "summary": "最近 {days} 天：{minutes} 分钟，{sessions} 次，{xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "听力",
     "skillReading": "阅读",
     "skillWriting": "写作",
-    "skillSpeaking": "口语"
+    "skillSpeaking": "口语",
+    "audioUnavailable": "音频不可用。",
+    "nothingTranscribed": "没有识别出任何内容。请重试。",
+    "transcribeFailed": "无法转写录音。",
+    "micPermissionRequired": "需要麦克风权限。"
   }
 }

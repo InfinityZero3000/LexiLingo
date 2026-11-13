@@ -129,7 +129,19 @@
     "errAlreadyExists": "That email or username is already taken",
     "errValidation": "Some details are invalid. Please check again.",
     "errNetwork": "No network connection. Please try again.",
-    "errRateLimited": "Too many attempts. Please wait a moment."
+    "errRateLimited": "Too many attempts. Please wait a moment.",
+    "googleSignInCancelled": "Google sign-in was cancelled.",
+    "facebookSignInCancelled": "Facebook sign-in was cancelled or failed.",
+    "errServerTimeout": "The server is not responding. Please try again in a moment.",
+    "errProfileLoad": "Sign-in succeeded, but we could not load your profile. Please try again.",
+    "errServer": "A server error occurred. Please try again later.",
+    "errGoogleConfig": "Google sign-in is not configured correctly. Please contact support.",
+    "errAccountExists": "This email is already linked to another sign-in method. Please use that method first.",
+    "errCors": "Sign-in is temporarily blocked. Please try again in a moment.",
+    "errCancelled": "Sign-in was cancelled.",
+    "errInvalidPassword": "Invalid password.",
+    "errUserNotFound": "No account found with this email.",
+    "errWrongPassword": "Incorrect password."
   },
   "home": {
     "wordsLeftToReview": "words to review",
@@ -495,12 +507,12 @@
     "youSaid": "You said:",
     "excellentPronunciation": "Excellent pronunciation!",
     "microphonePermissionDenied": "Microphone permission denied",
-    "failedToStartRecording": "Failed to start recording: {error}",
+    "failedToStartRecording": "Couldn't start recording.",
     "recordedAudioUnreadable": "Recorded audio could not be read",
     "noRecordedAudioReturned": "No recorded audio was returned",
-    "failedToStopRecording": "Failed to stop recording: {error}",
+    "failedToStopRecording": "Couldn't stop recording.",
     "enterPhraseFirst": "Enter a phrase first",
-    "failedToPlayAudio": "Failed to play audio: {error}",
+    "failedToPlayAudio": "Couldn't play the audio.",
     "speak": "Speak",
     "listen": "Listen",
     "recording": "Recording...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "Recording — tap to stop",
     "recognizing": "Recognizing your speech...",
     "notMatchedTryAgain": "Not a match yet — try again",
-    "saidCorrectly": "You said it correctly"
+    "saidCorrectly": "You said it correctly",
+    "noSpeechDetected": "No speech detected. Please try again.",
+    "microphoneUnavailable": "Microphone not available. Please check your permissions.",
+    "recognitionAborted": "Speech recognition was interrupted.",
+    "languageNotSupported": "This language is not supported for speech recognition.",
+    "recognitionFailed": "Speech recognition failed. Please try again.",
+    "recognitionUnsupported": "Speech recognition is not supported on this browser or device.",
+    "textRequired": "Please enter some text first.",
+    "transcribeFailed": "Could not transcribe the recording. Please try again.",
+    "recordingStartFailed": "Could not start recording. Please try again.",
+    "recordingStopFailed": "Could not stop recording. Please try again.",
+    "playbackFailed": "Could not play the audio. Please try again."
   },
   "chat": {
     "loadMore": "Load more...",
@@ -733,7 +756,8 @@
     "emptyChart": "Start learning to see your progress chart!",
     "tabLessons": "Lessons",
     "tabActivity": "Activity",
-    "tabContent": "Content"
+    "tabContent": "Content",
+    "noStreakFreezes": "No streak freezes available."
   },
   "settings": {
     "title": "Settings",
@@ -850,7 +874,10 @@
       "yourTimeBody": "You chose this time to learn. Open the app, check in, then get back to your day.",
       "fadingTitle": "Yesterday's words are fading",
       "fadingBody": "Reviewing right before you forget is when memory gains the most."
-    }
+    },
+    "markReadFailed": "Could not mark as read. Please try again.",
+    "deleteFailed": "Could not delete the notification. Please try again.",
+    "restoreFailed": "Could not restore the notification. Please try again."
   },
   "errors": {
     "networkError": "Network error",
@@ -860,7 +887,17 @@
     "unknown": "An unknown error occurred",
     "timeout": "Request timeout",
     "noInternet": "No internet connection",
-    "genericRetry": "An error occurred. Please try again."
+    "genericRetry": "An error occurred. Please try again.",
+    "sessionExpired": "Your login session expired. Please sign in again.",
+    "sessionExpiredOnServer": "Your session expired on the server. A new one was started.",
+    "sessionOtherAccount": "This session belongs to another account. Start a new chat.",
+    "sessionStartFailed": "Could not start the session. Please try again.",
+    "noActiveSession": "No active session.",
+    "loadFailed": "Could not load the data. Please try again.",
+    "saveFailed": "Could not save. Please try again.",
+    "submitFailed": "Could not submit. Please try again.",
+    "networkRetry": "Network error. Please check your connection and try again.",
+    "localStorage": "Local storage error. Please try again."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -939,7 +976,10 @@
     "nearbyReason": "Nearby",
     "refreshSuggestions": "Refresh suggestions",
     "disableNearby": "Disable nearby",
-    "refreshNearby": "Refresh nearby"
+    "refreshNearby": "Refresh nearby",
+    "searchFailed": "Could not search users. Please try again.",
+    "locationPermissionDenied": "Location permission denied.",
+    "locationServicesDisabled": "Location services are disabled."
   },
   "onboarding": {
     "welcome": "Welcome to LexiLingo!",
@@ -1551,7 +1591,10 @@
     "suggestedCoursesLabel": "Courses for you",
     "modeFree": "Chat",
     "modeTopics": "Topics",
-    "voiceSpeed": "Voice speed"
+    "voiceSpeed": "Voice speed",
+    "historyUnavailable": "Session history is temporarily unavailable. You can continue chatting.",
+    "offlineQueued": "You are offline. Your message will be sent when you reconnect.",
+    "voiceProcessingFailed": "Voice processing failed. Please try again."
   },
   "youtube": {
     "subtitles": "Subtitles",
@@ -1897,7 +1940,11 @@
     "tagCrawl": "Collected",
     "tagSociety": "Society",
     "tagSeed": "Seed",
-    "tagHistory": "History"
+    "tagHistory": "History",
+    "removeFromDeckFailed": "Failed to remove from deck",
+    "alreadyInVocabulary": "\"{}\" is already in your vocabulary.",
+    "savedNewWord": "Saved new word \"{}\" to your vocabulary.",
+    "savedWord": "Saved \"{}\" to your vocabulary."
   },
   "legal": {
     "privacy_title": "Privacy Policy",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "We're having trouble connecting. Please try again."
   },
   "dailyChallenges": {
-    "rewardClaimed": "Reward claimed successfully!"
+    "rewardClaimed": "Reward claimed successfully!",
+    "rewardAlreadyClaimed": "This reward has already been claimed.",
+    "challengeNotCompleted": "Complete the challenge first to claim the reward."
   },
   "contentActivity": {
     "summary": "Last {days} days: {minutes} min, {sessions} activities, {xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "Listening",
     "skillReading": "Reading",
     "skillWriting": "Writing",
-    "skillSpeaking": "Speaking"
+    "skillSpeaking": "Speaking",
+    "audioUnavailable": "Audio unavailable.",
+    "nothingTranscribed": "Nothing was transcribed. Try again.",
+    "transcribeFailed": "Could not transcribe the recording.",
+    "micPermissionRequired": "Microphone permission is required."
   }
 }
