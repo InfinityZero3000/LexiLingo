@@ -62,6 +62,9 @@ updates:
       # scipy 1.18+ requires Python 3.12; CI runs Python 3.11 (see requirements.txt).
       - dependency-name: "scipy"
         versions: [">=1.18.0"]
+      # networkx 3.7+ requires Python 3.12; the prod image is 3.11.
+      - dependency-name: "networkx"
+        versions: [">=3.7.0"]
       # Multi-GB wheels that take 15-30 min to build on the prod VPS; bump on purpose.
       - dependency-name: "torch"
       - dependency-name: "llama-cpp-python"
