@@ -17,14 +17,16 @@ def test_nearest_rank_percentiles():
     assert e2e.nearest_rank(values, 0.99) == 99
 
 
-def test_preflight_requires_exactly_seven_unique_keys():
+def test_preflight_accepts_any_number_of_unique_keys():
     env = e2e.required_config({
-        "GROQ_API_KEYS": ",".join(f"key-{i}" for i in range(7)),
+        "GROQ_API_KEYS": ",".join(f"key-{i}" for i in range(34)),
         "SECRET_KEY": "s" * 32,
     })
-    assert env["configured_key_count"] == 7
-    with pytest.raises(ValueError, match="exactly seven"):
-        e2e.required_config({"GROQ_API_KEYS": "a,b", "SECRET_KEY": "s" * 32})
+    assert env["configured_key_count"] == 34
+    with pytest.raises(ValueError, match="at least one key"):
+        e2e.required_config({"GROQ_API_KEYS": "a,a", "SECRET_KEY": "s" * 32})
+    with pytest.raises(ValueError, match="at least one key"):
+        e2e.required_config({"GROQ_API_KEYS": "", "SECRET_KEY": "s" * 32})
 
 
 def test_access_token_has_backend_contract():
