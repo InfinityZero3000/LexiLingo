@@ -160,16 +160,14 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       title: 'storySelection.emptyTitle'.tr(),
       body: 'storySelection.emptyBody'.tr(),
       actions: [
-        FilledButton.icon(
+        FilledButton(
           onPressed: _load,
-          icon: const Icon(Icons.refresh_rounded),
-          label: Text('storySelection.retry'.tr()),
+          child: Text('storySelection.retry'.tr()),
         ),
         if (widget.onOpenFreeChat != null)
-          OutlinedButton.icon(
+          OutlinedButton(
             onPressed: widget.onOpenFreeChat,
-            icon: const Icon(Icons.chat_bubble_outline_rounded),
-            label: Text('storySelection.openFreeChat'.tr()),
+            child: Text('storySelection.openFreeChat'.tr()),
           ),
       ],
     );
@@ -394,10 +392,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       title: 'storySelection.noTopicsFound'.tr(),
       body: 'storySelection.noMatchBody'.tr(),
       actions: [
-        TextButton.icon(
+        TextButton(
           onPressed: _clearFilters,
-          icon: const Icon(Icons.filter_alt_off_rounded),
-          label: Text('storySelection.clearFilters'.tr()),
+          child: Text('storySelection.clearFilters'.tr()),
         ),
       ],
     );

@@ -175,7 +175,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
           child: SizedBox(
             width: double.infinity,
-            child: FilledButton.icon(
+            child: FilledButton(
               onPressed: provider.answers.length == quiz.totalQuestions
                   ? () {
                       // submitQuiz awards the XP, proportional to the score and
@@ -185,8 +185,6 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                       provider.submitQuiz();
                     }
                   : null,
-              icon: const Icon(Icons.check_circle_rounded, size: 20),
-              label: Text('newsQuiz.submitAnswers'.tr()),
               style: FilledButton.styleFrom(
                 backgroundColor: cefrColor,
                 disabledBackgroundColor: cefrColor.withValues(alpha: 0.3),
@@ -199,6 +197,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                   fontWeight: FontWeight.w700,
                 ),
               ),
+              child: Text('newsQuiz.submitAnswers'.tr()),
             ),
           ),
         ),
@@ -531,7 +530,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: OutlinedButton(
                   onPressed: () {
                     provider.resetQuiz();
                     provider.loadQuiz(
@@ -539,8 +538,6 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                       article: widget.article,
                     );
                   },
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: Text('newsQuiz.retry'.tr()),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: cefrColor,
                     side: BorderSide(color: cefrColor),
@@ -549,17 +546,16 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
+                  child: Text('newsQuiz.retry'.tr()),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton.icon(
+                child: FilledButton(
                   onPressed: () {
                     provider.resetQuiz();
                     Navigator.pop(context);
                   },
-                  icon: const Icon(Icons.done_all_rounded, size: 18),
-                  label: Text('newsQuiz.done'.tr()),
                   style: FilledButton.styleFrom(
                     backgroundColor: cefrColor,
                     shape: RoundedRectangleBorder(
@@ -567,6 +563,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
+                  child: Text('newsQuiz.done'.tr()),
                 ),
               ),
             ],

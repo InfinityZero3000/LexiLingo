@@ -294,10 +294,9 @@ class _CacheCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: OutlinedButton(
                   onPressed: isMutating ? null : onClearExpired,
-                  icon: const Icon(Icons.cleaning_services_rounded),
-                  label: Text('offlineSync.clearExpired'.tr()),
+                  child: Text('offlineSync.clearExpired'.tr()),
                 ),
               ),
               const SizedBox(width: 10),
@@ -567,10 +566,9 @@ class _ErrorState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            FilledButton.icon(
+            FilledButton(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text('common.retry'.tr()),
+              child: Text('common.retry'.tr()),
             ),
           ],
         ),

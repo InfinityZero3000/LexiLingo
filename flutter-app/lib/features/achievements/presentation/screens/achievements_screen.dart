@@ -67,20 +67,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             }
 
             if (provider.error != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-                    const SizedBox(height: 16),
-                    Text(provider.error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: _loadData,
-                      child: Text('common.retry'.tr()),
-                    ),
-                  ],
-                ),
+              return EmptyStateWidget(
+                title: 'notifications.somethingWentWrong'.tr(),
+                description: provider.error!,
+                actionLabel: 'common.retry'.tr(),
+                onAction: _loadData,
               );
             }
 

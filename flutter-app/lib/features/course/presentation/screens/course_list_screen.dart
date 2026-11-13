@@ -1567,13 +1567,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                         ),
                         const Spacer(),
                         if (_hasAnyFilter)
-                          TextButton.icon(
+                          TextButton(
                             onPressed: _clearAll,
-                            icon: const Icon(Icons.clear_all, size: 18),
-                            label: Text('common.clear'.tr()),
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.red[400],
                             ),
+                            child: Text('common.clear'.tr()),
                           ),
                       ],
                     ),
@@ -1590,11 +1589,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   children: [
                     // ── Language ──────────────────────────────────────
-                    _SectionHeader(
-                      icon: Icons.language,
-                      color: primaryAccent,
-                      label: 'common.language'.tr(),
-                    ),
+                    _SectionHeader(label: 'common.language'.tr()),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -1645,11 +1640,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     const SizedBox(height: 24),
 
                     // ── Level ─────────────────────────────────────────
-                    _SectionHeader(
-                      icon: Icons.signal_cellular_alt,
-                      color: AppColors.purple,
-                      label: 'common.level'.tr(),
-                    ),
+                    _SectionHeader(label: 'common.level'.tr()),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -1669,11 +1660,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     // ── Category ──────────────────────────────────────
                     if (categories.isNotEmpty) ...[
                       const SizedBox(height: 24),
-                      _SectionHeader(
-                        icon: Icons.category_outlined,
-                        color: AppColors.teal,
-                        label: 'topics.category'.tr(),
-                      ),
+                      _SectionHeader(label: 'topics.category'.tr()),
                       const SizedBox(height: 12),
                       Wrap(
                         spacing: 8,
@@ -1707,11 +1694,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     const SizedBox(height: 24),
 
                     // ── Enrolled ──────────────────────────────────────
-                    _SectionHeader(
-                      icon: Icons.bookmark_outline,
-                      color: Colors.amber[700]!,
-                      label: 'course.myEnrollments'.tr(),
-                    ),
+                    _SectionHeader(label: 'course.myEnrollments'.tr()),
                     const SizedBox(height: 12),
                     GestureDetector(
                       onTap: () =>
@@ -1773,11 +1756,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     const SizedBox(height: 24),
 
                     // ── Sort By ───────────────────────────────────────
-                    _SectionHeader(
-                      icon: Icons.sort,
-                      color: AppColors.primary,
-                      label: 'course.sortBy'.tr(),
-                    ),
+                    _SectionHeader(label: 'course.sortBy'.tr()),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -1865,34 +1844,15 @@ class _FilterSheetState extends State<_FilterSheet> {
 
 /// Compact section header row used inside _FilterSheet
 class _SectionHeader extends StatelessWidget {
-  final IconData icon;
-  final Color color;
   final String label;
 
-  const _SectionHeader({
-    required this.icon,
-    required this.color,
-    required this.label,
-  });
+  const _SectionHeader({required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Icon(icon, size: 16, color: color),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-        ),
-      ],
+    return Text(
+      label,
+      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
     );
   }
 }

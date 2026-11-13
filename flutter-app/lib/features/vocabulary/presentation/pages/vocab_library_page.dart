@@ -29,33 +29,33 @@ class VocabLibraryPage extends StatefulWidget {
 class _VocabLibraryPageState extends State<VocabLibraryPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  static const Map<String, _TagMeta> _tagMeta = {
-    'general':    _TagMeta(labelKey: 'vocabulary.topicGeneral',  icon: Icons.hearing_rounded),
-    'travel':     _TagMeta(labelKey: 'vocabulary.topicTravel',    icon: Icons.flight),
-    'business':   _TagMeta(labelKey: 'vocabulary.topicBusiness', icon: Icons.work),
-    'daily':      _TagMeta(labelKey: 'vocabulary.topicDailyLife',  icon: Icons.coffee),
-    'science':    _TagMeta(labelKey: 'vocabulary.topicScience',   icon: Icons.science_rounded),
-    'technology': _TagMeta(labelKey: 'vocabulary.topicTechnology',  icon: Icons.devices_rounded),
-    'ielts':      _TagMeta(labelKey: 'vocabulary.tagIelts',       icon: Icons.school_rounded),
-    'academic':   _TagMeta(labelKey: 'vocabulary.tagAcademic',  icon: Icons.menu_book_rounded),
-    'health':     _TagMeta(labelKey: 'vocabulary.tagHealth',   icon: Icons.health_and_safety_rounded),
-    'food':       _TagMeta(labelKey: 'vocabulary.tagFood',    icon: Icons.restaurant_rounded),
-    'sports':     _TagMeta(labelKey: 'vocabulary.tagSports',   icon: Icons.sports_rounded),
-    'daily_life': _TagMeta(labelKey: 'vocabulary.topicDailyLife',  icon: Icons.coffee_rounded),
-    'government': _TagMeta(labelKey: 'vocabulary.tagGovernment',  icon: Icons.gavel_rounded),
-    'economics':  _TagMeta(labelKey: 'vocabulary.tagEconomics',    icon: Icons.monetization_on_rounded),
-    'education':  _TagMeta(labelKey: 'vocabulary.tagEducation',   icon: Icons.school_rounded),
-    'lesson':     _TagMeta(labelKey: 'vocabulary.tagLesson',    icon: Icons.import_contacts_rounded),
-    'philosophy': _TagMeta(labelKey: 'vocabulary.tagPhilosophy',  icon: Icons.psychology_rounded),
-    'basic_200':  _TagMeta(labelKey: 'vocabulary.tagBasic200',  icon: Icons.star_outline_rounded),
-    'nature':     _TagMeta(labelKey: 'vocabulary.tagNature',   icon: Icons.nature_people_rounded),
-    'core-vocab': _TagMeta(labelKey: 'vocabulary.tagCore',    icon: Icons.grade_rounded),
-    'auto':       _TagMeta(labelKey: 'vocabulary.tagAuto', icon: Icons.bolt_rounded),
-    'crawl':      _TagMeta(labelKey: 'vocabulary.tagCrawl',    icon: Icons.download_rounded),
-    'society':    _TagMeta(labelKey: 'vocabulary.tagSociety',     icon: Icons.people_rounded),
-    'seed':       _TagMeta(labelKey: 'vocabulary.tagSeed',        icon: Icons.spa_rounded),
-    'history':    _TagMeta(labelKey: 'vocabulary.tagHistory',    icon: Icons.history_edu_rounded),
+  static const Map<String, String> _tagLabelKeys = {
+    'general': 'vocabulary.topicGeneral',
+    'travel': 'vocabulary.topicTravel',
+    'business': 'vocabulary.topicBusiness',
+    'daily': 'vocabulary.topicDailyLife',
+    'science': 'vocabulary.topicScience',
+    'technology': 'vocabulary.topicTechnology',
+    'ielts': 'vocabulary.tagIelts',
+    'academic': 'vocabulary.tagAcademic',
+    'health': 'vocabulary.tagHealth',
+    'food': 'vocabulary.tagFood',
+    'sports': 'vocabulary.tagSports',
+    'daily_life': 'vocabulary.topicDailyLife',
+    'government': 'vocabulary.tagGovernment',
+    'economics': 'vocabulary.tagEconomics',
+    'education': 'vocabulary.tagEducation',
+    'lesson': 'vocabulary.tagLesson',
+    'philosophy': 'vocabulary.tagPhilosophy',
+    'basic_200': 'vocabulary.tagBasic200',
+    'nature': 'vocabulary.tagNature',
+    'core-vocab': 'vocabulary.tagCore',
+    'society': 'vocabulary.tagSociety',
+    'history': 'vocabulary.tagHistory',
   };
+
+  // Pipeline bookkeeping tags, not topics a learner would filter by.
+  static const Set<String> _internalTags = {'auto', 'crawl', 'seed'};
 
   @override
   Widget build(BuildContext context) {
@@ -809,7 +809,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   child: Icon(
                     topic.icon,
                     size: 90,
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: Colors.white.withValues(alpha: 0.16),
                   ),
                 ),
               ),
@@ -818,18 +818,6 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        topic.icon,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
                     const Spacer(),
                     Text(
                       topic.titleKey.tr(),
@@ -953,14 +941,14 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             selectedTag == null,
             onTap: () => vocabProvider.setTagFilter(null),
           ),
-          ...availableTags.map((tag) {
-            final meta = _tagMeta[tag];
+          ...availableTags.where((tag) => !_internalTags.contains(tag)).map((
+            tag,
+          ) {
             return Padding(
               padding: const EdgeInsets.only(left: 8),
               child: _buildFilterChip(
                 _tagLabel(tag),
                 selectedTag == tag,
-                icon: meta?.icon,
                 onTap: () => vocabProvider.setTagFilter(
                   selectedTag == tag ? null : tag,
                 ),
@@ -973,8 +961,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   }
 
   String _tagLabel(String tag) {
-    final meta = _tagMeta[tag];
-    return meta == null ? _capitalizeTag(tag) : meta.labelKey.tr();
+    final key = _tagLabelKeys[tag];
+    return key == null ? _capitalizeTag(tag) : key.tr();
   }
 
   String _capitalizeTag(String tag) =>
@@ -983,7 +971,6 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   Widget _buildFilterChip(
     String label,
     bool isSelected, {
-    IconData? icon,
     VoidCallback? onTap,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -991,38 +978,22 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: EdgeInsets.symmetric(
-          horizontal: icon != null ? 10 : 14,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary
               : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.grey100),
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 14,
-                color: isSelected ? Colors.white : AppColors.textGrey,
-              ),
-              const SizedBox(width: 5),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? Colors.white
-                    : (isDark ? Colors.white70 : AppColors.textDark),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 12,
-              ),
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white70 : AppColors.textDark),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 12,
+          ),
         ),
       ),
     );
@@ -1503,12 +1474,6 @@ class _InfoChip extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TagMeta {
-  final String labelKey;
-  final IconData icon;
-  const _TagMeta({required this.labelKey, required this.icon});
 }
 
 class _TopicConfig {

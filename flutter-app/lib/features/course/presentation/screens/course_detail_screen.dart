@@ -203,9 +203,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           // View Full Roadmap Button
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.account_tree_outlined),
-                              label: Text('course.viewFullRoadmap'.tr()),
+                            child: OutlinedButton(
+                              child: Text('course.viewFullRoadmap'.tr()),
                               onPressed: () {
                                 Navigator.push(
                                   context,

@@ -609,10 +609,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         children: [
           // Skip — always visible, outlined pill
           Expanded(
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed: () => provider.skipExercise(),
-              icon: const Icon(Icons.skip_next_rounded, size: 18),
-              label: Text('common.skip'.tr()),
               style: OutlinedButton.styleFrom(
                 foregroundColor: primaryColor,
                 side: BorderSide(color: primaryColor, width: 1.5),
@@ -621,6 +619,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
+              child: Text('common.skip'.tr()),
             ),
           ),
           const SizedBox(width: 12),

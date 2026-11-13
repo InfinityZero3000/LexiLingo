@@ -58,13 +58,12 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton.icon(
+                    ElevatedButton(
                       onPressed: () {
                         progressProvider.fetchMyProgress();
                         context.read<HomeProvider>().loadWeeklyProgress();
                       },
-                      icon: const Icon(Icons.refresh),
-                      label: Text('common.retry'.tr()),
+                      child: Text('common.retry'.tr()),
                     ),
                   ],
                 ),

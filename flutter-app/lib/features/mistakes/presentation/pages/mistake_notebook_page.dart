@@ -524,10 +524,9 @@ class _MistakeCard extends StatelessWidget {
                   child: Text('mistakeNotebook.reopen'.tr()),
                 ),
               ] else
-                OutlinedButton.icon(
+                OutlinedButton(
                   onPressed: onMarkReviewed,
-                  icon: const Icon(Icons.done_rounded, size: 18),
-                  label: Text('mistakeNotebook.markReviewed'.tr()),
+                  child: Text('mistakeNotebook.markReviewed'.tr()),
                 ),
               const Spacer(),
               IconButton(

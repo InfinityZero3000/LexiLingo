@@ -859,10 +859,9 @@ class _ErrorView extends StatelessWidget {
               style: TextStyle(color: AppColors.grey600),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text('common.retry'.tr()),
+              child: Text('common.retry'.tr()),
             ),
             const SizedBox(height: 8),
             // Without the roadmap header there is no other way out of here.

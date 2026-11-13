@@ -561,12 +561,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           child: Opacity(opacity: opacity, child: child),
         );
       },
-      child: FilledButton.icon(
+      child: FilledButton(
         onPressed: () {
           Navigator.pushNamed(context, '/news/quiz', arguments: widget.article);
         },
-        icon: const Icon(Icons.quiz_rounded, size: 20),
-        label: Text('news.takeQuiz'.tr()),
         style: FilledButton.styleFrom(
           backgroundColor: cefrColor,
           foregroundColor: Colors.white,
@@ -576,6 +574,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           ),
           textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
         ),
+        child: Text('news.takeQuiz'.tr()),
       ),
     );
   }
@@ -710,10 +709,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: FilledButton.icon(
+                child: FilledButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                  label: Text('news.closeButton'.tr()),
                   style: FilledButton.styleFrom(
                     backgroundColor: cefrColor,
                     shape: RoundedRectangleBorder(
@@ -721,6 +718,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
+                  child: Text('news.closeButton'.tr()),
                 ),
               ),
             ],
