@@ -184,7 +184,6 @@
     "navDiscovery": "Explorer",
     "navLearning": "Apprendre",
     "navLexi": "Lexi",
-    "navTopic": "Sujets",
     "navAccount": "Compte",
     "streak": "Série : {count} jours",
     "continueLesson": "Continuer l'apprentissage",
@@ -287,7 +286,20 @@
     "recReasonGap": "Vous ne maîtrisez pas encore ceci",
     "recReasonLevel": "Adapté à votre niveau {level}",
     "recReasonSimilar": "Proche de ce que vous apprenez",
-    "recReasonDefault": "Suggéré pour vous"
+    "recReasonDefault": "Suggéré pour vous",
+    "nextUp": "À suivre",
+    "discover": "Découvrir",
+    "openProfile": "Ouvrir le profil",
+    "activeBoostsChip": "{count} boosts actifs",
+    "streakKeepAlive": "Apprenez aujourd’hui pour garder votre série",
+    "streakSemantics": "Série de {count} jours, {active} jours actifs cette semaine. Ouvrir le calendrier",
+    "dailyGoalSemantics": "Objectif du jour : {earned} sur {goal} XP, {percent} %. Modifier l’objectif",
+    "notificationsSemantics": "Notifications, {count} non lues",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "Pratique"
   },
   "course": {
     "title": "Cours",
@@ -457,7 +469,17 @@
     "easyDifficulty": "Facile",
     "perfectDifficulty": "Parfait!",
     "blackout": "Panne d'électricité (0)",
-    "perfectFive": "Parfait (5)"
+    "perfectFive": "Parfait (5)",
+    "nothingDueTitle": "Vous êtes à jour !",
+    "nothingDueBody": "Aucun mot à réviser pour le moment. Revenez plus tard ou ajoutez de nouveaux mots à votre collection.",
+    "nothingDueAction": "Retour",
+    "loadFailed": "Impossible de charger votre vocabulaire. Veuillez réessayer.",
+    "unexpectedError": "Une erreur s’est produite. Veuillez réessayer.",
+    "noVocabularyForTopic": "Aucun mot trouvé pour « {topic} ».",
+    "noVocabularyInDeck": "Cette collection ne contient pas encore de mots.",
+    "prepareFailed": "Impossible de préparer les cartes d’étude.",
+    "submitFailed": "Impossible d’enregistrer votre révision. Veuillez réessayer.",
+    "quizNotEnough": "Pas encore assez de mots pour créer un quiz."
   },
   "voice": {
     "practiceTitle": "Pratique vocale",
@@ -1239,8 +1261,13 @@
     "filterIntermediate": "Intermédiaire",
     "filterAdvanced": "Avancé",
     "popularScenariosTitle": "Scénarios populaires",
-    "seeAllLink": "Voir tout",
-    "noTopicsFound": "Aucun sujet trouvé"
+    "noTopicsFound": "Aucun sujet trouvé",
+    "emptyTitle": "Aucun sujet pour l'instant",
+    "emptyBody": "Impossible de charger les sujets de conversation. Réessayez ou discutez librement avec Lexi en attendant.",
+    "retry": "Réessayer",
+    "openFreeChat": "Discuter avec Lexi",
+    "noMatchBody": "Aucun sujet ne correspond à votre recherche ou au filtre de niveau.",
+    "clearFilters": "Effacer les filtres"
   },
   "topicChat": {
     "preparingTopicMessage": "Préparation de votre sujet...",
@@ -1385,7 +1412,10 @@
     "conceptCollocation": "Collocation",
     "conceptPhonology": "Prononciation",
     "conceptSkill": "Compétence",
-    "suggestedCoursesLabel": "Cours pour vous"
+    "suggestedCoursesLabel": "Cours pour vous",
+    "modeFree": "Discussion",
+    "modeTopics": "Sujets",
+    "voiceSpeed": "Vitesse de la voix"
   },
   "youtube": {
     "subtitles": "Sous-titres",
@@ -1871,7 +1901,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "Terminez quelques exercices et vos compétences à travailler apparaîtront ici."
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",

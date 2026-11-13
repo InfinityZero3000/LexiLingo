@@ -184,7 +184,6 @@
     "navDiscovery": "探索",
     "navLearning": "学習",
     "navLexi": "レクシー",
-    "navTopic": "トピック",
     "navAccount": "アカウント",
     "streak": "連続: {count}日",
     "continueLesson": "学習を続ける",
@@ -287,7 +286,20 @@
     "recReasonGap": "まだ習得できていません",
     "recReasonLevel": "{level}レベルにぴったり",
     "recReasonSimilar": "学習中の内容に近いです",
-    "recReasonDefault": "あなたへのおすすめ"
+    "recReasonDefault": "あなたへのおすすめ",
+    "nextUp": "次に学ぶ",
+    "discover": "見つける",
+    "openProfile": "プロフィールを開く",
+    "activeBoostsChip": "ブースト{count}件有効",
+    "streakKeepAlive": "今日学んで連続記録を守ろう",
+    "streakSemantics": "{count}日連続、今週は{active}日学習。カレンダーを開く",
+    "dailyGoalSemantics": "今日の目標：{goal} XP中{earned} XP（{percent}%）。目標を変更",
+    "notificationsSemantics": "通知、未読{count}件",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "練習"
   },
   "course": {
     "title": "コース",
@@ -457,7 +469,17 @@
     "easyDifficulty": "簡単",
     "perfectDifficulty": "完璧！",
     "blackout": "ブラックアウト (0)",
-    "perfectFive": "パーフェクト (5)"
+    "perfectFive": "パーフェクト (5)",
+    "nothingDueTitle": "復習はすべて完了です！",
+    "nothingDueBody": "今は復習する単語がありません。あとでまた来るか、新しい単語をコレクションに追加しましょう。",
+    "nothingDueAction": "戻る",
+    "loadFailed": "単語を読み込めませんでした。もう一度お試しください。",
+    "unexpectedError": "問題が発生しました。もう一度お試しください。",
+    "noVocabularyForTopic": "「{topic}」の単語が見つかりません。",
+    "noVocabularyInDeck": "このコレクションにはまだ単語がありません。",
+    "prepareFailed": "学習用カードを準備できませんでした。",
+    "submitFailed": "復習結果を保存できませんでした。もう一度お試しください。",
+    "quizNotEnough": "クイズを作るにはまだ単語が足りません。"
   },
   "voice": {
     "practiceTitle": "発声練習",
@@ -1239,8 +1261,13 @@
     "filterIntermediate": "中級",
     "filterAdvanced": "高度な",
     "popularScenariosTitle": "人気のシナリオ",
-    "seeAllLink": "全て見る",
-    "noTopicsFound": "トピックが見つかりませんでした"
+    "noTopicsFound": "トピックが見つかりませんでした",
+    "emptyTitle": "まだトピックがありません",
+    "emptyBody": "会話のトピックを読み込めませんでした。もう一度試すか、その間にレクシーと自由に会話しましょう。",
+    "retry": "再試行",
+    "openFreeChat": "レクシーと話す",
+    "noMatchBody": "検索やレベルの条件に一致するトピックがありません。",
+    "clearFilters": "絞り込みを解除"
   },
   "topicChat": {
     "preparingTopicMessage": "トピックを準備しています...",
@@ -1385,7 +1412,10 @@
     "conceptCollocation": "コロケーション",
     "conceptPhonology": "発音",
     "conceptSkill": "スキル",
-    "suggestedCoursesLabel": "あなたにおすすめのコース"
+    "suggestedCoursesLabel": "あなたにおすすめのコース",
+    "modeFree": "チャット",
+    "modeTopics": "トピック",
+    "voiceSpeed": "音声の速さ"
   },
   "youtube": {
     "subtitles": "字幕",
@@ -1871,7 +1901,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "いくつか練習問題を終えると、重点スキルがここに表示されます。"
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
@@ -30,6 +31,7 @@ class FlashcardProvider extends ChangeNotifier {
   ReviewSessionEntity? _currentSession;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _nothingDue = false;
   bool _isCardFlipped = false;
   DateTime? _cardStartTime;
 
@@ -42,6 +44,7 @@ class FlashcardProvider extends ChangeNotifier {
   ReviewSessionEntity? get currentSession => _currentSession;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get nothingDue => _nothingDue;
   bool get isCardFlipped => _isCardFlipped;
   bool get hasSession => _currentSession != null;
   bool get isLoadingMore => _isLoadingMore;
@@ -110,6 +113,7 @@ class FlashcardProvider extends ChangeNotifier {
     _resetLazyState();
     _isLoading = true;
     _errorMessage = null;
+    _nothingDue = false;
     notifyListeners();
 
     try {
@@ -125,7 +129,7 @@ class FlashcardProvider extends ChangeNotifier {
         },
         (dueVocabularyList) async {
           if (dueVocabularyList.isEmpty) {
-            _errorMessage = 'No vocabulary due for review!';
+            _nothingDue = true;
             _isLoading = false;
             notifyListeners();
             return;
@@ -140,7 +144,7 @@ class FlashcardProvider extends ChangeNotifier {
           _loadedVocabCount = firstBatch.length;
 
           if (cards.isEmpty) {
-            _errorMessage = 'Failed to load vocabulary items';
+            _errorMessage = 'flashcard.loadFailed'.tr();
             _isLoading = false;
             notifyListeners();
             return;
@@ -158,7 +162,8 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      debugPrint('Unexpected vocabulary error: $e');
+      _errorMessage = 'flashcard.unexpectedError'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -186,7 +191,9 @@ class FlashcardProvider extends ChangeNotifier {
         },
         (vocabItems) async {
           if (vocabItems.isEmpty) {
-            _errorMessage = 'No vocabulary found for topic: $tag';
+            _errorMessage = 'flashcard.noVocabularyForTopic'.tr(
+              namedArgs: {'topic': tag},
+            );
             _isLoading = false;
             notifyListeners();
             return;
@@ -232,8 +239,7 @@ class FlashcardProvider extends ChangeNotifier {
               final cards = results.whereType<ReviewCardEntity>().toList();
 
               if (cards.isEmpty) {
-                _errorMessage =
-                    'Failed to prepare vocabulary cards for study.';
+                _errorMessage = 'flashcard.prepareFailed'.tr();
                 _isLoading = false;
                 notifyListeners();
                 return;
@@ -254,7 +260,8 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      debugPrint('Unexpected vocabulary error: $e');
+      _errorMessage = 'flashcard.unexpectedError'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -282,7 +289,7 @@ class FlashcardProvider extends ChangeNotifier {
         },
         (deckItems) async {
           if (deckItems.isEmpty) {
-            _errorMessage = 'No vocabulary found in this deck!';
+            _errorMessage = 'flashcard.noVocabularyInDeck'.tr();
             _isLoading = false;
             notifyListeners();
             return;
@@ -296,7 +303,7 @@ class FlashcardProvider extends ChangeNotifier {
           _loadedVocabCount = firstBatch.length;
 
           if (cards.isEmpty) {
-            _errorMessage = 'Failed to load vocabulary items';
+            _errorMessage = 'flashcard.loadFailed'.tr();
             _isLoading = false;
             notifyListeners();
             return;
@@ -315,7 +322,8 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      debugPrint('Unexpected vocabulary error: $e');
+      _errorMessage = 'flashcard.unexpectedError'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -398,7 +406,8 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Failed to submit review: $e';
+      debugPrint('Failed to submit review: $e');
+      _errorMessage = 'flashcard.submitFailed'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -421,7 +430,7 @@ class FlashcardProvider extends ChangeNotifier {
   }
 
   String _getFailureMessage(failure) {
-    return failure.message ?? 'An error occurred';
+    return failure.message ?? 'flashcard.unexpectedError'.tr();
   }
 
   @override

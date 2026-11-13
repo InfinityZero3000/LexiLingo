@@ -1,212 +1,9 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
-import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_data.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_models.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_navigation.dart';
-import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
-import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 
-class TodayPlanSection extends StatefulWidget {
-  const TodayPlanSection({super.key});
-
-  @override
-  State<TodayPlanSection> createState() => _TodayPlanSectionState();
-}
-
-class _TodayPlanSectionState extends State<TodayPlanSection> {
-  int? _dueVocabularyCount;
-  bool _isLoadingVocabulary = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVocabularyStats();
-  }
-
-  Future<void> _loadVocabularyStats() async {
-    final count = await fetchDueVocabularyCount();
-    if (!mounted) return;
-
-    setState(() {
-      _dueVocabularyCount = count;
-      _isLoadingVocabulary = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final colorScheme = theme.colorScheme;
-    final accent = AppColorRoles.primary(isDark);
-    final tactile =
-        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
-
-    return Consumer3<
-      HomeProvider,
-      DailyChallengesProvider,
-      ProficiencyProvider
-    >(
-      builder: (context, home, challenges, proficiency, _) {
-        final snapshot = buildTodayPlanSnapshot(
-          enrolledCourses: home.enrolledCourses,
-          challenges: challenges.challenges,
-          weakestSkills: proficiency.weakestSkills,
-          dueVocabularyCount: _isLoadingVocabulary ? null : _dueVocabularyCount,
-        );
-        final visibleTasks = snapshot.visibleTasks();
-
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () {
-                trackProductEvent('card_tapped', source: 'today_plan');
-                Navigator.of(context).pushNamed('/today-plan');
-              },
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: tactile.decoration(
-                  variant: TactileSurfaceVariant.interactive,
-                  fill: isDark
-                      ? colorScheme.surfaceContainerHighest
-                      : Colors.white,
-                  accent: accent,
-                  borderRadius: BorderRadius.circular(20),
-                  diagnosticId: 'home-today-plan',
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.route_rounded,
-                            color: accent,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'home.todayPlan.title'.tr(),
-                                style: Theme.of(context).textTheme.titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w800),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'home.todayPlan.subtitle'.tr(),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: AppColorRoles.textMuted(isDark),
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        _PlanProgressPill(snapshot: snapshot, color: accent),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        minHeight: 7,
-                        value: snapshot.progress,
-                        backgroundColor: accent.withValues(alpha: 0.14),
-                        valueColor: AlwaysStoppedAnimation<Color>(accent),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...visibleTasks.map(
-                      (task) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: _TodayPlanTaskTile(
-                          task: task,
-                          dense: true,
-                          onTap: () => openTodayPlanTask(context, task),
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'home.todayPlan.footer'.tr(),
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppColorRoles.textMuted(isDark),
-                                ),
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            trackProductEvent(
-                              'view_plan_tapped',
-                              source: 'today_plan',
-                            );
-                            Navigator.of(context).pushNamed('/today-plan');
-                          },
-                          child: Text('home.todayPlan.viewAll'.tr()),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _PlanProgressPill extends StatelessWidget {
-  const _PlanProgressPill({required this.snapshot, required this.color});
-
-  final TodayPlanSnapshot snapshot;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        '${snapshot.completedCount}/${snapshot.totalCount}',
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w800,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
+/// Full task tile for the Today's Plan page. Home shows tasks inside the
+/// "Up next" hero instead (see next_up_hero.dart).
 class TodayPlanTaskTile extends StatelessWidget {
   const TodayPlanTaskTile({super.key, required this.task, required this.onTap});
 
@@ -215,25 +12,9 @@ class TodayPlanTaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _TodayPlanTaskTile(task: task, onTap: onTap);
-  }
-}
-
-class _TodayPlanTaskTile extends StatelessWidget {
-  const _TodayPlanTaskTile({
-    required this.task,
-    required this.onTap,
-    this.dense = false,
-  });
-
-  final TodayPlanTask task;
-  final VoidCallback onTap;
-  final bool dense;
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
     final muted = AppColorRoles.textMuted(isDark);
 
     return Material(
@@ -242,7 +23,7 @@ class _TodayPlanTaskTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Container(
-          padding: EdgeInsets.all(dense ? 10 : 14),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: task.isCompleted
                 ? task.color.withValues(alpha: 0.10)
@@ -257,17 +38,13 @@ class _TodayPlanTaskTile extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                width: dense ? 40 : 48,
-                height: dense ? 40 : 48,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: task.color.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  task.icon,
-                  color: task.color,
-                  size: dense ? 21 : 25,
-                ),
+                child: Icon(task.icon, color: task.color, size: 25),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -278,31 +55,27 @@ class _TodayPlanTaskTile extends StatelessWidget {
                       task.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       task.subtitle,
-                      maxLines: dense ? 1 : 2,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: muted),
+                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
-                    if (!dense) ...[
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(999),
-                        child: LinearProgressIndicator(
-                          minHeight: 5,
-                          value: task.progress,
-                          backgroundColor: task.color.withValues(alpha: 0.12),
-                          valueColor: AlwaysStoppedAnimation<Color>(task.color),
-                        ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        minHeight: 5,
+                        value: task.progress,
+                        backgroundColor: task.color.withValues(alpha: 0.12),
+                        valueColor: AlwaysStoppedAnimation<Color>(task.color),
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -313,9 +86,8 @@ class _TodayPlanTaskTile extends StatelessWidget {
                   if (task.rewardLabel != null)
                     Text(
                       task.rewardLabel!,
-                      style: TextStyle(
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: task.color,
-                        fontSize: 11,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -324,9 +96,8 @@ class _TodayPlanTaskTile extends StatelessWidget {
                       task.metaLabel!,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: theme.textTheme.labelMedium?.copyWith(
                         color: muted,
-                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

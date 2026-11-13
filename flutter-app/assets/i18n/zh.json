@@ -184,7 +184,6 @@
     "navDiscovery": "发现",
     "navLearning": "学习",
     "navLexi": "莱克西",
-    "navTopic": "话题",
     "navAccount": "账户",
     "streak": "连续学习：{count} 天",
     "continueLesson": "继续学习",
@@ -287,7 +286,20 @@
     "recReasonGap": "这部分你还没掌握",
     "recReasonLevel": "适合你的{level}水平",
     "recReasonSimilar": "与你正在学习的内容相近",
-    "recReasonDefault": "为你推荐"
+    "recReasonDefault": "为你推荐",
+    "nextUp": "接下来学习",
+    "discover": "发现",
+    "openProfile": "打开个人资料",
+    "activeBoostsChip": "{count} 个加成生效中",
+    "streakKeepAlive": "今天学习，保住连续天数",
+    "streakSemantics": "连续 {count} 天，本周学习 {active} 天。打开日历",
+    "dailyGoalSemantics": "今日目标：{goal} XP 中的 {earned} XP，{percent}%。修改目标",
+    "notificationsSemantics": "通知，{count} 条未读",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "练习"
   },
   "course": {
     "title": "课程",
@@ -457,7 +469,17 @@
     "easyDifficulty": "简单的",
     "perfectDifficulty": "完美的！",
     "blackout": "停电 (0)",
-    "perfectFive": "完美 (5)"
+    "perfectFive": "完美 (5)",
+    "nothingDueTitle": "已全部复习完！",
+    "nothingDueBody": "目前没有需要复习的单词。稍后再来，或将新单词加入你的收藏。",
+    "nothingDueAction": "返回",
+    "loadFailed": "无法加载你的词汇。请重试。",
+    "unexpectedError": "出了点问题。请重试。",
+    "noVocabularyForTopic": "没有找到“{topic}”相关的单词。",
+    "noVocabularyInDeck": "此收藏中还没有单词。",
+    "prepareFailed": "无法准备学习卡片。",
+    "submitFailed": "无法保存你的复习结果。请重试。",
+    "quizNotEnough": "单词还不够，暂时无法生成测验。"
   },
   "voice": {
     "practiceTitle": "发声练习",
@@ -1239,8 +1261,13 @@
     "filterIntermediate": "中间的",
     "filterAdvanced": "先进的",
     "popularScenariosTitle": "热门场景",
-    "seeAllLink": "查看全部",
-    "noTopicsFound": "没有找到主题"
+    "noTopicsFound": "没有找到主题",
+    "emptyTitle": "还没有话题",
+    "emptyBody": "无法加载对话话题。请重试，或先与莱克西自由聊天。",
+    "retry": "重试",
+    "openFreeChat": "与莱克西聊天",
+    "noMatchBody": "没有符合搜索或级别筛选的话题。",
+    "clearFilters": "清除筛选"
   },
   "topicChat": {
     "preparingTopicMessage": "正在准备您的主题...",
@@ -1385,7 +1412,10 @@
     "conceptCollocation": "搭配",
     "conceptPhonology": "发音",
     "conceptSkill": "技能",
-    "suggestedCoursesLabel": "为你推荐的课程"
+    "suggestedCoursesLabel": "为你推荐的课程",
+    "modeFree": "聊天",
+    "modeTopics": "话题",
+    "voiceSpeed": "语音速度"
   },
   "youtube": {
     "subtitles": "字幕",
@@ -1871,7 +1901,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "完成几道练习后，你的重点技能会显示在这里。"
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",

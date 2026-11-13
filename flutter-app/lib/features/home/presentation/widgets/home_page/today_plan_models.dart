@@ -71,6 +71,23 @@ class TodayPlanSnapshot {
     final done = tasks.where((task) => task.isCompleted);
     return pending.followedBy(done).take(limit).toList();
   }
+
+  TodayPlanTask? taskOfType(TodayPlanTaskType type) {
+    for (final task in tasks) {
+      if (task.type == type) return task;
+    }
+    return null;
+  }
+
+  /// [nextTask] for a surface that already shows [exclude] on its own row,
+  /// so the same task is never listed twice.
+  TodayPlanTask? nextTaskExcluding(TodayPlanTaskType exclude) {
+    final rest = tasks.where((task) => task.type != exclude);
+    for (final task in rest) {
+      if (!task.isCompleted) return task;
+    }
+    return rest.isEmpty ? null : rest.first;
+  }
 }
 
 TodayPlanSnapshot buildTodayPlanSnapshot({

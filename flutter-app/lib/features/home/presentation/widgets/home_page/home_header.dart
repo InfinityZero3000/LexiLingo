@@ -14,7 +14,6 @@ class HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    // Get user display name from AuthProvider
     final user = authProvider.currentUser;
     final displayName = user?.displayName.isNotEmpty == true
         ? user!.displayName
@@ -22,18 +21,15 @@ class HomeHeader extends StatelessWidget {
 
     return Consumer2<NotificationProvider, LevelProvider>(
       builder: (context, notificationProvider, levelProvider, child) {
-        final totalXP = levelProvider.levelStatus.totalXP;
         return PersonalizedGreetingHeader(
           userName: displayName,
-          totalXP: totalXP,
+          totalXP: levelProvider.levelStatus.totalXP,
           avatarUrl: user?.avatarUrl,
           notificationCount: notificationProvider.unreadCount,
           onNotificationTap: () {
             LearnerRoute.push(context, (_) => const NotificationsPage());
           },
-          onAvatarTap: () {
-            // Navigate to profile or settings
-          },
+          onAvatarTap: () => Navigator.of(context).pushNamed('/profile'),
         );
       },
     );

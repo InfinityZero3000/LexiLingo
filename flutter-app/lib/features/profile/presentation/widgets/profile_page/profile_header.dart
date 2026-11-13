@@ -7,15 +7,24 @@ import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_page/social_stats_row.dart';
-import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart' as glass;
+import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
+    as glass;
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
+String formatMemberSinceDate(DateTime createdAt, String locale) =>
+    DateFormat('MMM yyyy', locale).format(createdAt);
+
 String formatMemberSince(BuildContext context, DateTime? createdAt) {
   if (createdAt == null) return 'profile.member'.tr();
   return 'profile.memberSince'.tr(
-    namedArgs: {'date': DateFormat('MMM yyyy').format(createdAt)},
+    namedArgs: {
+      'date': formatMemberSinceDate(
+        createdAt,
+        Localizations.localeOf(context).languageCode,
+      ),
+    },
   );
 }
 
@@ -88,7 +97,7 @@ class ProfileHeader extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -128,30 +137,30 @@ class ProfileHeader extends StatelessWidget {
                             // Progress Ring
                             glass.AnimatedProgressRing(
                               progress: progress,
-                              size: 140,
-                              strokeWidth: 6,
+                              size: 104,
+                              strokeWidth: 5,
                               gradientColors: [
                                 isDark ? accent : AppColors.primary,
                                 isDark ? accent : AppColors.primary,
                                 AppColors.purple,
                               ],
                               child: Container(
-                                width: 120,
-                                height: 120,
+                                width: 88,
+                                height: 88,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Theme.of(context).colorScheme.surface
                                         .withValues(alpha: 0.5),
-                                    width: 3,
+                                    width: 2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
                                       color:
                                           (isDark ? accent : AppColors.primary)
                                               .withValues(alpha: 0.3),
-                                      blurRadius: 20,
-                                      spreadRadius: 5,
+                                      blurRadius: 16,
+                                      spreadRadius: 3,
                                     ),
                                   ],
                                 ),
@@ -159,15 +168,15 @@ class ProfileHeader extends StatelessWidget {
                                   child: NetworkAvatarImage(
                                     imageUrl: user?.avatarUrl,
                                     fit: BoxFit.cover,
-                                    width: 120,
-                                    height: 120,
+                                    width: 88,
+                                    height: 88,
                                     fallback: Container(
                                       color:
                                           (isDark ? accent : AppColors.primary)
                                               .withValues(alpha: 0.2),
                                       child: Icon(
                                         Icons.person,
-                                        size: 60,
+                                        size: 40,
                                         color: isDark
                                             ? accent
                                             : AppColors.primary,
@@ -180,8 +189,8 @@ class ProfileHeader extends StatelessWidget {
                             // Verified Badge
                             if (user?.isVerified == true)
                               Positioned(
-                                bottom: 10,
-                                right: 10,
+                                bottom: 4,
+                                right: 4,
                                 child: Semantics(
                                   label: 'profile.emailVerified'.tr(),
                                   child: Tooltip(
@@ -192,12 +201,8 @@ class ProfileHeader extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
-                                            isDark
-                                                ? accent
-                                                : AppColors.primary,
-                                            isDark
-                                                ? accent
-                                                : AppColors.primary,
+                                            isDark ? accent : AppColors.primary,
+                                            isDark ? accent : AppColors.primary,
                                           ],
                                         ),
                                         shape: BoxShape.circle,
@@ -227,7 +232,7 @@ class ProfileHeader extends StatelessWidget {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 12),
                         // User Name
                         Text(
                           user?.displayName ?? 'profile.guestUser'.tr(),
@@ -262,7 +267,7 @@ class ProfileHeader extends StatelessWidget {
                                 // Numeric Level badge
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                                    horizontal: 12,
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
@@ -274,10 +279,11 @@ class ProfileHeader extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(20),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: (isDark
-                                                ? accent
-                                                : AppColors.primary)
-                                            .withValues(alpha: 0.4),
+                                        color:
+                                            (isDark
+                                                    ? accent
+                                                    : AppColors.primary)
+                                                .withValues(alpha: 0.4),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
@@ -307,72 +313,54 @@ class ProfileHeader extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                                // CEFR Proficiency Badge
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: tierColor(
-                                      context,
-                                      lp.proficiencyLevel,
-                                    ).withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
+                                // CEFR Proficiency Badge. The level name
+                                // moved to a tooltip so the three badges fit
+                                // one row at 375px.
+                                Tooltip(
+                                  message: lp.proficiencyName,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
                                       color: tierColor(
                                         context,
                                         lp.proficiencyLevel,
-                                      ).withValues(alpha: 0.5),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        tierIcon(lp.proficiencyLevel),
-                                        size: 14,
+                                      ).withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
                                         color: tierColor(
                                           context,
                                           lp.proficiencyLevel,
-                                        ),
+                                        ).withValues(alpha: 0.5),
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        lp.proficiencyLevel,
-                                        style: TextStyle(
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          tierIcon(lp.proficiencyLevel),
+                                          size: 14,
                                           color: tierColor(
                                             context,
                                             lp.proficiencyLevel,
                                           ),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
                                         ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '·',
-                                        style: TextStyle(
-                                          color: tierColor(
-                                            context,
-                                            lp.proficiencyLevel,
-                                          ).withValues(alpha: 0.6),
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        lp.proficiencyName,
-                                        style: TextStyle(
-                                          color: tierColor(
-                                            context,
-                                            lp.proficiencyLevel,
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          lp.proficiencyLevel,
+                                          style: TextStyle(
+                                            color: tierColor(
+                                              context,
+                                              lp.proficiencyLevel,
+                                            ),
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
                                           ),
-                                          fontWeight: FontWeight.w500,
-                                          fontSize: 12,
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                                 // League Rank Badge
@@ -380,8 +368,7 @@ class ProfileHeader extends StatelessWidget {
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          const LeaderboardScreen(),
+                                      builder: (_) => const LeaderboardScreen(),
                                     ),
                                   ),
                                   child: isMasterRank
@@ -442,8 +429,9 @@ class ProfileHeader extends StatelessWidget {
                                             color: rankData.color.withValues(
                                               alpha: 0.1,
                                             ),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
                                             border: Border.all(
                                               color: rankData.color.withValues(
                                                 alpha: 0.4,
@@ -476,13 +464,14 @@ class ProfileHeader extends StatelessWidget {
                           },
                         ),
                         const SizedBox(height: 8),
-                        // Member Since
                         Text(
                           formatMemberSince(context, user?.createdAt),
-                          style: const TextStyle(
-                            color: AppColors.grey600,
-                            fontSize: 12,
-                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
                         ),
                         const SizedBox(height: 12),
                         // Edit Profile Button
@@ -538,7 +527,7 @@ class ProfileHeader extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         // Social Stats Row
                         const SocialStatsRow(),
                       ],

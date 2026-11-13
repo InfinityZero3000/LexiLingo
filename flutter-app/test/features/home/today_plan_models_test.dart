@@ -61,23 +61,20 @@ void main() {
       expect(snapshot.nextTask, snapshot.tasks[1]);
     });
 
-    test(
-      'shows a completed course as done instead of the "choose a course" '
-      'fallback when every enrolled course is already finished',
-      () {
-        final snapshot = buildTodayPlanSnapshot(
-          dueVocabularyCount: 0,
-          enrolledCourses: [_course(progress: 1.0)],
-          weakestSkills: const [],
-          challenges: const [],
-        );
+    test('shows a completed course as done instead of the "choose a course" '
+        'fallback when every enrolled course is already finished', () {
+      final snapshot = buildTodayPlanSnapshot(
+        dueVocabularyCount: 0,
+        enrolledCourses: [_course(progress: 1.0)],
+        weakestSkills: const [],
+        challenges: const [],
+      );
 
-        final courseTask = snapshot.tasks[1];
-        expect(courseTask.title, 'A2 Daily English'); // not the fallback copy
-        expect(courseTask.isCompleted, isTrue);
-        expect(courseTask.progress, 1.0);
-      },
-    );
+      final courseTask = snapshot.tasks[1];
+      expect(courseTask.title, 'A2 Daily English'); // not the fallback copy
+      expect(courseTask.isCompleted, isTrue);
+      expect(courseTask.progress, 1.0);
+    });
 
     test(
       'still falls back to "choose a course" when nothing is enrolled at all',
@@ -139,6 +136,58 @@ void main() {
         TodayPlanTaskType.course,
         TodayPlanTaskType.skill,
       ]);
+    });
+  });
+
+  group('home hero rows', () {
+    test('taskOfType finds the vocabulary task wherever it sits', () {
+      final snapshot = buildTodayPlanSnapshot(
+        dueVocabularyCount: 4,
+        enrolledCourses: const [],
+        weakestSkills: const [],
+        challenges: const [],
+      );
+
+      expect(
+        snapshot.taskOfType(TodayPlanTaskType.vocabulary)?.destination,
+        TodayPlanDestination.vocabularyReview,
+      );
+    });
+
+    test('nextTaskExcluding skips the type the hero already shows, so the '
+        'vocabulary row is never listed twice', () {
+      final snapshot = buildTodayPlanSnapshot(
+        dueVocabularyCount: 4, // vocabulary pending and first
+        enrolledCourses: const [],
+        weakestSkills: const [],
+        challenges: const [],
+      );
+
+      expect(snapshot.nextTask?.type, TodayPlanTaskType.vocabulary);
+      expect(
+        snapshot.nextTaskExcluding(TodayPlanTaskType.vocabulary)?.type,
+        TodayPlanTaskType.course,
+      );
+    });
+
+    test('nextTaskExcluding falls back to a finished task when every other '
+        'task is done, mirroring nextTask', () {
+      final snapshot = buildTodayPlanSnapshot(
+        dueVocabularyCount: 0,
+        enrolledCourses: [_course(progress: 1.0)],
+        weakestSkills: [_skill(SkillType.listening, score: 95)],
+        challenges: [_challenge(category: 'vocabulary', current: 3, target: 3)],
+      );
+
+      // Conversation never completes, so it is the pending pick.
+      expect(
+        snapshot.nextTaskExcluding(TodayPlanTaskType.vocabulary)?.type,
+        TodayPlanTaskType.conversation,
+      );
+      expect(
+        snapshot.nextTaskExcluding(TodayPlanTaskType.conversation)?.type,
+        TodayPlanTaskType.vocabulary,
+      );
     });
   });
 }

@@ -184,7 +184,6 @@
     "navDiscovery": "Descubrir",
     "navLearning": "Aprender",
     "navLexi": "Lexi",
-    "navTopic": "Temas",
     "navAccount": "Cuenta",
     "streak": "Racha: {count} días",
     "continueLesson": "Continuar aprendiendo",
@@ -287,7 +286,20 @@
     "recReasonGap": "Aún no dominas esto",
     "recReasonLevel": "Adecuado para tu nivel {level}",
     "recReasonSimilar": "Cercano a lo que estás aprendiendo",
-    "recReasonDefault": "Sugerido para ti"
+    "recReasonDefault": "Sugerido para ti",
+    "nextUp": "A continuación",
+    "discover": "Descubrir",
+    "openProfile": "Abrir perfil",
+    "activeBoostsChip": "{count} potenciadores activos",
+    "streakKeepAlive": "Aprende hoy para mantener tu racha",
+    "streakSemantics": "Racha de {count} días, {active} días activos esta semana. Abrir calendario",
+    "dailyGoalSemantics": "Meta diaria: {earned} de {goal} XP, {percent}%. Cambiar meta",
+    "notificationsSemantics": "Notificaciones, {count} sin leer",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "Práctica"
   },
   "course": {
     "title": "Cursos",
@@ -457,7 +469,17 @@
     "easyDifficulty": "Fácil",
     "perfectDifficulty": "¡Perfecto!",
     "blackout": "Apagón (0)",
-    "perfectFive": "Perfecto (5)"
+    "perfectFive": "Perfecto (5)",
+    "nothingDueTitle": "¡Estás al día!",
+    "nothingDueBody": "Ahora mismo no hay palabras para repasar. Vuelve más tarde o añade palabras nuevas a tu colección.",
+    "nothingDueAction": "Volver",
+    "loadFailed": "No se pudo cargar tu vocabulario. Inténtalo de nuevo.",
+    "unexpectedError": "Algo salió mal. Inténtalo de nuevo.",
+    "noVocabularyForTopic": "No hay palabras para «{topic}».",
+    "noVocabularyInDeck": "Esta colección aún no tiene palabras.",
+    "prepareFailed": "No se pudieron preparar las tarjetas de estudio.",
+    "submitFailed": "No se pudo guardar tu repaso. Inténtalo de nuevo.",
+    "quizNotEnough": "Aún no hay suficientes palabras para crear un cuestionario."
   },
   "voice": {
     "practiceTitle": "Práctica de voz",
@@ -1239,8 +1261,13 @@
     "filterIntermediate": "Intermedio",
     "filterAdvanced": "Avanzado",
     "popularScenariosTitle": "Escenarios populares",
-    "seeAllLink": "Ver todo",
-    "noTopicsFound": "No se encontraron temas"
+    "noTopicsFound": "No se encontraron temas",
+    "emptyTitle": "Aún no hay temas",
+    "emptyBody": "No se pudieron cargar los temas de conversación. Inténtalo de nuevo o, mientras tanto, chatea libremente con Lexi.",
+    "retry": "Reintentar",
+    "openFreeChat": "Chatear con Lexi",
+    "noMatchBody": "Nada coincide con tu búsqueda o filtro de nivel.",
+    "clearFilters": "Borrar filtros"
   },
   "topicChat": {
     "preparingTopicMessage": "Preparando tu tema...",
@@ -1385,7 +1412,10 @@
     "conceptCollocation": "Colocación",
     "conceptPhonology": "Pronunciación",
     "conceptSkill": "Habilidad",
-    "suggestedCoursesLabel": "Cursos para ti"
+    "suggestedCoursesLabel": "Cursos para ti",
+    "modeFree": "Chat",
+    "modeTopics": "Temas",
+    "voiceSpeed": "Velocidad de voz"
   },
   "youtube": {
     "subtitles": "Subtítulos",
@@ -1871,7 +1901,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "Completa algunos ejercicios y tus habilidades a reforzar aparecerán aquí."
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",

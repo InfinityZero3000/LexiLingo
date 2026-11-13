@@ -96,35 +96,32 @@ class QuickActionsGrid extends StatelessWidget {
                 : constraints.maxWidth >= 640
                 ? 4
                 : 3;
-            return GridView.builder(
-              shrinkWrap: true,
-              // A null padding inherits the bottom nav inset as dead space.
-              padding: EdgeInsets.zero,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                mainAxisSpacing: 10,
-                mainAxisExtent: 88,
-              ),
-              itemCount: quickActions.length,
-              itemBuilder: (context, index) {
-                final action = quickActions[index];
-                return _QuickActionTile(
-                  icon: action.icon,
-                  label: action.label.tr(),
-                  color: action.color,
-                  onTap: () {
-                    if (action.route == '/vocab') {
-                      LearnerRoute.push(
-                        context,
-                        (_) => const VocabLibraryPage(),
-                      );
-                    } else {
-                      Navigator.pushNamed(context, action.route);
-                    }
-                  },
-                );
-              },
+            // Tiles size to their text, so a larger font scale grows the row
+            // instead of overflowing a fixed extent.
+            final tileWidth = constraints.maxWidth / columns;
+            return Wrap(
+              runSpacing: 12,
+              children: [
+                for (final action in quickActions)
+                  SizedBox(
+                    width: tileWidth,
+                    child: _QuickActionTile(
+                      icon: action.icon,
+                      label: action.label.tr(),
+                      color: action.color,
+                      onTap: () {
+                        if (action.route == '/vocab') {
+                          LearnerRoute.push(
+                            context,
+                            (_) => const VocabLibraryPage(),
+                          );
+                        } else {
+                          Navigator.pushNamed(context, action.route);
+                        }
+                      },
+                    ),
+                  ),
+              ],
             );
           },
         ),
@@ -148,28 +145,31 @@ class _QuickActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return InkResponse(
       onTap: onTap,
       radius: 48,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircleIcon(icon: icon, color: color, size: 56),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.1,
-              fontWeight: FontWeight.w600,
-              color: AppColorRoles.textPrimary(isDark),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleIcon(icon: icon, color: color, size: 56),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: theme.textTheme.labelLarge?.copyWith(
+                height: 1.2,
+                fontWeight: FontWeight.w600,
+                color: AppColorRoles.textPrimary(isDark),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

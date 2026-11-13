@@ -44,7 +44,11 @@ class LexiChatPage extends StatefulWidget {
   /// flag is what tells it to stop listening and speaking.
   final bool isActive;
 
-  const LexiChatPage({super.key, this.isActive = true});
+  /// Replaces the title block in the header — the Lexi tab puts its mode
+  /// switch here so the page keeps a single header row.
+  final Widget? titleSlot;
+
+  const LexiChatPage({super.key, this.isActive = true, this.titleSlot});
 
   @override
   State<LexiChatPage> createState() => _LexiChatPageState();
@@ -85,9 +89,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   bool get _showVoicePanel {
     final phase = _duplexVoice?.phase.value ?? DuplexVoicePhase.idle;
-    return _voiceStarting ||
-        phase.isLive ||
-        phase == DuplexVoicePhase.error;
+    return _voiceStarting || phase.isLive || phase == DuplexVoicePhase.error;
   }
 
   late LexiChatProvider _chat;
@@ -154,9 +156,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       // Spoken replies must stop too, not only a live duplex call.
-      unawaited(
-        _isDuplexVoiceActive ? _stopAllVoice() : _chat.stopSpeaking(),
-      );
+      unawaited(_isDuplexVoiceActive ? _stopAllVoice() : _chat.stopSpeaking());
     } else if (state == AppLifecycleState.resumed && widget.isActive) {
       _chat.resumeSpeaking();
     }
@@ -632,8 +632,9 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Minimalist Header ────────────────────────────────────────────────────
   Widget _buildHeader(bool isDark) {
+    final iconColor = isDark ? Colors.white70 : AppColors.textDark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
@@ -653,175 +654,107 @@ class _LexiChatPageState extends State<LexiChatPage>
               color: isDark ? Colors.white70 : AppColors.textDark,
               onPressed: () => Navigator.of(context).pop(),
             ),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.surfaceDarkChat
-                  : AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.menu_rounded,
-                color: isDark ? Colors.white70 : AppColors.textDark,
-                size: 20,
-              ),
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              tooltip: 'lexiChat.tooltipSessionHistory'.tr(),
-            ),
+          IconButton(
+            icon: Icon(Icons.menu_rounded, color: iconColor, size: 22),
+            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+            tooltip: 'lexiChat.tooltipSessionHistory'.tr(),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 4),
           // Title
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'lexiChat.title'.tr(),
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppColors.textDark,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                Consumer<LexiChatProvider>(
-                  builder: (_, provider, __) {
-                    final status = provider.isLexiThinking
-                        ? 'lexiChat.statusThinking'.tr()
-                        : (provider.isLexiTyping
-                              ? 'lexiChat.statusTyping'.tr()
-                              : 'lexiChat.statusIdle'.tr());
-                    final isActive =
-                        provider.isLexiThinking || provider.isLexiTyping;
-                    return Text(
-                      status,
+            child:
+                widget.titleSlot ??
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'lexiChat.title'.tr(),
                       style: TextStyle(
-                        fontSize: 12,
-                        color: isActive
-                            ? AppColorRoles.primary(isDark)
-                            : (isDark ? Colors.white54 : AppColors.textGrey),
-                        fontWeight: isActive
-                            ? FontWeight.w600
-                            : FontWeight.w500,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : AppColors.textDark,
+                        letterSpacing: -0.3,
                       ),
-                    );
-                  },
+                    ),
+                    Consumer<LexiChatProvider>(
+                      builder: (_, provider, __) {
+                        final status = provider.isLexiThinking
+                            ? 'lexiChat.statusThinking'.tr()
+                            : (provider.isLexiTyping
+                                  ? 'lexiChat.statusTyping'.tr()
+                                  : 'lexiChat.statusIdle'.tr());
+                        final isActive =
+                            provider.isLexiThinking || provider.isLexiTyping;
+                        return Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isActive
+                                ? AppColorRoles.primary(isDark)
+                                : (isDark
+                                      ? Colors.white54
+                                      : AppColors.textGrey),
+                            fontWeight: isActive
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            ),
           ),
           // TTS toggle
           Consumer<LexiChatProvider>(
             builder: (_, provider, __) {
+              // Voice speed moved to the session drawer: with the mode switch
+              // in this row, a fourth control pushed it to icons-only on a
+              // 375px phone.
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (provider.ttsEnabled) ...[
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceDarkChat
-                            : AppColors.backgroundLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: InkWell(
-                        onTap: provider.cycleTtsSpeed,
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
-                          child: Text(
-                            provider.ttsSpeedLabel,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColorRoles.primary(isDark),
-                            ),
-                          ),
-                        ),
-                      ),
+                  IconButton(
+                    icon: Icon(
+                      provider.ttsEnabled
+                          ? Icons.volume_up_rounded
+                          : Icons.volume_off_rounded,
+                      color: provider.ttsEnabled
+                          ? AppColorRoles.primary(isDark)
+                          : (isDark ? Colors.white38 : AppColors.textGrey),
+                      size: 22,
                     ),
-                    const SizedBox(width: 4),
-                  ],
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceDarkChat
-                          : AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        provider.ttsEnabled
-                            ? Icons.volume_up_rounded
-                            : Icons.volume_off_rounded,
-                        color: provider.ttsEnabled
-                            ? AppColorRoles.primary(isDark)
-                            : (isDark ? Colors.white38 : AppColors.textGrey),
-                        size: 20,
-                      ),
-                      onPressed: provider.toggleTts,
-                      tooltip: 'lexiChat.tooltipToggleVoice'.tr(),
-                      padding: const EdgeInsets.all(8),
-                    ),
+                    onPressed: provider.toggleTts,
+                    tooltip: 'lexiChat.tooltipToggleVoice'.tr(),
                   ),
                   if (ApiConfig.enableDuplexVoice &&
-                      !DuplexVoiceClient.serverUnavailable) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? AppColors.surfaceDarkChat
-                            : AppColors.backgroundLight,
-                        borderRadius: BorderRadius.circular(12),
+                      !DuplexVoiceClient.serverUnavailable)
+                    IconButton(
+                      icon: Icon(
+                        provider.captionsVisible
+                            ? Icons.closed_caption_rounded
+                            : Icons.closed_caption_disabled_rounded,
+                        color: provider.captionsVisible
+                            ? AppColorRoles.primary(isDark)
+                            : (isDark ? Colors.white38 : AppColors.textGrey),
+                        size: 22,
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          provider.captionsVisible
-                              ? Icons.closed_caption_rounded
-                              : Icons.closed_caption_disabled_rounded,
-                          color: provider.captionsVisible
-                              ? AppColorRoles.primary(isDark)
-                              : (isDark ? Colors.white38 : AppColors.textGrey),
-                          size: 20,
-                        ),
-                        onPressed: () => provider.setCaptionsVisible(
-                          !provider.captionsVisible,
-                        ),
-                        tooltip: provider.captionsVisible
-                            ? 'lexiChat.voice.captionsOff'.tr()
-                            : 'lexiChat.voice.captionsOn'.tr(),
-                        padding: const EdgeInsets.all(8),
+                      onPressed: () => provider.setCaptionsVisible(
+                        !provider.captionsVisible,
                       ),
+                      tooltip: provider.captionsVisible
+                          ? 'lexiChat.voice.captionsOff'.tr()
+                          : 'lexiChat.voice.captionsOn'.tr(),
                     ),
-                  ],
                 ],
               );
             },
           ),
-          const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.surfaceDarkChat
-                  : AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: Icon(
-                Icons.add_comment_outlined,
-                color: isDark ? Colors.white70 : AppColors.textDark,
-                size: 20,
-              ),
-              onPressed: () =>
-                  context.read<LexiChatProvider>().createNewSession(_userId),
-              tooltip: 'lexiChat.tooltipNewChat'.tr(),
-              padding: const EdgeInsets.all(8),
-            ),
+          IconButton(
+            icon: Icon(Icons.add_comment_outlined, color: iconColor, size: 22),
+            onPressed: () =>
+                context.read<LexiChatProvider>().createNewSession(_userId),
+            tooltip: 'lexiChat.tooltipNewChat'.tr(),
           ),
         ],
       ),
@@ -980,6 +913,19 @@ class _LexiChatPageState extends State<LexiChatPage>
                         ),
                 ),
                 const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.speed_rounded),
+                  title: Text('lexiChat.voiceSpeed'.tr()),
+                  trailing: Text(
+                    provider.ttsSpeedLabel,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: AppColorRoles.primary(isDark),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  enabled: provider.ttsEnabled,
+                  onTap: provider.cycleTtsSpeed,
+                ),
                 ListTile(
                   leading: const Icon(Icons.psychology_alt_rounded),
                   title: Text('lexiChat.memory.entry'.tr()),

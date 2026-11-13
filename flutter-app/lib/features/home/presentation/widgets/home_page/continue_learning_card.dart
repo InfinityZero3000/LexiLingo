@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -18,9 +19,11 @@ class ContinueLearningCard extends StatelessWidget {
   const ContinueLearningCard({
     super.key,
     this.rotationInterval = const Duration(seconds: 6),
+    this.borderRadius = const BorderRadius.all(Radius.circular(20)),
   });
 
   final Duration rotationInterval;
+  final BorderRadius borderRadius;
 
   static CourseEntity? pick(List<CourseEntity> enrolled) {
     for (final course in enrolled) {
@@ -56,6 +59,7 @@ class ContinueLearningCard extends StatelessWidget {
       activeCourse: activeCourse,
       unstartedCourse: unstartedCourse,
       rotationInterval: rotationInterval,
+      borderRadius: borderRadius,
     );
   }
 }
@@ -66,11 +70,13 @@ class _RotatingLearningCard extends StatefulWidget {
     required this.activeCourse,
     required this.unstartedCourse,
     required this.rotationInterval,
+    required this.borderRadius,
   });
 
   final CourseEntity? activeCourse;
   final CourseEntity? unstartedCourse;
   final Duration rotationInterval;
+  final BorderRadius borderRadius;
 
   @override
   State<_RotatingLearningCard> createState() => _RotatingLearningCardState();
@@ -79,7 +85,7 @@ class _RotatingLearningCard extends StatefulWidget {
 class _RotatingLearningCardState extends State<_RotatingLearningCard> {
   Timer? _rotationTimer;
   late bool _showReminder;
-  bool _tickerEnabled = false;
+  bool _rotationEnabled = false;
 
   @override
   void initState() {
@@ -90,11 +96,13 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final tickerEnabled = TickerMode.of(context);
-    if (_tickerEnabled == tickerEnabled) return;
+    // Hidden tabs and reduced-motion learners both get a still card.
+    final enabled =
+        TickerMode.of(context) && !MediaQuery.disableAnimationsOf(context);
+    if (_rotationEnabled == enabled) return;
 
-    _tickerEnabled = tickerEnabled;
-    _restartTimer(resetToCourse: tickerEnabled);
+    _rotationEnabled = enabled;
+    _restartTimer(resetToCourse: enabled);
   }
 
   @override
@@ -109,7 +117,7 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
     _rotationTimer?.cancel();
     _rotationTimer = null;
     if (resetToCourse) _showReminder = widget.activeCourse == null;
-    if (!_tickerEnabled ||
+    if (!_rotationEnabled ||
         widget.activeCourse == null ||
         widget.rotationInterval <= Duration.zero) {
       return;
@@ -120,6 +128,22 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
       setState(() => _showReminder = !_showReminder);
     });
   }
+
+  // Both faces stay laid out so the card keeps the taller one's height.
+  Widget _sizingGhost(Widget face) => ExcludeSemantics(
+    child: IgnorePointer(
+      child: TickerMode(
+        enabled: false,
+        child: Visibility(
+          visible: false,
+          maintainSize: true,
+          maintainState: true,
+          maintainAnimation: true,
+          child: face,
+        ),
+      ),
+    ),
+  );
 
   @override
   void dispose() {
@@ -161,20 +185,45 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Material(
-        color: fill,
-        borderRadius: BorderRadius.circular(20),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: openTarget,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 60),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 350),
+    Widget courseContent(CourseEntity course) => _ContinueCourseContent(
+      key: ValueKey('course:${course.id}'),
+      course: course,
+      progress: progress,
+      theme: theme,
+      foreground: fg,
+      track: track,
+      fill: fill,
+      isDark: isDark,
+      onPressed: openTarget,
+    );
+    final reminderContent = _LearningReminderContent(
+      key: ValueKey('reminder:${promptCourse?.id ?? 'discover'}'),
+      course: promptCourse,
+      hasActiveCourse: activeCourse != null,
+      theme: theme,
+      foreground: fg,
+      fill: fill,
+      isDark: isDark,
+      onPressed: openTarget,
+    );
+
+    return Material(
+      color: fill,
+      borderRadius: widget.borderRadius,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: openTarget,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              if (activeCourse != null) ...[
+                _sizingGhost(courseContent(activeCourse)),
+                _sizingGhost(reminderContent),
+              ],
+              AnimatedSwitcher(
+                duration: homeMotion(context, 350),
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
@@ -185,32 +234,15 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
                     child: child,
                   ),
                 ),
+                layoutBuilder: (current, previous) => Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [...previous, ?current],
+                ),
                 child: !_showReminder && activeCourse != null
-                    ? _ContinueCourseContent(
-                        key: ValueKey('course:${activeCourse.id}'),
-                        course: activeCourse,
-                        progress: progress,
-                        theme: theme,
-                        foreground: fg,
-                        track: track,
-                        fill: fill,
-                        isDark: isDark,
-                        onPressed: openTarget,
-                      )
-                    : _LearningReminderContent(
-                        key: ValueKey(
-                          'reminder:${promptCourse?.id ?? 'discover'}',
-                        ),
-                        course: promptCourse,
-                        hasActiveCourse: activeCourse != null,
-                        theme: theme,
-                        foreground: fg,
-                        fill: fill,
-                        isDark: isDark,
-                        onPressed: openTarget,
-                      ),
+                    ? courseContent(activeCourse)
+                    : reminderContent,
               ),
-            ),
+            ],
           ),
         ),
       ),
@@ -242,63 +274,70 @@ class _ContinueCourseContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _LeadingDisc(
-          icon: PhosphorIconsBold.bookOpenText,
-          foreground: foreground,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'home.continueLearningSection'.tr(),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: foreground.withValues(alpha: 0.85),
-                ),
-              ),
-              Text(
-                course.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Row(
+        Row(
+          children: [
+            _LeadingDisc(
+              icon: PhosphorIconsBold.bookOpenText,
+              foreground: foreground,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        minHeight: 6,
-                        value: progress,
-                        backgroundColor: track,
-                        valueColor: AlwaysStoppedAnimation<Color>(foreground),
-                      ),
+                  Text(
+                    'home.continueLearningSection'.tr(),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: foreground.withValues(alpha: 0.85),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Text(
-                    '${(progress * 100).round()}%',
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    course.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
                       color: foreground,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            minHeight: 6,
+                            value: progress,
+                            backgroundColor: track,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              foreground,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${(progress * 100).round()}%',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: foreground,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        _CardActionButton(
+        const SizedBox(height: 14),
+        _HeroButton(
           icon: PhosphorIconsFill.play,
-          tooltip: 'home.continueLesson'.tr(),
+          label: 'home.continueLesson'.tr(),
           foreground: foreground,
           fill: fill,
           isDark: isDark,
@@ -342,48 +381,55 @@ class _LearningReminderContent extends StatelessWidget {
         : hasUnstartedCourse
         ? course!.title
         : 'home.enrollCoursePrompt'.tr();
+    final buttonLabel = hasActiveCourse
+        ? 'home.continueLesson'.tr()
+        : hasUnstartedCourse
+        ? 'home.startLearning'.tr()
+        : 'home.todayPlan.browseAction'.tr();
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _LeadingDisc(
-          icon: hasActiveCourse
-              ? PhosphorIconsBold.bell
-              : PhosphorIconsBold.sparkle,
-          foreground: foreground,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                labelKey.tr(),
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: foreground.withValues(alpha: 0.85),
-                ),
+        Row(
+          children: [
+            _LeadingDisc(
+              icon: hasActiveCourse
+                  ? PhosphorIconsBold.bell
+                  : PhosphorIconsBold.sparkle,
+              foreground: foreground,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    labelKey.tr(),
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: foreground.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    message,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: foreground,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 2),
-              Text(
-                message,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: foreground,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        _CardActionButton(
+        const SizedBox(height: 14),
+        _HeroButton(
           icon: course == null
               ? PhosphorIconsBold.arrowRight
               : PhosphorIconsFill.play,
-          tooltip: course == null
-              ? 'home.startLearning'.tr()
-              : 'home.startLesson'.tr(),
+          label: buttonLabel,
           foreground: foreground,
           fill: fill,
           isDark: isDark,
@@ -414,10 +460,11 @@ class _LeadingDisc extends StatelessWidget {
   }
 }
 
-class _CardActionButton extends StatelessWidget {
-  const _CardActionButton({
+/// The one primary action on Home: full width and 48 tall so a thumb finds it.
+class _HeroButton extends StatelessWidget {
+  const _HeroButton({
     required this.icon,
-    required this.tooltip,
+    required this.label,
     required this.foreground,
     required this.fill,
     required this.isDark,
@@ -425,7 +472,7 @@ class _CardActionButton extends StatelessWidget {
   });
 
   final IconData icon;
-  final String tooltip;
+  final String label;
   final Color foreground;
   final Color fill;
   final bool isDark;
@@ -433,15 +480,20 @@ class _CardActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconButton.filled(
+    final theme = Theme.of(context);
+    return FilledButton.icon(
       onPressed: onPressed,
-      tooltip: tooltip,
-      style: IconButton.styleFrom(
+      style: FilledButton.styleFrom(
         backgroundColor: isDark ? AppColorRoles.primary(true) : foreground,
-        foregroundColor: isDark ? Theme.of(context).colorScheme.surface : fill,
-        fixedSize: const Size(44, 44),
+        foregroundColor: isDark ? theme.colorScheme.surface : fill,
+        minimumSize: const Size.fromHeight(48),
+        shape: const StadiumBorder(),
+        textStyle: theme.textTheme.titleSmall?.copyWith(
+          fontWeight: FontWeight.w800,
+        ),
       ),
       icon: Icon(icon, size: 20),
+      label: Text(label),
     );
   }
 }
