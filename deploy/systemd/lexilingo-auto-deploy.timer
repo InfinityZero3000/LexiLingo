@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll CI and auto-deploy LexiLingo
+
+[Timer]
+OnBootSec=3min
+# Counted from when the previous run ends, so a long ai-service build never overlaps the next check.
+OnUnitInactiveSec=2min
+AccuracySec=15s
+Unit=lexilingo-auto-deploy.service
+
+[Install]
+WantedBy=timers.target
