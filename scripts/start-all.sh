@@ -350,7 +350,7 @@ if ! check_service 8001; then
     # Check if venv exists
     if [ ! -d "$AI_VENV" ]; then
         echo -e "   ${RED}[ERROR] Virtual environment not found at $AI_VENV${NC}"
-        echo -e "   ${YELLOW}Run: cd ai-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt${NC}"
+        echo -e "   ${YELLOW}Run: cd ai-service && python3 -m venv venv && source venv/bin/activate && pip install -r requirements-dev.txt${NC}"
         exit 1
     fi
 
