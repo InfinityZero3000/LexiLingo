@@ -129,7 +129,19 @@
     "errAlreadyExists": "そのメールアドレスまたはユーザー名は既に使われています",
     "errValidation": "入力内容が正しくありません。ご確認ください。",
     "errNetwork": "ネットワークに接続できません。もう一度お試しください。",
-    "errRateLimited": "試行回数が多すぎます。しばらくお待ちください。"
+    "errRateLimited": "試行回数が多すぎます。しばらくお待ちください。",
+    "googleSignInCancelled": "Googleでのサインインがキャンセルされました。",
+    "facebookSignInCancelled": "Facebookでのサインインがキャンセルされたか失敗しました。",
+    "errServerTimeout": "サーバーが応答しません。しばらくしてからもう一度お試しください。",
+    "errProfileLoad": "サインインは成功しましたが、プロフィールを読み込めませんでした。もう一度お試しください。",
+    "errServer": "サーバーエラーが発生しました。後でもう一度お試しください。",
+    "errGoogleConfig": "Googleサインインが正しく設定されていません。サポートにお問い合わせください。",
+    "errAccountExists": "このメールアドレスは別のサインイン方法に関連付けられています。先にその方法でサインインしてください。",
+    "errCors": "サインインは一時的にブロックされています。しばらくしてからもう一度お試しください。",
+    "errCancelled": "サインインがキャンセルされました。",
+    "errInvalidPassword": "パスワードが無効です。",
+    "errUserNotFound": "このメールアドレスのアカウントが見つかりません。",
+    "errWrongPassword": "パスワードが間違っています。"
   },
   "home": {
     "wordsLeftToReview": "復習する単語",
@@ -495,12 +507,12 @@
     "youSaid": "あなたが言った：",
     "excellentPronunciation": "素晴らしい発音！",
     "microphonePermissionDenied": "マイクの許可が拒否されました",
-    "failedToStartRecording": "記録の開始に失敗しました: {error}",
+    "failedToStartRecording": "録音を開始できませんでした。",
     "recordedAudioUnreadable": "録音された音声を読み取れませんでした",
     "noRecordedAudioReturned": "録音された音声は返されませんでした",
-    "failedToStopRecording": "記録の停止に失敗しました: {error}",
+    "failedToStopRecording": "録音を停止できませんでした。",
     "enterPhraseFirst": "最初にフレーズを入力してください",
-    "failedToPlayAudio": "オーディオの再生に失敗しました: {error}",
+    "failedToPlayAudio": "音声を再生できませんでした。",
     "speak": "話す",
     "listen": "聞く",
     "recording": "録音中...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "録音中 — タップで停止",
     "recognizing": "音声を認識しています…",
     "notMatchedTryAgain": "まだ一致していません。もう一度どうぞ。",
-    "saidCorrectly": "正しく言えました"
+    "saidCorrectly": "正しく言えました",
+    "noSpeechDetected": "音声が検出されませんでした。もう一度お試しください。",
+    "microphoneUnavailable": "マイクを使用できません。権限を確認してください。",
+    "recognitionAborted": "音声認識が中断されました。",
+    "languageNotSupported": "この言語は音声認識に対応していません。",
+    "recognitionFailed": "音声認識に失敗しました。もう一度お試しください。",
+    "recognitionUnsupported": "このブラウザまたはデバイスは音声認識に対応していません。",
+    "textRequired": "まずテキストを入力してください。",
+    "transcribeFailed": "録音を文字起こしできませんでした。もう一度お試しください。",
+    "recordingStartFailed": "録音を開始できませんでした。もう一度お試しください。",
+    "recordingStopFailed": "録音を停止できませんでした。もう一度お試しください。",
+    "playbackFailed": "音声を再生できませんでした。もう一度お試しください。"
   },
   "chat": {
     "loadMore": "さらに読み込む...",
@@ -733,7 +756,8 @@
     "emptyChart": "学習を始めると進捗グラフが表示されます！",
     "tabLessons": "レッスン",
     "tabActivity": "アクティビティ",
-    "tabContent": "コンテンツ"
+    "tabContent": "コンテンツ",
+    "noStreakFreezes": "使用できるストリークフリーズがありません。"
   },
   "settings": {
     "title": "設定",
@@ -850,7 +874,10 @@
       "yourTimeBody": "この時間に学ぶと決めたのはあなた。アプリを開いてチェックインしたら、また元の作業へ。",
       "fadingTitle": "昨日の単語が薄れ始めています",
       "fadingBody": "忘れかけた時の復習が、記憶にいちばん効きます。"
-    }
+    },
+    "markReadFailed": "既読にできませんでした。もう一度お試しください。",
+    "deleteFailed": "通知を削除できませんでした。もう一度お試しください。",
+    "restoreFailed": "通知を復元できませんでした。もう一度お試しください。"
   },
   "errors": {
     "networkError": "ネットワークエラー",
@@ -860,7 +887,17 @@
     "unknown": "不明なエラーが発生しました",
     "timeout": "リクエストタイムアウト",
     "noInternet": "インターネット接続がありません",
-    "genericRetry": "エラーが発生しました。もう一度お試しください。"
+    "genericRetry": "エラーが発生しました。もう一度お試しください。",
+    "sessionExpired": "ログインセッションの有効期限が切れました。もう一度サインインしてください。",
+    "sessionExpiredOnServer": "サーバー上でセッションが期限切れになりました。新しいセッションを開始しました。",
+    "sessionOtherAccount": "このセッションは別のアカウントのものです。新しいチャットを始めてください。",
+    "sessionStartFailed": "セッションを開始できませんでした。もう一度お試しください。",
+    "noActiveSession": "アクティブなセッションがありません。",
+    "loadFailed": "データを読み込めませんでした。もう一度お試しください。",
+    "saveFailed": "保存できませんでした。もう一度お試しください。",
+    "submitFailed": "送信できませんでした。もう一度お試しください。",
+    "networkRetry": "ネットワークエラーです。接続を確認してもう一度お試しください。",
+    "localStorage": "ローカルストレージのエラーです。もう一度お試しください。"
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -939,7 +976,10 @@
     "nearbyReason": "近く",
     "refreshSuggestions": "提案を更新する",
     "disableNearby": "近くで無効にする",
-    "refreshNearby": "近くでリフレッシュ"
+    "refreshNearby": "近くでリフレッシュ",
+    "searchFailed": "ユーザーを検索できませんでした。もう一度お試しください。",
+    "locationPermissionDenied": "位置情報の権限が拒否されました。",
+    "locationServicesDisabled": "位置情報サービスが無効になっています。"
   },
   "onboarding": {
     "welcome": "LexiLingo へようこそ!",
@@ -1415,7 +1455,10 @@
     "suggestedCoursesLabel": "あなたにおすすめのコース",
     "modeFree": "チャット",
     "modeTopics": "トピック",
-    "voiceSpeed": "音声の速さ"
+    "voiceSpeed": "音声の速さ",
+    "historyUnavailable": "セッション履歴は一時的に利用できません。チャットは続けられます。",
+    "offlineQueued": "オフラインです。再接続時にメッセージを送信します。",
+    "voiceProcessingFailed": "音声の処理に失敗しました。もう一度お試しください。"
   },
   "youtube": {
     "subtitles": "字幕",
@@ -1761,7 +1804,11 @@
     "tagCrawl": "収集",
     "tagSociety": "社会",
     "tagSeed": "シード",
-    "tagHistory": "歴史"
+    "tagHistory": "歴史",
+    "removeFromDeckFailed": "デッキから削除できませんでした",
+    "alreadyInVocabulary": "「{}」はすでに単語帳にあります。",
+    "savedNewWord": "新しい単語「{}」を単語帳に保存しました。",
+    "savedWord": "「{}」を単語帳に保存しました。"
   },
   "legal": {
     "privacy_title": "プライバシーポリシー",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "接続に問題が発生しています。もう一度お試しください。"
   },
   "dailyChallenges": {
-    "rewardClaimed": "報酬を受け取りました！"
+    "rewardClaimed": "報酬を受け取りました！",
+    "rewardAlreadyClaimed": "この報酬はすでに受け取っています。",
+    "challengeNotCompleted": "報酬を受け取るには、まずチャレンジを完了してください。"
   },
   "contentActivity": {
     "summary": "過去{days}日間：{minutes}分、{sessions}回、{xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "リスニング",
     "skillReading": "リーディング",
     "skillWriting": "ライティング",
-    "skillSpeaking": "スピーキング"
+    "skillSpeaking": "スピーキング",
+    "audioUnavailable": "音声を利用できません。",
+    "nothingTranscribed": "文字起こしできませんでした。もう一度お試しください。",
+    "transcribeFailed": "録音を文字起こしできませんでした。",
+    "micPermissionRequired": "マイクの許可が必要です。"
   }
 }

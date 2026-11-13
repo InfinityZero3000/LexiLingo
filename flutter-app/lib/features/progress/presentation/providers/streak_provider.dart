@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
@@ -135,7 +136,7 @@ class StreakProvider extends ChangeNotifier {
   /// Use a streak freeze to protect current streak
   Future<bool> useFreeze() async {
     if (_streak == null || _streak!.freezeCount <= 0) {
-      _errorMessage = 'No streak freezes available';
+      _errorMessage = 'progress.noStreakFreezes'.tr();
       notifyListeners();
       return false;
     }

@@ -129,7 +129,19 @@
     "errAlreadyExists": "Cet e-mail ou nom d'utilisateur est déjà utilisé",
     "errValidation": "Certaines informations sont invalides. Veuillez vérifier.",
     "errNetwork": "Pas de connexion réseau. Veuillez réessayer.",
-    "errRateLimited": "Trop de tentatives. Veuillez patienter un instant."
+    "errRateLimited": "Trop de tentatives. Veuillez patienter un instant.",
+    "googleSignInCancelled": "La connexion Google a été annulée.",
+    "facebookSignInCancelled": "La connexion Facebook a été annulée ou a échoué.",
+    "errServerTimeout": "Le serveur ne répond pas. Veuillez réessayer dans un instant.",
+    "errProfileLoad": "Connexion réussie, mais impossible de charger votre profil. Veuillez réessayer.",
+    "errServer": "Une erreur serveur est survenue. Veuillez réessayer plus tard.",
+    "errGoogleConfig": "La connexion Google n'est pas configurée correctement. Veuillez contacter le support.",
+    "errAccountExists": "Cet e-mail est déjà associé à une autre méthode de connexion. Veuillez d'abord utiliser cette méthode.",
+    "errCors": "La connexion est temporairement bloquée. Veuillez réessayer dans un instant.",
+    "errCancelled": "La connexion a été annulée.",
+    "errInvalidPassword": "Mot de passe invalide.",
+    "errUserNotFound": "Aucun compte trouvé avec cet e-mail.",
+    "errWrongPassword": "Mot de passe incorrect."
   },
   "home": {
     "wordsLeftToReview": "mots à réviser",
@@ -495,12 +507,12 @@
     "youSaid": "Vous avez dit:",
     "excellentPronunciation": "Excellente prononciation !",
     "microphonePermissionDenied": "Autorisation du microphone refusée",
-    "failedToStartRecording": "Échec du démarrage de l'enregistrement : {error}",
+    "failedToStartRecording": "Impossible de démarrer l’enregistrement.",
     "recordedAudioUnreadable": "L'audio enregistré n'a pas pu être lu",
     "noRecordedAudioReturned": "Aucun audio enregistré n'a été renvoyé",
-    "failedToStopRecording": "Échec de l'arrêt de l'enregistrement : {error}",
+    "failedToStopRecording": "Impossible d’arrêter l’enregistrement.",
     "enterPhraseFirst": "Entrez d'abord une phrase",
-    "failedToPlayAudio": "Échec de la lecture audio : {error}",
+    "failedToPlayAudio": "Impossible de lire l’audio.",
     "speak": "Parler",
     "listen": "Écouter",
     "recording": "Enregistrement...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "Enregistrement — touchez pour arrêter",
     "recognizing": "Reconnaissance de la parole...",
     "notMatchedTryAgain": "Pas encore correct — réessayez",
-    "saidCorrectly": "Vous l'avez bien dit"
+    "saidCorrectly": "Vous l'avez bien dit",
+    "noSpeechDetected": "Aucune parole détectée. Veuillez réessayer.",
+    "microphoneUnavailable": "Microphone indisponible. Vérifiez vos autorisations.",
+    "recognitionAborted": "La reconnaissance vocale a été interrompue.",
+    "languageNotSupported": "Cette langue n'est pas prise en charge par la reconnaissance vocale.",
+    "recognitionFailed": "La reconnaissance vocale a échoué. Veuillez réessayer.",
+    "recognitionUnsupported": "La reconnaissance vocale n'est pas prise en charge sur ce navigateur ou cet appareil.",
+    "textRequired": "Veuillez d'abord saisir un texte.",
+    "transcribeFailed": "Impossible de transcrire l'enregistrement. Veuillez réessayer.",
+    "recordingStartFailed": "Impossible de démarrer l'enregistrement. Veuillez réessayer.",
+    "recordingStopFailed": "Impossible d'arrêter l'enregistrement. Veuillez réessayer.",
+    "playbackFailed": "Impossible de lire l'audio. Veuillez réessayer."
   },
   "chat": {
     "loadMore": "Charger plus...",
@@ -733,7 +756,8 @@
     "emptyChart": "Commencez à apprendre pour voir votre graphique de progression !",
     "tabLessons": "Leçons",
     "tabActivity": "Activité",
-    "tabContent": "Contenu"
+    "tabContent": "Contenu",
+    "noStreakFreezes": "Aucun gel de série disponible."
   },
   "settings": {
     "title": "Paramètres",
@@ -850,7 +874,10 @@
       "yourTimeBody": "C'est vous qui avez choisi ce moment. Ouvrez l'appli, pointez, puis reprenez votre journée.",
       "fadingTitle": "Les mots d'hier s'estompent",
       "fadingBody": "Réviser juste avant d'oublier, c'est là que la mémoire gagne le plus."
-    }
+    },
+    "markReadFailed": "Impossible de marquer comme lu. Veuillez réessayer.",
+    "deleteFailed": "Impossible de supprimer la notification. Veuillez réessayer.",
+    "restoreFailed": "Impossible de restaurer la notification. Veuillez réessayer."
   },
   "errors": {
     "networkError": "Erreur réseau",
@@ -860,7 +887,17 @@
     "unknown": "Une erreur inconnue s'est produite",
     "timeout": "Délai de requête dépassé",
     "noInternet": "Pas de connexion Internet",
-    "genericRetry": "Une erreur est survenue. Veuillez réessayer."
+    "genericRetry": "Une erreur est survenue. Veuillez réessayer.",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "sessionExpiredOnServer": "Votre session a expiré sur le serveur. Une nouvelle a été ouverte.",
+    "sessionOtherAccount": "Cette session appartient à un autre compte. Démarrez une nouvelle conversation.",
+    "sessionStartFailed": "Impossible de démarrer la session. Veuillez réessayer.",
+    "noActiveSession": "Aucune session active.",
+    "loadFailed": "Impossible de charger les données. Veuillez réessayer.",
+    "saveFailed": "Impossible d'enregistrer. Veuillez réessayer.",
+    "submitFailed": "Impossible d'envoyer. Veuillez réessayer.",
+    "networkRetry": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+    "localStorage": "Erreur de stockage local. Veuillez réessayer."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -939,7 +976,10 @@
     "nearbyReason": "Proche",
     "refreshSuggestions": "Actualiser les suggestions",
     "disableNearby": "Désactiver à proximité",
-    "refreshNearby": "Actualiser à proximité"
+    "refreshNearby": "Actualiser à proximité",
+    "searchFailed": "Impossible de rechercher des utilisateurs. Veuillez réessayer.",
+    "locationPermissionDenied": "Autorisation de localisation refusée.",
+    "locationServicesDisabled": "Les services de localisation sont désactivés."
   },
   "onboarding": {
     "welcome": "Bienvenue sur LexiLingo !",
@@ -1415,7 +1455,10 @@
     "suggestedCoursesLabel": "Cours pour vous",
     "modeFree": "Discussion",
     "modeTopics": "Sujets",
-    "voiceSpeed": "Vitesse de la voix"
+    "voiceSpeed": "Vitesse de la voix",
+    "historyUnavailable": "L'historique de la session est temporairement indisponible. Vous pouvez continuer à discuter.",
+    "offlineQueued": "Vous êtes hors ligne. Votre message sera envoyé à la reconnexion.",
+    "voiceProcessingFailed": "Le traitement vocal a échoué. Veuillez réessayer."
   },
   "youtube": {
     "subtitles": "Sous-titres",
@@ -1761,7 +1804,11 @@
     "tagCrawl": "Collectés",
     "tagSociety": "Société",
     "tagSeed": "Base",
-    "tagHistory": "Histoire"
+    "tagHistory": "Histoire",
+    "removeFromDeckFailed": "Impossible de retirer du paquet",
+    "alreadyInVocabulary": "« {} » est déjà dans votre vocabulaire.",
+    "savedNewWord": "Nouveau mot « {} » enregistré dans votre vocabulaire.",
+    "savedWord": "« {} » enregistré dans votre vocabulaire."
   },
   "legal": {
     "privacy_title": "Politique de confidentialité",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "Problème de connexion. Veuillez réessayer."
   },
   "dailyChallenges": {
-    "rewardClaimed": "Récompense récupérée !"
+    "rewardClaimed": "Récompense récupérée !",
+    "rewardAlreadyClaimed": "Cette récompense a déjà été réclamée.",
+    "challengeNotCompleted": "Terminez d'abord le défi pour réclamer la récompense."
   },
   "contentActivity": {
     "summary": "{days} derniers jours : {minutes} min, {sessions} activités, {xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "Compréhension orale",
     "skillReading": "Compréhension écrite",
     "skillWriting": "Expression écrite",
-    "skillSpeaking": "Expression orale"
+    "skillSpeaking": "Expression orale",
+    "audioUnavailable": "Audio indisponible.",
+    "nothingTranscribed": "Rien n’a été transcrit. Réessayez.",
+    "transcribeFailed": "Impossible de transcrire l’enregistrement.",
+    "micPermissionRequired": "L’autorisation du microphone est requise."
   }
 }

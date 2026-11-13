@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:lexilingo_app/features/social/data/repositories/social_repository.dart';
@@ -248,7 +249,7 @@ class SocialProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error searching users: $e');
       _searchResults = [];
-      _searchError = 'Could not search users. Please try again.';
+      _searchError = 'social.searchFailed'.tr();
     } finally {
       _isSearching = false;
       notifyListeners();
@@ -308,7 +309,7 @@ class SocialProvider extends ChangeNotifier {
       if (!granted) {
         _nearbyUsers = [];
         _isNearbyEnabled = false;
-        _nearbyError ??= 'Location permission denied';
+        _nearbyError ??= 'social.locationPermissionDenied'.tr();
         return;
       }
 
@@ -319,7 +320,7 @@ class SocialProvider extends ChangeNotifier {
       _nearbyUsers = result.users;
       _isNearbyEnabled = result.locationEnabled;
     } catch (e) {
-      _nearbyError = e.toString();
+      _nearbyError = 'errors.genericRetry'.tr();
       debugPrint('Error loading nearby users: $e');
     } finally {
       _isLoadingNearby = false;
@@ -335,7 +336,7 @@ class SocialProvider extends ChangeNotifier {
       _nearbyError = null;
       notifyListeners();
     } catch (e) {
-      _nearbyError = e.toString();
+      _nearbyError = 'errors.genericRetry'.tr();
       debugPrint('Error disabling nearby sharing: $e');
       notifyListeners();
     }
@@ -353,7 +354,7 @@ class SocialProvider extends ChangeNotifier {
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      _nearbyError = 'Location services are disabled';
+      _nearbyError = 'social.locationServicesDisabled'.tr();
       return false;
     }
 

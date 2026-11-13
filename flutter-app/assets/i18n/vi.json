@@ -129,7 +129,19 @@
     "errAlreadyExists": "Email hoặc username đã được sử dụng",
     "errValidation": "Thông tin không hợp lệ. Vui lòng kiểm tra lại",
     "errNetwork": "Không có kết nối mạng. Vui lòng thử lại",
-    "errRateLimited": "Bạn đã thử quá nhiều lần. Vui lòng đợi một chút"
+    "errRateLimited": "Bạn đã thử quá nhiều lần. Vui lòng đợi một chút",
+    "googleSignInCancelled": "Đăng nhập Google đã bị hủy.",
+    "facebookSignInCancelled": "Đăng nhập Facebook đã bị hủy hoặc thất bại.",
+    "errServerTimeout": "Máy chủ không phản hồi. Vui lòng thử lại sau giây lát.",
+    "errProfileLoad": "Đăng nhập thành công nhưng không tải được hồ sơ của bạn. Vui lòng thử lại.",
+    "errServer": "Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.",
+    "errGoogleConfig": "Đăng nhập Google chưa được cấu hình đúng. Vui lòng liên hệ hỗ trợ.",
+    "errAccountExists": "Email này đã liên kết với phương thức đăng nhập khác. Vui lòng đăng nhập bằng phương thức đó trước.",
+    "errCors": "Đăng nhập tạm thời bị chặn. Vui lòng thử lại sau giây lát.",
+    "errCancelled": "Đăng nhập đã bị hủy.",
+    "errInvalidPassword": "Mật khẩu không hợp lệ.",
+    "errUserNotFound": "Không tìm thấy tài khoản với email này.",
+    "errWrongPassword": "Mật khẩu không đúng."
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",
@@ -495,12 +507,12 @@
     "youSaid": "Bạn đã nói:",
     "excellentPronunciation": "Phát âm xuất sắc!",
     "microphonePermissionDenied": "Bạn chưa cấp quyền micro",
-    "failedToStartRecording": "Không thể bắt đầu ghi âm: {error}",
+    "failedToStartRecording": "Không thể bắt đầu ghi âm.",
     "recordedAudioUnreadable": "Không thể đọc file ghi âm",
     "noRecordedAudioReturned": "Không nhận được dữ liệu ghi âm",
-    "failedToStopRecording": "Không thể dừng ghi âm: {error}",
+    "failedToStopRecording": "Không thể dừng ghi âm.",
     "enterPhraseFirst": "Hãy nhập câu trước",
-    "failedToPlayAudio": "Không thể phát âm thanh: {error}",
+    "failedToPlayAudio": "Không thể phát âm thanh.",
     "speak": "Nói",
     "listen": "Nghe",
     "recording": "Đang ghi âm...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "Đang ghi âm - nhấn để dừng",
     "recognizing": "Đang nhận dạng giọng nói...",
     "notMatchedTryAgain": "Chưa khớp, hãy thử lại",
-    "saidCorrectly": "Bạn đã nói đúng"
+    "saidCorrectly": "Bạn đã nói đúng",
+    "noSpeechDetected": "Không nhận được giọng nói. Vui lòng thử lại.",
+    "microphoneUnavailable": "Không dùng được micro. Vui lòng kiểm tra quyền truy cập.",
+    "recognitionAborted": "Nhận dạng giọng nói đã bị gián đoạn.",
+    "languageNotSupported": "Ngôn ngữ này chưa được hỗ trợ nhận dạng giọng nói.",
+    "recognitionFailed": "Nhận dạng giọng nói thất bại. Vui lòng thử lại.",
+    "recognitionUnsupported": "Trình duyệt hoặc thiết bị này không hỗ trợ nhận dạng giọng nói.",
+    "textRequired": "Vui lòng nhập văn bản trước.",
+    "transcribeFailed": "Không chuyển được bản ghi âm thành văn bản. Vui lòng thử lại.",
+    "recordingStartFailed": "Không bắt đầu ghi âm được. Vui lòng thử lại.",
+    "recordingStopFailed": "Không dừng ghi âm được. Vui lòng thử lại.",
+    "playbackFailed": "Không phát được âm thanh. Vui lòng thử lại."
   },
   "chat": {
     "loadMore": "Tải thêm...",
@@ -733,7 +756,8 @@
     "emptyChart": "Bắt đầu học để xem biểu đồ tiến độ của bạn!",
     "tabLessons": "Bài học",
     "tabActivity": "Hoạt động",
-    "tabContent": "Nội dung"
+    "tabContent": "Nội dung",
+    "noStreakFreezes": "Bạn không còn lượt đóng băng chuỗi."
   },
   "settings": {
     "title": "Cài đặt",
@@ -850,7 +874,10 @@
       "yourTimeBody": "Chính bạn chọn giờ này để học. Mở app, điểm danh, rồi quay lại việc đang làm.",
       "fadingTitle": "Từ hôm qua đang phai dần",
       "fadingBody": "Ôn lại lúc sắp quên là lúc trí nhớ được lợi nhiều nhất."
-    }
+    },
+    "markReadFailed": "Không đánh dấu đã đọc được. Vui lòng thử lại.",
+    "deleteFailed": "Không xóa được thông báo. Vui lòng thử lại.",
+    "restoreFailed": "Không khôi phục được thông báo. Vui lòng thử lại."
   },
   "errors": {
     "networkError": "Lỗi kết nối mạng",
@@ -860,7 +887,17 @@
     "unknown": "Đã xảy ra lỗi không xác định",
     "timeout": "Hết thời gian chờ",
     "noInternet": "Không có kết nối internet",
-    "genericRetry": "Đã xảy ra lỗi. Vui lòng thử lại."
+    "genericRetry": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "sessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    "sessionExpiredOnServer": "Phiên trò chuyện đã hết hạn trên máy chủ. Đã mở phiên mới.",
+    "sessionOtherAccount": "Phiên này thuộc về tài khoản khác. Hãy bắt đầu cuộc trò chuyện mới.",
+    "sessionStartFailed": "Không thể bắt đầu phiên. Vui lòng thử lại.",
+    "noActiveSession": "Không có phiên nào đang hoạt động.",
+    "loadFailed": "Không tải được dữ liệu. Vui lòng thử lại.",
+    "saveFailed": "Không lưu được. Vui lòng thử lại.",
+    "submitFailed": "Không gửi được. Vui lòng thử lại.",
+    "networkRetry": "Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.",
+    "localStorage": "Lỗi lưu trữ trên thiết bị. Vui lòng thử lại."
   },
   "gamification": {
     "xpEarned": "+{xp}XP",
@@ -939,7 +976,10 @@
     "nearbyReason": "Gần đây",
     "refreshSuggestions": "Làm mới gợi ý",
     "disableNearby": "Tắt tính năng gần đây",
-    "refreshNearby": "Làm mới người học gần đây"
+    "refreshNearby": "Làm mới người học gần đây",
+    "searchFailed": "Không tìm kiếm được người dùng. Vui lòng thử lại.",
+    "locationPermissionDenied": "Quyền truy cập vị trí bị từ chối.",
+    "locationServicesDisabled": "Dịch vụ vị trí đang tắt."
   },
   "onboarding": {
     "welcome": "Chào mừng đến với LexiLingo!",
@@ -1551,7 +1591,10 @@
     "suggestedCoursesLabel": "Khóa học dành cho bạn",
     "modeFree": "Trò chuyện",
     "modeTopics": "Chủ đề",
-    "voiceSpeed": "Tốc độ đọc"
+    "voiceSpeed": "Tốc độ đọc",
+    "historyUnavailable": "Lịch sử phiên tạm thời không khả dụng. Bạn vẫn có thể tiếp tục trò chuyện.",
+    "offlineQueued": "Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi có kết nối trở lại.",
+    "voiceProcessingFailed": "Xử lý giọng nói thất bại. Vui lòng thử lại."
   },
   "youtube": {
     "subtitles": "Phụ đề",
@@ -1897,7 +1940,11 @@
     "tagCrawl": "Thu thập",
     "tagSociety": "Xã hội",
     "tagSeed": "Mầm",
-    "tagHistory": "Lịch sử"
+    "tagHistory": "Lịch sử",
+    "removeFromDeckFailed": "Không xóa được khỏi bộ thẻ",
+    "alreadyInVocabulary": "\"{}\" đã có trong sổ từ vựng của bạn.",
+    "savedNewWord": "Đã lưu từ mới \"{}\" vào sổ từ vựng.",
+    "savedWord": "Đã lưu \"{}\" vào sổ từ vựng."
   },
   "legal": {
     "privacy_title": "Chính sách bảo mật",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "Chúng tôi đang gặp sự cố kết nối. Vui lòng thử lại."
   },
   "dailyChallenges": {
-    "rewardClaimed": "Đã nhận thưởng thành công!"
+    "rewardClaimed": "Đã nhận thưởng thành công!",
+    "rewardAlreadyClaimed": "Phần thưởng này đã được nhận rồi.",
+    "challengeNotCompleted": "Hãy hoàn thành thử thách trước khi nhận thưởng."
   },
   "contentActivity": {
     "summary": "{days} ngày qua: {minutes} phút, {sessions} lượt, {xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "Nghe",
     "skillReading": "Đọc",
     "skillWriting": "Viết",
-    "skillSpeaking": "Nói"
+    "skillSpeaking": "Nói",
+    "audioUnavailable": "Không có âm thanh.",
+    "nothingTranscribed": "Không nhận ra được lời nào. Hãy thử lại.",
+    "transcribeFailed": "Không thể chuyển bản ghi thành văn bản.",
+    "micPermissionRequired": "Cần cấp quyền micro để ghi âm."
   }
 }

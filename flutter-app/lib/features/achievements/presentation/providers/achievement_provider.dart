@@ -1,6 +1,7 @@
 /// Achievement Provider - State management for achievements
 library;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
@@ -95,8 +96,8 @@ class AchievementProvider with ChangeNotifier {
         _usingSampleData = false;
       }
     } catch (e) {
-      _error = 'Failed to load achievements: $e';
-      debugPrint(_error);
+      _error = 'errors.loadFailed'.tr();
+      debugPrint('Failed to load achievements: $e');
       // Fallback to sample data on error
       _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
       _usingSampleData = true;
@@ -118,8 +119,8 @@ class AchievementProvider with ChangeNotifier {
         await repository.getMyAchievements(),
       );
     } catch (e) {
-      _error = 'Failed to load my achievements: $e';
-      debugPrint(_error);
+      _error = 'errors.loadFailed'.tr();
+      debugPrint('Failed to load my achievements: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -154,8 +155,8 @@ class AchievementProvider with ChangeNotifier {
         _usingSampleData = false;
       }
     } catch (e) {
-      _error = 'Failed to load achievements: $e';
-      debugPrint(_error);
+      _error = 'errors.loadFailed'.tr();
+      debugPrint('Failed to load achievements: $e');
       // Fallback to sample data on error
       _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
       _usingSampleData = true;

@@ -129,7 +129,19 @@
     "errAlreadyExists": "이미 사용 중인 이메일 또는 사용자 이름입니다",
     "errValidation": "입력한 정보가 올바르지 않습니다. 다시 확인해 주세요.",
     "errNetwork": "네트워크에 연결할 수 없습니다. 다시 시도해 주세요.",
-    "errRateLimited": "시도 횟수가 너무 많습니다. 잠시 기다려 주세요."
+    "errRateLimited": "시도 횟수가 너무 많습니다. 잠시 기다려 주세요.",
+    "googleSignInCancelled": "Google 로그인이 취소되었습니다.",
+    "facebookSignInCancelled": "Facebook 로그인이 취소되었거나 실패했습니다.",
+    "errServerTimeout": "서버가 응답하지 않습니다. 잠시 후 다시 시도해 주세요.",
+    "errProfileLoad": "로그인은 되었지만 프로필을 불러올 수 없습니다. 다시 시도해 주세요.",
+    "errServer": "서버 오류가 발생했습니다. 나중에 다시 시도해 주세요.",
+    "errGoogleConfig": "Google 로그인이 올바르게 설정되지 않았습니다. 고객 지원에 문의해 주세요.",
+    "errAccountExists": "이 이메일은 이미 다른 로그인 방법에 연결되어 있습니다. 먼저 해당 방법으로 로그인해 주세요.",
+    "errCors": "로그인이 일시적으로 차단되었습니다. 잠시 후 다시 시도해 주세요.",
+    "errCancelled": "로그인이 취소되었습니다.",
+    "errInvalidPassword": "비밀번호가 올바르지 않습니다.",
+    "errUserNotFound": "이 이메일로 등록된 계정이 없습니다.",
+    "errWrongPassword": "비밀번호가 틀렸습니다."
   },
   "home": {
     "wordsLeftToReview": "복습할 단어",
@@ -495,12 +507,12 @@
     "youSaid": "당신은 말했다:",
     "excellentPronunciation": "발음이 훌륭해요!",
     "microphonePermissionDenied": "마이크 권한이 거부되었습니다.",
-    "failedToStartRecording": "녹음을 시작하지 못했습니다: {error}",
+    "failedToStartRecording": "녹음을 시작하지 못했습니다.",
     "recordedAudioUnreadable": "녹음된 오디오를 읽을 수 없습니다.",
     "noRecordedAudioReturned": "녹음된 오디오가 반환되지 않았습니다.",
-    "failedToStopRecording": "녹화를 중지하지 못했습니다: {error}",
+    "failedToStopRecording": "녹음을 중지하지 못했습니다.",
     "enterPhraseFirst": "먼저 문구를 입력하세요.",
-    "failedToPlayAudio": "오디오 재생 실패: {error}",
+    "failedToPlayAudio": "오디오를 재생하지 못했습니다.",
     "speak": "말하다",
     "listen": "듣다",
     "recording": "녹음...",
@@ -545,7 +557,18 @@
     "recordingTapToStop": "녹음 중 — 눌러서 중지",
     "recognizing": "음성을 인식하는 중...",
     "notMatchedTryAgain": "아직 일치하지 않아요. 다시 시도해 보세요.",
-    "saidCorrectly": "정확하게 말했어요"
+    "saidCorrectly": "정확하게 말했어요",
+    "noSpeechDetected": "음성이 감지되지 않았습니다. 다시 시도해 주세요.",
+    "microphoneUnavailable": "마이크를 사용할 수 없습니다. 권한을 확인해 주세요.",
+    "recognitionAborted": "음성 인식이 중단되었습니다.",
+    "languageNotSupported": "이 언어는 음성 인식을 지원하지 않습니다.",
+    "recognitionFailed": "음성 인식에 실패했습니다. 다시 시도해 주세요.",
+    "recognitionUnsupported": "이 브라우저 또는 기기에서는 음성 인식을 지원하지 않습니다.",
+    "textRequired": "먼저 텍스트를 입력해 주세요.",
+    "transcribeFailed": "녹음을 텍스트로 변환할 수 없습니다. 다시 시도해 주세요.",
+    "recordingStartFailed": "녹음을 시작할 수 없습니다. 다시 시도해 주세요.",
+    "recordingStopFailed": "녹음을 중지할 수 없습니다. 다시 시도해 주세요.",
+    "playbackFailed": "오디오를 재생할 수 없습니다. 다시 시도해 주세요."
   },
   "chat": {
     "loadMore": "더 보기...",
@@ -733,7 +756,8 @@
     "emptyChart": "학습을 시작하면 진행 그래프가 표시됩니다!",
     "tabLessons": "레슨",
     "tabActivity": "활동",
-    "tabContent": "콘텐츠"
+    "tabContent": "콘텐츠",
+    "noStreakFreezes": "사용할 수 있는 스트릭 프리즈가 없습니다."
   },
   "settings": {
     "title": "설정",
@@ -850,7 +874,10 @@
       "yourTimeBody": "이 시간에 공부하기로 한 건 당신이에요. 앱을 열고 출석한 뒤 하던 일로 돌아가세요.",
       "fadingTitle": "어제 배운 단어가 희미해지고 있어요",
       "fadingBody": "잊어버리기 직전에 복습할 때 기억에 가장 크게 남아요."
-    }
+    },
+    "markReadFailed": "읽음으로 표시할 수 없습니다. 다시 시도해 주세요.",
+    "deleteFailed": "알림을 삭제할 수 없습니다. 다시 시도해 주세요.",
+    "restoreFailed": "알림을 복원할 수 없습니다. 다시 시도해 주세요."
   },
   "errors": {
     "networkError": "네트워크 오류",
@@ -860,7 +887,17 @@
     "unknown": "알 수 없는 오류가 발생했습니다.",
     "timeout": "요청 시간 초과",
     "noInternet": "인터넷에 연결되어 있지 않음",
-    "genericRetry": "오류가 발생했습니다. 다시 시도해 주세요."
+    "genericRetry": "오류가 발생했습니다. 다시 시도해 주세요.",
+    "sessionExpired": "로그인 세션이 만료되었습니다. 다시 로그인해 주세요.",
+    "sessionExpiredOnServer": "서버에서 세션이 만료되어 새 세션을 시작했습니다.",
+    "sessionOtherAccount": "이 세션은 다른 계정의 것입니다. 새 채팅을 시작해 주세요.",
+    "sessionStartFailed": "세션을 시작할 수 없습니다. 다시 시도해 주세요.",
+    "noActiveSession": "활성 세션이 없습니다.",
+    "loadFailed": "데이터를 불러올 수 없습니다. 다시 시도해 주세요.",
+    "saveFailed": "저장할 수 없습니다. 다시 시도해 주세요.",
+    "submitFailed": "제출할 수 없습니다. 다시 시도해 주세요.",
+    "networkRetry": "네트워크 오류입니다. 연결을 확인한 후 다시 시도해 주세요.",
+    "localStorage": "로컬 저장소 오류입니다. 다시 시도해 주세요."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -939,7 +976,10 @@
     "nearbyReason": "가까운",
     "refreshSuggestions": "새로 고침 제안",
     "disableNearby": "근처에서 비활성화",
-    "refreshNearby": "주변 새로고침"
+    "refreshNearby": "주변 새로고침",
+    "searchFailed": "사용자를 검색할 수 없습니다. 다시 시도해 주세요.",
+    "locationPermissionDenied": "위치 권한이 거부되었습니다.",
+    "locationServicesDisabled": "위치 서비스가 꺼져 있습니다."
   },
   "onboarding": {
     "welcome": "렉시링고에 오신 것을 환영합니다!",
@@ -1415,7 +1455,10 @@
     "suggestedCoursesLabel": "추천 코스",
     "modeFree": "채팅",
     "modeTopics": "토픽",
-    "voiceSpeed": "음성 속도"
+    "voiceSpeed": "음성 속도",
+    "historyUnavailable": "세션 기록을 일시적으로 불러올 수 없습니다. 채팅은 계속할 수 있습니다.",
+    "offlineQueued": "오프라인 상태입니다. 다시 연결되면 메시지가 전송됩니다.",
+    "voiceProcessingFailed": "음성 처리에 실패했습니다. 다시 시도해 주세요."
   },
   "youtube": {
     "subtitles": "자막",
@@ -1761,7 +1804,11 @@
     "tagCrawl": "수집됨",
     "tagSociety": "사회",
     "tagSeed": "시드",
-    "tagHistory": "역사"
+    "tagHistory": "역사",
+    "removeFromDeckFailed": "덱에서 제거하지 못했습니다",
+    "alreadyInVocabulary": "\"{}\"은(는) 이미 단어장에 있습니다.",
+    "savedNewWord": "새 단어 \"{}\"을(를) 단어장에 저장했습니다.",
+    "savedWord": "\"{}\"을(를) 단어장에 저장했습니다."
   },
   "legal": {
     "privacy_title": "개인정보 처리방침",
@@ -1973,7 +2020,9 @@
     "serverErrorDesc": "연결에 문제가 있습니다. 다시 시도해 주세요."
   },
   "dailyChallenges": {
-    "rewardClaimed": "보상을 받았습니다!"
+    "rewardClaimed": "보상을 받았습니다!",
+    "rewardAlreadyClaimed": "이 보상은 이미 받았습니다.",
+    "challengeNotCompleted": "보상을 받으려면 먼저 챌린지를 완료하세요."
   },
   "contentActivity": {
     "summary": "최근 {days}일: {minutes}분, {sessions}회, {xp} XP",
@@ -2001,6 +2050,10 @@
     "skillListening": "듣기",
     "skillReading": "읽기",
     "skillWriting": "쓰기",
-    "skillSpeaking": "말하기"
+    "skillSpeaking": "말하기",
+    "audioUnavailable": "오디오를 사용할 수 없습니다.",
+    "nothingTranscribed": "받아쓰기된 내용이 없습니다. 다시 시도해 주세요.",
+    "transcribeFailed": "녹음을 텍스트로 변환하지 못했습니다.",
+    "micPermissionRequired": "마이크 권한이 필요합니다."
   }
 }
