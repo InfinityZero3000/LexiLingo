@@ -56,6 +56,7 @@ Future<void> _pumpCard(
   List<CourseEntity> enrolledCourses, {
   Duration rotationInterval = const Duration(seconds: 6),
   bool reduceMotion = false,
+  double textScale = 1,
 }) async {
   final repository = _CourseRepositoryStub(enrolledCourses);
   final provider = HomeProvider(
@@ -72,7 +73,10 @@ Future<void> _pumpCard(
         builder: (context, child) => MediaQuery(
           data: MediaQuery.of(
             context,
-          ).copyWith(disableAnimations: reduceMotion),
+          ).copyWith(
+            disableAnimations: reduceMotion,
+            textScaler: TextScaler.linear(textScale),
+          ),
           child: child!,
         ),
         home: Scaffold(
@@ -170,6 +174,28 @@ void main() {
 
     expect(shown('home.continueLearningSection'), findsOneWidget);
     expect(shown('home.keepGoing'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('200% text: both faces of the card fit on a phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await _pumpCard(
+      tester,
+      [_course('mid', 42)],
+      rotationInterval: const Duration(seconds: 1),
+      textScale: 2,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });
