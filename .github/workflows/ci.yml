@@ -245,12 +245,14 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: ai-service/requirements.txt
+          cache-dependency-path: |
+            ai-service/requirements.txt
+            ai-service/requirements-dev.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints-ai.txt -r requirements.txt ruff
+          pip install -c constraints-ai.txt -r requirements-dev.txt ruff
 
       - name: Ruff focused STT correctness checks
         run: ruff check --select E9,F63,F7,F82 api/routes/stt.py api/services/stt tests/stt
