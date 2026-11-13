@@ -422,3 +422,66 @@ jobs:
       - name: Check formatting (non-blocking)
         run: dart format --output=none --set-exit-if-changed lib/
         continue-on-error: true
+
+  # ──────────────────────────────────────────────
+  # Deploy script decisions (what ships, what restarts, nothing destructive)
+  # ──────────────────────────────────────────────
+  deploy-scripts:
+    name: Deploy Script Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: auto-deploy decision tests
+        run: bash scripts/tests/test_auto_deploy.sh
+
+  # ──────────────────────────────────────────────
+  # Images → GHCR, only after every job above is green.
+  # The VPS runs nothing but these, so a green CI run for a SHA
+  # means its images exist (scripts/auto-deploy.sh relies on it).
+  # ──────────────────────────────────────────────
+  images:
+    name: Build & Push Images
+    needs: [backend, backend-migrations, ai, mcp, admin, flutter, deploy-scripts]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: backend
+            context: backend-service
+          - image: ai-service
+            context: ai-service
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The ai-service image is ~4 GB (torch CPU, llama-cpp-python); a stock runner runs out of disk without this.
+      - name: Free runner disk
+        if: matrix.image == 'ai-service'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/Dockerfile.prod
+          push: true
+          # sha-<full sha> is what the VPS pins; the branch tag is only a convenience for humans.
+          tags: |
+            ghcr.io/infinityzero3000/lexilingo/${{ matrix.image }}:sha-${{ github.sha }}
+            ghcr.io/infinityzero3000/lexilingo/${{ matrix.image }}:${{ github.ref_name }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max

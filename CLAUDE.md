@@ -414,10 +414,25 @@ whatever the machine has.
 
 ## Production Deploy — hard rules
 
-Prod is a VPS at `/opt/lexilingo` (`sgp1-01-lexi`), branch `dev`, docker-compose
-with `--env-file .env.production --env-file .env.production.secrets`.
+Prod is the LXD container `lexilingo` on the shared OVH VPS (`ovh-vps`), at
+`/opt/lexilingo`, branch `dev`, docker-compose with
+`--env-file .env.production --env-file .env.production.secrets`.
 
-**Always deploy with `./scripts/deploy-one-shot.sh`.** It does the safe thing:
+**Backend and ai-service deploy themselves; nothing is built on the VPS.**
+The `images` job in `ci.yml` builds `ghcr.io/infinityzero3000/lexilingo/{backend,ai-service}:sha-<sha>`
+only after all seven test jobs pass, and `lexilingo-auto-deploy.timer` on the box
+runs `scripts/auto-deploy.sh` every 2 minutes: newest dev CI run green → pull →
+`up -d --no-deps --no-build` the changed services → verify the whole stack →
+roll back to the previous tags if it fails. `docker-compose.images.yml` swaps
+only the `image:` of the four app services; databases, volumes and mounts are
+untouched. Design, first switch and manual rollback: `docs/operations/AUTO_DEPLOY.md`.
+
+- The checkout on the VPS is **config and data, not code**: uploaded media
+  (`backend-service/data/media`, ~300 MB) and `ai-service/data` are bind-mounted
+  from it. Never delete or reset it to "go source-free" — move those mounts first.
+- Compose, gateway and env changes are not in an image; roll them out by hand.
+
+**For anything auto-deploy does not cover, use `./scripts/deploy-one-shot.sh`.** It does the safe thing:
 `pull` → `up -d --remove-orphans` → per-service health wait → smoke test.
 Compose then recreates only what actually changed and leaves the old container
 running until the new one is up.
@@ -486,9 +501,14 @@ Rules that exist because they were violated:
 - **`OnFailure` goes in `[Unit]`.** In `[Service]` systemd ignores it with only
   a log line, so failures alert nobody. Verify with
   `systemctl show -p OnFailure --value <unit>` — empty means broken.
-- **Backups are still LOCAL ONLY.** They sit on the same disk as the database.
-  Set `OFFSITE_RCLONE_REMOTE` on `lexilingo-backup.service` to fix this; the
-  script warns on every run until you do.
+- **The server dumps cover the two databases only.** Uploaded media and
+  `ai-service/data` live in the checkout and were never in them.
+- **The off-box copy is the developer's Mac.** `scripts/pull-backups-to-mac.sh --install`
+  (LaunchAgent `me.lexilingo.backup-pull`) pulls every set 20 min after the server
+  backup, verifies each against its manifest, and also copies media and
+  `ai-service/data` into `~/Backups/lexilingo`. It never deletes on the Mac what
+  the server deleted. A Mac that is off for days means no fresh copy — check
+  `~/Backups/lexilingo/LAST_RUN`.
 
 ## Testing
 

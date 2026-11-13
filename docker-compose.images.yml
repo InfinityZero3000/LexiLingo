@@ -1,0 +1,16 @@
+# Production override: run the images CI built and tested instead of building on the VPS.
+#   docker compose -f docker-compose.yml -f docker-compose.images.yml \
+#     --env-file .env.production --env-file .env.production.secrets \
+#     --env-file /var/lib/lexilingo/auto-deploy/image-tags.env ...
+# Only the image of the four application services changes. Databases, volumes, networks and bind
+# mounts all come from docker-compose.yml untouched, so the data is the same data.
+# Worker and beat run the backend image with their own command: one image, not three builds.
+services:
+  backend-service:
+    image: ghcr.io/infinityzero3000/lexilingo/backend:${BACKEND_TAG:?BACKEND_TAG missing from image-tags.env}
+  backend-reminder-worker:
+    image: ghcr.io/infinityzero3000/lexilingo/backend:${BACKEND_TAG:?BACKEND_TAG missing from image-tags.env}
+  backend-reminder-beat:
+    image: ghcr.io/infinityzero3000/lexilingo/backend:${BACKEND_TAG:?BACKEND_TAG missing from image-tags.env}
+  ai-service:
+    image: ghcr.io/infinityzero3000/lexilingo/ai-service:${AI_TAG:?AI_TAG missing from image-tags.env}
