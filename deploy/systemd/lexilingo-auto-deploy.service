@@ -1,0 +1,18 @@
+[Unit]
+Description=LexiLingo auto-deploy: ship origin/dev once its CI run is green
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/lexilingo
+Environment=DEPLOY_BRANCH=dev
+# Optional, via a drop-in (systemctl edit lexilingo-auto-deploy):
+#   Environment=ALERT_WEBHOOK_URL=https://hooks.slack.com/services/...
+#   Environment=GITHUB_TOKEN=...   (only if the repo goes private or the shared IP hits the API rate limit)
+ExecStart=/usr/bin/bash /opt/lexilingo/scripts/auto-deploy.sh
+# A backend build is ~1 min but ai-service is 15-30 min (llama-cpp-python wheel). Cancelling one mid-layer
+# once destroyed the rollback image, so there is deliberately no start timeout.
+TimeoutStartSec=infinity
+Nice=10
