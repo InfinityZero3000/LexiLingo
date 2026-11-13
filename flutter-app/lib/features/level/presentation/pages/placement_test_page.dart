@@ -306,10 +306,9 @@ class _QuestionState extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: OutlinedButton.icon(
+              child: OutlinedButton(
                 onPressed: currentIndex == 0 ? null : onPrevious,
-                icon: const Icon(Icons.arrow_back_rounded),
-                label: Text('assessment.previous'.tr()),
+                child: Text('assessment.previous'.tr()),
               ),
             ),
             const SizedBox(width: 12),
@@ -530,22 +529,20 @@ class _ResultState extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: OutlinedButton(
                       onPressed: onRetake,
-                      icon: const Icon(Icons.replay_rounded),
-                      label: Text('assessment.retakeTest'.tr()),
+                      child: Text('assessment.retakeTest'.tr()),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.check_rounded),
-                      label: Text('common.done'.tr()),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accent,
                         foregroundColor: Colors.white,
                       ),
+                      child: Text('common.done'.tr()),
                     ),
                   ),
                 ],
@@ -677,10 +674,9 @@ class _CenteredState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            ElevatedButton.icon(
+            ElevatedButton(
               onPressed: onAction,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(actionLabel),
+              child: Text(actionLabel),
             ),
           ],
         ),

@@ -1431,10 +1431,8 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
           Row(
             children: [
               Expanded(
-                child: OutlinedButton.icon(
+                child: OutlinedButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded, size: 16),
-                  label: Text('common.close'.tr()),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
                         color: isDark ? Colors.white24 : AppColors.grey300),
@@ -1442,6 +1440,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                         borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                   ),
+                  child: Text('common.close'.tr()),
                 ),
               ),
               const SizedBox(width: 10),

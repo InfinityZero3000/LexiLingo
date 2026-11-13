@@ -195,40 +195,13 @@ class _SocialScreenState extends State<SocialScreen>
   }
 
   Widget _buildEmptyFeed() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColorRoles.primary(isDark);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
-          const SizedBox(height: 16),
-          Text(
-            'social.noActivityYet'.tr(),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'social.followFriendsToSeeActivity'.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColorRoles.textMuted(isDark)),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _showSearchSheet,
-            icon: const Icon(Icons.person_add),
-            label: Text('social.findFriends'.tr()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryColor,
-              foregroundColor: AppColors.surfaceLight,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.people_outline,
+      iconSize: 48,
+      title: 'social.noActivityYet'.tr(),
+      description: 'social.followFriendsToSeeActivity'.tr(),
+      actionLabel: 'social.findFriends'.tr(),
+      onAction: _showSearchSheet,
     );
   }
 
@@ -240,17 +213,7 @@ class _SocialScreenState extends State<SocialScreen>
         }
 
         if (provider.followers.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
-
-                const SizedBox(height: 16),
-                Text('social.noFollowersYet'.tr()),
-              ],
-            ),
-          );
+          return EmptyStateWidget(title: 'social.noFollowersYet'.tr());
         }
 
         return RefreshIndicator(
@@ -282,27 +245,10 @@ class _SocialScreenState extends State<SocialScreen>
         }
 
         if (provider.following.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.people_outline, size: 64, color: AppColors.grey400),
-                const SizedBox(height: 16),
-                Text('social.notFollowingAnyone'.tr()),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: _showSearchSheet,
-                  icon: const Icon(Icons.person_add),
-                  label: Text('social.findFriends'.tr()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColorRoles.primary(
-                      Theme.of(context).brightness == Brightness.dark,
-                    ),
-                    foregroundColor: AppColors.surfaceLight,
-                  ),
-                ),
-              ],
-            ),
+          return EmptyStateWidget(
+            title: 'social.notFollowingAnyone'.tr(),
+            actionLabel: 'social.findFriends'.tr(),
+            onAction: _showSearchSheet,
           );
         }
 
@@ -1049,12 +995,6 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red.shade300,
-                        ),
-                        const SizedBox(height: 16),
                         Text(
                           provider.searchError!,
                           textAlign: TextAlign.center,
@@ -1072,8 +1012,6 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search, size: 48, color: AppColors.grey400),
-                        const SizedBox(height: 16),
                         Text(
                           'social.searchForFriends'.tr(),
                           style: TextStyle(
@@ -1090,12 +1028,6 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.person_off,
-                          size: 48,
-                          color: AppColors.grey400,
-                        ),
-                        const SizedBox(height: 16),
                         Text(
                           'social.noUsersFound'.tr(),
                           style: TextStyle(

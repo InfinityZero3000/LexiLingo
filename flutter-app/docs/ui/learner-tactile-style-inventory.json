@@ -455,13 +455,40 @@
       }
     },
     {
-      "id": "lib/core/widgets/empty_state_widget.dart::EmptyStateWidget::BoxDecoration::0",
+      "id": "lib/core/widgets/empty_state_widget.dart::_EmptyStateWidgetState::BoxDecoration::0",
       "path": "lib/core/widgets/empty_state_widget.dart",
       "entryPoint": "surface",
-      "symbol": "EmptyStateWidget",
+      "symbol": "_EmptyStateWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 38,
+      "line": 186,
+      "category": "excluded",
+      "group": 3,
+      "status": "excluded",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      },
+      "reason": "One-shot echo ring behind the empty-state mark: a fading stroke, not a surface."
+    },
+    {
+      "id": "lib/core/widgets/empty_state_widget.dart::_EmptyStateWidgetState::BoxDecoration::1",
+      "path": "lib/core/widgets/empty_state_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_EmptyStateWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 204,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",

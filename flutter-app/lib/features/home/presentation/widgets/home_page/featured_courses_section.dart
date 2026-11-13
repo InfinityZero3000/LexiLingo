@@ -61,10 +61,9 @@ class FeaturedCoursesEmptyState extends StatelessWidget {
           const Spacer(),
           Row(
             children: [
-              FilledButton.icon(
+              FilledButton(
                 onPressed: () => provider.loadFeaturedCourses(),
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: Text('home.reload'.tr()),
+                child: Text('home.reload'.tr()),
               ),
               const SizedBox(width: 10),
               TextButton(
