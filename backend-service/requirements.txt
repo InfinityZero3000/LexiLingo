@@ -18,6 +18,8 @@ alembic>=1.20.1
 # Data Validation
 pydantic>=2.14.3
 pydantic-settings>=2.16.2
+# slim image has no system zoneinfo aliases; browsers report e.g. Asia/Saigon
+tzdata>=2025.2
 email-validator>=2.3.0
 
 # Security
