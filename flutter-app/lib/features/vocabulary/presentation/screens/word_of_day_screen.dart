@@ -58,6 +58,9 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
     final localizedTranslation = word.getTranslation(
       context.locale.languageCode,
     );
+    final definitionTr = word.getDefinitionTranslation(
+      context.locale.languageCode,
+    );
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
@@ -163,12 +166,14 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
 
                 // Translation in the user's app language (hidden when the word
                 // has no entry for that locale).
-                if (localizedTranslation != null) ...[
+                if (localizedTranslation != null || definitionTr != null) ...[
                   const SizedBox(height: 16),
                   _Section(
                     title: 'vocabulary.translationLabel'.tr(),
                     child: Text(
-                      localizedTranslation,
+                      [localizedTranslation, definitionTr]
+                          .whereType<String>()
+                          .join('\n'),
                       style: TextStyle(
                         fontSize: 15,
                         color: AppColorRoles.textPrimary(isDark),

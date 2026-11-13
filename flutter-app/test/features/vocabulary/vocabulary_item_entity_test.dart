@@ -30,9 +30,33 @@ void main() {
       expect(_word({'vi': 'kéo'}).getTranslation('vi'), 'kéo');
     });
 
+    test('hides a translation that only repeats the definition', () {
+      final copy = {'en': 'To pull or move something with force '};
+      expect(_word(copy).getTranslation('en'), isNull);
+      expect(_word(copy).getTranslation('ja'), isNull);
+    });
+
     test('treats empty and absent translations alike', () {
       expect(_word({'vi': ''}).getTranslation('vi'), isNull);
       expect(_word(null).getTranslation('vi'), isNull);
+    });
+  });
+
+  group('getDefinitionTranslation', () {
+    test('reads the locale entry and never falls back', () {
+      final w = _word({
+        'definitions': {'ja': '力を入れて引く'},
+      });
+      expect(w.getDefinitionTranslation('ja'), '力を入れて引く');
+      expect(w.getDefinitionTranslation('vi'), isNull);
+      expect(_word(null).getDefinitionTranslation('ja'), isNull);
+    });
+
+    test('hides a definition that only repeats the English one', () {
+      final w = _word({
+        'definitions': {'fr': ' To pull or move something with force'},
+      });
+      expect(w.getDefinitionTranslation('fr'), isNull);
     });
   });
 }

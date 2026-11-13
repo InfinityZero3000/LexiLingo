@@ -35,10 +35,30 @@ class VocabularyItemEntity {
   /// Get localized translation dynamically.
   /// Never falls back to Vietnamese — showing `vi` to a non-Vietnamese user is
   /// noise, not a translation. Null means "no translation for this locale".
+  /// A copy of the English definition is not a translation either, so it is
+  /// hidden rather than shown twice.
   String? getTranslation(String localeCode) {
     final text =
         translation?[localeCode] as String? ?? translation?['en'] as String?;
-    return (text == null || text.isEmpty) ? null : text;
+    if (text == null || text.trim().isEmpty) return null;
+    if (text.trim().toLowerCase() == definition.trim().toLowerCase()) {
+      return null;
+    }
+    return text;
+  }
+
+  /// The English definition in the user's language
+  /// (`translation.definitions.<locale>`). Null when absent — no fallback —
+  /// or when it only repeats the English text (a cognate of a one-word
+  /// definition such as "opposition").
+  String? getDefinitionTranslation(String localeCode) {
+    final defs = translation?['definitions'];
+    final text = defs is Map ? defs[localeCode] : null;
+    if (text is! String || text.trim().isEmpty) return null;
+    if (text.trim().toLowerCase() == definition.trim().toLowerCase()) {
+      return null;
+    }
+    return text;
   }
 
   /// Get Vietnamese translation

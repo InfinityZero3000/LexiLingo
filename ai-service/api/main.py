@@ -228,8 +228,6 @@ async def lifespan(app: FastAPI):
         logger.info(" Redis & Rate Limiter initialized")
     except Exception as e:
         _groq_pool = None
-        if os.getenv("GROQ_REQUIRE_SEVEN_KEYS", "false").lower() == "true":
-            raise RuntimeError("Strict Groq key-pool initialization failed") from e
         logger.warning(f"Redis initialization failed; continuing without cache/rate pool: {e}")
 
     _http_client = httpx.AsyncClient(timeout=30.0)

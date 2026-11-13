@@ -358,7 +358,8 @@ any one of them degrades a feature; losing the process costs chat, translate, ST
 and TRACE-CAG all at once. So **every optional subsystem is wrapped**, and new
 ones must be:
 
-- Redis / Groq key pool — caught and logged (unless `GROQ_REQUIRE_SEVEN_KEYS`).
+- Redis / Groq key pool — caught and logged. Any number of keys works; the old
+  exactly-seven rule (`GROQ_REQUIRE_SEVEN_KEYS`) was removed 2026-11-13.
 - Piper TTS warmup — caught and logged.
 - **Learner observation forwarder** — caught and logged since 2026-10-02. It only
   forwards skill evidence to backend-service; chat has to keep working without it.

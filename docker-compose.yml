@@ -284,8 +284,7 @@ services:
       BACKEND_AUDIT_INGEST_URL: http://backend-service:8000/api/v1/ai-audit/events
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
-      GROQ_API_KEYS: ${GROQ_API_KEYS:?Set exactly seven Groq keys}
-      GROQ_REQUIRE_SEVEN_KEYS: "true"
+      GROQ_API_KEYS: ${GROQ_API_KEYS:?Set GROQ_API_KEYS (comma-separated, any number)}
       GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       GROQ_SLOT_TELEMETRY: ${GROQ_SLOT_TELEMETRY:-false}
       TRACECAG_GROQ_RPM: ${TRACECAG_GROQ_RPM:-28}
