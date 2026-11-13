@@ -23,6 +23,7 @@ import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_r
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_hub_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -218,9 +219,10 @@ void main() {
   bool chatActive(WidgetTester tester) =>
       tester.widget<LexiChatPage>(chatPage).isActive;
 
-  // A mode is built on its first frame and loads its data on the next.
+  // A mode is built on its first frame, slides in over ~320ms and loads its
+  // data once the slide is done.
   Future<void> settleModes(WidgetTester tester) async {
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < 8; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
   }
@@ -333,5 +335,35 @@ void main() {
 
     expect(chatActive(tester), isTrue);
     expect(find.byType(TextField), findsOneWidget);
+  });
+
+  hubTest('the switch morphs between its narrow and wide slots', (
+    tester,
+  ) async {
+    await pumpHub(tester);
+    final switches = find.byType(LexiModeSwitch);
+    expect(switches, findsOneWidget);
+    final narrow = tester.getSize(switches).width;
+
+    await tester.tap(find.byIcon(PhosphorIconsRegular.chatCircleDots));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+
+    // Mid-flight: the chat page is still painted under the fading topics
+    // pane, and the overlay switch sits between the two slot widths.
+    expect(find.byType(LexiChatPage), findsOneWidget);
+    final widths = tester
+        .widgetList<LexiModeSwitch>(switches)
+        .map((w) => tester.getSize(find.byWidget(w)).width)
+        .toList();
+    final wide = widths.reduce((a, b) => a > b ? a : b);
+    expect(wide, greaterThan(narrow));
+    expect(widths.where((w) => w > narrow && w < wide), hasLength(1));
+
+    await settleModes(tester);
+    expect(switches, findsOneWidget);
+    expect(tester.getSize(switches).width, wide);
+    expect(find.byType(LexiChatPage), findsNothing);
   });
 }

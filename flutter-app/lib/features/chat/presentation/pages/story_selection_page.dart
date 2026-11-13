@@ -38,7 +38,15 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+    if (!widget.embedded) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+      return;
+    }
+    // Embedded in the Lexi hub the page slides in right after it is built;
+    // fetching inside that slide competes with it for frames.
+    Future<void>.delayed(const Duration(milliseconds: 340), () {
+      if (mounted) _load();
+    });
   }
 
   void _load() {
@@ -376,11 +384,13 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         }
 
         final story = stories[index - 1];
-        return _TopicListItem(
-          story: story,
-          onTap: () => _handleTopicSelection(story),
-          theme: theme,
-          isDark: isDark,
+        return RepaintBoundary(
+          child: _TopicListItem(
+            story: story,
+            onTap: () => _handleTopicSelection(story),
+            theme: theme,
+            isDark: isDark,
+          ),
         );
       },
     );
