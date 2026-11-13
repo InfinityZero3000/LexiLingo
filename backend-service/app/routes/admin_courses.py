@@ -868,8 +868,15 @@ async def update_vocabulary(
         raise HTTPException(status_code=404, detail="Vocabulary not found")
     
     if word is not None: vocab.word = word
-    if definition is not None: vocab.definition = definition
-    if translation is not None: vocab.translation = {"vi": translation}
+    if definition is not None:
+        if definition != vocab.definition and isinstance(vocab.translation, dict):
+            # The translated definitions describe the old wording; the
+            # translate script refills them.
+            vocab.translation = {k: v for k, v in vocab.translation.items() if k != "definitions"}
+        vocab.definition = definition
+    if translation is not None:
+        # Merge: the other locales and examples live in the same dict.
+        vocab.translation = {**(vocab.translation or {}), "vi": translation}
     if part_of_speech is not None: vocab.part_of_speech = part_of_speech
     if pronunciation is not None: vocab.pronunciation = pronunciation
     if difficulty_level is not None: vocab.difficulty_level = difficulty_level
