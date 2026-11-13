@@ -184,7 +184,6 @@
     "navDiscovery": "탐색",
     "navLearning": "학습",
     "navLexi": "렉시",
-    "navTopic": "토픽",
     "navAccount": "계정",
     "streak": "연속: {count}일",
     "continueLesson": "학습 계속하기",
@@ -299,7 +298,8 @@
     "greetingPhraseMorning": "Good morning",
     "greetingPhraseAfternoon": "Good afternoon",
     "greetingPhraseEvening": "Good evening",
-    "greetingPhraseNight": "Good night"
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "연습"
   },
   "course": {
     "title": "행동",
@@ -469,7 +469,17 @@
     "easyDifficulty": "쉬운",
     "perfectDifficulty": "완벽한!",
     "blackout": "정전 (0)",
-    "perfectFive": "완벽하다 (5)"
+    "perfectFive": "완벽하다 (5)",
+    "nothingDueTitle": "복습을 모두 마쳤어요!",
+    "nothingDueBody": "지금은 복습할 단어가 없습니다. 나중에 다시 오거나 새 단어를 컬렉션에 추가해 보세요.",
+    "nothingDueAction": "뒤로",
+    "loadFailed": "단어를 불러오지 못했습니다. 다시 시도해 주세요.",
+    "unexpectedError": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "noVocabularyForTopic": "“{topic}”에 해당하는 단어가 없습니다.",
+    "noVocabularyInDeck": "이 컬렉션에는 아직 단어가 없습니다.",
+    "prepareFailed": "학습용 카드를 준비하지 못했습니다.",
+    "submitFailed": "복습 결과를 저장하지 못했습니다. 다시 시도해 주세요.",
+    "quizNotEnough": "퀴즈를 만들기에는 아직 단어가 부족합니다."
   },
   "voice": {
     "practiceTitle": "음성 연습",
@@ -1251,8 +1261,13 @@
     "filterIntermediate": "중급",
     "filterAdvanced": "고급의",
     "popularScenariosTitle": "인기 시나리오",
-    "seeAllLink": "모두 보기",
-    "noTopicsFound": "주제를 찾을 수 없습니다."
+    "noTopicsFound": "주제를 찾을 수 없습니다.",
+    "emptyTitle": "아직 주제가 없습니다",
+    "emptyBody": "대화 주제를 불러오지 못했습니다. 다시 시도하거나, 그동안 렉시와 자유롭게 대화해 보세요.",
+    "retry": "다시 시도",
+    "openFreeChat": "렉시와 대화하기",
+    "noMatchBody": "검색어나 레벨 필터에 맞는 주제가 없습니다.",
+    "clearFilters": "필터 지우기"
   },
   "topicChat": {
     "preparingTopicMessage": "주제를 준비 중입니다...",
@@ -1397,7 +1412,10 @@
     "conceptCollocation": "연어",
     "conceptPhonology": "발음",
     "conceptSkill": "스킬",
-    "suggestedCoursesLabel": "추천 코스"
+    "suggestedCoursesLabel": "추천 코스",
+    "modeFree": "채팅",
+    "modeTopics": "토픽",
+    "voiceSpeed": "음성 속도"
   },
   "youtube": {
     "subtitles": "자막",
@@ -1883,7 +1901,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "연습 문제를 몇 개 풀면 집중 기술이 여기에 표시됩니다."
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",

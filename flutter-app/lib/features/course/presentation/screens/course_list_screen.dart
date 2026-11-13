@@ -795,11 +795,23 @@ class _HorizontalCourseCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tags row — horizontally scrollable, above title
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
+                      // Tags row — horizontally scrollable, above title. The
+                      // fade says "more to the right" instead of a hard cut
+                      // through the last chip.
+                      ShaderMask(
+                        blendMode: BlendMode.dstIn,
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [
+                            Colors.white,
+                            Colors.white,
+                            Colors.transparent,
+                          ],
+                          stops: [0, 0.85, 1],
+                        ).createShader(bounds),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
                             // Language chip (INT + en)
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -896,7 +908,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 ),
                               ),
                             ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
 

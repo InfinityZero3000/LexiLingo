@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
@@ -87,7 +88,6 @@ import 'package:lexilingo_app/features/books/presentation/providers/book_provide
 import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
 import 'package:lexilingo_app/features/mistakes/presentation/pages/mistake_notebook_page.dart';
 import 'package:lexilingo_app/features/offline/presentation/pages/offline_sync_center_page.dart';
-import 'package:lexilingo_app/features/practice/presentation/pages/practice_lab_page.dart';
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
@@ -119,6 +119,7 @@ void _onFlutterError(FlutterErrorDetails details) {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await initializeDateFormatting();
 
   if (kIsWeb) {
     // Avoid sqflite web worker boot failures when sqflite_sw.js is not deployed.
@@ -455,7 +456,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 (context) => const TodayPlanPage(),
               ),
               '/practice-lab': LearnerRoute.builder(
-                (context) => const PracticeLabPage(),
+                (context) => const MainScreen(initialIndex: 3),
               ),
               '/mistake-notebook': LearnerRoute.builder(
                 (context) => const MistakeNotebookPage(),

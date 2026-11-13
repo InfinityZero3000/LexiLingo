@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_navigation.dart';
+import 'package:lexilingo_app/features/vocabulary/due_vocabulary_count.dart';
 import 'package:provider/provider.dart';
 
 class PracticeLabPage extends StatefulWidget {
@@ -23,6 +24,9 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
   // top suggestion while it resolves.
   bool _hasPremium = false;
 
+  // Null until known. Zero removes the review card from the suggestions.
+  int? _dueVocabularyCount;
+
   @override
   void initState() {
     super.initState();
@@ -30,6 +34,7 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
       context.read<ProficiencyProvider>().loadProfile();
     });
     _loadPremiumStatus();
+    _loadDueVocabulary();
   }
 
   Future<void> _loadPremiumStatus() async {
@@ -43,77 +48,109 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
     }
   }
 
+  Future<void> _loadDueVocabulary() async {
+    try {
+      final due = await fetchDueVocabularyCount();
+      if (!mounted || due == _dueVocabularyCount) return;
+      setState(() => _dueVocabularyCount = due);
+    } catch (_) {
+      // Unknown, not zero: the review card stays suggested.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // A bottom-nav tab, not a pushed route: no AppBar, and the list ends
+    // under the floating nav bar instead of behind it.
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(title: Text('practiceLab.title'.tr())),
-      body: ContentWidth(child: SafeArea(
-        child: Consumer<ProficiencyProvider>(
-          builder: (context, proficiency, _) {
-            final items = buildPracticeLabItems(
-              weakestSkills: proficiency.weakestSkills,
-            );
-            final recommended = recommendedPracticeItems(
-              items: items,
-              hasPremium: _hasPremium,
-            );
-            final hasRecommendations = items.any((item) => item.recommended);
+      body: ContentWidth(
+        child: SafeArea(
+          bottom: false,
+          child: Consumer<ProficiencyProvider>(
+            builder: (context, proficiency, _) {
+              final items = buildPracticeLabItems(
+                weakestSkills: proficiency.weakestSkills,
+              );
+              final recommended = recommendedPracticeItems(
+                items: items,
+                hasPremium: _hasPremium,
+                dueVocabularyCount: _dueVocabularyCount,
+              );
+              final hasRecommendations = items.any((item) => item.recommended);
+              // Measured weaknesses only: the fallback cards are not "focus
+              // skills", so a new learner must not read a count of them.
+              final focusCount = proficiency.weakestSkills.length;
 
-            return RefreshIndicator(
-              onRefresh: proficiency.loadProfile,
-              child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                children: [
-                  _PracticeLabHero(
-                    levelCode: proficiency.levelCode,
-                    recommendedCount: hasRecommendations
-                        ? recommended.length
-                        : 0,
-                    isLoading: proficiency.isLoading,
+              return RefreshIndicator(
+                onRefresh: () => Future.wait([
+                  proficiency.loadProfile(),
+                  _loadDueVocabulary(),
+                ]),
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    12,
+                    16,
+                    24 + MediaQuery.paddingOf(context).bottom,
                   ),
-                  const SizedBox(height: 16),
-                  const _IeltsEntryCard(),
-                  const SizedBox(height: 16),
-                  _SectionHeader(
-                    title: 'practiceLab.recommendedTitle'.tr(),
-                    subtitle: hasRecommendations
-                        ? 'practiceLab.recommendedSubtitle'.tr()
-                        : 'practiceLab.fallbackSubtitle'.tr(),
-                  ),
-                  const SizedBox(height: 10),
-                  for (final item in recommended) ...[
-                    _PracticeLabCardGate(
-                      item: item,
-                      compact: true,
-                      onTap: () => openPracticeLabItem(context, item),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
+                      child: Text(
+                        'practiceLab.title'.tr(),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    _PracticeLabHero(
+                      levelCode: proficiency.levelCode,
+                      focusCount: focusCount,
+                      isLoading: proficiency.isLoading,
+                    ),
+                    const SizedBox(height: 16),
+                    const _IeltsEntryCard(),
+                    const SizedBox(height: 16),
+                    _SectionHeader(
+                      title: 'practiceLab.recommendedTitle'.tr(),
+                      subtitle: hasRecommendations
+                          ? 'practiceLab.recommendedSubtitle'.tr()
+                          : 'practiceLab.fallbackSubtitle'.tr(),
                     ),
                     const SizedBox(height: 10),
-                  ],
-                  const SizedBox(height: 8),
-                  _SectionHeader(
-                    title: 'practiceLab.allSkillsTitle'.tr(),
-                    subtitle: 'practiceLab.allSkillsSubtitle'.tr(),
-                  ),
-                  const SizedBox(height: 10),
-                  for (final item in items) ...[
-                    _PracticeLabCardGate(
-                      item: item,
-                      onTap: () => openPracticeLabItem(context, item),
+                    for (final item in recommended) ...[
+                      _PracticeLabCardGate(
+                        item: item,
+                        compact: true,
+                        onTap: () => openPracticeLabItem(context, item),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                    const SizedBox(height: 8),
+                    _SectionHeader(
+                      title: 'practiceLab.allSkillsTitle'.tr(),
+                      subtitle: 'practiceLab.allSkillsSubtitle'.tr(),
                     ),
                     const SizedBox(height: 10),
+                    for (final item in items) ...[
+                      _PracticeLabCardGate(
+                        item: item,
+                        onTap: () => openPracticeLabItem(context, item),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                   ],
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         ),
-      ),),
+      ),
     );
   }
 }
@@ -149,12 +186,12 @@ class _PracticeLabCardGate extends StatelessWidget {
 class _PracticeLabHero extends StatelessWidget {
   const _PracticeLabHero({
     required this.levelCode,
-    required this.recommendedCount,
+    required this.focusCount,
     required this.isLoading,
   });
 
   final String levelCode;
-  final int recommendedCount;
+  final int focusCount;
   final bool isLoading;
 
   @override
@@ -219,13 +256,40 @@ class _PracticeLabHero extends StatelessWidget {
                   value: levelCode,
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _HeroMetric(
-                  label: 'practiceLab.recommended'.tr(),
-                  value: isLoading ? '...' : '$recommendedCount',
+              if (isLoading || focusCount > 0) ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _HeroMetric(
+                    label: 'practiceLab.recommended'.tr(),
+                    value: isLoading ? '...' : '$focusCount',
+                  ),
                 ),
-              ),
+              ] else ...[
+                const SizedBox(width: 10),
+                Expanded(
+                  flex: 2,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline_rounded,
+                        size: 18,
+                        color: AppColorRoles.textSecondary(isDark),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'practiceLab.noFocusHint'.tr(),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                                height: 1.3,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ],
@@ -264,7 +328,7 @@ class _HeroMetric extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             label,
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColorRoles.textSecondary(isDark),
@@ -382,7 +446,7 @@ class _PracticeLabSkillCard extends StatelessWidget {
                     const SizedBox(height: 5),
                     Text(
                       item.subtitleKey.tr(),
-                      maxLines: compact ? 1 : 2,
+                      maxLines: compact ? 2 : 3,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColorRoles.textSecondary(isDark),
@@ -581,7 +645,6 @@ class _SmallChip extends StatelessWidget {
   }
 }
 
-
 /// Entry point to the IELTS mock tests.
 ///
 /// Deliberately a card of its own rather than a `PracticeLabItem`: a mock test
@@ -596,9 +659,9 @@ class _IeltsEntryCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const IeltsTestsPage()),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const IeltsTestsPage())),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(

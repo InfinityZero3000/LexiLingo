@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
@@ -136,6 +137,8 @@ Future<void> _pumpEditProfile(
 }
 
 void main() {
+  setUpAll(initializeDateFormatting);
+
   group('ProfileHeader email verification badge', () {
     testWidgets('shows verified icon only for a verified user', (tester) async {
       final levelProvider = LevelProvider(apiClient: _ApiClientStub());

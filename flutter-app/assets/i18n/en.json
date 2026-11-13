@@ -184,7 +184,6 @@
     "navDiscovery": "Discovery",
     "navLearning": "Learning",
     "navLexi": "Lexi",
-    "navTopic": "Topic",
     "navAccount": "Account",
     "streak": "Streak: {count} days",
     "continueLesson": "Continue learning",
@@ -299,7 +298,8 @@
     "greetingPhraseMorning": "Good morning",
     "greetingPhraseAfternoon": "Good afternoon",
     "greetingPhraseEvening": "Good evening",
-    "greetingPhraseNight": "Good night"
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "Practice"
   },
   "course": {
     "title": "Courses",
@@ -469,7 +469,17 @@
     "easyDifficulty": "Easy",
     "perfectDifficulty": "Perfect!",
     "blackout": "Blackout (0)",
-    "perfectFive": "Perfect (5)"
+    "perfectFive": "Perfect (5)",
+    "nothingDueTitle": "All caught up!",
+    "nothingDueBody": "No words are due for review right now. Come back later, or add new words to your collection.",
+    "nothingDueAction": "Back",
+    "loadFailed": "Couldn't load your vocabulary. Please try again.",
+    "unexpectedError": "Something went wrong. Please try again.",
+    "noVocabularyForTopic": "No words found for “{topic}”.",
+    "noVocabularyInDeck": "This collection has no words yet.",
+    "prepareFailed": "Couldn't prepare the cards for study.",
+    "submitFailed": "Couldn't save your review. Please try again.",
+    "quizNotEnough": "Not enough words to build a quiz yet."
   },
   "voice": {
     "practiceTitle": "Voice Practice",
@@ -1119,7 +1129,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "Finish a few exercises and your focus skills will show up here."
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",
@@ -1386,8 +1397,13 @@
     "filterIntermediate": "Intermediate",
     "filterAdvanced": "Advanced",
     "popularScenariosTitle": "Popular Scenarios",
-    "seeAllLink": "See all",
-    "noTopicsFound": "No topics found"
+    "noTopicsFound": "No topics found",
+    "emptyTitle": "No topics yet",
+    "emptyBody": "Conversation topics could not be loaded. Try again, or chat freely with Lexi in the meantime.",
+    "retry": "Try again",
+    "openFreeChat": "Chat with Lexi",
+    "noMatchBody": "Nothing matches your search or level filter.",
+    "clearFilters": "Clear filters"
   },
   "topicChat": {
     "preparingTopicMessage": "Preparing your topic...",
@@ -1532,7 +1548,10 @@
     "conceptCollocation": "Collocation",
     "conceptPhonology": "Pronunciation",
     "conceptSkill": "Skill",
-    "suggestedCoursesLabel": "Courses for you"
+    "suggestedCoursesLabel": "Courses for you",
+    "modeFree": "Chat",
+    "modeTopics": "Topics",
+    "voiceSpeed": "Voice speed"
   },
   "youtube": {
     "subtitles": "Subtitles",

@@ -184,7 +184,6 @@
     "navDiscovery": "Khám phá",
     "navLearning": "Học tập",
     "navLexi": "Lexi",
-    "navTopic": "Chủ đề",
     "navAccount": "Tài khoản",
     "streak": "Chuỗi ngày: {count} ngày",
     "continueLesson": "Tiếp tục học",
@@ -299,7 +298,8 @@
     "greetingPhraseMorning": "Good morning",
     "greetingPhraseAfternoon": "Good afternoon",
     "greetingPhraseEvening": "Good evening",
-    "greetingPhraseNight": "Good night"
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "Luyện tập"
   },
   "course": {
     "title": "Khóa học",
@@ -469,7 +469,17 @@
     "easyDifficulty": "Dễ",
     "perfectDifficulty": "Hoàn hảo!",
     "blackout": "Quên hoàn toàn (0)",
-    "perfectFive": "Hoàn hảo (5)"
+    "perfectFive": "Hoàn hảo (5)",
+    "nothingDueTitle": "Bạn đã ôn xong!",
+    "nothingDueBody": "Hiện chưa có từ nào đến hạn ôn. Hãy quay lại sau, hoặc thêm từ mới vào bộ sưu tập.",
+    "nothingDueAction": "Quay lại",
+    "loadFailed": "Không tải được từ vựng của bạn. Vui lòng thử lại.",
+    "unexpectedError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "noVocabularyForTopic": "Không có từ nào cho “{topic}”.",
+    "noVocabularyInDeck": "Bộ sưu tập này chưa có từ nào.",
+    "prepareFailed": "Không thể chuẩn bị thẻ để học.",
+    "submitFailed": "Không lưu được kết quả ôn tập. Vui lòng thử lại.",
+    "quizNotEnough": "Chưa đủ từ để tạo bài kiểm tra."
   },
   "voice": {
     "practiceTitle": "Luyện nói",
@@ -1119,7 +1129,8 @@
         "action": "Ôn lỗi sai",
         "estimate": "4-8 phút"
       }
-    }
+    },
+    "noFocusHint": "Hoàn thành vài bài tập, kỹ năng trọng tâm của bạn sẽ hiện ở đây."
   },
   "mistakeNotebook": {
     "title": "Sổ lỗi sai",
@@ -1386,8 +1397,13 @@
     "filterIntermediate": "Trung cấp",
     "filterAdvanced": "Nâng cao",
     "popularScenariosTitle": "Tình huống phổ biến",
-    "seeAllLink": "Xem tất cả",
-    "noTopicsFound": "Không tìm thấy chủ đề"
+    "noTopicsFound": "Không tìm thấy chủ đề",
+    "emptyTitle": "Chưa có chủ đề nào",
+    "emptyBody": "Không tải được chủ đề hội thoại. Thử lại, hoặc trò chuyện tự do với Lexi trong lúc chờ.",
+    "retry": "Thử lại",
+    "openFreeChat": "Trò chuyện với Lexi",
+    "noMatchBody": "Không có chủ đề nào khớp với tìm kiếm hoặc bộ lọc cấp độ.",
+    "clearFilters": "Xóa bộ lọc"
   },
   "topicChat": {
     "preparingTopicMessage": "Đang chuẩn bị chủ đề...",
@@ -1532,7 +1548,10 @@
     "conceptCollocation": "Kết hợp từ",
     "conceptPhonology": "Phát âm",
     "conceptSkill": "Kỹ năng",
-    "suggestedCoursesLabel": "Khóa học dành cho bạn"
+    "suggestedCoursesLabel": "Khóa học dành cho bạn",
+    "modeFree": "Trò chuyện",
+    "modeTopics": "Chủ đề",
+    "voiceSpeed": "Tốc độ đọc"
   },
   "youtube": {
     "subtitles": "Phụ đề",

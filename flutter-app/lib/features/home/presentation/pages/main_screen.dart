@@ -6,9 +6,9 @@ import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
-import '../../../chat/presentation/pages/story_selection_page.dart';
+import '../../../practice/presentation/pages/practice_lab_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
-import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
+import '../../../lexi_chat/presentation/pages/lexi_hub_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -41,9 +41,9 @@ const _tabs = <({IconData icon, IconData activeIcon, String label})>[
     label: 'home.navLexi',
   ),
   (
-    icon: PhosphorIconsRegular.chatCircleDots,
-    activeIcon: PhosphorIconsFill.chatCircleDots,
-    label: 'home.navTopic',
+    icon: PhosphorIconsRegular.flask,
+    activeIcon: PhosphorIconsFill.flask,
+    label: 'home.navPracticeLab',
   ),
   (
     icon: PhosphorIconsRegular.userCircle,
@@ -70,9 +70,9 @@ class _MainScreenState extends State<MainScreen> {
       case 1:
         return const CourseListScreen();
       case 2:
-        return const LexiChatPage();
+        return const LexiHubPage();
       case 3:
-        return const StorySelectionPage();
+        return const PracticeLabPage();
       case 4:
         return const ProfilePage();
       default:
@@ -183,7 +183,7 @@ class _MainScreenState extends State<MainScreen> {
         if (!_pageCache.containsKey(i)) return const SizedBox.shrink();
         // Lexi keeps its mic and speaker; it has to be told when it is hidden.
         final page = switch (i) {
-          _lexiTab => LexiChatPage(isActive: _currentIndex == i),
+          _lexiTab => LexiHubPage(isActive: _currentIndex == i),
           // The tab stays mounted, so Profile reloads when it is selected.
           _profileTab => ProfilePage(isActive: _currentIndex == i),
           _ => _pageCache[i]!,

@@ -164,6 +164,44 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               );
             }
 
+            if (provider.nothingDue) {
+              final theme = Theme.of(context);
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: 64,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'flashcard.nothingDueTitle'.tr(),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'flashcard.nothingDueBody'.tr(),
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        child: Text('flashcard.nothingDueAction'.tr()),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             // No session
             if (!provider.hasSession) {
               return Center(

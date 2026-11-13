@@ -31488,6 +31488,58 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart::LexiModeSwitch::BoxDecoration::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart",
+      "entryPoint": "surface",
+      "symbol": "LexiModeSwitch",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 58,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart::LexiModeSwitch::DecoratedBox::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart",
+      "entryPoint": "surface",
+      "symbol": "LexiModeSwitch",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 57,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [

@@ -12,7 +12,19 @@ import 'topic_chat_page.dart';
 
 /// Story Selection Page - Modern Redesign
 class StorySelectionPage extends StatefulWidget {
-  const StorySelectionPage({super.key});
+  /// Offered from the empty state when no topics could be loaded; the hub
+  /// passes this to flip back to free chat.
+  final VoidCallback? onOpenFreeChat;
+
+  /// True inside the Lexi tab, which already draws the header row: the page
+  /// then has no AppBar and shows the topic count above the list instead.
+  final bool embedded;
+
+  const StorySelectionPage({
+    super.key,
+    this.onOpenFreeChat,
+    this.embedded = false,
+  });
 
   @override
   State<StorySelectionPage> createState() => _StorySelectionPageState();
@@ -26,10 +38,20 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<StoryProvider>();
-      provider.loadStories();
-      provider.loadCategories();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _load());
+  }
+
+  void _load() {
+    final provider = context.read<StoryProvider>();
+    provider.loadStories();
+    provider.loadCategories();
+  }
+
+  void _clearFilters() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _selectedDifficulty = null;
     });
   }
 
@@ -43,74 +65,57 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accent = AppColorRoles.primary(isDark);
 
     return Scaffold(
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,
-      appBar: AppBar(
-        toolbarHeight: 100,
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        scrolledUnderElevation: 0,
-        automaticallyImplyLeading: false,
-        titleSpacing: 0,
-        title: Consumer<StoryProvider>(
-          builder: (context, provider, _) {
-            final total = provider.stories.length;
-            return Align(
-              alignment: Alignment.center,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1180),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-                  child: Row(
+      appBar: widget.embedded
+          ? null
+          : AppBar(
+              toolbarHeight: 64,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              elevation: 0,
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              automaticallyImplyLeading: false,
+              titleSpacing: 20,
+              title: Consumer<StoryProvider>(
+                builder: (context, provider, _) {
+                  final total = provider.stories.length;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: accent,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.forum_rounded,
-                          color: Theme.of(context).colorScheme.surface,
-                          size: 24,
+                      Text(
+                        'storySelection.pageTitle'.tr(),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'storySelection.pageTitle'.tr(),
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'storySelection.topicsAvailableCount'.tr(
-                              namedArgs: {'total': '$total'},
-                            ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'storySelection.topicsAvailableCount'.tr(
+                          namedArgs: {'total': '$total'},
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ],
-                  ),
-                ),
+                  );
+                },
               ),
-            );
-          },
-        ),
-      ),
+            ),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
+          if (provider.isLoading && provider.stories.isEmpty) {
+            return const Center(child: LottieLoadingWidget.medium());
+          }
+          // Search and level chips are pointless with nothing to filter.
+          if (provider.stories.isEmpty) {
+            return _buildNoTopicsState(theme, isDark);
+          }
+
           final filteredStories = provider.stories.where((s) {
             final matchesSearch =
                 s.title.en.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -138,9 +143,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
 
                   // Content
                   Expanded(
-                    child: provider.isLoading && provider.stories.isEmpty
-                        ? const Center(child: LottieLoadingWidget.medium())
-                        : _buildStoryList(filteredStories, theme, isDark),
+                    child: _buildStoryList(filteredStories, theme, isDark),
                   ),
                 ],
               ),
@@ -148,6 +151,27 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildNoTopicsState(ThemeData theme, bool isDark) {
+    return _EmptyState(
+      icon: Icons.forum_outlined,
+      title: 'storySelection.emptyTitle'.tr(),
+      body: 'storySelection.emptyBody'.tr(),
+      actions: [
+        FilledButton.icon(
+          onPressed: _load,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text('storySelection.retry'.tr()),
+        ),
+        if (widget.onOpenFreeChat != null)
+          OutlinedButton.icon(
+            onPressed: widget.onOpenFreeChat,
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            label: Text('storySelection.openFreeChat'.tr()),
+          ),
+      ],
     );
   }
 
@@ -319,29 +343,35 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       itemCount: stories.length + 1,
       itemBuilder: (context, index) {
         if (index == 0) {
+          // The "See all" label that sat here had no tap handler and the
+          // list already shows every topic.
           return Padding(
             padding: const EdgeInsets.only(bottom: 16, top: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'storySelection.popularScenariosTitle'.tr(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColorRoles.textPrimary(isDark),
                   ),
                 ),
-                Text(
-                  'storySelection.seeAllLink'.tr(),
-                  style: TextStyle(
-                    color: isDark
-                        ? AppColorRoles.primary(isDark)
-                        : theme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                if (widget.embedded)
+                  Text(
+                    'storySelection.topicsAvailableCount'.tr(
+                      namedArgs: {
+                        'total':
+                            '${context.read<StoryProvider>().stories.length}',
+                      },
+                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
               ],
             ),
           );
@@ -359,25 +389,17 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   }
 
   Widget _buildEmptyState(bool isDark) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: isDark ? Colors.grey[700] : Colors.grey[300],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'storySelection.noTopicsFound'.tr(),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColorRoles.textSecondary(isDark),
-            ),
-          ),
-        ],
-      ),
+    return _EmptyState(
+      icon: Icons.search_off,
+      title: 'storySelection.noTopicsFound'.tr(),
+      body: 'storySelection.noMatchBody'.tr(),
+      actions: [
+        TextButton.icon(
+          onPressed: _clearFilters,
+          icon: const Icon(Icons.filter_alt_off_rounded),
+          label: Text('storySelection.clearFilters'.tr()),
+        ),
+      ],
     );
   }
 
@@ -392,6 +414,70 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => TopicChatPage(story: story)),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  final List<Widget> actions;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.actions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          32,
+          24,
+          32,
+          24 + MediaQuery.paddingOf(context).bottom,
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 56, color: AppColorRoles.textMuted(isDark)),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColorRoles.textPrimary(isDark),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                body,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: AppColorRoles.textSecondary(isDark),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: actions,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -487,7 +573,9 @@ class _TopicListItem extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          'course.durationMin'.tr(namedArgs: {'count': '${story.estimatedMinutes}'}),
+                          'course.durationMin'.tr(
+                            namedArgs: {'count': '${story.estimatedMinutes}'},
+                          ),
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColorRoles.textMuted(isDark),
