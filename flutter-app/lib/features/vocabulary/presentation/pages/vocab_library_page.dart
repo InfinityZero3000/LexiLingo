@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:math';
@@ -74,7 +75,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             color: AppColors.primary,
           ),
           actions: [
-            GestureDetector(
+            TapTarget(
               onTap: () => _showAddWordDialog(context, vocabProvider),
               child: Container(
                 margin: const EdgeInsets.only(right: 16),

@@ -30,6 +30,45 @@ class LexiModeSwitch extends StatelessWidget {
         ? Duration.zero
         : const Duration(milliseconds: 200);
 
+    return Stack(
+      children: [
+        _track(context, tactile, scheme, radius, motion),
+        // The segments sit inside the track's border and padding, which left
+        // them 35 px tall; these take the tap over the full 44.
+        Positioned.fill(
+          child: Row(
+            children: [
+              for (final mode in LexiMode.values)
+                Expanded(
+                  child: Semantics(
+                    button: true,
+                    selected: mode == value,
+                    label: _label(mode),
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: mode == value ? null : () => onChanged(mode),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  static String _label(LexiMode mode) => switch (mode) {
+    LexiMode.chat => 'lexiChat.modeFree'.tr(),
+    LexiMode.topics => 'lexiChat.modeTopics'.tr(),
+  };
+
+  Widget _track(
+    BuildContext context,
+    AppTactileTheme tactile,
+    ColorScheme scheme,
+    BorderRadius radius,
+    Duration motion,
+  ) {
     return Container(
       height: height,
       padding: const EdgeInsets.all(3),
@@ -70,8 +109,6 @@ class LexiModeSwitch extends StatelessWidget {
                         mode: mode,
                         selected: mode == value,
                         showLabel: showLabels,
-                        radius: radius,
-                        onTap: () => onChanged(mode),
                       ),
                     ),
                 ],
@@ -88,58 +125,43 @@ class _Segment extends StatelessWidget {
   final LexiMode mode;
   final bool selected;
   final bool showLabel;
-  final BorderRadius radius;
-  final VoidCallback onTap;
 
   const _Segment({
     required this.mode,
     required this.selected,
     required this.showLabel,
-    required this.radius,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final label = switch (mode) {
-      LexiMode.chat => 'lexiChat.modeFree'.tr(),
-      LexiMode.topics => 'lexiChat.modeTopics'.tr(),
-    };
     final icon = switch (mode) {
       LexiMode.chat => PhosphorIconsRegular.sparkle,
       LexiMode.topics => PhosphorIconsRegular.chatCircleDots,
     };
     final foreground = selected ? scheme.onPrimary : scheme.onSurfaceVariant;
 
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: showLabel ? null : label,
-      child: InkWell(
-        borderRadius: radius,
-        onTap: selected ? null : onTap,
-        child: Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: foreground),
-              if (showLabel) ...[
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: foreground,
-                      fontWeight: FontWeight.w700,
-                    ),
+    return ExcludeSemantics(
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: foreground),
+            if (showLabel) ...[
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  LexiModeSwitch._label(mode),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: foreground,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
+              ),
             ],
-          ),
+          ],
         ),
       ),
     );

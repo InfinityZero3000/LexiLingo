@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -68,7 +69,7 @@ class _GemCounterState extends State<GemCounter>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: widget.onTap,
       child: AnimatedBuilder(
         animation: _scaleAnimation,

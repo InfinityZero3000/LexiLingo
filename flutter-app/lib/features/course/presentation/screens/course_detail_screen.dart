@@ -333,7 +333,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ),
     );
 
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
@@ -347,6 +347,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       child: widget.heroTag != null
           ? Hero(tag: widget.heroTag!, child: heroImage)
           : heroImage,
+    );
+    // Full width on a tablet makes the cover 400 px tall and pushes the
+    // roadmap off the first screen.
+    if (!ContentWidth.isTablet(MediaQuery.sizeOf(context).width)) return card;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: card,
+      ),
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -499,7 +500,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               Positioned(
                 bottom: 0,
                 right: 0,
-                child: GestureDetector(
+                child: TapTarget(
                   onTap: () => _showAvatarPicker(),
                   child: Container(
                     padding: const EdgeInsets.all(10),
