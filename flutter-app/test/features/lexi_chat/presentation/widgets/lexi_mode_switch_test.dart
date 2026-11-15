@@ -41,4 +41,36 @@ void main() {
       greaterThanOrEqualTo(44),
     );
   });
+
+  testWidgets('the thumb stretches while it travels and settles at half width', (
+    tester,
+  ) async {
+    Widget host(LexiMode mode) => MaterialApp(
+      theme: AppTheme.lightTheme,
+      home: Scaffold(
+        body: Center(
+          child: SizedBox(
+            width: 400,
+            child: LexiModeSwitch(value: mode, onChanged: (_) {}),
+          ),
+        ),
+      ),
+    );
+    final thumb = find.byKey(const ValueKey('lexi-mode-thumb'));
+
+    await tester.pumpWidget(host(LexiMode.chat));
+    final resting = tester.getSize(thumb).width;
+    final restingLeft = tester.getTopLeft(thumb).dx;
+
+    await tester.pumpWidget(host(LexiMode.topics));
+    await tester.pump(const Duration(milliseconds: 190));
+    final mid = tester.getSize(thumb).width;
+    final midLeft = tester.getTopLeft(thumb).dx;
+    expect(mid, greaterThan(resting));
+    expect(midLeft, greaterThan(restingLeft));
+
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.getSize(thumb).width, closeTo(resting, 0.5));
+    expect(tester.getTopLeft(thumb).dx, greaterThan(midLeft));
+  });
 }

@@ -51,12 +51,13 @@ class _LexiHubPageState extends State<LexiHubPage>
   /// 0 = free chat fully shown, 1 = topics fully shown.
   late final AnimationController _transition = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 300),
+    duration: const Duration(milliseconds: 420),
   );
+  // Symmetric: easeOutCubic spent ~80% of the distance in the first third of
+  // the time, which read as an instant jump.
   late final CurvedAnimation _curve = CurvedAnimation(
     parent: _transition,
-    curve: Curves.easeOutCubic,
-    reverseCurve: Curves.easeInCubic,
+    curve: Curves.easeInOutCubic,
   );
 
   @override
@@ -131,6 +132,11 @@ class _LexiHubPageState extends State<LexiHubPage>
             : const Rect.fromLTWH(0, 0, 200, LexiModeSwitch.height);
         double reveal(Rect r) =>
             r.width - 6 >= LexiModeSwitch.labelMinWidth ? 1 : 0;
+        // Labels wait until the frame has opened a little, so text is never
+        // squeezed into a half-grown pill.
+        final labelT = Curves.easeInOut.transform(
+          ((_curve.value - 0.3) / 0.7).clamp(0.0, 1.0),
+        );
         return Positioned.fromRect(
           rect: rect,
           // Kept mounted so its thumb slides on a mode change like the
@@ -142,7 +148,7 @@ class _LexiHubPageState extends State<LexiHubPage>
                 value: _modeN.value,
                 onChanged: _select,
                 labelReveal: active
-                    ? reveal(from) + (reveal(to) - reveal(from)) * _curve.value
+                    ? reveal(from) + (reveal(to) - reveal(from)) * labelT
                     : 0,
               ),
             ),
