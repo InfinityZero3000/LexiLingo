@@ -4,11 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_history_entry.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 
-/// Vertical timeline of the learner's CEFR level changes.
+/// The learner's CEFR path as one row of chips, the latest change in one line.
 ///
-/// The server records a row only when the level changes, so the first node is
-/// derived: the level the learner held before the earliest change, or the
-/// current level when nothing has changed yet.
+/// A level changes only when the learner passes a level test, so the path is
+/// short. The server records a row only on a change, so the first chip is
+/// derived: the level held before the earliest change, or the current level
+/// when nothing has changed yet.
 class LevelHistoryTimeline extends StatefulWidget {
   const LevelHistoryTimeline({super.key});
 
@@ -17,6 +18,8 @@ class LevelHistoryTimeline extends StatefulWidget {
 }
 
 class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
+  static const _maxSteps = 6;
+
   @override
   void initState() {
     super.initState();
@@ -25,13 +28,21 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
     });
   }
 
+  Future<void> _takeTest() async {
+    final provider = context.read<ProficiencyProvider>();
+    await Navigator.pushNamed(context, '/placement-test');
+    if (!mounted) return;
+    await provider.loadProfile();
+    await provider.loadHistory(force: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ProficiencyProvider>();
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -42,11 +53,11 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
         children: [
           Text(
             'profile.levelJourney'.tr(),
-            style: theme.textTheme.titleMedium?.copyWith(
+            style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           _body(context, provider),
         ],
       ),
@@ -82,131 +93,154 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
     }
 
     final history = provider.history;
-    final nodes = <_Node>[
-      _Node(
-        level: history.isEmpty
-            ? provider.assessedLevel
-            : history.first.previousLevel,
-        caption: null,
-        startLevel: true,
-      ),
-      for (final entry in history)
-        _Node(level: entry.newLevel, caption: entry, startLevel: false),
-    ];
+    final steps = _steps(history, provider.assessedLevel);
+    final shown = steps.length > _maxSteps
+        ? steps.sublist(steps.length - _maxSteps)
+        : steps;
+    final next = provider.nextLevel;
+    final ready = next != null && next.qualifies && next.level != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (var i = 0; i < nodes.length; i++)
-          _TimelineRow(node: nodes[i], isLast: i == nodes.length - 1),
-        if (history.isEmpty) ...[
-          const SizedBox(height: 8),
+        Semantics(
+          label: steps.map((s) => s.level).join(' → '),
+          excludeSemantics: true,
+          child: Wrap(
+            spacing: 4,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (steps.length > shown.length)
+                Text('…', style: theme.textTheme.titleMedium),
+              for (var i = 0; i < shown.length; i++) ...[
+                if (i > 0 || steps.length > shown.length)
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: theme.colorScheme.outline,
+                  ),
+                _StepChip(
+                  step: shown[i],
+                  current: i == shown.length - 1,
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          _lastChange(history, provider.assessedLevel),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 10),
+        if (ready)
+          _ReadyRow(level: next.level!, onTake: _takeTest)
+        else
           Text(
-            'profile.levelJourneyEmpty'.tr(),
+            'profile.levelTestRule'.tr(),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
-        ],
       ],
+    );
+  }
+
+  static List<_Step> _steps(List<LevelHistoryEntry> history, String assessed) {
+    final steps = <_Step>[
+      _Step(history.isEmpty ? assessed : history.first.previousLevel, false),
+    ];
+    for (final entry in history) {
+      if (entry.newLevel == steps.last.level) continue;
+      steps.add(_Step(entry.newLevel, !entry.isPromotion));
+    }
+    return steps;
+  }
+
+  static String _lastChange(List<LevelHistoryEntry> history, String assessed) {
+    if (history.isEmpty) {
+      return 'profile.levelStart'.tr(namedArgs: {'level': assessed});
+    }
+    final entry = history.last;
+    final text = entry.isInitial
+        ? 'profile.levelPlaced'.tr(namedArgs: {'level': entry.newLevel})
+        : (entry.isPromotion ? 'profile.levelPromoted' : 'profile.levelDemoted')
+              .tr(namedArgs: {'from': entry.previousLevel});
+    return '$text · ${DateFormat.yMMMd().format(entry.triggeredAt)}';
+  }
+}
+
+class _Step {
+  const _Step(this.level, this.down);
+
+  final String level;
+  final bool down;
+}
+
+class _StepChip extends StatelessWidget {
+  const _StepChip({required this.step, required this.current});
+
+  final _Step step;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final tone = step.down ? scheme.error : scheme.primary;
+    final onTone = step.down ? scheme.onError : scheme.onPrimary;
+
+    return Container(
+      constraints: const BoxConstraints(minWidth: 44, minHeight: 30),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: current ? tone : tone.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: tone, width: 1.5),
+      ),
+      child: Text(
+        step.level,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          color: current ? onTone : tone,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
 
-class _Node {
-  const _Node({
-    required this.level,
-    required this.caption,
-    required this.startLevel,
-  });
+class _ReadyRow extends StatelessWidget {
+  const _ReadyRow({required this.level, required this.onTake});
 
   final String level;
-  final LevelHistoryEntry? caption;
-  final bool startLevel;
-}
-
-class _TimelineRow extends StatelessWidget {
-  const _TimelineRow({required this.node, required this.isLast});
-
-  final _Node node;
-  final bool isLast;
+  final VoidCallback onTake;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final entry = node.caption;
-    final tone = entry == null
-        ? theme.colorScheme.primary
-        : entry.isPromotion
-        ? theme.colorScheme.primary
-        : theme.colorScheme.error;
-
-    final subtitle = entry == null
-        ? 'profile.levelStart'.tr(namedArgs: {'level': node.level})
-        : (entry.isPromotion ? 'profile.levelPromoted' : 'profile.levelDemoted')
-              .tr(namedArgs: {'from': entry.previousLevel});
-
-    return IntrinsicHeight(
+    return Container(
+      padding: const EdgeInsets.only(left: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(
-            width: 44,
-            child: Column(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: tone.withValues(alpha: 0.12),
-                    border: Border.all(color: tone, width: 2),
-                  ),
-                  child: Text(
-                    node.level,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: tone,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: theme.colorScheme.outlineVariant,
-                    ),
-                  ),
-              ],
+          Expanded(
+            child: Text(
+              'profile.levelTestReady'.tr(namedArgs: {'level': level}),
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 12,
-                bottom: isLast ? 0 : 20,
-                top: 6,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (entry != null)
-                    Text(
-                      DateFormat.yMMMd().format(entry.triggeredAt),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                ],
-              ),
-            ),
+          TextButton(
+            onPressed: onTake,
+            style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
+            child: Text('profile.levelTestTake'.tr()),
           ),
         ],
       ),

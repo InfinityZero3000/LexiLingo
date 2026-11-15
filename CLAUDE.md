@@ -68,10 +68,27 @@ wherever the format is known.
 - Difficulty scales the **step size**, not the numerator — the old bonus was
   clipped at 100, so A1 and C2 answers landed identically.
 - `confidence` comes from **cumulative** `exercises_completed`, not from the
-  current request. It gates promotion via `LevelThreshold.min_skill_confidence`:
+  current request. It gates readiness for the level test (`qualifies_for_next`) via
+  `LevelThreshold.min_skill_confidence`:
   volume asks "did you do enough?", confidence asks "do we know enough about
   you yet?". Without it, raw counts were the only real gate and a long chat
   session could satisfy them.
+- **CEFR level moves only through a level test.** `record_exercise_results_for_user`
+  feeds the skill scores and the progress bar and never writes
+  `UserProficiencyProfile.assessed_level`, `users.level` or `UserLevelHistory`
+  (it only settles `users.level` back onto the profile). It used to re-derive the
+  level from scratch on every batch — `calculate_overall_level` never read its
+  `current_level` — so one weak batch demoted a learner and a strong week
+  promoted them with no test, and it overwrote `users.level`, so that column and
+  the profile drifted apart. `calculate_overall_level` is now only the
+  "evidence" view; `next_level.qualifies` from `GET /proficiency/profile` means
+  *ready to take the test*, not *promoted*. The placement test is the one
+  writer: the first test sets the level (replacing a self-reported one), later
+  tests can only raise it (`test_level` in the response is what it scored), and
+  every change writes a `UserLevelHistory` row (`initial` / `promotion`).
+  `PUT /users/me` takes a self-reported `level` once, while onboarding is open;
+  after that `level` / `cefr_level` are ignored. Nothing writes `demotion`
+  any more — old rows, and the demo seed's "demotion episode", still exist.
 - One weighted overall score, `ProficiencyService.weighted_overall`. There were
   four different formulas; two overwrote each other, so the number a learner
   saw was not the number their promotion was judged on.

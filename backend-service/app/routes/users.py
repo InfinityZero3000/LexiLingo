@@ -6,6 +6,7 @@ import uuid as uuid_lib
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -15,6 +16,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.crud.user import UserCRUD
+from app.models.proficiency import UserProficiencyProfile
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.learner_state import bump_learner_state_epoch
@@ -126,7 +128,32 @@ async def update_current_user_profile(
     """
     # Update user fields
     update_dict = update_data.model_dump(exclude_unset=True)
-    
+
+    # CEFR moves only through a level test. A self-reported starting level is
+    # accepted once, while onboarding is still open; after that — and for any
+    # later call — the fields are ignored rather than honoured.
+    reported_level = update_dict.pop("level", None) or update_dict.pop("cefr_level", None)
+    update_dict.pop("cefr_level", None)
+    if reported_level and not current_user.is_onboarding_completed:
+        reported_level = reported_level.strip().upper()
+        if reported_level in {"A1", "A2", "B1", "B2", "C1", "C2"}:
+            update_dict["level"] = reported_level
+            profile = (
+                await db.execute(
+                    select(UserProficiencyProfile).where(
+                        UserProficiencyProfile.user_id == current_user.id
+                    )
+                )
+            ).scalar_one_or_none()
+            if profile is None:
+                db.add(
+                    UserProficiencyProfile(
+                        user_id=current_user.id, assessed_level=reported_level
+                    )
+                )
+            elif profile.placement_level is None:
+                profile.assessed_level = reported_level
+
     for field, value in update_dict.items():
         setattr(current_user, field, value)
 

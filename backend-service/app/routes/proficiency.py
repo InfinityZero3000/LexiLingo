@@ -641,38 +641,27 @@ async def record_exercise_results_for_user(
         for skill_score in all_skill_scores
     }
 
-    new_level, progress = ProficiencyService.calculate_overall_level(
-        skill_scores=skill_scores_dict,
+    # CEFR changes only through a level test (placement). Activity feeds the
+    # skill scores and the progress bar; it used to also re-derive the level
+    # from scratch on every batch, so a dip demoted the learner and a good week
+    # promoted them with no test at all.
+    previous_level = profile.assessed_level
+    level_changed = False
+    # Copies: an unmeasured skill counts as 0 for the requirement check only,
+    # not in the weighted overall below.
+    check_scores = {k: skill_scores_dict.get(k, 0.0) for k in SkillType}
+    check_confidences = {k: skill_confidences_dict.get(k, 0.0) for k in SkillType}
+    level_check = ProficiencyService.get_level_requirements_check(
+        current_level=ProficiencyLevel(profile.assessed_level),
+        skill_scores=check_scores,
         exercises_completed=profile.total_exercises_completed,
         lessons_completed=profile.total_lessons_completed,
         accuracy=profile.accuracy,
-        current_level=ProficiencyLevel(profile.assessed_level),
-        skill_confidences=skill_confidences_dict,
-        floor=ProficiencyLevel(profile.placement_level)
-        if profile.placement_level
-        else None,
+        streak_days=0,
+        skill_confidences=check_confidences,
     )
-    
-    level_changed = new_level.value != previous_level
-    
-    if level_changed:
-        # Record level change
-        history = UserLevelHistory(
-            profile_id=profile.id,
-            previous_level=previous_level,
-            new_level=new_level.value,
-            change_type="promotion" if ProficiencyService.get_level_index(new_level) > ProficiencyService.get_level_index(ProficiencyLevel(previous_level)) else "demotion",
-            overall_score=profile.overall_score,
-            skill_scores_snapshot={s.skill.value: s.score for s in all_skill_scores},
-            exercises_completed=profile.total_exercises_completed,
-            accuracy=profile.accuracy,
-            reason=f"Level updated based on proficiency assessment",
-        )
-        db.add(history)
-        
-        profile.assessed_level = new_level.value
-        profile.last_level_change_at = datetime.now(timezone.utc)
-    
+    progress = level_check.overall_progress
+
     xp_earned = 0
 
     # Update overall score
@@ -683,17 +672,15 @@ async def record_exercise_results_for_user(
 
     profile.last_assessment_at = datetime.now(timezone.utc)
 
-    # users.level can disagree with the profile (older rows, or a profile created
-    # by this very call), so compare it too, not just profile.assessed_level.
-    user_level_moved = current_user.level != new_level.value
-    current_user.level = new_level.value
+    # users.level can disagree with the profile (older rows, a self-reported
+    # starting level), so settle it on the profile's assessed level — never on
+    # what the scores alone would suggest.
+    user_level_moved = current_user.level != profile.assessed_level
+    current_user.level = profile.assessed_level
 
-    if level_changed or user_level_moved:
+    if user_level_moved:
         # Rank depends on proficiency_level (current_user.level, just synced
-        # above), so it has to be recomputed whenever that changed even though
-        # no XP moved here. Otherwise a lesson/game completion that levels up
-        # CEFR leaves the rank badge computed against the old level until the
-        # user's next XP-earning event.
+        # above), so recompute it whenever that changed even though no XP moved.
         rank_info = calculate_rank(
             numeric_level=current_user.numeric_level or 1,
             proficiency_level=current_user.level,
@@ -706,7 +693,7 @@ async def record_exercise_results_for_user(
     # card the moment it is dropped, so dropping it earlier would just cache
     # the old level again. XP and streak drift is what the card's TTL is for;
     # invalidating on every exercise batch would be one request per answer.
-    if level_changed or user_level_moved:
+    if user_level_moved:
         await invalidate_learner_card(current_user.id)
 
     return {
@@ -714,11 +701,12 @@ async def record_exercise_results_for_user(
         "skill_updates": skill_updates,
         "level_changed": level_changed,
         "previous_level": previous_level,
-        "current_level": new_level.value,
+        "current_level": profile.assessed_level,
+        "next_level": level_check.next_level.value if level_check.next_level else None,
         "progress_to_next": progress,
         "xp_earned": xp_earned,
         "total_xp": profile.total_xp,
-        "message": f"Congratulations! You've advanced to {new_level.value}!" if level_changed else "Keep practicing to improve your skills!",
+        "message": "Keep practicing to improve your skills!",
     }
 
 
@@ -886,7 +874,16 @@ async def submit_placement_test(
     )
     profile = result.scalar_one_or_none()
 
-    old_level = current_user.level or "A1"
+    # The first test sets the level outright (it replaces a self-reported one).
+    # Every later test can only raise it: a level is earned by passing a test,
+    # so a bad day on a retake must not take it away.
+    first_test = profile is None or profile.placement_level is None
+    old_level = (profile.assessed_level if profile else None) or current_user.level or "A1"
+    scored_level = assessed_level
+    if not first_test and ProficiencyService.get_level_index(
+        ProficiencyLevel(scored_level)
+    ) < ProficiencyService.get_level_index(ProficiencyLevel(old_level)):
+        assessed_level = old_level
     level_changed = old_level != assessed_level
 
     now = datetime.now(timezone.utc)
@@ -901,8 +898,34 @@ async def submit_placement_test(
             last_assessment_at=now,
         )
         db.add(profile)
-    profile.placement_level = assessed_level
-    profile.placement_at = now
+    if first_test or level_changed:
+        profile.placement_level = assessed_level
+        profile.placement_at = now
+    if level_changed:
+        profile.last_level_change_at = now
+        await db.flush()
+        db.add(
+            UserLevelHistory(
+                profile_id=profile.id,
+                previous_level=old_level,
+                new_level=assessed_level,
+                change_type=(
+                    "initial"
+                    if first_test
+                    else "promotion"
+                ),
+                overall_score=round(pct, 2),
+                exercises_completed=profile.total_exercises_completed or 0,
+                accuracy=(
+                    profile.accuracy if profile.total_exercises_completed else 0.0
+                ),
+                reason=(
+                    f"Placement test: {round(pct)}%"
+                    if first_test
+                    else f"Passed the level test: {round(pct)}%"
+                ),
+            )
+        )
 
     # The test's own percentage belongs to the test record, not to
     # profile.overall_score: that field is the weighted skill total, and
@@ -913,7 +936,7 @@ async def submit_placement_test(
     db.add(
         LevelAssessmentTest(
             user_id=current_user.id,
-            test_type="initial",
+            test_type="initial" if first_test else "level_up",
             assessed_level=assessed_level,
             overall_score=round(pct, 2),
             skill_scores={},
@@ -947,6 +970,7 @@ async def submit_placement_test(
         "total_questions": len(PLACEMENT_QUESTIONS),
         "level_changed": level_changed,
         "previous_level": old_level,
+        "test_level": scored_level,
         "rank": new_rank.rank.value,
         "rank_name": new_rank.name,
         "details": details,
