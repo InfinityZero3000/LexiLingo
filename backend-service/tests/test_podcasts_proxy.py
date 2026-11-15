@@ -225,6 +225,23 @@ class TestPodcastResolveAudio:
         assert resolve.await_count == 1
 
     @pytest.mark.asyncio
+    async def test_prefers_https_chain_and_falls_back(self, no_db_client: AsyncClient):
+        final = "http://cdn.example.com/ep.mp3"
+        resolve = AsyncMock(side_effect=[RuntimeError("reset"), final])
+        with patch("app.routes.podcasts.safe_resolve_final_url", resolve):
+            response = await no_db_client.get(
+                f"{BASE}/audio",
+                params={"url": "http://open.example.com/proto/http/vpid/x.mp3"},
+            )
+
+        assert response.headers["location"] == final
+        tried = [call.args[1] for call in resolve.await_args_list]
+        assert tried == [
+            "https://open.example.com/proto/https/vpid/x.mp3",
+            "http://open.example.com/proto/http/vpid/x.mp3",
+        ]
+
+    @pytest.mark.asyncio
     async def test_rejects_private_url(self, no_db_client: AsyncClient):
         response = await no_db_client.get(
             f"{BASE}/audio", params={"url": "http://127.0.0.1/ep.mp3"}

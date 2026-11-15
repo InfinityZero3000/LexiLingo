@@ -265,6 +265,12 @@ _AUDIO_RESOLVE_MAX = 256
 _audio_resolved: dict[str, tuple[float, str]] = {}
 
 
+def _prefer_https(url: str) -> str:
+    """https form of a publisher URL, including BBC's `/proto/http/` selector."""
+    upgraded = re.sub(r"^http://", "https://", url)
+    return upgraded.replace("/proto/http/", "/proto/https/")
+
+
 @router.get("/audio", summary="Redirect to an episode's final audio URL")
 async def resolve_audio(url: str = Query(..., max_length=2048)):
     """Follow the publisher's redirect chain from the server and 302 to the
@@ -277,20 +283,25 @@ async def resolve_audio(url: str = Query(..., max_length=2048)):
     if cached and now - cached[0] < _AUDIO_RESOLVE_TTL:
         final_url = cached[1]
     else:
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                final_url = await safe_resolve_final_url(
-                    client,
-                    url,
-                    headers={
-                        "User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)",
-                        "Range": "bytes=0-0",
-                    },
-                )
-        except HTTPException:
-            raise
-        except Exception as exc:
-            logger.error("Error resolving podcast audio %s: %s", url, exc)
+        # An http final link is blocked as mixed content on the web app, so try
+        # the https form of the chain first and keep the original as fallback.
+        candidates = [c for c in dict.fromkeys([_prefer_https(url), url])]
+        final_url = ""
+        for candidate in candidates:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    final_url = await safe_resolve_final_url(
+                        client,
+                        candidate,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)",
+                            "Range": "bytes=0-0",
+                        },
+                    )
+                break
+            except Exception as exc:
+                logger.warning("Podcast audio resolve failed for %s: %s", candidate, exc)
+        if not final_url:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,
                 detail="Audio source unreachable.",
