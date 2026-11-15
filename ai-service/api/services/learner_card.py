@@ -189,9 +189,17 @@ def render_card_facts(card: dict[str, Any], intents: set[str]) -> str:
             lines.append(f"Interest: {card['interest']}")
 
     if "progress" in intents:
+        level = card.get("assessed_level") or card.get("cefr_level") or "unknown"
+        certified = card.get("certified_level")
+        if card.get("level_verified") is False and certified:
+            # The learner picked this level; a test confirmed only `certified`.
+            # Saying "your level is B2" here would state a pick as a result.
+            level = (
+                f"{level} (chosen by the learner, not yet confirmed by a test; "
+                f"certified level {certified})"
+            )
         lines.append(
-            f"CEFR level: {card.get('assessed_level') or card.get('cefr_level') or 'unknown'} "
-            f"(overall score {card.get('overall_score', 0)}/100)"
+            f"CEFR level: {level} (overall score {card.get('overall_score', 0)}/100)"
         )
         lines.append(
             f"XP: {card.get('total_xp', 0)} · app level {card.get('numeric_level', 1)} · "

@@ -79,3 +79,17 @@ def test_invalid_cross_script_name_is_not_added_to_identity_facts():
 def test_course_rows_are_attached_only_for_course_turns():
     assert course_suggestions(CARD, {"course"})[0]["course_id"] == "c2"
     assert course_suggestions(CARD, {"progress"}) == []
+
+
+def test_a_chosen_level_above_the_certified_one_is_not_stated_as_a_result():
+    card = {**CARD, "certified_level": "B1", "level_verified": False}
+    progress = render_card_facts(card, {"progress"})
+    assert "B2 (chosen by the learner, not yet confirmed by a test; certified level B1)" in progress
+
+
+def test_a_verified_or_older_card_reads_as_before():
+    verified = render_card_facts({**CARD, "certified_level": "B2", "level_verified": True}, {"progress"})
+    older = render_card_facts(CARD, {"progress"})
+    for text in (verified, older):
+        assert "CEFR level: B2 (overall score 71.5/100)" in text
+        assert "chosen by the learner" not in text
