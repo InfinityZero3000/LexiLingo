@@ -8,6 +8,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/entities/word_translation.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/add_word_usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/get_words_usecase.dart';
 
@@ -144,6 +145,7 @@ class VocabProvider extends ChangeNotifier {
           if (vocab == null) return null;
           final word = vocab['word'] as String? ?? '';
           if (word.isEmpty) return null;
+          final translation = vocab['translation'] as Map<String, dynamic>?;
           final rawTags = vocab['tags'];
           final tags = rawTags is List
               ? rawTags.whereType<String>().toList()
@@ -156,7 +158,9 @@ class VocabProvider extends ChangeNotifier {
             audioUrl: vocab['audio_url'] as String?,
             partOfSpeech: vocab['part_of_speech'] as String?,
             isLearned: (item['status'] as String?) == 'mastered',
+            example: translationExamples(translation).firstOrNull,
             tags: tags,
+            translation: translation,
           );
         })
         .whereType<VocabWord>()

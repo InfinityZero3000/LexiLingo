@@ -181,6 +181,7 @@ class VocabRepositoryImpl implements VocabRepository {
             if (w.audioUrl != null) 'audioUrl': w.audioUrl,
             if (w.example != null) 'example': w.example,
             if (w.partOfSpeech != null) 'partOfSpeech': w.partOfSpeech,
+            if (w.translation != null) 'translation': w.translation,
           },
         )
         .toList();
@@ -198,6 +199,7 @@ class VocabRepositoryImpl implements VocabRepository {
         audioUrl: m['audioUrl'] as String?,
         example: m['example'] as String?,
         partOfSpeech: m['partOfSpeech'] as String?,
+        translation: m['translation'] as Map<String, dynamic>?,
       );
     }).toList();
   }

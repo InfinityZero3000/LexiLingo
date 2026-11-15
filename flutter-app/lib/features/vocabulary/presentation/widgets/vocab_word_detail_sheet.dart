@@ -580,6 +580,9 @@ class _CardBack extends StatelessWidget {
                   ),
                 ),
 
+          // Translation in the learner's language
+          ..._buildTranslation(context, cs),
+
           // Example
           if (word.example != null && word.example!.isNotEmpty) ...[
             const SizedBox(height: 20),
@@ -630,6 +633,35 @@ class _CardBack extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildTranslation(BuildContext context, ColorScheme cs) {
+    final locale = context.locale.languageCode;
+    final gloss = word.gloss(locale);
+    final definitionTr = word.definitionIn(locale);
+    if (gloss == null && definitionTr == null) return const [];
+    return [
+      const SizedBox(height: 20),
+      _SectionLabel(label: 'vocabulary.translationLabel'.tr()),
+      const SizedBox(height: 8),
+      if (gloss != null)
+        Text(
+          gloss,
+          style: TextStyle(fontSize: 16, height: 1.6, color: cs.onSurface),
+        ),
+      if (definitionTr != null)
+        Padding(
+          padding: EdgeInsets.only(top: gloss != null ? 4 : 0),
+          child: Text(
+            definitionTr,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: cs.onSurfaceVariant,
+            ),
+          ),
+        ),
+    ];
   }
 }
 
