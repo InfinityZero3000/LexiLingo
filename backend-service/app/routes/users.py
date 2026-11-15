@@ -6,7 +6,6 @@ import uuid as uuid_lib
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -16,10 +15,10 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.crud.user import UserCRUD
-from app.models.proficiency import UserProficiencyProfile
 from app.models.user import User
 from app.services.cefr_level_service import (
     apply_level_change,
+    get_or_create_profile,
     level_verified,
     normalise_level,
     publish_level_change,
@@ -146,19 +145,7 @@ async def update_current_user_profile(
     update_dict.pop("cefr_level", None)
     level_change = None
     if reported_level is not None:
-        profile = (
-            await db.execute(
-                select(UserProficiencyProfile).where(
-                    UserProficiencyProfile.user_id == current_user.id
-                )
-            )
-        ).scalar_one_or_none()
-        if profile is None:
-            profile = UserProficiencyProfile(
-                user_id=current_user.id, assessed_level=current_user.level or "A1"
-            )
-            db.add(profile)
-            await db.flush()
+        profile = await get_or_create_profile(db, current_user)
         level_change = await apply_level_change(
             db, current_user, profile, source="self", working=reported_level
         )
@@ -336,6 +323,8 @@ async def get_user_level_full(
             total_xp=current_user.total_xp,
             cefr_level=persisted_tier.code,
             cefr_name=persisted_tier.name,
+            certified_level=rank_proficiency_level(current_user),
+            level_verified=level_verified(current_user),
             cefr_progression_source="profile",
             xp_derived_cefr_level=xp_derived_status.current_tier.code,
             xp_derived_cefr_name=xp_derived_status.current_tier.name,

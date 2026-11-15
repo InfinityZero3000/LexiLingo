@@ -42,7 +42,6 @@ from app.services.proficiency_service import (
     ProficiencyService,
 )
 from app.services.rank_service import (
-    apply_rank_info_to_user,
     calculate_rank,
     rank_proficiency_level,
 )
@@ -51,6 +50,7 @@ from app.services.learner_state import record_concept_observation
 from app.clients.ai_service_client import diagnose_error, invalidate_learner_card
 from app.services.cefr_level_service import (
     apply_level_change,
+    get_or_create_profile,
     level_index,
     level_verified,
     normalise_level,
@@ -275,23 +275,9 @@ async def get_proficiency_profile(
     - Improvement recommendations
     """
     # Get or create profile
-    result = await db.execute(
-        select(UserProficiencyProfile)
-        .where(UserProficiencyProfile.user_id == current_user.id)
-    )
-    profile = result.scalar_one_or_none()
-    
-    if not profile:
-        # Create new profile for user
-        profile = UserProficiencyProfile(
-            user_id=current_user.id,
-            assessed_level="A1",
-            overall_score=0.0,
-            total_xp=current_user.total_xp or 0,
-        )
-        db.add(profile)
+    profile = await get_or_create_profile(db, current_user)
+    if profile in db.new or db.is_modified(profile):
         await db.commit()
-        await db.refresh(profile)
     
     # Get skill scores
     skill_result = await db.execute(
@@ -491,20 +477,7 @@ async def record_exercise_results_for_user(
     calling route (lesson, game, vocab) or to `award_xp_transaction`.
     """
     # Get profile
-    result = await db.execute(
-        select(UserProficiencyProfile)
-        .where(UserProficiencyProfile.user_id == current_user.id)
-    )
-    profile = result.scalar_one_or_none()
-    
-    if not profile:
-        profile = UserProficiencyProfile(
-            user_id=current_user.id,
-            assessed_level="A1",
-        )
-        db.add(profile)
-        await db.commit()
-        await db.refresh(profile)
+    profile = await get_or_create_profile(db, current_user)
     
     async def _diagnose_or_none(exercise: ExerciseResult) -> Optional[str]:
         if not exercise.submitted_answer:
@@ -821,20 +794,7 @@ async def set_working_level(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="level must be one of A1, A2, B1, B2, C1, C2",
         )
-    profile = (
-        await db.execute(
-            select(UserProficiencyProfile).where(
-                UserProficiencyProfile.user_id == current_user.id
-            )
-        )
-    ).scalar_one_or_none()
-    if profile is None:
-        profile = UserProficiencyProfile(
-            user_id=current_user.id, assessed_level=current_user.level or "A1"
-        )
-        db.add(profile)
-        await db.flush()
-
+    profile = await get_or_create_profile(db, current_user)
     change = await apply_level_change(
         db, current_user, profile, source="self", working=level
     )
@@ -920,28 +880,13 @@ async def submit_placement_test(
             assessed_level = level
             break
 
-    profile = (
-        await db.execute(
-            select(UserProficiencyProfile).where(
-                UserProficiencyProfile.user_id == current_user.id
-            )
-        )
-    ).scalar_one_or_none()
-
     # The first sitting sets both levels outright. Until the level exam ships,
     # a retake is how a learner gets certified higher, so it may only raise:
     # a bad day must not take a certified level away, and a working level the
     # learner chose above the result is theirs to keep.
-    first_test = profile is None or profile.placement_level is None
-
+    profile = await get_or_create_profile(db, current_user)
+    first_test = profile.placement_level is None
     now = datetime.now(timezone.utc)
-    if profile is None:
-        profile = UserProficiencyProfile(
-            user_id=current_user.id,
-            assessed_level=current_user.level or "A1",
-        )
-        db.add(profile)
-        await db.flush()
     old_level = profile.assessed_level or "A1"
     profile.last_assessment_at = now
 

@@ -129,6 +129,8 @@ class LevelFullResponse(BaseModel):
     level_progress_percent: float = Field(..., ge=0, le=100, description="Progress to next level")
     total_xp: int = Field(..., description="Total XP earned")
     cefr_level: str = Field(..., description="Persisted CEFR proficiency code from user profile (A1-C2)")
+    certified_level: str = Field("A1", description="CEFR level a test confirmed; rank reads it")
+    level_verified: bool = Field(True, description="False while cefr_level sits above certified_level")
     cefr_name: str = Field(..., description="Persisted CEFR display name")
     cefr_progression_source: str = Field(
         default="profile",

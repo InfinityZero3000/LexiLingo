@@ -19,6 +19,7 @@ from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.clients.ai_service_client import invalidate_learner_card
@@ -62,6 +63,36 @@ def refresh_rank(user: User) -> None:
             proficiency_level=rank_proficiency_level(user),
         ),
     )
+
+
+async def get_or_create_profile(db: AsyncSession, user: User) -> UserProficiencyProfile:
+    """The learner's proficiency profile, created from their current level.
+
+    Several routes create the profile lazily. Seeding it with a fixed "A1"
+    made the next practice batch settle `users.level` onto that A1 — a silent
+    demotion for anyone who held a level before their first profile read.
+    Flushes, never commits.
+    """
+    profile = (
+        await db.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == user.id
+            )
+        )
+    ).scalar_one_or_none()
+    if profile is None:
+        profile = UserProficiencyProfile(
+            user_id=user.id,
+            assessed_level=normalise_level(user.level) or "A1",
+            overall_score=0.0,
+            total_xp=user.total_xp or 0,
+            total_exercises_completed=0,
+            total_correct_exercises=0,
+            total_lessons_completed=0,
+        )
+        db.add(profile)
+        await db.flush()
+    return profile
 
 
 @dataclass(frozen=True)

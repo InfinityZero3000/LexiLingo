@@ -186,3 +186,22 @@ async def test_user_level_is_settled_on_the_profile_not_the_scores(
     # Rank reads the certified level, which practice never moves.
     assert test_user.certified_level is None
     assert test_user.rank_proficiency_score == rank_before
+
+
+async def test_a_first_profile_starts_at_the_users_level_not_a1(db_session, test_user):
+    """Creating the profile lazily with a fixed A1 and then settling users.level
+    on it silently demoted anyone who held a level before their first profile."""
+    test_user.level = "B2"
+    await db_session.commit()
+
+    await record_exercise_results_for_user(db_session, test_user, _one_result())
+
+    assert test_user.level == "B2"
+    profile = (
+        await db_session.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == test_user.id
+            )
+        )
+    ).scalar_one()
+    assert profile.assessed_level == "B2"
