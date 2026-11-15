@@ -392,7 +392,9 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                   inactiveTrackColor: AppColors.surfaceLight.withValues(
                     alpha: 0.4,
                   ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  materialTapTargetSize: TapTargetBox.applies(context)
+                      ? MaterialTapTargetSize.padded
+                      : MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
             ),

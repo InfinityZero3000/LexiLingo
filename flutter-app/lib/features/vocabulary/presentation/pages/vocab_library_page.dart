@@ -390,7 +390,9 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         IconButton(
                           icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
                           onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
-                          constraints: const BoxConstraints(),
+                          constraints: TapTargetBox.applies(context)
+                              ? const BoxConstraints(minWidth: 44, minHeight: 44)
+                              : const BoxConstraints(),
                           padding: EdgeInsets.zero,
                         ),
                       ],

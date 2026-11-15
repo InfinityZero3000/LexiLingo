@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
@@ -310,7 +311,9 @@ class GrammarCorrectionBadge extends StatelessWidget {
                 onPressed: onPractice,
                 backgroundColor: Colors.orange.shade100,
                 side: BorderSide.none,
-                visualDensity: VisualDensity.compact,
+                visualDensity: TapTargetBox.applies(context)
+                    ? VisualDensity.standard
+                    : VisualDensity.compact,
               ),
             ),
         ],

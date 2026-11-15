@@ -1,5 +1,5 @@
 """Drive the Flutter web build through its semantics tree; shots + metrics per screen."""
-import asyncio, json, re, sys
+import asyncio, json, os, re, sys, time
 from playwright.async_api import async_playwright
 
 SIZES = {"390": (390, 844), "768": (768, 1024), "1440": (1440, 900)}
@@ -17,7 +17,8 @@ class App:
         self.page, self.size, self.out = page, size, out
         self.w, self.h = SIZES[size]
     async def nodes(self):
-        if self.w >= 840:
+        import os
+        if self.w >= 840 or os.environ.get('AUDIT_DESKTOP'):
             await self.page.evaluate("document.querySelector('flt-semantics-placeholder')?.click()")
         elif not await self.page.evaluate("document.querySelectorAll('flt-semantics').length"):
             # On a phone the placeholder covers the screen and only a touch at its centre enables semantics.
@@ -33,10 +34,14 @@ class App:
         return hits[nth] if len(hits) > nth else None
     async def click(self, label, role=None, nth=0, wait=1500, must=True):
         n = await self.find(label, role, nth)
+        for _ in range(4 if must else 0):   # content that is still loading
+            if n: break
+            await self.page.wait_for_timeout(1500); n = await self.find(label, role, nth)
         if not n:
             if must: raise RuntimeError(f"[{self.size}] no node for {label!r}")
             return False
-        if self.w < 840 and n["y"] + n["h"] / 2 > self.h - 80:  # under the bottom bar
+        if self.w < 840 and n["y"] + n["h"] / 2 > self.h - 80 and not re.search("Tab \\d", n["label"]) \
+                and any("Tab 1" in m["label"] for m in await self.nodes()):  # under the bottom bar
             await self.scroll(320); n = await self.find(label, role, nth) or n
         await self.page.mouse.click(n["x"] + n["w"] / 2, n["y"] + n["h"] / 2)
         await self.page.wait_for_timeout(wait)
@@ -73,9 +78,14 @@ class App:
 async def open_app(p, size, out, storage=None):
     b = await p.chromium.launch(channel="chrome")
     w, h = SIZES[size]
-    touch = {} if w >= 840 else {"has_touch": True, "is_mobile": True, "user_agent":
+    import os
+    touch = {} if w >= 840 or os.environ.get('AUDIT_DESKTOP') else {"has_touch": True, "is_mobile": True, "user_agent":
         "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"}
+    saved = os.path.join(os.path.dirname(os.path.abspath(out)), f".state-{size}-{'d' if not touch else 'm'}.json")  # beside the shots, never in the repo
+    if storage is None and os.environ.get("AUDIT_EMAIL") and os.path.exists(saved) and time.time() - os.path.getmtime(saved) < 1200:
+        storage = saved   # logging in for every run trips the login rate limit
     ctx = await b.new_context(viewport={"width": w, "height": h}, storage_state=storage, locale="vi-VN", **touch)
+    ctx._audit_state = saved
     if touch:  # Flutter picks its platform from navigator.platform, which a UA override leaves alone
         await ctx.add_init_script("Object.defineProperty(navigator, 'platform', {get: () => 'iPhone'})")
     page = await ctx.new_page()
@@ -88,9 +98,13 @@ async def ensure_login(a):
     """Log in when the app opens on the welcome or login page. AUDIT_EMAIL / AUDIT_PASSWORD."""
     import os
     if await a.find("^Khám phá"): return
-    await a.click("Đã có tài khoản", must=False)
-    forgot = await a.find("Quên mật khẩu")
-    eye = min((n for n in await a.nodes() if n["role"] == "button" and not n["label"] and abs(n["y"] - forgot["y"]) < 120 and n["y"] > forgot["y"]),
+    forgot = None
+    for _ in range(5):  # the first load after a build can take a while
+        await a.click("Đã có tài khoản", must=False)
+        forgot = await a.find("Quên mật khẩu")
+        if forgot: break
+        await a.page.wait_for_timeout(3000)
+    eye = min((n for n in await a.nodes() if n["role"] == "button" and not n["label"] and abs(n["y"] - forgot["y"]) < 160 and n["y"] >= forgot["y"] - 20 and n["w"] <= 60),
               key=lambda n: n["y"])
     y = eye["y"] + eye["h"] / 2
     await a.page.mouse.click(a.w / 2 - 20, y - 94); await a.page.keyboard.type(os.environ["AUDIT_EMAIL"], delay=10)
@@ -99,3 +113,4 @@ async def ensure_login(a):
     if not await a.find("^Khám phá"):
         await a.click("^Đăng nhập$", wait=8000, must=False)
     if not await a.find("^Khám phá"): raise SystemExit("login failed: Home never appeared")
+    await a.page.context.storage_state(path=a.page.context._audit_state)
