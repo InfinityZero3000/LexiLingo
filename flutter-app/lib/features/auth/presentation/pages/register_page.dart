@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -517,7 +518,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               color: const Color(0xFF3E536B),
                             ),
                           ),
-                          GestureDetector(
+                          TapTarget(
                             onTap: () {
                               if (Navigator.of(context).canPop()) {
                                 Navigator.of(context).pop();

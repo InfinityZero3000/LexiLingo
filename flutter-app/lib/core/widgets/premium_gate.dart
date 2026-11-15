@@ -70,12 +70,20 @@ class _PremiumGateState extends State<PremiumGate> {
               alignment: Alignment.center,
               children: [
                 widget.child,
-                Container(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  child: const Icon(
+                // A centred 36 px lock sat on top of the button label, so a
+                // phone showed "Tải về ... offline" with the middle hidden.
+                // The scrim says "locked"; the badge sits clear of the text.
+                Positioned.fill(
+                  child: ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.35),
+                  ),
+                ),
+                const Positioned(
+                  right: 12,
+                  child: Icon(
                     Icons.lock_rounded,
                     color: Colors.white,
-                    size: 36,
+                    size: 20,
                   ),
                 ),
               ],

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -333,7 +334,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                                 children: widget.article.highlightedWords.map((
                                   word,
                                 ) {
-                                  return GestureDetector(
+                                  return TapTarget(
                                     onTap: () => _onWordTap(word),
                                     child: Container(
                                       padding: EdgeInsets.symmetric(

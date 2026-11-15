@@ -24,7 +24,22 @@ The fixes are in #702: the touch theme now applies by width, so a narrow desktop
 
 35 screens at all three sizes: the five tabs, notifications, course detail, study plan, flashcard review, speaking practice, streak calendar, daily goal, level and daily-challenge sheets, YouTube, news, games, podcast, books, vocabulary library, course filter, category, Lexi history and topics, IELTS tests, shop, leaderboard, friends, progress, settings, premium, edit profile, gems, welcome and login.
 
-**Not captured:** lesson session, quizzes, the full roadmap, book reader, podcast and video players, news article, game play, an IELTS paper, word of the day, achievements, register, forgot password and onboarding. The crawler did not reach them; they still need a pass.
+**Second pass (secondary screens), at 390 and 768 px as a phone:** full roadmap, a lesson question, book detail and reader, podcast show, video player, news article, word of the day, vocabulary decks, three games (word scramble, fill in the blank, matching), speaking from Practice, the Practice listening card, premium, register, forgot password and onboarding. No page-level horizontal scroll on any of them.
+
+What that pass found and how it ended:
+
+| Screen | Problem | Status |
+|---|---|---|
+| Book detail | The premium lock (a centred 36 px icon) covered the middle of the "Tải về để đọc offline" label | Fixed: a 20 px badge at the end of the button |
+| News article | Vocabulary chips 29 px tall | Fixed: 44 px hit area |
+| Login, register, onboarding | Language button 34 px tall | Fixed |
+| Welcome | Globe button 40x40 with no accessible label | Fixed: 44 px, labelled "Ngôn ngữ" |
+| Register | "Đăng nhập" link 87x24 | Fixed |
+| Streak calendar | Reminder switch forced to `shrinkWrap` (60x40) | Fixed |
+| Lexi practice hint, deck delete | Compact density / removed constraints | Fixed |
+| Video player | Each transcript word is a 20 px tall tap target | Left as is: these are words inside running text, the inline-target exception in WCAG 2.5.8. A 44 px row per word would make the transcript unreadable |
+
+**Still not captured:** quizzes beyond the first lesson question, an IELTS paper (no published test in the local data) and a shop purchase. A lesson's answered state was not captured because the check button stays disabled until an option is chosen and the crawler did not select one.
 
 ## Result by requirement
 

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
@@ -153,7 +154,7 @@ class LanguageSwitcherButton extends StatelessWidget {
     final code = context.locale.languageCode;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
+    return TapTarget(
       onTap: () => showLanguageSheet(context),
       child: Container(
         height: 34,
