@@ -43,7 +43,8 @@ async def main():
     out, size = sys.argv[1], sys.argv[2]
     only = sys.argv[3:] 
     async with async_playwright() as p:
-        b, ctx, a = await open_app(p, size, out, storage=f"{out}/../state.json")
+        b, ctx, a = await open_app(p, size, out)
+        await ensure_login(a)
         for name, path, scrolls in SCREENS:
             if only and not any(o in name for o in only): continue
             try:

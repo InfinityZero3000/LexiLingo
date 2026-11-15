@@ -7,12 +7,18 @@ Baseline taken 2026-11-15 on `dev` at `4c0f2c77`, before any responsive fix. It 
 A profile web build (`flutter build web --profile --dart-define=API_BASE_URL=http://localhost:8000/api/v1`, with `.env.development` as `.env`) served on `localhost:8080`, driven by Playwright through Flutter's semantics tree (`tool/responsive_audit/`). Each screen was captured at 390x844, 768x1024 and 1440x900, and every tappable semantics node smaller than 44 px in either direction was recorded.
 
 ```bash
-AUDIT_EMAIL=... AUDIT_PASSWORD=... python tool/responsive_audit/login.py <out>/shots
+export AUDIT_EMAIL=... AUDIT_PASSWORD=...
 python tool/responsive_audit/crawl.py <out>/shots 390     # then 768, 1440
 python tool/responsive_audit/crawl_auth.py <out>/shots
 ```
 
 Traps: a release build always talks to production (`ApiConfig._mustUseProductionBackend`), so use `--profile`. Local login answers 503 while the Redis container is stopped. The seeded `@lexilingo.test` accounts cannot log in at all: the login schema rejects the reserved `.test` domain, so the audit account needs a real-looking domain.
+
+## Correction: measure 390 and 768 as a phone, not as a desktop browser
+
+The first pass ran every width in desktop Chrome. Flutter chooses `MaterialTapTargetSize.shrinkWrap` and compact density on desktop platforms, so stock buttons, chips and switches measured 40 px or less there while being 48 px on a real phone. Of the 106 controls listed below, about 30 were under 44 px on a phone; the rest were an artefact of the platform. The crawler now emulates a phone below 840 px (touch, mobile user agent, `navigator.platform`), and the table below is kept as the desktop-browser reading.
+
+The fixes are in #702: the touch theme now applies by width, so a narrow desktop window matches a phone, and the hand-built controls get a 44 px hit area. After it, the phone-emulated crawl finds one control under 44 px: the stock `Switch` at 60x40.
 
 ## Coverage
 
@@ -26,7 +32,7 @@ Traps: a release build always talks to production (`ApiConfig._mustUseProduction
 |---|---|
 | No page-level horizontal scroll | Pass on all 35 screens at all three sizes. Horizontal movement exists only in carousels and chip rows. |
 | Tables stack below 768 px | Nothing to convert on the captured screens: the app has no table widget, and its row lists (progress stats, leaderboard, gem history, friends) are already single-column cards at 390 px. The league had one participant in the test data, so a full leaderboard is unverified. |
-| Tap targets at least 44x44 | **Fails on 27 of 35 screens**, 106 distinct controls. Almost all fail identically at every size, so they are component defaults, not layout bugs. |
+| Tap targets at least 44x44 | In a desktop browser: fails on 27 of 35 screens, 106 controls. On a phone: about 30 controls, all hand-built. See the correction above. |
 | Layout at 768 px | **Weak.** Phone layouts are stretched to the full width; see below. |
 | Desktop layout unchanged | Baseline screenshots at 1440 px are the reference for later PRs. |
 
@@ -100,7 +106,7 @@ At 768 px the app still uses the bottom bar and the phone layout (the rail start
 
 ## Observations outside the three requirements
 
-- **Category screen shows the wrong count.** "Xem tất cả" on a category with 5 courses opened a page saying "Có 0 khóa học" (768 px), and a 2-course category listed 1 (1440 px). This looks like data or filtering, not layout.
-- **Book covers and the featured-book banner rendered blank** at 768 and 1440 px while they loaded at 390 px. Possibly slow images in the capture; confirm by hand.
+- **Category screen shows the wrong count (fixed in #701).** "Xem tất cả" on a category with 5 courses opened a page saying "Có 0 khóa học" (768 px), and a 2-course category listed 1 (1440 px). This looks like data or filtering, not layout.
+- Book covers and the featured-book banner rendered blank in some captures. A second crawl showed them loaded; it was slow images, not layout.
 - At 1440 px every pushed screen replaces the navigation rail, and the category screen keeps its content in the left 580 px. Both are existing desktop behaviour and are left alone, per the "desktop does not change" rule.
 - The Home "continue learning" card looked doubled in two captures; it is the cross-fade between its two messages caught mid-animation, not a layout fault.

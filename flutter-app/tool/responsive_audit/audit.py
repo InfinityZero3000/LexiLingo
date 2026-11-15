@@ -17,7 +17,13 @@ class App:
         self.page, self.size, self.out = page, size, out
         self.w, self.h = SIZES[size]
     async def nodes(self):
-        await self.page.evaluate("document.querySelector('flt-semantics-placeholder')?.click()")
+        if self.w >= 840:
+            await self.page.evaluate("document.querySelector('flt-semantics-placeholder')?.click()")
+        elif not await self.page.evaluate("document.querySelectorAll('flt-semantics').length"):
+            # On a phone the placeholder covers the screen and only a touch at its centre enables semantics.
+            for _ in range(3):
+                await self.page.touchscreen.tap(self.w / 2, self.h / 2); await self.page.wait_for_timeout(700)
+                if await self.page.evaluate("document.querySelectorAll('flt-semantics').length"): break
         await self.page.wait_for_timeout(350)
         return await self.page.evaluate(JS_NODES)
     async def find(self, label, role=None, nth=0):
@@ -67,8 +73,29 @@ class App:
 async def open_app(p, size, out, storage=None):
     b = await p.chromium.launch(channel="chrome")
     w, h = SIZES[size]
-    ctx = await b.new_context(viewport={"width": w, "height": h}, storage_state=storage, locale="vi-VN")
+    touch = {} if w >= 840 else {"has_touch": True, "is_mobile": True, "user_agent":
+        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"}
+    ctx = await b.new_context(viewport={"width": w, "height": h}, storage_state=storage, locale="vi-VN", **touch)
+    if touch:  # Flutter picks its platform from navigator.platform, which a UA override leaves alone
+        await ctx.add_init_script("Object.defineProperty(navigator, 'platform', {get: () => 'iPhone'})")
     page = await ctx.new_page()
     page.on("console", lambda m: print("  console.error:", m.text[:160]) if m.type == "error" and "overflow" in m.text.lower() else None)
     await page.goto("http://localhost:8080/"); await page.wait_for_timeout(8000)
     return b, ctx, App(page, size, out)
+
+
+async def ensure_login(a):
+    """Log in when the app opens on the welcome or login page. AUDIT_EMAIL / AUDIT_PASSWORD."""
+    import os
+    if await a.find("^Khám phá"): return
+    await a.click("Đã có tài khoản", must=False)
+    forgot = await a.find("Quên mật khẩu")
+    eye = min((n for n in await a.nodes() if n["role"] == "button" and not n["label"] and abs(n["y"] - forgot["y"]) < 120 and n["y"] > forgot["y"]),
+              key=lambda n: n["y"])
+    y = eye["y"] + eye["h"] / 2
+    await a.page.mouse.click(a.w / 2 - 20, y - 94); await a.page.keyboard.type(os.environ["AUDIT_EMAIL"], delay=10)
+    await a.page.mouse.click(a.w / 2 - 20, y); await a.page.keyboard.type(os.environ["AUDIT_PASSWORD"], delay=10)
+    await a.page.keyboard.press("Enter"); await a.page.wait_for_timeout(1500)
+    if not await a.find("^Khám phá"):
+        await a.click("^Đăng nhập$", wait=8000, must=False)
+    if not await a.find("^Khám phá"): raise SystemExit("login failed: Home never appeared")
