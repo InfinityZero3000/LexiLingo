@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
@@ -36,7 +38,7 @@ class LexiModeSwitch extends StatelessWidget {
     final radius = BorderRadius.circular(height / 2);
     final motion = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
-        : const Duration(milliseconds: 200);
+        : const Duration(milliseconds: 380);
 
     return Stack(
       children: [
@@ -62,6 +64,39 @@ class LexiModeSwitch extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  // The pill stretches toward its target and settles back to half width, so
+  // it reads as flowing across instead of teleporting. Symmetric easing: an
+  // ease-out spends most of its distance in the first frames.
+  Widget _thumb(
+    double trackWidth,
+    ColorScheme scheme,
+    BorderRadius radius,
+    Duration motion,
+  ) {
+    final half = trackWidth / 2;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(end: value.index.toDouble()),
+      duration: motion,
+      curve: Curves.easeInOutCubic,
+      builder: (context, p, _) {
+        final width = half * (1 + 0.3 * math.sin(math.pi * p.clamp(0.0, 1.0)));
+        return Positioned(
+          key: const ValueKey('lexi-mode-thumb'),
+          left: p * (trackWidth - width),
+          top: 0,
+          bottom: 0,
+          width: width,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: scheme.primary,
+              borderRadius: radius,
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -94,23 +129,7 @@ class LexiModeSwitch extends StatelessWidget {
               (constraints.maxWidth >= labelMinWidth ? 1.0 : 0.0);
           return Stack(
             children: [
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: constraints.maxWidth / 2,
-                child: AnimatedSlide(
-                  offset: Offset(value.index.toDouble(), 0),
-                  duration: motion,
-                  curve: Curves.easeOutCubic,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: scheme.primary,
-                      borderRadius: radius,
-                    ),
-                  ),
-                ),
-              ),
+              _thumb(constraints.maxWidth, scheme, radius, motion),
               Row(
                 children: [
                   for (final mode in LexiMode.values)
