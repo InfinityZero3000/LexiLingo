@@ -1,0 +1,26 @@
+name: PR title
+
+# Squash-merge uses the PR title as the commit subject, and the release notes are built from those subjects.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [dev]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional:
+    name: PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Title is a conventional commit subject
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          re='^(feat|fix|perf|refactor|docs|test|chore|ci|build|style|revert)(\([A-Za-z0-9._/, -]+\))?!?: .+'
+          if [[ ! "$TITLE" =~ $re ]]; then
+            echo "::error::PR title must look like 'fix(auth): stop the login spinner'. Types: feat fix perf refactor docs test chore ci build style revert."
+            echo "Got: $TITLE"
+            exit 1
+          fi
