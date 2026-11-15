@@ -11,6 +11,11 @@ class UserEntity {
   final bool isOnboardingCompleted;
   final String roleSlug; // 'user', 'admin', 'super_admin'
   final String cefrLevel; // CEFR level: A1, A2, B1, B2, C1, C2
+
+  /// What a test confirmed; rank reads it. [cefrLevel] is the working level
+  /// the learner may pick, and is unverified while it sits above this one.
+  final String certifiedLevel;
+  final bool levelVerified;
   final String nativeLanguage; // ISO code: vi, en, ja, ko, zh, fr, es
   final int totalXp;
   final int numericLevel;
@@ -31,6 +36,8 @@ class UserEntity {
     this.isOnboardingCompleted = false,
     this.roleSlug = 'user',
     this.cefrLevel = 'A1',
+    this.certifiedLevel = 'A1',
+    this.levelVerified = true,
     this.nativeLanguage = 'vi',
     this.totalXp = 0,
     this.numericLevel = 1,
@@ -52,6 +59,8 @@ class UserEntity {
     bool? isOnboardingCompleted,
     String? roleSlug,
     String? cefrLevel,
+    String? certifiedLevel,
+    bool? levelVerified,
     String? nativeLanguage,
     int? totalXp,
     int? numericLevel,
@@ -73,6 +82,8 @@ class UserEntity {
           isOnboardingCompleted ?? this.isOnboardingCompleted,
       roleSlug: roleSlug ?? this.roleSlug,
       cefrLevel: cefrLevel ?? this.cefrLevel,
+      certifiedLevel: certifiedLevel ?? this.certifiedLevel,
+      levelVerified: levelVerified ?? this.levelVerified,
       nativeLanguage: nativeLanguage ?? this.nativeLanguage,
       totalXp: totalXp ?? this.totalXp,
       numericLevel: numericLevel ?? this.numericLevel,

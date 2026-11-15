@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/level/data/datasources/proficiency_data_s
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/placement_test_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_exam_provider.dart';
 
 /// Registers all level-related dependencies
 void registerLevelModule() {
@@ -22,6 +23,9 @@ void registerLevelModule() {
     () => ProficiencyProvider(dataSource: sl<ProficiencyDataSource>()),
   );
 
+  sl.registerFactory<LevelExamProvider>(
+    () => LevelExamProvider(dataSource: sl<ProficiencyDataSource>()),
+  );
   sl.registerFactory<PlacementTestProvider>(
     () => PlacementTestProvider(dataSource: sl<ProficiencyDataSource>()),
   );

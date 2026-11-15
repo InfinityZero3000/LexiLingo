@@ -736,7 +736,15 @@
     "startLessons": "Iniciar lecciones",
     "adminMobile": "Admin móvil",
     "switchToAdmin": "Cambiar al panel de administración",
-    "adminMobileSubtitle": "LexiLingo Admin móvil"
+    "adminMobileSubtitle": "LexiLingo Admin móvil",
+    "levelCertifiedTag": "Certificado por una prueba",
+    "levelUnverifiedTag": "Se mostrará como no verificado hasta que apruebes el examen de nivel",
+    "levelUnverifiedValue": "{level} · no verificado (certificado {certified})",
+    "levelPickerHint": "Elige el nivel con el que quieres estudiar. Solo el examen de nivel certifica un nivel.",
+    "levelAboveCertifiedTitle": "¿Estudiar por encima de tu nivel certificado?",
+    "levelAboveCertifiedBody": "Las lecciones y Lexi usarán {level}. Tu nivel certificado seguirá siendo {certified} hasta que apruebes el examen, y tu rango seguirá usándolo.",
+    "levelSaved": "Ahora estudias en el nivel {level}",
+    "levelSelfSet": "Elegiste {level}"
   },
   "progress": {
     "streakRestoresLeft": "Restauraciones de racha restantes este mes: {count}",
@@ -1019,7 +1027,8 @@
     "interestDailyLife": "Vida diaria y temas sociales",
     "interestTechnology": "Tecnología e innovación",
     "interestCulture": "Cultura y entretenimiento",
-    "interestCareer": "Crecimiento profesional y entrevistas"
+    "interestCareer": "Crecimiento profesional y entrevistas",
+    "levelC2": "C2 - Maestría"
   },
   "preAuth": {
     "quickSetup": "Configuración rápida",
@@ -2059,5 +2068,30 @@
     "nothingTranscribed": "No se transcribió nada. Inténtalo de nuevo.",
     "transcribeFailed": "No se pudo transcribir la grabación.",
     "micPermissionRequired": "Se necesita permiso de micrófono."
+  },
+  "levelExam": {
+    "title": "Examen de nivel",
+    "introTitle": "Examen de nivel desde {level}",
+    "introBody": "Una sección corta por cada nivel por encima de tu nivel certificado. Aprueba secciones seguidas para subir: una sola sesión puede certificar varios niveles. Si no apruebas, podrás intentarlo de nuevo en 24 horas. El tiempo empieza cuando comienzas.",
+    "start": "Empezar el examen",
+    "resume": "Reanudar el examen",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "Nivel {level}",
+    "timeLeft": "Quedan {time}",
+    "next": "Siguiente",
+    "previous": "Atrás",
+    "submit": "Enviar",
+    "passedTitle": "¡Has alcanzado {level}!",
+    "failedTitle": "Esta vez no",
+    "sectionRow": "{level}: {correct}/{total} correctas",
+    "certifiedNow": "Tu nivel certificado ahora es {level}.",
+    "retryAt": "Podrás intentarlo de nuevo desde {time}.",
+    "done": "Hecho",
+    "gateNotReady": "Sigue practicando para desbloquear el examen {level} ({progress}% completado).",
+    "gateCooldown": "Podrás volver a hacer el examen desde {time}.",
+    "gateExpired": "Se acabó el tiempo. Podrás intentarlo de nuevo desde {time}.",
+    "gateNoQuestions": "El examen del siguiente nivel aún no está disponible.",
+    "gateMaxLevel": "Estás certificado en el nivel más alto.",
+    "gateError": "No se pudo cargar el examen. Inténtalo de nuevo."
   }
 }

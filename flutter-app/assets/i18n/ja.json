@@ -736,7 +736,15 @@
     "startLessons": "レッスンを開始する",
     "adminMobile": "管理者モバイル",
     "switchToAdmin": "管理パネルに切り替える",
-    "adminMobileSubtitle": "LexiLingo 管理者モバイル"
+    "adminMobileSubtitle": "LexiLingo 管理者モバイル",
+    "levelCertifiedTag": "テストで認定済み",
+    "levelUnverifiedTag": "レベル試験に合格するまで未認定と表示されます",
+    "levelUnverifiedValue": "{level} · 未認定（認定済み {certified}）",
+    "levelPickerHint": "学習したいレベルを選んでください。レベルを認定するのはレベル試験だけです。",
+    "levelAboveCertifiedTitle": "認定レベルより上で学習しますか？",
+    "levelAboveCertifiedBody": "レッスンとLexiは{level}を使います。レベル試験に合格するまで認定レベルは{certified}のままで、ランクもそれを使います。",
+    "levelSaved": "{level}で学習します",
+    "levelSelfSet": "{level}を選択"
   },
   "progress": {
     "streakRestoresLeft": "今月の連続記録の復元残り回数: {count}",
@@ -1019,7 +1027,8 @@
     "interestDailyLife": "日常生活と社会的な話題",
     "interestTechnology": "テクノロジーとイノベーション",
     "interestCulture": "文化とエンタメ",
-    "interestCareer": "キャリアアップと面接"
+    "interestCareer": "キャリアアップと面接",
+    "levelC2": "C2 - 熟達"
   },
   "preAuth": {
     "quickSetup": "クイックセットアップ",
@@ -2059,5 +2068,30 @@
     "nothingTranscribed": "文字起こしできませんでした。もう一度お試しください。",
     "transcribeFailed": "録音を文字起こしできませんでした。",
     "micPermissionRequired": "マイクの許可が必要です。"
+  },
+  "levelExam": {
+    "title": "レベル試験",
+    "introTitle": "{level}からのレベル試験",
+    "introBody": "認定レベルより上の各レベルに短いセクションがあります。続けて合格すると上のレベルに進み、一度の受験で複数レベルを認定できます。合格できなかった場合は24時間後に再挑戦できます。時間は開始した時点から計測されます。",
+    "start": "試験を始める",
+    "resume": "試験を再開",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "レベル {level}",
+    "timeLeft": "残り {time}",
+    "next": "次へ",
+    "previous": "戻る",
+    "submit": "提出",
+    "passedTitle": "{level}に到達しました！",
+    "failedTitle": "今回は不合格です",
+    "sectionRow": "{level}: {correct}/{total} 正解",
+    "certifiedNow": "認定レベルは{level}になりました。",
+    "retryAt": "{time}から再挑戦できます。",
+    "done": "完了",
+    "gateNotReady": "{level}の試験を解放するには、もう少し練習してください（{progress}%）。",
+    "gateCooldown": "{time}から再受験できます。",
+    "gateExpired": "時間切れです。{time}から再挑戦できます。",
+    "gateNoQuestions": "次のレベルの試験はまだ利用できません。",
+    "gateMaxLevel": "最高レベルに認定されています。",
+    "gateError": "試験を読み込めませんでした。もう一度お試しください。"
   }
 }

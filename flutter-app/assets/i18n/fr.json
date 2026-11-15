@@ -736,7 +736,15 @@
     "startLessons": "Commencer les leçons",
     "adminMobile": "Admin mobile",
     "switchToAdmin": "Passer au panneau d'administration",
-    "adminMobileSubtitle": "LexiLingo Admin mobile"
+    "adminMobileSubtitle": "LexiLingo Admin mobile",
+    "levelCertifiedTag": "Certifié par un test",
+    "levelUnverifiedTag": "Affiché comme non vérifié tant que vous n'avez pas réussi l'examen de niveau",
+    "levelUnverifiedValue": "{level} · non vérifié (certifié {certified})",
+    "levelPickerHint": "Choisissez le niveau auquel vous voulez étudier. Seul l'examen de niveau certifie un niveau.",
+    "levelAboveCertifiedTitle": "Étudier au-dessus de votre niveau certifié ?",
+    "levelAboveCertifiedBody": "Les leçons et Lexi utiliseront {level}. Votre niveau certifié reste {certified} tant que vous n'avez pas réussi l'examen, et votre rang continue de l'utiliser.",
+    "levelSaved": "Vous étudiez maintenant au niveau {level}",
+    "levelSelfSet": "Niveau {level} choisi"
   },
   "progress": {
     "streakRestoresLeft": "Restaurations de série restantes ce mois-ci : {count}",
@@ -1019,7 +1027,8 @@
     "interestDailyLife": "Vie quotidienne et sujets sociaux",
     "interestTechnology": "Technologie et innovation",
     "interestCulture": "Culture et divertissement",
-    "interestCareer": "Évolution de carrière et entretiens"
+    "interestCareer": "Évolution de carrière et entretiens",
+    "levelC2": "C2 - Maîtrise"
   },
   "preAuth": {
     "quickSetup": "Configuration rapide",
@@ -2059,5 +2068,30 @@
     "nothingTranscribed": "Rien n’a été transcrit. Réessayez.",
     "transcribeFailed": "Impossible de transcrire l’enregistrement.",
     "micPermissionRequired": "L’autorisation du microphone est requise."
+  },
+  "levelExam": {
+    "title": "Examen de niveau",
+    "introTitle": "Examen de niveau depuis {level}",
+    "introBody": "Une courte section par niveau au-dessus de votre niveau certifié. Réussissez des sections à la suite pour monter — une session peut certifier plusieurs niveaux. En cas d'échec, vous pourrez réessayer dans 24 heures. Le chronomètre démarre quand vous commencez.",
+    "start": "Commencer l'examen",
+    "resume": "Reprendre l'examen",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "Niveau {level}",
+    "timeLeft": "{time} restantes",
+    "next": "Suivant",
+    "previous": "Retour",
+    "submit": "Envoyer",
+    "passedTitle": "Vous avez atteint {level} !",
+    "failedTitle": "Pas cette fois",
+    "sectionRow": "{level} : {correct}/{total} correctes",
+    "certifiedNow": "Votre niveau certifié est maintenant {level}.",
+    "retryAt": "Vous pourrez réessayer à partir de {time}.",
+    "done": "Terminé",
+    "gateNotReady": "Continuez à vous entraîner pour débloquer l'examen {level} ({progress} % atteints).",
+    "gateCooldown": "Vous pourrez repasser l'examen à partir de {time}.",
+    "gateExpired": "Le temps est écoulé. Vous pourrez réessayer à partir de {time}.",
+    "gateNoQuestions": "L'examen du niveau suivant n'est pas encore disponible.",
+    "gateMaxLevel": "Vous êtes certifié au niveau le plus élevé.",
+    "gateError": "Impossible de charger l'examen. Veuillez réessayer."
   }
 }

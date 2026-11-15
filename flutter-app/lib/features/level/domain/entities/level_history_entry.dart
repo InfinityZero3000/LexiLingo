@@ -11,6 +11,9 @@ class LevelHistoryEntry extends Equatable {
 
   /// The first placement test, as opposed to a later level change.
   final bool isInitial;
+
+  /// The learner picked this working level; no test was involved.
+  final bool isSelfSet;
   final DateTime triggeredAt;
 
   const LevelHistoryEntry({
@@ -18,6 +21,7 @@ class LevelHistoryEntry extends Equatable {
     required this.newLevel,
     required this.isPromotion,
     this.isInitial = false,
+    this.isSelfSet = false,
     required this.triggeredAt,
   });
 
@@ -27,6 +31,7 @@ class LevelHistoryEntry extends Equatable {
     newLevel,
     isPromotion,
     isInitial,
+    isSelfSet,
     triggeredAt,
   ];
 }
@@ -52,8 +57,12 @@ List<LevelHistoryEntry> parseLevelHistory(Map<String, dynamic> json) {
       LevelHistoryEntry(
         previousLevel: previous,
         newLevel: next,
-        isPromotion: item['change_type'] != 'demotion',
+        // A self-set can go either way; its direction is in the levels.
+        isPromotion: item['change_type'] == 'self_set'
+            ? _cefrIndex(next) > _cefrIndex(previous)
+            : item['change_type'] != 'demotion',
         isInitial: item['change_type'] == 'initial',
+        isSelfSet: item['change_type'] == 'self_set',
         triggeredAt: at.toLocal(),
       ),
     );
@@ -61,3 +70,6 @@ List<LevelHistoryEntry> parseLevelHistory(Map<String, dynamic> json) {
   entries.sort((a, b) => a.triggeredAt.compareTo(b.triggeredAt));
   return entries;
 }
+
+int _cefrIndex(String level) =>
+    const ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(level.toUpperCase());

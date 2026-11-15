@@ -15,6 +15,9 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/utils/avatar_utils.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/widgets/cefr_level_picker.dart';
 
 /// Edit Profile Screen
 /// Allows users to update their display name and avatar.
@@ -161,9 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   }
 
   Future<void> _sendVerificationEmail(UserEntity user) async {
-    if (user.isVerified ||
-        _isSendingVerification ||
-        _isCheckingVerification) {
+    if (user.isVerified || _isSendingVerification || _isCheckingVerification) {
       return;
     }
 
@@ -275,159 +276,157 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           ),
         ],
       ),
-      body: ContentWidth(maxWidth: ContentWidth.reading, child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Error message
-                if (_errorMessage != null)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.errorBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.errorBright.withValues(alpha: 0.35),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: AppColors.errorBright,
-                          size: 20,
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Error message
+                  if (_errorMessage != null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.errorBright.withValues(alpha: 0.35),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            _errorMessage!,
-                            style: const TextStyle(
-                              color: AppColors.errorBright,
-                              fontSize: 13,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppColors.errorBright,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(
+                                color: AppColors.errorBright,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
 
-                // Avatar Section
-                _buildAvatarSection(
-                  user,
-                  isDark,
-                  primaryColor,
-                  primaryDeepColor,
-                ),
-                const SizedBox(height: 32),
-
-                // Display Name
-                _buildSectionLabel('profile.displayName'.tr()),
-                const SizedBox(height: 8),
-                _buildTextField(
-                  controller: _displayNameController,
-                  hint: 'profile.enterDisplayName'.tr(),
-                  icon: Icons.person_outline,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'profile.displayNameRequired'.tr();
-                    }
-                    if (value.trim().length < 2) {
-                      return 'profile.displayNameMin'.tr();
-                    }
-                    if (value.trim().length > 50) {
-                      return 'profile.displayNameMax'.tr();
-                    }
-                    return null;
-                  },
-                  isDark: isDark,
-                  primaryColor: primaryColor,
-                ),
-                const SizedBox(height: 24),
-
-                // Account Info (read-only)
-                _buildSectionLabel('profile.accountInformation'.tr()),
-                const SizedBox(height: 8),
-                _buildReadOnlyField(
-                  label: 'profile.username'.tr(),
-                  value: user?.username ?? 'common.noData'.tr(),
-                  icon: Icons.alternate_email,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 12),
-                _buildReadOnlyField(
-                  label: 'auth.email'.tr(),
-                  value: user?.email ?? 'common.noData'.tr(),
-                  icon: Icons.email_outlined,
-                  isDark: isDark,
-                ),
-                const SizedBox(height: 12),
-                if (user != null) ...[
-                  _buildEmailVerificationCard(
+                  // Avatar Section
+                  _buildAvatarSection(
                     user,
+                    isDark,
+                    primaryColor,
+                    primaryDeepColor,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Display Name
+                  _buildSectionLabel('profile.displayName'.tr()),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _displayNameController,
+                    hint: 'profile.enterDisplayName'.tr(),
+                    icon: Icons.person_outline,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'profile.displayNameRequired'.tr();
+                      }
+                      if (value.trim().length < 2) {
+                        return 'profile.displayNameMin'.tr();
+                      }
+                      if (value.trim().length > 50) {
+                        return 'profile.displayNameMax'.tr();
+                      }
+                      return null;
+                    },
                     isDark: isDark,
                     primaryColor: primaryColor,
                   ),
-                  const SizedBox(height: 12),
-                ],
-                _buildReadOnlyField(
-                  label: 'profile.levelTitle'.tr(),
-                  value: user?.cefrLevel ?? 'A1',
-                  icon: Icons.school_outlined,
-                  isDark: isDark,
-                ),
+                  const SizedBox(height: 24),
 
-                const SizedBox(height: 40),
-
-                // Save Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: AppColors.surfaceLight,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 4,
-                      shadowColor: primaryColor.withValues(alpha: 0.3),
-                    ),
-                    child: _isSaving
-                        ? SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: LottieLoadingWidget.tiny(),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.save_outlined, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'profile.saveChanges'.tr(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
+                  // Account Info (read-only)
+                  _buildSectionLabel('profile.accountInformation'.tr()),
+                  const SizedBox(height: 8),
+                  _buildReadOnlyField(
+                    label: 'profile.username'.tr(),
+                    value: user?.username ?? 'common.noData'.tr(),
+                    icon: Icons.alternate_email,
+                    isDark: isDark,
                   ),
-                ),
-                const SizedBox(height: 20),
-              ],
+                  const SizedBox(height: 12),
+                  _buildReadOnlyField(
+                    label: 'auth.email'.tr(),
+                    value: user?.email ?? 'common.noData'.tr(),
+                    icon: Icons.email_outlined,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  if (user != null) ...[
+                    _buildEmailVerificationCard(
+                      user,
+                      isDark: isDark,
+                      primaryColor: primaryColor,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  _buildLevelField(user: user, isDark: isDark),
+
+                  const SizedBox(height: 40),
+
+                  // Save Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveProfile,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: AppColors.surfaceLight,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 4,
+                        shadowColor: primaryColor.withValues(alpha: 0.3),
+                      ),
+                      child: _isSaving
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: LottieLoadingWidget.tiny(),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.save_outlined, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'profile.saveChanges'.tr(),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),
-      ),),
+      ),
     );
   }
 
@@ -855,6 +854,163 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
   }
 
+  /// The working level, editable like the onboarding question. A level above
+  /// the certified one is allowed but shows as unverified until the exam.
+  Widget _buildLevelField({required UserEntity? user, required bool isDark}) {
+    final theme = Theme.of(context);
+    final level = user?.cefrLevel ?? 'A1';
+    final verified = user?.levelVerified ?? true;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: user == null ? null : () => _pickLevel(user),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 56),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.school_outlined,
+                color: theme.colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'profile.levelTitle'.tr(),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      verified
+                          ? level
+                          : 'profile.levelUnverifiedValue'.tr(
+                              namedArgs: {
+                                'level': level,
+                                'certified': user?.certifiedLevel ?? 'A1',
+                              },
+                            ),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickLevel(UserEntity user) async {
+    final chosen = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        var selected = user.cefrLevel;
+        return StatefulBuilder(
+          builder: (context, setSheetState) => SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'onboarding.levelQuestion'.tr(),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'profile.levelPickerHint'.tr(),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  CefrLevelPicker(
+                    value: selected,
+                    certifiedLevel: user.certifiedLevel,
+                    onChanged: (code) => setSheetState(() => selected = code),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                    ),
+                    onPressed: selected == user.cefrLevel
+                        ? null
+                        : () => Navigator.of(sheetContext).pop(selected),
+                    child: Text('common.save'.tr()),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (chosen == null || !mounted) return;
+
+    if (cefrIndex(chosen) > cefrIndex(user.certifiedLevel)) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('profile.levelAboveCertifiedTitle'.tr()),
+          content: Text(
+            'profile.levelAboveCertifiedBody'.tr(
+              namedArgs: {'level': chosen, 'certified': user.certifiedLevel},
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text('common.cancel'.tr()),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text('common.confirm'.tr()),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    final ok = await context.read<ProficiencyProvider>().setWorkingLevel(
+      chosen,
+    );
+    if (!mounted) return;
+    if (ok) await LevelSync.afterLevelChange(context);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'profile.levelSaved'.tr(namedArgs: {'level': chosen})
+              : 'errors.saveFailed'.tr(),
+        ),
+      ),
+    );
+  }
+
   Widget _buildReadOnlyField({
     required String label,
     required String value,
@@ -1001,8 +1157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                         ),
                         OutlinedButton.icon(
                           onPressed:
-                              _isCheckingVerification ||
-                                  _isSendingVerification
+                              _isCheckingVerification || _isSendingVerification
                               ? null
                               : _checkVerificationStatus,
                           icon: _isCheckingVerification
