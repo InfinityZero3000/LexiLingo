@@ -49,6 +49,42 @@ class ProficiencyDataSource {
     return ExerciseRecordResult.fromJson(response);
   }
 
+  /// Set the working level the learner studies at (either direction).
+  /// Never certifies: only the level exam does.
+  Future<Map<String, dynamic>> setWorkingLevel(String level) async {
+    final response = await _apiClient.put(
+      '/proficiency/level',
+      body: {'level': level},
+    );
+    await _cache.invalidate(_profileCacheKey);
+    return response;
+  }
+
+  /// Drop the cached profile after anything that changed the level.
+  Future<void> invalidateProfile() => _cache.invalidate(_profileCacheKey);
+
+  Future<Map<String, dynamic>> getLevelExamEligibility() =>
+      _apiClient.get('/proficiency/level-exam/eligibility');
+
+  /// Opens a sitting, or resumes the open one.
+  Future<Map<String, dynamic>> startLevelExam() =>
+      _apiClient.post('/proficiency/level-exam/start', body: const {});
+
+  Future<Map<String, dynamic>> submitLevelExam(
+    String attemptId,
+    Map<String, String> answers,
+  ) async {
+    final response = await _apiClient.post(
+      '/proficiency/level-exam/$attemptId/submit',
+      body: {'answers': answers},
+    );
+    await _cache.invalidate(_profileCacheKey);
+    return response;
+  }
+
+  Future<Map<String, dynamic>> getLevelExamResult(String attemptId) =>
+      _apiClient.get('/proficiency/level-exam/$attemptId/result');
+
   /// Get level change history
   Future<Map<String, dynamic>> getLevelHistory({int limit = 10}) async {
     return await _apiClient.get('/proficiency/history?limit=$limit');
@@ -64,9 +100,14 @@ class ProficiencyDataSource {
     required Map<String, int> answers,
     required int timeTakenSeconds,
   }) async {
-    return await _apiClient.post(
-      '/proficiency/placement-test/submit',
-      body: {'answers': buildPlacementAnswerPayload(answers)},
-    );
+    return await _apiClient
+        .post(
+          '/proficiency/placement-test/submit',
+          body: {'answers': buildPlacementAnswerPayload(answers)},
+        )
+        .then((response) async {
+          await _cache.invalidate(_profileCacheKey);
+          return response;
+        });
   }
 }

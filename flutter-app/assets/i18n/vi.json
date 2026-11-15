@@ -736,7 +736,15 @@
     "startLessons": "Bắt đầu học",
     "adminMobile": "Quản trị trên di động",
     "switchToAdmin": "Chuyển sang trang quản trị",
-    "adminMobileSubtitle": "LexiLingo Admin trên di động"
+    "adminMobileSubtitle": "LexiLingo Admin trên di động",
+    "levelCertifiedTag": "Đã được chứng nhận qua bài kiểm tra",
+    "levelUnverifiedTag": "Sẽ hiển thị là chưa xác minh cho tới khi bạn thi đậu",
+    "levelUnverifiedValue": "{level} · chưa xác minh (đã chứng nhận {certified})",
+    "levelPickerHint": "Chọn trình độ bạn muốn học. Chỉ bài thi thăng cấp mới chứng nhận trình độ.",
+    "levelAboveCertifiedTitle": "Học trên trình độ đã chứng nhận?",
+    "levelAboveCertifiedBody": "Bài học và Lexi sẽ dùng {level}. Trình độ chứng nhận vẫn là {certified} cho tới khi bạn thi đậu, và xếp hạng vẫn tính theo nó.",
+    "levelSaved": "Bạn đang học ở trình độ {level}",
+    "levelSelfSet": "Đã chọn {level}"
   },
   "progress": {
     "streakRestoresLeft": "Lượt khôi phục chuỗi còn lại trong tháng: {count}",
@@ -1019,7 +1027,8 @@
     "interestDailyLife": "Cuộc sống hàng ngày & xã hội",
     "interestTechnology": "Công nghệ & đổi mới",
     "interestCulture": "Văn hóa & giải trí",
-    "interestCareer": "Phát triển sự nghiệp & phỏng vấn"
+    "interestCareer": "Phát triển sự nghiệp & phỏng vấn",
+    "levelC2": "C2 - Thành thạo"
   },
   "preAuth": {
     "quickSetup": "Thiết lập nhanh",
@@ -2059,5 +2068,30 @@
     "nothingTranscribed": "Không nhận ra được lời nào. Hãy thử lại.",
     "transcribeFailed": "Không thể chuyển bản ghi thành văn bản.",
     "micPermissionRequired": "Cần cấp quyền micro để ghi âm."
+  },
+  "levelExam": {
+    "title": "Thi thăng cấp",
+    "introTitle": "Bài thi từ trình độ {level}",
+    "introBody": "Mỗi trình độ trên mức đã chứng nhận có một phần ngắn. Đậu liên tiếp các phần để lên cấp — một lần thi có thể chứng nhận nhiều cấp. Nếu chưa đậu, bạn có thể thi lại sau 24 giờ. Thời gian bắt đầu tính khi bạn bấm bắt đầu.",
+    "start": "Bắt đầu thi",
+    "resume": "Tiếp tục bài thi",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "Trình độ {level}",
+    "timeLeft": "Còn {time}",
+    "next": "Tiếp",
+    "previous": "Quay lại",
+    "submit": "Nộp bài",
+    "passedTitle": "Bạn đã đạt {level}!",
+    "failedTitle": "Lần này chưa đạt",
+    "sectionRow": "{level}: đúng {correct}/{total}",
+    "certifiedNow": "Trình độ chứng nhận của bạn giờ là {level}.",
+    "retryAt": "Bạn có thể thi lại từ {time}.",
+    "done": "Xong",
+    "gateNotReady": "Hãy luyện tập thêm để mở bài thi {level} (đã đạt {progress}%).",
+    "gateCooldown": "Bạn có thể thi lại từ {time}.",
+    "gateExpired": "Đã hết giờ. Bạn có thể thi lại từ {time}.",
+    "gateNoQuestions": "Bài thi cho trình độ tiếp theo chưa sẵn sàng.",
+    "gateMaxLevel": "Bạn đã được chứng nhận ở trình độ cao nhất.",
+    "gateError": "Không tải được bài thi. Vui lòng thử lại."
   }
 }

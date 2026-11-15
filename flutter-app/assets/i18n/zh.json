@@ -736,7 +736,15 @@
     "startLessons": "开始上课",
     "adminMobile": "移动端管理",
     "switchToAdmin": "切换到管理后台",
-    "adminMobileSubtitle": "LexiLingo 移动端管理"
+    "adminMobileSubtitle": "LexiLingo 移动端管理",
+    "levelCertifiedTag": "Certified by a test",
+    "levelUnverifiedTag": "Shows as unverified until you pass the level exam",
+    "levelUnverifiedValue": "{level} · not yet verified (certified {certified})",
+    "levelPickerHint": "Pick the level you want to study at. Only the level exam certifies a level.",
+    "levelAboveCertifiedTitle": "Study above your certified level?",
+    "levelAboveCertifiedBody": "Lessons and Lexi will use {level}. Your certified level stays {certified} until you pass the level exam, and your rank keeps using it.",
+    "levelSaved": "You now study at {level}",
+    "levelSelfSet": "Chose {level}"
   },
   "progress": {
     "streakRestoresLeft": "本月剩余连续记录恢复次数：{count}",
@@ -1019,7 +1027,8 @@
     "interestDailyLife": "日常生活与社交话题",
     "interestTechnology": "科技与创新",
     "interestCulture": "文化与娱乐",
-    "interestCareer": "职业发展与面试"
+    "interestCareer": "职业发展与面试",
+    "levelC2": "C2 - Mastery"
   },
   "preAuth": {
     "quickSetup": "快速设置",
@@ -2059,5 +2068,30 @@
     "nothingTranscribed": "没有识别出任何内容。请重试。",
     "transcribeFailed": "无法转写录音。",
     "micPermissionRequired": "需要麦克风权限。"
+  },
+  "levelExam": {
+    "title": "Level exam",
+    "introTitle": "Level exam from {level}",
+    "introBody": "One short section per level above your certified level. Pass sections in a row to move up — one sitting can certify several levels. If you do not pass, you can try again in 24 hours. The clock starts when you begin.",
+    "start": "Start the exam",
+    "resume": "Resume the exam",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "Level {level}",
+    "timeLeft": "{time} left",
+    "next": "Next",
+    "previous": "Back",
+    "submit": "Submit",
+    "passedTitle": "You reached {level}!",
+    "failedTitle": "Not this time",
+    "sectionRow": "{level}: {correct}/{total} correct",
+    "certifiedNow": "Your certified level is now {level}.",
+    "retryAt": "You can try again from {time}.",
+    "done": "Done",
+    "gateNotReady": "Keep practising to unlock the {level} exam ({progress}% of the way).",
+    "gateCooldown": "You can take the exam again from {time}.",
+    "gateExpired": "Time ran out. You can try again from {time}.",
+    "gateNoQuestions": "The exam for your next level is not available yet.",
+    "gateMaxLevel": "You are certified at the highest level.",
+    "gateError": "Could not load the exam. Please try again."
   }
 }

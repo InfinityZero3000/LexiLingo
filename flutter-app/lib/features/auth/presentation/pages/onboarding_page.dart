@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/level/presentation/widgets/cefr_level_picker.dart';
 
 class OnboardingAnswers {
   final String goal;
@@ -140,31 +141,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           subtitle: 'onboarding.levelSubtitle'.tr(),
                           value: _selectedLevel,
                           options: [
-                            _OnboardingOption(
-                              'A1',
-                              'onboarding.levelA1'.tr(),
-                              Icons.child_care_rounded,
-                            ),
-                            _OnboardingOption(
-                              'A2',
-                              'onboarding.levelA2'.tr(),
-                              Icons.directions_walk_rounded,
-                            ),
-                            _OnboardingOption(
-                              'B1',
-                              'onboarding.levelB1'.tr(),
-                              Icons.directions_run_rounded,
-                            ),
-                            _OnboardingOption(
-                              'B2',
-                              'onboarding.levelB2'.tr(),
-                              Icons.directions_bike_rounded,
-                            ),
-                            _OnboardingOption(
-                              'C1',
-                              'onboarding.levelC1'.tr(),
-                              Icons.workspace_premium_rounded,
-                            ),
+                            for (final option in cefrLevelOptions)
+                              _OnboardingOption(
+                                option.code,
+                                option.labelKey.tr(),
+                                option.icon,
+                              ),
                           ],
                           onSelected: (value) {
                             setState(() => _selectedLevel = value);

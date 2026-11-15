@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
-import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
@@ -20,6 +19,8 @@ import '../pages/register_page.dart';
 import '../pages/welcome_page.dart';
 import '../pages/onboarding_page.dart';
 import '../pages/pre_auth_questions_page.dart';
+import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
+import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -211,12 +212,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
       nativeLanguage: preAuth?.nativeLanguage,
     );
 
-    // Refresh authoritative CEFR + numeric level snapshot immediately.
+    // The onboarding answer set the working level: catch every holder up.
     if (mounted) {
       try {
-        await context.read<LevelProvider>().fetchLevelFull();
+        await LevelSync.afterLevelChange(context);
       } catch (_) {
-        // Keep onboarding non-blocking if level refresh fails.
+        // Keep onboarding non-blocking if a refresh fails.
       }
     }
 
@@ -263,6 +264,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
         // Load user settings when authenticated
         if (userId != null) {
           context.read<SettingsProvider>().loadSettings(userId, context);
+        }
+        // Lexi falls back to what the app sends when the learner card is
+        // slow; it used to send a fixed B1 for everyone.
+        final level = authProvider.currentUser?.cefrLevel;
+        if (level != null) {
+          context.read<LexiChatProvider>().setLearnerLevel(level);
         }
         _resolvePostAuthFlow(authProvider);
         _syncEntitlements(authProvider);

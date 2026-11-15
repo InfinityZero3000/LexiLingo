@@ -14335,13 +14335,13 @@
       }
     },
     {
-      "id": "lib/features/level/presentation/pages/placement_test_page.dart::_AnswerOption::BoxDecoration::0",
-      "path": "lib/features/level/presentation/pages/placement_test_page.dart",
+      "id": "lib/features/level/presentation/widgets/test_answer_option.dart::TestAnswerOption::BoxDecoration::0",
+      "path": "lib/features/level/presentation/widgets/test_answer_option.dart",
       "entryPoint": "surface",
-      "symbol": "_AnswerOption",
+      "symbol": "TestAnswerOption",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 385,
+      "line": 43,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -14361,13 +14361,13 @@
       }
     },
     {
-      "id": "lib/features/level/presentation/pages/placement_test_page.dart::_AnswerOption::BoxDecoration::1",
-      "path": "lib/features/level/presentation/pages/placement_test_page.dart",
+      "id": "lib/features/level/presentation/widgets/test_answer_option.dart::TestAnswerOption::BoxDecoration::1",
+      "path": "lib/features/level/presentation/widgets/test_answer_option.dart",
       "entryPoint": "surface",
-      "symbol": "_AnswerOption",
+      "symbol": "TestAnswerOption",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 395,
+      "line": 53,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -18461,6 +18461,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::showDialog::1",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "overlay",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "showDialog",
+      "ordinal": 1,
+      "line": 973,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::showModalBottomSheet::0",
       "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
       "entryPoint": "overlay",
@@ -18468,6 +18480,18 @@
       "callKind": "showModalBottomSheet",
       "ordinal": 0,
       "line": 454,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::showModalBottomSheet::1",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "overlay",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 1,
+      "line": 923,
       "category": "eligible",
       "group": 6,
       "status": "inventoried"
@@ -26795,6 +26819,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/main.dart::_LexiLingoAppState::namedRoute::24",
+      "path": "lib/main.dart",
+      "entryPoint": "namedRoute",
+      "symbol": "_LexiLingoAppState",
+      "callKind": "namedRoute",
+      "ordinal": 24,
+      "line": 535,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/progress/presentation/widgets/streak_widget.dart::_LargeStreakFireWidgetState::BoxDecoration::0",
       "path": "lib/features/progress/presentation/widgets/streak_widget.dart",
       "entryPoint": "surface",
@@ -30576,6 +30612,32 @@
       "callKind": "BoxDecoration",
       "ordinal": 8,
       "line": 855,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::BoxDecoration::9",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "BoxDecoration",
+      "ordinal": 9,
+      "line": 1087,
       "category": "eligible",
       "group": 6,
       "status": "inventoried",

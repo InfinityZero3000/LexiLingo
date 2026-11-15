@@ -29,11 +29,12 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
   }
 
   Future<void> _takeTest() async {
-    final provider = context.read<ProficiencyProvider>();
-    await Navigator.pushNamed(context, '/placement-test');
+    final promoted = await Navigator.pushNamed(context, '/level-exam');
     if (!mounted) return;
-    await provider.loadProfile();
-    await provider.loadHistory(force: true);
+    // A pass already ran LevelSync; a fail still changed the cooldown.
+    if (promoted != true) {
+      await context.read<ProficiencyProvider>().refreshAfterLevelChange();
+    }
   }
 
   @override
@@ -120,10 +121,7 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
                     size: 18,
                     color: theme.colorScheme.outline,
                   ),
-                _StepChip(
-                  step: shown[i],
-                  current: i == shown.length - 1,
-                ),
+                _StepChip(step: shown[i], current: i == shown.length - 1),
               ],
             ],
           ),
@@ -155,7 +153,9 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
     ];
     for (final entry in history) {
       if (entry.newLevel == steps.last.level) continue;
-      steps.add(_Step(entry.newLevel, !entry.isPromotion));
+      steps.add(
+        _Step(entry.newLevel, !entry.isPromotion, chosen: entry.isSelfSet),
+      );
     }
     return steps;
   }
@@ -165,7 +165,9 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
       return 'profile.levelStart'.tr(namedArgs: {'level': assessed});
     }
     final entry = history.last;
-    final text = entry.isInitial
+    final text = entry.isSelfSet
+        ? 'profile.levelSelfSet'.tr(namedArgs: {'level': entry.newLevel})
+        : entry.isInitial
         ? 'profile.levelPlaced'.tr(namedArgs: {'level': entry.newLevel})
         : (entry.isPromotion ? 'profile.levelPromoted' : 'profile.levelDemoted')
               .tr(namedArgs: {'from': entry.previousLevel});
@@ -174,10 +176,13 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
 }
 
 class _Step {
-  const _Step(this.level, this.down);
+  const _Step(this.level, this.down, {this.chosen = false});
 
   final String level;
   final bool down;
+
+  /// Picked by the learner rather than reached through a test.
+  final bool chosen;
 }
 
 class _StepChip extends StatelessWidget {
@@ -189,8 +194,16 @@ class _StepChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final tone = step.down ? scheme.error : scheme.primary;
-    final onTone = step.down ? scheme.onError : scheme.onPrimary;
+    final tone = step.chosen
+        ? scheme.outline
+        : step.down
+        ? scheme.error
+        : scheme.primary;
+    final onTone = step.chosen
+        ? scheme.surface
+        : step.down
+        ? scheme.onError
+        : scheme.onPrimary;
 
     return Container(
       constraints: const BoxConstraints(minWidth: 44, minHeight: 30),

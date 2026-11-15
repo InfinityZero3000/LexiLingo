@@ -180,6 +180,10 @@ class NextLevelInfo extends Equatable {
 class ProficiencyProfile extends Equatable {
   final String userId;
   final String assessedLevel;
+
+  /// What a test confirmed; [assessedLevel] is the working level.
+  final String certifiedLevel;
+  final bool levelVerified;
   final double overallScore;
   final int totalXp;
   final Map<SkillType, SkillScore> skills;
@@ -193,6 +197,8 @@ class ProficiencyProfile extends Equatable {
   const ProficiencyProfile({
     required this.userId,
     required this.assessedLevel,
+    this.certifiedLevel = 'A1',
+    this.levelVerified = true,
     required this.overallScore,
     required this.totalXp,
     required this.skills,
@@ -240,6 +246,8 @@ class ProficiencyProfile extends Equatable {
     return ProficiencyProfile(
       userId: json['user_id'] ?? '',
       assessedLevel: json['assessed_level'] ?? 'A1',
+      certifiedLevel: json['certified_level'] as String? ?? 'A1',
+      levelVerified: json['level_verified'] as bool? ?? true,
       overallScore: (json['overall_score'] ?? 0).toDouble(),
       totalXp: json['total_xp'] ?? 0,
       skills: skills,

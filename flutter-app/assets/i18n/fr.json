@@ -736,7 +736,15 @@
     "startLessons": "Commencer les leçons",
     "adminMobile": "Admin mobile",
     "switchToAdmin": "Passer au panneau d'administration",
-    "adminMobileSubtitle": "LexiLingo Admin mobile"
+    "adminMobileSubtitle": "LexiLingo Admin mobile",
+    "levelCertifiedTag": "Certified by a test",
+    "levelUnverifiedTag": "Shows as unverified until you pass the level exam",
+    "levelUnverifiedValue": "{level} · not yet verified (certified {certified})",
+    "levelPickerHint": "Pick the level you want to study at. Only the level exam certifies a level.",
+    "levelAboveCertifiedTitle": "Study above your certified level?",
+    "levelAboveCertifiedBody": "Lessons and Lexi will use {level}. Your certified level stays {certified} until you pass the level exam, and your rank keeps using it.",
+    "levelSaved": "You now study at {level}",
+    "levelSelfSet": "Chose {level}"
   },
   "progress": {
     "streakRestoresLeft": "Restaurations de série restantes ce mois-ci : {count}",
@@ -1019,7 +1027,8 @@
     "interestDailyLife": "Vie quotidienne et sujets sociaux",
     "interestTechnology": "Technologie et innovation",
     "interestCulture": "Culture et divertissement",
-    "interestCareer": "Évolution de carrière et entretiens"
+    "interestCareer": "Évolution de carrière et entretiens",
+    "levelC2": "C2 - Mastery"
   },
   "preAuth": {
     "quickSetup": "Configuration rapide",
@@ -2059,5 +2068,30 @@
     "nothingTranscribed": "Rien n’a été transcrit. Réessayez.",
     "transcribeFailed": "Impossible de transcrire l’enregistrement.",
     "micPermissionRequired": "L’autorisation du microphone est requise."
+  },
+  "levelExam": {
+    "title": "Level exam",
+    "introTitle": "Level exam from {level}",
+    "introBody": "One short section per level above your certified level. Pass sections in a row to move up — one sitting can certify several levels. If you do not pass, you can try again in 24 hours. The clock starts when you begin.",
+    "start": "Start the exam",
+    "resume": "Resume the exam",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "Level {level}",
+    "timeLeft": "{time} left",
+    "next": "Next",
+    "previous": "Back",
+    "submit": "Submit",
+    "passedTitle": "You reached {level}!",
+    "failedTitle": "Not this time",
+    "sectionRow": "{level}: {correct}/{total} correct",
+    "certifiedNow": "Your certified level is now {level}.",
+    "retryAt": "You can try again from {time}.",
+    "done": "Done",
+    "gateNotReady": "Keep practising to unlock the {level} exam ({progress}% of the way).",
+    "gateCooldown": "You can take the exam again from {time}.",
+    "gateExpired": "Time ran out. You can try again from {time}.",
+    "gateNoQuestions": "The exam for your next level is not available yet.",
+    "gateMaxLevel": "You are certified at the highest level.",
+    "gateError": "Could not load the exam. Please try again."
   }
 }

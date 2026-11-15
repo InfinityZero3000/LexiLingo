@@ -360,6 +360,30 @@ class ProfileHeader extends StatelessWidget {
                                             fontSize: 13,
                                           ),
                                         ),
+                                        // Chosen, not yet confirmed by a test.
+                                        if (!lp.levelVerified) ...[
+                                          const SizedBox(width: 4),
+                                          Tooltip(
+                                            message:
+                                                'profile.levelUnverifiedValue'
+                                                    .tr(
+                                                      namedArgs: {
+                                                        'level':
+                                                            lp.proficiencyLevel,
+                                                        'certified':
+                                                            lp.certifiedLevel,
+                                                      },
+                                                    ),
+                                            child: Icon(
+                                              Icons.help_outline_rounded,
+                                              size: 14,
+                                              color: tierColor(
+                                                context,
+                                                lp.proficiencyLevel,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),

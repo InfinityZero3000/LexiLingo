@@ -44,6 +44,8 @@ import 'package:lexilingo_app/features/course/presentation/providers/course_prov
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/pages/placement_test_page.dart';
+import 'package:lexilingo_app/features/level/presentation/pages/level_exam_page.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_exam_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/placement_test_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
@@ -486,6 +488,12 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 (context) => ChangeNotifierProvider(
                   create: (_) => di.sl<PlacementTestProvider>(),
                   child: const PlacementTestPage(),
+                ),
+              ),
+              '/level-exam': LearnerRoute.builder(
+                (context) => ChangeNotifierProvider(
+                  create: (_) => di.sl<LevelExamProvider>(),
+                  child: const LevelExamPage(),
                 ),
               ),
               '/vocabulary/review': LearnerRoute.builder(

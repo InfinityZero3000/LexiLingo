@@ -87,6 +87,17 @@ class ApiClient {
     return _send('POST', uri, headers: headers, body: body, timeout: timeout);
   }
 
+  /// PUT request returning unwrapped data
+  Future<Map<String, dynamic>> put(
+    String path, {
+    Map<String, String>? headers,
+    Object? body,
+    Duration? timeout,
+  }) async {
+    final uri = _resolve(path);
+    return _send('PUT', uri, headers: headers, body: body, timeout: timeout);
+  }
+
   /// PATCH request returning unwrapped data
   Future<Map<String, dynamic>> patch(
     String path, {
