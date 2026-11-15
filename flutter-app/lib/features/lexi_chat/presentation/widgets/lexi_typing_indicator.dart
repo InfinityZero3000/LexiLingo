@@ -74,7 +74,9 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  widget.isThinking ? '${widget.name} is thinking' : '${widget.name} is typing',
+                  widget.isThinking
+                      ? '${widget.name} is thinking'
+                      : '${widget.name} is typing',
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,

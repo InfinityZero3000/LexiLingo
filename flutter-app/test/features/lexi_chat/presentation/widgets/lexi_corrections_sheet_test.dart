@@ -25,10 +25,12 @@ void main() {
   });
 
   test('duplicates and unparseable ids are dropped', () {
-    final chips = describeConcepts(
-      ['concept:function.greeting', 'concept:function.greeting', 'greeting', ''],
-      {},
-    );
+    final chips = describeConcepts([
+      'concept:function.greeting',
+      'concept:function.greeting',
+      'greeting',
+      '',
+    ], {});
     expect(chips.length, 1);
   });
 }
