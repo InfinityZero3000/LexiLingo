@@ -1,3 +1,5 @@
+import 'word_translation.dart';
+
 /// Vocabulary Item Entity (Domain Layer)
 /// Represents a vocabulary word from the master database
 /// Clean Architecture: Pure business model without dependencies
@@ -37,29 +39,15 @@ class VocabularyItemEntity {
   /// noise, not a translation. Null means "no translation for this locale".
   /// A copy of the English definition is not a translation either, so it is
   /// hidden rather than shown twice.
-  String? getTranslation(String localeCode) {
-    final text =
-        translation?[localeCode] as String? ?? translation?['en'] as String?;
-    if (text == null || text.trim().isEmpty) return null;
-    if (text.trim().toLowerCase() == definition.trim().toLowerCase()) {
-      return null;
-    }
-    return text;
-  }
+  String? getTranslation(String localeCode) =>
+      localizedGloss(translation, definition, localeCode);
 
   /// The English definition in the user's language
   /// (`translation.definitions.<locale>`). Null when absent — no fallback —
   /// or when it only repeats the English text (a cognate of a one-word
   /// definition such as "opposition").
-  String? getDefinitionTranslation(String localeCode) {
-    final defs = translation?['definitions'];
-    final text = defs is Map ? defs[localeCode] : null;
-    if (text is! String || text.trim().isEmpty) return null;
-    if (text.trim().toLowerCase() == definition.trim().toLowerCase()) {
-      return null;
-    }
-    return text;
-  }
+  String? getDefinitionTranslation(String localeCode) =>
+      localizedDefinition(translation, definition, localeCode);
 
   /// Get Vietnamese translation
   String? get vietnameseTranslation {
@@ -67,13 +55,7 @@ class VocabularyItemEntity {
   }
 
   /// Get example sentences
-  List<String> get examples {
-    final examplesList = translation?['examples'];
-    if (examplesList is List) {
-      return examplesList.cast<String>();
-    }
-    return [];
-  }
+  List<String> get examples => translationExamples(translation);
 
   @override
   bool operator ==(Object other) {

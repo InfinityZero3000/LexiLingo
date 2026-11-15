@@ -1,3 +1,5 @@
+import 'word_translation.dart';
+
 class VocabWord {
   final int? id;
   final String? userVocabularyId; // Backend UserVocabulary UUID
@@ -9,6 +11,7 @@ class VocabWord {
   final String? example; // Example sentence
   final String? partOfSpeech; // noun, verb, adjective…
   final List<String>? tags; // Topic tags, e.g. ["business", "travel"]
+  final Map<String, dynamic>? translation; // {"vi": "...", "examples": [...]}
 
   VocabWord({
     this.id,
@@ -21,5 +24,12 @@ class VocabWord {
     this.example,
     this.partOfSpeech,
     this.tags,
+    this.translation,
   });
+
+  String? gloss(String localeCode) =>
+      localizedGloss(translation, definition, localeCode);
+
+  String? definitionIn(String localeCode) =>
+      localizedDefinition(translation, definition, localeCode);
 }
