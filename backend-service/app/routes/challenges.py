@@ -29,6 +29,8 @@ from app.services.xp_service import (
 )
 
 
+DAILY_BONUS_XP = 50
+
 router = APIRouter(prefix="/challenges", tags=["Challenges"])
 
 
@@ -560,8 +562,7 @@ async def get_daily_challenges(
         ))
     
     # Bonus XP for completing all challenges
-    all_completed = total_completed == len(challenges)
-    bonus_xp = 50 if all_completed else 0
+    bonus_xp = DAILY_BONUS_XP
     bonus_claimed = "daily_bonus" in claimed_ids
     
     return ApiResponse(
@@ -627,7 +628,7 @@ async def claim_daily_bonus(
             detail=f"Complete all challenges first. Progress: {total_completed}/{len(challenges)}"
         )
 
-    bonus_xp = 50
+    bonus_xp = DAILY_BONUS_XP
     bonus_gems = 10
 
     # Apply XP boost
