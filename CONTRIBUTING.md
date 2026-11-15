@@ -56,25 +56,7 @@ flutter run
 
 ## 🌳 Branching Strategy
 
-We follow **Git Flow** branching model.
-
-### Branch Types
-```
-main           → Production-ready code
-develop        → Integration branch
-feature/*      → New features
-bugfix/*       → Bug fixes
-hotfix/*       → Critical production fixes
-release/*      → Release preparation
-```
-
-### Naming Convention
-```bash
-feature/LEXI-123-add-vocabulary-feature
-bugfix/LEXI-200-fix-login-crash
-hotfix/LEXI-500-critical-crash-fix
-release/v1.0.0
-```
+`dev` is the trunk and every merge into it deploys. Branch from the newest `dev` as `feat/…`, `fix/…`, `chore/…`, `docs/…`, open a PR into `dev`, squash-merge. Releases are version tags cut from `dev`. The full agreement (what a merge deploys, releases, rollback, branch rules) is in [docs/operations/WORKFLOW.md](docs/operations/WORKFLOW.md).
 
 ## 📝 Coding Standards
 
@@ -363,6 +345,7 @@ Follow **Conventional Commits** specification:
 - `chore`: Maintenance
 - `ci`: CI/CD
 - `build`: Build system
+- `revert`: Revert an earlier change
 
 ### Examples
 ```bash
@@ -379,7 +362,7 @@ test(chat): add unit tests for message service
 1. Self-review your code
 2. Run all tests locally
 3. Update documentation
-4. Sync with latest develop
+4. Rebase on the latest `dev`
 5. No merge conflicts
 6. CI checks passing
 
@@ -389,20 +372,13 @@ test(chat): add unit tests for message service
 - **Large:** > 400 lines (Should be split)
 
 ### PR Template
-We provide a PR template. Fill it completely:
-- Description
-- Type of change
-- Testing performed
-- Screenshots (if UI changes)
-- Checklist
+`.github/pull_request_template.md` opens with the PR. Fill Why, What, Checked and **Deploy impact**. The PR title must be a conventional commit subject (`fix(auth): stop the login spinner`): it becomes the squash commit and a release-notes line, and the `PR title` check enforces it.
 
 ### Review Process
-1. Create PR
-2. Assign reviewers (at least 1)
-3. Address review comments
-4. Get approval
-5. Merge (squash and merge recommended)
-6. Delete branch
+1. Open the PR into `dev`
+2. Required checks must be green
+3. Address review comments (a review is welcome but not required)
+4. Squash and merge; the branch is deleted automatically
 
 ## 👀 Code Review
 

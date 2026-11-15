@@ -1,10 +1,11 @@
 name: CI
 
+# dev is the trunk: every change arrives by PR and every push to dev deploys. main only trails the last release.
 on:
   push:
-    branches: [main, feature, "feature/**", develop, dev]
+    branches: [dev]
   pull_request:
-    branches: [main, feature, dev]
+    branches: [dev]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -435,6 +436,10 @@ jobs:
       - uses: actions/checkout@v7
       - name: auto-deploy decision tests
         run: bash scripts/tests/test_auto_deploy.sh
+      - name: every service declares one product version
+        run: bash scripts/check-versions.sh
+      - name: release scripts (version bump, release notes)
+        run: bash scripts/tests/test_release_scripts.sh
 
   # ──────────────────────────────────────────────
   # Images → GHCR, only after every job above is green.
@@ -444,7 +449,7 @@ jobs:
   images:
     name: Build & Push Images
     needs: [backend, backend-migrations, ai, mcp, admin, flutter, deploy-scripts]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     permissions:
       contents: read

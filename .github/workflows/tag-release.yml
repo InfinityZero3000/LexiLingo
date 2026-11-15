@@ -1,0 +1,115 @@
+name: Release
+
+# A release is a merged "chore(release): vX.Y.Z" PR (opened by scripts/release.sh). Once CI is green on that
+# commit its images exist, so this tags the commit, publishes the GitHub Release and gives the images
+# a vX.Y.Z tag. Nothing is built here.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Release commit on dev (default: head of dev)"
+        required: false
+      version:
+        description: "X.Y.Z (default: read from the commit subject)"
+        required: false
+      dry_run:
+        description: "Print what would happen and change nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  packages: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Tag, publish, version the images
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       startsWith(github.event.workflow_run.head_commit.message, 'chore(release): v'))
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ github.event.workflow_run.head_sha || inputs.sha || github.sha }}
+      DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+      INPUT_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Work out the version
+        run: |
+          subject="$(git log -1 --format=%s "$SHA")"
+          version="${INPUT_VERSION:-$(sed -nE 's/^chore\(release\): v([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' <<<"$subject")}"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::${SHA} is not a release commit and no version was given"; exit 1; }
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+          echo "Release v${version} at ${SHA}"
+
+      - name: The commit must declare the version it releases
+        run: |
+          declared="$(sed -nE 's/^version: ([0-9]+\.[0-9]+\.[0-9]+)\+[0-9]+$/\1/p' flutter-app/pubspec.yaml)"
+          [ "$declared" = "$VERSION" ] || { echo "::error::pubspec declares ${declared}, release is ${VERSION}"; exit 1; }
+          bash scripts/check-versions.sh
+
+      - name: Already released?
+        run: |
+          if git rev-parse -q --verify "refs/tags/v${VERSION}" >/dev/null; then
+            echo "v${VERSION} already exists; nothing to do"
+            echo "SKIP=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Release notes
+        if: env.SKIP != 'true'
+        run: |
+          prev="$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | grep -v -- - | head -1 || true)"
+          bash scripts/release/notes.sh "$prev" "$SHA" | tee notes.md
+
+      - name: Log in to GitHub Container Registry
+        if: env.SKIP != 'true' && env.DRY != 'true'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Give the images their version tag
+        if: env.SKIP != 'true'
+        run: |
+          repo="ghcr.io/${GITHUB_REPOSITORY,,}"
+          for image in backend ai-service; do
+            # CI pushed sha-<sha> for both images when it went green on this commit.
+            docker buildx imagetools inspect "${repo}/${image}:sha-${SHA}" >/dev/null \
+              || { echo "::error::${repo}/${image}:sha-${SHA} does not exist; CI did not finish its images"; exit 1; }
+            if [ "$DRY" = true ]; then echo "would tag ${repo}/${image}:v${VERSION}"; continue; fi
+            docker buildx imagetools create -t "${repo}/${image}:v${VERSION}" "${repo}/${image}:sha-${SHA}"
+          done
+
+      - name: Tag and publish
+        if: env.SKIP != 'true'
+        run: |
+          if [ "$DRY" = true ]; then echo "would tag v${VERSION} at ${SHA} and publish the release"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${VERSION}" "$SHA" -m "LexiLingo v${VERSION}"
+          git push origin "v${VERSION}"
+          gh release create "v${VERSION}" --verify-tag --title "v${VERSION}" --notes-file notes.md --latest
+
+      # main is the last release. A merge commit, not a force-push, so the history stays intact.
+      # A failure here must not undo a release that is already tagged and published.
+      - name: Move main to the release
+        if: env.SKIP != 'true' && env.DRY != 'true'
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch -q origin main
+          git checkout -q -B main origin/main
+          git merge --no-ff -q -m "Release v${VERSION}" "$SHA"
+          git push origin main
