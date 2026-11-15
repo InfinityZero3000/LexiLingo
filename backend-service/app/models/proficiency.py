@@ -5,7 +5,7 @@ Database models for tracking user proficiency across multiple language skills.
 This system provides a more accurate CEFR level assessment than simple XP accumulation.
 """
 
-from sqlalchemy import Column, Date, String, Integer, Float, ForeignKey, Text, Boolean, Enum as SQLEnum
+from sqlalchemy import CheckConstraint, Column, Date, String, Integer, Float, ForeignKey, Index, Text, Boolean, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from app.core.db_types import TZDateTime, PortableJSON, GUID
 from datetime import date, datetime, timezone
@@ -251,3 +251,40 @@ class LevelAssessmentTest(Base):
     # Whether this assessment resulted in a level change
     level_changed = Column(Boolean, default=False)
     previous_level = Column(String(5), nullable=True)
+
+
+LEVEL_EXAM_STATUSES = ("in_progress", "submitted", "expired")
+
+
+class LevelExamAttempt(Base):
+    """One sitting of the promotion exam.
+
+    The paper is fixed at start (`sections`: level -> question ids) so a reload
+    resumes the same questions, and graded on the server so answers never
+    travel to the client before submission. An expired sitting counts as a
+    failed one for the cooldown — otherwise a learner could start, read the
+    paper, let it lapse and start again at once.
+    """
+
+    __tablename__ = "level_exam_attempts"
+
+    id = Column(GUID(), primary_key=True, default=uuid.uuid4)
+    user_id = Column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    from_level = Column(String(5), nullable=False)
+    sections = Column(PortableJSON, nullable=False)
+    answers = Column(PortableJSON, nullable=True)
+    status = Column(String(20), nullable=False, default="in_progress")
+    started_at = Column(TZDateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    expires_at = Column(TZDateTime, nullable=False)
+    submitted_at = Column(TZDateTime, nullable=True)
+    result_level = Column(String(5), nullable=True)
+    section_scores = Column(PortableJSON, nullable=True)
+    score = Column(Float, nullable=True)
+
+    __table_args__ = (
+        Index("ix_level_exam_attempts_user_started", "user_id", "started_at"),
+        CheckConstraint(
+            "status IN ('in_progress', 'submitted', 'expired')",
+            name="ck_level_exam_attempts_status",
+        ),
+    )

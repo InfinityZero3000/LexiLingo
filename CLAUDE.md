@@ -91,6 +91,18 @@ wherever the format is known.
   weak batch. `next_level.qualifies` means *ready for the exam*. A placement retake
   may only raise (it is the promotion path until the level exam replaces it).
   Nothing writes `demotion`; old rows remain.
+- **The promotion exam** (`/proficiency/level-exam/*`, `level_exam_service`) is
+  how the certified level rises after placement. One 5-question section per
+  level above the certified one, as far as `question_bank` can fill (a published
+  `test_exams` row narrows the pool and sets `passing_score`); the result is the
+  highest level reached through an **unbroken** run of passed sections, so one
+  sitting can certify several levels. Gate: `qualifies_for_next` from the
+  *certified* level, then a 24h cooldown after a failed **or lapsed** sitting
+  (counting lapses stops "start, read the paper, let it expire, start again").
+  Graded on the server; a question it cannot grade for certain (not multiple
+  choice, answer not exactly one of its options) is left out of the paper.
+  Refusals carry `error.details.reason` — raise them through `_refusal`, never
+  with a dict `detail`, which the global handler turns into a Python repr.
 - One weighted overall score, `ProficiencyService.weighted_overall`. There were
   four different formulas; two overwrote each other, so the number a learner
   saw was not the number their promotion was judged on.
