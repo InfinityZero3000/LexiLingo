@@ -202,7 +202,12 @@ class _Sitting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
+        // A Wrap, not a Row: a long locale or a large text size must wrap
+        // the header instead of running it off the screen.
+        Wrap(
+          spacing: 12,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Chip(
               label: Text(
@@ -211,7 +216,6 @@ class _Sitting extends StatelessWidget {
                 ),
               ),
             ),
-            const Spacer(),
             Text(
               'levelExam.questionOf'.tr(
                 namedArgs: {
@@ -221,7 +225,6 @@ class _Sitting extends StatelessWidget {
               ),
               style: theme.textTheme.labelLarge,
             ),
-            const SizedBox(width: 12),
             Text(
               'levelExam.timeLeft'.tr(namedArgs: {'time': timeLeft}),
               style: theme.textTheme.labelLarge?.copyWith(
