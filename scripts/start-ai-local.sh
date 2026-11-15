@@ -41,7 +41,7 @@ fi
 # Check if virtual environment exists
 if [ ! -d "$VENV_PATH" ]; then
     echo -e "${RED}✗${NC} Virtual environment not found at $VENV_PATH"
-    echo "  Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r ai-service/requirements.txt"
+    echo "  Run: python3 -m venv .venv && source .venv/bin/activate && pip install -r ai-service/requirements-dev.txt"
     exit 1
 fi
 

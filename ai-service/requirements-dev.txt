@@ -1,0 +1,13 @@
+# Test, lint and plotting tools. The runtime images install requirements.txt only;
+# CI and local development install this file, which pulls requirements.txt in.
+-r requirements.txt
+
+black>=26.10.1
+flake8>=7.5.0
+mypy>=1.20.2
+pytest==9.2.0
+pytest-asyncio==1.4.1.post1
+matplotlib>=3.11.2,<4
+seaborn>=0.13.2,<0.14
+playwright>=1.64.1,<2
+pytest-playwright>=0.10.0,<1
