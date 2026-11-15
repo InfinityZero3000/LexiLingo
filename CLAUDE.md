@@ -443,6 +443,15 @@ whatever the machine has.
 
 ---
 
+## Workflow — branches, PRs, releases
+
+Full text in `docs/operations/WORKFLOW.md`. `dev` is the trunk **and production**: a merge deploys (VPS images via auto-deploy, web and admin to Vercel).
+
+- Branch from `origin/dev` in your own worktree (`git worktree add`), never in the shared checkout; open a PR into `dev`; squash-merge. No direct pushes to `dev` or `main`, no hotfix branches.
+- The PR title is the squash commit and a release-notes line: `type(scope): subject` (`feat fix perf refactor docs test chore ci build style revert`). The `PR title` check fails otherwise.
+- Fill the PR template's **Deploy impact**. Compose, `gateway/` and `.env.production*` are not carried by images; they need `scripts/deploy-one-shot.sh`.
+- Releases: `scripts/release.sh patch|minor|major` opens `chore(release): vX.Y.Z`; merging it tags, publishes the GitHub Release and tags the images. One version, five files, `scripts/check-versions.sh`. Do not bump versions by hand.
+
 ## Production Deploy — hard rules
 
 Prod is the LXD container `lexilingo` on the shared OVH VPS (`ovh-vps`), at
