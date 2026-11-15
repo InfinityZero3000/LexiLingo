@@ -30685,6 +30685,18 @@
       }
     },
     {
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_LevelHistoryTimelineState::Navigator.pushNamed::0",
+      "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_LevelHistoryTimelineState",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 0,
+      "line": 33,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_LevelHistoryTimelineState::BoxDecoration::0",
       "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
       "entryPoint": "surface",
@@ -30711,13 +30723,39 @@
       }
     },
     {
-      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_TimelineRow::BoxDecoration::0",
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_StepChip::BoxDecoration::0",
       "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
       "entryPoint": "surface",
-      "symbol": "_TimelineRow",
+      "symbol": "_StepChip",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 161,
+      "line": 199,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_ReadyRow::BoxDecoration::0",
+      "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
+      "entryPoint": "surface",
+      "symbol": "_ReadyRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 226,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
