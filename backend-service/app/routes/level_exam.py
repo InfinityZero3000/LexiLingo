@@ -28,6 +28,14 @@ from app.services.rank_service import rank_proficiency_level
 router = APIRouter(prefix="/proficiency/level-exam", tags=["proficiency"])
 
 
+def _refusal(status_code: int, message: str, details: dict[str, Any]) -> HTTPException:
+    """An error the app can act on: the global handler puts `details` in
+    `error.details`; a dict `detail` would reach the client as a Python repr."""
+    error = HTTPException(status_code=status_code, detail=message)
+    error.details = details
+    return error
+
+
 class ExamSubmission(BaseModel):
     # question id -> chosen option text (or its index)
     answers: dict[str, str | int] = Field(default_factory=dict)
@@ -91,15 +99,16 @@ async def start_exam(
         return await _paper(db, attempt)
     if not gate["available"]:
         await db.commit()
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=gate)
+        raise _refusal(status.HTTP_403_FORBIDDEN, f"Level exam unavailable: {gate['reason']}", gate)
 
     from_level = rank_proficiency_level(current_user)
     sections = await exam.build_paper(db, from_level)
     if not sections:
         await db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={**gate, "available": False, "reason": "no_questions"},
+        raise _refusal(
+            status.HTTP_409_CONFLICT,
+            "Level exam unavailable: no_questions",
+            {**gate, "available": False, "reason": "no_questions"},
         )
     now = datetime.now(UTC)
     question_count = sum(len(section["question_ids"]) for section in sections)
@@ -136,9 +145,10 @@ async def submit_exam(
         attempt.status = "expired"
         attempt.submitted_at = now
         await db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_410_GONE,
-            detail={"reason": "expired", "retry_at": exam.retry_at(attempt).isoformat()},
+        raise _refusal(
+            status.HTTP_410_GONE,
+            "Exam time is over",
+            {"reason": "expired", "retry_at": exam.retry_at(attempt).isoformat()},
         )
 
     questions = await exam.load_questions(db, attempt.sections)

@@ -259,6 +259,8 @@ async def test_failing_changes_nothing_and_starts_the_cooldown(db, user, ready):
     with pytest.raises(HTTPException) as raised:
         await routes.start_exam(db, user)
     assert raised.value.status_code == 403
+    assert raised.value.details["reason"] == "cooldown"
+    assert raised.value.details["retry_at"]
 
     profile = (await db.execute(select(UserProficiencyProfile))).scalar_one()
     later = datetime.now(UTC) + exam.COOLDOWN + timedelta(minutes=1)
@@ -275,6 +277,7 @@ async def test_a_late_submission_closes_the_sitting_as_expired(db, user, ready):
     with pytest.raises(HTTPException) as raised:
         await _submit(db, user, paper, {"A2"})
     assert raised.value.status_code == 410
+    assert raised.value.details["reason"] == "expired"
     assert attempt.status == "expired"
     assert user.certified_level == "A1"
     assert (await routes.get_eligibility(db, user))["reason"] == "cooldown"
