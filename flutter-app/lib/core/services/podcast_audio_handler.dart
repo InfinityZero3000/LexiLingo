@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
+import 'package:lexilingo_app/features/podcast/data/repositories/podcast_repository.dart'
+    show podcastAudioUri;
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
 import 'sleep_timer_countdown.dart';
 
@@ -79,7 +81,7 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     if (useLocal) {
       source = AudioSource.file(episode.localPath!, tag: item);
     } else {
-      source = AudioSource.uri(Uri.parse(episode.audioUrl), tag: item);
+      source = AudioSource.uri(podcastAudioUri(episode.audioUrl), tag: item);
     }
 
     await _player.setAudioSource(source);

@@ -194,3 +194,50 @@ class TestPodcastRouteProxiedUrls:
         assert episode["image_url"].startswith("http://test/api/v1/podcasts/proxy/image?url=")
         expected_part = urllib.parse.quote("https://example.com/ep_cover.jpg")
         assert expected_part in episode["image_url"]
+
+
+class TestPodcastResolveAudio:
+    """Tests for GET /podcasts/audio endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def _clear_cache(self):
+        from app.routes import podcasts
+
+        podcasts._audio_resolved.clear()
+
+    @pytest.mark.asyncio
+    async def test_redirects_to_final_url(self, no_db_client: AsyncClient):
+        final = "https://cdn.example.com/ep.mp3?sig=abc"
+        with patch(
+            "app.routes.podcasts.safe_resolve_final_url",
+            AsyncMock(return_value=final),
+        ) as resolve:
+            response = await no_db_client.get(
+                f"{BASE}/audio", params={"url": "http://open.example.com/ep.mp3"}
+            )
+            again = await no_db_client.get(
+                f"{BASE}/audio", params={"url": "http://open.example.com/ep.mp3"}
+            )
+
+        assert response.status_code == 302
+        assert response.headers["location"] == final
+        assert again.headers["location"] == final
+        assert resolve.await_count == 1
+
+    @pytest.mark.asyncio
+    async def test_rejects_private_url(self, no_db_client: AsyncClient):
+        response = await no_db_client.get(
+            f"{BASE}/audio", params={"url": "http://127.0.0.1/ep.mp3"}
+        )
+        assert response.status_code in (400, 403)
+
+    @pytest.mark.asyncio
+    async def test_upstream_failure_is_502(self, no_db_client: AsyncClient):
+        with patch(
+            "app.routes.podcasts.safe_resolve_final_url",
+            AsyncMock(side_effect=RuntimeError("reset")),
+        ):
+            response = await no_db_client.get(
+                f"{BASE}/audio", params={"url": "https://open.example.com/ep.mp3"}
+            )
+        assert response.status_code == 502

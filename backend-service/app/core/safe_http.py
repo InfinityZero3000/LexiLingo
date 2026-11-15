@@ -179,3 +179,32 @@ async def safe_stream_get(
             continue
         return response
     raise HTTPException(status_code=400, detail="Too many redirects.")
+
+
+async def safe_resolve_final_url(
+    client: httpx.AsyncClient,
+    url: str,
+    *,
+    max_redirects: int = 5,
+    **kwargs,
+) -> str:
+    """Follow redirects with the same validation as safe_get, without reading
+    any body, and return the URL that finally answered 2xx."""
+    current_url = url
+    for _ in range(max_redirects + 1):
+        pinned_url, request_kwargs = await _validate_and_pin(current_url, kwargs)
+        request = client.build_request("GET", pinned_url, **request_kwargs)
+        response = await client.send(request, stream=True)
+        try:
+            if response.is_redirect and response.headers.get("location"):
+                current_url = urljoin(current_url, response.headers["location"])
+                continue
+            if response.status_code >= 400:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Audio source answered HTTP {response.status_code}.",
+                )
+            return current_url
+        finally:
+            await response.aclose()
+    raise HTTPException(status_code=400, detail="Too many redirects.")
