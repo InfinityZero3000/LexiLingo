@@ -20273,13 +20273,13 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::BoxDecoration::0",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::0",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 356,
+      "line": 383,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20299,13 +20299,13 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::BoxDecoration::1",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::1",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 370,
+      "line": 397,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20325,13 +20325,13 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::BoxDecoration::2",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::2",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 468,
+      "line": 446,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20351,13 +20351,39 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::Card::0",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::Card::0",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 454,
+      "line": 504,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::3",
+      "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_DailyChallengesSheetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 518,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20746,6 +20772,32 @@
       "callKind": "Card",
       "ordinal": 1,
       "line": 317,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart::_GemBurst::BoxDecoration::0",
+      "path": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart",
+      "entryPoint": "surface",
+      "symbol": "_GemBurst",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 623,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
