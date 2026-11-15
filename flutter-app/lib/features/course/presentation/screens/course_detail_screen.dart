@@ -1,5 +1,5 @@
+import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -424,11 +424,6 @@ List<String> buildCourseThumbnailCandidates({
 class _CourseHeroNetworkImage extends StatelessWidget {
   final List<String> imageUrls;
   final Widget placeholder;
-  // Scopes the cache entry to this Hero instance (heroTag, falling back to
-  // courseId) so it doesn't share a cache key with another still-mounted
-  // CachedNetworkImage for the same URL — e.g. the list card mid Hero
-  // flight — which has been observed to render solid black instead of the
-  // photo (see course_list_screen.dart's heroTag-scoped cacheKey).
   final String cacheScopeKey;
 
   const _CourseHeroNetworkImage({
@@ -447,12 +442,11 @@ class _CourseHeroNetworkImage extends StatelessWidget {
       return placeholder;
     }
 
-    return CachedNetworkImage(
-      imageUrl: imageUrls[index],
-      cacheKey: '$cacheScopeKey|${imageUrls[index]}',
-      fit: BoxFit.cover,
-      placeholder: (_, __) => placeholder,
-      errorWidget: (_, __, ___) => _buildCandidate(index + 1),
+    return CourseNetworkImage(
+      url: imageUrls[index],
+      placeholder: placeholder,
+      onError: () => _buildCandidate(index + 1),
+      memCacheWidth: 960,
     );
   }
 }
