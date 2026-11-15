@@ -1,9 +1,7 @@
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 // ignore: depend_on_referenced_packages
-import 'package:cached_network_image_platform_interface/cached_network_image_platform_interface.dart' show ImageRenderMethodForWeb;
+import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -44,6 +42,38 @@ class _CourseListScreenState extends State<CourseListScreen> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  List<CourseEntity>? _sectionsCourses;
+  List<CourseCategoryEntity>? _sectionsCategories;
+  List<MapEntry<CourseCategoryEntity, List<CourseEntity>>> _sections = const [];
+
+  // Grouping is O(categories x courses x tags); redo it only when the inputs
+  // change, not on every provider notification.
+  List<MapEntry<CourseCategoryEntity, List<CourseEntity>>> _sectionsFor(
+    List<CourseEntity> courses,
+    List<CourseCategoryEntity> categories,
+  ) {
+    if (identical(courses, _sectionsCourses) &&
+        identical(categories, _sectionsCategories)) {
+      return _sections;
+    }
+    final result = <MapEntry<CourseCategoryEntity, List<CourseEntity>>>[];
+    for (final category in categories) {
+      final name = category.name.toLowerCase();
+      final matched = courses
+          .where(
+            (c) =>
+                c.tags.contains(category.slug) ||
+                c.tags.contains(name) ||
+                (c.tags.isEmpty && category.slug == 'general'),
+          )
+          .toList();
+      if (matched.isNotEmpty) result.add(MapEntry(category, matched));
+    }
+    _sectionsCourses = courses;
+    _sectionsCategories = categories;
+    return _sections = result;
   }
 
   void _onScroll() {
@@ -215,27 +245,10 @@ class _CourseListScreenState extends State<CourseListScreen> {
     }
 
     final categories = provider.categories;
-    final nonEmptyCategorySections =
-        <MapEntry<CourseCategoryEntity, List<CourseEntity>>>[];
-    final mappedCourseIds = <String>{};
-
-    for (final category in categories) {
-      final categoryCourses = displayCourses
-          .where(
-            (c) =>
-                c.tags.contains(category.slug) ||
-                c.tags.contains(category.name.toLowerCase()) ||
-                (c.tags.isEmpty && category.slug == 'general'),
-          )
-          .toList();
-
-      if (categoryCourses.isNotEmpty) {
-        nonEmptyCategorySections.add(MapEntry(category, categoryCourses));
-        for (final course in categoryCourses) {
-          mappedCourseIds.add(course.id);
-        }
-      }
-    }
+    final nonEmptyCategorySections = _sectionsFor(displayCourses, categories);
+    final mappedCourseIds = <String>{
+      for (final e in nonEmptyCategorySections) ...e.value.map((c) => c.id),
+    };
 
     final totalCourses = displayCourses.length;
     final mappingCoverage = totalCourses == 0
@@ -609,6 +622,8 @@ class _CategorySection extends StatelessWidget {
               horizontal: isCompactMobile ? 10 : 12,
             ),
             itemCount: courses.length,
+            itemExtent: (isCompactMobile ? 150.0 : 170.0) + 8,
+            cacheExtent: 400,
             itemBuilder: (context, index) {
               final course = courses[index];
               // A course can match multiple category tags, so the same
@@ -617,11 +632,9 @@ class _CategorySection extends StatelessWidget {
               // unique within the route (duplicate tags crash the Hero
               // flight on navigation).
               final heroTag = 'discovery-course-image-$categoryId-${course.id}';
-              return AnimatedListItem(
-                index: index,
-                duration: const Duration(milliseconds: 300),
-                delayPerItem: const Duration(milliseconds: 80),
+              return RepaintBoundary(
                 child: _HorizontalCourseCard(
+                  key: ValueKey(heroTag),
                   course: course,
                   heroTag: heroTag,
                   compact: isCompactMobile,
@@ -648,6 +661,7 @@ class _HorizontalCourseCard extends StatelessWidget {
   final ValueChanged<String> onTap;
 
   const _HorizontalCourseCard({
+    super.key,
     required this.course,
     required this.heroTag,
     this.compact = false,
@@ -668,7 +682,7 @@ class _HorizontalCourseCard extends StatelessWidget {
       width: cardWidth,
       margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: Card(
-        elevation: 4,
+        elevation: 1.5,
         shadowColor: Colors.black26,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
@@ -799,17 +813,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                       // Tags row — horizontally scrollable, above title. The
                       // fade says "more to the right" instead of a hard cut
                       // through the last chip.
-                      ShaderMask(
-                        blendMode: BlendMode.dstIn,
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [
-                            Colors.white,
-                            Colors.white,
-                            Colors.transparent,
-                          ],
-                          stops: [0, 0.85, 1],
-                        ).createShader(bounds),
+                      ClipRect(
                         child: SingleChildScrollView(
+                          physics: const NeverScrollableScrollPhysics(),
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
@@ -1096,13 +1102,6 @@ class _HorizontalCourseCard extends StatelessWidget {
     final fallbackUrl = _getCourseImageUrl();
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
-    // Same course can render in two category sections at once (see
-    // heroTag comment above) — two Hero widgets loading the identical
-    // network image concurrently have been observed to render black
-    // instead of the photo, so scope the cache entry per Hero instance
-    // rather than sharing one keyed only by URL.
-    const targetWidth = 400;
-
     Widget gradientLoading() => Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1138,17 +1137,10 @@ class _HorizontalCourseCard extends StatelessWidget {
     );
 
     Widget networkThumbnail(String url, {required Widget Function() onError}) =>
-        CachedNetworkImage(
-          imageUrl: url,
-          cacheKey: '$heroTag|$url',
-          // Web cards painted solid black without erroring, so the fallbacks
-          // never ran. Suspected HtmlImage + resize; HttpGet decodes in-engine
-          // and errors reach errorWidget. Unverified on prod — revert if not.
-          imageRenderMethodForWeb: ImageRenderMethodForWeb.HttpGet,
-          memCacheWidth: kIsWeb ? null : targetWidth,
-          fit: BoxFit.cover,
-          placeholder: (_, __) => gradientLoading(),
-          errorWidget: (_, __, ___) => onError(),
+        CourseNetworkImage(
+          url: url,
+          placeholder: gradientLoading(),
+          onError: onError,
         );
 
     // DB thumbnail exists: try it first, fall back to computed URL on error

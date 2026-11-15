@@ -343,13 +343,38 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
 }
 
 /// Full Daily Challenges Bottom Sheet
-class DailyChallengesSheet extends StatelessWidget {
+class DailyChallengesSheet extends StatefulWidget {
   final DailyChallengesProvider provider;
 
   const DailyChallengesSheet({super.key, required this.provider});
 
   @override
+  State<DailyChallengesSheet> createState() => _DailyChallengesSheetState();
+}
+
+class _DailyChallengesSheetState extends State<DailyChallengesSheet> {
+  DailyChallengesProvider get provider => widget.provider;
+  final Set<String> _claiming = {};
+  String? _feedback;
+  bool _feedbackIsError = false;
+
+  void _showFeedback(String message, {required bool isError}) {
+    if (!mounted) return;
+    setState(() {
+      _feedback = message;
+      _feedbackIsError = isError;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: provider,
+      builder: (context, _) => _buildSheet(context),
+    );
+  }
+
+  Widget _buildSheet(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accent = AppColors.purple;
@@ -413,6 +438,27 @@ class DailyChallengesSheet extends StatelessWidget {
               ),
             ],
           ),
+          if (_feedback != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: (_feedbackIsError
+                        ? AppColors.errorBright
+                        : AppColors.greenSuccessBright)
+                    .withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                _feedback!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColorRoles.textPrimary(isDark),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           // Progress
@@ -563,41 +609,44 @@ class DailyChallengesSheet extends StatelessWidget {
     );
   }
 
-  void _claimBonus(BuildContext context) async {
+  Future<void> _claimBonus(BuildContext context) async {
+    if (!_claiming.add('daily_bonus')) return;
     final bonusXp = provider.bonusXp;
+    final levelProvider = context.read<LevelProvider>();
     final success = await provider.claimBonus();
-    if (success && context.mounted) {
-      final levelProvider = context.read<LevelProvider>();
+    _claiming.remove('daily_bonus');
+    if (success) {
       levelProvider.updateLevel(levelProvider.totalXp + bonusXp);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('home.rewardClaimed'.tr()),
-          backgroundColor: AppColors.greenSuccessBright,
-        ),
-      );
+      _showFeedback('home.rewardClaimed'.tr(), isError: false);
       levelProvider.fetchLevelFull();
+    } else {
+      _showFeedback(
+        provider.errorMessage ?? 'common.error'.tr(),
+        isError: true,
+      );
+      provider.loadChallenges();
     }
   }
 
-  void _claimReward(BuildContext context, String challengeId) async {
+  Future<void> _claimReward(BuildContext context, String challengeId) async {
+    if (!_claiming.add(challengeId)) return;
     final challenge = provider.challenges.firstWhere(
       (c) => c.id == challengeId,
     );
+    final levelProvider = context.read<LevelProvider>();
     final success = await provider.claimReward(challengeId);
-    if (success && context.mounted) {
-      // Optimistically update XP immediately so the header reflects it right away.
-      final levelProvider = context.read<LevelProvider>();
+    _claiming.remove(challengeId);
+    if (success) {
+      // Optimistic so the header moves now; fetchLevelFull applies boosts.
       levelProvider.updateLevel(levelProvider.totalXp + challenge.xpReward);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('home.rewardClaimed'.tr()),
-          backgroundColor: AppColors.greenSuccessBright,
-        ),
-      );
-      // Sync with server in background to apply any XP-boost multipliers.
+      _showFeedback('home.rewardClaimed'.tr(), isError: false);
       levelProvider.fetchLevelFull();
+    } else {
+      _showFeedback(
+        provider.errorMessage ?? 'common.error'.tr(),
+        isError: true,
+      );
+      provider.loadChallenges();
     }
   }
 }

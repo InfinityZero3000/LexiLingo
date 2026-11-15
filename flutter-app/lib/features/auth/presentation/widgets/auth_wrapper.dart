@@ -13,6 +13,7 @@ import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/purchases_service.dart';
 import '../providers/auth_provider.dart';
+import 'auth_gate.dart';
 import '../../../home/presentation/pages/main_screen.dart';
 import '../pages/login_page.dart';
 import '../pages/register_page.dart';
@@ -308,6 +309,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
         );
       } else {
         currentPage = const LearnerTheme(child: MainScreen());
+        if (PendingRoute.name != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final target = PendingRoute.take();
+            if (target != null && mounted) {
+              Navigator.of(context).pushNamed(target);
+            }
+          });
+        }
       }
     } else {
       if (_isResolvingPreAuthFlow || !_preAuthFlowResolved) {

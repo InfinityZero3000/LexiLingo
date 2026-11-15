@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppNavigationService {
   static final navigatorKey = GlobalKey<NavigatorState>();
+  static final routeObserver = RouteObserver<ModalRoute<void>>();
 
   static Future<bool> openRoute(String route, {Object? arguments}) async {
     final navigator = navigatorKey.currentState;

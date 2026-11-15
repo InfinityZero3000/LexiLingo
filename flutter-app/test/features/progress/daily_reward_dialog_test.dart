@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
+import 'package:lexilingo_app/features/gamification/domain/repositories/gamification_repository.dart';
+import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
@@ -12,6 +15,11 @@ import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/daily_reward_dialog.dart';
+
+class _FakeGamificationRepository implements GamificationRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
 
 class _RewardRepository implements ProgressRepository {
   _RewardRepository(this.streak);
@@ -94,14 +102,23 @@ Future<StreakProvider> _pumpDialog(
   );
   await provider.loadStreak();
 
+  final gamification = GamificationProvider(
+    repository: _FakeGamificationRepository(),
+    enableStarterReward: false,
+  );
+  addTearDown(gamification.dispose);
+
   await tester.pumpWidget(
-    MaterialApp(
-      home: Builder(
-        builder: (context) => Scaffold(
-          body: Center(
-            child: ElevatedButton(
-              onPressed: () => showDailyRewardDialog(context, provider),
-              child: const Text('Open reward'),
+    ChangeNotifierProvider<GamificationProvider>.value(
+      value: gamification,
+      child: MaterialApp(
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => showDailyRewardDialog(context, provider),
+                child: const Text('Open reward'),
+              ),
             ),
           ),
         ),
@@ -160,5 +177,30 @@ void main() {
       ),
     );
     expect(claimButton.onPressed, isNull);
+  });
+
+  testWidgets('claims in place: same dialog flips to a received state', (
+    tester,
+  ) async {
+    final provider = await _pumpDialog(tester, rewardAvailable: true);
+    addTearDown(provider.dispose);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(Dialog),
+        matching: find.byType(ElevatedButton),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1200));
+
+    expect(find.byType(Dialog), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('daily-reward-gem-burst')),
+      findsOneWidget,
+    );
+    expect(find.byIcon(Icons.redeem_rounded), findsNothing);
+    expect(find.byIcon(Icons.check_circle_rounded), findsNWidgets(3));
+    expect(find.byType(TextButton), findsNothing);
   });
 }

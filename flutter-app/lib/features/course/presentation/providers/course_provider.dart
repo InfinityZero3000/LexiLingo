@@ -37,6 +37,23 @@ class CourseProvider with ChangeNotifier {
   String? _selectedLanguage;
   String? _selectedLevel;
 
+  // Category screen has its own list so it never replaces the discovery list.
+  List<CourseEntity> _categoryCourses = [];
+  bool _isLoadingCategoryCourses = false;
+  String? _categoryCoursesError;
+  int _categoryPage = 1;
+  int _categoryTotalPages = 1;
+
+  // Fresh-enough first page is reused instead of refetched on every visit.
+  static const Duration _listFreshFor = Duration(seconds: 60);
+  DateTime? _coursesLoadedAt;
+  int _coursesRequestId = 0;
+
+  // Memoised derived data; rebuilt only when inputs change.
+  int _dataVersion = 0;
+  int _filteredVersion = -1;
+  List<CourseEntity> _filteredCache = const [];
+
   // Client-side filters (applied on top of server-fetched courses)
   String? _selectedCategorySlug;
   bool _showEnrolledOnly = false;
@@ -89,10 +106,10 @@ class CourseProvider with ChangeNotifier {
 
   /// Courses after applying client-side category/enrolled/sort filters
   List<CourseEntity> get filteredCourses {
+    if (_filteredVersion == _dataVersion) return _filteredCache;
+    final slug = _selectedCategorySlug?.toLowerCase();
     var result = _courses.where((c) {
-      if (_selectedCategorySlug != null &&
-          !c.tags.any((t) =>
-              t.toLowerCase() == _selectedCategorySlug!.toLowerCase())) {
+      if (slug != null && !c.tags.any((t) => t.toLowerCase() == slug)) {
         return false;
       }
       if (_showEnrolledOnly && c.isEnrolled != true) return false;
@@ -107,8 +124,14 @@ class CourseProvider with ChangeNotifier {
       case 'az':
         result.sort((a, b) => a.title.compareTo(b.title));
     }
-    return result;
+    _filteredVersion = _dataVersion;
+    return _filteredCache = result;
   }
+
+  List<CourseEntity> get categoryCourses => _categoryCourses;
+  bool get isLoadingCategoryCourses => _isLoadingCategoryCourses;
+  String? get categoryCoursesError => _categoryCoursesError;
+  bool get hasMoreCategoryPages => _categoryPage < _categoryTotalPages;
 
   CourseDetailEntity? get courseDetail => _courseDetail;
   bool get isLoadingDetail => _isLoadingDetail;
@@ -126,54 +149,77 @@ class CourseProvider with ChangeNotifier {
   bool get isLoadingEnrolled => _isLoadingEnrolled;
   String? get enrolledError => _enrolledError;
 
-  /// Load courses with pagination and filters
+  /// Load courses with pagination and filters.
+  ///
+  /// Stale-while-revalidate: a refresh keeps the current list on screen and
+  /// swaps it when the response lands; a fresh first page is not refetched
+  /// unless [force]. A newer request supersedes an older one in flight.
   Future<void> loadCourses({
     int page = 1,
     String? language,
     String? level,
     bool append = false,
+    bool force = false,
   }) async {
-    if (_isLoadingCourses) return;
+    if (append && _isLoadingCourses) return;
 
-    _isLoadingCourses = true;
-    _coursesError = null;
-    _currentPage = page;
-    _selectedLanguage = language;
-    _selectedLevel = level;
-
-    if (!append) {
-      _courses = [];
+    final sameQuery = language == _selectedLanguage && level == _selectedLevel;
+    final loadedAt = _coursesLoadedAt;
+    if (!append &&
+        !force &&
+        sameQuery &&
+        _courses.isNotEmpty &&
+        loadedAt != null &&
+        DateTime.now().difference(loadedAt) < _listFreshFor) {
+      return;
     }
 
+    final requestId = ++_coursesRequestId;
+    _isLoadingCourses = true;
+    _coursesError = null;
+    if (!append) {
+      _selectedLanguage = language;
+      _selectedLevel = level;
+      if (!sameQuery) {
+        _courses = [];
+        _dataVersion++;
+      }
+    }
     notifyListeners();
 
-    final params = GetCoursesParams(
-      page: page,
-      pageSize: 20,
-      language: language,
-      level: level,
+    final result = await getCoursesUseCase(
+      GetCoursesParams(
+        page: page,
+        pageSize: 20,
+        language: language,
+        level: level,
+      ),
     );
-
-    final result = await getCoursesUseCase(params);
+    if (requestId != _coursesRequestId) return;
 
     result.fold(
       (failure) {
         _coursesError = _getErrorMessage(failure);
-        _isLoadingCourses = false;
-        notifyListeners();
       },
       (data) {
         final (coursesList, totalPages) = data;
         if (append) {
-          _courses.addAll(coursesList);
+          final known = _courses.map((c) => c.id).toSet();
+          _courses = [
+            ..._courses,
+            ...coursesList.where((c) => !known.contains(c.id)),
+          ];
         } else {
           _courses = coursesList;
+          _coursesLoadedAt = DateTime.now();
         }
+        _currentPage = page;
         _totalPages = totalPages;
-        _isLoadingCourses = false;
-        notifyListeners();
+        _dataVersion++;
       },
     );
+    _isLoadingCourses = false;
+    notifyListeners();
   }
 
   /// Load more courses (pagination)
@@ -193,17 +239,18 @@ class CourseProvider with ChangeNotifier {
       page: 1,
       language: _selectedLanguage,
       level: _selectedLevel,
+      force: true,
     );
   }
 
   /// Filter courses by language
   Future<void> filterByLanguage(String? language) async {
-    await loadCourses(page: 1, language: language, level: _selectedLevel);
+    await loadCourses(page: 1, language: language, level: _selectedLevel, force: true);
   }
 
   /// Filter courses by level
   Future<void> filterByLevel(String? level) async {
-    await loadCourses(page: 1, language: _selectedLanguage, level: level);
+    await loadCourses(page: 1, language: _selectedLanguage, level: level, force: true);
   }
 
   /// Apply client-side filters (category, enrolled, sort)
@@ -213,6 +260,7 @@ class CourseProvider with ChangeNotifier {
     bool? enrolledOnly,
     String? sortOrder,
   }) {
+    _dataVersion++;
     if (clearCategory) {
       _selectedCategorySlug = null;
     } else if (categorySlug != null) {
@@ -229,7 +277,8 @@ class CourseProvider with ChangeNotifier {
     _selectedCategorySlug = null;
     _showEnrolledOnly = false;
     _sortOrder = 'default';
-    await loadCourses(page: 1);
+    _dataVersion++;
+    await loadCourses(page: 1, force: true);
   }
 
   /// Group courses by category (level)
@@ -412,6 +461,7 @@ class CourseProvider with ChangeNotifier {
         final index = _courses.indexWhere((c) => c.id == courseId);
         if (index != -1) {
           _courses[index] = _courses[index].copyWith(isEnrolled: true);
+          _dataVersion++;
         }
 
         notifyListeners();
@@ -452,22 +502,17 @@ class CourseProvider with ChangeNotifier {
     );
   }
 
-  /// Load courses by specific category
+  /// Load courses by specific category (kept apart from the discovery list)
   Future<void> loadCoursesByCategory(
     String categoryId, {
     int page = 1,
     bool append = false,
   }) async {
-    if (_isLoadingCourses) return;
+    if (_isLoadingCategoryCourses) return;
 
-    _isLoadingCourses = true;
-    _coursesError = null;
-    _currentPage = page;
-
-    if (!append) {
-      _courses = [];
-    }
-
+    _isLoadingCategoryCourses = true;
+    _categoryCoursesError = null;
+    if (!append) _categoryCourses = [];
     notifyListeners();
 
     final result = await getCoursesByCategoryUseCase(
@@ -477,24 +522,18 @@ class CourseProvider with ChangeNotifier {
     );
 
     result.fold(
-      (failure) {
-        _coursesError = _getErrorMessage(failure);
-        _isLoadingCourses = false;
-        notifyListeners();
-      },
+      (failure) => _categoryCoursesError = _getErrorMessage(failure),
       (data) {
         final (newCourses, totalPages) = data;
-        if (append) {
-          _courses.addAll(newCourses);
-        } else {
-          _courses = newCourses;
-        }
-        _totalPages = totalPages;
-        _coursesError = null;
-        _isLoadingCourses = false;
-        notifyListeners();
+        _categoryCourses = append
+            ? [..._categoryCourses, ...newCourses]
+            : newCourses;
+        _categoryPage = page;
+        _categoryTotalPages = totalPages;
       },
     );
+    _isLoadingCategoryCourses = false;
+    notifyListeners();
   }
 
   /// Load enrolled courses
@@ -540,6 +579,10 @@ class CourseProvider with ChangeNotifier {
   /// Reset state
   void reset() {
     _courses = [];
+    _categoryCourses = [];
+    _coursesLoadedAt = null;
+    _coursesRequestId++;
+    _dataVersion++;
     _courseDetail = null;
     _detailCache.clear();
     _isLoadingCourses = false;

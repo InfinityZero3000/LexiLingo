@@ -120,6 +120,15 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshWeeklyProgressSilently() async {
+    if (getWeeklyProgressUseCase == null) return;
+    final result = await getWeeklyProgressUseCase!.call();
+    result.fold((_) {}, (data) {
+      _weeklyProgress = data;
+      notifyListeners();
+    });
+  }
+
   /// Load featured courses for home screen
   Future<void> loadFeaturedCourses() async {
     _isLoadingCourses = true;

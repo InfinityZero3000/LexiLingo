@@ -7,6 +7,7 @@ def test_review_reminder_templates_render():
     context = {
         "display_name": "Learner",
         "due_count": "5",
+        "due_noun": "words",
         "review_link": "https://lexilingo.me/vocabulary/review",
         "settings_link": "https://lexilingo.me/settings",
         "support_email": "nhthang2077@gmail.com",

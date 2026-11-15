@@ -101,7 +101,8 @@ ai-service/
 │   └── main.py
 ├── config/                # MongoDB config
 ├── scripts/               # DB initialization
-├── requirements.txt
+├── requirements.txt       # runtime, what the images install
+├── requirements-dev.txt   # tests, lint, plotting (CI and local)
 └── Dockerfile
 ```
 

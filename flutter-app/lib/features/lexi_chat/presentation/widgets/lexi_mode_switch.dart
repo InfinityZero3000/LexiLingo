@@ -11,11 +11,19 @@ class LexiModeSwitch extends StatelessWidget {
   final LexiMode value;
   final ValueChanged<LexiMode> onChanged;
 
+  /// 0..1 override for how much of the labels to show. The hub drives this
+  /// while the switch morphs between its narrow and wide slots, so the labels
+  /// grow in instead of popping at the width threshold.
+  final double? labelReveal;
+
   const LexiModeSwitch({
     super.key,
     required this.value,
     required this.onChanged,
+    this.labelReveal,
   });
+
+  static const double labelMinWidth = 160;
 
   static const double height = 44;
 
@@ -81,7 +89,9 @@ class LexiModeSwitch extends StatelessWidget {
         builder: (context, constraints) {
           // Narrow headers (four chat actions on a 375px phone) keep the icons
           // and hand the label to Semantics instead.
-          final showLabels = constraints.maxWidth >= 160;
+          final reveal =
+              labelReveal ??
+              (constraints.maxWidth >= labelMinWidth ? 1.0 : 0.0);
           return Stack(
             children: [
               Positioned(
@@ -108,7 +118,7 @@ class LexiModeSwitch extends StatelessWidget {
                       child: _Segment(
                         mode: mode,
                         selected: mode == value,
-                        showLabel: showLabels,
+                        labelReveal: reveal,
                       ),
                     ),
                 ],
@@ -124,12 +134,12 @@ class LexiModeSwitch extends StatelessWidget {
 class _Segment extends StatelessWidget {
   final LexiMode mode;
   final bool selected;
-  final bool showLabel;
+  final double labelReveal;
 
   const _Segment({
     required this.mode,
     required this.selected,
-    required this.showLabel,
+    required this.labelReveal,
   });
 
   @override
@@ -147,20 +157,27 @@ class _Segment extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 18, color: foreground),
-            if (showLabel) ...[
-              const SizedBox(width: 6),
+            if (labelReveal > 0)
               Flexible(
-                child: Text(
-                  LexiModeSwitch._label(mode),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: foreground,
-                    fontWeight: FontWeight.w700,
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: labelReveal,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Text(
+                        LexiModeSwitch._label(mode),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: foreground.withValues(alpha: labelReveal),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ],
           ],
         ),
       ),

@@ -1,4 +1,4 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -327,14 +327,10 @@ class _FeaturedCourseThumbnail extends StatelessWidget {
       return _FeaturedCourseThumbnailPlaceholder(levelColor: levelColor);
     }
 
-    return CachedNetworkImage(
-      imageUrl: candidates[index],
-      cacheKey: 'featured-course-image-${course.id}|${candidates[index]}',
-      memCacheWidth: 480,
-      fit: BoxFit.cover,
-      placeholder: (_, __) =>
-          Container(color: levelColor.withValues(alpha: 0.1)),
-      errorWidget: (_, __, ___) => _FeaturedCourseThumbnail(
+    return CourseNetworkImage(
+      url: candidates[index],
+      placeholder: Container(color: levelColor.withValues(alpha: 0.1)),
+      onError: () => _FeaturedCourseThumbnail(
         course: course,
         levelColor: levelColor,
         index: index + 1,

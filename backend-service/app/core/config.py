@@ -226,7 +226,11 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     SMTP_USE_SSL: bool = False
     SMTP_TIMEOUT: int = 10
-    EMAIL_FROM: str = "noreply@lexilingo.app"
+    EMAIL_FROM: str = "noreply@lexilingo.me"
+    EMAIL_FROM_NAME: str = "LexiLingo"
+    # Where replies go; leave empty to let replies hit EMAIL_FROM.
+    EMAIL_REPLY_TO: str | None = None
+    EMAIL_ASSET_BASE_URL: str = "https://api.lexilingo.me/email-assets"
     PASSWORD_RESET_URL_BASE: str = "lexilingo-app://reset-password"
     PASSWORD_RESET_URL_BASE_PRODUCTION: str | None = None
     EMAIL_VERIFICATION_URL_BASE: str = "https://lexilingo.me/verify-email"
