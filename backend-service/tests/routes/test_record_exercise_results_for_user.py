@@ -14,7 +14,6 @@ from app.models.proficiency import (
 from app.models.user import User
 from app.routes.proficiency import record_exercise_results_for_user
 from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
-from app.services.rank_service import calculate_rank
 
 
 @pytest.fixture
@@ -174,15 +173,35 @@ async def test_poor_practice_never_demotes_cefr(db_session, test_user):
 async def test_user_level_is_settled_on_the_profile_not_the_scores(
     db_session, test_user
 ):
-    """users.level drifting from the profile is repaired toward the profile."""
+    """users.level drifting from the profile is repaired toward the profile, and rank stays put."""
     test_user.level = "A1"
     db_session.add(UserProficiencyProfile(user_id=test_user.id, assessed_level="B2"))
+    await db_session.commit()
+
+    rank_before = test_user.rank_proficiency_score
+
+    await record_exercise_results_for_user(db_session, test_user, _one_result())
+
+    assert test_user.level == "B2"
+    # Rank reads the certified level, which practice never moves.
+    assert test_user.certified_level is None
+    assert test_user.rank_proficiency_score == rank_before
+
+
+async def test_a_first_profile_starts_at_the_users_level_not_a1(db_session, test_user):
+    """Creating the profile lazily with a fixed A1 and then settling users.level
+    on it silently demoted anyone who held a level before their first profile."""
+    test_user.level = "B2"
     await db_session.commit()
 
     await record_exercise_results_for_user(db_session, test_user, _one_result())
 
     assert test_user.level == "B2"
-    expected_rank = calculate_rank(
-        numeric_level=test_user.numeric_level or 1, proficiency_level="B2"
-    )
-    assert test_user.rank_proficiency_score == expected_rank.proficiency_score
+    profile = (
+        await db_session.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == test_user.id
+            )
+        )
+    ).scalar_one()
+    assert profile.assessed_level == "B2"

@@ -216,3 +216,13 @@ def apply_rank_info_to_user(user, rank_info: RankInfo) -> None:
     user.rank_score = rank_info.score
     user.rank_level_score = rank_info.level_score
     user.rank_proficiency_score = rank_info.proficiency_score
+
+
+def rank_proficiency_level(user) -> str:
+    """The CEFR level rank is computed from: the certified one.
+
+    `user.level` is the working level a learner may pick themselves; ranking on
+    it would let anyone climb by editing their profile.
+    """
+    level = str(getattr(user, "certified_level", None) or "").strip().upper()
+    return level if level in ("A1", "A2", "B1", "B2", "C1", "C2") else "A1"

@@ -31,6 +31,7 @@ from app.models.user import User
 from app.crud.vocabulary import USER_SAVED_PLACEHOLDER, vocabulary_crud
 from app.services.streak_service import record_daily_activity, update_user_streak
 from app.schemas.common import MessageResponse
+from app.services.rank_service import rank_proficiency_level
 from app.schemas.vocabulary import (
     VocabularyItemResponse,
     UserVocabularyResponse,
@@ -682,7 +683,7 @@ async def submit_review(
     leveled_up, old_level, new_level = check_numeric_level_up(old_xp, new_xp)
 
     # Calculate new rank
-    new_rank_info = calculate_rank(new_level, current_user.level or "A1")
+    new_rank_info = calculate_rank(new_level, rank_proficiency_level(current_user))
     
     # Apply user updates
     current_user.total_xp = new_xp
