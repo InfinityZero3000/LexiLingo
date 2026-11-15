@@ -21,6 +21,8 @@ from app.core.database import get_db
 from app.models.course import Course
 from app.models.proficiency import UserProficiencyProfile, UserSkillScore
 from app.models.progress import Streak, UserCourseProgress
+from app.services.cefr_level_service import level_verified
+from app.services.rank_service import rank_proficiency_level
 from app.models.user import User
 from app.routes.learner_state import require_learner_state_service
 
@@ -134,6 +136,9 @@ async def get_learner_card(
         "member_since": user.created_at.date().isoformat() if user.created_at else None,
         "cefr_level": user.level,
         "assessed_level": assessed_level,
+        # So Lexi can tell "you chose B2" from "you passed B2".
+        "certified_level": rank_proficiency_level(user),
+        "level_verified": level_verified(user),
         "overall_score": round(float(profile.overall_score or 0.0), 1) if profile else 0.0,
         "goal": user.goal,
         "interest": user.interest,

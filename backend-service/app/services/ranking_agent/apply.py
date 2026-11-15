@@ -26,7 +26,7 @@ from app.models.progress import DailyActivity
 from app.models.ranking_agent import RankingAgentJob
 from app.models.user import User
 from app.services.level_service import calculate_numeric_level
-from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.rank_service import apply_rank_info_to_user, calculate_rank, rank_proficiency_level
 from app.services.ranking_agent_jobs import RankingAgentJobService
 
 _LEAGUE_ORDER = ["bronze", "silver", "gold", "platinum", "sapphire", "ruby", "amethyst", "master"]
@@ -160,7 +160,7 @@ async def _process_league_change(
     # Update User.rank
     user = await db.get(User, user_id)
     if user:
-        proficiency = getattr(user, "proficiency_level", None) or "A1"
+        proficiency = rank_proficiency_level(user)
         numeric = getattr(user, "numeric_level", None) or 1
         rank_info = calculate_rank(numeric, proficiency)
         apply_rank_info_to_user(user, rank_info)
@@ -455,7 +455,7 @@ async def _grant_achievement_rewards(
         user.numeric_level = calculate_numeric_level(user.total_xp)
         apply_rank_info_to_user(
             user,
-            calculate_rank(user.numeric_level, user.level or "A1"),
+            calculate_rank(user.numeric_level, rank_proficiency_level(user)),
         )
 
     if xp_by_user:

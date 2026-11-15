@@ -551,6 +551,15 @@ class TestGetPlacementTest:
 # POST /proficiency/placement-test/submit
 # ===========================================================================
 
+@pytest.fixture(autouse=True)
+def _no_learner_state_epoch():
+    """The session here is a mock; the epoch bump has its own tests on SQLite."""
+    with patch(
+        "app.services.cefr_level_service.bump_learner_state_epoch", autospec=True
+    ):
+        yield
+
+
 class TestSubmitPlacementTest:
 
     def _all_correct_answers(self) -> list:

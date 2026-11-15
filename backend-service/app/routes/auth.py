@@ -33,6 +33,8 @@ from app.core.token_blacklist import TokenBlacklist
 from app.services.admin_audit import record_admin_action
 from app.services.starter_reward_service import StarterRewardService
 from app.models.user import User, RefreshToken
+from app.services.cefr_level_service import level_verified
+from app.services.rank_service import rank_proficiency_level
 from app.services.email_service import EmailService
 from app.services.auth_service import (
     register_user,
@@ -146,6 +148,8 @@ def _build_user_response(user: User) -> UserResponse:
             getattr(user, "cefr_level", None) or getattr(user, "level", None),
             "A1",
         ),
+        certified_level=rank_proficiency_level(user),
+        level_verified=level_verified(user),
         total_xp=int(getattr(user, "total_xp", 0) or 0),
         numeric_level=int(getattr(user, "numeric_level", 1) or 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),

@@ -41,10 +41,21 @@ from app.services.proficiency_service import (
     LEVEL_DIFFICULTY_MULTIPLIER,
     ProficiencyService,
 )
-from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.rank_service import (
+    apply_rank_info_to_user,
+    calculate_rank,
+    rank_proficiency_level,
+)
 from app.services.learner_error_service import record_learner_error
 from app.services.learner_state import record_concept_observation
 from app.clients.ai_service_client import diagnose_error, invalidate_learner_card
+from app.services.cefr_level_service import (
+    apply_level_change,
+    level_index,
+    level_verified,
+    normalise_level,
+    publish_level_change,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -338,6 +349,8 @@ async def get_proficiency_profile(
     return {
         "user_id": str(current_user.id),
         "assessed_level": profile.assessed_level,
+        "certified_level": rank_proficiency_level(current_user),
+        "level_verified": level_verified(current_user),
         "overall_score": profile.overall_score,
         "total_xp": profile.total_xp,
         "skills": skills,
@@ -672,20 +685,11 @@ async def record_exercise_results_for_user(
 
     profile.last_assessment_at = datetime.now(timezone.utc)
 
-    # users.level can disagree with the profile (older rows, a self-reported
-    # starting level), so settle it on the profile's assessed level — never on
-    # what the scores alone would suggest.
+    # users.level can disagree with the profile (older rows), so settle it on
+    # the profile's assessed level — never on what the scores alone suggest.
+    # Rank reads the certified level, so this never moves it.
     user_level_moved = current_user.level != profile.assessed_level
     current_user.level = profile.assessed_level
-
-    if user_level_moved:
-        # Rank depends on proficiency_level (current_user.level, just synced
-        # above), so recompute it whenever that changed even though no XP moved.
-        rank_info = calculate_rank(
-            numeric_level=current_user.numeric_level or 1,
-            proficiency_level=current_user.level,
-        )
-        apply_rank_info_to_user(current_user, rank_info)
 
     await db.commit()
 
@@ -795,6 +799,56 @@ async def get_level_history(
 # Placement Test Endpoints
 # =====================
 
+class WorkingLevelUpdate(BaseModel):
+    level: str
+
+
+@router.put("/level", response_model=dict)
+async def set_working_level(
+    body: WorkingLevelUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Let the learner pick the level they study at, in either direction.
+
+    Personalisation follows it at once. The certified level — what rank and
+    badges read — is untouched: a level above it shows as unverified until the
+    level exam confirms it.
+    """
+    level = normalise_level(body.level)
+    if level is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="level must be one of A1, A2, B1, B2, C1, C2",
+        )
+    profile = (
+        await db.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == current_user.id
+            )
+        )
+    ).scalar_one_or_none()
+    if profile is None:
+        profile = UserProficiencyProfile(
+            user_id=current_user.id, assessed_level=current_user.level or "A1"
+        )
+        db.add(profile)
+        await db.flush()
+
+    change = await apply_level_change(
+        db, current_user, profile, source="self", working=level
+    )
+    await db.commit()
+    await publish_level_change(change)
+
+    return {
+        "level": current_user.level,
+        "certified_level": rank_proficiency_level(current_user),
+        "level_verified": level_verified(current_user),
+        "level_changed": change is not None,
+    }
+
+
 @router.get("/placement-test", response_model=dict)
 async def get_placement_test(
     current_user: User = Depends(get_current_user),
@@ -866,66 +920,44 @@ async def submit_placement_test(
             assessed_level = level
             break
 
-    # Persist to proficiency profile (upsert)
-    result = await db.execute(
-        select(UserProficiencyProfile).where(
-            UserProficiencyProfile.user_id == current_user.id
-        )
-    )
-    profile = result.scalar_one_or_none()
-
-    # The first test sets the level outright (it replaces a self-reported one).
-    # Every later test can only raise it: a level is earned by passing a test,
-    # so a bad day on a retake must not take it away.
-    first_test = profile is None or profile.placement_level is None
-    old_level = (profile.assessed_level if profile else None) or current_user.level or "A1"
-    scored_level = assessed_level
-    if not first_test and ProficiencyService.get_level_index(
-        ProficiencyLevel(scored_level)
-    ) < ProficiencyService.get_level_index(ProficiencyLevel(old_level)):
-        assessed_level = old_level
-    level_changed = old_level != assessed_level
-
-    now = datetime.now(timezone.utc)
-
-    if profile:
-        profile.assessed_level = assessed_level
-        profile.last_assessment_at = now
-    else:
-        profile = UserProficiencyProfile(
-            user_id=current_user.id,
-            assessed_level=assessed_level,
-            last_assessment_at=now,
-        )
-        db.add(profile)
-    if first_test or level_changed:
-        profile.placement_level = assessed_level
-        profile.placement_at = now
-    if level_changed:
-        profile.last_level_change_at = now
-        await db.flush()
-        db.add(
-            UserLevelHistory(
-                profile_id=profile.id,
-                previous_level=old_level,
-                new_level=assessed_level,
-                change_type=(
-                    "initial"
-                    if first_test
-                    else "promotion"
-                ),
-                overall_score=round(pct, 2),
-                exercises_completed=profile.total_exercises_completed or 0,
-                accuracy=(
-                    profile.accuracy if profile.total_exercises_completed else 0.0
-                ),
-                reason=(
-                    f"Placement test: {round(pct)}%"
-                    if first_test
-                    else f"Passed the level test: {round(pct)}%"
-                ),
+    profile = (
+        await db.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == current_user.id
             )
         )
+    ).scalar_one_or_none()
+
+    # The first sitting sets both levels outright. Until the level exam ships,
+    # a retake is how a learner gets certified higher, so it may only raise:
+    # a bad day must not take a certified level away, and a working level the
+    # learner chose above the result is theirs to keep.
+    first_test = profile is None or profile.placement_level is None
+
+    now = datetime.now(timezone.utc)
+    if profile is None:
+        profile = UserProficiencyProfile(
+            user_id=current_user.id,
+            assessed_level=current_user.level or "A1",
+        )
+        db.add(profile)
+        await db.flush()
+    old_level = profile.assessed_level or "A1"
+    profile.last_assessment_at = now
+
+    working = assessed_level
+    if not first_test and level_index(old_level) > level_index(assessed_level):
+        working = old_level
+    change = await apply_level_change(
+        db,
+        current_user,
+        profile,
+        source="placement",
+        working=working,
+        certified=assessed_level,
+        score=pct,
+        initial=first_test,
+    )
 
     # The test's own percentage belongs to the test record, not to
     # profile.overall_score: that field is the weighted skill total, and
@@ -944,34 +976,29 @@ async def submit_placement_test(
             correct_count=correct_count,
             started_at=now,
             completed_at=now,
-            level_changed=level_changed,
+            level_changed=change is not None,
+            previous_level=old_level,
         )
     )
 
-    # Update user record
-    current_user.level = assessed_level
-
-    # Recalculate rank with new proficiency
-    new_rank = calculate_rank(
-        numeric_level=current_user.numeric_level or 1,
-        proficiency_level=assessed_level,
-    )
-    apply_rank_info_to_user(current_user, new_rank)
-
     await db.commit()
-    await invalidate_learner_card(current_user.id)
+    await publish_level_change(change)
 
     return {
-        "assessed_level": assessed_level,
+        "assessed_level": current_user.level,
+        "certified_level": current_user.certified_level,
         "total_score": total_score,
         "max_score": MAX_PLACEMENT_SCORE,
         "score_percentage": round(pct, 1),
         "correct_count": correct_count,
         "total_questions": len(PLACEMENT_QUESTIONS),
-        "level_changed": level_changed,
+        "level_changed": change is not None,
         "previous_level": old_level,
-        "test_level": scored_level,
-        "rank": new_rank.rank.value,
-        "rank_name": new_rank.name,
+        "test_level": assessed_level,
+        "rank": current_user.rank,
+        "rank_name": calculate_rank(
+            numeric_level=current_user.numeric_level or 1,
+            proficiency_level=rank_proficiency_level(current_user),
+        ).name,
         "details": details,
     }

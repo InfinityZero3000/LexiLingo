@@ -38,7 +38,7 @@ from app.schemas.gamification import (
     StarterRewardResponse,
 )
 from app.schemas.response import ApiResponse
-from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.rank_service import apply_rank_info_to_user, calculate_rank, rank_proficiency_level
 from app.services.starter_reward_service import StarterRewardService
 
 router = APIRouter(prefix="/gamification", tags=["Gamification"])
@@ -529,7 +529,7 @@ async def get_my_league_status(
     """
     rank_info = calculate_rank(
         numeric_level=current_user.numeric_level or 1,
-        proficiency_level=current_user.level or "A1",
+        proficiency_level=rank_proficiency_level(current_user),
     )
     apply_rank_info_to_user(current_user, rank_info)
     await db.commit()
@@ -555,7 +555,7 @@ async def get_my_league_status(
             rank_proficiency_score=rank_info.proficiency_score,
             total_xp=current_user.total_xp or 0,
             numeric_level=current_user.numeric_level or 1,
-            proficiency_level=current_user.level or "A1",
+            proficiency_level=rank_proficiency_level(current_user),
             current_rank=rank,
             xp_earned=entry.xp_earned,
             lessons_completed=entry.lessons_completed,

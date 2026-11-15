@@ -26,6 +26,7 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
+from fastapi import Depends
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -84,15 +85,17 @@ async def auth_client() -> AsyncGenerator[AsyncClient, None]:
         async with _session_factory() as session:
             yield session
 
-    async def override_get_user():
-        async with _session_factory() as session:
-            result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
-            user = result.scalar_one_or_none()
-            if user is None:
-                pytest.fail(
-                    f"User '{TARGET_EMAIL}' not found. Run: python -m tests.seed_proficiency_data"
-                )
-            return user
+    # Same session as the route, like the real get_current_user: a user loaded
+    # in a separate, closed session silently drops every write a route makes
+    # to it (its level, its certified level, its rank).
+    async def override_get_user(session: AsyncSession = Depends(get_db)):
+        result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
+        user = result.scalar_one_or_none()
+        if user is None:
+            pytest.fail(
+                f"User '{TARGET_EMAIL}' not found. Run: python -m tests.seed_proficiency_data"
+            )
+        return user
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_user

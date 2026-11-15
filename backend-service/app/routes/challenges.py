@@ -23,6 +23,7 @@ from app.models.vocabulary import VocabularyReview, UserVocabulary
 from app.schemas.response import ApiResponse
 from app.crud.gamification import WalletCRUD
 from app.services.streak_service import record_daily_activity
+from app.services.rank_service import rank_proficiency_level
 from app.services.xp_service import (
     MAX_STUDY_MINUTES_PER_AWARD,
     capped_duration_seconds,
@@ -671,7 +672,7 @@ async def claim_daily_bonus(
 
     new_total_xp = (locked_user.total_xp or 0) + boosted_xp
     new_numeric_level = calculate_numeric_level(new_total_xp)
-    new_rank_info = calc_rank(new_numeric_level, locked_user.level)
+    new_rank_info = calc_rank(new_numeric_level, rank_proficiency_level(locked_user))
 
     locked_user.total_xp = new_total_xp
     locked_user.numeric_level = new_numeric_level
@@ -808,7 +809,7 @@ async def claim_challenge_reward(
 
     new_total_xp = (locked_user.total_xp or 0) + boosted_xp
     new_numeric_level = calculate_numeric_level(new_total_xp)
-    new_rank_info = calc_rank(new_numeric_level, locked_user.level)
+    new_rank_info = calc_rank(new_numeric_level, rank_proficiency_level(locked_user))
 
     locked_user.total_xp = new_total_xp
     locked_user.numeric_level = new_numeric_level

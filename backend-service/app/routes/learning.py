@@ -54,6 +54,7 @@ from app.services.level_service import (
     check_numeric_level_up
 )
 from app.services.rank_service import (
+    rank_proficiency_level,
     apply_rank_info_to_user,
     calculate_rank as calc_rank
 )
@@ -1111,7 +1112,7 @@ async def complete_lesson(
         leveled, _, _ = check_numeric_level_up(old_xp, new_xp)
         
         # Check rank change
-        new_rank_info = calc_rank(new_numeric_level, current_user.level)
+        new_rank_info = calc_rank(new_numeric_level, rank_proficiency_level(current_user))
         apply_rank_info_to_user(current_user, new_rank_info)
         
         # --- Update DailyActivity ---

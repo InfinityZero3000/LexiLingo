@@ -107,10 +107,12 @@ async def test_no_route_lets_a_client_claim_an_exam_pass(
     assert response.status_code in (404, 405)
 
 
-async def test_rank_is_recomputed_when_users_level_drifts_from_profile(db_session, test_user):
+async def test_a_drifted_users_level_is_settled_without_moving_rank(db_session, test_user):
+    """users.level follows the profile; rank reads the certified level, so it stays."""
     test_user.level = "B1"
     db_session.add(UserProficiencyProfile(user_id=test_user.id, assessed_level="A1"))
     await db_session.commit()
+    rank_before = test_user.rank_proficiency_score
 
     with patch("app.routes.proficiency.calculate_rank", wraps=calculate_rank) as spy:
         await record_exercise_results_for_user(
@@ -128,5 +130,5 @@ async def test_rank_is_recomputed_when_users_level_drifts_from_profile(db_sessio
         )
 
     assert test_user.level == "A1"
-    spy.assert_called_once()
-    assert spy.call_args.kwargs["proficiency_level"] == "A1"
+    spy.assert_not_called()
+    assert test_user.rank_proficiency_score == rank_before

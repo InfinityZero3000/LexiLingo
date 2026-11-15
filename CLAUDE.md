@@ -73,22 +73,24 @@ wherever the format is known.
   volume asks "did you do enough?", confidence asks "do we know enough about
   you yet?". Without it, raw counts were the only real gate and a long chat
   session could satisfy them.
-- **CEFR level moves only through a level test.** `record_exercise_results_for_user`
-  feeds the skill scores and the progress bar and never writes
-  `UserProficiencyProfile.assessed_level`, `users.level` or `UserLevelHistory`
-  (it only settles `users.level` back onto the profile). It used to re-derive the
-  level from scratch on every batch — `calculate_overall_level` never read its
-  `current_level` — so one weak batch demoted a learner and a strong week
-  promoted them with no test, and it overwrote `users.level`, so that column and
-  the profile drifted apart. `calculate_overall_level` is now only the
-  "evidence" view; `next_level.qualifies` from `GET /proficiency/profile` means
-  *ready to take the test*, not *promoted*. The placement test is the one
-  writer: the first test sets the level (replacing a self-reported one), later
-  tests can only raise it (`test_level` in the response is what it scored), and
-  every change writes a `UserLevelHistory` row (`initial` / `promotion`).
-  `PUT /users/me` takes a self-reported `level` once, while onboarding is open;
-  after that `level` / `cefr_level` are ignored. Nothing writes `demotion`
-  any more — old rows, and the demo seed's "demotion episode", still exist.
+- **Two CEFR levels, one writer.** The *working* level (`users.level` ==
+  `UserProficiencyProfile.assessed_level`) is what a learner studies at:
+  a test sets it and the learner may pick it either way (`PUT /proficiency/level`,
+  or `level` on `PUT /users/me`). The *certified* level (`users.certified_level`)
+  is what a test confirmed: only a test moves it, only upward, and **rank reads
+  it** (`rank_service.rank_proficiency_level`) — ranking on the working level
+  would let anyone climb by editing their profile. A working level above the
+  certified one is `level_verified: false`. Every change goes through
+  `cefr_level_service.apply_level_change` (history row `initial` / `promotion` /
+  `self_set`, rank, learner-state epoch) and, after the commit,
+  `publish_level_change` (learner card + `rec:insights:` cache). The epoch bump
+  is what refreshes ai-service: its `rec:v1:` key and TraceCAG artifacts carry
+  the epoch, not the level. Practice never moves either level —
+  `record_exercise_results_for_user` used to re-derive it from scratch every
+  batch (`calculate_overall_level` never read `current_level`), demoting on one
+  weak batch. `next_level.qualifies` means *ready for the exam*. A placement retake
+  may only raise (it is the promotion path until the level exam replaces it).
+  Nothing writes `demotion`; old rows remain.
 - One weighted overall score, `ProficiencyService.weighted_overall`. There were
   four different formulas; two overwrote each other, so the number a learner
   saw was not the number their promotion was judged on.
