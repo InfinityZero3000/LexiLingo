@@ -154,21 +154,24 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('LexiChatProvider', () {
-    test('legacy audio transcription requests language auto-detection', () async {
-      final aiClient = _CapturingAiApiClient();
-      final provider = LexiChatProvider(
-        repository: _FakeLexiChatRepository(),
-        aiClient: aiClient,
-      );
-      addTearDown(provider.dispose);
+    test(
+      'legacy audio transcription requests language auto-detection',
+      () async {
+        final aiClient = _CapturingAiApiClient();
+        final provider = LexiChatProvider(
+          repository: _FakeLexiChatRepository(),
+          aiClient: aiClient,
+        );
+        addTearDown(provider.dispose);
 
-      final transcript = await provider.transcribeAudio(
-        Uint8List.fromList([1, 2, 3]),
-      );
+        final transcript = await provider.transcribeAudio(
+          Uint8List.fromList([1, 2, 3]),
+        );
 
-      expect(aiClient.path, '/stt/transcribe?language=auto');
-      expect(transcript, 'xin chào');
-    });
+        expect(aiClient.path, '/stt/transcribe?language=auto');
+        expect(transcript, 'xin chào');
+      },
+    );
 
     test('builds web-safe request ids without crypto random', () async {
       final repo = _FakeLexiChatRepository();

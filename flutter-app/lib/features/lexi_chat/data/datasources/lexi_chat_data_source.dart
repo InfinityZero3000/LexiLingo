@@ -291,7 +291,9 @@ class LexiChatDataSource {
           (item) =>
               LexiCourseSuggestion.fromJson(Map<String, dynamic>.from(item)),
         )
-        .where((course) => course.courseId.isNotEmpty && course.title.isNotEmpty)
+        .where(
+          (course) => course.courseId.isNotEmpty && course.title.isNotEmpty,
+        )
         .toList();
   }
 
